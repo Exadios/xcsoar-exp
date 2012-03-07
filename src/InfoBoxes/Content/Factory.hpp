@@ -131,7 +131,7 @@ namespace InfoBoxFactory
     e_TaskMaxHeightTime, /* Time aircraft has been under the max start height */
     e_Fin_ETE_VMG,
     e_WP_ETE_VMG,
-    e_Horizon,
+/*    e_Horizon,  */
 
     e_NearestAirspaceHorizontal,
     e_NearestAirspaceVertical,

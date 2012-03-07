@@ -853,13 +853,13 @@ const InfoBoxFactory::InfoBoxMetaData InfoBoxFactory::MetaData[NUM_TYPES] = {
     e_Fin_Time, // Fin ETE
   },
 
-  {
+/*  {
     N_("Attitude indicator"),
     N_("Horizon"),
     N_("Attitude indicator (artifical horizon) display calculated from flightpath, supplemented with acceleration and variometer data if available."),
     e_Fin_TimeLocal, // Fin ETA
     e_Fin_Time, // Fin ETE
-  },
+  },  */
 
   {
     N_("Nearest airspace horizontal"),
@@ -1058,8 +1058,8 @@ InfoBoxFactory::Create(unsigned InfoBoxType)
     return new InfoBoxContentFinalETEVMG();
   case e_WP_ETE_VMG:
     return new InfoBoxContentNextETEVMG();
-  case e_Horizon:
-    return new InfoBoxContentHorizon();
+/*  case e_Horizon:
+    return new InfoBoxContentHorizon();  */
 
   case e_NearestAirspaceHorizontal:
     return new InfoBoxContentNearestAirspaceHorizontal();
