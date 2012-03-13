@@ -2,6 +2,9 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
+Version 6.2.6-restricted - 2012/03/13
+This is Version 6.2.6 with the artificial horizon display removed.
+
 Version 6.2.6 - 2012/02/25
 * calculations
   - fix bogus terrain warnings
