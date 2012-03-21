@@ -10,6 +10,13 @@ ifeq ($(TARGET),ANDROID)
 # In the stable branch, this should default to "n".
 TESTING = n
 
+ifeq ($(EXADIOS),y)
+TESTING = y
+endif
+ifeq ($(RESTRICTED),y)
+RESTRICTED=y
+endif
+
 ANT = ant
 JAVAH = javah
 JARSIGNER = jarsigner
@@ -90,10 +97,18 @@ $(PNG4): $(DRAWABLE_DIR)/%.png: output/data/icons/%.bmp | $(DRAWABLE_DIR)/dirsta
 
 PNG_FILES = $(DRAWABLE_DIR)/icon.png $(PNG1) $(PNG2) $(PNG3) $(PNG4)
 
+ifeq ($(EXADIOS),y)
+ifeq ($(RESTRICTED),y)
+MANIFEST = android/exadios/restricted/AndroidManifest.xml
+else
+MANIFEST = android/exadios/AndroidManifest.xml
+endif
+else
 ifeq ($(TESTING),y)
 MANIFEST = android/testing/AndroidManifest.xml
 else
 MANIFEST = android/AndroidManifest.xml
+endif
 endif
 
 # symlink some important files to $(ANDROID_BUILD) and let the Android
@@ -111,11 +126,27 @@ ifneq ($(IOIOLIB_DIR),)
 endif
 	$(Q)ln -s ../../../../android/res/values $(@D)/res/
 	$(Q)$(ANDROID_SDK)/tools/android update project --path $(@D) --target $(ANDROID_PLATFORM)
+ifeq ($(EXADIOS),y)
+ifeq ($(RESTRICTED),y)
+ifeq ($(shell uname -s),Darwin)
+	$(Q)sed -i "" -f build/r.exadios.restricted.sed $@
+else
+	$(Q)sed -i -f build/r.exadios.restricted.sed $@
+endif
+else
+ifeq ($(shell uname -s),Darwin)
+	$(Q)sed -i "" -f build/r.exadios.sed $@
+else
+	$(Q)sed -i -f build/r.exadios.sed $@
+endif
+endif
+else
 ifeq ($(TESTING),y)
 ifeq ($(shell uname -s),Darwin)
 	$(Q)sed -i "" -f build/r.sed $@
 else
 	$(Q)sed -i -f build/r.sed $@
+endif
 endif
 endif
 	@touch $@
