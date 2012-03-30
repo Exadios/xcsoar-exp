@@ -10,6 +10,13 @@ ifeq ($(TARGET),ANDROID)
 # In the stable branch, this should default to "n".
 TESTING = n
 
+ifeq ($(EXADIOS),y)
+TESTING = y
+endif
+ifeq ($(RESTRICTED),y)
+RESTRICTED=y
+endif
+
 ANT = ant
 JAVAH = javah
 JARSIGNER = jarsigner
@@ -104,6 +111,13 @@ $(PNG5): $(DRAWABLE_DIR)/%.png: $(DATA)/graphics/%.bmp | $(DRAWABLE_DIR)/dirstam
 
 PNG_FILES = $(DRAWABLE_DIR)/icon.png $(PNG1) $(PNG2) $(PNG3) $(PNG4) $(PNG5)
 
+ifeq ($(EXADIOS),y)
+ifeq ($(RESTRICTED),y)
+MANIFEST = android/exadios/restricted/AndroidManifest.xml
+else
+MANIFEST = android/exadios/AndroidManifest.xml
+endif
+else
 ifeq ($(TESTING),y)
 MANIFEST = android/testing/AndroidManifest.xml
 else
@@ -138,6 +152,21 @@ ifeq ($(WINHOST),y)
 else
 	$(Q)$(ANDROID_SDK)/tools/android update project --path $(@D) --target $(ANDROID_PLATFORM)
 endif
+ifeq ($(EXADIOS),y)
+ifeq ($(RESTRICTED),y)
+ifeq ($(shell uname -s),Darwin)
+	$(Q)sed -i "" -f build/r.exadios.restricted.sed $@
+else
+	$(Q)sed -i -f build/r.exadios.restricted.sed $@
+endif
+else
+ifeq ($(shell uname -s),Darwin)
+	$(Q)sed -i "" -f build/r.exadios.sed $@
+else
+	$(Q)sed -i -f build/r.exadios.sed $@
+endif
+endif
+else
 ifeq ($(TESTING),y)
 ifeq ($(HOST_IS_DARWIN),y)
 	$(Q)sed -i "" -f build/r.testing.sed $@
@@ -150,6 +179,7 @@ ifeq ($(HOST_IS_DARWIN),y)
 	$(Q)sed -i "" -f build/r.nohorizon.sed $@
 else
 	$(Q)sed -i -f build/r.nohorizon.sed $@
+endif
 endif
 endif
 endif
