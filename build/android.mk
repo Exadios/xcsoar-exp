@@ -114,19 +114,16 @@ PNG_FILES = $(DRAWABLE_DIR)/icon.png $(PNG1) $(PNG2) $(PNG3) $(PNG4) $(PNG5)
 ifeq ($(EXADIOS),y)
 ifeq ($(RESTRICTED),y)
 MANIFEST = android/exadios/restricted/AndroidManifest.xml
-else
+else     # RESTRICTED 
 MANIFEST = android/exadios/AndroidManifest.xml
-endif
-else
+endif    # RESTRICTED
+else     # EXADIOS
 ifeq ($(TESTING),y)
 MANIFEST = android/testing/AndroidManifest.xml
-else
-ifeq ($(NO_HORIZON),y)
-MANIFEST = android/nohorizon/AndroidManifest.xml
-else
+else     # TESTING
 MANIFEST = android/AndroidManifest.xml
-endif
-endif
+endif    # TESTING
+endif    # EXADIOS
 
 # symlink some important files to $(ANDROID_BUILD) and let the Android
 # SDK generate build.xml
@@ -156,33 +153,33 @@ ifeq ($(EXADIOS),y)
 ifeq ($(RESTRICTED),y)
 ifeq ($(shell uname -s),Darwin)
 	$(Q)sed -i "" -f build/r.exadios.restricted.sed $@
-else
+else    # Darwin
 	$(Q)sed -i -f build/r.exadios.restricted.sed $@
-endif
-else
+endif   # Darwin
+else    # RESTRICTED
 ifeq ($(shell uname -s),Darwin)
 	$(Q)sed -i "" -f build/r.exadios.sed $@
-else
+else    # Darwin
 	$(Q)sed -i -f build/r.exadios.sed $@
-endif
-endif
-else
+endif   # Darwin
+endif   # RESTRICTED
+else    # EXADIOS
 ifeq ($(TESTING),y)
 ifeq ($(HOST_IS_DARWIN),y)
 	$(Q)sed -i "" -f build/r.testing.sed $@
-else
+else    # Darwin
 	$(Q)sed -i -f build/r.testing.sed $@
-endif
-else
+endif   # Darwin
+else    # TESTING
 ifeq ($(NO_HORIZON),y)
 ifeq ($(HOST_IS_DARWIN),y)
 	$(Q)sed -i "" -f build/r.nohorizon.sed $@
-else
+else    # Darwin
 	$(Q)sed -i -f build/r.nohorizon.sed $@
-endif
-endif
-endif
-endif
+endif   # Darwin
+endif   # NO_HORIZON
+endif   # TESTING
+endif   # EXADIOS
 	@touch $@
 
 ifeq ($(FAT_BINARY),y)
