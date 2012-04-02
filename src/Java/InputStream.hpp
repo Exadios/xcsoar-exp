@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2010-2012 Max Kellermann <max@duempel.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,28 +27,39 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef XCSOAR_JAVA_OBJECT_HPP
-#define XCSOAR_JAVA_OBJECT_HPP
-
-#include "Java/Ref.hpp"
+#ifndef XCSOAR_JAVA_INPUT_STREAM_HPP
+#define XCSOAR_JAVA_INPUT_STREAM_HPP
 
 #include <jni.h>
+#include <assert.h>
+#include <stddef.h>
 
 namespace Java {
   /**
-   * Wrapper for a local "jobject" reference.
+   * Wrapper for a java.io.InputStream object.
    */
-  typedef LocalRef<jobject> LocalObject;
+  class InputStream {
+    static jmethodID close_method, read_method;
 
-  class Object : public GlobalRef<jobject> {
   public:
-    /**
-     * Constructs an uninitialized object.  The method set() must be
-     * called before it is destructed.
-     */
-    Object() = default;
+    static void Initialise(JNIEnv *env);
 
-    Object(JNIEnv *env, jobject obj):GlobalRef<jobject>(env, obj) {}
+    static void close(JNIEnv *env, jobject is) {
+      assert(env != NULL);
+      assert(is != NULL);
+      assert(close_method != NULL);
+
+      env->CallVoidMethod(is, close_method);
+    }
+
+    static int read(JNIEnv *env, jobject is, jbyteArray buffer) {
+      assert(env != NULL);
+      assert(is != NULL);
+      assert(buffer != NULL);
+      assert(read_method != NULL);
+
+      return env->CallIntMethod(is, read_method, buffer);
+    }
   };
 }
 

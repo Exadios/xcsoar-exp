@@ -32,8 +32,7 @@ class Timer;
 
 class AndroidTimer {
   class Bridge : protected Java::Object {
-    static jclass cls;
-    static jmethodID ctor, install_method, uninstall_method;
+    static jmethodID install_method, uninstall_method;
 
   public:
     static void Initialise(JNIEnv *env);

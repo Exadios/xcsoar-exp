@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2010-2012 Max Kellermann <max@duempel.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,29 +27,16 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef XCSOAR_JAVA_OBJECT_HPP
-#define XCSOAR_JAVA_OBJECT_HPP
+#include "File.hpp"
+#include "Class.hpp"
 
-#include "Java/Ref.hpp"
+jmethodID Java::File::getAbsolutePath_method;
 
-#include <jni.h>
+void
+Java::File::Initialise(JNIEnv *env)
+{
+  Class cls(env, "java/io/File");
 
-namespace Java {
-  /**
-   * Wrapper for a local "jobject" reference.
-   */
-  typedef LocalRef<jobject> LocalObject;
-
-  class Object : public GlobalRef<jobject> {
-  public:
-    /**
-     * Constructs an uninitialized object.  The method set() must be
-     * called before it is destructed.
-     */
-    Object() = default;
-
-    Object(JNIEnv *env, jobject obj):GlobalRef<jobject>(env, obj) {}
-  };
+  getAbsolutePath_method = env->GetMethodID(cls, "getAbsolutePath",
+                                            "()Ljava/lang/String;");
 }
-
-#endif
