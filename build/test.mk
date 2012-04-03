@@ -666,10 +666,12 @@ DEBUG_PROGRAM_NAMES = \
 	RunOLCAnalysis \
 	BenchmarkProjection \
 	DumpTextFile DumpTextZip WriteTextFile RunTextWriter \
+	DumpHexColor \
 	RunXMLParser \
 	ReadMO \
 	ReadProfileString ReadProfileInt \
 	WriteProfileString WriteProfileInt \
+	RunMD5 \
 	ReadGRecord VerifyGRecord AppendGRecord \
 	AddChecksum \
 	KeyCodeDumper \
@@ -718,7 +720,7 @@ DEBUG_PROGRAM_NAMES += FeedTCP \
 endif
 
 ifeq ($(HAVE_NET),y)
-DEBUG_PROGRAM_NAMES += DownloadFile RunNOAADownloader RunLiveTrack24
+DEBUG_PROGRAM_NAMES += DownloadFile RunDownloadToFile RunNOAADownloader RunLiveTrack24
 endif
 
 ifeq ($(HAVE_CE)$(findstring $(TARGET),ALTAIR),y)
@@ -815,6 +817,12 @@ DUMP_TEXT_ZIP_SOURCES = \
 DUMP_TEXT_ZIP_DEPENDS = IO ZZIP
 $(eval $(call link-program,DumpTextZip,DUMP_TEXT_ZIP))
 
+DUMP_HEX_COLOR_SOURCES = \
+	$(SRC)/Formatter/HexColor.cpp \
+	$(TEST_SRC_DIR)/DumpHexColor.cpp
+DUMP_HEX_COLOR_DEPENDS = SCREEN
+$(eval $(call link-program,DumpHexColor,DUMP_HEX_COLOR))
+
 DEBUG_DISPLAY_SOURCES = \
 	$(SRC)/Hardware/Display.cpp \
 	$(TEST_SRC_DIR)/FakeAsset.cpp \
@@ -837,6 +845,17 @@ DOWNLOAD_FILE_SOURCES = \
 	$(TEST_SRC_DIR)/DownloadFile.cpp
 DOWNLOAD_FILE_DEPENDS = IO LIBNET
 $(eval $(call link-program,DownloadFile,DOWNLOAD_FILE))
+
+RUN_DOWNLOAD_TO_FILE_SOURCES = \
+	$(SRC)/Version.cpp \
+	$(SRC)/Net/ToFile.cpp \
+	$(SRC)/Logger/MD5.cpp \
+	$(SRC)/OS/FileUtil.cpp \
+	$(SRC)/Operation/Operation.cpp \
+	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
+	$(TEST_SRC_DIR)/RunDownloadToFile.cpp
+RUN_DOWNLOAD_TO_FILE_DEPENDS = LIBNET
+$(eval $(call link-program,RunDownloadToFile,RUN_DOWNLOAD_TO_FILE))
 
 RUN_NOAA_DOWNLOADER_SOURCES = \
 	$(SRC)/Version.cpp \
@@ -932,6 +951,11 @@ WRITE_PROFILE_INT_SOURCES = \
 	$(TEST_SRC_DIR)/WriteProfileInt.cpp
 WRITE_PROFILE_INT_DEPENDS = PROFILE IO UTIL
 $(eval $(call link-program,WriteProfileInt,WRITE_PROFILE_INT))
+
+RUN_MD5_SOURCES = \
+	$(SRC)/Logger/MD5.cpp \
+	$(TEST_SRC_DIR)/RunMD5.cpp
+$(eval $(call link-program,RunMD5,RUN_MD5))
 
 READ_GRECORD_SOURCES = \
 	$(SRC)/Logger/LoggerGRecord.cpp \
@@ -1083,7 +1107,6 @@ READ_PORT_SOURCES = \
 	$(SRC)/Device/Port/ConfiguredPort.cpp \
 	$(SRC)/Thread/Mutex.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(TEST_SRC_DIR)/FakeLogFile.cpp \
 	$(TEST_SRC_DIR)/DebugPort.cpp \
@@ -1095,7 +1118,6 @@ RUN_PORT_HANDLER_SOURCES = \
 	$(SRC)/Device/Port/ConfiguredPort.cpp \
 	$(SRC)/Thread/Mutex.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(TEST_SRC_DIR)/FakeLogFile.cpp \
 	$(TEST_SRC_DIR)/DebugPort.cpp \
@@ -1106,7 +1128,6 @@ $(eval $(call link-program,RunPortHandler,RUN_PORT_HANDLER))
 RUN_TCP_LISTENER_SOURCES = \
 	$(SRC)/Device/Port/Port.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Device/Port/TCPPort.cpp \
 	$(TEST_SRC_DIR)/RunTCPListener.cpp
@@ -1170,7 +1191,6 @@ RUN_DECLARE_SOURCES = \
 	$(SRC)/Replay/IGCParser.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/Thread/Mutex.cpp \
 	$(SRC)/Operation/Operation.cpp \
 	$(SRC)/Operation/ProxyOperationEnvironment.cpp \
@@ -1197,7 +1217,6 @@ RUN_VEGA_SETTINGS_SOURCES = \
 	$(SRC)/NMEA/ExternalSettings.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/Thread/Mutex.cpp \
 	$(TEST_SRC_DIR)/FakeVega.cpp \
 	$(TEST_SRC_DIR)/FakeMessage.cpp \
@@ -1215,7 +1234,6 @@ RUN_FLARM_UTILS_SOURCES = \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Mutex.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/Operation/Operation.cpp \
 	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
 	$(TEST_SRC_DIR)/FakeLogFile.cpp \
@@ -1238,7 +1256,6 @@ RUN_FLIGHT_LIST_SOURCES = \
 	$(SRC)/Replay/IGCParser.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/Thread/Mutex.cpp \
 	$(SRC)/Operation/Operation.cpp \
 	$(SRC)/Operation/ProxyOperationEnvironment.cpp \
@@ -1269,7 +1286,6 @@ RUN_DOWNLOAD_FLIGHT_SOURCES = \
 	$(SRC)/Replay/IGCParser.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/Thread/Mutex.cpp \
 	$(SRC)/Operation/Operation.cpp \
 	$(SRC)/Operation/ProxyOperationEnvironment.cpp \
@@ -1301,7 +1317,6 @@ CAI302_TOOL_SOURCES = \
 	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
 	$(SRC)/Thread/Mutex.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(TEST_SRC_DIR)/FakeLogFile.cpp \
 	$(TEST_SRC_DIR)/DebugPort.cpp \
@@ -2180,7 +2195,6 @@ $(eval $(call link-program,FeedTCP,FEED_TCP))
 FEED_TCP_SERVER_SOURCES = \
 	$(SRC)/Device/Port/Port.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Device/Port/TCPPort.cpp \
 	$(TEST_SRC_DIR)/FeedTCPServer.cpp

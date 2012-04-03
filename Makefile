@@ -114,7 +114,7 @@ include $(topdir)/build/install.mk
 
 ######## compiler flags
 
-INCLUDES += -I$(SRC) -I$(ENGINE_SRC_DIR) -I$(SRC)/Waypoint
+INCLUDES += -I$(SRC) -I$(ENGINE_SRC_DIR)
 
 ####### linker configuration
 
@@ -625,7 +625,6 @@ XCSOAR_SOURCES := \
 	$(SRC)/XML/Parser.cpp \
 	$(SRC)/XML/Writer.cpp \
 	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/Thread/SuspensibleThread.cpp \
 	$(SRC)/Thread/RecursivelySuspensibleThread.cpp \
 	$(SRC)/Thread/WorkerThread.cpp \
@@ -770,6 +769,7 @@ endif
 ifeq ($(HAVE_NET),y)
 XCSOAR_SOURCES += \
 	$(SRC)/Net/ToBuffer.cpp \
+	$(SRC)/Net/ToFile.cpp \
 	$(SRC)/Weather/NOAAGlue.cpp \
 	$(SRC)/Weather/METARParser.cpp \
 	$(SRC)/Weather/NOAAFormatter.cpp \

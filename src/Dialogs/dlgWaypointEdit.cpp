@@ -29,11 +29,11 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Terrain/RasterTerrain.hpp"
 #include "Math/FastMath.h"
-#include "DataField/Enum.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "UIGlobals.hpp"
 #include "Components.hpp"
 #include "Waypoint/Waypoint.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Compiler.h"
 #include "Sizes.h"
 

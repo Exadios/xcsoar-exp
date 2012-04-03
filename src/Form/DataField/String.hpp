@@ -21,26 +21,28 @@ Copyright_License {
 }
 */
 
-#include "DataField/String.hpp"
+#ifndef XCSOAR_DATA_FIELD_STRING_HPP
+#define XCSOAR_DATA_FIELD_STRING_HPP
 
-void
-DataFieldString::SetAsString(const TCHAR *Value)
+#include "Base.hpp"
+#include "Util/StaticString.hpp"
+
+#define EDITSTRINGSIZE 32
+
+class DataFieldString: public DataField
 {
-  if (mValue == Value)
-    return;
+  StaticString<EDITSTRINGSIZE> mValue;
 
-  mValue = Value;
-  Modified();
-}
+public:
+  DataFieldString(const TCHAR *Default,
+                  DataAccessCallback OnDataAccess) :
+    DataField(Type::STRING, false, OnDataAccess), mValue(Default) {}
 
-void
-DataFieldString::Set(const TCHAR *Value)
-{
-  mValue = Value;
-}
+  virtual void SetAsString(const TCHAR *Value);
 
-const TCHAR *
-DataFieldString::GetAsString() const
-{
-  return mValue;
-}
+  void Set(const TCHAR *Value);
+
+  virtual const TCHAR *GetAsString() const;
+};
+
+#endif

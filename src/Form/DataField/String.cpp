@@ -21,7 +21,26 @@ Copyright_License {
 }
 */
 
-#include "Thread/StoppableThread.hpp"
+#include "String.hpp"
 
-StoppableThread::StoppableThread()
-  :stop_trigger(true) {}
+void
+DataFieldString::SetAsString(const TCHAR *Value)
+{
+  if (mValue == Value)
+    return;
+
+  mValue = Value;
+  Modified();
+}
+
+void
+DataFieldString::Set(const TCHAR *Value)
+{
+  mValue = Value;
+}
+
+const TCHAR *
+DataFieldString::GetAsString() const
+{
+  return mValue;
+}

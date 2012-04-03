@@ -21,28 +21,21 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_DATA_FIELD_STRING_HPP
-#define XCSOAR_DATA_FIELD_STRING_HPP
+#include "Number.hpp"
 
-#include "DataField/Base.hpp"
-#include "Util/StaticString.hpp"
-
-#define EDITSTRINGSIZE 32
-
-class DataFieldString: public DataField
+NumberDataField::NumberDataField(Type type, bool support_combo,
+                                 const TCHAR *_edit_format,
+                                 const TCHAR *_display_format,
+                                 DataAccessCallback OnDataAccess)
+  :DataField(type, support_combo, OnDataAccess),
+   edit_format(_edit_format), display_format(_display_format)
 {
-  StaticString<EDITSTRINGSIZE> mValue;
+}
 
-public:
-  DataFieldString(const TCHAR *Default,
-                  DataAccessCallback OnDataAccess) :
-    DataField(Type::STRING, false, OnDataAccess), mValue(Default) {}
-
-  virtual void SetAsString(const TCHAR *Value);
-
-  void Set(const TCHAR *Value);
-
-  virtual const TCHAR *GetAsString() const;
-};
-
-#endif
+void
+NumberDataField::SetFormat(const TCHAR *text)
+{
+  edit_format = text;
+  display_format = text;
+  display_format += _T(" %s") ;
+}

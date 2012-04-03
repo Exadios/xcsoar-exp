@@ -21,30 +21,35 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_VEGA_DISPLAY_PARAMETERS_HPP
-#define XCSOAR_VEGA_DISPLAY_PARAMETERS_HPP
+#include "Formatter/HexColor.hpp"
+#include "Screen/Color.hpp"
+#include "OS/Args.hpp"
+#include "Util/Macros.hpp"
 
-#include "VegaParametersWidget.hpp"
-#include "Form/DataField/Enum.hpp"
-#include "Language/Language.hpp"
-#include "Compiler.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-static gcc_constexpr_data StaticEnumChoice needle_gauge_types[] = {
-  { 0, _T("None") },
-  { 1, _T("LX") },
-  { 2, _T("Analog") },
-  { 0 },
-};
+int main(int argc, char **argv)
+{
+  Args args(argc, argv, "COLOR ...");
+  tstring s = args.ExpectNextT();
+  while (true) {
+    Color color;
+    if (!ParseHexColor(s.c_str(), color)) {
+      _ftprintf(stderr, _T("Failed to parse '%s'\n"), s.c_str());
+      return EXIT_FAILURE;
+    }
 
-static gcc_constexpr_data
-VegaParametersWidget::StaticParameter display_parameters[] = {
-  { DataField::Type::ENUM, "NeedleGaugeType", N_("Needle gauge type"),
-    NULL, needle_gauge_types },
-  { DataField::Type::INTEGER, "LedBrightness", N_("LED bright"), NULL,
-    NULL, 1, 15, 1, _T("%d/15") },
+    TCHAR buffer[32];
+    FormatHexColor(buffer, ARRAY_SIZE(buffer), color);
 
-  /* sentinel */
-  { DataField::Type::BOOLEAN }
-};
+    _tprintf(_T("%s -> %s\n"), s.c_str(), buffer);
 
-#endif
+    if (args.IsEmpty())
+      break;
+
+    s = args.ExpectNextT();
+  }
+
+  return EXIT_SUCCESS;
+}

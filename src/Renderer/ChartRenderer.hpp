@@ -40,11 +40,17 @@ class Pen;
 
 class ChartRenderer
 {
-private:
   const ChartLook &look;
 
   Canvas &canvas;
   PixelRect rc;
+
+  fixed yscale;
+  fixed xscale;
+  fixed y_min, x_min;
+  fixed x_max, y_max;
+  bool unscaled_x;
+  bool unscaled_y;
 
 public:
   int PaddingLeft;
@@ -113,23 +119,20 @@ public:
   fixed getXmax() const { return x_max; }
 
   gcc_pure
-  long screenX(fixed x) const;
+  PixelScalar screenX(fixed x) const;
 
   gcc_pure
-  long screenY(fixed y) const;
+  PixelScalar screenY(fixed y) const;
 
   gcc_pure
-  long screenS(fixed s) const;
+  PixelScalar screenS(fixed s) const;
+
+  gcc_pure
+  RasterPoint ToScreen(fixed x, fixed y) const {
+    return RasterPoint{ screenX(x), screenY(y) };
+  }
 
   Canvas& get_canvas() { return canvas; }
-
-private:
-  fixed yscale;
-  fixed xscale;
-  fixed y_min, x_min;
-  fixed x_max, y_max;
-  bool unscaled_x;
-  bool unscaled_y;
 };
 
 #endif

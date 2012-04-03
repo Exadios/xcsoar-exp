@@ -21,25 +21,37 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_DATA_FIELD_NUMBER_HPP
-#define XCSOAR_DATA_FIELD_NUMBER_HPP
+#include "Net/ToFile.hpp"
+#include "Net/Session.hpp"
+#include "Net/Features.hpp"
+#include "OS/Args.hpp"
+#include "Operation/ConsoleOperationEnvironment.hpp"
 
-#include "Util/StaticString.hpp"
-#include "DataField/Base.hpp"
-#include "Compiler.h"
+#include <stdio.h>
 
-class NumberDataField : public DataField {
-protected:
-  StaticString<32> edit_format;
-  StaticString<32> display_format;
+int main(int argc, char **argv)
+{
+#ifdef HAVE_NET
+  Args args(argc, argv, "URL PATH");
+  tstring url = args.ExpectNextT();
+  tstring path = args.ExpectNextT();
+  args.ExpectEnd();
 
-public:
-  void SetFormat(const TCHAR *text);
+  char md5_digest[33];
 
-protected:
-  NumberDataField(Type type, bool support_combo,
-                  const TCHAR *edit_format, const TCHAR *display_format,
-                  DataAccessCallback OnDataAccess = NULL);
-};
+  ConsoleOperationEnvironment env;
 
+  Net::Session session;
+  if (!Net::DownloadToFile(session, url.c_str(), path.c_str(),
+                           md5_digest, env)) {
+    fprintf(stderr, "Error\n");
+    return EXIT_FAILURE;
+  }
+
+  puts(md5_digest);
+  return EXIT_SUCCESS;
+#else
+  fprintf(stderr, "Networking not available on this platform\n");
+  return EXIT_FAILURE;
 #endif
+}

@@ -61,7 +61,7 @@ GRecord::AppendStringToBuffer(const unsigned char *in)
 {
   for (int i = 0; i < 4; i++)
     // skip whitespace flag=1
-    md5[i].AppendString(in, 1);
+    md5[i].AppendString(in, true);
 }
 
 void
@@ -85,9 +85,6 @@ GRecord::Initialize(int key_id)
 {
   for (unsigned i = 0; i < BUFF_LEN; i++)
     filename[i] = 0;
-
-  for (unsigned i = 0; i < 3; i++)
-    md5[i].InitDigest();
 
   // 4 different 512 bit keys
   switch (key_id)

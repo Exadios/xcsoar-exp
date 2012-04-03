@@ -21,21 +21,42 @@ Copyright_License {
 }
 */
 
-#include "DataField/Number.hpp"
+#include "Logger/MD5.hpp"
+#include "OS/Args.hpp"
 
-NumberDataField::NumberDataField(Type type, bool support_combo,
-                                 const TCHAR *_edit_format,
-                                 const TCHAR *_display_format,
-                                 DataAccessCallback OnDataAccess)
-  :DataField(type, support_combo, OnDataAccess),
-   edit_format(_edit_format), display_format(_display_format)
-{
-}
+#include <stdio.h>
 
-void
-NumberDataField::SetFormat(const TCHAR *text)
+int
+main(int argc, char **argv)
 {
-  edit_format = text;
-  display_format = text;
-  display_format += _T(" %s") ;
+  Args args(argc, argv, "PATH");
+  const char *path = args.ExpectNext();
+  args.ExpectEnd();
+
+  FILE *file = fopen(path, "rb");
+  if (file == NULL) {
+    fprintf(stderr, "Failed to open file\n");
+    return EXIT_FAILURE;
+  }
+
+  MD5 md5;
+  md5.InitKey();
+
+  while (!feof(file)) {
+    int ch = fgetc(file);
+    if (ch == EOF)
+      break;
+
+    md5.Append((uint8_t)ch);
+  }
+
+  fclose(file);
+
+  md5.Finalize();
+
+  char digest[33];
+  md5.GetDigest(digest);
+
+  puts(digest);
+  return EXIT_SUCCESS;
 }

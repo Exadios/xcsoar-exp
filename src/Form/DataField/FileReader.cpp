@@ -21,10 +21,10 @@ Copyright_License {
 }
 */
 
-#include "DataField/FileReader.hpp"
-#include "DataField/ComboList.hpp"
+#include "FileReader.hpp"
+#include "ComboList.hpp"
 #include "LocalPath.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Compatibility/string.h"
 #include "OS/PathName.hpp"
 #include "OS/FileUtil.hpp"

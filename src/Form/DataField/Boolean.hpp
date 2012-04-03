@@ -21,44 +21,49 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_IO_BUFFERED_SOURCE_HPP
-#define XCSOAR_IO_BUFFERED_SOURCE_HPP
+#ifndef XCSOAR_DATA_FIELD_BOOLEAN_HPP
+#define XCSOAR_DATA_FIELD_BOOLEAN_HPP
 
-#include "Util/FifoBuffer.hpp"
-#include "Source.hpp"
+#include "Base.hpp"
+#include "Util/StaticString.hpp"
 
-template<class T, unsigned size>
-class BufferedSource : public Source<T> {
+class DataFieldBoolean: public DataField
+{
 private:
-  FifoBuffer<T, size> buffer;
-  long position;
+  bool mValue;
+
+  StaticString<32> true_text;
+  StaticString<32> false_text;
 
 public:
-  BufferedSource():position(0) {}
+  DataFieldBoolean(bool Default, const TCHAR *TextTrue, const TCHAR *TextFalse,
+                   DataAccessCallback OnDataAccess)
+    :DataField(Type::BOOLEAN, true, OnDataAccess),
+     mValue(Default),
+     true_text(TextTrue), false_text(TextFalse) {}
 
-protected:
-  virtual unsigned read(T *p, unsigned n) = 0;
+  void Inc();
+  void Dec();
+  virtual ComboList *CreateComboList() const;
 
-public:
-  virtual typename Source<T>::Range read() {
-    auto r = buffer.Write();
-    if (!r.IsEmpty()) {
-      unsigned n = read(r.data, r.length);
-      buffer.Append(n);
-    }
+  bool GetAsBoolean() const;
+  virtual int GetAsInteger() const;
+  virtual const TCHAR *GetAsString() const;
 
-    r = buffer.Read();
-    return typename Source<T>::Range(r.data, r.length);
+  virtual void
+  Set(int Value)
+  {
+    if (Value > 0)
+      Set(true);
+    else
+      Set(false);
   }
 
-  virtual void consume(unsigned n) {
-    buffer.Consume(n);
-    position += n;
-  }
+  void Set(bool Value);
 
-  virtual long tell() const {
-    return position;
-  }
+  void SetAsBoolean(bool Value);
+  virtual void SetAsInteger(int Value);
+  virtual void SetAsString(const TCHAR *Value);
 };
 
 #endif
