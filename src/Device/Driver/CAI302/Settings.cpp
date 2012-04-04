@@ -22,45 +22,23 @@ Copyright_License {
 */
 
 #include "Internal.hpp"
-#include "Protocol.hpp"
-#include "Device/Port/Port.hpp"
-#include "Units/System.hpp"
-
-#include <stdio.h>
+#include "PocketNav.hpp"
 
 bool
 CAI302Device::PutMacCready(fixed MacCready, OperationEnvironment &env)
 {
-  unsigned mac_cready = uround(Units::ToUserUnit(MacCready * 10, Unit::KNOTS));
-
-  char szTmp[32];
-  sprintf(szTmp, "!g,m%u\r", mac_cready);
-  port.Write(szTmp);
-
-  return true;
+  return CAI302::PutMacCready(port, MacCready, env);
 }
 
 bool
 CAI302Device::PutBugs(fixed Bugs, OperationEnvironment &env)
 {
-  unsigned bugs = uround(Bugs * 100);
-
-  char szTmp[32];
-  sprintf(szTmp, "!g,u%u\r", bugs);
-  port.Write(szTmp);
-
-  return true;
+  return CAI302::PutBugs(port, Bugs, env);
 }
 
 bool
 CAI302Device::PutBallast(fixed fraction, gcc_unused fixed overload,
                          OperationEnvironment &env)
 {
-  unsigned ballast = uround(fraction * 100);
-
-  char szTmp[32];
-  sprintf(szTmp, "!g,b%u\r", ballast);
-  port.Write(szTmp);
-
-  return true;
+  return CAI302::PutBallast(port, fraction, env);
 }

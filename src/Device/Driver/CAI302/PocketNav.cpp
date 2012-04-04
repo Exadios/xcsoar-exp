@@ -21,31 +21,38 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_DEVICE_DEVICE_HPP
-#define XCSOAR_DEVICE_DEVICE_HPP
+#include "PocketNav.hpp"
+#include "Device/Port/Port.hpp"
+#include "Units/System.hpp"
 
-#include <tchar.h>
 #include <stdio.h>
 
-struct Declaration;
-class Mutex;
-class DeviceDescriptor;
-class OperationEnvironment;
-
-void
-VarioWriteNMEA(const TCHAR *Text, OperationEnvironment &env);
-
-DeviceDescriptor *devVarioFindVega();
-
-/**
- * Returns true if at least one of the connected device is a Condor
- * flight simulator.
- */
 bool
-HaveCondorDevice();
+CAI302::PutMacCready(Port &port, fixed mc, OperationEnvironment &env)
+{
+  unsigned mac_cready = uround(Units::ToUserUnit(mc * 10, Unit::KNOTS));
 
-void devStartup();
-void devShutdown();
-void devRestart();
+  char buffer[32];
+  sprintf(buffer, "!g,m%u\r", mac_cready);
+  return port.Write(buffer);
+}
 
-#endif
+bool
+CAI302::PutBugs(Port &port, fixed bugs, OperationEnvironment &env)
+{
+  unsigned bugs2 = uround(bugs * 100);
+
+  char buffer[32];
+  sprintf(buffer, "!g,u%u\r", bugs2);
+  return port.Write(buffer);
+}
+
+bool
+CAI302::PutBallast(Port &port, fixed fraction, OperationEnvironment &env)
+{
+  unsigned ballast = uround(fraction * 100);
+
+  char buffer[32];
+  sprintf(buffer, "!g,b%u\r", ballast);
+  return port.Write(buffer);
+}

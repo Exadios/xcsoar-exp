@@ -1218,6 +1218,8 @@ RUN_VEGA_SETTINGS_SOURCES = \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Thread.cpp \
 	$(SRC)/Thread/Mutex.cpp \
+	$(SRC)/Operation/Operation.cpp \
+	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
 	$(TEST_SRC_DIR)/FakeVega.cpp \
 	$(TEST_SRC_DIR)/FakeMessage.cpp \
 	$(TEST_SRC_DIR)/FakeLogFile.cpp \
@@ -1478,6 +1480,13 @@ RUN_MAP_WINDOW_SOURCES = \
 	$(SRC)/NMEA/ThermalLocator.cpp \
 	$(SRC)/NMEA/Aircraft.cpp \
 	$(SRC)/NMEA/FlyingState.cpp \
+	$(SRC)/NMEA/Derived.cpp \
+	$(SRC)/NMEA/VarioInfo.cpp \
+	$(SRC)/NMEA/ClimbInfo.cpp \
+	$(SRC)/NMEA/ClimbHistory.cpp \
+	$(SRC)/NMEA/CirclingInfo.cpp \
+	$(SRC)/NMEA/ThermalBand.cpp \
+	$(SRC)/Engine/Navigation/TraceHistory.cpp \
 	$(SRC)/FLARM/State.cpp \
 	$(SRC)/Airspace/ProtectedAirspaceWarningManager.cpp \
 	$(SRC)/Airspace/AirspaceParser.cpp \
@@ -1521,6 +1530,7 @@ RUN_MAP_WINDOW_SOURCES = \
 	$(SRC)/Renderer/TrailRenderer.cpp \
 	$(SRC)/Renderer/WaypointIconRenderer.cpp \
 	$(SRC)/Renderer/WaypointRenderer.cpp \
+	$(SRC)/Renderer/WaypointRendererSettings.cpp \
 	$(SRC)/Renderer/WindArrowRenderer.cpp \
 	$(SRC)/Markers/Markers.cpp \
 	$(SRC)/Markers/ProtectedMarkers.cpp \
@@ -1580,10 +1590,20 @@ RUN_MAP_WINDOW_SOURCES = \
 	$(SRC)/Units/System.cpp \
 	$(SRC)/Formatter/Units.cpp \
 	$(SRC)/Formatter/UserUnits.cpp \
+	$(SRC)/Formatter/HexColor.cpp \
 	$(SRC)/Profile/Profile.cpp \
 	$(SRC)/Profile/ProfileKeys.cpp \
 	$(SRC)/Profile/Earth.cpp \
+	$(SRC)/Profile/ComputerProfile.cpp \
+	$(SRC)/Profile/TaskProfile.cpp \
+	$(SRC)/Profile/RouteProfile.cpp \
+	$(SRC)/Profile/AirspaceConfig.cpp \
+	$(SRC)/Profile/TrackingProfile.cpp \
+	$(SRC)/Profile/MapProfile.cpp \
+	$(SRC)/Profile/TerrainConfig.cpp \
+	$(SRC)/Profile/Screen.cpp \
 	$(SRC)/Geo/UTM.cpp \
+	$(SRC)/Waypoint/HomeGlue.cpp \
 	$(SRC)/Waypoint/WaypointGlue.cpp \
 	$(SRC)/Waypoint/WaypointReader.cpp \
 	$(SRC)/Waypoint/WaypointReaderBase.cpp \

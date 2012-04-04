@@ -21,31 +21,18 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_DEVICE_DEVICE_HPP
-#define XCSOAR_DEVICE_DEVICE_HPP
+#ifndef XCSOAR_CAI302_POCKET_NAV_HPP
+#define XCSOAR_CAI302_POCKET_NAV_HPP
 
-#include <tchar.h>
-#include <stdio.h>
+#include "Math/fixed.hpp"
 
-struct Declaration;
-class Mutex;
-class DeviceDescriptor;
+class Port;
 class OperationEnvironment;
 
-void
-VarioWriteNMEA(const TCHAR *Text, OperationEnvironment &env);
-
-DeviceDescriptor *devVarioFindVega();
-
-/**
- * Returns true if at least one of the connected device is a Condor
- * flight simulator.
- */
-bool
-HaveCondorDevice();
-
-void devStartup();
-void devShutdown();
-void devRestart();
+namespace CAI302 {
+  bool PutMacCready(Port &port, fixed mc, OperationEnvironment &env);
+  bool PutBugs(Port &port, fixed bugs, OperationEnvironment &env);
+  bool PutBallast(Port &port, fixed fraction, OperationEnvironment &env);
+}
 
 #endif

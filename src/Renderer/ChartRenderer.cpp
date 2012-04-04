@@ -59,7 +59,7 @@ ChartRenderer::ChartRenderer(const ChartLook &_look, Canvas &the_canvas,
 void
 ChartRenderer::ScaleYFromData(const LeastSquares &lsdata)
 {
-  if (!lsdata.sum_n)
+  if (lsdata.IsEmpty())
     return;
 
   if (unscaled_y) {
@@ -91,7 +91,7 @@ ChartRenderer::ScaleYFromData(const LeastSquares &lsdata)
 void
 ChartRenderer::ScaleXFromData(const LeastSquares &lsdata)
 {
-  if (!lsdata.sum_n)
+  if (lsdata.IsEmpty())
     return;
 
   if (unscaled_x) {
@@ -172,15 +172,15 @@ ChartRenderer::DrawLabel(const TCHAR *text, const fixed xv, const fixed yv)
 void
 ChartRenderer::DrawNoData()
 {
-  const TCHAR *text = _("No data");
-
   canvas.Select(*look.label_font);
+  canvas.SetBackgroundTransparent();
+
+  const TCHAR *text = _("No data");
   PixelSize tsize = canvas.CalcTextSize(text);
 
   PixelScalar x = (rc.left + rc.right - tsize.cx) / 2;
   PixelScalar y = (rc.top + rc.bottom - tsize.cy) / 2;
 
-  canvas.SetBackgroundTransparent();
   canvas.text(x, y, text);
 }
 
@@ -188,12 +188,12 @@ void
 ChartRenderer::DrawXLabel(const TCHAR *text)
 {
   canvas.Select(*look.axis_label_font);
+  canvas.SetBackgroundTransparent();
 
   PixelSize tsize = canvas.CalcTextSize(text);
   PixelScalar x = rc.right - tsize.cx - Layout::Scale(3);
   PixelScalar y = rc.bottom - tsize.cy;
 
-  canvas.SetBackgroundTransparent();
   canvas.text(x, y, text);
 }
 
@@ -212,12 +212,12 @@ void
 ChartRenderer::DrawYLabel(const TCHAR *text)
 {
   canvas.Select(*look.axis_label_font);
+  canvas.SetBackgroundTransparent();
 
   PixelSize tsize = canvas.CalcTextSize(text);
   PixelScalar x = max(PixelScalar(2), PixelScalar(rc.left - tsize.cx));
   PixelScalar y = rc.top;
 
-  canvas.SetBackgroundTransparent();
   canvas.text(x, y, text);
 }
 
@@ -338,13 +338,13 @@ ChartRenderer::DrawBarChart(const LeastSquares &lsdata)
   canvas.Select(green_brush);
   canvas.SelectNullPen();
 
-  for (int i = 0; i < lsdata.sum_n; i++) {
+  for (unsigned i = 0, n = lsdata.slots.size(); i != n; i++) {
     PixelScalar xmin((fixed(i) + fixed(1.2)) * xscale
                      + fixed(rc.left + PaddingLeft));
     PixelScalar ymin((y_max - y_min) * yscale + fixed(rc.top));
     PixelScalar xmax((fixed(i) + fixed(1.8)) * xscale
                      + fixed(rc.left + PaddingLeft));
-    PixelScalar ymax((y_max - lsdata.ystore[i]) * yscale + fixed(rc.top));
+    PixelScalar ymax((y_max - lsdata.slots[i].y) * yscale + fixed(rc.top));
     canvas.Rectangle(xmin, ymin, xmax, ymax);
   }
 }
@@ -352,32 +352,39 @@ ChartRenderer::DrawBarChart(const LeastSquares &lsdata)
 void
 ChartRenderer::DrawFilledLineGraph(const LeastSquares &lsdata)
 {
-  RasterPoint line[4];
+  assert(lsdata.slots.size() >= 2);
 
-  for (int i = 0; i < lsdata.sum_n - 1; i++) {
-    line[0] = ToScreen(lsdata.xstore[i], lsdata.ystore[i]);
-    line[1] = ToScreen(lsdata.xstore[i + 1], lsdata.ystore[i + 1]);
-    line[2].x = line[1].x;
-    line[2].y = rc.bottom - PaddingBottom;
-    line[3].x = line[0].x;
-    line[3].y = rc.bottom - PaddingBottom;
-    canvas.DrawTriangleFan(line, 4);
-  }
+  const unsigned n = lsdata.slots.size() + 2;
+  RasterPoint *points = point_buffer.get(n);
+
+  RasterPoint *p = points;
+  for (auto i = lsdata.slots.begin(), end = lsdata.slots.end();
+       i != end; ++i)
+    *p++ = ToScreen(i->x, i->y);
+  *p++ = RasterPoint{ p[-1].x, PixelScalar(rc.bottom - PaddingBottom) };
+  *p++ = RasterPoint{ points[0].x, PixelScalar(rc.bottom - PaddingBottom) };
+
+  assert(p == points + n);
+
+  canvas.polygon(points, n);
 }
 
 void
 ChartRenderer::DrawLineGraph(const LeastSquares &lsdata, const Pen &pen)
 {
-  RasterPoint line[2];
+  assert(lsdata.slots.size() >= 2);
 
-  for (int i = 0; i < lsdata.sum_n - 1; i++) {
-    line[0] = ToScreen(lsdata.xstore[i], lsdata.ystore[i]);
-    line[1] = ToScreen(lsdata.xstore[i + 1], lsdata.ystore[i + 1]);
+  const unsigned n = lsdata.slots.size();
+  RasterPoint *points = point_buffer.get(n);
 
-    // STYLE_DASHGREEN
-    // STYLE_MEDIUMBLACK
-    StyleLine(line[0], line[1], pen);
-  }
+  RasterPoint *p = points;
+  for (auto i = lsdata.slots.begin(), end = lsdata.slots.end();
+       i != end; ++i)
+    *p++ = ToScreen(i->x, i->y);
+  assert(p == points + n);
+
+  canvas.Select(pen);
+  canvas.DrawPolyline(points, n);
 }
 
 void
@@ -412,7 +419,9 @@ ChartRenderer::DrawXGrid(fixed tic_step, const fixed zero, const Pen &pen,
   if (!positive(tic_step))
     return;
 
+  canvas.Select(pen);
   canvas.Select(*look.axis_value_font);
+  canvas.SetBackgroundTransparent();
 
   RasterPoint line[2];
 
@@ -435,13 +444,12 @@ ChartRenderer::DrawXGrid(fixed tic_step, const fixed zero, const Pen &pen,
 
     // STYLE_THINDASHPAPER
     if ((xval < x_max) && (xmin >= rc.left + PaddingLeft) && (xmin <= rc.right)) {
-      StyleLine(line[0], line[1], pen);
+      canvas.line(line[0], line[1]);
 
       if (draw_units && xmin >= next_text) {
         TCHAR unit_text[MAX_PATH];
         FormatTicText(unit_text, xval * unit_step / tic_step, unit_step);
 
-        canvas.SetBackgroundTransparent();
         canvas.text(xmin, rc.bottom - Layout::Scale(17), unit_text);
 
         next_text = xmin + canvas.CalcTextSize(unit_text).cx + Layout::FastScale(2);
@@ -456,13 +464,12 @@ ChartRenderer::DrawXGrid(fixed tic_step, const fixed zero, const Pen &pen,
     // STYLE_THINDASHPAPER
 
     if ((xval > x_min) && (xmin >= rc.left + PaddingLeft) && (xmin <= rc.right)) {
-      StyleLine(line[0], line[1], pen);
+      canvas.line(line[0], line[1]);
 
       if (draw_units) {
         TCHAR unit_text[MAX_PATH];
         FormatTicText(unit_text, xval * unit_step / tic_step, unit_step);
 
-        canvas.SetBackgroundTransparent();
         canvas.text(xmin, rc.bottom - Layout::Scale(17), unit_text);
       }
     }
@@ -484,7 +491,9 @@ ChartRenderer::DrawYGrid(fixed tic_step, const fixed zero, const Pen &pen,
   if (!positive(tic_step))
     return;
 
+  canvas.Select(pen);
   canvas.Select(*look.axis_value_font);
+  canvas.SetBackgroundTransparent();
 
   RasterPoint line[2];
 
@@ -503,13 +512,12 @@ ChartRenderer::DrawYGrid(fixed tic_step, const fixed zero, const Pen &pen,
 
     // STYLE_THINDASHPAPER
     if ((yval < y_max) && (ymin >= rc.top) && (ymin <= rc.bottom - PaddingBottom)) {
-      StyleLine(line[0], line[1], pen);
+      canvas.line(line[0], line[1]);
 
       if (draw_units) {
         TCHAR unit_text[MAX_PATH];
         FormatTicText(unit_text, yval * unit_step / tic_step, unit_step);
 
-        canvas.SetBackgroundTransparent();
         canvas.text(rc.left + Layout::Scale(8), ymin, unit_text);
       }
     }
@@ -521,13 +529,12 @@ ChartRenderer::DrawYGrid(fixed tic_step, const fixed zero, const Pen &pen,
 
     // STYLE_THINDASHPAPER
     if ((yval > y_min) && (ymin >= rc.top) && (ymin <= rc.bottom - PaddingBottom)) {
-      StyleLine(line[0], line[1], pen);
+      canvas.line(line[0], line[1]);
 
       if (draw_units) {
         TCHAR unit_text[MAX_PATH];
         FormatTicText(unit_text, yval * unit_step / tic_step, unit_step);
 
-        canvas.SetBackgroundTransparent();
         canvas.text(rc.left + Layout::Scale(8), ymin, unit_text);
       }
     }
@@ -596,6 +603,8 @@ void
 ChartRenderer::DrawArrow(const fixed x, const fixed y, const fixed mag,
                          const Angle angle, ChartLook::Style Style)
 {
+  canvas.Select(look.GetPen(Style));
+
   RasterPoint wv[2];
 
   wv[0] = ToScreen(x, y);
@@ -606,17 +615,17 @@ ChartRenderer::DrawArrow(const fixed x, const fixed y, const fixed mag,
   p = r.Rotate(mag, fixed_zero);
   wv[1].x = wv[0].x + (int)p.first;
   wv[1].y = wv[0].y + (int)p.second;
-  StyleLine(wv[0], wv[1], Style);
+  canvas.line(wv[0], wv[1]);
 
   p = r.Rotate(mag - fixed(5), fixed(-3));
   wv[1].x = wv[0].x + (int)p.first;
   wv[1].y = wv[0].y + (int)p.second;
-  StyleLine(wv[0], wv[1], Style);
+  canvas.line(wv[0], wv[1]);
 
   p = r.Rotate(mag - fixed(5), fixed(3));
   wv[1].x = wv[0].x + (int)p.first;
   wv[1].y = wv[0].y + (int)p.second;
-  StyleLine(wv[0], wv[1], Style);
+  canvas.line(wv[0], wv[1]);
 }
 
 void 
@@ -626,7 +635,7 @@ ChartRenderer::DrawFilledY(const std::vector<std::pair<fixed, fixed>> &vals,
   if (vals.size()<2)
     return;
   const unsigned fsize = vals.size()+2;
-  RasterPoint line[fsize];
+  RasterPoint *line = point_buffer.get(fsize);
 
   for (unsigned i = 0; i < vals.size(); ++i)
     line[i + 2] = ToScreen(vals[i].first, vals[i].second);

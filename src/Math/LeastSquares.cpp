@@ -174,29 +174,22 @@ void
 LeastSquares::LeastSquaresAdd(fixed x, fixed y, fixed weight)
 {
   // Update maximum/minimum values
-  if ((y > y_max) || (!sum_n)) {
+  if (IsEmpty() || y > y_max)
     y_max = y;
-  }
-  if ((y < y_min) || (!sum_n)) {
-    y_min = y;
-  }
 
-  if ((x > x_max) || (!sum_n)) {
+  if (IsEmpty() || y < y_min)
+    y_min = y;
+
+  if (IsEmpty() || x > x_max)
     x_max = x;
-  }
-  if ((x < x_min) || (!sum_n)) {
+
+  if (IsEmpty() || x < x_min)
     x_min = x;
-  }
 
   // Add point
   // TODO code: really should have a circular buffer here
-  if (sum_n < MAX_STATISTICS) {
-    xstore[sum_n] = x;
-    ystore[sum_n] = y;
-#ifdef LEASTSQS_WEIGHT_STORE
-    weightstore[sum_n] = weight;
-#endif
-  }
+  if (!slots.full())
+    slots.append() = Slot(x, y, weight);
 
   ++sum_n;
 

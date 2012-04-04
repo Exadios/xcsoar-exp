@@ -26,21 +26,9 @@ Copyright_License {
 
 #include "Compiler.h"
 
-#include <tchar.h>
-
-static inline bool
-IsWhitespaceOrNull(const TCHAR ch)
-{
-  return (unsigned)ch <= 0x20;
-}
-
-static inline bool
-IsWhitespaceNotNull(const TCHAR ch)
-{
-  return ch > 0 && ch <= 0x20;
-}
-
 #ifdef _UNICODE
+#include <tchar.h>
+#endif
 
 static inline bool
 IsWhitespaceOrNull(const char ch)
@@ -54,6 +42,20 @@ IsWhitespaceNotNull(const char ch)
   return ch > 0 && ch <= 0x20;
 }
 
+#ifdef _UNICODE
+
+static inline bool
+IsWhitespaceOrNull(const TCHAR ch)
+{
+  return (unsigned)ch <= 0x20;
+}
+
+static inline bool
+IsWhitespaceNotNull(const TCHAR ch)
+{
+  return ch > 0 && ch <= 0x20;
+}
+
 #endif /* _UNICODE */
 
 gcc_constexpr_function
@@ -63,13 +65,71 @@ IsDigitASCII(char ch)
   return ch >= '0' && ch <= '9';
 }
 
+gcc_constexpr_function
+static inline bool
+IsUpperAlphaASCII(char ch)
+{
+  return ch >= 'A' && ch <= 'Z';
+}
+
+gcc_constexpr_function
+static inline bool
+IsLowerAlphaASCII(char ch)
+{
+  return ch >= 'a' && ch <= 'z';
+}
+
+gcc_constexpr_function
+static inline bool
+IsAlphaASCII(char ch)
+{
+  return IsUpperAlphaASCII(ch) || IsLowerAlphaASCII(ch);
+}
+
+gcc_constexpr_function
+static inline bool
+IsAlphaNumericASCII(char ch)
+{
+  return IsAlphaASCII(ch) || IsDigitASCII(ch);
+}
+
 #ifdef _UNICODE
+
 gcc_constexpr_function
 static inline bool
 IsDigitASCII(TCHAR ch)
 {
   return ch >= _T('0') && ch <= _T('9');
 }
+
+gcc_constexpr_function
+static inline bool
+IsUpperAlphaASCII(TCHAR ch)
+{
+  return ch >= _T('A') && ch <= _T('Z');
+}
+
+gcc_constexpr_function
+static inline bool
+IsLowerAlphaASCII(TCHAR ch)
+{
+  return ch >= _T('a') && ch <= _T('z');
+}
+
+gcc_constexpr_function
+static inline bool
+IsAlphaASCII(TCHAR ch)
+{
+  return IsUpperAlphaASCII(ch) || IsLowerAlphaASCII(ch);
+}
+
+gcc_constexpr_function
+static inline bool
+IsAlphaNumericASCII(TCHAR ch)
+{
+  return IsAlphaASCII(ch) || IsDigitASCII(ch);
+}
+
 #endif
 
 /**
