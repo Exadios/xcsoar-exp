@@ -342,10 +342,22 @@ gcc_visibility_default
 JNIEXPORT void JNICALL
 Java_org_xcsoar_NonGPSSensors_setBarometricPressure(
     JNIEnv* env, jobject obj, jfloat pressure) {
-  const unsigned int index = getDeviceIndex(env, obj);
-  ScopeLock protect(device_blackboard->mutex);
-  NMEAInfo &basic = device_blackboard->SetRealState(index);
-  basic.ProvideStaticPressure(
-      AtmosphericPressure::HectoPascal(fixed(pressure)));
-  device_blackboard->ScheduleMerge();
+  static int n = 0;
+  static jfloat tp = 0.0;
+  if (n < 4)
+    {
+    tp += pressure;
+    n++;
+    }
+  else
+    {
+    const unsigned int index = getDeviceIndex(env, obj);
+    ScopeLock protect(device_blackboard->mutex);
+    NMEAInfo &basic = device_blackboard->SetRealState(index);
+    basic.ProvideStaticPressure(
+        AtmosphericPressure::HectoPascal(fixed(tp / n)));
+    device_blackboard->ScheduleMerge();
+    n = 1;
+    tp = pressure;
+    }
 }
