@@ -391,17 +391,9 @@ class NativeView extends SurfaceView
    */
   private boolean loadResourceTexture(String name, int[] result) {
     /* find the resource */
-    int resourceId = resources.getIdentifier(name, "drawable", "org.xcsoar");
-    if (resourceId == 0) {
-      resourceId = resources.getIdentifier(name, "drawable",
-                                           "org.xcsoar.testing");
-      if (resourceId == 0) {
-        resourceId = resources.getIdentifier(name, "drawable",
-                                             "org.xcsoar.nohorizon");
-        if (resourceId == 0)
-          return false;
-      }
-    }
+    int resourceId = resources.getIdentifier(name, "drawable", "com.exadios.xcsoar");
+    if (resourceId == 0)
+      return false;
 
     /* load the Bitmap from the resource */
     BitmapFactory.Options opts = new BitmapFactory.Options();
