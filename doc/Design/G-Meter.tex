@@ -1,0 +1,145 @@
+% This file was converted to LaTeX by Writer2LaTeX ver. 0.5
+% see http://www.hj-gym.dk/~hj/writer2latex for more info
+\documentclass[a4paper]{report}
+\usepackage[ascii]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath,amssymb,amsfonts,textcomp}
+\usepackage{color}
+\usepackage{array}
+\usepackage{supertabular}
+\usepackage{hhline}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, filecolor=blue, pagecolor=blue, urlcolor=blue, pdftitle="Weather Radar Theory", pdfauthor=pfb, pdfsubject=, pdfkeywords=}
+\usepackage[pdftex]{graphicx}
+% Text styles
+\newcommand\textstyleEmphasis[1]{\textit{#1}}
+% Outline numbering
+\setcounter{secnumdepth}{4}
+\renewcommand\thesection{\arabic{chapter}.\arabic{section}}
+\renewcommand\thesubsection{\arabic{chapter}.\arabic{section}.\arabic{subsection}}
+\renewcommand\thesubsubsection{\arabic{chapter}.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}}
+\renewcommand\theparagraph{\arabic{chapter}.\arabic{section}.\arabic{subsection}.\arabic{subsubsection}.\arabic{paragraph}}
+\makeatletter
+\newcommand\arraybslash{\let\\\@arraycr}
+\makeatother
+% Figure numbering
+\renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
+\newcommand{\Section}[1]{\section{#1} \setcounter{figure}{1}}
+% Footnote rule
+\setlength{\skip\footins}{1.2mm}
+\renewcommand\footnoterule{\vspace*{-0.18mm}\setlength\leftskip{0pt}\setlength\rightskip{0pt plus 1fil}\noindent\textcolor{black}{\rule{0.25\columnwidth}{0.18mm}}\vspace*{1.02mm}}
+% Pages styles
+\makeatletter
+\newcommand\ps@NewChapter{
+  \renewcommand\@oddhead{}
+  \renewcommand\@evenhead{}
+  \renewcommand\@oddfoot{}
+  \renewcommand\@evenfoot{}
+  \renewcommand\thepage{\arabic{page}}
+}
+\newcommand\ps@Standard{
+  \renewcommand\@oddhead{}
+  \renewcommand\@evenhead{}
+  \renewcommand\@oddfoot{}
+  \renewcommand\@evenfoot{}
+  \renewcommand\thepage{\arabic{page}}
+}
+\newcommand\ps@FirstPage{
+  \renewcommand\@oddhead{}
+  \renewcommand\@evenhead{}
+  \renewcommand\@oddfoot{}
+  \renewcommand\@evenfoot{}
+  \renewcommand\thepage{\arabic{page}}
+}
+\newcommand\ps@Contents{
+  \renewcommand\@oddhead{}
+  \renewcommand\@evenhead{}
+  \renewcommand\@oddfoot{}
+  \renewcommand\@evenfoot{}
+  \renewcommand\thepage{\roman{page}}
+}
+\makeatother
+\pagestyle{plain}
+\setlength\tabcolsep{1mm}
+\renewcommand\arraystretch{1.3}
+\newcounter{Text}[section]
+\numberwithin{equation}{chapter}
+\renewcommand\theText{\thesection.\arabic{Text}}
+\pagenumbering{arabic}
+\renewcommand{\thepage}{\arabic{chapter}.\arabic{page}}
+
+\title{G Meter Variometer Design}
+
+\begin{document}
+\maketitle
+\date{January 2011}
+
+\clearpage\setcounter{page}{1}
+\thispagestyle{Contents}
+
+\tableofcontents
+
+\clearpage\setcounter{page}{1}
+\thispagestyle{Contents}
+
+\listoffigures
+
+\appendix
+
+\clearpage\setcounter{page}{1}
+\chapter[Kalman Filter]{Kalman Filter}
+
+\section[The Discrete Kalman Filter Algorithm]{The Discrete Kalman Filter Algorithm}
+
+The Kalman Filter Algorithm is implemented as a two step process. The first step is to generate an innovation at time $t_{k-1}$ by using the state of the system at time $t_{k - 1}$ and the model of the plant to produce the state at $t_k$. The second step is to introduce corrections to the innovation at time $t_k$ from observations made at $t_k$.
+
+\bigskip
+
+In the following the subscript notation $k|i$ donates the state at $t_k$ using knowledge from $t_i$. Further
+
+$\hat{x}$= System state estimate
+
+$u$ = Any control input that may be applied directly to the $\hat{x}$
+
+$A$ = The Matrix with maps $\hat{x}_{k - 1|k - 1}$ to $\hat{x}_{k|k - 1}$
+
+$B$ = The matrix which maps $u$ to $\hat{x}$
+
+$H$ = The matrix which maps $\hat{x}_{k|k - 1}$ to $z_{k|k}$
+
+$P$ = Process covariance
+
+$K$ = Kalman gain
+
+$z$ = Observation
+
+$Q$ = Process noise
+
+$R$ = Observation noise
+
+\subsubsection[Innovation]{Innovation}
+
+\begin{equation}
+\hat{x}_{k|{k-1}} = A\hat{x}_{{k-1}|{k-1}} + Bu_k
+\end{equation}
+
+\begin{equation}
+P_{k|{k-1}} = AP_{{k-1}|{k-1}}A^T + Q
+\end{equation}
+
+\subsubsection[Observation]{Observation}
+
+\begin{equation}
+K_{k|k} = P_{k|{k-1}}H^T \left( HP_{k|{k-1}}H^T + R \right) ^{-1}
+\end{equation}
+
+\begin{equation}
+\hat{x}_{k|k} = \hat{x}_{k|{k-1}} + K_{k|k} \left( z_{k|k} - H\hat{x}_{k|{k-1}} \right)
+\end{equation}
+
+\begin{equation}
+P_{k|k} = \left( I - K_{k|k}H \right) P_{k|{k-1}}
+\end{equation}
+
+\end{document}

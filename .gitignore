@@ -33,3 +33,10 @@ test/data/private
 .DS_Store
 massif.out.*
 build/local-config.mk
+*.aux
+*.lof
+*.out
+*.pdf
+*.toc
+*.zip
+*.swp
