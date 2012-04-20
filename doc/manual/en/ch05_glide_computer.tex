@@ -57,7 +57,7 @@ be displayed in any flight mode.  This is useful if the pilot has
 information he wants to be able to view no matter what mode the
 computer is in.  This is accessed from the menu
 \begin{quote}
-\bmenu{Info}\blink\bmenu{Info}\blink\bmenu{Aux Info On}
+\bmenu{Info ..}\blink\bmenu{Aux Info On}
 \end{quote}
 
 which toggles between the normal mode-specific InfoBoxes and
@@ -80,15 +80,15 @@ The MacCready setting may be adjusted several ways:
 \begin{itemize}
 \item From the menu items
 \begin{quote}
-\bmenu{Config}\blink\bmenu{MC $+$} 
-
-\bmenu{Config}\blink\bmenu{MC $-$}
+\bmenu{Config}\blink\bmenu{MC $+$/$-$}
 \end{quote}
+
 \item For touchscreen/mouse devices, select the MacCready InfoBox field, then
   use the up and down arrow keys.
 \item When connected to a supported intelligent variometer, adjusting
   the MacCready setting on the variometer will change the setting
-  in XCSoar.
+  in XCSoar according to the devices synchronisation configuration (see 
+  section~\ref{conf:comdevices}).
 \end{itemize}
 In addition, an automatic MacCready mode is available as described in
 Section~\ref{sec:auto-maccready}.
@@ -131,7 +131,7 @@ appropriately adjusted for the increased cockpit weight.
 The current glide polar and all up weight can be reviewed in the
 analysis dialog as described later in this chapter.
 
-\section{Flight setup dialog}\label{sec:basic-sett-dial}
+\section{Flight setup dialog}\label{sec:flight-setup}
 Use the flight settings dialog to modify the all up weight of the glider both
 before and during flight, as well as to set the QNH pressure.  
 
@@ -197,7 +197,7 @@ Depending on the configuration, speed command chevrons can be
 displayed on the right side of the map area, or on the variometer
 gauge.
 
-\section{Speed to fly}
+\section{Speed to fly}\label{sec:stf}
 
 XCSoar continuously calculates two types of speed to fly:
 \begin{description}

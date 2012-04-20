@@ -71,6 +71,13 @@ struct DeviceConfig {
      * Listen on a TCP port.
      */
     TCP_LISTENER,
+
+    /**
+     * A master pseudo-terminal.  The "path" attribute specifies the
+     * path of a symlink pointing to the slave pseudo-terminal.  Only
+     * for debugging.
+     */
+    PTY,
   };
 
   /**
@@ -206,7 +213,7 @@ struct DeviceConfig {
   static bool UsesDriver(PortType port_type) {
     return port_type == PortType::SERIAL || port_type == PortType::RFCOMM ||
       port_type == PortType::AUTO || port_type == PortType::TCP_LISTENER ||
-      port_type == PortType::IOIOUART;
+      port_type == PortType::IOIOUART || port_type == PortType::PTY;
   }
 
   bool UsesDriver() const {
@@ -246,7 +253,7 @@ struct DeviceConfig {
     return IsDriver(_T("Vega"));
   }
 
-  bool IsAndroidInternalGPS() {
+  bool IsAndroidInternalGPS() const {
 #ifdef ANDROID
     return port_type == PortType::INTERNAL;
 #else

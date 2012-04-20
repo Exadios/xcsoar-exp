@@ -75,6 +75,34 @@ Window::CreateMessageWindow()
 }
 
 void
+Window::SetEnabled(bool enabled)
+{
+  AssertThread();
+
+  const bool was_focused = !enabled && has_focus();
+
+  ::EnableWindow(hWnd, enabled);
+
+  if (was_focused && ::GetFocus() == NULL) {
+    /* The window lost its keyboard focus because it got disabled; now
+       the focus is in limbo, and can only be recovered by clicking on
+       another control, which is impossible for Altair users (no touch
+       screen).  This is a major WIN32 API misdesign that is
+       documtented here:
+       https://blogs.msdn.com/b/oldnewthing/archive/2004/08/04/208005.aspx */
+
+    ContainerWindow *root = GetRootOwner();
+    if (root != NULL)
+      /* to work around this problem, we pass focus to the main
+         window, which will bounce it to the next dialog control; this
+         kludge is needed because this Window doesn't know the dialog
+         code, and trusts that the main window will do the right
+         thing */
+      root->SetFocus();
+  }
+}
+
+void
 Window::created(HWND _hWnd)
 {
   assert(hWnd == NULL);
@@ -96,20 +124,6 @@ LRESULT
 Window::OnMessage(HWND _hWnd, UINT message,
                        WPARAM wParam, LPARAM lParam)
 {
-  if (IsEmbedded() && !IsAltair()) {
-    /* some older iPaqs such as the H3900 send only WM_KEYUP for
-       VK_APP*, but never VK_KEYDOWN; the hx4700 has an additional set
-       of undocumented key codes (0xca..0xcd) for the APP keys, but
-       sends WM_KEYUP/VK_APP* additionally; the following rules
-       hopefully catch all of these obscurities */
-    if (message == WM_KEYUP && wParam >= 0x80)
-      /* convert to WM_KEYDOWN to make all handlers catch it */
-      message = WM_KEYDOWN;
-    else if (message == WM_KEYDOWN && wParam >= 0x80)
-      /* ignore the real WM_KEYDOWN, just in case it really happens */
-      return 0;
-  }
-
   switch (message) {
   case WM_CREATE:
     OnCreate();

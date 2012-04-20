@@ -324,7 +324,7 @@ First select the airspace class you wish to change. Then select the colour and
 pattern you wish the selected airspace class to be drawn in.
 
 \subsection*{Filters}
-The filter function is described in Section~\ref{sec:airsp-filt-dial}.
+The filter function is described in Section~\ref{sec:airspace-filter}.
 
 
 %%%%%%%%%%%%%%%%%%
@@ -458,7 +458,7 @@ glide reach is drawn as a line resp.\ a shade on the map area.
 
 
 %%%%%%%%%%%%%%%%%%
-\section{Gauges / FLARM, Other} \label{sec:vario-gauge}
+\section{Gauges / FLARM, Other} \label{sec:flarmandother-gauge}
 
 \begin{description}
 \item[FLARM radar]  \label{conf:flarmdisplay} This enables the display of the FLARM 
@@ -481,7 +481,6 @@ In all FLARM environment, the colour of the target indicates the threat level.
 
 This page bundles all details to the vario-gauge and is entirely classified as expert setup.
 
-\label{conf:variogauge}
 \item[Speed arrows*]  \label{conf:variogauge} Whether to show speed command 
   arrows on the vario gauge.
   When shown, in cruise mode, arrows point up to command slow down; arrows point down 
@@ -652,7 +651,7 @@ and your custom InfoBox sets.
 
 
 %%%%%%%%%%
-\section{InfoBox Sets (or InfoBox Modes)}\label{sec:infobox_sets}
+\section{Look / InfoBox Modes (or InfoBox Sets)}\label{sec:infobox_sets}
 
 This page shows the available InfoBox sets.
 
@@ -790,10 +789,15 @@ for every glide performance relevant computation of XCSoar.
 
 
 %%%%%%%%%%%%%%%%%%
-\section{Setup / Logger}
+\section{Setup / Logger} \label{conf:logger}
 
 This page allows you to set the pilot and aircraft details used for
-annotating XCSoar's IGC logger. 
+annotating XCSoar's IGC logger.  
+The internal software logger has adjustable time steps, separate for
+cruise and circling modes.  
+Typically the circling time step is set to a smaller value
+than cruise in order to give good quality flight logs for replay
+purposes.
 
 \begin{description}
 \item[Time step cruise*]  This is the time interval between logged points when 
@@ -830,15 +834,15 @@ Separate selections are available for all items. Once you changed a given preset
 will be referenced as `Custom' set and will also be stored in your profile.
 
 \begin{description}
-\item[Aircraft/Wind speed*]  Unit used for airspeed and ground speed. A separate
-  unit is available for task speeds.
-\item[Distance*]  Unit used for horizontal distances e.g. range to waypoint, distance to go.
-\item[Lift*]  Unit used for vertical speeds (variometer).
-\item[Altitude*] Unit used for altitude and heights.
-\item[Temperature*]  Units used for temperature.
-\item[Task speed*] unit used for task speed.
-\item[Pressure*]  Unit used for pressures.
-\item[Lat./Lon.*]  Unit, or better format used for latitude and longitude.
+\item[Aircraft/Wind speed*]  Units used for airspeed and ground speed: mph, knots, km/h.
+  A separate unit is available for task speeds.
+\item[Distance*]  Units used for horizontal distances e.g. range to waypoint, distance to go: sm, nm, km.
+\item[Lift*]  Units used for vertical speeds (variometer): knots, m/s, ft/min.
+\item[Altitude*] Units used for altitude and heights: foot/meter.
+\item[Temperature*]  Units used for temperature: \degree C, \degree F.
+\item[Task speed*] Units used for task speed: mph, knots, km/h.
+\item[Pressure*]  Units used for pressures: hPa, mb, inHg.
+\item[Lat./Lon.*]  Units, or better formats used for latitude and longitude. Supported are several `degree/minutes/seconds' formats, respectively their decimal fraction, and the  UTM WGS 84 format.
 \end{description}
 
 

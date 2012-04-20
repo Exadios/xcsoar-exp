@@ -19,6 +19,7 @@ endif
 
 CAI302_SOURCES = \
 	$(DRIVER_SRC_DIR)/CAI302/Protocol.cpp \
+	$(DRIVER_SRC_DIR)/CAI302/PocketNav.cpp \
 	$(DRIVER_SRC_DIR)/CAI302/Mode.cpp \
 	$(DRIVER_SRC_DIR)/CAI302/Parser.cpp \
 	$(DRIVER_SRC_DIR)/CAI302/Settings.cpp \
@@ -53,8 +54,10 @@ LX_SOURCES = \
 FLARM_SOURCES = \
 	$(DRIVER_SRC_DIR)/FLARM/Device.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/Register.cpp \
+	$(DRIVER_SRC_DIR)/FLARM/Mode.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/Declare.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/Logger.cpp \
+	$(DRIVER_SRC_DIR)/FLARM/CRC16.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/BinaryProtocol.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/TextProtocol.cpp
 

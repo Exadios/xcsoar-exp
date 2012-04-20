@@ -666,6 +666,7 @@ DEBUG_PROGRAM_NAMES = \
 	RunOLCAnalysis \
 	BenchmarkProjection \
 	DumpTextFile DumpTextZip WriteTextFile RunTextWriter \
+	DumpHexColor \
 	RunXMLParser \
 	ReadMO \
 	ReadProfileString ReadProfileInt \
@@ -696,6 +697,8 @@ DEBUG_PROGRAM_NAMES = \
 	RunAnalysis \
 	RunAirspaceWarningDialog \
 	TestNotify \
+	FeedNMEA \
+	FeedVega EmulateDevice \
 	DebugDisplay \
 	RunVegaSettings \
 	RunFlarmUtils \
@@ -704,16 +707,13 @@ DEBUG_PROGRAM_NAMES = \
 	IGC2NMEA
 
 ifeq ($(TARGET),UNIX)
-DEBUG_PROGRAM_NAMES += FeedNMEA \
-	FeedVega \
+DEBUG_PROGRAM_NAMES += \
 	FeedTCP \
-	FeedTCPServer \
 	FeedFlyNetData
 endif
 
 ifeq ($(TARGET),PC)
 DEBUG_PROGRAM_NAMES += FeedTCP \
-  FeedTCPServer \
   FeedFlyNetData
 endif
 
@@ -814,6 +814,12 @@ DUMP_TEXT_ZIP_SOURCES = \
 	$(TEST_SRC_DIR)/DumpTextZip.cpp
 DUMP_TEXT_ZIP_DEPENDS = IO ZZIP
 $(eval $(call link-program,DumpTextZip,DUMP_TEXT_ZIP))
+
+DUMP_HEX_COLOR_SOURCES = \
+	$(SRC)/Formatter/HexColor.cpp \
+	$(TEST_SRC_DIR)/DumpHexColor.cpp
+DUMP_HEX_COLOR_DEPENDS = SCREEN
+$(eval $(call link-program,DumpHexColor,DUMP_HEX_COLOR))
 
 DEBUG_DISPLAY_SOURCES = \
 	$(SRC)/Hardware/Display.cpp \
@@ -2157,12 +2163,49 @@ TEST_NOTIFY_DEPENDS = SCREEN TEST1
 $(eval $(call link-program,TestNotify,TEST_NOTIFY))
 
 FEED_NMEA_SOURCES = \
+	$(SRC)/Device/Port/ConfiguredPort.cpp \
+	$(SRC)/Thread/Mutex.cpp \
+	$(SRC)/Thread/Thread.cpp \
+	$(SRC)/Thread/StoppableThread.cpp \
+	$(SRC)/OS/Clock.cpp \
+	$(TEST_SRC_DIR)/FakeLogFile.cpp \
+	$(TEST_SRC_DIR)/DebugPort.cpp \
 	$(TEST_SRC_DIR)/FeedNMEA.cpp
+FEED_NMEA_DEPENDS = PORT UTIL
 $(eval $(call link-program,FeedNMEA,FEED_NMEA))
 
 FEED_VEGA_SOURCES = \
+	$(SRC)/Device/Port/ConfiguredPort.cpp \
+	$(SRC)/Thread/Mutex.cpp \
+	$(SRC)/Thread/Thread.cpp \
+	$(SRC)/Thread/StoppableThread.cpp \
+	$(SRC)/OS/Clock.cpp \
+	$(TEST_SRC_DIR)/FakeLogFile.cpp \
+	$(TEST_SRC_DIR)/DebugPort.cpp \
 	$(TEST_SRC_DIR)/FeedVega.cpp
+FEED_VEGA_DEPENDS = PORT UTIL
 $(eval $(call link-program,FeedVega,FEED_VEGA))
+
+EMULATE_DEVICE_SOURCES = \
+	$(SRC)/Device/Port/ConfiguredPort.cpp \
+	$(SRC)/Device/Port/LineHandler.cpp \
+	$(SRC)/Device/Internal.cpp \
+	$(SRC)/Device/Driver/FLARM/BinaryProtocol.cpp \
+	$(SRC)/Device/Driver/FLARM/CRC16.cpp \
+	$(SRC)/NMEA/Checksum.cpp \
+	$(SRC)/NMEA/InputLine.cpp \
+	$(SRC)/IO/CSVLine.cpp \
+	$(SRC)/Thread/Mutex.cpp \
+	$(SRC)/Thread/Thread.cpp \
+	$(SRC)/Thread/StoppableThread.cpp \
+	$(SRC)/OS/Clock.cpp \
+	$(SRC)/Operation/Operation.cpp \
+	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
+	$(TEST_SRC_DIR)/FakeLogFile.cpp \
+	$(TEST_SRC_DIR)/DebugPort.cpp \
+	$(TEST_SRC_DIR)/EmulateDevice.cpp
+EMULATE_DEVICE_DEPENDS = PORT UTIL
+$(eval $(call link-program,EmulateDevice,EMULATE_DEVICE))
 
 FEED_TCP_SOURCES = \
 	$(TEST_SRC_DIR)/FeedTCP.cpp
@@ -2176,24 +2219,6 @@ endif
 endif
 
 $(eval $(call link-program,FeedTCP,FEED_TCP))
-
-FEED_TCP_SERVER_SOURCES = \
-	$(SRC)/Device/Port/Port.cpp \
-	$(SRC)/Thread/Thread.cpp \
-	$(SRC)/Thread/StoppableThread.cpp \
-	$(SRC)/OS/Clock.cpp \
-	$(SRC)/Device/Port/TCPPort.cpp \
-	$(TEST_SRC_DIR)/FeedTCPServer.cpp
-
-ifeq ($(HAVE_POSIX),n)
-ifeq ($(HAVE_CE),y)
-FEED_TCP_SERVER_LDLIBS += -lwinsock
-else
-FEED_TCP_SERVER_LDLIBS += -lws2_32
-endif
-endif
-
-$(eval $(call link-program,FeedTCPServer,FEED_TCP_SERVER))
 
 FEED_FLYNET_DATA_SOURCES = \
 	$(SRC)/Math/fixed.cpp \
