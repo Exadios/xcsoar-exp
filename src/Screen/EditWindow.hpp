@@ -57,7 +57,7 @@ public:
   }
 #endif
 
-  void read_only() {
+  void SetReadOnly() {
 #ifndef USE_GDI
     is_read_only = true;
 #else
@@ -65,7 +65,7 @@ public:
 #endif
   }
 
-  void multiline() {
+  void SetMultiLine() {
 #ifndef USE_GDI
     text_style &= ~DT_VCENTER;
     text_style |= DT_WORDBREAK;
@@ -75,7 +75,7 @@ public:
 #endif
   }
 
-  void center() {
+  void SetCenter() {
 #ifndef USE_GDI
     text_style &= ~DT_LEFT;
     text_style |= DT_CENTER;
@@ -85,7 +85,7 @@ public:
 #endif
   }
 
-  void vertical_center() {
+  void SetVerticalCenter() {
 #ifndef USE_GDI
     text_style |= DT_VCENTER;
 #else
@@ -102,6 +102,11 @@ class EditWindow : public Window {
   bool read_only;
 
   tstring value;
+
+  /**
+   * The first visible line.
+   */
+  unsigned origin;
 #endif
 
 public:
@@ -112,8 +117,18 @@ public:
   void set(ContainerWindow &parent, const PixelRect rc,
            const EditWindowStyle style);
 
-  unsigned get_row_count() const {
-    assert_none_locked();
+#ifndef USE_GDI
+  gcc_pure
+  unsigned GetVisibleRows() const {
+    assert(IsMultiLine());
+
+    return GetHeight() / GetFont().GetHeight();
+  }
+#endif
+
+  gcc_pure
+  unsigned GetRowCount() const {
+    AssertNoneLocked();
 
 #ifndef USE_GDI
     const TCHAR *str = value.c_str();
@@ -129,9 +144,9 @@ public:
 #endif /* USE_GDI */
   }
 
-  void set_text(const TCHAR *text);
+  void SetText(const TCHAR *text);
 
-  void get_text(TCHAR *text, size_t max_length) {
+  void GetText(TCHAR *text, size_t max_length) {
 #ifndef USE_GDI
     value.copy(text, std::min(max_length - 1, value.length()));
 #else
@@ -139,8 +154,8 @@ public:
 #endif
   }
 
-  void set_read_only(bool value) {
-    assert_none_locked();
+  void SetReadOnly(bool value) {
+    AssertNoneLocked();
 
 #ifndef USE_GDI
     read_only = value;
@@ -150,16 +165,24 @@ public:
 #endif
   }
 
-  bool is_read_only() const {
+  bool IsReadOnly() const {
 #ifndef USE_GDI
     return read_only;
 #else
-    return (get_window_style() & ES_READONLY) != 0;
+    return (GetStyle() & ES_READONLY) != 0;
 #endif
   }
 
-  void set_selection(int start, int end) {
-    assert_none_locked();
+  bool IsMultiLine() const {
+#ifndef USE_GDI
+    return (GetTextStyle() & DT_WORDBREAK) != 0;
+#else
+    return (GetStyle() & ES_MULTILINE) != 0;
+#endif
+  }
+
+  void Select(int start, int end) {
+    AssertNoneLocked();
 
 #ifndef USE_GDI
     // XXX
@@ -168,17 +191,26 @@ public:
 #endif
   }
 
-  void set_selection() {
+  void SelectAll() {
 #ifndef USE_GDI
     // XXX
 #else
-    set_selection(0, -1);
+    Select(0, -1);
 #endif
   }
 
+  /**
+   * Scroll the contents of a multi-line control by the specified
+   * number of lines.
+   */
+  void ScrollVertically(int delta_lines);
+
 #ifndef USE_GDI
 protected:
+  virtual void OnResize(UPixelScalar width, UPixelScalar height);
   virtual void OnPaint(Canvas &canvas);
+  virtual bool OnKeyCheck(unsigned key_code) const;
+  virtual bool OnKeyDown(unsigned key_code);
 #endif /* !USE_GDI */
 };
 

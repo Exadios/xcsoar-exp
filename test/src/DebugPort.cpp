@@ -33,6 +33,27 @@ ParsePortArgs(Args &args)
 
   config.port_type = DeviceConfig::PortType::SERIAL;
   config.path = args.ExpectNextT().c_str();
+
+#ifndef NDEBUG
+  if (config.path.equals(_T("dump"))) {
+    config = ParsePortArgs(args);
+    config.dump_port = true;
+    return config;
+  }
+#endif
+
+  if (config.path.equals(_T("pty"))) {
+    config.port_type = DeviceConfig::PortType::PTY;
+    config.path = args.ExpectNextT().c_str();
+    return config;
+  }
+
+  if (config.path.equals(_T("tcp"))) {
+    config.port_type = DeviceConfig::PortType::TCP_LISTENER;
+    config.tcp_port = atoi(args.ExpectNext());
+    return config;
+  }
+
   if (config.UsesSpeed())
     config.baud_rate = atoi(args.ExpectNext());
 

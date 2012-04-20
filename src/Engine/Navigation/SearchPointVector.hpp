@@ -38,6 +38,8 @@ public:
     :std::vector<SearchPoint>(begin, end) {}
 
   bool PruneInterior();
+
+  gcc_pure
   bool IsConvex() const;
 
   /**
@@ -50,25 +52,36 @@ public:
 
   void Project(const TaskProjection &tp);
 
+  gcc_pure
   FlatGeoPoint NearestPoint(const FlatGeoPoint &p) const;
 
   /** Find iterator of nearest point, assuming polygon is convex */
+  gcc_pure
   const_iterator NearestIndexConvex(const FlatGeoPoint &p) const;
 
+  gcc_pure
   bool IntersectsWith(const FlatRay &ray) const;
 
+  gcc_pure
   FlatBoundingBox CalculateBoundingbox() const;
+
+  gcc_pure
   GeoBounds CalculateGeoBounds() const;
 
   /** increment iterator, wrapping around to start if required */
-  void NextCircular(SearchPointVector::const_iterator &i) const;
+  gcc_pure
+  const_iterator NextCircular(const_iterator i) const;
 
   /** decreement iterator, wrapping around to last item if required */
-  void PreviousCircular(SearchPointVector::const_iterator &i) const;
+  gcc_pure
+  const_iterator PreviousCircular(const_iterator i) const;
 
   /** Is the given GeoPoint inside the polygon of SearchPoints? */
+  gcc_pure
   bool IsInside(const GeoPoint &pt) const;
+
   /** Is the given FlatGeoPoint inside the polygon of SearchPoints? */
+  gcc_pure
   bool IsInside(const FlatGeoPoint &pt) const;
 };
 

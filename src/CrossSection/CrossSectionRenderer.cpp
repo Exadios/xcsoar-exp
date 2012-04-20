@@ -42,8 +42,6 @@
 #include "Screen/OpenGL/Scope.hpp"
 #endif
 
-#define AIRSPACE_SCANSIZE_X 16
-
 /**
  * Local visitor class used for rendering airspaces in the CrossSectionRenderer
  */
@@ -298,21 +296,22 @@ CrossSectionRenderer::PaintTerrain(Canvas &canvas, ChartRenderer &chart) const
   if (terrain == NULL)
     return;
 
-  const GeoPoint p_diff = vec.EndPoint(start) - start;
+  const GeoPoint point_diff = vec.EndPoint(start) - start;
 
   RasterTerrain::Lease map(*terrain);
 
-  RasterPoint points[2 + AIRSPACE_SCANSIZE_X];
+  RasterPoint points[2 + NUM_SLICES];
 
-  points[0] = chart.ToScreen(vec.distance, fixed_zero);
-  points[1] = chart.ToScreen(fixed_zero, fixed_zero);
+  points[0] = chart.ToScreen(vec.distance, fixed(-500));
+  points[1] = chart.ToScreen(fixed_zero, fixed(-500));
 
   unsigned i = 2;
-  for (unsigned j = 0; j < AIRSPACE_SCANSIZE_X; ++j) {
-    const fixed t_this = fixed(j) / (AIRSPACE_SCANSIZE_X - 1);
-    const GeoPoint p_this = start + p_diff * t_this;
+  for (unsigned j = 0; j < NUM_SLICES; ++j) {
+    const fixed slice_distance_factor = fixed(i) / (NUM_SLICES - 1);
+    const fixed slice_distance = slice_distance_factor * vec.distance;
+    const GeoPoint slice_point = start + point_diff * slice_distance_factor;
 
-    short h = map->GetHeight(p_this);
+    short h = map->GetHeight(slice_point);
     if (RasterBuffer::IsSpecial(h)) {
       if (RasterBuffer::IsWater(h))
         /* water is at 0m MSL */
@@ -323,14 +322,14 @@ CrossSectionRenderer::PaintTerrain(Canvas &canvas, ChartRenderer &chart) const
         continue;
     }
 
-    points[i] = chart.ToScreen(t_this * vec.distance, fixed(h));
+    points[i] = chart.ToScreen(slice_distance, fixed(h));
     i++;
   }
 
   if (i >= 4) {
     canvas.SelectNullPen();
     canvas.Select(look.terrain_brush);
-    canvas.polygon(&points[0], i);
+    canvas.polygon(points, i);
   }
 }
 

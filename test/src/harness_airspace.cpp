@@ -107,6 +107,9 @@ void setup_airspaces(Airspaces& airspaces, const GeoPoint& center, const unsigne
 
 class AirspaceVisitorPrint: 
   public AirspaceVisitor {
+  std::ofstream *fout;
+  const bool do_report;
+
 public:
   AirspaceVisitorPrint(const char* fname,
                        const bool _do_report):
@@ -140,14 +143,18 @@ public:
       visit_general(as);
     }
   }
-private:
-  std::ofstream *fout;
-  const bool do_report;
 };
 
 
 class AirspaceIntersectionVisitorPrint: 
   public AirspaceIntersectionVisitor {
+  std::ofstream *fout;
+  std::ofstream *yout;
+  std::ofstream *iout;
+  const bool do_report;
+  const AircraftState m_state;
+  const AirspaceAircraftPerformance &m_perf;
+
 public:
   AirspaceIntersectionVisitorPrint(const char* fname,
                                    const char* yname,
@@ -199,22 +206,22 @@ public:
       intersection(as);
     }
   }
-private:
-  std::ofstream *fout;
-  std::ofstream *yout;
-  std::ofstream *iout;
-  const bool do_report;
-  const AircraftState m_state;
-  const AirspaceAircraftPerformance &m_perf;
 };
 
 
 class AirspaceVisitorClosest: public AirspaceVisitor {
+  std::ofstream *fout;
+  const TaskProjection &projection;
+  const AircraftState& state;
+  const AirspaceAircraftPerformance &m_perf;
+
 public:
   AirspaceVisitorClosest(const char* fname,
+                         const TaskProjection &_projection,
                          const AircraftState &_state,
                          const AirspaceAircraftPerformance &perf):
     fout(NULL),
+    projection(_projection),
     state(_state),
     m_perf(perf)
     {
@@ -226,7 +233,7 @@ public:
       delete fout;
   }
   virtual void closest(const AbstractAirspace& as) {
-    GeoPoint c = as.ClosestPoint(state.location);
+    GeoPoint c = as.ClosestPoint(state.location, projection);
     if (fout) {
       *fout << "# closest point\n";
       *fout << c.longitude << " " << c.latitude << " " << "\n";
@@ -235,7 +242,7 @@ public:
     AirspaceInterceptSolution solution;
     GeoVector vec(state.location, c);
     vec.distance = fixed(20000); // set big distance (for testing)
-    if (as.Intercept(state, vec.EndPoint(state.location), m_perf, solution)) {
+    if (as.Intercept(state, vec.EndPoint(state.location), projection, m_perf, solution)) {
       if (fout) {
         *fout << "# intercept in " << solution.elapsed_time << " h " << solution.altitude << "\n";
       }
@@ -247,10 +254,6 @@ public:
   virtual void Visit(const AirspacePolygon& as) {
     closest(as);
   }
-private:
-  std::ofstream *fout;
-  const AircraftState& state;
-  const AirspaceAircraftPerformance &m_perf;
 };
 
 /**
@@ -289,7 +292,7 @@ void scan_airspaces(const AircraftState state,
 
   {
     AirspaceVisitorClosest pvisitor("results/res-bb-closest.txt",
-                                    state, perf);
+                                    airspaces.GetProjection(), state, perf);
     airspaces.visit_within_range(state.location, range, pvisitor);
   }
 

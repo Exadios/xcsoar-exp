@@ -104,7 +104,7 @@ static void
 OnReconnectClicked(gcc_unused WndButton &button)
 {
   if (device->IsOccupied()) {
-    MessageBoxX(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
+    ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -146,7 +146,7 @@ ShowPortMonitor(SingleWindow &parent, const DialogLook &dialog_look,
   caption.Format(_T("%s: %s"), _("Port monitor"),
                  device->GetConfig().GetPortName(buffer, ARRAY_SIZE(buffer)));
 
-  dialog = new WndForm(parent, dialog_look, parent.get_client_rect(),
+  dialog = new WndForm(parent, dialog_look, parent.GetClientRect(),
                        caption, dialog_style);
 
   ContainerWindow &client_area = dialog->GetClientAreaWindow();

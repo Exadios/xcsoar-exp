@@ -28,7 +28,7 @@ Copyright_License {
 #include "Edit.hpp"
 #include "DataField/Base.hpp"
 #include "Util/StaticArray.hpp"
-#include "Units/Settings.hpp"
+#include "Units/Group.hpp"
 
 #include <assert.h>
 #include <stdint.h>
@@ -514,7 +514,7 @@ protected:
   PixelRect InitialControlRect(UPixelScalar height) {
     assert(IsDefined());
 
-    PixelRect rc = GetWindow()->get_client_rect();
+    PixelRect rc = GetWindow()->GetClientRect();
     rc.bottom = rc.top + height;
     return rc;
   }

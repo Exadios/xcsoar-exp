@@ -103,7 +103,7 @@ int
 InfoBoxManager::GetFocused()
 {
   for (unsigned i = 0; i < layout.count; i++)
-    if (InfoBoxes[i]->has_focus())
+    if (InfoBoxes[i]->HasFocus())
       return i;
 
   return -1;
@@ -216,9 +216,9 @@ InfoBoxManager::Event_Change(int i)
 
   k = panel.contents[InfoFocus];
   if (i > 0)
-    j = (InfoBoxFactory::t_InfoBox)InfoBoxFactory::GetNext(k);
+    j = InfoBoxFactory::GetNext(k);
   else if (i < 0)
-    j = (InfoBoxFactory::t_InfoBox)InfoBoxFactory::GetPrevious(k);
+    j = InfoBoxFactory::GetPrevious(k);
 
   // TODO code: if i==0, go to default or reset
 
