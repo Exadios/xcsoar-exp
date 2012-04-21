@@ -346,6 +346,6 @@ Java_org_xcsoar_NonGPSSensors_setBarometricPressure(
   ScopeLock protect(device_blackboard->mutex);
   NMEAInfo &basic = device_blackboard->SetRealState(index);
   basic.ProvideStaticPressure(
-      AtmosphericPressure::HectoPascal(fixed(tp / n)));
+      AtmosphericPressure::HectoPascal(fixed(pressure)));
   device_blackboard->ScheduleMerge();
 }
