@@ -29,8 +29,8 @@
 
 #include <vector>
 
-#include "kalman/kvector.hpp"
-#include "kalman/kmatrix.hpp"
+#include "Math/Kalman/kalman/kvector.hpp"
+#include "Math/Kalman/kalman/kmatrix.hpp"
 
 using namespace std;
 using namespace Kalman;

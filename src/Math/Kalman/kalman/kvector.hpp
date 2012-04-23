@@ -34,7 +34,7 @@
 #include <string>
 #include <iostream>
 
-#include "kalman/ktypes.hpp"
+#include "Math/Kalman/kalman/ktypes.hpp"
 
 namespace Kalman {
 
@@ -178,6 +178,6 @@ namespace Kalman {
   KVectorContext selectKVectorContext(KVectorContext c);
 }
 
-#include "kalman/kvector_impl.hpp"
+#include "Math/Kalman/kalman/kvector_impl.hpp"
 
 #endif

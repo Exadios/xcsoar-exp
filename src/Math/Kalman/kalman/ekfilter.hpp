@@ -30,8 +30,8 @@
 //! \file
 //! \brief Contains the interface of the \c EKFilter base template class.
 
-#include "kalman/kvector.hpp"
-#include "kalman/kmatrix.hpp"
+#include "Math/Kalman/kalman/kvector.hpp"
+#include "Math/Kalman/kalman/kmatrix.hpp"
 
 namespace Kalman {
 
@@ -812,7 +812,7 @@ namespace Kalman {
 
 }
 
-#include "kalman/ekfilter_impl.hpp"
+#include "Math/Kalman/kalman/ekfilter_impl.hpp"
 
 #endif
 

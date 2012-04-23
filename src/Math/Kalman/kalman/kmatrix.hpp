@@ -34,7 +34,7 @@
 #include <string>
 #include <iostream>
 
-#include "kalman/ktypes.hpp"
+#include "Math/Kalman/kalman/ktypes.hpp"
 
 namespace Kalman {
 
@@ -193,6 +193,6 @@ namespace Kalman {
 
 }
 
-#include "kalman/kmatrix_impl.hpp"
+#include "Math/Kalman/kalman/kmatrix_impl.hpp"
 
 #endif
