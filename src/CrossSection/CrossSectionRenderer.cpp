@@ -174,24 +174,24 @@ public:
 
     PixelRect rcd;
     // Calculate top and bottom coordinate
-    rcd.top = chart.screenY(as.GetTopAltitude(state));
+    rcd.top = chart.ScreenY(as.GetTopAltitude(state));
     if (as.IsBaseTerrain())
-      rcd.bottom = chart.screenY(fixed_zero);
+      rcd.bottom = chart.ScreenY(fixed_zero);
     else
-      rcd.bottom = chart.screenY(as.GetBaseAltitude(state));
+      rcd.bottom = chart.ScreenY(as.GetBaseAltitude(state));
 
     // Iterate through the intersections
     for (auto it = intersections.begin(); it != intersections.end(); ++it) {
       const GeoPoint &p_start = it->first;
       const GeoPoint &p_end = it->second;
 
-      rcd.left = chart.screenX(start.Distance(p_start));
+      rcd.left = chart.ScreenX(start.Distance(p_start));
 
       // only one edge found, next edge must be beyond screen
       if (p_start == p_end)
-        rcd.right = chart.screenX(chart.getXmax());
+        rcd.right = chart.ScreenX(chart.GetXMax());
       else
-        rcd.right = chart.screenX(start.Distance(p_end));
+        rcd.right = chart.ScreenX(start.Distance(p_end));
 
       // Draw the airspace
       RenderBox(rcd, brush, settings.black_outline, type);
@@ -263,8 +263,11 @@ CrossSectionRenderer::Paint(Canvas &canvas, const PixelRect rc) const
   chart.ScaleYFromValue(hmin);
   chart.ScaleYFromValue(hmax);
 
+  short elevations[NUM_SLICES];
+  UpdateTerrain(elevations);
+
   PaintAirspaces(canvas, chart);
-  PaintTerrain(canvas, chart);
+  PaintTerrain(canvas, chart, elevations);
   PaintGlide(chart);
   PaintAircraft(canvas, chart, rc);
   PaintGrid(canvas, chart);
@@ -291,7 +294,7 @@ CrossSectionRenderer::PaintAirspaces(Canvas &canvas,
 }
 
 void
-CrossSectionRenderer::PaintTerrain(Canvas &canvas, ChartRenderer &chart) const
+CrossSectionRenderer::UpdateTerrain(short *elevations) const
 {
   if (terrain == NULL)
     return;
@@ -299,19 +302,32 @@ CrossSectionRenderer::PaintTerrain(Canvas &canvas, ChartRenderer &chart) const
   const GeoPoint point_diff = vec.EndPoint(start) - start;
 
   RasterTerrain::Lease map(*terrain);
+  for (unsigned i = 0; i < NUM_SLICES; ++i) {
+    const fixed slice_distance_factor = fixed(i) / (NUM_SLICES - 1);
+    const GeoPoint slice_point = start + point_diff * slice_distance_factor;
+
+    elevations[i] = map->GetHeight(slice_point);
+  }
+}
+
+void
+CrossSectionRenderer::PaintTerrain(Canvas &canvas, ChartRenderer &chart,
+                                   const short *elevations) const
+{
+  if (terrain == NULL)
+    return;
 
   RasterPoint points[2 + NUM_SLICES];
 
   points[0] = chart.ToScreen(vec.distance, fixed(-500));
   points[1] = chart.ToScreen(fixed_zero, fixed(-500));
 
-  unsigned i = 2;
+  unsigned num_points = 2;
   for (unsigned j = 0; j < NUM_SLICES; ++j) {
-    const fixed slice_distance_factor = fixed(i) / (NUM_SLICES - 1);
+    const fixed slice_distance_factor = fixed(j) / (NUM_SLICES - 1);
     const fixed slice_distance = slice_distance_factor * vec.distance;
-    const GeoPoint slice_point = start + point_diff * slice_distance_factor;
 
-    short h = map->GetHeight(slice_point);
+    short h = elevations[j];
     if (RasterBuffer::IsSpecial(h)) {
       if (RasterBuffer::IsWater(h))
         /* water is at 0m MSL */
@@ -322,14 +338,13 @@ CrossSectionRenderer::PaintTerrain(Canvas &canvas, ChartRenderer &chart) const
         continue;
     }
 
-    points[i] = chart.ToScreen(slice_distance, fixed(h));
-    i++;
+    points[num_points++] = chart.ToScreen(slice_distance, fixed(h));
   }
 
-  if (i >= 4) {
+  if (num_points >= 4) {
     canvas.SelectNullPen();
     canvas.Select(look.terrain_brush);
-    canvas.polygon(points, i);
+    canvas.polygon(points, num_points);
   }
 }
 
