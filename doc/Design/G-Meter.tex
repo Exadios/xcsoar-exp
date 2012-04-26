@@ -85,8 +85,40 @@
 
 \listoffigures
 
+
+\clearpage\setcounter{page}{1}
+\chapter[Introduction]{Introduction}
+
+\section[Purpose]{Purpose}
+
+The purpose of this design document is to describe an instrument that will provide the glider pilot with real time data that is compariable to the data presently provided by the traditional Variometer. However, this data will be derived in a completely different manner from the manner in which the traditional Variometer data is derived.
+
+\bigskip
+
+A glider climbs as a result of an acceleration normal to the Geod. By observing the normal acceleration the climb velocity may be determined.
+
+\begin{equation}
+v = \int{\left( a - g \right)} dt
+\end{equation}
+
+where $a$ is the observed acceleration normal to to the Geoid, $g$ is the acceleration due to gravity and $v$ is the velocity normal to the Geod.
+
+\clearpage\setcounter{page}{1}
+\chapter[Design]{Design}
+
+In order to observe $a$ it is necessary to have an accelerometer vector which is aligned with the Geodetical normal. This requires a level stable platform. This platform will consist of a "strapdown" inertial platform.
+
+\bigskip
+
+Given the quality of avaliable inertial sensors (gyros, accelerometers) it is unrealistic to attempt to build a stand alone dead reckoning inertial platform. It will be necessary to couple the platform to a GPS solution of position ($\phi$, $\lambda$, $h$, $t$). This coupling will need to be fairly tight - time constants will need to be less than sixty seconds.
+
+\bigskip
+
+The necessary integration of the intertial platform and the GPS solution will be effected using a suitably designed Kalman Filter.
+
 \appendix
 
+\clearpage\setcounter{page}{1}
 \clearpage\setcounter{page}{1}
 \chapter[Kalman Filter]{Kalman Filter}
 
