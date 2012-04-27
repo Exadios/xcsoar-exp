@@ -1,5 +1,5 @@
 /*
-Copyright_License {
+  Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
   Copyright (C) 2000-2012 The XCSoar Project
@@ -21,80 +21,32 @@ Copyright_License {
 }
 */
 
-#include "NullPort.hpp"
+#ifndef TERRAIN_CROSS_SECTION_RENDERER_HPP
+#define TERRAIN_CROSS_SECTION_RENDERER_HPP
 
-#include <stdio.h>
+#include "Terrain/RasterBuffer.hpp"
+#include "Screen/Point.hpp"
 
-NullPort::NullPort()
-  :Port(*(Port::Handler *)this)
+class Canvas;
+class ChartRenderer;
+struct CrossSectionLook;
+
+/**
+ * A Window which renders a terrain and airspace cross-section
+ */
+class TerrainXSRenderer
 {
-}
+  const CrossSectionLook &look;
 
-NullPort::NullPort(Port::Handler &_handler)
-  :Port(_handler)
-{
-}
+public:
+  TerrainXSRenderer(const CrossSectionLook &_look): look(_look) {}
 
-bool
-NullPort::IsValid() const
-{
-  return true;
-}
+  void Draw(Canvas &canvas, const ChartRenderer &chart,
+            const short *elevations) const;
 
-bool
-NullPort::Drain()
-{
-  return true;
-}
+private:
+  void DrawPolygon(Canvas &canvas, RasterBuffer::TerrainType type,
+                   const RasterPoint *points, unsigned num_points) const;
+};
 
-void
-NullPort::Flush()
-{
-}
-
-size_t
-NullPort::Write(const void *data, size_t length)
-{
-  return length;
-}
-
-bool
-NullPort::StopRxThread()
-{
-  return true;
-}
-
-bool
-NullPort::StartRxThread()
-{
-  return true;
-}
-
-unsigned
-NullPort::GetBaudrate() const
-{
-  return 0;
-}
-
-bool
-NullPort::SetBaudrate(unsigned baud_rate)
-{
-  return true;
-}
-
-int
-NullPort::Read(void *Buffer, size_t Size)
-{
-  return -1;
-}
-
-Port::WaitResult
-NullPort::WaitRead(unsigned timeout_ms)
-{
-  return WaitResult::FAILED;
-}
-
-void
-NullPort::DataReceived(const void *data, size_t length)
-{
-}
+#endif
