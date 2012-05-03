@@ -20,7 +20,8 @@
 }
 */
 
-#include "Replay/IGCParser.hpp"
+#include "IGC/IGCParser.hpp"
+#include "IGC/IGCFix.hpp"
 #include "IO/FileLineReader.hpp"
 #include "Engine/Trace/Trace.hpp"
 #include "Engine/Trace/Vector.hpp"
@@ -79,7 +80,7 @@ TestTrace(const char *filename, unsigned ntrace, bool output=false)
     }
 
     IGCFix fix;
-    if (!IGCParseFix(line, fix))
+    if (!IGCParseFix(line, fix) || !fix.gps_valid)
       continue;
 
     OnAdvance(trace,

@@ -25,14 +25,15 @@
 #define CROSS_SECTION_RENDERER_HPP
 
 #include "Blackboard/BaseBlackboard.hpp"
-#include "Renderer/AirspaceRendererSettings.hpp"
 #include "TerrainXSRenderer.hpp"
+#include "AirspaceXSRenderer.hpp"
 #include "Screen/Point.hpp"
 
 struct MoreData;
 struct CrossSectionLook;
 struct AirspaceLook;
 struct ChartLook;
+struct AirspaceRendererSettings;
 class Airspaces;
 class RasterTerrain;
 class ChartRenderer;
@@ -48,12 +49,10 @@ public:
   static const unsigned NUM_SLICES = 16;
 
 protected:
-  AirspaceRendererSettings airspace_renderer_settings;
-
   const CrossSectionLook &look;
-  const AirspaceLook &airspace_look;
   const ChartLook &chart_look;
 
+  AirspaceXSRenderer airspace_renderer;
   TerrainXSRenderer terrain_renderer;
 
   /** Pointer to a RasterTerrain instance or NULL */
@@ -77,7 +76,7 @@ public:
 
   void ReadBlackboard(const MoreData &_gps_info,
                       const DerivedInfo &_calculated_info,
-                      const AirspaceRendererSettings &_ar_settings);
+                      const AirspaceRendererSettings &ar_settings);
 
   /**
    * Renders the CrossSection to the given canvas in the given PixelRect
@@ -134,9 +133,6 @@ public:
 protected:
   void UpdateTerrain(short *elevations) const;
 
-  void PaintAirspaces(Canvas &canvas, const ChartRenderer &chart) const;
-  void PaintTerrain(Canvas &canvas, ChartRenderer &chart,
-                    const short *elevations) const;
   void PaintGlide(ChartRenderer &chart) const;
   void PaintAircraft(Canvas &canvas, const ChartRenderer &chart,
                      const PixelRect rc) const;

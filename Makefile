@@ -328,7 +328,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Logger/LoggerGRecord.cpp \
 	$(SRC)/Logger/LoggerEPE.cpp \
 	$(SRC)/Logger/LoggerImpl.cpp \
-	$(SRC)/Logger/IGCWriter.cpp \
+	$(SRC)/IGC/IGCWriter.cpp \
 	$(SRC)/Logger/MD5.cpp \
 	$(SRC)/Logger/NMEALogger.cpp \
 	$(SRC)/Logger/ExternalLogger.cpp \
@@ -351,7 +351,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/NMEA/Checksum.cpp \
 	$(SRC)/NMEA/Aircraft.cpp \
 	$(SRC)/Replay/Replay.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/Replay/IgcReplay.cpp \
 	$(SRC)/Replay/IgcReplayGlue.cpp \
 	$(SRC)/Replay/NmeaReplay.cpp \
@@ -378,6 +378,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Wind/WindEKF.cpp \
 	$(SRC)/Wind/WindEKFGlue.cpp \
 	\
+	$(SRC)/CrossSection/AirspaceXSRenderer.cpp \
 	$(SRC)/CrossSection/TerrainXSRenderer.cpp \
 	$(SRC)/CrossSection/CrossSectionRenderer.cpp \
 	$(SRC)/CrossSection/CrossSectionWindow.cpp \
@@ -584,11 +585,14 @@ XCSOAR_SOURCES := \
 	$(SRC)/Formatter/Units.cpp \
 	$(SRC)/Formatter/UserUnits.cpp \
 	$(SRC)/Formatter/HexColor.cpp \
+	$(SRC)/Formatter/GlideRatioFormatter.cpp \
 	$(SRC)/Formatter/GeoPointFormatter.cpp \
 	$(SRC)/Formatter/ByteSizeFormatter.cpp \
 	$(SRC)/Formatter/UserGeoPointFormatter.cpp \
 	$(SRC)/Formatter/TimeFormatter.cpp \
 	$(SRC)/Formatter/IGCFilenameFormatter.cpp \
+	$(SRC)/Formatter/AirspaceFormatter.cpp \
+	$(SRC)/Formatter/AirspaceUserUnitsFormatter.cpp \
 	$(SRC)/Units/Descriptor.cpp \
 	$(SRC)/Units/System.cpp \
 	$(SRC)/Units/Settings.cpp \

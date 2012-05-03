@@ -1,4 +1,5 @@
-/* Copyright_License {
+/*
+Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
   Copyright (C) 2000-2012 The XCSoar Project
@@ -20,7 +21,9 @@
 }
 */
 
-#include "AirspaceClass.hpp"
+#include "AirspaceFormatter.hpp"
+
+#include "Engine/Airspace/AbstractAirspace.hpp"
 #include "Util/Macros.hpp"
 
 static const TCHAR *airspace_class_names[] = {
@@ -42,6 +45,11 @@ static const TCHAR *airspace_class_names[] = {
   _T("Class G"),
 };
 
+static_assert(ARRAY_SIZE(airspace_class_names) ==
+              (size_t)AirspaceClass::AIRSPACECLASSCOUNT,
+              "number of airspace class names does not match number of "
+              "airspace classes");
+
 static const TCHAR *airspace_class_short_names[] = {
   _T("?"),
   _T("R"),
@@ -61,15 +69,50 @@ static const TCHAR *airspace_class_short_names[] = {
   _T("G"),
 };
 
-const TCHAR *
-AirspaceClassAsText(const AirspaceClass item, const bool short_name)
-{
-  unsigned i = (unsigned)item;
+static_assert(ARRAY_SIZE(airspace_class_short_names) ==
+              (size_t)AirspaceClass::AIRSPACECLASSCOUNT,
+              "number of airspace class short names does not match number of "
+              "airspace classes");
 
-  if (!short_name)
-    return i < ARRAY_SIZE(airspace_class_names) ?
-           airspace_class_names[i] : NULL;
+const TCHAR *
+AirspaceFormatter::GetClass(AirspaceClass airspace_class)
+{
+  unsigned i = (unsigned)airspace_class;
+
+  return i < ARRAY_SIZE(airspace_class_names) ?
+         airspace_class_names[i] : NULL;
+}
+
+const TCHAR *
+AirspaceFormatter::GetClassShort(AirspaceClass airspace_class)
+{
+  unsigned i = (unsigned)airspace_class;
 
   return i < ARRAY_SIZE(airspace_class_short_names) ?
          airspace_class_short_names[i] : NULL;
+}
+
+const TCHAR *
+AirspaceFormatter::GetClass(const AbstractAirspace &airspace)
+{
+  return GetClass(airspace.GetType());
+}
+
+const TCHAR *
+AirspaceFormatter::GetClassShort(const AbstractAirspace &airspace)
+{
+  return GetClassShort(airspace.GetType());
+}
+
+tstring
+AirspaceFormatter::GetNameAndClass(const AbstractAirspace &airspace)
+{
+  return tstring(airspace.GetName()) + _T(" ") + GetClass(airspace.GetType());
+}
+
+tstring
+AirspaceFormatter::GetVerticalText(const AbstractAirspace &airspace)
+{
+  return _T("Base: ") + airspace.GetBase().GetAsText(false) +
+         _T(" Top: ") + airspace.GetTop().GetAsText(false);
 }

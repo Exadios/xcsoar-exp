@@ -30,6 +30,7 @@
 #include "Airspace/AirspaceNearestSort.hpp"
 #include "Airspace/AirspaceSoonestSort.hpp"
 #include "Navigation/Geometry/GeoVector.hpp"
+#include "Formatter/AirspaceFormatter.hpp"
 
 static void
 airspace_random_properties(AbstractAirspace& as)
@@ -126,8 +127,8 @@ public:
   }
   virtual void visit_general(const AbstractAirspace& as) {
     if (do_report) {
-      *fout << "# Name: " << as.GetNameText().c_str()
-            << " " << as.GetVerticalText().c_str()
+      *fout << "# Name: " << AirspaceFormatter::GetNameAndClass(as).c_str()
+            << " " << AirspaceFormatter::GetVerticalText(as).c_str()
             << "\n";
     }
   }

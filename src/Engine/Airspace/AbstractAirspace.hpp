@@ -300,28 +300,10 @@ public:
                                    const AbstractAirspace &as);
 #endif
 
-  /**
-   * Produce text version of airspace class.
-   *
-   * @param concise Whether to use short form or long form
-   *
-   * @return Text version of class
-   */
-  gcc_pure
-  const TCHAR *GetTypeText(const bool concise = false) const;
-
   gcc_pure
   const TCHAR *GetName() const {
     return name.c_str();
   }
-
-  /**
-   * Produce text version of name and airspace class.
-   *
-   * @return Text version of name/type
-   */
-  gcc_pure
-  const tstring GetNameText() const;
 
   /**
    * Returns true if the name begins with the specified string.
@@ -336,36 +318,6 @@ public:
    */
   gcc_pure
   const tstring GetRadioText() const;
-
-  /**
-   * Produce text version of base+top altitude (no units).
-   *
-   * @param concise Whether to use short form or long form
-   *
-   * @return Text version of base altitude
-   */
-  gcc_pure
-  const tstring GetVerticalText() const;
-
-  /**
-   * Produce text version of base altitude with units.
-   *
-   * @param concise Whether to use short form or long form
-   *
-   * @return Text version of base altitude
-   */
-  gcc_pure
-  const tstring GetBaseText(const bool concise = false) const;
-
-  /**
-   * Produce text version of top altitude with units.
-   *
-   * @param concise Whether to use short form or long form
-   *
-   * @return Text version of top altitude
-   */
-  gcc_pure
-  const tstring GetTopText(const bool concise = false) const;
 
   /**
    * Accessor for airspace shape

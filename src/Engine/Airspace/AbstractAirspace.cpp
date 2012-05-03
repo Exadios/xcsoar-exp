@@ -202,18 +202,6 @@ AbstractAirspace::Intercept(const AircraftState &state,
   return true;
 }
 
-const TCHAR *
-AbstractAirspace::GetTypeText(const bool concise) const
-{
-  return AirspaceClassAsText(type, concise);
-}
-
-const tstring 
-AbstractAirspace::GetNameText() const
-{
-  return name + _T(" ") + AirspaceClassAsText(type);
-}
-
 bool
 AbstractAirspace::MatchNamePrefix(const TCHAR *prefix) const
 {
@@ -238,13 +226,6 @@ const tstring
 AbstractAirspace::GetRadioText() const
 {
   return radio;
-}
-
-const tstring
-AbstractAirspace::GetVerticalText() const
-{
-  return _T("Base: ") + altitude_base.GetAsText(false) +
-         _T(" Top: ") + altitude_top.GetAsText(false);
 }
 
 void

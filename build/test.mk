@@ -48,6 +48,7 @@ define link-harness-program
 $(1)_SOURCES = \
 	$(SRC)/NMEA/FlyingState.cpp \
 	$(SRC)/Atmosphere/Pressure.cpp \
+	$(SRC)/Formatter/AirspaceFormatter.cpp \
 	$(TEST_SRC_DIR)/FakeTerrain.cpp \
 	$(TEST_SRC_DIR)/$(1).cpp
 $(1)_LDADD = $(TEST1_LDADD)
@@ -103,7 +104,7 @@ TEST_OVERWRITING_RING_BUFFER_DEPENDS = MATH
 $(eval $(call link-program,TestOverwritingRingBuffer,TEST_OVERWRITING_RING_BUFFER))
 
 TEST_IGC_PARSER_SOURCES = \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(TEST_SRC_DIR)/tap.c \
 	$(TEST_SRC_DIR)/TestIGCParser.cpp
 TEST_IGC_PARSER_DEPENDS = MATH
@@ -258,6 +259,7 @@ TEST_ROUTE_SOURCES = \
 	$(SRC)/Terrain/RasterMap.cpp \
 	$(SRC)/Terrain/RasterBuffer.cpp \
 	$(SRC)/Terrain/RasterProjection.cpp \
+	$(SRC)/Formatter/AirspaceFormatter.cpp \
 	$(SRC)/Geo/GeoClip.cpp \
 	$(SRC)/OS/FileUtil.cpp \
 	$(SRC)/OS/PathName.cpp \
@@ -272,6 +274,7 @@ TEST_REPLAY_TASK_SOURCES = \
 	$(SRC)/XML/Node.cpp \
 	$(SRC)/XML/Parser.cpp \
 	$(SRC)/XML/Writer.cpp \
+	$(SRC)/Formatter/AirspaceFormatter.cpp \
 	$(SRC)/Atmosphere/Pressure.cpp \
 	$(TEST_SRC_DIR)/test_replay_task.cpp
 TEST_REPLAY_TASK_DEPENDS = TEST1
@@ -287,6 +290,7 @@ TEST_LOAD_TASK_SOURCES = \
 	$(SRC)/XML/Node.cpp \
 	$(SRC)/XML/Parser.cpp \
 	$(SRC)/XML/Writer.cpp \
+	$(SRC)/Formatter/AirspaceFormatter.cpp \
 	$(SRC)/Atmosphere/Pressure.cpp \
 	$(SRC)/NMEA/FlyingState.cpp \
 	$(TEST_SRC_DIR)/test_load_task.cpp
@@ -544,7 +548,7 @@ TEST_RADIX_TREE_SOURCES = \
 $(eval $(call link-program,TestRadixTree,TEST_RADIX_TREE))
 
 TEST_LOGGER_SOURCES = \
-	$(SRC)/Logger/IGCWriter.cpp \
+	$(SRC)/IGC/IGCWriter.cpp \
 	$(SRC)/Logger/LoggerFRecord.cpp \
 	$(SRC)/Logger/LoggerGRecord.cpp \
 	$(SRC)/Logger/LoggerEPE.cpp \
@@ -579,7 +583,7 @@ TEST_DRIVER_SOURCES = \
 	$(SRC)/FLARM/State.cpp \
 	$(SRC)/Units/Descriptor.cpp \
 	$(SRC)/Units/System.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/ClimbAverageCalculator.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Util/StringUtil.cpp \
@@ -634,7 +638,7 @@ $(eval $(call link-program,TestWaypointReader,TEST_WAY_POINT_FILE))
 
 TEST_TRACE_SOURCES = \
 	$(TEST_SRC_DIR)/tap.c \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(TEST_SRC_DIR)/FakeTerrain.cpp \
 	$(TEST_SRC_DIR)/Printing.cpp \
 	$(TEST_SRC_DIR)/TestTrace.cpp 
@@ -643,7 +647,7 @@ $(eval $(call link-program,TestTrace,TEST_TRACE))
 
 FLIGHT_TABLE_SOURCES = \
 	$(SRC)/OS/FileUtil.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/GeoPoint.cpp \
 	$(ENGINE_SRC_DIR)/Math/Earth.cpp \
 	$(TEST_SRC_DIR)/FlightTable.cpp
@@ -736,7 +740,7 @@ DEBUG_REPLAY_SOURCES = \
 	$(SRC)/Device/Register.cpp \
 	$(SRC)/Device/Parser.cpp \
 	$(SRC)/Device/Internal.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/Units/Descriptor.cpp \
 	$(SRC)/Units/System.cpp \
 	$(SRC)/ComputerSettings.cpp \
@@ -1162,7 +1166,7 @@ RUN_DEVICE_DRIVER_SOURCES = \
 	$(SRC)/NMEA/ExternalSettings.cpp \
 	$(SRC)/NMEA/InputLine.cpp \
 	$(SRC)/NMEA/Checksum.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/FLARM/FlarmCalculations.cpp \
 	$(SRC)/ClimbAverageCalculator.cpp \
 	$(SRC)/OS/Clock.cpp \
@@ -1189,7 +1193,7 @@ RUN_DECLARE_SOURCES = \
 	$(SRC)/NMEA/InputLine.cpp \
 	$(SRC)/NMEA/Checksum.cpp \
 	$(SRC)/NMEA/ExternalSettings.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Thread.cpp \
 	$(SRC)/Thread/Mutex.cpp \
@@ -1256,7 +1260,7 @@ RUN_FLIGHT_LIST_SOURCES = \
 	$(SRC)/NMEA/InputLine.cpp \
 	$(SRC)/NMEA/Checksum.cpp \
 	$(SRC)/NMEA/ExternalSettings.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Thread.cpp \
 	$(SRC)/Thread/Mutex.cpp \
@@ -1286,7 +1290,7 @@ RUN_DOWNLOAD_FLIGHT_SOURCES = \
 	$(SRC)/NMEA/InputLine.cpp \
 	$(SRC)/NMEA/Checksum.cpp \
 	$(SRC)/NMEA/ExternalSettings.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/OS/Clock.cpp \
 	$(SRC)/Thread/Thread.cpp \
 	$(SRC)/Thread/Mutex.cpp \
@@ -1346,7 +1350,7 @@ RUN_IGC_WRITER_SOURCES = \
 	$(SRC)/Version.cpp \
 	$(SRC)/FLARM/FlarmCalculations.cpp \
 	$(SRC)/ClimbAverageCalculator.cpp \
-	$(SRC)/Logger/IGCWriter.cpp \
+	$(SRC)/IGC/IGCWriter.cpp \
 	$(SRC)/Logger/LoggerFRecord.cpp \
 	$(SRC)/Logger/LoggerGRecord.cpp \
 	$(SRC)/Logger/LoggerEPE.cpp \
@@ -1399,7 +1403,7 @@ $(eval $(call link-program,RunWindEKF,RUN_WIND_EKF))
 
 RUN_TRACE_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/NMEA/Aircraft.cpp \
 	$(SRC)/NMEA/FlyingState.cpp \
 	$(ENGINE_SRC_DIR)/GlideSolvers/GlideSettings.cpp \
@@ -1416,7 +1420,7 @@ $(eval $(call link-program,RunTrace,RUN_TRACE))
 
 RUN_OLC_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/NMEA/Aircraft.cpp \
 	$(SRC)/NMEA/FlyingState.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/SearchPoint.cpp \
@@ -1988,6 +1992,7 @@ RUN_ANALYSIS_SOURCES = \
 	$(SRC)/Dialogs/DialogSettings.cpp \
 	$(SRC)/Look/DialogLook.cpp \
 	$(SRC)/Look/ButtonLook.cpp \
+	$(SRC)/CrossSection/AirspaceXSRenderer.cpp \
 	$(SRC)/CrossSection/TerrainXSRenderer.cpp \
 	$(SRC)/CrossSection/CrossSectionRenderer.cpp \
 	$(SRC)/CrossSection/CrossSectionWindow.cpp \
@@ -2028,7 +2033,7 @@ RUN_ANALYSIS_SOURCES = \
 	$(SRC)/ComputerSettings.cpp \
 	$(SRC)/Logger/Settings.cpp \
 	$(SRC)/Tracking/TrackingSettings.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/MapSettings.cpp \
 	$(SRC)/Blackboard/InterfaceBlackboard.cpp \
 	$(SRC)/Audio/VegaVoice.cpp \
@@ -2084,6 +2089,8 @@ RUN_AIRSPACE_WARNING_DIALOG_SOURCES = \
 	$(SRC)/Formatter/Units.cpp \
 	$(SRC)/Formatter/UserUnits.cpp \
 	$(SRC)/Formatter/TimeFormatter.cpp \
+	$(SRC)/Formatter/AirspaceFormatter.cpp \
+	$(SRC)/Formatter/AirspaceUserUnitsFormatter.cpp \
 	$(SRC)/Look/DialogLook.cpp \
 	$(SRC)/Look/ButtonLook.cpp \
 	$(SRC)/Dialogs/XML.cpp \
@@ -2300,7 +2307,7 @@ $(eval $(call link-program,DumpTaskFile,DUMP_TASK_FILE))
 
 IGC2NMEA_SOURCES = \
 	$(SRC)/Replay/IgcReplay.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/NMEA/Checksum.cpp \
 	$(SRC)/Units/System.cpp \
 	$(SRC)/Units/Descriptor.cpp \

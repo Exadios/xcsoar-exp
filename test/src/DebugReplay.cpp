@@ -30,7 +30,8 @@ Copyright_License {
 #include "Device/Port/NullPort.hpp"
 #include "Device/Parser.hpp"
 #include "Profile/DeviceConfig.hpp"
-#include "Replay/IGCParser.hpp"
+#include "IGC/IGCParser.hpp"
+#include "IGC/IGCFix.hpp"
 
 static DeviceConfig config;
 static NullPort port;
@@ -141,7 +142,7 @@ DebugReplayIGC::Next()
   while ((line = reader->read()) != NULL) {
     if (line[0] == 'B') {
       IGCFix fix;
-      if (IGCParseFix(line, fix)) {
+      if (IGCParseFix(line, fix) && fix.gps_valid) {
         CopyFromFix(fix);
 
         Compute();
