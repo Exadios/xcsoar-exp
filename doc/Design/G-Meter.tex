@@ -73,7 +73,7 @@
 
 \begin{document}
 \maketitle
-\date{January 2011}
+\date{April 2012}
 
 \clearpage\setcounter{page}{1}
 \thispagestyle{Contents}
@@ -96,11 +96,9 @@ The purpose of this design document is to describe an instrument that will provi
 \bigskip
 
 A glider climbs as a result of an acceleration normal to the Geod. By observing the normal acceleration the climb velocity may be determined.
-
 \begin{equation}
 v = \int{\left( a - g \right)} dt
 \end{equation}
-
 where $a$ is the observed acceleration normal to to the Geoid, $g$ is the acceleration due to gravity and $v$ is the velocity normal to the Geod.
 
 \clearpage\setcounter{page}{1}
@@ -114,13 +112,311 @@ Given the quality of avaliable inertial sensors (gyros, accelerometers) it is un
 
 \bigskip
 
-The necessary integration of the intertial platform and the GPS solution will be effected using a suitably designed Kalman Filter.
+The necessary integration of the intertial platform and the GPS solution will be effected using a suitably designed Kalman Filter. The output of the filter is position ($\phi$, $\lambda$ and $h$) and velocity ($v_N$, $v_E$ and $v_h$). The height, $h$, is the height above the Elipsoid in use (WGS84). The vertical velocity is normal to the Elipsoid which, for the purposes of this application, is close enough to the Geodetic normal that the two are considered equal. The general arrangement is shown in \ref{fig:001}.
+\begin{figure}
+\centering 
+\includegraphics{G-Meter-fig-001.png}
+\caption[INS/GPS integration using a Kalman Filter]{INS/GPS integration using a Kalman Filter}
+\label{fig:001}
+\end{figure}
+
+\section[INS Solution]{INS Solution}
+
+In the following the $b$ super or sub script denote a variable in the body (aircraft) domain and the $e$ super or sub script denote a variable in the Earth Centered Earth Fixed (ECEF) domain.
+\begin{equation}
+f^e = R^e_b f^b
+\label{eqn:BodytoECEFForce}
+\end{equation}
+where
+
+  $f^e$ is a force vector in the $e$ domain
+
+  $f^b$ is a force vector in the $b$ domain which is read from the accelerometers
+
+  $R^e_b$ is the transformation matrix from the $b$ domain to the $e$ domain.
+
+\begin{equation}
+\begin{bmatrix}
+\dot{x^e}\\
+\dot{v^e}\\
+\dot{R^e_b}
+\end{bmatrix}
+=
+\begin{bmatrix}
+v^e\\
+f^e - 2\Omega^e_{ie} v^e + g^e \left( x^e \right)\\
+R^e_b \Omega^b_{eb}
+\end{bmatrix}
+\label{eqn:dynamic}
+\end{equation}
+where
+
+  $x^e$ is the position vector in the $e$ domain
+
+  $v^e$ is the velocity vector in the $e$ domain
+
+  $\Omega^e_{ie}$ is the skew-symentric matrix of the earth's rotation rate, $\omega^e_{ie}$, which is well known
+
+  $\Omega^b_{eb}$ is the skew-symetric matrix of the angular velocity vector of the $b$ domain w.r.t. the $e$ domain, $\omega^b_{eb}$, coordinated in the $b$ domain.
+
+\bigskip
+
+The vectors are functions of time and the super dots denote derivatives w.r.t. The skew-dynamtic matrices are of the form
+\begin{equation}
+\Omega =
+\begin{bmatrix}
+0 & - \omega_z & \omega_y\\
+\omega_z & 0 & - \omega_x\\
+- \omega_y & \omega_x & 0
+\end{bmatrix}
+\end{equation}
+
+The angular velocity vector, $\omega^b_{eb}$, is given by
+\begin{equation}
+\omega^b_{eb} = \omega^b_{ib} - R^b_e \omega^e_{ie}
+\text{, }
+R^b_e = R^{e\mathrm{T}}_b
+\end{equation}
+where
+
+  $\omega^b_{ib}$ the measured angular velocities from the gyros w.r.t. the inertial frame in the body domain.
+
+\subsection[Discrete Time Navigation System]{Discrete Time Navigation System}
+
+Consider a system in which the IMU is sampled at regular intervals, $t_{k+1} - t_k = \delta{T}$, then (\ref{eqn:dynamic}) becomes
+\begin{equation}
+R^e_b \left( t_{k + 1} \right) = R^e_b \left( t_k \right) e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)}
+\end{equation}
+\begin{equation}
+\dot{v}^e \left( t_k \right) = R^e_b \left( t_k \right) f^b - 2 \Omega^e_{eb} \left( t_k \right) v^e \left( t_k \right) + g^e \left( x^e \left( t_k \right) \right)
+\end{equation}
+
+For computational efficiency the (1, 1) Pade approximation of $e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)}$, $P \left(e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)} \right)$, is
+\begin{equation}
+P \left( e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)} \right) = \frac{\left( 2I + \Omega^b_{eb} \left( t_k \right) \delta{T} \right)}{\left( 2I - \Omega^b_{eb} \left( t_k \right) \delta{T} \right)}
+\end{equation}
+
+\section[IMU Systematic Error Model]{IMU Systematic Error Model}
+
+The solution to $R^e_b \left( t \right)$ of (\ref{eqn:BodytoECEFForce}) is
+\begin{equation}
+R^e_b \left( t \right) = R^e_b \left( 0 \right) e^{\Omega^b_{eb} t}
+\label{eqn:DifferentialSolution}
+\end{equation}
+when $\Omega^b_{eb}$ is constant. Let the angular velocity errors of $\omega^b_{eb}$ caused by gyro drifts be $\Delta \omega^b_{eb}$, giving drifts $\Delta \Omega^b_{eb}$ in $\Omega^b_{eb}$ and $\Delta R^e_b \left( t \right)$ in $R^e_b \left( t \right)$. Then (\ref{eqn:DifferentialSolution}) can become
+\begin{equation}
+R^e_b \left( t \right) + \Delta R^e_b \left( t \right) = R^e_b \left( 0 \right) e^{\left( \Omega^b_{eb} + \Delta \Omega^b_{eb} t \right)} = R^e_b \left( t \right) + R^e_b \left( 0 \right) \Delta \Omega^e_{eb} \left( t \right) + \dotsb
+\end{equation}
+Let accelerometer bias be $\Delta f^b$, then
+\begin{equation}
+\left( R^e_b \left( t \right) + R^e_b \left( 0 \right) \Delta \Omega^b_{eb} t \right) \left( f^b + \Delta f^b \right) = f^e + R^e_b \left( t \right) \Delta f^b + R^e_b \left( 0 \right) \Delta \Omega^b_{eb} \left( f^b + \Delta f^b \right) t
+\end{equation}
+That is
+\begin{equation}
+\left( R^e_b \left( t \right) + R^e_b \left( 0 \right) \Delta \Omega^b_{eb} t \right) \left( f^b + \Delta f^b \right) = f^e + \Delta f^e_g + \Delta f^e_a t
+\end{equation}
+where
+
+$\Delta f^e_g = R^e_b \Delta f^b$ is the gyro drifts
+
+$\Delta f^e_a = R^e_b \Delta \Omega^b_{eb} \left( f^b + \Delta f^b \right)$ is the accelerometer biases.
+
+
+\section[Kalman Filter]{Kalman Filter}
+
+Let the state space model of the Kalman Filter used to integrate the data be
+\begin{equation}
+x =
+\begin{bmatrix}
+x^e_p\\
+b_p\\
+\dot{x^e_p}\\
+\dot{b_p}\\
+\Delta f^e_g\\
+\Delta f^e_a
+\end{bmatrix}
+\label{StateSpaceModel}
+\end{equation}
+where
+
+$x^e_p$ is the GPS position vector in the ECEF domain
+
+$b_p$ is the GPS clock bias scalar
+
+$\dot{x^e_p}$ is the GPS velocity vector in the ECEF domain
+
+$\dot{b_p}$ is the GPS rate of change of the clock bias scalar
+
+$\Delta f^e_g$ is the gyro drift vector
+
+$\Delta f^e_a$ is the accelerometer biase vector.
+
+\bigskip
+
+The plant model is
+\begin{equation}
+\hat{x} \left( t_{k + 1} | t_k \right) = A_k \hat{x} \left( t_k | t_k \right) + B u \left( t_k \right)
+\label{eqn:PlantModel}
+\end{equation}
+In this case the INS accelerations, $\dot{v}^e$, are introduced into the model via $u \left( t_k \right)$ and the time interval, $t_{k + 1} - t_k$, is equal to $\delta T$, the INS sample rate. The GPS sample rate is very likely to be more that a order of magnitude less than the INS sample rate. In the case where the two sample rates are synchronous then the filter can be implemented without additional observation error. In the case that they are not synchronous then the same filter is assumed (or hoped) that the introduced noise has a white Gaussian distribution. The GPS sample rate is $\Delta T = m \delta T$ where m is some integer in the synchronous case and a real number in the asynchronous case. (However, if m is an integer the sample rates are not necessarilly synchronous!)
+
+\bigskip
+
+So
+\begin{equation}
+u =
+\begin{bmatrix}
+\dot{v^e_x}\\
+\dot{v^e_y}\\
+\dot{v^e_z}
+\end{bmatrix}
+\end{equation}
+and
+\begin{equation}
+B =
+\begin{bmatrix}
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+\delta T & 0 & 0\\
+0 & \delta T & 0\\
+0 & 0 & \delta T\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+0 & 0 & 0\\
+\end{bmatrix}
+\end{equation}
+
+\bigskip
+
+The transition matrix is
+\begin{equation}
+A_k =
+\begin{bmatrix}
+A_{11} & A_{12}\\
+0 & A_{22}
+\end{bmatrix}
+\end{equation}
+where
+\begin{equation}
+A_{11} =
+\begin{bmatrix}
+1 & 0 & 0 & 0 & \delta T & 0 & 0 & 0\\
+0 & 1 & 0 & 0 & 0 & \delta T & 0 & 0\\
+0 & 0 & 1 & 0 & 0 & 0 & \delta T & 0\\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & \delta T\\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1\\
+\end{bmatrix}
+\end{equation}
+\begin{equation}
+A_{12P} =
+\begin{bmatrix}
+0 & 0 & 0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 0\\
+\Delta T & 0 & 0 & \Delta T^2 & 0 & 0\\
+0 & \Delta T & 0 & 0 & \Delta T^2 & 0\\
+0 & 0 & \Delta T & 0 & 0 & \Delta T^2\\
+0 & 0 & 0 & 0 & 0 & 0\\
+\end{bmatrix}
+\end{equation}
+\begin{equation}
+A_{22P} =
+\begin{bmatrix}
+q_G I_{3 \times 3} & 0_{3 \times 3}\\
+0_{3 \times 3} & q_A I_{3 \times 3}
+\end{bmatrix}
+\end{equation}
+\begin{equation}
+A_{12} =
+\begin{cases}
+A_{12P} & \text{if $k = mN$}\\
+0_{8 \times 6} & \text{otherwise}
+\end{cases}
+\end{equation}
+\begin{equation}
+A_{22} =
+\begin{cases}
+A_{22P} & \text{if $k = mN$}\\
+0_{6 \times 6} & \text{otherwise}
+\end{cases}
+\end{equation}
+where $q_G$ and $q_A$ are the arbitary aging rates for the angular velocity drifts and the accelerometer biases.
+
+\bigskip
+
+The observation model is
+\begin{equation}
+z \left( t_k \right) = O^{\mathrm{T}} \left( t_k \right) x \left( t_k \right)
+\end{equation}
+\begin{equation}
+O^{\mathrm{T}} \left( t_k \right) =
+\begin{cases}
+\begin{bmatrix}
+I_{8 \times 8} & 0_{8 \times 6}\\
+\end{bmatrix} & \text{if $k = mN$}\\
+0 & \text{otherwise}\\
+\end{cases}
+\end{equation}
+where $x \left( t_k \right)$ is the observed data from the GPS here.
+
+\subsection[Initialization]{Initialization}
+
+\begin{equation}
+\hat{x} \left( 0 | 0 \right) = x \left( 0 \right)
+\end{equation}
+\begin{equation}
+P \left( 0 | 0 \right) = P \left( 0 \right)
+\end{equation}
+
+\subsection[Inovation]{Inovation}
+
+\begin{equation}
+\hat{x} \left( t_k | t_{k - 1} \right) = A \left( t_{k - 1} \right) \hat{x} \left( t_{k - 1} | t_{k - 1} \right) + B \left( t_{k - 1} \right) u \left( t_{k - 1} \right)
+\end{equation}
+\begin{equation}
+P \left( t_k | t_{k - 1} \right) = A_{11} P \left( t_{k - 1} | t_{k - 1} \right) P \left( t_{k - 1} | t_{k - 1} \right) A^{\mathrm{T}}_{11} + Q_P \left( t_{k - 1} \right)
+\end{equation}
+
+\subsection[Update]{Update}
+
+\begin{equation}
+K_P \left( t_k \right) = P_P \left( t_k | t_{k - 1} \right) O_P \left( t_k \right) \left[ C^{\mathrm{T}}_P \left( t_k \right) P_P \left( t_k | t_{k - 1} \right) O_P \left( t_k \right) + R \left( t_k \right) \right]^{-1}
+\end{equation}
+\begin{equation}
+P_P \left( t_k | t_k \right) = \left[ I - K_P \left( t_k \right) O_P^{\mathrm{T}} \left( t_k \right) \right] P_P \left( t_k | t_{k - 1} \right)
+\end{equation}
+\begin{equation}
+\hat{x} \left( t_k | t_k \right) = \hat{x} \left( t_k | t_{k - 1} \right) + K \left( t_k \right) \left[ Z \left( t_k \right) - O_P^{\mathrm{T}} \left( t_k \right) \hat{x} \left( t_k | t_{k - 1} \right) \right]
+\end{equation}
+\begin{equation}
+K \left( t_k \right) = 
+\begin{cases}
+\begin{bmatrix}
+K_P \left( t_k \right)\\
+K_I \left( t_k \right)_{6 \times 8}\\
+\end{bmatrix}
+& \text{, if $ k = mN$} \\
+0 & \text{, otherwise}
+\end{cases}
+\end{equation}
+
+\clearpage\setcounter{page}{1}
+\chapter[Energy]{Energy}
 
 \appendix
 
 \clearpage\setcounter{page}{1}
-\clearpage\setcounter{page}{1}
-\chapter[Kalman Filter]{Kalman Filter}
+\chapter[Kalman Filter Algorithm]{Kalman Filter Algorithm}
 
 \section[The Discrete Kalman Filter Algorithm]{The Discrete Kalman Filter Algorithm}
 
@@ -128,17 +424,17 @@ The Kalman Filter Algorithm is implemented as a two step process. The first step
 
 \bigskip
 
-In the following the subscript notation $k|i$ donates the state at $t_k$ using knowledge from $t_i$. Further
+In the following the notation $x \left( t_k|t_i \right)$ donates the state $x$ at $t_k$ using knowledge from $t_i$. Further
 
 $\hat{x}$= System state estimate
 
 $u$ = Any control input that may be applied directly to the $\hat{x}$
 
-$A$ = The matrix with maps $\hat{x}_{k - 1|k - 1}$ to $\hat{x}_{k|k - 1}$
+$A$ = The matrix with maps $\hat{x} \left( t_{k - 1}|t_{k - 1} \right)$ to $\hat{x} \left( t_k|t_{k - 1} \right)$
 
 $B$ = The matrix which maps $u$ to $\hat{x}$
 
-$H$ = The matrix which maps $\hat{x}_{k|k - 1}$ to $z_{k|k}$
+$H$ = The matrix which maps $\hat{x} \left( t_k|t_{k - 1} \right)$ to $z \left( t_k|t_k \right)$
 
 $P$ = Process covariance
 
@@ -153,25 +449,25 @@ $R$ = Observation noise
 \subsubsection[Innovation]{Innovation}
 
 \begin{equation}
-\hat{x}_{k|{k-1}} = A\hat{x}_{{k-1}|{k-1}} + Bu_k
+\hat{x} \left( t_k|t_{k-1} \right) = A\hat{x} \left( t_{k-1}|t_{k-1} \right) + Bu \left( t_k \right)
 \end{equation}
 
 \begin{equation}
-P_{k|{k-1}} = AP_{{k-1}|{k-1}}A^T + Q
+P \left( t_k|t_{k-1} \right) = AP \left( t_{k-1}|t_{k-1} \right) A^{\mathrm{T}} + Q
 \end{equation}
 
 \subsubsection[Observation]{Observation}
 
 \begin{equation}
-K_{k|k} = P_{k|{k-1}}H^T \left( HP_{k|{k-1}}H^T + R \right) ^{-1}
+K \left( t_k|t_k \right) = P \left( t_k|t_{k-1} \right) H^{\mathrm{T}} \left( HP \left( t_k|t_{k-1} \right) H^{\mathrm{T}} + R \right) ^{-1}
 \end{equation}
 
 \begin{equation}
-\hat{x}_{k|k} = \hat{x}_{k|{k-1}} + K_{k|k} \left( z_{k|k} - H\hat{x}_{k|{k-1}} \right)
+\hat{x} \left( t_k|t_k \right) = \hat{x} \left( t_k|t_{k-1} \right) + K \left( t_k|t_k \right) \left( z \left(t_k \right) - H\hat{x} \left( t_k|t_{k-1} \right) \right)
 \end{equation}
 
 \begin{equation}
-P_{k|k} = \left( I - K_{k|k}H \right) P_{k|{k-1}}
+P \left( t_k|t_k \right) = \left( I - K \left( t_k|t_k \right)H \right) P \left( t_k|t_{k-1} \right)
 \end{equation}
 
 \end{document}

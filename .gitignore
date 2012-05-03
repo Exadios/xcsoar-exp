@@ -40,3 +40,4 @@ build/local-config.mk
 *.toc
 *.zip
 *.swp
+doc/Design/*.png
