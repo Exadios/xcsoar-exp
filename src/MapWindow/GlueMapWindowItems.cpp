@@ -79,7 +79,7 @@ GlueMapWindow::ShowMapItems(const GeoPoint &location,
   // Show the list dialog
   if (list.empty()) {
     if (show_empty_message)
-      MessageBoxX(_("There is nothing interesting near this location."),
+      ShowMessageBox(_("There is nothing interesting near this location."),
                   _("Map elements at this location"), MB_OK | MB_ICONINFORMATION);
 
     return false;
@@ -87,7 +87,7 @@ GlueMapWindow::ShowMapItems(const GeoPoint &location,
 
   ShowMapItemListDialog(UIGlobals::GetMainWindow(), list,
                         UIGlobals::GetDialogLook(), look, traffic_look,
-                        GetMapSettings(),
+                        final_glide_bar_renderer.GetLook(), GetMapSettings(),
                         glide_computer != NULL
                         ? &glide_computer->GetAirspaceWarnings() : NULL);
   return true;

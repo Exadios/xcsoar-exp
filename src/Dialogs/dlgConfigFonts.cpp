@@ -29,7 +29,7 @@ Copyright_License {
 #include "Profile/FontConfig.hpp"
 #include "Screen/Layout.hpp"
 #include "UIGlobals.hpp"
-#include "DataField/Boolean.hpp"
+#include "Form/DataField/Boolean.hpp"
 #include "Util/StringUtil.hpp"
 #include "Compiler.h"
 
@@ -289,14 +289,14 @@ void dlgConfigFontsShowModal()
                               szProfileUseCustomFonts,
                               ui_settings.custom_fonts);
 
+  delete wf;
+
   if (changed) {
     Profile::Save();
 
-    MessageBoxX(_("Changes to configuration saved.  Restart XCSoar to apply changes."),
+    ShowMessageBox(_("Changes to configuration saved.  Restart XCSoar to apply changes."),
                 _T(""), MB_OK);
   }
-
-  delete wf;
 
   TempInfoWindowFont.Reset();
   TempTitleWindowFont.Reset();

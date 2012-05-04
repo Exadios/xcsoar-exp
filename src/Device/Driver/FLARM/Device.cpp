@@ -118,6 +118,30 @@ FlarmDevice::SetRange(unsigned range, OperationEnvironment &env)
 }
 
 bool
+FlarmDevice::GetBaudRate(unsigned &baud_id, OperationEnvironment &env)
+{
+  TCHAR buffer[12];
+  if (!GetConfig("BAUD", buffer, ARRAY_SIZE(buffer), env))
+    return false;
+
+  TCHAR *end_ptr;
+  unsigned value = _tcstoul(buffer, &end_ptr, 10);
+  if (end_ptr == buffer)
+    return false;
+
+  baud_id = value;
+  return true;
+}
+
+bool
+FlarmDevice::SetBaudRate(unsigned baud_id, OperationEnvironment &env)
+{
+  StaticString<32> buffer;
+  buffer.Format(_T("%u"), baud_id);
+  return SetConfig("BAUD", buffer, env);
+}
+
+bool
 FlarmDevice::GetPilot(TCHAR *buffer, size_t length, OperationEnvironment &env)
 {
   return GetConfig("PILOT", buffer, length, env);
@@ -210,7 +234,7 @@ FlarmDevice::GetConfig(const char *setting, TCHAR *buffer, size_t length,
 
   char narrow_buffer[length];
 
-  Send(request);
+  Send(request, env);
   if (!Receive(expected_answer, narrow_buffer, length, env, 2000))
     return false;
 
@@ -231,12 +255,12 @@ FlarmDevice::SetConfig(const char *setting, const TCHAR *value,
   NarrowString<256> expected_answer(buffer);
   expected_answer[6u] = 'A';
 
-  Send(buffer);
+  Send(buffer, env);
   return port.ExpectString(expected_answer, env, 2000);
 }
 
 void
-FlarmDevice::Restart()
+FlarmDevice::Restart(OperationEnvironment &env)
 {
-  Send("PFLAR,0");
+  Send("PFLAR,0", env);
 }

@@ -45,6 +45,7 @@ Copyright_License {
 #include "UtilsSystem.hpp"
 #include "FLARM/FlarmDetails.hpp"
 #include "FLARM/FlarmNet.hpp"
+#include "FLARM/Friends.hpp"
 #include "MapSettings.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/NMEALogger.hpp"
@@ -362,7 +363,7 @@ XCSoarInterface::Startup()
 
   // Set the home waypoint
   WaypointGlue::SetHome(way_points, terrain, SetComputerSettings(),
-                        false);
+                        device_blackboard, false);
 
   // ReSynchronise the blackboards here since SetHome touches them
   device_blackboard->Merge();
@@ -518,6 +519,8 @@ XCSoarInterface::Shutdown()
   flight_logger = NULL;
 
   GetLiveBlackboard().RemoveListener(glide_computer_events);
+
+  FlarmFriends::Save();
 
   // Save settings to profile
   operation.SetText(_("Shutdown, saving profile..."));

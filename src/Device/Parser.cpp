@@ -31,7 +31,7 @@ Copyright_License {
 #include "NMEA/Info.hpp"
 #include "NMEA/Checksum.hpp"
 #include "NMEA/InputLine.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Compatibility/string.h" /* for _ttoi() */
 #include "Units/System.hpp"
 #include "OS/Clock.hpp"
@@ -707,7 +707,7 @@ NMEAParser::PFLAA(NMEAInputLine &line, NMEAInfo &info)
   // 5 id, 6 digit hex
   char id_string[16];
   line.read(id_string, 16);
-  traffic.id.Parse(id_string, NULL);
+  traffic.id = FlarmId::Parse(id_string, NULL);
 
   traffic.track_received = line.read_checked(value);
   if (!traffic.track_received) {

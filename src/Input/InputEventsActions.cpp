@@ -70,7 +70,7 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "Gauge/GaugeFLARM.hpp"
 #include "Profile/Profile.hpp"
 #include "Profile/ProfileKeys.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Audio/Sound.hpp"
 #include "Interface.hpp"
 #include "Components.hpp"
@@ -263,7 +263,7 @@ InputEvents::eventFlarmDetails(gcc_unused const TCHAR *misc)
     if (id.IsDefined())
       dlgFlarmTrafficDetailsShowModal(id);
   } else {
-    MessageBoxX(_("Unknown competition number"),
+    ShowMessageBox(_("Unknown competition number"),
                 _("Not found"), MB_OK | MB_ICONINFORMATION);
   }
 }

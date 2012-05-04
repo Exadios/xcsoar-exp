@@ -27,6 +27,7 @@ Copyright_License {
 #include "Dialogs/Message.hpp"
 #include "Airspace/AbstractAirspace.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
+#include "Formatter/AirspaceFormatter.hpp"
 #include "Math/FastMath.h"
 #include "Math/Earth.hpp"
 #include "Navigation/Geometry/GeoVector.hpp"
@@ -51,15 +52,9 @@ OnAcknowledgeClicked(gcc_unused WndButton &Sender)
     return;
 
   bool acked = airspace_warnings->get_ack_day(*airspace);
+  airspace_warnings->acknowledge_day(*airspace, !acked);
 
-  int answer = MessageBoxX(airspace->GetName(), acked ?
-                           _("Enable airspace again?") : _("Acknowledge for day?"),
-                           MB_YESNO | MB_ICONQUESTION);
-
-  if (answer == IDYES) {
-    airspace_warnings->acknowledge_day(*airspace, !acked);
-    wf->SetModalResult(mrOK);
-  }
+  wf->SetModalResult(mrOK);
 }
 
 static void
@@ -107,29 +102,32 @@ SetValues()
 
   wp = (WndProperty*)wf->FindByName(_T("prpType"));
   assert(wp != NULL);
-  wp->SetText(airspace->GetTypeText());
+  wp->SetText(AirspaceFormatter::GetClass(*airspace));
   wp->RefreshDisplay();
 
   wp = (WndProperty*)wf->FindByName(_T("prpTop"));
   assert(wp != NULL);
-  wp->SetText(airspace->GetTopText().c_str());
+  wp->SetText(AirspaceFormatter::GetTop(*airspace).c_str());
   wp->RefreshDisplay();
 
   wp = (WndProperty*)wf->FindByName(_T("prpBase"));
   assert(wp != NULL);
-  wp->SetText(airspace->GetBaseText().c_str());
+  wp->SetText(AirspaceFormatter::GetBase(*airspace).c_str());
   wp->RefreshDisplay();
 
-  wp = (WndProperty*)wf->FindByName(_T("prpRange"));
-  assert(wp != NULL);
-  const GeoPoint &ac_loc = XCSoarInterface::Basic().location;
-  const GeoPoint closest_loc = airspace->ClosestPoint(ac_loc);
-  const GeoVector vec(ac_loc, closest_loc);
-  StaticString<80> buf;
-  buf.Format(_T("%d%s"), (int)Units::ToUserDistance(vec.distance),
-             Units::GetDistanceName());
-  wp->SetText(buf);
-  wp->RefreshDisplay();
+  if (airspace_warnings != NULL) {
+    wp = (WndProperty*)wf->FindByName(_T("prpRange"));
+    assert(wp != NULL);
+    const GeoPoint &ac_loc = XCSoarInterface::Basic().location;
+    const GeoPoint closest_loc =
+      airspace->ClosestPoint(ac_loc, airspace_warnings->GetProjection());
+    const GeoVector vec(ac_loc, closest_loc);
+    StaticString<80> buf;
+    buf.Format(_T("%d%s"), (int)Units::ToUserDistance(vec.distance),
+               Units::GetDistanceName());
+    wp->SetText(buf);
+    wp->RefreshDisplay();
+  }
 }
 
 void

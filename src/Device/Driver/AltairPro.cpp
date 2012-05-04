@@ -194,7 +194,7 @@ AltairProDevice::PropertySetGet(char *Buffer, size_t size,
   TimeoutClock timeout(5000);
 
   // eg $PDVSC,S,FOO,BAR*<cr>\r\n
-  if (!PortWriteNMEA(port, Buffer))
+  if (!PortWriteNMEA(port, Buffer, env))
     return false;
 
   Buffer[6] = _T('A');

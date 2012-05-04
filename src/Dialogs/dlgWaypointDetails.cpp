@@ -96,14 +96,14 @@ NextPage(int Step)
 #endif
            waypoint->details.empty());
 
-  wInfo->set_visible(page == 0);
-  wDetails->set_visible(page == 1);
-  wCommand->set_visible(page == 2);
-  wImage->set_visible(page >= 3);
+  wInfo->SetVisible(page == 0);
+  wDetails->SetVisible(page == 1);
+  wCommand->SetVisible(page == 2);
+  wImage->SetVisible(page >= 3);
   zoom = 0;
-  wMagnify->set_visible(page >= 3);
+  wMagnify->SetVisible(page >= 3);
   wMagnify->SetEnabled(true);
-  wShrink->set_visible(page >= 3);
+  wShrink->SetVisible(page >= 3);
   wShrink->SetEnabled(false);
 }
 
@@ -222,7 +222,7 @@ OnGotoAndClearTaskClicked(gcc_unused WndButton &button)
   if (protected_task_manager == NULL)
     return;
 
-  if ((ordered_task_size() > 2) && MessageBoxX(_("Clear current task?"),
+  if ((ordered_task_size() > 2) && ShowMessageBox(_("Clear current task?"),
                         _("Goto and clear task"), MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
 
@@ -234,7 +234,7 @@ OnGotoAndClearTaskClicked(gcc_unused WndButton &button)
   case NOTASK:
   case UNMODIFIED:
   case INVALID:
-    MessageBoxX(_("Unknown error creating task."), _("Error"),
+    ShowMessageBox(_("Unknown error creating task."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
   }
@@ -367,7 +367,7 @@ dlgWaypointDetailsShowModal(SingleWindow &parent, const Waypoint &_waypoint,
 
   EditWindow *wDetailsText = (EditWindow *)wf->FindByName(_T("Details"));
   assert(wDetailsText != NULL);
-  wDetailsText->set_text(waypoint->details.c_str());
+  wDetailsText->SetText(waypoint->details.c_str());
 
 #ifdef ANDROID
   int num_files = std::distance(waypoint->files_external.begin(),
@@ -378,12 +378,12 @@ dlgWaypointDetailsShowModal(SingleWindow &parent, const Waypoint &_waypoint,
     wFilesList->SetActivateCallback(OnFileListEnter);
 
     unsigned list_height = wFilesList->GetItemHeight() * std::min(num_files, 5);
-    wFilesList->resize(wFilesList->get_width(), list_height);
+    wFilesList->Resize(wFilesList->GetWidth(), list_height);
     wFilesList->SetLength(num_files);
 
-    PixelRect rc = wDetailsText->get_position();
+    PixelRect rc = wDetailsText->GetPosition();
     rc.top += list_height;
-    wDetailsText->move(rc);
+    wDetailsText->Move(rc);
   } else
 #endif
     wFilesList->Hide();

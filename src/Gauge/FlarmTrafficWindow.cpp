@@ -298,25 +298,25 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
       FlarmFriends::Color team_color = FlarmFriends::GetFriendColor(traffic.id);
 
       // If no color found but target is teammate
-      if (team_color == FlarmFriends::NONE &&
+      if (team_color == FlarmFriends::Color::NONE &&
           settings.team_flarm_tracking &&
           traffic.id == settings.team_flarm_id)
         // .. use yellow color
-        team_color = FlarmFriends::GREEN;
+        team_color = FlarmFriends::Color::GREEN;
 
       // If team color found -> draw a colored circle around the target
-      if (team_color != FlarmFriends::NONE) {
+      if (team_color != FlarmFriends::Color::NONE) {
         switch (team_color) {
-        case FlarmFriends::GREEN:
+        case FlarmFriends::Color::GREEN:
           circle_pen = &look.team_pen_green;
           break;
-        case FlarmFriends::BLUE:
+        case FlarmFriends::Color::BLUE:
           circle_pen = &look.team_pen_blue;
           break;
-        case FlarmFriends::YELLOW:
+        case FlarmFriends::Color::YELLOW:
           circle_pen = &look.team_pen_yellow;
           break;
-        case FlarmFriends::MAGENTA:
+        case FlarmFriends::Color::MAGENTA:
           circle_pen = &look.team_pen_magenta;
           break;
         default:
@@ -652,13 +652,13 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const
 
   TCHAR distance_string[10];
   FormatUserDistanceSmart(distance, distance_string,
-                            ARRAY_SIZE(distance_string));
+                          ARRAY_SIZE(distance_string), fixed(1000));
   PixelSize s = canvas.CalcTextSize(distance_string);
   canvas.text(radar_mid.x - s.cx / 2,
               radar_mid.y + radius - s.cy * 0.75, distance_string);
 
   FormatUserDistanceSmart(distance / 2, distance_string,
-                            ARRAY_SIZE(distance_string));
+                          ARRAY_SIZE(distance_string), fixed(1000));
   s = canvas.CalcTextSize(distance_string);
   canvas.text(radar_mid.x - s.cx / 2,
               radar_mid.y + radius / 2 - s.cy * 0.75, distance_string);

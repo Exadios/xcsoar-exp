@@ -33,6 +33,7 @@ Copyright_License {
 #include "Profile/DeviceConfig.hpp"
 #include "OS/Args.hpp"
 #include "OS/Sleep.h"
+#include "Operation/ConsoleOperationEnvironment.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,6 +68,8 @@ main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
+  ConsoleOperationEnvironment env;
+
   char stamp[6] = "";
 
   char line[1024];
@@ -81,7 +84,7 @@ main(int argc, char **argv)
       strncpy(stamp, line + 7, sizeof(stamp));
     }
 
-    if (!port->FullWriteString(line, 1000)) {
+    if (!port->FullWriteString(line, env, 1000)) {
       fprintf(stderr, "Failed to write to port\n");
       delete port;
       return EXIT_FAILURE;

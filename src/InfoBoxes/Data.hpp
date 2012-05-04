@@ -25,7 +25,7 @@ Copyright_License {
 #define XCSOAR_INFO_BOX_DATA_HPP
 
 #include "Util/StaticString.hpp"
-#include "Units/Settings.hpp"
+#include "Units/Unit.hpp"
 #include "Math/fixed.hpp"
 
 class Angle;
@@ -98,6 +98,11 @@ struct InfoBoxData {
   void SetValue(Angle value, const TCHAR *suffix=_T(""));
 
   void SetValueFromBearingDifference(Angle delta);
+
+  /**
+   * Set the InfoBox value to the specified glide ratio.
+   */
+  void SetValueFromGlideRatio(fixed gr);
 
   /**
    * Set the InfoBox value to the specified distance.

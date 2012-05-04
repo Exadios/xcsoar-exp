@@ -32,6 +32,7 @@ Copyright_License {
 #include "Airspace/AirspaceWarning.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
 #include "Airspace/AirspaceWarningManager.hpp"
+#include "Formatter/AirspaceFormatter.hpp"
 #include "Engine/Airspace/AbstractAirspace.hpp"
 #include "Util/TrivialArray.hpp"
 
@@ -95,10 +96,10 @@ UpdateButtons()
 {
   const AbstractAirspace *airspace = GetSelectedAirspace();
   if (airspace == NULL) {
-    ack_warn_button->set_visible(false);
-    ack_day_button->set_visible(false);
-    ack_space_button->set_visible(false);
-    enable_button->set_visible(false);
+    ack_warn_button->SetVisible(false);
+    ack_day_button->SetVisible(false);
+    ack_space_button->SetVisible(false);
+    enable_button->SetVisible(false);
     return;
   }
 
@@ -112,10 +113,10 @@ UpdateButtons()
     inside = warning.GetWarningState() == AirspaceWarning::WARNING_INSIDE;
   }
 
-  ack_warn_button->set_visible(ack_expired && !inside);
-  ack_day_button->set_visible(!ack_day);
-  ack_space_button->set_visible(ack_expired && inside);
-  enable_button->set_visible(!ack_expired);
+  ack_warn_button->SetVisible(ack_expired && !inside);
+  ack_day_button->SetVisible(!ack_day);
+  ack_space_button->SetVisible(ack_expired && inside);
+  enable_button->SetVisible(!ack_expired);
 }
 
 static void
@@ -311,10 +312,9 @@ OnAirspaceListItemPaint(Canvas &canvas, const PixelRect paint_rc, unsigned i)
   const AbstractAirspace &airspace = *warning.airspace;
   const AirspaceInterceptSolution &solution = warning.solution;
 
-  tstring name = airspace.GetNameText();
-  tstring top = airspace.GetTopText(true);
-  tstring base = airspace.GetBaseText(true);
-  tstring type = airspace.GetTypeText(true);
+  tstring name = AirspaceFormatter::GetNameAndClass(airspace);
+  tstring top = AirspaceFormatter::GetTopShort(airspace);
+  tstring base = AirspaceFormatter::GetBaseShort(airspace);
 
   const UPixelScalar text_height = 12, text_top = 1;
 

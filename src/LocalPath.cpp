@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "LocalPath.hpp"
 #include "Compatibility/path.h"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Asset.hpp"
 
 #include "OS/FileUtil.hpp"
@@ -90,6 +90,7 @@ SetPrimaryDataPath(const TCHAR *path)
 
   free(data_path);
   data_path = _tcsdup(path);
+  data_path_length = _tcslen(data_path);
 }
 
 void

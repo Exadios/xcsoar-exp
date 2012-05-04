@@ -46,12 +46,13 @@ Copyright_License {
 #include "Device/Descriptor.hpp"
 #include "Device/Driver/Vega/Internal.hpp"
 #include "Profile/Profile.hpp"
-#include "DataField/Enum.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "UIGlobals.hpp"
 #include "Simulator.hpp"
 #include "Compiler.h"
 #include "OS/Sleep.h"
 #include "Util/Macros.hpp"
+#include "Operation/MessageOperationEnvironment.hpp"
 
 #include <assert.h>
 #include <string.h>
@@ -96,7 +97,7 @@ static TabbedControl *tabbed;
 static void
 SetParametersScheme(int schemetype)
 {
-  if(MessageBoxX(_("Set new audio scheme?  Old values will be lost."),
+  if(ShowMessageBox(_("Set new audio scheme?  Old values will be lost."),
                  _T("Vega"),
                  MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
@@ -160,7 +161,8 @@ OnSaveClicked(gcc_unused WndButton &Sender)
   dirty |= changed;
 
   // make sure changes are sent to device
-  if (dirty && device->SendSetting("StoreToEeprom", 2))
+  MessageOperationEnvironment env;
+  if (dirty && device->SendSetting("StoreToEeprom", 2, env))
     dirty = false;
 }
 

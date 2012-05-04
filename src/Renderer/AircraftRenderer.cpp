@@ -162,6 +162,75 @@ DrawSimpleAircraft(Canvas &canvas, const AircraftLook &look,
   canvas.polygon(aircraft, AircraftPoints);
 }
 
+static void
+DrawHangGlider(Canvas &canvas, const AircraftLook &look,
+               const Angle angle, const RasterPoint aircraft_pos)
+{
+  RasterPoint aircraft[] = {
+    {1, -3},
+    {7, 0},
+    {13, 4},
+    {13, 6},
+    {6, 3},
+    {1, 2},
+    {-1, 2},
+    {-6, 3},
+    {-13, 6},
+    {-13, 4},
+    {-7, 0},
+    {-1, -3},
+   };
+
+  PolygonRotateShift(aircraft, ARRAY_SIZE(aircraft),
+                     aircraft_pos.x, aircraft_pos.y, angle);
+
+  canvas.SelectWhiteBrush();
+  canvas.SelectBlackPen();
+  canvas.polygon(aircraft, ARRAY_SIZE(aircraft));
+}
+
+static void
+DrawParaGlider(Canvas &canvas, const AircraftLook &look,
+               const Angle angle, const RasterPoint aircraft_pos)
+{
+  RasterPoint aircraft[] = {
+    // Wing
+    {-16, 5},
+    {-22, 4},
+    {-28, 2},
+    {-27, -1},
+    {-26, -2},
+    {-24, -3},
+    {-21, -4},
+    {-16, -5},
+    {0, -6},
+    {16, -5},
+    {21, -4},
+    {24, -3},
+    {26, -2},
+    {27, -1},
+    {28, 2},
+    {22, 4},
+    {16, 5},
+
+    // Arrow on wing
+    {4, 6},
+    {-4, 6},
+    {0, -4},
+   };
+
+  PolygonRotateShift(aircraft, ARRAY_SIZE(aircraft),
+                     aircraft_pos.x, aircraft_pos.y, angle, 50);
+
+  canvas.SelectWhiteBrush();
+  canvas.SelectBlackPen();
+  canvas.polygon(aircraft, ARRAY_SIZE(aircraft) - 1);
+
+  canvas.SelectBlackBrush();
+  canvas.SelectNullPen();
+  canvas.polygon(aircraft + ARRAY_SIZE(aircraft) - 3, 3);
+}
+
 void
 AircraftRenderer::Draw(Canvas &canvas, const MapSettings &settings_map,
                        const AircraftLook &look,
@@ -177,6 +246,12 @@ AircraftRenderer::Draw(Canvas &canvas, const MapSettings &settings_map,
     break;
   case acSimple:
     DrawSimpleAircraft(canvas, look, angle, aircraft_pos, false);
+    break;
+  case acHangGlider:
+    DrawHangGlider(canvas, look, angle, aircraft_pos);
+    break;
+  case acParaGlider:
+    DrawParaGlider(canvas, look, angle, aircraft_pos);
     break;
   }
 }

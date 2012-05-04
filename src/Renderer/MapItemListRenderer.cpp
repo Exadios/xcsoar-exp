@@ -36,6 +36,7 @@ Copyright_License {
 #include "Formatter/UserGeoPointFormatter.hpp"
 #include "Formatter/TimeFormatter.hpp"
 #include "Formatter/AngleFormatter.hpp"
+#include "Formatter/AirspaceFormatter.hpp"
 #include "Dialogs/dlgTaskHelpers.hpp"
 #include "Renderer/OZPreviewRenderer.hpp"
 #include "Language/Language.hpp"
@@ -47,6 +48,7 @@ Copyright_License {
 #include "LocalTime.hpp"
 #include "Math/Screen.hpp"
 #include "Look/TrafficLook.hpp"
+#include "Look/FinalGlideBarLook.hpp"
 #include "Renderer/TrafficRenderer.hpp"
 
 #include <cstdio>
@@ -57,7 +59,8 @@ namespace MapItemListRenderer
             const DialogLook &dialog_look);
 
   void Draw(Canvas &canvas, const PixelRect rc,
-            const ArrivalAltitudeMapItem &item, const DialogLook &dialog_look);
+            const ArrivalAltitudeMapItem &item,
+            const DialogLook &dialog_look, const FinalGlideBarLook &look);
 
   void Draw(Canvas &canvas, const PixelRect rc, const SelfMapItem &item,
             const DialogLook &dialog_look,
@@ -131,21 +134,51 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
 void
 MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                           const ArrivalAltitudeMapItem &item,
-                          const DialogLook &dialog_look)
+                          const DialogLook &dialog_look,
+                          const FinalGlideBarLook &look)
 {
   const UPixelScalar line_height = rc.bottom - rc.top;
-
-  const Font &name_font = *dialog_look.list.font;
-  const Font &small_font = *dialog_look.small_font;
-
-  PixelScalar left = rc.left + line_height + Layout::FastScale(2);
-
 
   bool elevation_available =
       !RasterBuffer::IsSpecial((short)item.elevation);
 
   bool reach_relevant =
       (item.arrival_altitude_reach != item.arrival_altitude_direct);
+
+  RoughAltitude arrival_altitude = item.arrival_altitude_reach;
+  if (elevation_available)
+    arrival_altitude -= item.elevation;
+
+  bool reachable = arrival_altitude.IsPositive();
+
+
+  // Draw final glide arrow icon
+
+  RasterPoint pt = { (PixelScalar)(rc.left + line_height / 2),
+                     (PixelScalar)(rc.top + line_height / 2) };
+
+  RasterPoint arrow[] = {
+      { -9, -4 }, { 0, 5 }, { 9, -4 }
+  };
+
+  Angle arrow_angle = reachable ? Angle::Degrees(fixed_180) : Angle::Zero();
+  PolygonRotateShift(arrow, ARRAY_SIZE(arrow), pt.x, pt.y, arrow_angle, 100);
+
+  if (reachable) {
+    canvas.Select(look.brush_above);
+    canvas.Select(look.pen_above);
+  } else {
+    canvas.Select(look.brush_below);
+    canvas.Select(look.pen_below);
+  }
+  canvas.polygon(arrow, ARRAY_SIZE(arrow));
+
+
+  const Font &name_font = *dialog_look.list.font;
+  const Font &small_font = *dialog_look.small_font;
+
+  PixelScalar left = rc.left + line_height + Layout::FastScale(2);
+
 
   // Format title row
 
@@ -215,10 +248,6 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
 {
   const PixelScalar line_height = rc.bottom - rc.top;
 
-  RasterPoint pt = { (PixelScalar)(rc.left + line_height / 2),
-                     (PixelScalar)(rc.top + line_height / 2) };
-  AircraftRenderer::Draw(canvas, settings, look, item.bearing, pt);
-
   const Font &name_font = *dialog_look.list.font;
   const Font &small_font = *dialog_look.small_font;
 
@@ -234,6 +263,10 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
   canvas.text_clipped(left,
                       rc.top + name_font.GetHeight() + Layout::FastScale(4),
                       rc, buffer);
+
+  RasterPoint pt = { (PixelScalar)(rc.left + line_height / 2),
+                     (PixelScalar)(rc.top + line_height / 2) };
+  AircraftRenderer::Draw(canvas, settings, look, item.bearing, pt);
 }
 
 void
@@ -247,14 +280,6 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
 
   const AbstractAirspace &airspace = *item.airspace;
 
-  RasterPoint pt = { PixelScalar(rc.left + line_height / 2),
-                     PixelScalar(rc.top + line_height / 2) };
-  PixelScalar radius = std::min(PixelScalar(line_height / 2
-                                            - Layout::FastScale(4)),
-                                Layout::FastScale(10));
-  AirspacePreviewRenderer::Draw(canvas, airspace, pt, radius,
-                                renderer_settings, look);
-
   const Font &name_font = *dialog_look.list.font;
   const Font &small_font = *dialog_look.small_font;
 
@@ -266,19 +291,30 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
   canvas.Select(small_font);
   canvas.text_clipped(left,
                       rc.top + name_font.GetHeight() + Layout::FastScale(4),
-                      rc, airspace.GetTypeText(false));
+                      rc, AirspaceFormatter::GetClass(airspace));
 
+  tstring top = AirspaceFormatter::GetTopShort(airspace);
   PixelScalar altitude_width =
-    canvas.CalcTextWidth(airspace.GetTopText(true).c_str());
+    canvas.CalcTextWidth(top.c_str());
   canvas.text_clipped(rc.right - altitude_width - Layout::FastScale(4),
                       rc.top + name_font.GetHeight() -
                       small_font.GetHeight() + Layout::FastScale(2), rc,
-                      airspace.GetTopText(true).c_str());
+                      top.c_str());
 
-  altitude_width = canvas.CalcTextWidth(airspace.GetBaseText(true).c_str());
+  tstring base = AirspaceFormatter::GetBaseShort(airspace);
+  altitude_width = canvas.CalcTextWidth(base.c_str());
+
   canvas.text_clipped(rc.right - altitude_width - Layout::FastScale(4),
                       rc.top + name_font.GetHeight() + Layout::FastScale(4),
-                      rc, airspace.GetBaseText(true).c_str());
+                      rc, base.c_str());
+
+  RasterPoint pt = { PixelScalar(rc.left + line_height / 2),
+                     PixelScalar(rc.top + line_height / 2) };
+  PixelScalar radius = std::min(PixelScalar(line_height / 2
+                                            - Layout::FastScale(4)),
+                                Layout::FastScale(10));
+  AirspacePreviewRenderer::Draw(canvas, airspace, pt, radius,
+                                renderer_settings, look);
 }
 
 void
@@ -384,14 +420,6 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
   const ObservationZonePoint &oz = *item.oz;
   const Waypoint &waypoint = item.waypoint;
 
-  RasterPoint pt = { PixelScalar(rc.left + line_height / 2),
-                     PixelScalar(rc.top + line_height / 2) };
-  PixelScalar radius = std::min(PixelScalar(line_height / 2
-                                            - Layout::FastScale(4)),
-                                Layout::FastScale(10));
-  OZPreviewRenderer::Draw(canvas, oz, pt, radius, look,
-                          airspace_settings, airspace_look);
-
   const Font &name_font = *dialog_look.list.font;
   const Font &small_font = *dialog_look.small_font;
 
@@ -415,6 +443,15 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                         item.index, buffer);
   canvas.text_clipped(left, rc.top + Layout::FastScale(2),
                       rc.right - left, buffer);
+
+  RasterPoint pt = { PixelScalar(rc.left + line_height / 2),
+                     PixelScalar(rc.top + line_height / 2) };
+  PixelScalar radius = std::min(PixelScalar(line_height / 2
+                                            - Layout::FastScale(4)),
+                                Layout::FastScale(10));
+  OZPreviewRenderer::Draw(canvas, oz, pt, radius, look,
+                          airspace_settings, airspace_look);
+
 }
 
 void
@@ -425,12 +462,6 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
 {
   const PixelScalar line_height = rc.bottom - rc.top;
   const FlarmTraffic traffic = item.traffic;
-
-  RasterPoint pt = { (PixelScalar)(rc.left + line_height / 2),
-                     (PixelScalar)(rc.top + line_height / 2) };
-
-  // Render the representation of the traffic icon
-  TrafficRenderer::Draw(canvas, traffic_look, traffic, traffic.track, pt);
 
   // Now render the text information
   const Font &name_font = *dialog_look.list.font;
@@ -462,6 +493,12 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
   canvas.text_clipped(left,
                       rc.top + name_font.GetHeight() + Layout::FastScale(4),
                       rc, info_string);
+
+  RasterPoint pt = { (PixelScalar)(rc.left + line_height / 2),
+                     (PixelScalar)(rc.top + line_height / 2) };
+
+  // Render the representation of the traffic icon
+  TrafficRenderer::Draw(canvas, traffic_look, traffic, traffic.track, pt);
 }
 
 void
@@ -469,6 +506,7 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                           const MapItem &item,
                           const DialogLook &dialog_look, const MapLook &look,
                           const TrafficLook &traffic_look,
+                          const FinalGlideBarLook &final_glide_look,
                           const MapSettings &settings)
 {
   switch (item.type) {
@@ -476,7 +514,8 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
     Draw(canvas, rc, (const LocationMapItem &)item, dialog_look);
     break;
   case MapItem::ARRIVAL_ALTITUDE:
-    Draw(canvas, rc, (const ArrivalAltitudeMapItem &)item, dialog_look);
+    Draw(canvas, rc, (const ArrivalAltitudeMapItem &)item,
+         dialog_look, final_glide_look);
     break;
   case MapItem::SELF:
     Draw(canvas, rc, (const SelfMapItem &)item,

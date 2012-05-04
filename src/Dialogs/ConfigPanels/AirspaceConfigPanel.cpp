@@ -23,9 +23,9 @@ Copyright_License {
 
 #include "AirspaceConfigPanel.hpp"
 #include "ConfigPanel.hpp"
-#include "DataField/Enum.hpp"
-#include "DataField/Boolean.hpp"
-#include "DataField/Listener.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/Boolean.hpp"
+#include "Form/DataField/Listener.hpp"
 #include "Form/Button.hpp"
 #include "Form/RowFormWidget.hpp"
 #include "Dialogs/Airspace.hpp"
@@ -128,10 +128,10 @@ void
 AirspaceConfigPanel::SetButtonsVisible(bool active)
 {
   if (buttonColors != NULL)
-    buttonColors->set_visible(active);
+    buttonColors->SetVisible(active);
 
   if (buttonMode != NULL)
-    buttonMode->set_visible(active);
+    buttonMode->SetVisible(active);
 }
 
 void

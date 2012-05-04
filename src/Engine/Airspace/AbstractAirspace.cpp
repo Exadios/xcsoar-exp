@@ -181,10 +181,12 @@ AbstractAirspace::Intercept(const AircraftState &state,
 bool 
 AbstractAirspace::Intercept(const AircraftState &state,
                             const GeoPoint &end,
+                            const TaskProjection &projection,
                             const AirspaceAircraftPerformance &perf,
                             AirspaceInterceptSolution &solution) const
 {
-  AirspaceIntersectionVector vis = Intersects(state.location, end);
+  AirspaceIntersectionVector vis = Intersects(state.location, end,
+                                              projection);
   if (vis.empty())
     return false;
 
@@ -198,18 +200,6 @@ AbstractAirspace::Intercept(const AircraftState &state,
 
   solution = this_solution;
   return true;
-}
-
-const TCHAR *
-AbstractAirspace::GetTypeText(const bool concise) const
-{
-  return AirspaceClassAsText(type, concise);
-}
-
-const tstring 
-AbstractAirspace::GetNameText() const
-{
-  return name + _T(" ") + AirspaceClassAsText(type);
 }
 
 bool
@@ -238,13 +228,6 @@ AbstractAirspace::GetRadioText() const
   return radio;
 }
 
-const tstring
-AbstractAirspace::GetVerticalText() const
-{
-  return _T("Base: ") + altitude_base.GetAsText(false) +
-         _T(" Top: ") + altitude_top.GetAsText(false);
-}
-
 void
 AbstractAirspace::Project(const TaskProjection &task_projection)
 {
@@ -265,14 +248,12 @@ AbstractAirspace::GetGeoBounds() const
 }
 
 const SearchPointVector&
-AbstractAirspace::GetClearance() const
+AbstractAirspace::GetClearance(const TaskProjection &projection) const
 {
   #define RADIUS 5
 
   if (!m_clearance.empty())
     return m_clearance;
-
-  assert(m_task_projection != NULL);
 
   m_clearance = m_border;
   if (!m_is_convex)
@@ -287,8 +268,7 @@ AbstractAirspace::GetClearance() const
     int mag = hypot(r.vector.Longitude, r.vector.Latitude);
     int mag_new = mag + RADIUS;
     p = r.Parametric((fixed)mag_new / mag);
-    *i = SearchPoint(m_task_projection->unproject(p));
-    i->project(*m_task_projection);
+    *i = SearchPoint(projection.unproject(p), p);
   }
 
   return m_clearance;

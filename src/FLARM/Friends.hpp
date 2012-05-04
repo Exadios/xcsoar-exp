@@ -24,20 +24,26 @@ Copyright_License {
 #ifndef XCSOAR_FLARM_FRIENDS_HPP
 #define XCSOAR_FLARM_FRIENDS_HPP
 
+#include <stdint.h>
+
 class FlarmId;
 
 namespace FlarmFriends
 {
-  enum Color {
+  enum class Color: uint8_t {
     NONE,
     GREEN,
     BLUE,
     YELLOW,
     MAGENTA,
+    COUNT
   };
 
   Color GetFriendColor(FlarmId id);
   void SetFriendColor(FlarmId id, Color color);
+
+  void Load();
+  void Save();
 };
 
 #endif

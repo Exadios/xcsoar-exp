@@ -26,6 +26,7 @@ Copyright_License {
 #include "Profile/DeviceConfig.hpp"
 #include "OS/Args.hpp"
 #include "OS/Sleep.h"
+#include "Operation/ConsoleOperationEnvironment.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +61,8 @@ main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
+  ConsoleOperationEnvironment env;
+
   unsigned long last_stamp = -1;
   char line[1024];
   while (fgets(line, sizeof(line), stdin) != NULL) {
@@ -83,7 +86,7 @@ main(int argc, char **argv)
 
     last_stamp = current_stamp;
 
-    if (!port->FullWrite(start, end - start, 1000)) {
+    if (!port->FullWrite(start, end - start, env, 1000)) {
       fprintf(stderr, "Failed to write to port\n");
       delete port;
       return EXIT_FAILURE;

@@ -98,7 +98,7 @@ protected:
     PixelRect rc = {
       0, 0, (PixelScalar)canvas.get_width(), (PixelScalar)canvas.get_height()
     };
-    
+
     renderer.Draw(canvas, rc, calculated, glide_settings, true);
   }
 };
@@ -152,7 +152,7 @@ public:
     SingleWindow::set(_T("RunFinalGlideBarRenderer"), _T("RunFinalGlideBarRenderer"),
                       _rc);
 
-    const PixelRect rc = get_client_rect();
+    const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();

@@ -32,7 +32,7 @@ Copyright_License {
 #include "Port/ConfiguredPort.hpp"
 #include "NMEA/Info.hpp"
 #include "Thread/Mutex.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Logger/NMEALogger.hpp"
 #include "Language/Language.hpp"
 #include "Operation/Operation.hpp"
@@ -432,16 +432,16 @@ DeviceDescriptor::ParseNMEA(const char *line, NMEAInfo &info)
 }
 
 bool
-DeviceDescriptor::WriteNMEA(const char *line)
+DeviceDescriptor::WriteNMEA(const char *line, OperationEnvironment &env)
 {
   assert(line != NULL);
 
-  return port != NULL && PortWriteNMEA(*port, line);
+  return port != NULL && PortWriteNMEA(*port, line, env);
 }
 
 #ifdef _UNICODE
 bool
-DeviceDescriptor::WriteNMEA(const TCHAR *line)
+DeviceDescriptor::WriteNMEA(const TCHAR *line, OperationEnvironment &env)
 {
   assert(line != NULL);
 
@@ -453,7 +453,7 @@ DeviceDescriptor::WriteNMEA(const TCHAR *line)
                             NULL, NULL) <= 0)
     return false;
 
-  return WriteNMEA(buffer);
+  return WriteNMEA(buffer, env);
 }
 #endif
 

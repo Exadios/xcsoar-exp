@@ -28,7 +28,7 @@ Copyright_License {
 #include "Edit.hpp"
 #include "DataField/Base.hpp"
 #include "Util/StaticArray.hpp"
-#include "Units/Settings.hpp"
+#include "Units/Group.hpp"
 
 #include <assert.h>
 #include <stdint.h>
@@ -253,6 +253,19 @@ public:
                         fixed min_value, fixed max_value,
                         fixed step, bool fine,
                         fixed value,
+                        DataFieldListener *listener) {
+    WndProperty *control = AddFloat(label, help, display_format, edit_format,
+                                    min_value, max_value, step, fine, value);
+    control->GetDataField()->SetListener(listener);
+    return control;
+  }
+
+  WndProperty *AddFloat(const TCHAR *label, const TCHAR *help,
+                        const TCHAR *display_format,
+                        const TCHAR *edit_format,
+                        fixed min_value, fixed max_value,
+                        fixed step, bool fine,
+                        fixed value,
                         DataField::DataAccessCallback callback=NULL);
 
   WndProperty *AddFloat(const TCHAR *label, const TCHAR *help,
@@ -262,6 +275,20 @@ public:
                         fixed step, bool fine,
                         UnitGroup unit_group, fixed value,
                         DataField::DataAccessCallback callback=NULL);
+
+  WndProperty *AddFloat(const TCHAR *label, const TCHAR *help,
+                        const TCHAR *display_format,
+                        const TCHAR *edit_format,
+                        fixed min_value, fixed max_value,
+                        fixed step, bool fine,
+                        UnitGroup unit_group, fixed value,
+                        DataFieldListener *listener) {
+    WndProperty *control = AddFloat(label, help, display_format, edit_format,
+                                    min_value, max_value, step, fine,
+                                    unit_group, value);
+    control->GetDataField()->SetListener(listener);
+    return control;
+  }
 
   WndProperty *AddEnum(const TCHAR *label, const TCHAR *help,
                        const StaticEnumChoice *list, unsigned value=0,
@@ -514,7 +541,7 @@ protected:
   PixelRect InitialControlRect(UPixelScalar height) {
     assert(IsDefined());
 
-    PixelRect rc = GetWindow()->get_client_rect();
+    PixelRect rc = GetWindow()->GetClientRect();
     rc.bottom = rc.top + height;
     return rc;
   }

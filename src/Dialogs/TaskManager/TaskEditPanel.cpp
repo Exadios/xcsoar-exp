@@ -102,7 +102,7 @@ void
 TaskEditPanel::OnClearAllClicked()
 {
   if ((ordered_task->TaskSize() < 2) ||
-      (MessageBoxX(_("Clear all points?"), _("Task edit"),
+      (ShowMessageBox(_("Clear all points?"), _("Task edit"),
                    MB_YESNO|MB_ICONQUESTION) == IDYES)) {
 
     while (ordered_task->OptionalStartsSize())
@@ -341,7 +341,7 @@ TaskEditPanel::OnKeyDown(unsigned key_code)
 {
   switch (key_code){
   case VK_ESCAPE:
-    if (IsAltair() && wTaskPoints->has_focus()){
+    if (IsAltair() && wTaskPoints->HasFocus()){
        wf.FocusFirstControl();
       return true;
     }

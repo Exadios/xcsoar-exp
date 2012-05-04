@@ -32,7 +32,7 @@ bool
 SearchPointVector::PruneInterior()
 {
   GrahamScan gs(*this);
-  return gs.prune_interior();
+  return gs.PruneInterior();
 }
 
 bool
@@ -43,7 +43,7 @@ SearchPointVector::ThinToSize(const unsigned max_size)
   bool retval = false;
   while (size() > max_size) {
     GrahamScan gs(*this, tolerance * i);
-    retval |= gs.prune_interior();
+    retval |= gs.PruneInterior();
     i *= i;
   }
   return retval;
@@ -54,7 +54,7 @@ SearchPointVector::IsConvex() const
 {
   SearchPointVector copy = *this;
   GrahamScan gs(copy);
-  return !gs.prune_interior();
+  return !gs.PruneInterior();
 }
 
 void 
@@ -64,6 +64,7 @@ SearchPointVector::Project(const TaskProjection& tp)
     i->project(tp);
 }
 
+gcc_pure
 static FlatGeoPoint
 NearestPoint(const FlatGeoPoint &p1, const FlatGeoPoint &p2,
               const FlatGeoPoint &p3)
@@ -86,6 +87,7 @@ NearestPoint(const FlatGeoPoint &p1, const FlatGeoPoint &p2,
   }
 }
 
+gcc_pure
 static FlatGeoPoint
 SegmentNearestPoint(const SearchPointVector& spv,
                       const SearchPointVector::const_iterator i1,
@@ -102,6 +104,7 @@ SegmentNearestPoint(const SearchPointVector& spv,
   }
 }
 
+gcc_pure
 static FlatGeoPoint
 NearestPointNonConvex(const SearchPointVector& spv, const FlatGeoPoint &p3)
 {
@@ -188,21 +191,23 @@ SearchPointVector::CalculateGeoBounds() const
   return bb;
 }
 
-void
-SearchPointVector::NextCircular(SearchPointVector::const_iterator &i) const
+SearchPointVector::const_iterator
+SearchPointVector::NextCircular(const_iterator i) const
 {
   i++;
   if (i == end())
     i = begin();
+  return i;
 }
 
-void
-SearchPointVector::PreviousCircular(SearchPointVector::const_iterator &i) const
+SearchPointVector::const_iterator
+SearchPointVector::PreviousCircular(const_iterator i) const
 {
   if (i == begin())
     i = begin() + size() - 1;
   else
     i--;
+  return i;
 }
 
 bool

@@ -19,10 +19,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
+
 #include "TaskManager.hpp"
 #include "Visitors/TaskPointVisitor.hpp"
 #include "Tasks/TaskSolvers/TaskSolution.hpp"
 #include "Tasks/BaseTask/UnorderedTaskPoint.hpp"
+#include "Tasks/BaseTask/OrderedTaskPoint.hpp"
+#include "TaskPoints/AATPoint.hpp"
 #include "Util/StringUtil.hpp"
 
 // uses delegate pattern
@@ -192,12 +195,25 @@ TaskManager::UpdateCommonStatsWaypoints(const AircraftState &state)
   if (tp != NULL) {
     // must make an UnorderedTaskPoint here so we pick up arrival height requirements
     const UnorderedTaskPoint fp(tp->GetWaypoint(), task_behaviour);
+
     // @todo: consider change to task_abort.get_safety_polar();
+    GlidePolar glide_polar = GetGlidePolar();
+
     common_stats.next_solution =
       TaskSolution::GlideSolutionRemaining(fp, state, task_behaviour.glide,
-                                           GetGlidePolar());
-  } else
+                                           glide_polar);
+
+    if (positive(glide_polar.GetMC())) {
+      glide_polar.SetMC(fixed_zero);
+      common_stats.next_solution_mc0 =
+        TaskSolution::GlideSolutionRemaining(fp, state, task_behaviour.glide,
+                                             glide_polar);
+    } else
+      common_stats.next_solution_mc0 = common_stats.next_solution;
+  } else {
     common_stats.next_solution.Reset();
+    common_stats.next_solution_mc0.Reset();
+  }
 }
 
 void
@@ -390,7 +406,7 @@ TaskManager::RandomPointInTask(const unsigned index, const fixed mag) const
   if (active_task == &task_ordered && task_ordered.IsValidIndex(index))
     return task_ordered.GetTaskPoint(index).GetRandomPointInSector(mag);
 
-  if (index <= TaskSize())
+  if (active_task != NULL && index <= active_task->TaskSize())
     return active_task->GetActiveTaskPoint()->GetLocation();
 
   GeoPoint null_location(Angle::Zero(), Angle::Zero());
@@ -432,24 +448,6 @@ TaskManager::UpdateAutoMC(const AircraftState& state_now,
   }
 
   return false;
-}
-
-GeoPoint
-TaskManager::GetTaskCenter(const GeoPoint& fallback_location) const
-{
-  if (active_task)
-    return active_task->GetTaskCenter(fallback_location);
-
-  return fallback_location;
-}
-
-fixed
-TaskManager::GetTaskRadius(const GeoPoint& fallback_location) const
-{
-  if (active_task)
-    return active_task->GetTaskRadius(fallback_location);
-
-  return fixed_zero;
 }
 
 bool

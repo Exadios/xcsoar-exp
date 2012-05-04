@@ -31,7 +31,7 @@ Copyright_License {
 #include "Form/CheckBox.hpp"
 #include "Screen/Layout.hpp"
 #include "Profile/Profile.hpp"
-#include "DataField/FileReader.hpp"
+#include "Form/DataField/FileReader.hpp"
 #include "LogFile.hpp"
 #include "Util/Macros.hpp"
 #include "ConfigPanels/ConfigPanel.hpp"
@@ -279,7 +279,7 @@ Save()
     Profile::Save();
     LogDebug(_T("Configuration: Changes saved"));
     if (requirerestart)
-      MessageBoxX(_("Changes to configuration saved.  Restart XCSoar to apply changes."),
+      ShowMessageBox(_("Changes to configuration saved.  Restart XCSoar to apply changes."),
                   _T(""), MB_OK);
   }
 }
@@ -290,8 +290,13 @@ void dlgConfigurationShowModal()
 
   wf->ShowModal();
 
-  if (wf->IsDefined())
+  if (wf->IsDefined()) {
+    /* hide the dialog, to avoid redraws inside Save() on a dialog
+       that has already been deregistered from the SingleWindow */
+    wf->Hide();
+
     Save();
+  }
 
   /* destroy the TabMenuControl first, to have a well-defined
      destruction order; this is necessary because some config panels

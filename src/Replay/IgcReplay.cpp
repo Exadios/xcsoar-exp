@@ -22,12 +22,13 @@
 */
 
 #include "Replay/IgcReplay.hpp"
-#include "Replay/IGCParser.hpp"
+#include "IGC/IGCParser.hpp"
+#include "IGC/IGCFix.hpp"
+#include "Util/StringUtil.hpp"
 
 #include <algorithm>
 
 #include "Navigation/GeoPoint.hpp"
-#include "StringUtil.hpp"
 
 IgcReplay::IgcReplay() :
   AbstractReplay(),
@@ -40,7 +41,7 @@ IgcReplay::IgcReplay() :
 bool
 IgcReplay::ScanBuffer(const char *buffer, IGCFix &fix)
 {
-  return IGCParseFix(buffer, fix);
+  return IGCParseFix(buffer, fix) && fix.gps_valid;
 }
 
 bool

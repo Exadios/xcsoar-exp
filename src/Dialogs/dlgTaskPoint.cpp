@@ -28,7 +28,7 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Components.hpp"
 #include "Dialogs/dlgTaskHelpers.hpp"
-#include "DataField/Float.hpp"
+#include "Form/DataField/Float.hpp"
 #include "Units/Units.hpp"
 #include "Task/Tasks/OrderedTask.hpp"
 #include "Task/TaskPoints/StartPoint.hpp"
@@ -147,7 +147,7 @@ RefreshView()
   WndButton* wb;
   wb = (WndButton*)wf->FindByName(_T("cmdOptionalStarts"));
   assert(wb);
-  wb->set_visible(active_index == 0);
+  wb->SetVisible(active_index == 0);
   if (ordered_task->optional_start_points_size() == 0)
     wb->SetCaption(_("Enable Alternate Starts"));
   else {
@@ -268,7 +268,7 @@ ReadValues()
 static void
 OnTaskPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 {
-  PixelRect rc = Sender->get_client_rect();
+  PixelRect rc = Sender->GetClientRect();
 
   OrderedTaskPoint* tp = ordered_task->get_tp(active_index);
 
@@ -294,7 +294,7 @@ OnTaskPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 static void 
 OnRemoveClicked(gcc_unused WndButton &Sender)
 {
-  if (MessageBoxX(_("Remove task point?"), _("Task Point"),
+  if (ShowMessageBox(_("Remove task point?"), _("Task Point"),
                   MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
 

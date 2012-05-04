@@ -38,13 +38,15 @@ namespace IMI
 }
 
 bool
-IMI::Send(Port &port, const TMsg &msg)
+IMI::Send(Port &port, const TMsg &msg, OperationEnvironment &env)
 {
-  return port.FullWrite(&msg, IMICOMM_MSG_HEADER_SIZE + msg.payloadSize + 2, 2000);
+  return port.FullWrite(&msg, IMICOMM_MSG_HEADER_SIZE + msg.payloadSize + 2,
+                        env, 2000);
 }
 
 bool
-IMI::Send(Port &port, IMIBYTE msgID, const void *payload, IMIWORD payloadSize,
+IMI::Send(Port &port, OperationEnvironment &env,
+          IMIBYTE msgID, const void *payload, IMIWORD payloadSize,
           IMIBYTE parameter1, IMIWORD parameter2, IMIWORD parameter3)
 {
   if (payloadSize > COMM_MAX_PAYLOAD_SIZE)
@@ -68,7 +70,7 @@ IMI::Send(Port &port, IMIBYTE msgID, const void *payload, IMIWORD payloadSize,
   msg.payload[payloadSize] = (IMIBYTE)(crc >> 8);
   msg.payload[payloadSize + 1] = (IMIBYTE)crc;
 
-  return Send(port, msg);
+  return Send(port, msg, env);
 }
 
 const IMI::TMsg *
@@ -102,7 +104,7 @@ IMI::Receive(Port &port, OperationEnvironment &env,
     if (msg != NULL) {
       // message received
       if (msg->msgID == MSG_ACK_NOTCONFIG) {
-        Disconnect(port);
+        Disconnect(port, env);
         return NULL;
       } else if (msg->msgID == MSG_CFG_KEEPCONFIG)
         return NULL;
@@ -126,7 +128,7 @@ IMI::SendRet(Port &port, OperationEnvironment &env,
   extraTimeout += 10000 * (payloadSize + sizeof(IMICOMM_MSG_HEADER_SIZE) + 10)
       / baudRate;
   while (retry--) {
-    if (Send(port, msgID, payload, payloadSize, parameter1, parameter2,
+    if (Send(port, env, msgID, payload, payloadSize, parameter1, parameter2,
              parameter3)) {
       const TMsg *msg = Receive(port, env, extraTimeout, retPayloadSize);
       if (msg && msg->msgID == reMsgID && (retPayloadSize == (IMIWORD)-1
@@ -177,8 +179,8 @@ RLEDecompress(IMI::IMIBYTE* dest, const IMI::IMIBYTE *src, unsigned size,
 }
 
 bool
-IMI::FlashRead(Port &port, OperationEnvironment &env,
-               void *buffer, unsigned address, unsigned size)
+IMI::FlashRead(Port &port, void *buffer, unsigned address, unsigned size,
+               OperationEnvironment &env)
 {
   if (!_connected)
     return false;
@@ -186,7 +188,8 @@ IMI::FlashRead(Port &port, OperationEnvironment &env,
   if (size == 0)
     return true;
 
-  const TMsg *pMsg = SendRet(port, env, MSG_FLASH, 0, 0, MSG_FLASH, -1,
+  const TMsg *pMsg = SendRet(port, env,
+                             MSG_FLASH, 0, 0, MSG_FLASH, -1,
                              IMICOMM_BIGPARAM1(address),
                              IMICOMM_BIGPARAM2(address),
                              size, 300, 2);

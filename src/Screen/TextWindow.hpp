@@ -27,7 +27,7 @@ Copyright_License {
 #include "Screen/Window.hpp"
 
 #ifndef USE_GDI
-#include <tstring.hpp>
+#include "Util/tstring.hpp"
 #include <algorithm>
 #endif
 
@@ -76,7 +76,7 @@ public:
            const TextWindowStyle style=TextWindowStyle());
 
   void set_text(const TCHAR *_text) {
-    assert_none_locked();
+    AssertNoneLocked();
     AssertThread();
 
 #ifndef USE_GDI

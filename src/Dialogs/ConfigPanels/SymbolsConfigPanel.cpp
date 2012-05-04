@@ -23,9 +23,9 @@ Copyright_License {
 
 #include "SymbolsConfigPanel.hpp"
 #include "Profile/ProfileKeys.hpp"
-#include "DataField/Enum.hpp"
-#include "DataField/Base.hpp"
-#include "DataField/Listener.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/Base.hpp"
+#include "Form/DataField/Listener.hpp"
 #include "Interface.hpp"
 #include "Language/Language.hpp"
 #include "Form/Form.hpp"
@@ -111,6 +111,10 @@ static const StaticEnumChoice  aircraft_symbol_list[] = {
     N_("Enlarged simple graphics.") },
   { acDetailed, N_("Detailed"),
     N_("Detailed rendered aircraft graphics.") },
+  { acHangGlider, N_("HangGlider"),
+    N_("Simplified hang glider as line graphics, white with black contours.") },
+  { acParaGlider, N_("ParaGlider"),
+    N_("Simplified para glider as line graphics, white with black contours.") },
   { 0 }
 };
 

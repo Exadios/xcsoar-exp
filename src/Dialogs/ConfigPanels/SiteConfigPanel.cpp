@@ -25,7 +25,7 @@ Copyright_License {
 #include "Language/Language.hpp"
 #include "Dialogs/Dialogs.h"
 #include "Dialogs/Waypoint.hpp"
-#include "DataField/Enum.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "Form/Button.hpp"
 #include "Form/Util.hpp"
 #include "Form/Form.hpp"
@@ -67,14 +67,14 @@ public:
 void
 SiteConfigPanel::Show(const PixelRect &rc)
 {
-  buttonWaypoints->set_visible(true);
+  buttonWaypoints->SetVisible(true);
   RowFormWidget::Show(rc);
 }
 
 void
 SiteConfigPanel::Hide()
 {
-  buttonWaypoints->set_visible(false);
+  buttonWaypoints->SetVisible(false);
   RowFormWidget::Hide();
 }
 

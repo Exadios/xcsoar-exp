@@ -66,9 +66,9 @@ public:
     visit_abstract(as);
   }
   void visit_abstract(const AbstractAirspace &as) {
-    assert(!m_intersections.empty());
+    assert(!intersections.empty());
 
-    GeoPoint point = m_intersections[0].first;
+    GeoPoint point = intersections[0].first;
 
     RouteLink l = rpolar.GenerateIntermediate(link.first,
                                                RoutePoint(proj.project(point), link.second.altitude),
@@ -174,11 +174,9 @@ AirspaceRoute::FindClearingPair(const SearchPointVector& spv,
       }
     }
 
-    if (backwards)
-      spv.PreviousCircular(i);
-    else
-      spv.NextCircular(i);
+    i = backwards ? spv.PreviousCircular(i) : spv.NextCircular(i);
   }
+
   return p;
 }
 
@@ -203,12 +201,10 @@ AirspaceRoute::GetBackupPairs(const SearchPointVector& spv,
   SearchPointVector::const_iterator start = spv.NearestIndexConvex(intc);
   ClearingPair p(intc, intc);
 
-  SearchPointVector::const_iterator i_left = start;
-  spv.NextCircular(i_left);
+  SearchPointVector::const_iterator i_left = spv.NextCircular(start);
   p.first = AFlatGeoPoint(i_left->get_flatLocation(), _start.altitude); // @todo alt!
 
-  SearchPointVector::const_iterator i_right = start;
-  spv.PreviousCircular(i_right);
+  SearchPointVector::const_iterator i_right = spv.PreviousCircular(start);
   p.second = AFlatGeoPoint(i_right->get_flatLocation(), _start.altitude); // @todo alt!
 
   return p;
@@ -264,7 +260,8 @@ void
 AirspaceRoute::AddNearbyAirspace(const RouteAirspaceIntersection &inx,
                                    const RouteLink &e)
 {
-  const SearchPointVector& fat = inx.airspace->GetClearance();
+  const SearchPointVector& fat =
+    inx.airspace->GetClearance(m_airspaces.GetProjection());
   const ClearingPair p = GetPairs(fat, e.first, e.second);
   const ClearingPair pb = GetBackupPairs(fat, e.first, inx.point);
 
@@ -335,7 +332,7 @@ AirspaceRoute::OnSolve(const AGeoPoint& origin,
     task_projection.reset(origin);
     task_projection.update_fast();
   } else {
-    task_projection = m_airspaces.get_task_projection();
+    task_projection = m_airspaces.GetProjection();
   }
 }
 

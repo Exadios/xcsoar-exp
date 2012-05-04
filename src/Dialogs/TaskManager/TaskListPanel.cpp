@@ -121,7 +121,7 @@ TaskListPanel::OnTaskPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 
   const MapLook &look = UIGlobals::GetMapLook();
   const NMEAInfo &basic = CommonInterface::Basic();
-  PaintTask(canvas, Sender->get_client_rect(), *ordered_task,
+  PaintTask(canvas, Sender->GetClientRect(), *ordered_task,
             basic.location_available, basic.location,
             XCSoarInterface::GetMapSettings(),
             look.task, look.airspace,
@@ -185,7 +185,7 @@ TaskListPanel::SaveTask()
     task_store->Scan();
     RefreshView();
   } else {
-    MessageBoxX(getTaskValidationErrors(
+    ShowMessageBox(getTaskValidationErrors(
         (*active_task)->GetFactory().GetValidationErrors()), _("Task not saved"),
         MB_ICONEXCLAMATION);
   }
@@ -203,7 +203,7 @@ TaskListPanel::LoadTask()
   text += get_cursor_name();
   text += _T(")");
 
-  if (MessageBoxX(text.c_str(), _("Task Browser"),
+  if (ShowMessageBox(text.c_str(), _("Task Browser"),
                   MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
 
@@ -231,7 +231,7 @@ TaskListPanel::DeleteTask()
       ::toupper);
 
   if (upperstring.find(_T(".CUP")) != tstring::npos) {
-    MessageBoxX(_("Can't delete .CUP files"), _("Delete Error"),
+    ShowMessageBox(_("Can't delete .CUP files"), _("Delete Error"),
         MB_ICONEXCLAMATION);
     return;
   }
@@ -242,7 +242,7 @@ TaskListPanel::DeleteTask()
   text += fname;
   text += _T(")");
 
-  if (MessageBoxX(text.c_str(), _("Task Browser"),
+  if (ShowMessageBox(text.c_str(), _("Task Browser"),
                   MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
 
@@ -279,7 +279,7 @@ TaskListPanel::RenameTask()
   StaticString<40> newname(oldname);
 
   if (ClearSuffix(newname.buffer(), _T(".cup"))) {
-    MessageBoxX(_("Can't rename .CUP files"), _("Rename Error"),
+    ShowMessageBox(_("Can't rename .CUP files"), _("Rename Error"),
         MB_ICONEXCLAMATION);
     return;
   }
@@ -342,7 +342,7 @@ void
 TaskListPanel::OnNewTaskClicked()
 {
   if (((*active_task)->TaskSize() < 2) ||
-      (MessageBoxX(_("Create new task?"), _("Task New"),
+      (ShowMessageBox(_("Create new task?"), _("Task New"),
                    MB_YESNO|MB_ICONQUESTION) == IDYES)) {
     (*active_task)->Clear();
     (*active_task)->SetFactory(XCSoarInterface::GetComputerSettings().task.task_type_default);
@@ -400,7 +400,7 @@ TaskListPanel::OnDeclareClicked()
   if (!(*active_task)->CheckTask()) {
     const AbstractTaskFactory::TaskValidationErrorVector errors =
       (*active_task)->GetFactory().GetValidationErrors();
-    MessageBoxX(getTaskValidationErrors(errors), _("Declare task"),
+    ShowMessageBox(getTaskValidationErrors(errors), _("Declare task"),
                 MB_ICONEXCLAMATION);
     return;
   }
@@ -422,13 +422,13 @@ TaskListPanel::OnTaskViewClick()
   if (!fullscreen) {
     const UPixelScalar xoffset = (Layout::landscape ? tab_bar.GetTabWidth() : 0);
     const UPixelScalar yoffset = (!Layout::landscape ? tab_bar.GetTabHeight() : 0);
-    wTaskView->move(xoffset, yoffset,
-                    wf.GetClientAreaWindow().get_width() - xoffset,
-                    wf.GetClientAreaWindow().get_height() - yoffset);
+    wTaskView->Move(xoffset, yoffset,
+                    wf.GetClientAreaWindow().GetWidth() - xoffset,
+                    wf.GetClientAreaWindow().GetHeight() - yoffset);
     fullscreen = true;
-    wTaskView->show_on_top();
+    wTaskView->ShowOnTop();
   } else {
-    wTaskView->move(TaskViewRect.left, TaskViewRect.top,
+    wTaskView->Move(TaskViewRect.left, TaskViewRect.top,
                     TaskViewRect.right - TaskViewRect.left,
                     TaskViewRect.bottom - TaskViewRect.top);
     fullscreen = false;
@@ -493,7 +493,7 @@ TaskListPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
   wTaskView = (WndOwnerDrawFrame*)form.FindByName(_T("frmTaskView1"));
   assert(wTaskView != NULL);
 
-  TaskViewRect = wTaskView->get_position();
+  TaskViewRect = wTaskView->GetPosition();
   wTaskView->SetOnMouseDownNotify(::OnTaskViewClick);
   fullscreen = false;
 

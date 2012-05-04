@@ -28,7 +28,7 @@ Copyright_License {
 #include "Interface.hpp"
 #include "Units/Units.hpp"
 #include "Formatter/UserUnits.hpp"
-#include "DataField/Float.hpp"
+#include "Form/DataField/Float.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Components.hpp"
 #include "Screen/Layout.hpp"
@@ -86,8 +86,11 @@ TaskCalculatorPanel::Refresh()
   if (positive(rPlanned)) {
     fixed rMax = task_stats.distance_max;
     fixed rMin = task_stats.distance_min;
-    fixed range = Double((rPlanned - rMin) / (rMax - rMin)) - fixed_one;
-    LoadFormProperty(form, _T("prpRange"), range * 100);
+
+    if (rMin < rMax) {
+      fixed range = Double((rPlanned - rMin) / (rMax - rMin)) - fixed_one;
+      LoadFormProperty(form, _T("prpRange"), range * 100);
+    }
   }
 
 /*

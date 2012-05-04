@@ -28,8 +28,8 @@ Copyright_License {
 #include "Look/MapLook.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
-#include "DataField/Enum.hpp"
-#include "DataField/Float.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/Float.hpp"
 #include "MapWindow/TargetMapWindow.hpp"
 #include "Components.hpp"
 #include "Task/TaskPoints/AATPoint.hpp"
@@ -244,7 +244,7 @@ RefreshCalculator()
   }
 
   if (chkbOptimized) {
-    chkbOptimized->set_visible(bAAT);
+    chkbOptimized->SetVisible(bAAT);
     chkbOptimized->SetState(!IsLocked);
   }
 
@@ -255,7 +255,7 @@ RefreshCalculator()
     DataFieldFloat *df = (DataFieldFloat *)wp->GetDataField();
     df->Set(Range * fixed(100));
     wp->RefreshDisplay();
-    wp->set_visible(!nodisplay);
+    wp->SetVisible(!nodisplay);
   }
 
   wp = (WndProperty*)wf->FindByName(_T("prpRadial"));
@@ -269,7 +269,7 @@ RefreshCalculator()
     DataFieldFloat *df = (DataFieldFloat *)wp->GetDataField();
     df->Set(rTemp);
     wp->RefreshDisplay();
-    wp->set_visible(!nodisplay);
+    wp->SetVisible(!nodisplay);
   }
 
   // update outputs
@@ -502,14 +502,14 @@ drawBtnNext()
 
   if (IsAltair())
     // altair already has < and > buttons on WndProperty
-    btnNext->set_visible(false);
+    btnNext->SetVisible(false);
 
   btnPrev = (WndSymbolButton*)wf->FindByName(_T("btnPrev"));
   assert(btnPrev != NULL);
 
   if (IsAltair())
     // altair already has < and > buttons on WndProperty
-    btnPrev->set_visible(false);
+    btnPrev->SetVisible(false);
 }
 
 void
@@ -557,7 +557,7 @@ dlgTargetShowModal(int TargetPoint)
   CommonInterface::GetLiveBlackboard().AddListener(rate_limited_bl);
 
   wf->ShowModal();
-  CommonInterface::GetLiveBlackboard().RemoveListener(rate_limited_bl);
-
   delete wf;
+
+  CommonInterface::GetLiveBlackboard().RemoveListener(rate_limited_bl);
 }

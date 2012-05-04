@@ -24,10 +24,10 @@ Copyright_License {
 #include "PolarConfigPanel.hpp"
 #include "ConfigPanel.hpp"
 #include "UIGlobals.hpp"
-#include "DataField/Enum.hpp"
-#include "DataField/Float.hpp"
-#include "DataField/ComboList.hpp"
-#include "DataField/FileReader.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/Float.hpp"
+#include "Form/DataField/ComboList.hpp"
+#include "Form/DataField/FileReader.hpp"
 #include "Form/XMLWidget.hpp"
 #include "Form/Button.hpp"
 #include "Form/Edit.hpp"
@@ -165,7 +165,7 @@ PolarConfigPanel::UpdatePolarInvalidLabel()
   fixed w3 = GetFormValueFixed(form, _T("prpPolarW3"));
 
   PolarCoefficients coeff = PolarCoefficients::From3VW(v1, v2, v3, w1, w2, w3);
-  ((WndFrame *)form.FindByName(_T("lblPolarInvalid")))->set_visible(!coeff.IsValid());
+  ((WndFrame *)form.FindByName(_T("lblPolarInvalid")))->SetVisible(!coeff.IsValid());
 }
 
 void
@@ -321,13 +321,13 @@ void
 PolarConfigPanel::SetVisible(bool active)
 {
   if (buttonList != NULL)
-    buttonList->set_visible(active);
+    buttonList->SetVisible(active);
 
   if (buttonImport != NULL)
-    buttonImport->set_visible(active);
+    buttonImport->SetVisible(active);
 
   if (buttonExport != NULL)
-    buttonExport->set_visible(active);
+    buttonExport->SetVisible(active);
 }
 
 void

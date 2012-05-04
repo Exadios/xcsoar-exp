@@ -190,7 +190,9 @@ DeviceListWidget::OnPaintItem(Canvas &canvas, const PixelRect rc, unsigned i)
       _tcscpy(buffer1, _("Connected"));
     }
 
-    if (basic.baro_altitude_available) {
+    if (basic.baro_altitude_available ||
+        basic.pressure_altitude_available ||
+        basic.static_pressure_available) {
       _tcscat(buffer1, _T("; "));
       _tcscat(buffer1, _("Baro"));
     }
@@ -236,7 +238,7 @@ DeviceListWidget::ReconnectCurrent()
 
   DeviceDescriptor &device = *device_list[indices[current]];
   if (device.IsBorrowed()) {
-    MessageBoxX(_("Device is occupied"), _("Reconnect"), MB_OK | MB_ICONERROR);
+    ShowMessageBox(_("Device is occupied"), _("Reconnect"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -255,7 +257,7 @@ DeviceListWidget::DownloadFlightFromCurrent()
 
   DeviceDescriptor &device = *device_list[indices[current]];
   if (!device.Borrow()) {
-    MessageBoxX(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
+    ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -307,7 +309,7 @@ DeviceListWidget::ManageCurrent()
     return;
 
   if (!descriptor.Borrow()) {
-    MessageBoxX(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
+    ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
     return;
   }
 

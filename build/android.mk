@@ -8,6 +8,7 @@ ifeq ($(TARGET),ANDROID)
 # Activity icon, to allow simultaneous installation of "stable" and
 # "testing".
 # In the stable branch, this should default to "n".
+TESTING = y
 
 ANT = ant
 JAVAH = javah
@@ -66,6 +67,18 @@ RAW_DIR = $(ANDROID_BUILD)/res/raw
 
 $(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_red_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
 	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
+#<<<<<<< HEAD
+#=======
+else
+ifeq ($(NO_HORIZON),y)
+$(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_no_horizon_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
+	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
+else
+$(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
+	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
+endif
+endif
+#>>>>>>> master
 
 OGGENC = oggenc --quiet --quality 1
 
@@ -98,7 +111,11 @@ $(PNG5): $(DRAWABLE_DIR)/%.png: $(DATA)/graphics/%.bmp | $(DRAWABLE_DIR)/dirstam
 
 PNG_FILES = $(DRAWABLE_DIR)/icon.png $(PNG1) $(PNG2) $(PNG3) $(PNG4) $(PNG5)
 
+ifeq ($(TESTING),y)
+MANIFEST = android/exadios/testing/AndroidManifest.xml
+else     # TESTING
 MANIFEST = android/exadios/AndroidManifest.xml
+endif    # TESTING
 
 # symlink some important files to $(ANDROID_BUILD) and let the Android
 # SDK generate build.xml
@@ -124,11 +141,21 @@ ifeq ($(WINHOST),y)
 else
 	$(Q)$(ANDROID_SDK)/tools/android update project --path $(@D) --target $(ANDROID_PLATFORM)
 endif
-ifeq ($(shell uname -s),Darwin)
-	$(Q)sed -i "" -f build/r.exadios.sed $@
+ifeq ($(TESTING),y)
+ifeq ($(HOST_IS_DARWIN),y)
+	$(Q)sed -i "" -f build/r.exadios.testing.sed $@
 else    # Darwin
-	$(Q)sed -i -f build/r.exadios.sed $@
+	$(Q)sed -i -f build/r.exadios.testing.sed $@
 endif   # Darwin
+else    # TESTING
+ifeq ($(NO_HORIZON),y)
+ifeq ($(HOST_IS_DARWIN),y)
+	$(Q)sed -i "" -f build/r.exadios.nohorizon.sed $@
+else    # Darwin
+	$(Q)sed -i -f build/r.exadios.nohorizon.sed $@
+endif   # Darwin
+endif   # NO_HORIZON
+endif   # TESTING
 	@touch $@
 
 ifeq ($(FAT_BINARY),y)

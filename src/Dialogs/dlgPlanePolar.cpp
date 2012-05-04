@@ -25,8 +25,8 @@ Copyright_License {
 #include "Dialogs/CallBackTable.hpp"
 #include "Dialogs/Internal.hpp"
 #include "Dialogs/ComboPicker.hpp"
-#include "DataField/ComboList.hpp"
-#include "DataField/Base.hpp"
+#include "Form/DataField/ComboList.hpp"
+#include "Form/DataField/Base.hpp"
 #include "Screen/Layout.hpp"
 #include "Polar/Polar.hpp"
 #include "Polar/PolarStore.hpp"
@@ -72,7 +72,7 @@ UpdateInvalidLabel()
 
   WndFrame *label = ((WndFrame *)dialog->FindByName(_T("InvalidLabel")));
   assert(label != NULL);
-  label->set_visible(visible);
+  label->SetVisible(visible);
 }
 
 static void
