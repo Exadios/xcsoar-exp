@@ -25,10 +25,7 @@ else
   ANDROID_SDK ?= $(HOME)/opt/android-sdk-linux_x86
 endif
 ANDROID_SDK_PLATFORM_DIR = $(ANDROID_SDK)/platforms/$(ANDROID_PLATFORM)
-ANDROID_ABI = $(ANDROID_ABI3)
-ANDROID_ABI_DIR = $(ANDROID_BUILD)/libs/$(ANDROID_ABI)
-ANDROID_ALL_ABIS = armeabi armeabi-v7a
-ANDROID_LIB_DIR = /opt/android/libs/$(ANDROID_ABI)
+ANDROID_ABI_DIR = $(ANDROID_BUILD)/libs/$(ANDROID_ABI3)
 
 ANDROID_LIB_NAMES = xcsoar
 
@@ -179,6 +176,8 @@ endef
 define generate-all-abis
 $(eval $(call generate-abi,$(1),armeabi,ANDROID))
 $(eval $(call generate-abi,$(1),armeabi-v7a,ANDROID7))
+$(eval $(call generate-abi,$(1),x86,ANDROID86))
+$(eval $(call generate-abi,$(1),mips,ANDROIDMIPS))
 endef
 
 $(foreach NAME,$(ANDROID_LIB_NAMES),$(eval $(call generate-all-abis,$(NAME))))

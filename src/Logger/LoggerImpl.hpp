@@ -46,11 +46,8 @@ class LoggerImpl
 {
 public:
   enum {
-    /**< Buffer size (s) of points recorded before takeoff */
+    /** Buffer size (s) of points recorded before takeoff */
     PRETAKEOFF_BUFFER_MAX = 60,
-    /**< Number of records in disk buffer */
-    DISK_BUFFER_NUM_RECS = 10,
-    MAX_IGC_BUFF = 255,
   };
 
   /** Buffer for points recorded before takeoff */
@@ -72,7 +69,7 @@ public:
     /** GPS fix state */
     int nav_warning;
     /** GPS fix quality */
-    int fix_quality;
+    FixQuality fix_quality;
     /** GPS fix state */
     int satellites_used;
     bool satellites_used_available;
@@ -97,6 +94,13 @@ public:
 private:
   IGCWriter *writer;
 
+  /**
+   * If at least one GPS fix came from the simulator
+   * (NMEA_INFO.Simulator), then this flag is true, and signing is
+   * disabled.
+   */
+  bool simulator;
+
 public:
   /** Default constructor */
   LoggerImpl();
@@ -116,7 +120,7 @@ public:
    * @param gps_info Current NMEA_INFO
    * @return True if enough space could be cleared, False otherwise
    */
-  static bool LoggerClearFreeSpace(const NMEAInfo &gps_info);
+  static bool LoggerClearFreeSpace(unsigned current_year);
   void StartLogger(const NMEAInfo &gps_info, const LoggerSettings &settings,
                    const TCHAR *asset_number, const Declaration &decl);
 

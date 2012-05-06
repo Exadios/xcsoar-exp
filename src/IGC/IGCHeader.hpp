@@ -21,34 +21,24 @@ Copyright_License {
 }
 */
 
-/** \file
- *
- * This library manages the list of device drivers.
- */
+#ifndef XCSOAR_IGC_HEADER_HPP
+#define XCSOAR_IGC_HEADER_HPP
 
-#ifndef XCSOAR_DEVICE_REGISTRY_HPP
-#define XCSOAR_DEVICE_REGISTRY_HPP
+struct IGCHeader {
+  /**
+   * 3-letter manufacturer id.
+   */
+  char manufacturer[4];
 
-#include "Compiler.h"
+  /**
+   * 3-letter logger id.
+   */
+  char id[4];
 
-#include <tchar.h>
-
-struct DeviceRegister;
-
-gcc_const
-const struct DeviceRegister *
-GetDriverByIndex(unsigned i);
-
-gcc_pure
-const struct DeviceRegister *
-FindDriverByName(const TCHAR *name);
-
-/**
- * Find the driver with the specified name, and return its display
- * name.  If no such driver was found, the specified name is returned.
- */
-gcc_pure
-const TCHAR *
-FindDriverDisplayName(const TCHAR *name);
+  /**
+   * The flight number on that day.
+   */
+  unsigned flight;
+};
 
 #endif
