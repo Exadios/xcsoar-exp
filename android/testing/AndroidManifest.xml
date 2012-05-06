@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.xcsoar.testing"
+          package="com.exadios.xcsoar.testing"
           android:installLocation="auto"
           android:versionCode="35"
           android:versionName="6.4_preview3">
-  <application android:icon="@drawable/icon" android:label="@string/app_name"
+  <application android:icon="@drawable/icon" android:label="@string/app_name_exp"
                android:debuggable="true">
     <activity android:name=".XCSoar"
               android:label="@string/app_name_testing"

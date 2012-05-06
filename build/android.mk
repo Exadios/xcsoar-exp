@@ -8,7 +8,7 @@ ifeq ($(TARGET),ANDROID)
 # Activity icon, to allow simultaneous installation of "stable" and
 # "testing".
 # In the stable branch, this should default to "n".
-TESTING = y
+TESTING = n
 
 ANT = ant
 JAVAH = javah
@@ -65,6 +65,7 @@ endif
 DRAWABLE_DIR = $(ANDROID_BUILD)/res/drawable
 RAW_DIR = $(ANDROID_BUILD)/res/raw
 
+ifeq ($(TESTING),y)
 $(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_red_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
 	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
 #<<<<<<< HEAD
@@ -74,7 +75,7 @@ ifeq ($(NO_HORIZON),y)
 $(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_no_horizon_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
 	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
 else
-$(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
+$(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_red_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
 	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
 endif
 endif
@@ -112,14 +113,14 @@ $(PNG5): $(DRAWABLE_DIR)/%.png: $(DATA)/graphics/%.bmp | $(DRAWABLE_DIR)/dirstam
 PNG_FILES = $(DRAWABLE_DIR)/icon.png $(PNG1) $(PNG2) $(PNG3) $(PNG4) $(PNG5)
 
 ifeq ($(TESTING),y)
-MANIFEST = android/exadios/testing/AndroidManifest.xml
+MANIFEST = android/testing/AndroidManifest.xml
 else     # TESTING
-MANIFEST = android/exadios/AndroidManifest.xml
+MANIFEST = android/AndroidManifest.xml
 endif    # TESTING
 
 # symlink some important files to $(ANDROID_BUILD) and let the Android
 # SDK generate build.xml
-$(ANDROID_BUILD)/build.xml: $(MANIFEST) $(PNG_FILES) build/r.testing.sed build/r.nohorizon.sed | $(TARGET_BIN_DIR)/dirstamp
+$(ANDROID_BUILD)/build.xml: $(MANIFEST) $(PNG_FILES) build/r.sed build/r.testing.sed build/r.nohorizon.sed | $(TARGET_BIN_DIR)/dirstamp
 	@$(NQ)echo "  ANDROID $@"
 	$(Q)rm -r -f $@ $(@D)/AndroidManifest.xml $(@D)/src $(@D)/bin $(@D)/res/values
 	$(Q)mkdir -p $(ANDROID_BUILD)/res $(ANDROID_BUILD)/src
@@ -143,16 +144,22 @@ else
 endif
 ifeq ($(TESTING),y)
 ifeq ($(HOST_IS_DARWIN),y)
-	$(Q)sed -i "" -f build/r.exadios.testing.sed $@
+	$(Q)sed -i "" -f build/r.testing.sed $@
 else    # Darwin
-	$(Q)sed -i -f build/r.exadios.testing.sed $@
+	$(Q)sed -i -f build/r.testing.sed $@
 endif   # Darwin
 else    # TESTING
 ifeq ($(NO_HORIZON),y)
 ifeq ($(HOST_IS_DARWIN),y)
-	$(Q)sed -i "" -f build/r.exadios.nohorizon.sed $@
+	$(Q)sed -i "" -f build/r.nohorizon.sed $@
 else    # Darwin
-	$(Q)sed -i -f build/r.exadios.nohorizon.sed $@
+	$(Q)sed -i -f build/r.nohorizon.sed $@
+endif   # Darwin
+else    # NO_HORIZON
+ifeq ($(HOST_IS_DARWIN),y)
+	$(Q)sed -i "" -f build/r.sed $@
+else    # Darwin
+	$(Q) sed -i -f build/r.sed $@
 endif   # Darwin
 endif   # NO_HORIZON
 endif   # TESTING
