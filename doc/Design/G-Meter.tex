@@ -198,6 +198,29 @@ For computational efficiency the (1, 1) Pade approximation of $e^{\left( \Omega^
 P \left( e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)} \right) = \left( 2I + \Omega^b_{eb} \left( t_k \right) \delta{T} \right)\left( 2I - \Omega^b_{eb} \left( t_k \right) \delta{T} \right)^{-1}
 \end{equation}
 
+\bigskip
+
+The implementation equations are
+\begin{equation}
+\hat{R}^e_b \left( t_{k + 1} \right) = \hat{R}^e_b \left( t_k \right) \left( 2I + \hat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)\left( 2I - \hat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)^{-1}
+\end{equation}
+\begin{equation}
+\hat{\dot{v}}^e \left( t_k \right) = \hat{R}^e_b \left( t_k \right) \hat{f}^b - 2 \hat{\Omega}^e_{eb} \left( t_k \right) \hat{v}^e \left( t_k \right) + g^e \left( \hat{x}^e \left( t_k \right) \right)
+\end{equation}
+where
+
+  $\hat{R}^e_b$ is the estimate of the transformation matrix from the $b$ to the $e$ domains
+
+  $\hat{\Omega}e_{eb}$ is the estimate of the skew-symetric matrix of the angular velocity vector of the $b$ domain, w.r.t. the $e$ domain, $\omega_{eb}$ , coordinated in the $b$ domain
+
+  $\hat{\dot{v}}^e$ is the estimate of the accelerations in the $e$ domain
+
+  $\hat{f}^b$ is the estimate of the forces from the IMU in the $b$ domain
+
+  $\hat{v}^e$ is the estimate of the velocities from the Kalman Filter in the $e$ domain
+
+  $g^e \left( \hat{x}^e \left(t_k \right) \right)$ is the estimate of the gravity force using the position from the Kalman Filter.
+
 \section[IMU Systematic Error Model]{IMU Systematic Error Model}
 
 The solution to $R^e_b \left( t \right)$ of (\ref{eqn:BodytoECEFForce}) is
