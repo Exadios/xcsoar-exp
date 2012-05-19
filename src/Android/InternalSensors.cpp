@@ -281,11 +281,9 @@ JNIEXPORT void JNICALL
 Java_org_xcsoar_NonGPSSensors_setAcceleration(
     JNIEnv* env, jobject obj, jfloat ddx, jfloat ddy, jfloat ddz) {
   // TODO
-  /*
   const unsigned int index = getDeviceIndex(env, obj);
   ScopeLock protect(device_blackboard->mutex);
   NMEAInfo &basic = device_blackboard->SetRealState(index);
-  */
 }
 
 gcc_visibility_default
@@ -294,11 +292,9 @@ Java_org_xcsoar_NonGPSSensors_setRotation(
     JNIEnv* env, jobject obj,
     jfloat dtheta_x, jfloat dtheta_y, jfloat dtheta_z) {
   // TODO
-  /*
   const unsigned int index = getDeviceIndex(env, obj);
   ScopeLock protect(device_blackboard->mutex);
   NMEAInfo &basic = device_blackboard->SetRealState(index);
-  */
 }
 
 gcc_visibility_default
