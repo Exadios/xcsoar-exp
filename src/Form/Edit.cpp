@@ -323,12 +323,12 @@ WndProperty::OnPaint(Canvas &canvas)
 
   /* background and selector */
   if (focused) {
-    canvas.clear(look.focused.background_color);
+    canvas.Clear(look.focused.background_color);
   } else {
     /* don't need to erase the background when it has been done by the
        parent window already */
-    if (have_clipping())
-      canvas.clear(look.background_color);
+    if (HaveClipping())
+      canvas.Clear(look.background_color);
   }
 
   WindowControl::OnPaint(canvas);
@@ -357,7 +357,7 @@ WndProperty::OnPaint(Canvas &canvas)
     if (org.x < 1)
       org.x = 1;
 
-    if (have_clipping())
+    if (HaveClipping())
       canvas.text(org.x, org.y, caption.c_str());
     else
       canvas.text_clipped(org.x, org.y, caption_width - org.x,

@@ -22,6 +22,7 @@ Copyright_License {
 */
 
 #include "IGCParser.hpp"
+#include "IGCHeader.hpp"
 #include "IGCFix.hpp"
 #include "DateTime.hpp"
 
@@ -106,23 +107,26 @@ IGCParseDate(const char *line, BrokenDate &date)
 bool
 IGCParseFix(const char *buffer, IGCFix &fix)
 {
-  int DegLat, DegLon;
-  int MinLat, MinLon;
-  char NoS, EoW;
-  char valid_char;
-  int iAltitude, iPressureAltitude;
-  int Hour = 0;
-  int Minute = 0;
-  int Second = 0;
-  int lfound =
-      sscanf(buffer, "B%02d%02d%02d%02d%05d%c%03d%05d%c%c%05d%05d",
-      &Hour, &Minute, &Second, &DegLat, &MinLat, &NoS, &DegLon,
-      &MinLon, &EoW, &valid_char, &iPressureAltitude, &iAltitude);
-
-  if (lfound == EOF)
+  BrokenTime time;
+  if (!IGCParseFixTime(buffer, time))
     return false;
 
-  if (lfound != 12)
+  unsigned lat_degrees, lat_minutes, lon_degrees, lon_minutes;
+  char lat_char, lon_char, valid_char;
+  int gps_altitude, pressure_altitude;
+
+  if (sscanf(buffer + 7, "%02u%05u%c%03u%05u%c%c%05d%05d",
+             &lat_degrees, &lat_minutes, &lat_char,
+             &lon_degrees, &lon_minutes, &lon_char,
+             &valid_char, &pressure_altitude, &gps_altitude) != 9)
+    return false;
+
+  if (lat_degrees >= 90 || lat_minutes >= 60000 ||
+      (lat_char != 'N' && lat_char != 'S'))
+    return false;
+
+  if (lon_degrees >= 180 || lon_minutes >= 60000 ||
+      (lon_char != 'E' && lon_char != 'W'))
     return false;
 
   if (valid_char == 'A')
@@ -132,44 +136,35 @@ IGCParseFix(const char *buffer, IGCFix &fix)
   else
     return false;
 
-  fixed Latitude = fixed(DegLat) + fixed(MinLat) / 60000;
-  if (NoS == 'S')
-    Latitude = -Latitude;
+  fix.location.latitude = Angle::Degrees(fixed(lat_degrees) +
+                                         fixed(lat_minutes) / 60000);
+  if (lat_char == 'S')
+    fix.location.latitude.Flip();
 
-  fixed Longitude = fixed(DegLon) + fixed(MinLon) / 60000;
-  if (EoW == 'W')
-    Longitude = -Longitude;
+  fix.location.longitude = Angle::Degrees(fixed(lon_degrees) +
+                                          fixed(lon_minutes) / 60000);
+  if (lon_char == 'W')
+    fix.location.longitude.Flip();
 
-  fix.location.latitude = Angle::Degrees(Latitude);
-  fix.location.longitude = Angle::Degrees(Longitude);
+  fix.gps_altitude = gps_altitude;
+  fix.pressure_altitude = pressure_altitude;
 
-  fix.gps_altitude = fixed(iAltitude);
-  fix.pressure_altitude = fixed(iPressureAltitude);
+  fix.time = time;
 
-  // some loggers drop out GPS altitude, so when this happens, revert
-  // to pressure altitude
-  if ((iPressureAltitude != 0) && (iAltitude==0)) {
-    fix.gps_altitude = fix.pressure_altitude;
-  }
-
-  fix.time = BrokenTime(Hour, Minute, Second);
   return true;
 }
 
 bool
 IGCParseFixTime(const char *buffer, BrokenTime &time)
 {
-  int Hour = 0;
-  int Minute = 0;
-  int Second = 0;
-  int lfound = sscanf(buffer, "B%02d%02d%02d", &Hour, &Minute, &Second);
+  unsigned hour, minute, second;
 
-  if (lfound == EOF)
+  if (sscanf(buffer, "B%02u%02u%02u", &hour, &minute, &second) != 3)
     return false;
 
-  if (lfound != 3)
+  if (hour >= 24 || minute >= 60 || second >= 60)
     return false;
 
-  time = BrokenTime(Hour, Minute, Second);
+  time = BrokenTime(hour, minute, second);
   return true;
 }

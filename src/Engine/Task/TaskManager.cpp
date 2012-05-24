@@ -143,7 +143,7 @@ TaskManager::UpdateCommonStatsTimes(const AircraftState &state)
     if (task_stats.total.remaining.IsDefined() &&
         positive(common_stats.aat_time_remaining))
       common_stats.aat_speed_remaining =
-          fixed(task_stats.total.remaining.get_distance()) /
+          fixed(task_stats.total.remaining.GetDistance()) /
           common_stats.aat_time_remaining;
     else
       common_stats.aat_speed_remaining = -fixed_one;
@@ -180,7 +180,7 @@ TaskManager::UpdateCommonStatsTimes(const AircraftState &state)
     task_ordered.update_summary(common_stats.ordered_summary);
 
   } else {
-    common_stats.reset_task();
+    common_stats.ResetTask();
   }
 }
 
@@ -387,7 +387,7 @@ TaskManager::Reset()
   task_ordered.Reset();
   task_goto.Reset();
   task_abort.Reset();
-  common_stats.reset();
+  common_stats.Reset();
   glide_polar.SetCruiseEfficiency(fixed_one);
 }
 

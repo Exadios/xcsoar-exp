@@ -31,6 +31,7 @@
 #include "Task/ProtectedTaskManager.hpp"
 #include "Asset.hpp"
 #include "ComputerSettings.hpp"
+#include "IGCFileCleanup.hpp"
 
 void
 Logger::LogPoint(const NMEAInfo &gps_info)
@@ -73,10 +74,9 @@ Logger::IsLoggerActive() const
 }
 
 bool
-Logger::LoggerClearFreeSpace(const NMEAInfo &gps_info)
+Logger::LoggerClearFreeSpace(unsigned current_year)
 {
-  Poco::ScopedRWLock protect(lock, true);
-  return logger.LoggerClearFreeSpace(gps_info);
+  return IGCFileCleanup(current_year);
 }
 
 void
@@ -113,7 +113,7 @@ Logger::GUIStartLogger(const NMEAInfo& gps_info,
     }
   }
 
-  if (!LoggerClearFreeSpace(gps_info)) {
+  if (!LoggerClearFreeSpace(gps_info.date_time_utc.year)) {
     ShowMessageBox(_("Logger inactive, insufficient storage!"),
                 _("Logger Error"), MB_OK| MB_ICONERROR);
     LogStartUp(_T("Logger not started: Insufficient Storage"));

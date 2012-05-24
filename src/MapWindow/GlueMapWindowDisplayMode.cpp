@@ -26,26 +26,21 @@ Copyright_License {
 #include "Profile/Profile.hpp"
 #include "Screen/Layout.hpp"
 
-ZoomClimb_t::ZoomClimb_t():
-  CruiseScale(fixed_one / 60),
-  ClimbScale(fixed_one / 2),
-  last_isclimb(false) {}
-
 void
-OffsetHistory::reset()
+OffsetHistory::Reset()
 {
   offsets.fill(RasterPoint{0, 0});
 }
 
 void
-OffsetHistory::add(RasterPoint p)
+OffsetHistory::Add(RasterPoint p)
 {
   offsets[pos] = p;
   pos = (pos + 1) % offsets.size();
 }
 
 RasterPoint
-OffsetHistory::average() const
+OffsetHistory::GetAverage() const
 {
   int x = 0;
   int y = 0;
@@ -113,66 +108,42 @@ GlueMapWindow::PanTo(const GeoPoint &location)
 }
 
 void
-GlueMapWindow::SetMapScale(const fixed x)
+GlueMapWindow::SetMapScale(fixed scale)
 {
-  MapWindow::SetMapScale(x);
+  MapWindow::SetMapScale(scale);
 
-  if (GetDisplayMode() == DM_CIRCLING &&
-      CommonInterface::GetMapSettings().circle_zoom_enabled)
+  MapSettings &settings = CommonInterface::SetMapSettings();
+
+  if (InCirclingMode() && settings.circle_zoom_enabled)
     // save cruise scale
-    zoomclimb.ClimbScale = visible_projection.GetScale();
+    settings.circling_scale = visible_projection.GetScale();
   else
-    zoomclimb.CruiseScale = visible_projection.GetScale();
+    settings.cruise_scale = visible_projection.GetScale();
 
   SaveDisplayModeScales();
 }
 
 void
-GlueMapWindow::LoadDisplayModeScales()
-{
-  fixed tmp;
-  if (Profile::Get(szProfileClimbMapScale, tmp))
-    zoomclimb.ClimbScale = tmp / 10000;
-  else
-    zoomclimb.ClimbScale = fixed_one / Layout::FastScale(2);
-
-  if (Profile::Get(szProfileCruiseMapScale, tmp))
-    zoomclimb.CruiseScale = tmp / 10000;
-  else
-    zoomclimb.CruiseScale = fixed_one / Layout::FastScale(60);
-}
-
-void
 GlueMapWindow::SaveDisplayModeScales()
 {
-  Profile::Set(szProfileClimbMapScale, (int)(zoomclimb.ClimbScale * 10000));
-  Profile::Set(szProfileCruiseMapScale, (int)(zoomclimb.CruiseScale * 10000));
+  const MapSettings &settings = CommonInterface::GetMapSettings();
+
+  Profile::Set(szProfileClimbMapScale, (int)(settings.circling_scale * 10000));
+  Profile::Set(szProfileCruiseMapScale, (int)(settings.cruise_scale * 10000));
 }
 
 void
 GlueMapWindow::SwitchZoomClimb()
 {
-  bool isclimb = (GetDisplayMode() == DM_CIRCLING);
+  const MapSettings &settings = CommonInterface::GetMapSettings();
 
-  if (CommonInterface::GetMapSettings().circle_zoom_enabled) {
-    if (isclimb != zoomclimb.last_isclimb) {
-      if (isclimb) {
-        // save cruise scale
-        zoomclimb.CruiseScale = visible_projection.GetScale();
-        // switch to climb scale
-        visible_projection.SetScale(zoomclimb.ClimbScale);
-      } else {
-        // leaving climb
-        // save cruise scale
-        zoomclimb.ClimbScale = visible_projection.GetScale();
-        // switch to climb scale
-        visible_projection.SetScale(zoomclimb.CruiseScale);
-      }
+  if (!settings.circle_zoom_enabled)
+    return;
 
-      SaveDisplayModeScales();
-      zoomclimb.last_isclimb = isclimb;
-    }
-  }
+  if (InCirclingMode())
+    visible_projection.SetScale(settings.circling_scale);
+  else
+    visible_projection.SetScale(settings.cruise_scale);
 }
 
 void
@@ -184,11 +155,16 @@ GlueMapWindow::UpdateDisplayMode()
     GetNewDisplayMode(CommonInterface::GetUIState(),
                       CommonInterface::Calculated());
 
-  if (DisplayMode != new_mode && new_mode == DM_CIRCLING)
-    offsetHistory.reset();
+  bool was_circling = (display_mode == DM_CIRCLING);
+  bool is_circling = (new_mode == DM_CIRCLING);
 
-  DisplayMode = new_mode;
-  SwitchZoomClimb();
+  if (!was_circling && is_circling)
+    offset_history.Reset();
+
+  display_mode = new_mode;
+
+  if (is_circling != was_circling)
+    SwitchZoomClimb();
 }
 
 void
@@ -201,7 +177,7 @@ GlueMapWindow::UpdateScreenAngle()
   const MapSettings &settings = CommonInterface::GetMapSettings();
 
   DisplayOrientation orientation =
-      (GetDisplayMode() == DM_CIRCLING) ?
+      InCirclingMode() ?
           settings.circling_orientation : settings.cruise_orientation;
 
   if (orientation == TARGETUP &&
@@ -225,27 +201,30 @@ GlueMapWindow::UpdateMapScale()
   const DerivedInfo &calculated = CommonInterface::Calculated();
   const MapSettings &settings = CommonInterface::GetMapSettings();
 
-  if (GetDisplayMode() == DM_CIRCLING && settings.circle_zoom_enabled)
+  if (InCirclingMode() && settings.circle_zoom_enabled)
     return;
 
   if (!IsNearSelf())
     return;
 
-  fixed wpd = calculated.auto_zoom_distance;
-  if (settings.auto_zoom_enabled && positive(wpd)) {
+  fixed distance = calculated.auto_zoom_distance;
+  if (settings.auto_zoom_enabled && positive(distance)) {
     // Calculate distance percentage between plane symbol and map edge
     // 50: centered  100: at edge of map
-    int AutoZoomFactor = (GetDisplayMode() == DM_CIRCLING) ?
-                                 50 : 100 - settings.glider_screen_position;
+    int auto_zoom_factor = InCirclingMode() ?
+                           50 : 100 - settings.glider_screen_position;
     // Leave 5% of full distance for target display
-    AutoZoomFactor -= 5;
+    auto_zoom_factor -= 5;
     // Adjust to account for map scale units
-    AutoZoomFactor *= 8;
-    wpd = wpd / ((fixed) AutoZoomFactor / fixed_int_constant(100));
+    auto_zoom_factor *= 8;
+
+    distance /= fixed(auto_zoom_factor) / 100;
+
     // Clip map auto zoom range to reasonable values
-    wpd = max(fixed_int_constant(525),
-              min(settings.max_auto_zoom_distance / fixed_int_constant(10), wpd));
-    visible_projection.SetFreeMapScale(wpd);
+    distance = max(fixed_int_constant(525),
+                   min(settings.max_auto_zoom_distance / 10, distance));
+
+    visible_projection.SetFreeMapScale(distance);
   }
 }
 
@@ -275,7 +254,7 @@ GlueMapWindow::UpdateProjection()
   center.x = (rc.left + rc.right) / 2;
   center.y = (rc.top + rc.bottom) / 2;
 
-  if (GetDisplayMode() == DM_CIRCLING || !IsNearSelf())
+  if (InCirclingMode() || !IsNearSelf())
     visible_projection.SetScreenOrigin(center.x, center.y);
   else if (settings_map.cruise_orientation == NORTHUP) {
     RasterPoint offset{0, 0};
@@ -300,11 +279,11 @@ GlueMapWindow::UpdateProjection()
           y = sc.second;
         }
       }
-      fixed gspFactor = (fixed) (50 - settings_map.glider_screen_position) / 100;
-      offset.x = PixelScalar(x * (rc.right - rc.left) * gspFactor);
-      offset.y = PixelScalar(y * (rc.top - rc.bottom) * gspFactor);
-      offsetHistory.add(offset);
-      offset = offsetHistory.average();
+      fixed position_factor = fixed(50 - settings_map.glider_screen_position) / 100;
+      offset.x = PixelScalar(x * (rc.right - rc.left) * position_factor);
+      offset.y = PixelScalar(y * (rc.top - rc.bottom) * position_factor);
+      offset_history.Add(offset);
+      offset = offset_history.GetAverage();
     }
     visible_projection.SetScreenOrigin(center.x + offset.x, center.y + offset.y);
   } else
@@ -313,8 +292,7 @@ GlueMapWindow::UpdateProjection()
 
   if (!IsNearSelf()) {
     /* no-op - the Projection's location is updated manually */
-  } else if (GetDisplayMode() == DM_CIRCLING &&
-           calculated.thermal_locator.estimate_valid) {
+  } else if (InCirclingMode() && calculated.thermal_locator.estimate_valid) {
     const fixed d_t = calculated.thermal_locator.estimate_location.Distance(basic.location);
     if (!positive(d_t)) {
       SetLocationLazy(basic.location);

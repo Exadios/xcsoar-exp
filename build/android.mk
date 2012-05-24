@@ -65,18 +65,7 @@ RAW_DIR = $(ANDROID_BUILD)/res/raw
 ifeq ($(TESTING),y)
 $(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_red_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
 	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
-#<<<<<<< HEAD
-#=======
-else
-ifeq ($(NO_HORIZON),y)
-$(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_no_horizon_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
-	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
-else
-$(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_red_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
-	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
 endif
-endif
-#>>>>>>> master
 
 OGGENC = oggenc --quiet --quality 1
 
@@ -185,6 +174,8 @@ endef
 define generate-all-abis
 $(eval $(call generate-abi,$(1),armeabi,ANDROID))
 $(eval $(call generate-abi,$(1),armeabi-v7a,ANDROID7))
+$(eval $(call generate-abi,$(1),x86,ANDROID86))
+$(eval $(call generate-abi,$(1),mips,ANDROIDMIPS))
 endef
 
 $(foreach NAME,$(ANDROID_LIB_NAMES),$(eval $(call generate-all-abis,$(NAME))))
