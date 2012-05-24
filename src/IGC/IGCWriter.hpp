@@ -29,6 +29,7 @@ Copyright_License {
 #include "Util/BatchBuffer.hpp"
 #include "Math/fixed.hpp"
 #include "Engine/Navigation/GeoPoint.hpp"
+#include "IGCFix.hpp"
 
 #include <tchar.h>
 #include <windef.h> /* for MAX_PATH */
@@ -48,31 +49,16 @@ class IGCWriter {
   TCHAR path[MAX_PATH];
   BatchBuffer<char[MAX_IGC_BUFF],LOGGER_DISK_BUFFER_NUM_RECS> buffer;
 
-  LoggerFRecord frecord;
   GRecord grecord;
 
-  /**
-   * If at least one GPS fix came from the simulator
-   * (NMEA_INFO.Simulator), then this flag is true, and signing is
-   * disabled.
-   */
-  bool simulator;
-
-  struct Fix {
-    GeoPoint location;
-    int altitude_gps;
-
-    const Fix &operator=(const NMEAInfo &gps_info);
-  };
-
-  Fix last_valid_point;
+  IGCFix last_valid_point;
   bool last_valid_point_initialized;
 
 public:
-  IGCWriter(const TCHAR *_path, const NMEAInfo &gps_info);
+  IGCWriter(const TCHAR *_path, bool simulator);
 
   bool Flush();
-  void Finish(const NMEAInfo &gps_info);
+  void Finish();
   void Sign();
 
   bool WriteLine(const char *line);
@@ -82,30 +68,39 @@ private:
 
   static const char *GetHFFXARecord();
   static const char *GetIRecord();
-  static fixed GetEPE(const NMEAInfo &gps_info);
+  static fixed GetEPE(const GPSState &gps);
   /** Satellites in use if logger fix quality is a valid gps */
-  static int GetSIU(const NMEAInfo &gps_info);
+  static int GetSIU(const GPSState &gps);
 
 public:
   /**
    * @param logger_id the ID of the logger, consisting of exactly 3
    * alphanumeric characters (plain ASCII)
    */
-  void WriteHeader(const BrokenDateTime &DateTime,
+  void WriteHeader(const BrokenDateTime &date_time,
                    const TCHAR *pilot_name, const TCHAR *aircraft_model,
                    const TCHAR *aircraft_registration,
                    const TCHAR *competition_id,
-                   const char *logger_id, const TCHAR *driver_name);
+                   const char *logger_id, const TCHAR *driver_name,
+                   bool simulator);
 
   void AddDeclaration(const GeoPoint &location, const TCHAR *ID);
-  void StartDeclaration(const BrokenDateTime &FirstDateTime,
+  void StartDeclaration(const BrokenDateTime &date_time,
                         const int number_of_turnpoints);
   void EndDeclaration();
 
   void LoggerNote(const TCHAR *text);
 
+  void LogPoint(const IGCFix &fix, int epe, int satellites);
   void LogPoint(const NMEAInfo &gps_info);
+  void LogEvent(const IGCFix &fix, int epe, int satellites, const char *event);
   void LogEvent(const NMEAInfo &gps_info, const char *event);
+
+  void LogEmptyFRecord(const BrokenTime &time);
+  void LogFRecord(const BrokenTime &time, const int *satellite_ids);
+
+protected:
+  void LogEvent(const BrokenTime &time, const char *event = "");
 };
 
 #endif

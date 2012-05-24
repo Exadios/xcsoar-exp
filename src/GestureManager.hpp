@@ -58,6 +58,12 @@ public:
     threshold(0) {}
 
   /**
+   * Returns the recognized gesture
+   * @return NULL or recognized gesture string
+   */
+  const TCHAR* GetGesture() const;
+
+  /**
    * Stops the GestureManager and returns the recognized gesture
    * @return NULL or recognized gesture string
    */
@@ -70,8 +76,9 @@ public:
 
   /**
    * Adds new coordinates to the GestureManager
+   * @return True if the threshold was reached, False otherwise
    */
-  void Update(PixelScalar x, PixelScalar y);
+  bool Update(PixelScalar x, PixelScalar y);
 };
 
 #endif

@@ -83,6 +83,7 @@ GlueMapWindow::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
 
   case DRAG_GESTURE:
     gestures.Update(x, y);
+    Invalidate();
     return true;
 
   case DRAG_SIMULATOR:
@@ -179,22 +180,21 @@ GlueMapWindow::OnMouseUp(PixelScalar x, PixelScalar y)
     if (click_time > 50 &&
         compare_squared(drag_start.x - x, drag_start.y - y,
                         Layout::Scale(36)) == 1) {
-      GeoPoint G = visible_projection.ScreenToGeo(x, y);
+      GeoPoint location = visible_projection.ScreenToGeo(x, y);
 
       double distance = hypot(drag_start.x - x, drag_start.y - y);
 
       // This drag moves the aircraft (changes speed and direction)
-      const Angle oldbearing = Basic().track;
-      const fixed minspeed = fixed(1.1) *
+      const Angle old_bearing = Basic().track;
+      const fixed min_speed = fixed(1.1) *
         CommonInterface::GetComputerSettings().polar.glide_polar_task.GetVMin();
-      const Angle newbearing = drag_start_geopoint.Bearing(G);
-      if (((newbearing - oldbearing).AsDelta().AbsoluteDegrees() < fixed(30)) ||
-          (Basic().ground_speed < minspeed))
-        device_blackboard->SetSpeed(min(fixed(100.0),
-                                        max(minspeed,
-                                            fixed(distance / (Layout::FastScale(3))))));
+      const Angle new_bearing = drag_start_geopoint.Bearing(location);
+      if (((new_bearing - old_bearing).AsDelta().AbsoluteDegrees() < fixed(30)) ||
+          (Basic().ground_speed < min_speed))
+        device_blackboard->SetSpeed(
+            min(fixed(100.0), max(min_speed, fixed(distance / (Layout::FastScale(3))))));
 
-      device_blackboard->SetTrack(newbearing);
+      device_blackboard->SetTrack(new_bearing);
       // change bearing without changing speed if direction change > 30
       // 20080815 JMW prevent dragging to stop glider
 
@@ -205,7 +205,7 @@ GlueMapWindow::OnMouseUp(PixelScalar x, PixelScalar y)
 
   case DRAG_GESTURE:
     const TCHAR* gesture = gestures.Finish();
-    if (gesture && on_mouse_gesture(gesture))
+    if (gesture && OnMouseGesture(gesture))
       return true;
 
     break;
@@ -256,7 +256,7 @@ GlueMapWindow::OnMultiTouchDown()
 #endif /* HAVE_MULTI_TOUCH */
 
 bool
-GlueMapWindow::on_mouse_gesture(const TCHAR* gesture)
+GlueMapWindow::OnMouseGesture(const TCHAR* gesture)
 {
   return InputEvents::processGesture(gesture);
 }
@@ -306,6 +306,8 @@ GlueMapWindow::OnPaint(Canvas &canvas)
   // Draw center screen cross hair in pan mode
   if (IsPanning())
     DrawCrossHairs(canvas);
+
+  DrawGesture(canvas);
 }
 
 void

@@ -21,22 +21,37 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_COMPATIBILITY_DIRENT_H
-#define XCSOAR_COMPATIBILITY_DIRENT_H
+#ifndef XCSOAR_TEAM_CODE_SETTINGS_HPP
+#define XCSOAR_TEAM_CODE_SETTINGS_HPP
 
-#include <tchar.h>
-#include <dirent.h>
+#include "Util/StaticString.hpp"
+#include "TeamCode.hpp"
+#include "FLARM/FlarmId.hpp"
+#include "Util/TypeTraits.hpp"
 
-#ifdef __WINE__
+/**
+ * Settings for teamcode calculations
+ */
+struct TeamCodeSettings {
+  /** Reference waypoint id for code origin */
+  int team_code_reference_waypoint;
+  /** Whether to enable tracking by FLARM */
+  bool team_flarm_tracking;
+  /** Whether the teammate code is valid */
+  bool team_code_valid;
 
-/* libwine doesn't provide these macros*/
+  /** CN of the glider to track */
+  StaticString<4> team_flarm_callsign;
+  /** auto-detected, see also in Info.h */
+  TeamCode team_code;
 
-#define _TDIR DIR
-#define _topendir opendir
-#define _tclosedir closedir
-#define _treaddir readdir
-#define _tdirent dirent
+  /** FlarmId of the glider to track */
+  FlarmId team_flarm_id;
+
+  void SetDefaults();
+};
+
+static_assert(is_trivial<TeamCodeSettings>::value, "type is not trivial");
 
 #endif
 
-#endif

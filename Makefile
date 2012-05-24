@@ -140,6 +140,7 @@ DIALOG_SOURCES = \
 	$(SRC)/Dialogs/Vega/VegaParametersWidget.cpp \
 	$(SRC)/Dialogs/Vega/VegaConfigurationDialog.cpp \
 	$(SRC)/Dialogs/Vega/VegaDemoDialog.cpp \
+	$(SRC)/Dialogs/FLARM/ConfigWidget.cpp \
 	$(SRC)/Dialogs/MapItemListDialog.cpp \
 	$(SRC)/Dialogs/WindSettingsPanel.cpp \
 	$(SRC)/Dialogs/dlgAirspace.cpp \
@@ -328,6 +329,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Logger/LoggerGRecord.cpp \
 	$(SRC)/Logger/LoggerEPE.cpp \
 	$(SRC)/Logger/LoggerImpl.cpp \
+	$(SRC)/Logger/IGCFileCleanup.cpp \
 	$(SRC)/IGC/IGCWriter.cpp \
 	$(SRC)/Logger/MD5.cpp \
 	$(SRC)/Logger/NMEALogger.cpp \
@@ -360,8 +362,10 @@ XCSOAR_SOURCES := \
 	$(SRC)/Replay/DemoReplayGlue.cpp \
 	$(SRC)/Replay/TaskAutoPilot.cpp \
 	$(SRC)/Replay/AircraftSim.cpp \
-	$(SRC)/TeamCodeCalculation.cpp \
+	$(SRC)/TeamCode.cpp \
+	$(SRC)/Waypoint/WaypointList.cpp \
 	$(SRC)/Waypoint/WaypointGlue.cpp \
+	$(SRC)/Waypoint/LastUsed.cpp \
 	$(SRC)/Waypoint/HomeGlue.cpp \
 	$(SRC)/Waypoint/WaypointReader.cpp \
 	$(SRC)/Waypoint/WaypointReaderBase.cpp \
@@ -507,12 +511,12 @@ XCSOAR_SOURCES := \
 	$(SRC)/MapWindow/GlueMapWindowItems.cpp \
 	$(SRC)/MapWindow/GlueMapWindowEvents.cpp \
 	$(SRC)/MapWindow/GlueMapWindowOverlays.cpp \
-	$(SRC)/MapWindow/GlueMapWindowTarget.cpp \
 	$(SRC)/MapWindow/GlueMapWindowDisplayMode.cpp \
 	$(SRC)/MapWindow/TargetMapWindow.cpp \
 	$(SRC)/MapWindow/TargetMapWindowEvents.cpp \
 	$(SRC)/MapWindow/TargetMapWindowDrag.cpp \
 	$(SRC)/GestureManager.cpp \
+	$(SRC)/TrackingGestureManager.cpp \
 	$(SRC)/DrawThread.cpp \
 	\
 	$(SRC)/Computer/BasicComputer.cpp \
@@ -534,6 +538,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/MapSettings.cpp \
 	$(SRC)/SystemSettings.cpp \
 	$(SRC)/ComputerSettings.cpp \
+	$(SRC)/TeamCodeSettings.cpp \
 	$(SRC)/MergeThread.cpp \
 	$(SRC)/CalculationThread.cpp \
 	$(SRC)/DisplayMode.cpp \
@@ -676,6 +681,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Look/AirspaceLook.cpp \
 	$(SRC)/Look/TrailLook.cpp \
 	$(SRC)/Look/CrossSectionLook.cpp \
+	$(SRC)/Look/GestureLook.cpp \
 	$(SRC)/Look/HorizonLook.cpp \
 	$(SRC)/Look/TaskLook.cpp \
 	$(SRC)/Look/TrafficLook.cpp \

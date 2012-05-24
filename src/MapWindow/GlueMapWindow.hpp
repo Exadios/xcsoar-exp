@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "MapWindow.hpp"
 #include "PeriodClock.hpp"
-#include "GestureManager.hpp"
+#include "TrackingGestureManager.hpp"
 #include "Renderer/ThermalBandRenderer.hpp"
 #include "Renderer/FinalGlideBarRenderer.hpp"
 #include "Screen/Timer.hpp"
@@ -36,30 +36,23 @@ Copyright_License {
 #include <array>
 
 struct Look;
+struct GestureLook;
 class Logger;
 class SingleWindow;
 
-struct ZoomClimb_t
+class OffsetHistory
 {
-  fixed CruiseScale;
-  fixed ClimbScale;
-  bool last_isclimb;
-
-  ZoomClimb_t();
-};
-
-
-class OffsetHistory {
   unsigned int pos;
   std::array<RasterPoint, 30> offsets;
 
-  friend class GlueMapWindow;
+public:
+  OffsetHistory():pos(0) {
+    Reset();
+  }
 
-protected:
-  OffsetHistory() : pos(0) { reset(); }
-  void reset();
-  void add(RasterPoint p);
-  RasterPoint average() const;
+  void Reset();
+  void Add(RasterPoint p);
+  RasterPoint GetAverage() const;
 };
 
 
@@ -88,22 +81,20 @@ class GlueMapWindow : public MapWindow {
 
   GeoPoint drag_start_geopoint;
   RasterPoint drag_start, drag_last;
-  GestureManager gestures;
+  TrackingGestureManager gestures;
   bool ignore_single_click;
 
   /** flag to indicate if the MapItemList should be shown on mouse up */
   bool arm_mapitem_list;
-
-  ZoomClimb_t zoomclimb;
 
   /**
    * The projection which was active when dragging started.
    */
   Projection drag_projection;
 
-  enum DisplayMode DisplayMode;
+  DisplayMode display_mode;
 
-  OffsetHistory offsetHistory;
+  OffsetHistory offset_history;
 
 #ifndef ENABLE_OPENGL
   /**
@@ -128,6 +119,8 @@ class GlueMapWindow : public MapWindow {
 
   ThermalBandRenderer thermal_band_renderer;
   FinalGlideBarRenderer final_glide_bar_renderer;
+
+  const GestureLook &gesture_look;
 
   WindowTimer map_item_timer;
 
@@ -174,19 +167,6 @@ public:
   void TogglePan();
   void PanTo(const GeoPoint &location);
 
-  /**
-   * If point is in any active OZ of the current task,
-   * it returns the index of that turnpoint.
-   *
-   * Used to popup the dlgTarget
-   *
-   * @param gp location where click started
-   *
-   * @return -1 if not in any sector, else tp index
-   *        if tp index >= task's ActiveIndex
-   */
-  int isInAnyActiveSector(const GeoPoint &gp);
-
   bool ShowMapItems(const GeoPoint &location,
                     bool show_empty_message = true) const;
 
@@ -209,7 +189,7 @@ protected:
    * @return True if the gesture was handled by the
    * event handler, False otherwise
    */
-  bool on_mouse_gesture(const TCHAR* gesture);
+  bool OnMouseGesture(const TCHAR* gesture);
 
   virtual bool OnKeyDown(unsigned key_code);
   virtual bool OnCancelMode();
@@ -218,6 +198,7 @@ protected:
   bool OnTimer(WindowTimer &timer);
 
 private:
+  void DrawGesture(Canvas &canvas) const;
   void DrawMapScale(Canvas &canvas, const PixelRect &rc,
                     const MapWindowProjection &projection) const;
   void DrawFlightMode(Canvas &canvas, const PixelRect &rc) const;
@@ -233,7 +214,6 @@ private:
 
   void SwitchZoomClimb();
 
-  void LoadDisplayModeScales();
   void SaveDisplayModeScales();
 
   void UpdateScreenAngle();
@@ -250,10 +230,14 @@ private:
 public:
   void UpdateMapScale();
   void UpdateDisplayMode();
-  void SetMapScale(const fixed x);
+  void SetMapScale(fixed scale);
 
-  enum DisplayMode GetDisplayMode() const {
-    return DisplayMode;
+  DisplayMode GetDisplayMode() const {
+    return display_mode;
+  }
+
+  bool InCirclingMode() const {
+    return display_mode == DM_CIRCLING;
   }
 };
 

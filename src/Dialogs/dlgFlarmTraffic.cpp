@@ -113,7 +113,7 @@ protected:
   virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
   virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
   virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  bool on_mouse_gesture(const TCHAR* gesture);
+  bool OnMouseGesture(const TCHAR* gesture);
 };
 
 static WndForm *wf = NULL;
@@ -127,7 +127,7 @@ FlarmTrafficControl::OnCreate()
 
   const TrafficSettings &settings = CommonInterface::GetUISettings().traffic;
 
-  Profile::Get(szProfileFlarmSideData, side_display_type);
+  Profile::GetEnum(szProfileFlarmSideData, side_display_type);
   enable_auto_zoom = settings.auto_zoom;
   enable_north_up = settings.north_up;
 }
@@ -268,7 +268,7 @@ FlarmTrafficControl::PaintTaskDirection(Canvas &canvas) const
                                        Angle::Zero() : heading));
 
   // Draw the arrow
-  canvas.polygon(triangle, 4);
+  canvas.DrawPolygon(triangle, 4);
 }
 
 void
@@ -439,7 +439,7 @@ FlarmTrafficControl::PaintID(Canvas &canvas, PixelRect rc,
       }
 
       canvas.SelectNullPen();
-      canvas.circle(rc.left + Layout::FastScale(7), rc.top + (font_size / 2),
+      canvas.DrawCircle(rc.left + Layout::FastScale(7), rc.top + (font_size / 2),
                     Layout::FastScale(7));
 
       rc.left += Layout::FastScale(16);
@@ -585,11 +585,12 @@ OnCloseClicked(gcc_unused WndButton &button)
 static void
 SwitchData()
 {
-  wdf->side_display_type++;
-  if (wdf->side_display_type > 2)
-    wdf->side_display_type = 1;
+  if (wdf->side_display_type == FlarmTrafficWindow::SIDE_INFO_VARIO)
+    wdf->side_display_type = FlarmTrafficWindow::SIDE_INFO_RELATIVE_ALTITUDE;
+  else
+    wdf->side_display_type = FlarmTrafficWindow::SIDE_INFO_VARIO;
 
-  Profile::Set(szProfileFlarmSideData, wdf->side_display_type);
+  Profile::SetEnum(szProfileFlarmSideData, wdf->side_display_type);
 }
 
 /**
@@ -713,7 +714,7 @@ bool
 FlarmTrafficControl::OnMouseUp(PixelScalar x, PixelScalar y)
 {
   const TCHAR *gesture = gestures.Finish();
-  if (gesture && on_mouse_gesture(gesture))
+  if (gesture && OnMouseGesture(gesture))
     return true;
 
   if (!WarningMode())
@@ -723,7 +724,7 @@ FlarmTrafficControl::OnMouseUp(PixelScalar x, PixelScalar y)
 }
 
 bool
-FlarmTrafficControl::on_mouse_gesture(const TCHAR* gesture)
+FlarmTrafficControl::OnMouseGesture(const TCHAR* gesture)
 {
   if (StringIsEqual(gesture, _T("U"))) {
     ZoomIn();

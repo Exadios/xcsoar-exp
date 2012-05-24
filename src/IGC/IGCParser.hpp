@@ -24,31 +24,10 @@ Copyright_License {
 #ifndef XCSOAR_IGC_PARSER_HPP
 #define XCSOAR_IGC_PARSER_HPP
 
-#include "Util/StaticString.hpp"
-#include "Math/fixed.hpp"
-#include "Engine/Navigation/GeoPoint.hpp"
-#include "DateTime.hpp"
-
-#include <tchar.h>
-
 struct IGCFix;
-
-struct IGCHeader {
-  /**
-   * 3-letter manufacturer id.
-   */
-  char manufacturer[4];
-
-  /**
-   * 3-letter logger id.
-   */
-  char id[4];
-
-  /**
-   * The flight number on that day.
-   */
-  unsigned flight;
-};
+struct IGCHeader;
+struct BrokenDate;
+struct BrokenTime;
 
 /**
  * Parse an IGC "A" record.

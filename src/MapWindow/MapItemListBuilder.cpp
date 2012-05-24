@@ -88,7 +88,7 @@ public:
   AirspaceWarningPredicate(const AirspaceWarningList &_warnings)
     :warnings(_warnings) {}
 
-  bool condition(const AbstractAirspace& airspace) const {
+  bool operator()(const AbstractAirspace& airspace) const {
     return warnings.ContainsInside(airspace) ||
            warnings.ContainsWarning(airspace);
   }
@@ -110,7 +110,7 @@ public:
      warning_predicate(_warnings),
      inside_predicate(_location) {}
 
-  bool condition(const AbstractAirspace& airspace) const {
+  bool operator()(const AbstractAirspace& airspace) const {
     // Airspace should be visible or have a warning/inside status
     // and airspace needs to be at specified location
 
@@ -237,7 +237,7 @@ MapItemListBuilder::AddVisibleAirspace(
                                      warnings, location);
 
   AirspaceListBuilderVisitor builder(list);
-  airspaces.visit_within_range(location, fixed(100.0), builder, predicate);
+  airspaces.VisitWithinRange(location, fixed(100.0), builder, predicate);
 }
 
 void
