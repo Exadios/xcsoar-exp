@@ -95,12 +95,12 @@ EditWindow::OnPaint(Canvas &canvas)
 {
   if (IsEnabled()) {
     if (IsReadOnly())
-      canvas.clear(Color(0xf0, 0xf0, 0xf0));
+      canvas.Clear(Color(0xf0, 0xf0, 0xf0));
     else
       canvas.ClearWhite();
     canvas.SetTextColor(COLOR_BLACK);
   } else {
-    canvas.clear(COLOR_LIGHT_GRAY);
+    canvas.Clear(COLOR_LIGHT_GRAY);
     canvas.SetTextColor(COLOR_DARK_GRAY);
   }
 
@@ -119,7 +119,7 @@ EditWindow::OnPaint(Canvas &canvas)
   PixelScalar padding = Layout::FastScale(2);
   InflateRect(&rc, -padding, -padding);
 
-  if (have_clipping() || IsMultiLine()) {
+  if (HaveClipping() || IsMultiLine()) {
     rc.top -= origin * GetFont().GetHeight();
     canvas.formatted_text(&rc, value.c_str(), GetTextStyle());
   } else if ((GetTextStyle() & DT_VCENTER) == 0)

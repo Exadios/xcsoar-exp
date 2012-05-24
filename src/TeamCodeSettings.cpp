@@ -21,32 +21,14 @@ Copyright_License {
 }
 */
 
-#include "GlueMapWindow.hpp"
-#include "Task/ProtectedTaskManager.hpp"
+#include "TeamCodeSettings.hpp"
 
-int
-GlueMapWindow::isInAnyActiveSector(const GeoPoint &gp)
+void
+TeamCodeSettings::SetDefaults()
 {
-  assert(task != NULL);
-
-  ProtectedTaskManager::Lease task_manager(*task);
-  const AbstractTask *at = task_manager->GetActiveTask();
-  if (at == NULL)
-    return -1;
-
-  const unsigned TaskSize = at->TaskSize();
-  const unsigned ActiveIndex = task_manager->GetActiveTaskPointIndex();
-
-  if (task_manager->GetMode() != TaskManager::MODE_ORDERED)
-    return -1;
-
-  AircraftState a;
-  a.location = gp;
-
-  for (unsigned i = ActiveIndex; i < TaskSize; i++) {
-    if (task_manager->IsInSector(i, a, false))
-      return i;
-  }
-
-  return -1;
+  team_code_reference_waypoint = -1;
+  team_flarm_tracking = false;
+  team_code_valid = false;
+  team_flarm_callsign.clear();
+  team_flarm_id.Clear();
 }

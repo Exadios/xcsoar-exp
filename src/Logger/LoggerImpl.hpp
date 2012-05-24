@@ -92,7 +92,12 @@ public:
   };
 
 private:
+  TCHAR filename[MAX_PATH];
   IGCWriter *writer;
+
+  OverwritingRingBuffer<PreTakeoffBuffer, PRETAKEOFF_BUFFER_MAX> pre_takeoff_buffer;
+
+  LoggerFRecord frecord;
 
   /**
    * If at least one GPS fix came from the simulator
@@ -114,13 +119,6 @@ public:
     return writer != NULL;
   }
 
-  /**
-   * Deletes old IGC files until at least LOGGER_MINFREESTORAGE KiB of space are
-   * available
-   * @param gps_info Current NMEA_INFO
-   * @return True if enough space could be cleared, False otherwise
-   */
-  static bool LoggerClearFreeSpace(unsigned current_year);
   void StartLogger(const NMEAInfo &gps_info, const LoggerSettings &settings,
                    const TCHAR *asset_number, const Declaration &decl);
 
@@ -142,10 +140,7 @@ private:
   
 private:
   void LogPointToBuffer(const NMEAInfo &gps_info);
-
-private:
-  TCHAR filename[MAX_PATH];
-  OverwritingRingBuffer<PreTakeoffBuffer, PRETAKEOFF_BUFFER_MAX> pre_takeoff_buffer;
+  void WritePoint(const NMEAInfo &gps_info);
 };
 
 #endif

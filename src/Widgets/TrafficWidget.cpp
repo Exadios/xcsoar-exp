@@ -109,7 +109,7 @@ protected:
   virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
   virtual bool OnMouseDouble(PixelScalar x, PixelScalar y);
   virtual bool OnKeyDown(unsigned key_code);
-  bool on_mouse_gesture(const TCHAR* gesture);
+  bool OnMouseGesture(const TCHAR* gesture);
 };
 
 /** XXX this hack is needed because the form callbacks don't get a
@@ -123,7 +123,7 @@ FlarmTrafficControl2::OnCreate()
 
   const TrafficSettings &settings = CommonInterface::GetUISettings().traffic;
 
-  Profile::Get(szProfileFlarmSideData, side_display_type);
+  Profile::GetEnum(szProfileFlarmSideData, side_display_type);
   enable_auto_zoom = settings.auto_zoom;
   enable_north_up = settings.north_up;
 }
@@ -264,7 +264,7 @@ FlarmTrafficControl2::PaintTaskDirection(Canvas &canvas) const
                                        Angle::Zero() : heading));
 
   // Draw the arrow
-  canvas.polygon(triangle, 4);
+  canvas.DrawPolygon(triangle, 4);
 }
 
 /**
@@ -390,7 +390,7 @@ FlarmTrafficControl2::PaintTrafficInfo(Canvas &canvas) const
       }
 
       canvas.SelectNullPen();
-      canvas.circle(rc.left + Layout::FastScale(7), rc.top + (font_size / 2),
+      canvas.DrawCircle(rc.left + Layout::FastScale(7), rc.top + (font_size / 2),
                     Layout::FastScale(7));
 
       rc.left += Layout::FastScale(16);
@@ -453,11 +453,12 @@ TrafficWidget::NextTarget()
 void
 TrafficWidget::SwitchData()
 {
-  view->side_display_type++;
-  if (view->side_display_type > 2)
-    view->side_display_type = 1;
+  if (view->side_display_type == FlarmTrafficWindow::SIDE_INFO_VARIO)
+    view->side_display_type = FlarmTrafficWindow::SIDE_INFO_RELATIVE_ALTITUDE;
+  else
+    view->side_display_type = FlarmTrafficWindow::SIDE_INFO_VARIO;
 
-  Profile::Set(szProfileFlarmSideData, view->side_display_type);
+  Profile::SetEnum(szProfileFlarmSideData, view->side_display_type);
 }
 
 void
@@ -528,7 +529,7 @@ bool
 FlarmTrafficControl2::OnMouseUp(PixelScalar x, PixelScalar y)
 {
   const TCHAR *gesture = gestures.Finish();
-  if (gesture && on_mouse_gesture(gesture))
+  if (gesture && OnMouseGesture(gesture))
     return true;
 
   if (!WarningMode())
@@ -545,7 +546,7 @@ FlarmTrafficControl2::OnMouseDouble(PixelScalar x, PixelScalar y)
 }
 
 bool
-FlarmTrafficControl2::on_mouse_gesture(const TCHAR* gesture)
+FlarmTrafficControl2::OnMouseGesture(const TCHAR* gesture)
 {
   if (StringIsEqual(gesture, _T("U"))) {
     ZoomIn();

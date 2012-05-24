@@ -167,7 +167,7 @@ ContractLocalPath(TCHAR* filein)
 
   // Get the relative file name and location (ptr)
   const TCHAR *ptr = StringAfterPrefix(filein, data_path);
-  if (ptr == NULL || !is_dir_separator(*ptr))
+  if (ptr == NULL || !IsDirSeparator(*ptr))
     return;
 
   // Replace the full local path by the code "%LOCAL_PATH%\\" (output)
@@ -183,9 +183,9 @@ InFlashNamed(const TCHAR *path, const TCHAR *name)
 {
   size_t name_length = _tcslen(name);
 
-  return is_dir_separator(path[0]) &&
+  return IsDirSeparator(path[0]) &&
     memcmp(path + 1, name, name_length * sizeof(name[0])) == 0 &&
-    is_dir_separator(path[1 + name_length]);
+    IsDirSeparator(path[1 + name_length]);
 }
 
 /**
@@ -264,9 +264,12 @@ ModuleInFlash(HMODULE module, TCHAR *buffer)
 
 /**
  * Determine whether a text file contains a given string
+ *
+ * If two strings are given, the second string is considered
+ * as no-match for the given line (i.e. string1 AND !string2).
  */
 static bool
-fgrep(const char *fname, const char *string)
+fgrep(const char *fname, const char *string, const char *string2 = NULL)
 {
   char line[100];
   FILE *fp;
@@ -274,9 +277,10 @@ fgrep(const char *fname, const char *string)
   if ((fp = fopen(fname, "r")) == NULL)
     return false;
   while (fgets(line, sizeof(line), fp) != NULL)
-    if (strstr(line, string) != NULL) {
-      fclose(fp);
-      return true;
+    if (strstr(line, string) != NULL &&
+        (string2 == NULL || strstr(line, string2) == NULL)) {
+        fclose(fp);
+        return true;
     }
   fclose(fp);
   return false;
@@ -357,7 +361,7 @@ FindDataPath()
     struct stat st;
     if (stat(ANDROID_SAMSUNG_EXTERNAL_SD, &st) == 0 &&
         (st.st_mode & S_IFDIR) != 0 &&
-        fgrep("/proc/mounts", ANDROID_SAMSUNG_EXTERNAL_SD " ")) {
+        fgrep("/proc/mounts", ANDROID_SAMSUNG_EXTERNAL_SD " ", "tmpfs ")) {
       __android_log_print(ANDROID_LOG_DEBUG, "XCSoar",
                           "Enable Samsung hack, " XCSDATADIR " in "
                           ANDROID_SAMSUNG_EXTERNAL_SD);

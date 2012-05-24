@@ -23,7 +23,6 @@
 
 #include "FlarmTrafficWindow.hpp"
 #include "FLARM/Traffic.hpp"
-#include "FLARM/Friends.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Fonts.hpp"
 #include "Formatter/UserUnits.hpp"
@@ -44,7 +43,7 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
    small(_small),
    enable_north_up(false),
    heading(Angle::Zero()),
-   side_display_type(1)
+   side_display_type(SIDE_INFO_VARIO)
 {
   data.Clear();
 }
@@ -295,14 +294,7 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
       hollow_brush = true;
     } else {
       // Search for team color
-      FlarmFriends::Color team_color = FlarmFriends::GetFriendColor(traffic.id);
-
-      // If no color found but target is teammate
-      if (team_color == FlarmFriends::Color::NONE &&
-          settings.team_flarm_tracking &&
-          traffic.id == settings.team_flarm_id)
-        // .. use yellow color
-        team_color = FlarmFriends::Color::GREEN;
+      FlarmFriends::Color team_color = GetTeamColor(traffic.id);
 
       // If team color found -> draw a colored circle around the target
       if (team_color != FlarmFriends::Color::NONE) {
@@ -349,9 +341,9 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
   if (circles > 0) {
     canvas.SelectHollowBrush();
     canvas.Select(*circle_pen);
-    canvas.circle(sc[i].x, sc[i].y, Layout::FastScale(small ? 8 : 16));
+    canvas.DrawCircle(sc[i].x, sc[i].y, Layout::FastScale(small ? 8 : 16));
     if (circles == 2)
-      canvas.circle(sc[i].x, sc[i].y, Layout::FastScale(small ? 10 : 19));
+      canvas.DrawCircle(sc[i].x, sc[i].y, Layout::FastScale(small ? 10 : 19));
   }
 
   // Create an arrow polygon
@@ -393,67 +385,11 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
     canvas.Select(*target_brush);
 
   // Draw the polygon
-  canvas.polygon(Arrow, 5);
+  canvas.DrawPolygon(Arrow, 5);
 
   if (small) {
-    if (WarningMode() && !traffic.HasAlarm())
-      return;
-
-    const short relalt =
-        iround(Units::ToUserAltitude(traffic.relative_altitude) / 100);
-
-    // if (relative altitude is other than zero)
-    if (relalt == 0)
-      return;
-
-    // Write the relativ altitude devided by 100 to the Buffer
-    StaticString<10> buffer;
-    buffer.Format(_T("%d"), abs(relalt));
-
-    // Select font
-    canvas.SetBackgroundTransparent();
-    canvas.Select(look.side_info_font);
-    canvas.SetTextColor(*text_color);
-
-    // Calculate size of the output string
-    PixelSize tsize = canvas.CalcTextSize(buffer);
-
-    UPixelScalar dist = Layout::FastScale(traffic.HasAlarm() ? 12 : 8);
-
-    // Draw string
-    canvas.text(sc[i].x + dist, sc[i].y - tsize.cy / 2, buffer);
-
-    // Set target_brush for the up/down arrow
-    canvas.Select(*arrow_brush);
-    canvas.SelectNullPen();
-
-    // Prepare the triangular polygon
-    RasterPoint triangle[4];
-    triangle[0].x = 0;
-    triangle[0].y = -4;
-    triangle[1].x = 3;
-    triangle[1].y = 0;
-    triangle[2].x = -3;
-    triangle[2].y = 0;
-
-    // Flip = -1 for arrow pointing downwards
-    short flip = 1;
-    if (relalt < 0)
-      flip = -1;
-
-    // Shift the arrow to the right position
-    for (int j = 0; j < 3; j++) {
-      triangle[j].x = Layout::FastScale(triangle[j].x);
-      triangle[j].y = Layout::FastScale(triangle[j].y);
-
-      triangle[j].x = sc[i].x + dist + triangle[j].x + tsize.cx / 2;
-      triangle[j].y = sc[i].y + flip * (triangle[j].y  - tsize.cy / 2);
-    }
-    triangle[3].x = triangle[0].x;
-    triangle[3].y = triangle[0].y;
-
-    // Draw the arrow
-    canvas.DrawTriangleFan(triangle, 4);
+    if (!WarningMode() || traffic.HasAlarm())
+      PaintTargetInfoSmall(canvas, traffic, i, *text_color, *arrow_brush);
 
     return;
   }
@@ -463,7 +399,7 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
     return;
 
   // if vertical speed to small or negative -> skip this one
-  if (side_display_type == 1 &&
+  if (side_display_type == SIDE_INFO_VARIO &&
       (!traffic.climb_rate_avg30s_available ||
        traffic.climb_rate_avg30s < fixed(0.5) ||
        traffic.IsPowered()))
@@ -476,7 +412,7 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
   // Format string
   TCHAR tmp[10];
 
-  if (side_display_type == 1)
+  if (side_display_type == SIDE_INFO_VARIO)
     FormatUserVerticalSpeed(traffic.climb_rate_avg30s, tmp, false);
   else
     FormatRelativeUserAltitude(traffic.relative_altitude, tmp, true);
@@ -495,6 +431,69 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
 
   // Draw vertical speed
   canvas.text(sc[i].x + Layout::FastScale(11), sc[i].y - sz.cy / 2, tmp);
+}
+
+void
+FlarmTrafficWindow::PaintTargetInfoSmall(
+    Canvas &canvas, const FlarmTraffic &traffic, unsigned i,
+    const Color &text_color, const Brush &arrow_brush)
+{
+  const short relalt =
+      iround(Units::ToUserAltitude(traffic.relative_altitude) / 100);
+
+  // if (relative altitude is other than zero)
+  if (relalt == 0)
+    return;
+
+  // Write the relativ altitude devided by 100 to the Buffer
+  StaticString<10> buffer;
+  buffer.Format(_T("%d"), abs(relalt));
+
+  // Select font
+  canvas.SetBackgroundTransparent();
+  canvas.Select(look.side_info_font);
+  canvas.SetTextColor(text_color);
+
+  // Calculate size of the output string
+  PixelSize tsize = canvas.CalcTextSize(buffer);
+
+  UPixelScalar dist = Layout::FastScale(traffic.HasAlarm() ? 12 : 8);
+
+  // Draw string
+  canvas.text(sc[i].x + dist, sc[i].y - tsize.cy / 2, buffer);
+
+  // Set target_brush for the up/down arrow
+  canvas.Select(arrow_brush);
+  canvas.SelectNullPen();
+
+  // Prepare the triangular polygon
+  RasterPoint triangle[4];
+  triangle[0].x = 0;
+  triangle[0].y = -4;
+  triangle[1].x = 3;
+  triangle[1].y = 0;
+  triangle[2].x = -3;
+  triangle[2].y = 0;
+
+  // Flip = -1 for arrow pointing downwards
+  short flip = 1;
+  if (relalt < 0)
+    flip = -1;
+
+  // Shift the arrow to the right position
+  for (int j = 0; j < 3; j++) {
+    triangle[j].x = Layout::FastScale(triangle[j].x);
+    triangle[j].y = Layout::FastScale(triangle[j].y);
+
+    triangle[j].x = sc[i].x + dist + triangle[j].x + tsize.cx / 2;
+    triangle[j].y = sc[i].y + flip * (triangle[j].y  - tsize.cy / 2);
+  }
+  triangle[3].x = triangle[0].x;
+  triangle[3].y = triangle[0].y;
+
+  // Draw the arrow
+  canvas.DrawTriangleFan(triangle, 4);
+
 }
 
 /**
@@ -560,7 +559,7 @@ FlarmTrafficWindow::PaintRadarPlane(Canvas &canvas) const
     y2 = p.second;
   }
 
-  canvas.line(radar_mid.x + x1, radar_mid.y + y1,
+  canvas.DrawLine(radar_mid.x + x1, radar_mid.y + y1,
               radar_mid.x + x2, radar_mid.y + y2);
 
   x1 = 0;
@@ -577,7 +576,7 @@ FlarmTrafficWindow::PaintRadarPlane(Canvas &canvas) const
     y2 = p.second;
   }
 
-  canvas.line(radar_mid.x + x1, radar_mid.y + y1,
+  canvas.DrawLine(radar_mid.x + x1, radar_mid.y + y1,
               radar_mid.x + x2, radar_mid.y + y2);
 
   x1 = Layout::FastScale(small ? 2 : 4);
@@ -594,7 +593,7 @@ FlarmTrafficWindow::PaintRadarPlane(Canvas &canvas) const
     y2 = p.second;
   }
 
-  canvas.line(radar_mid.x + x1, radar_mid.y + y1,
+  canvas.DrawLine(radar_mid.x + x1, radar_mid.y + y1,
               radar_mid.x + x2, radar_mid.y + y2);
 }
 
@@ -619,7 +618,7 @@ FlarmTrafficWindow::PaintNorth(Canvas &canvas) const
   canvas.Select(look.label_font);
 
   PixelSize s = canvas.CalcTextSize(_T("N"));
-  canvas.circle(radar_mid.x + iround(x * radius),
+  canvas.DrawCircle(radar_mid.x + iround(x * radius),
                 radar_mid.y + iround(y * radius), s.cy * 0.65);
   canvas.text(radar_mid.x + iround(x * radius) - s.cx / 2,
               radar_mid.y + iround(y * radius) - s.cy / 2, _T("N"));
@@ -637,8 +636,8 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const
   canvas.SetTextColor(look.radar_color);
 
   // Paint circles
-  canvas.circle(radar_mid.x, radar_mid.y, radius);
-  canvas.circle(radar_mid.x, radar_mid.y, radius / 2);
+  canvas.DrawCircle(radar_mid.x, radar_mid.y, radius);
+  canvas.DrawCircle(radar_mid.x, radar_mid.y, radius / 2);
 
   PaintRadarPlane(canvas);
 
@@ -694,6 +693,28 @@ FlarmTrafficWindow::OnPaint(Canvas &canvas)
 {
   canvas.ClearWhite();
   Paint(canvas);
+}
+
+FlarmFriends::Color
+FlarmTrafficWindow::GetTeamColor(const FlarmId &id) const
+{
+  return GetTeamColor(id, settings);
+}
+
+FlarmFriends::Color
+FlarmTrafficWindow::GetTeamColor(const FlarmId &id,
+                                 const TeamCodeSettings &settings)
+{
+  FlarmFriends::Color team_color = FlarmFriends::GetFriendColor(id);
+
+  // If no color found but target is teammate
+  if (team_color == FlarmFriends::Color::NONE &&
+      settings.team_flarm_tracking &&
+      id == settings.team_flarm_id)
+    // .. use yellow color
+    return FlarmFriends::Color::GREEN;
+
+  return team_color;
 }
 
 bool

@@ -26,7 +26,7 @@ Copyright_License {
 #include "NMEA/Info.hpp"
 #include "NMEA/Derived.hpp"
 #include "ConditionMonitor/ConditionMonitors.hpp"
-#include "TeamCodeCalculation.hpp"
+#include "TeamCode.hpp"
 #include "PeriodClock.hpp"
 #include "GlideComputerInterface.hpp"
 #include "ComputerSettings.hpp"
@@ -274,7 +274,7 @@ void
 GlideComputer::OnTakeoff()
 {
   // reset stats on takeoff
-  air_data_computer.ResetFlight(SetCalculated(), GetComputerSettings());
+  air_data_computer.ResetFlight(SetCalculated(), GetComputerSettings(), false);
 
   // save stats in case we never finish
   SaveFinish();

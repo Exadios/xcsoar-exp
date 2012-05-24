@@ -668,6 +668,7 @@ DEBUG_PROGRAM_NAMES = \
 	FlightTable \
 	RunTrace \
 	RunOLCAnalysis \
+	FlightPath \
 	BenchmarkProjection \
 	DumpTextFile DumpTextZip WriteTextFile RunTextWriter \
 	DumpHexColor \
@@ -713,6 +714,7 @@ DEBUG_PROGRAM_NAMES = \
 
 ifeq ($(TARGET),UNIX)
 DEBUG_PROGRAM_NAMES += \
+	AnalyseFlight \
 	FeedTCP \
 	FeedFlyNetData
 endif
@@ -744,6 +746,7 @@ DEBUG_REPLAY_SOURCES = \
 	$(SRC)/Units/Descriptor.cpp \
 	$(SRC)/Units/System.cpp \
 	$(SRC)/ComputerSettings.cpp \
+	$(SRC)/TeamCodeSettings.cpp \
 	$(SRC)/Logger/Settings.cpp \
 	$(SRC)/Tracking/TrackingSettings.cpp \
 	$(ENGINE_SRC_DIR)/GlideSolvers/GlideSettings.cpp \
@@ -1248,6 +1251,7 @@ RUN_FLARM_UTILS_SOURCES = \
 	$(SRC)/Thread/Thread.cpp \
 	$(SRC)/Operation/Operation.cpp \
 	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
+	$(SRC)/NMEA/InputLine.cpp \
 	$(TEST_SRC_DIR)/FakeLogFile.cpp \
 	$(TEST_SRC_DIR)/DebugPort.cpp \
 	$(TEST_SRC_DIR)/RunFlarmUtils.cpp
@@ -1461,6 +1465,62 @@ RUN_OLC_LDADD = $(DEBUG_REPLAY_LDADD)
 RUN_OLC_DEPENDS = UTIL MATH
 $(eval $(call link-program,RunOLCAnalysis,RUN_OLC))
 
+ANALYSE_FLIGHT_SOURCES = \
+	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/IGC/IGCParser.cpp \
+	$(SRC)/NMEA/Aircraft.cpp \
+	$(SRC)/NMEA/FlyingState.cpp \
+	$(SRC)/XML/Node.cpp \
+	$(SRC)/XML/Writer.cpp \
+	$(SRC)/Formatter/TimeFormatter.cpp \
+	$(SRC)/DateTime.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/SearchPoint.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/SearchPointVector.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/Flat/FlatGeoPoint.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/Flat/FlatRay.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/TaskProjection.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/ConvexHull/GrahamScan.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/ConvexHull/PolygonInterior.cpp \
+	$(ENGINE_SRC_DIR)/Trace/Point.cpp \
+	$(ENGINE_SRC_DIR)/Trace/Trace.cpp \
+	$(ENGINE_SRC_DIR)/Contest/ContestManager.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/Contests.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/AbstractContest.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/ContestDijkstra.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/OLCLeague.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/OLCSprint.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/OLCClassic.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/OLCTriangle.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/OLCFAI.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/OLCPlus.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/XContestFree.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/XContestTriangle.cpp \
+	$(ENGINE_SRC_DIR)/Contest/Solvers/OLCSISAT.cpp \
+	$(TEST_SRC_DIR)/FakeTerrain.cpp \
+	$(TEST_SRC_DIR)/Printing.cpp \
+	$(TEST_SRC_DIR)/ContestPrinting.cpp \
+	$(TEST_SRC_DIR)/AnalyseFlight.cpp
+ANALYSE_FLIGHT_LDADD = $(DEBUG_REPLAY_LDADD)
+ANALYSE_FLIGHT_DEPENDS = UTIL MATH
+$(eval $(call link-program,AnalyseFlight,ANALYSE_FLIGHT))
+
+FLIGHT_PATH_SOURCES = \
+	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/IGC/IGCParser.cpp \
+	$(SRC)/NMEA/Aircraft.cpp \
+	$(SRC)/NMEA/FlyingState.cpp \
+	$(ENGINE_SRC_DIR)/GlideSolvers/GlideSettings.cpp \
+	$(ENGINE_SRC_DIR)/Trace/Point.cpp \
+	$(ENGINE_SRC_DIR)/Trace/Trace.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/Flat/FlatGeoPoint.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/TaskProjection.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/SearchPoint.cpp \
+	$(TEST_SRC_DIR)/Printing.cpp \
+	$(TEST_SRC_DIR)/FlightPath.cpp
+FLIGHT_PATH_LDADD = $(DEBUG_REPLAY_LDADD)
+FLIGHT_PATH_DEPENDS = UTIL MATH
+$(eval $(call link-program,FlightPath,FLIGHT_PATH))
+
 RUN_CANVAS_SOURCES = \
 	$(SRC)/Hardware/Display.cpp \
 	$(SRC)/Screen/Layout.cpp \
@@ -1579,6 +1639,7 @@ RUN_MAP_WINDOW_SOURCES = \
 	$(SRC)/ResourceLoader.cpp \
 	$(SRC)/MapSettings.cpp \
 	$(SRC)/ComputerSettings.cpp \
+	$(SRC)/TeamCodeSettings.cpp \
 	$(SRC)/Logger/Settings.cpp \
 	$(SRC)/Tracking/TrackingSettings.cpp \
 	$(SRC)/Computer/TraceComputer.cpp \
@@ -1968,6 +2029,7 @@ RUN_ANALYSIS_SOURCES = \
 	$(SRC)/Look/TaskLook.cpp \
 	$(SRC)/Look/AircraftLook.cpp \
 	$(SRC)/Look/TrafficLook.cpp \
+	$(SRC)/Look/GestureLook.cpp \
 	$(SRC)/Look/InfoBoxLook.cpp \
 	$(SRC)/Look/MarkerLook.cpp \
 	$(SRC)/Look/TerminalLook.cpp \
@@ -2039,13 +2101,14 @@ RUN_ANALYSIS_SOURCES = \
 	$(SRC)/Gauge/VarioSettings.cpp \
 	$(SRC)/Gauge/TrafficSettings.cpp \
 	$(SRC)/ComputerSettings.cpp \
+	$(SRC)/TeamCodeSettings.cpp \
 	$(SRC)/Logger/Settings.cpp \
 	$(SRC)/Tracking/TrackingSettings.cpp \
 	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/MapSettings.cpp \
 	$(SRC)/Blackboard/InterfaceBlackboard.cpp \
 	$(SRC)/Audio/VegaVoice.cpp \
-	$(SRC)/TeamCodeCalculation.cpp \
+	$(SRC)/TeamCode.cpp \
 	$(SRC)/Engine/Navigation/TraceHistory.cpp \
 	$(SRC)/Airspace/ProtectedAirspaceWarningManager.cpp \
 	$(SRC)/Airspace/AirspaceParser.cpp \
