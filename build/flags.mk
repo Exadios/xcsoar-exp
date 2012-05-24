@@ -2,6 +2,7 @@ CXX_FEATURES = -fno-exceptions -fno-rtti
 CXX_FEATURES += -std=gnu++0x
 CXX_FEATURES += -fno-threadsafe-statics
 CXX_FEATURES += -fmerge-all-constants
+CXX_FEATURES += -fexceptions	# Enabled for Kalman library.
 
 ifeq ($(TARGET),ANDROID)
 # Temporary workaround for a libstdc++ 4.4 bug.  Disable this as soon
