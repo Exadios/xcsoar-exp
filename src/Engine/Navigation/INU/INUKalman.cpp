@@ -22,6 +22,6 @@
 
 #include <limits>
 #include <float.h>
-#include "Navigation/INU/Inu.hpp"
-#include "Navigation/INU/Kalman.hpp"
+#include "Engine/Navigation/INU/Inu.hpp"
+#include "Engine/Navigation/INU/INUKalman.hpp"
 

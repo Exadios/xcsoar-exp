@@ -1,5 +1,5 @@
 kvector : kvector.cpp
-	g++ -g -o $@ $< -Wno-deprecated -lkalman -I../../ -L../../ 
+	g++ -g -o $@ $< -Wno-deprecated -lkalman -I../../ -I../../../../ -L../../ -L../../../../ 
 
 .PHONY : clean
 

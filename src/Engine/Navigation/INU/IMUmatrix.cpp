@@ -32,16 +32,16 @@ IMUvector::IMUvector()
 //------------------------------------------------------------------------------
 IMUvector::IMUvector(fixed x0, fixed x1, fixed x2)
   {
-  this->v(1) = x0;
-  this->v(2) = x1;
-  this->v(3) = x2;
+  this->v[1] = x0;
+  this->v[2] = x1;
+  this->v[3] = x2;
   }
 
 //------------------------------------------------------------------------------
 IMUvector::IMUvector(const IMUvector& rhs)
   {
   for (size_t i = 1; i <= 3; i++)
-    this->v(i) = rhs(i);
+    this->v[i] = rhs[i];
   }
 
 //------------------------------------------------------------------------------
@@ -50,49 +50,9 @@ IMUvector::~IMUvector()
   }
 
 //------------------------------------------------------------------------------
-IMUvector&
-IMUvector::operator=(const IMUvector& rhs)
-  {
-  for (int i = 1; i <= 3; i++)
-    this->v(i) = rhs(i);
-  return *this;
-  }
-
-//------------------------------------------------------------------------------
-Kalman::KVector<fixed, 1, false>&
-IMUvector::operator=(const Kalman::KVector<fixed, 1, false> &rhs)
-  {
-  this->v = rhs;
-  return this->v;
-  }
-
-//------------------------------------------------------------------------------
-fixed&
-IMUvector::operator()(size_t i)
-  {
-  return this->v(i);
-  }
-
-//------------------------------------------------------------------------------
-const fixed&
-IMUvector::operator()(size_t i) const
-  {
-  return this->v(i);
-  }
-
-//------------------------------------------------------------------------------
-IMUmatrix::IMUmatrix()
-  {
-  this->a.resize(3, 3);
-  this->a = fixed(0);
-  }
-
-//------------------------------------------------------------------------------
 IMUmatrix::IMUmatrix(const IMUmatrix& rhs)
   {
-  for (int i = 1; i <= 3; i++)
-    for (int j = 1; j <= 3; j++)
-      this->a(i, j) = rhs(i, j);
+  this->a = rhs.a;
   }
 
 //------------------------------------------------------------------------------
@@ -101,34 +61,28 @@ IMUmatrix::~IMUmatrix()
   }
 
 //------------------------------------------------------------------------------
-IMUmatrix&
-IMUmatrix::operator=(const IMUmatrix& rhs)
+IMUslice_iter::IMUslice_iter(std::valarray<fixed> *v, IMUslice s)
   {
-  for (int i = 1; i <= 3; i++)
-    for (int j = 1; j <= 3; j++)
-      this->a(i, j) = rhs(i, j);
-  return *this;
+  this->v = v;
+  this->s = s;
+  this->i = 0;
   }
 
 //------------------------------------------------------------------------------
-Kalman::KMatrix<fixed, 1, false>&
-IMUmatrix::operator=(const Kalman::KMatrix<fixed, 1, false>& rhs)
+IMUslice_iter::~IMUslice_iter()
   {
-  this->a = rhs;
-  return this->a;
   }
 
 //------------------------------------------------------------------------------
-fixed&
-IMUmatrix::operator()(size_t i, size_t j)
+IMUCslice_iter::IMUCslice_iter(const std::valarray<fixed> *v, IMUslice s)
   {
-  return this->a(i, j);
+  this->v = v;
+  this->s = s;
+  this->i = 0;
   }
 
 //------------------------------------------------------------------------------
-const fixed&
-IMUmatrix::operator()(size_t i, size_t j) const
+IMUCslice_iter::~IMUCslice_iter()
   {
-  return this->a(i, j);
   }
 

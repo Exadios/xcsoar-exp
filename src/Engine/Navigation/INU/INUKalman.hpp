@@ -22,7 +22,6 @@
 #ifndef KALMAN_HPP
 #define KALMAN_HPP
 
-#include <valarray>
 #include <Math/fixed.hpp>
 
 /**
@@ -30,7 +29,7 @@
  * optimal manner.
  */
 
-class INUKalman
+class INUKalman 
   {
   public:
     /**

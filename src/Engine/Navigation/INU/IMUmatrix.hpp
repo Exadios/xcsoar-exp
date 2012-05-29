@@ -22,6 +22,7 @@
 #ifndef INU_HPP
 #define INU_HPP
 
+#include <valarray>
 #include <Math/fixed.hpp>
 #include <Math/Kalman/kalman/kmatrix.hpp>
 #include <Math/Kalman/kalman/kvector.hpp>
@@ -30,6 +31,12 @@
  * @file
  * Classes to implement matrices and vectors for the INU.
  */
+
+class IMUslice_iter;
+class IMUCslice_iter;
+
+typedef std::slice IMUslice;
+typedef std::slice_array<fixed> IMUslice_array;
 
 class IMUvector
 {
@@ -66,31 +73,24 @@ class IMUvector
     IMUvector &operator=(const IMUvector& rhs);
 
     /**
-     * Copy operator.
-     * @param rhs The KVector of the rhs.
-     * @return This KVector.
-     */
-    Kalman::KVector<fixed, 1, false> &operator=(const Kalman::KVector<fixed, 1, false>& rhs);
-
-    /**
      * Index assignment.
      * @param i Index.
      * @return The vector element.
      */
-    fixed& operator()(size_t i);
+    fixed& operator[](size_t i);
 
     /**
      * Index value.
      * @param i Index.
      * @return The value of the indexed element.
      */
-    const fixed& operator()(size_t i) const;
+    const fixed& operator[](size_t i) const;
 
   private:
     /**
      * The vector.
      */
-    Kalman::KVector<fixed, 1, false>v;
+    std::valarray<fixed> v;
 };
 
 class IMUmatrix
@@ -120,30 +120,169 @@ class IMUmatrix
     IMUmatrix& operator=(const IMUmatrix &rhs);
 
     /**
-     * Copy operator.
-     * @param rhs The KMatrix of the rhs.
-     * @return This KMatrix.
-     */
-    Kalman::KMatrix<fixed, 1, false>& operator=(const Kalman::KMatrix<fixed, 1, false>& rhs);
-
-    /**
      * Index assignment.
      * @param i Row index.
-     * @param j Column index.
      * @return The matrix row.
      */
-    fixed& operator()(size_t i, size_t j);
+    IMUslice_iter operator()(size_t i);
 
     /**
      * Index value.
      * @param i Row index.
-     * @param j Column index.
      * @return The matrix row.
      */
-    const fixed& operator()(size_t i, size_t j) const;
+    IMUCslice_iter operator()(size_t i) const;
+
+    /**
+     * Index assignment.
+     * @param i Row index.
+     * @return The iterator.
+     */
+    IMUslice_iter operator[](size_t i);
+
+    /**
+     * Index value.
+     * @param i Row index.
+     * @return The iterator.
+     */
+    IMUCslice_iter operator[](size_t i) const;
+
+    /**
+     * Give the row.
+     * @param i The row index.
+     * @return The row.
+     */
+    IMUslice_iter row(size_t i);
+
+    /**
+     * Give the row.
+     * @param i The row index.
+     * @return The row.
+     */
+    IMUCslice_iter row(size_t i) const;
 
   private:
-    Kalman::KMatrix<fixed, 1, false>a;
+    std::valarray<fixed> a;
 };
+
+class IMUslice_iter
+{
+  public:
+    /**
+     * Ctor.
+     */
+    IMUslice_iter(std::valarray<fixed> *v, IMUslice s);
+
+    /**
+     * Dtor.
+     */
+    virtual ~IMUslice_iter();
+
+    /**
+     * The end of iteration.
+     * @return The last itterator + 1.
+     */
+    IMUslice_iter end();
+
+    /**
+     * Increment.
+     * @return This + 1.
+     */
+    IMUslice_iter& operator++();
+
+    /**
+     * Index assignment.
+     * @param i Index.
+     * @return The indexed element.
+     */
+    fixed& operator[](size_t i);
+
+    /**
+     * Index assignment.
+     * @param i Index.
+     * @return The indexed element.
+     */
+    fixed& operator()(size_t i);
+
+    /**
+     * Dereference.
+     * @param The pointer.
+     * @return The dereferenced element.
+     */
+    fixed& operator*();
+
+  private:
+    std::valarray<fixed> *v;
+    IMUslice s;
+    size_t i;
+
+    /**
+     * Dereference.
+     * @param i Index.
+     * @return The dereferenced element.
+     */
+    fixed& deref(size_t i) const;
+};
+
+class IMUCslice_iter
+{
+  public:
+    /**
+     * Ctor.
+     */
+    IMUCslice_iter(const std::valarray<fixed> *v, IMUslice s);
+
+    /**
+     * Dtor.
+     */
+    virtual ~IMUCslice_iter();
+
+    /**
+     * The end of iteration.
+     * @return The last itterator + 1.
+     */
+    const IMUCslice_iter end();
+
+    /**
+     * Increment.
+     * @return This + 1.
+     */
+    const IMUCslice_iter& operator++();
+
+    /**
+     * Index assignment.
+     * @param i Index.
+     * @return The indexed element.
+     */
+    const fixed& operator[](size_t i);
+
+    /**
+     * Index assignment.
+     * @param i Index.
+     * @return The indexed element.
+     */
+    const fixed& operator()(size_t i);
+
+    /**
+     * Dereference.
+     * @param The pointer.
+     * @return The dereferenced element.
+     */
+    const fixed& operator*() const;
+
+  private:
+    const std::valarray<fixed> *v;
+    IMUslice s;
+    size_t i;
+
+    /**
+     * Dereference.
+     * @param i Index.
+     * @return The dereferenced element.
+     */
+    const fixed& deref(size_t i) const;
+};
+
+#include "IMUmatrix.i.cpp"
 
 #endif // INU_HPP

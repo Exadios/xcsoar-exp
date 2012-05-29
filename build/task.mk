@@ -47,7 +47,7 @@ ENGINE_CORE_SOURCES = \
 	$(ENGINE_SRC_DIR)/Navigation/Flat/FlatLine.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/INU/IMUmatrix.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/INU/Inu.cpp \
-	$(ENGINE_SRC_DIR)/Navigation/INU/Kalman.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/INU/INUKalman.cpp \
 	$(ENGINE_SRC_DIR)/Task/TaskAdvance.cpp \
 	$(ENGINE_SRC_DIR)/Task/TaskAdvanceLegacy.cpp \
 	$(ENGINE_SRC_DIR)/Task/TaskAdvanceSmart.cpp \
