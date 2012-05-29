@@ -19,8 +19,8 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
-#ifndef INU_HPP
-#define INU_HPP
+#ifndef IMUMATRIX_HPP
+#define IMUMATRIX_HPP
 
 #include <valarray>
 #include <Math/fixed.hpp>
@@ -180,7 +180,7 @@ class IMUslice_iter
 
     /**
      * The end of iteration.
-     * @return The last itterator + 1.
+     * @return The last iterator + 1.
      */
     IMUslice_iter end();
 
@@ -239,7 +239,7 @@ class IMUCslice_iter
 
     /**
      * The end of iteration.
-     * @return The last itterator + 1.
+     * @return The last iterator + 1.
      */
     const IMUCslice_iter end();
 
@@ -285,4 +285,4 @@ class IMUCslice_iter
 
 #include "IMUmatrix.i.cpp"
 
-#endif // INU_HPP
+#endif // IMUMATRIX_HPP
