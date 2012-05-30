@@ -132,6 +132,7 @@ Inu::gfh(fixed h) const
   return fixed(G_0) * (R_m / (h + R_m)) * (R_m / (h + R_m));
   }
   
+#if 0
 //------------------------------------------------------------------------------
 IMUvector::IMUvector()
   {
@@ -224,4 +225,4 @@ IMUmatrix::operator[](size_t i) const
   {
   return this->a[i];
   }
-
+#endif

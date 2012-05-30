@@ -24,7 +24,9 @@
 
 #include <valarray>
 #include <Math/fixed.hpp>
+#include "./IMUmatrix.hpp"
 
+#if 0
 class IMUvector;
 class IMUmatrix;
 
@@ -127,6 +129,7 @@ class IMUmatrix
   private:
     IMUvector a[3];
 };
+#endif
 
 /**
  * @file
