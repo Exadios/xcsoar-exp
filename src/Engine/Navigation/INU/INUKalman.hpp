@@ -23,6 +23,7 @@
 #define KALMAN_HPP
 
 #include <Math/fixed.hpp>
+#include "IMUmatrix.hpp"
 
 /**
  * A class designed to take INU and GPS data and merge those two data in an
@@ -41,6 +42,12 @@ class INUKalman
      * Dtor.
      */
     virtual ~INUKalman();
+
+    /**
+     * Predict.
+     * @param u The control input to the plant model.
+     * @return The predicted state vector.
+     */
 
   private:
     /**

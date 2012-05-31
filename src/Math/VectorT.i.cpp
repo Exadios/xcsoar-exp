@@ -20,20 +20,41 @@
 }
  */
 
-#include <limits>
-#include <float.h>
-#include "Engine/Navigation/INU/Inu.hpp"
-#include "Engine/Navigation/INU/INUKalman.hpp"
 
 //------------------------------------------------------------------------------
-INUKalman::INUKalman()
+inline VectorT&
+VectorT::operator=(const VectorT& rhs)
   {
+  for (int i = 1; i <= 3; i++)
+    this->v[i] = rhs[i];
+  return *this;
   }
 
 //------------------------------------------------------------------------------
-INUKalman::~INUKalman()
+inline T&
+VectorT::operator[](size_t i)
   {
+  return this->v[i];
   }
 
 //------------------------------------------------------------------------------
+inline const T&
+VectorT::operator[](size_t i) const
+  {
+  return this->v[i];
+  }
+
+//------------------------------------------------------------------------------
+inline T&
+VectorT::operator()(size_t i)
+  {
+  return this->v[i];
+  }
+
+//------------------------------------------------------------------------------
+inline const T&
+VectorT::operator()(size_t i) const
+  {
+  return this->v[i];
+  }
 

@@ -20,20 +20,25 @@
 }
  */
 
-#include <limits>
-#include <float.h>
-#include "Engine/Navigation/INU/Inu.hpp"
-#include "Engine/Navigation/INU/INUKalman.hpp"
+#include "Math/VectorT.hpp"
 
 //------------------------------------------------------------------------------
-INUKalman::INUKalman()
+VectorT::VectorT()
   {
+  this->v.resize(3);
+  this->v = fixed(0);
   }
 
 //------------------------------------------------------------------------------
-INUKalman::~INUKalman()
+VectorT::VectorT(const VectorT& rhs)
   {
+  for (size_t i = 1; i <= 3; i++)
+    this->v[i] = rhs[i];
   }
 
 //------------------------------------------------------------------------------
+VectorT::~VectorT()
+  {
+  }
+
 

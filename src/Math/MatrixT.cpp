@@ -20,20 +20,42 @@
 }
  */
 
-#include <limits>
-#include <float.h>
-#include "Engine/Navigation/INU/Inu.hpp"
-#include "Engine/Navigation/INU/INUKalman.hpp"
+#include "Math/MatrixT.hpp"
 
 //------------------------------------------------------------------------------
-INUKalman::INUKalman()
+MatrixT::MatrixT(const MatrixT& rhs)
+  {
+  this->a = rhs.a;
+  }
+
+//------------------------------------------------------------------------------
+MatrixT::~MatrixT()
   {
   }
 
 //------------------------------------------------------------------------------
-INUKalman::~INUKalman()
+slice_iter::slice_iter(std::valarray<T> *v, slice s)
+  {
+  this->v = v;
+  this->s = s;
+  this->i = 0;
+  }
+
+//------------------------------------------------------------------------------
+slice_iter::~slice_iter()
   {
   }
 
 //------------------------------------------------------------------------------
+Cslice_iter::Cslice_iter(const std::valarray<T> *v, slice s)
+  {
+  this->v = v;
+  this->s = s;
+  this->i = 0;
+  }
+
+//------------------------------------------------------------------------------
+Cslice_iter::~Cslice_iter()
+  {
+  }
 
