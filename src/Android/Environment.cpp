@@ -24,36 +24,17 @@ Copyright_License {
 #include "Android/Environment.hpp"
 #include "Java/Class.hpp"
 #include "Java/String.hpp"
-#include "Java/File.hpp"
 #include "Util/StringUtil.hpp"
 
-namespace Environment {
-  static Java::TrivialClass cls;
-  static jmethodID getExternalStorageDirectory_method;
-  static jmethodID getExternalStoragePublicDirectory_method;
-};
-
-void
-Environment::Initialise(JNIEnv *env)
+static jstring
+getAbsolutePath(JNIEnv *env, jobject file)
 {
-  cls.Find(env, "android/os/Environment");
+  Java::Class cls(env, env->GetObjectClass(file));
+  jmethodID mid = env->GetMethodID(cls, "getAbsolutePath",
+                                   "()Ljava/lang/String;");
+  assert(mid != NULL);
 
-  getExternalStorageDirectory_method =
-    env->GetStaticMethodID(cls, "getExternalStorageDirectory",
-                           "()Ljava/io/File;");
-
-  getExternalStoragePublicDirectory_method =
-    env->GetStaticMethodID(cls, "getExternalStoragePublicDirectory",
-                           "(Ljava/lang/String;)Ljava/io/File;");
-  if (getExternalStoragePublicDirectory_method == NULL)
-    /* needs API level 8 */
-    env->ExceptionClear();
-}
-
-void
-Environment::Deinitialise(JNIEnv *env)
-{
-  cls.Clear(env);
+  return (jstring)env->CallObjectMethod(file, mid);
 }
 
 static jstring
@@ -62,7 +43,7 @@ ToAbsolutePathChecked(JNIEnv *env, jobject file)
   if (file == NULL)
     return NULL;
 
-  jstring path = Java::File::getAbsolutePath(env, file);
+  jstring path = getAbsolutePath(env, file);
   env->DeleteLocalRef(file);
   return path;
 }
@@ -70,8 +51,12 @@ ToAbsolutePathChecked(JNIEnv *env, jobject file)
 static jstring
 getExternalStorageDirectory(JNIEnv *env)
 {
-  jobject file = env->CallStaticObjectMethod(Environment::cls,
-                                             Environment::getExternalStorageDirectory_method);
+  const Java::Class cls(env, "android/os/Environment");
+  jmethodID mid = env->GetStaticMethodID(cls, "getExternalStorageDirectory",
+                                         "()Ljava/io/File;");
+  assert(mid != NULL);
+
+  jobject file = env->CallStaticObjectMethod(cls, mid);
   return ToAbsolutePathChecked(env, file);
 }
 
@@ -92,14 +77,18 @@ Environment::getExternalStorageDirectory(char *buffer, size_t max_size)
 static jstring
 getExternalStoragePublicDirectory(JNIEnv *env, const char *type)
 {
-  if (Environment::getExternalStoragePublicDirectory_method == NULL)
-    /* needs API level 8 */
-    return NULL;
-
+  const Java::Class cls(env, "android/os/Environment");
   Java::String type2(env, type);
-  jobject file = env->CallStaticObjectMethod(Environment::cls,
-                                             Environment::getExternalStoragePublicDirectory_method,
-                                             type2.Get());
+  jmethodID mid =
+    env->GetStaticMethodID(cls, "getExternalStoragePublicDirectory",
+                           "(Ljava/lang/String;)Ljava/io/File;");
+  if (mid == NULL) {
+    /* needs API level 8 */
+    env->ExceptionClear();
+    return NULL;
+  }
+
+  jobject file = env->CallStaticObjectMethod(cls, mid, type2.Get());
   return ToAbsolutePathChecked(env, file);
 }
 

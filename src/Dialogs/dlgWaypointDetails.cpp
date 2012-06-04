@@ -52,7 +52,6 @@ Copyright_License {
 #include "Compatibility/path.h"
 #include "Util/Macros.hpp"
 #include "Language/Language.hpp"
-#include "Waypoint/LastUsed.hpp"
 
 #ifdef ANDROID
 #include "Android/NativeView.hpp"
@@ -97,14 +96,14 @@ NextPage(int Step)
 #endif
            waypoint->details.empty());
 
-  wInfo->SetVisible(page == 0);
-  wDetails->SetVisible(page == 1);
-  wCommand->SetVisible(page == 2);
-  wImage->SetVisible(page >= 3);
+  wInfo->set_visible(page == 0);
+  wDetails->set_visible(page == 1);
+  wCommand->set_visible(page == 2);
+  wImage->set_visible(page >= 3);
   zoom = 0;
-  wMagnify->SetVisible(page >= 3);
+  wMagnify->set_visible(page >= 3);
   wMagnify->SetEnabled(true);
-  wShrink->SetVisible(page >= 3);
+  wShrink->set_visible(page >= 3);
   wShrink->SetEnabled(false);
 }
 
@@ -223,7 +222,7 @@ OnGotoAndClearTaskClicked(gcc_unused WndButton &button)
   if (protected_task_manager == NULL)
     return;
 
-  if ((ordered_task_size() > 2) && ShowMessageBox(_("Clear current task?"),
+  if ((ordered_task_size() > 2) && MessageBoxX(_("Clear current task?"),
                         _("Goto and clear task"), MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
 
@@ -235,7 +234,7 @@ OnGotoAndClearTaskClicked(gcc_unused WndButton &button)
   case NOTASK:
   case UNMODIFIED:
   case INVALID:
-    ShowMessageBox(_("Unknown error creating task."), _("Error"),
+    MessageBoxX(_("Unknown error creating task."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
   }
@@ -281,7 +280,7 @@ OnImagePaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
       screen_pos.y = 0;
       screen_size.cy = canvas.get_height();
     }
-    canvas.Stretch(screen_pos.x, screen_pos.y, screen_size.cx, screen_size.cy,
+    canvas.stretch(screen_pos.x, screen_pos.y, screen_size.cx, screen_size.cy,
                    img, img_pos.x, img_pos.y, img_size.cx, img_size.cy);
   }
 }
@@ -342,7 +341,7 @@ dlgWaypointDetailsShowModal(SingleWindow &parent, const Waypoint &_waypoint,
                                       _T("IDR_XML_WAYPOINTDETAILS"));
   assert(wf != NULL);
 
-  LastUsedWaypoints::Add(_waypoint);
+  dlgWaypointSelectAddToLastUsed(_waypoint);
 
   UpdateCaption(waypoint->name.c_str());
 
@@ -368,7 +367,7 @@ dlgWaypointDetailsShowModal(SingleWindow &parent, const Waypoint &_waypoint,
 
   EditWindow *wDetailsText = (EditWindow *)wf->FindByName(_T("Details"));
   assert(wDetailsText != NULL);
-  wDetailsText->SetText(waypoint->details.c_str());
+  wDetailsText->set_text(waypoint->details.c_str());
 
 #ifdef ANDROID
   int num_files = std::distance(waypoint->files_external.begin(),
@@ -379,12 +378,12 @@ dlgWaypointDetailsShowModal(SingleWindow &parent, const Waypoint &_waypoint,
     wFilesList->SetActivateCallback(OnFileListEnter);
 
     unsigned list_height = wFilesList->GetItemHeight() * std::min(num_files, 5);
-    wFilesList->Resize(wFilesList->GetWidth(), list_height);
+    wFilesList->resize(wFilesList->get_width(), list_height);
     wFilesList->SetLength(num_files);
 
-    PixelRect rc = wDetailsText->GetPosition();
+    PixelRect rc = wDetailsText->get_position();
     rc.top += list_height;
-    wDetailsText->Move(rc);
+    wDetailsText->move(rc);
   } else
 #endif
     wFilesList->Hide();

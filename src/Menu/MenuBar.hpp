@@ -70,7 +70,7 @@ public:
   void HideButton(unsigned i);
 
   bool IsButtonEnabled(unsigned i) const {
-    return buttons[i].IsEnabled();
+    return buttons[i].is_enabled();
   }
 
   /**

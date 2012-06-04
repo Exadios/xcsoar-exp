@@ -35,9 +35,6 @@
 
 template<class T>
 class ReusableArray : private NonCopyable {
-public:
-  typedef typename AllocatedArray<T>::size_type size_type;
-
 protected:
   AllocatedArray<T> array;
 
@@ -45,12 +42,12 @@ public:
   ReusableArray() = default;
 
   gcc_constexpr_ctor
-  ReusableArray(size_type _length):array(_length) {}
+  ReusableArray(unsigned _length):array(_length) {}
 
   /**
    * Obtains an array.  Its values are undefined.
    */
-  T *get(size_type _length) {
+  T *get(unsigned _length) {
     array.GrowDiscard(_length);
     return array.begin();
   }
@@ -58,7 +55,7 @@ public:
   /**
    * Grows an existing array, preserving data.
    */
-  T *grow(size_type old_length, size_type new_length) {
+  T *grow(unsigned old_length, unsigned new_length) {
     array.grow_preserve(new_length, old_length);
     return array.begin();
   }

@@ -73,7 +73,7 @@ GaugeVario::GaugeVario(const FullBlackboard &_blackboard,
 void
 GaugeVario::OnPaintBuffer(Canvas &canvas)
 {
-  const PixelRect rc = GetClientRect();
+  const PixelRect rc = get_client_rect();
   const UPixelScalar width = rc.right - rc.left;
   const UPixelScalar height = rc.bottom - rc.top;
 
@@ -88,7 +88,7 @@ GaugeVario::OnPaintBuffer(Canvas &canvas)
     bottom_position.y = middle_position.y + value_height;
     bottom_position.x = rc.right;
 
-    canvas.Stretch(rc.left, rc.top, width, height,
+    canvas.stretch(rc.left, rc.top, width, height,
                    look.background_bitmap,
                    look.background_x, 0, 58, 120);
 
@@ -225,7 +225,7 @@ GaugeVario::MakeAllPolygons()
 void
 GaugeVario::RenderClimb(Canvas &canvas)
 {
-  const PixelRect rc = GetClientRect();
+  const PixelRect rc = get_client_rect();
   PixelScalar x = rc.right - Layout::Scale(14);
   PixelScalar y = rc.bottom - Layout::Scale(24);
 
@@ -233,7 +233,7 @@ GaugeVario::RenderClimb(Canvas &canvas)
     return;
 
   if (Basic().switch_state.flight_mode == SwitchInfo::FlightMode::CIRCLING)
-    canvas.ScaleCopy(x, y, look.climb_bitmap, 12, 0, 12, 12);
+    canvas.scale_copy(x, y, look.climb_bitmap, 12, 0, 12, 12);
   else if (is_persistent())
     canvas.DrawFilledRectangle(x, y, x + Layout::Scale(12), y + Layout::Scale(12),
                           look.background_color);
@@ -247,8 +247,8 @@ GaugeVario::RenderZero(Canvas &canvas)
   else
     canvas.SelectBlackPen();
 
-  canvas.DrawLine(0, yoffset, Layout::Scale(17), yoffset);
-  canvas.DrawLine(0, yoffset + 1, Layout::Scale(17), yoffset + 1);
+  canvas.line(0, yoffset, Layout::Scale(17), yoffset);
+  canvas.line(0, yoffset + 1, Layout::Scale(17), yoffset + 1);
 }
 
 int
@@ -434,7 +434,7 @@ GaugeVario::RenderSpeedToFly(Canvas &canvas, PixelScalar x, PixelScalar y)
   const UPixelScalar arrow_y_size = Layout::Scale(3);
   const UPixelScalar arrow_x_size = Layout::Scale(7);
 
-  const PixelRect rc = GetClientRect();
+  const PixelRect rc = get_client_rect();
 
   PixelScalar nary = NARROWS * arrow_y_size;
   PixelScalar ytop = rc.top + YOFFSET + nary; // JMW
@@ -549,7 +549,7 @@ GaugeVario::RenderBallast(Canvas &canvas)
   static RasterPoint orgValue = {-1,-1};
 
   if (!ballast_initialised) { // ontime init, origin and background rect
-    const PixelRect rc = GetClientRect();
+    const PixelRect rc = get_client_rect();
 
     PixelSize tSize;
 
@@ -650,7 +650,7 @@ GaugeVario::RenderBugs(Canvas &canvas)
   static RasterPoint orgValue = {-1,-1};
 
   if (!bugs_initialised) {
-    const PixelRect rc = GetClientRect();
+    const PixelRect rc = get_client_rect();
     PixelSize tSize;
 
     orgLabel.x = 1;

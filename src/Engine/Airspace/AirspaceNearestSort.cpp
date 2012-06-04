@@ -8,15 +8,14 @@ AirspaceNearestSort::populate_queue(const Airspaces &airspaces,
                                     const fixed range)
 {
   AirspacesInterface::AirspaceVector vectors = 
-    airspaces.ScanRange(m_location,
+    airspaces.scan_range(m_location,
                          range,
                          m_condition);
 
   for (auto v = vectors.begin(); v != vectors.end(); ++v) {
     const AbstractAirspace *as = v->get_airspace();
     if (as != NULL) {
-      const AirspaceInterceptSolution ais =
-        solve_intercept(*as, airspaces.GetProjection());
+      const AirspaceInterceptSolution ais = solve_intercept(*as);
       const fixed value = metric(ais);
       if (!negative(value)) {
         m_q.push(std::make_pair(m_reverse? -value:value, std::make_pair(ais, *v)));
@@ -27,14 +26,13 @@ AirspaceNearestSort::populate_queue(const Airspaces &airspaces,
 
 
 AirspaceInterceptSolution
-AirspaceNearestSort::solve_intercept(const AbstractAirspace &a,
-                                     const TaskProjection &projection) const
+AirspaceNearestSort::solve_intercept(const AbstractAirspace &a) const
 {
   if (a.Inside(m_location)) {
     return AirspaceInterceptSolution::Invalid();
   } else {
     AirspaceInterceptSolution sol;
-    sol.location = a.ClosestPoint(m_location, projection);
+    sol.location = a.ClosestPoint(m_location);
     sol.distance = sol.location.Distance(m_location);
     return sol;
   }

@@ -22,13 +22,12 @@
 */
 
 #include "Replay/IgcReplay.hpp"
-#include "IGC/IGCParser.hpp"
-#include "IGC/IGCFix.hpp"
-#include "Util/StringUtil.hpp"
+#include "Replay/IGCParser.hpp"
 
 #include <algorithm>
 
 #include "Navigation/GeoPoint.hpp"
+#include "StringUtil.hpp"
 
 IgcReplay::IgcReplay() :
   AbstractReplay(),
@@ -41,7 +40,7 @@ IgcReplay::IgcReplay() :
 bool
 IgcReplay::ScanBuffer(const char *buffer, IGCFix &fix)
 {
-  return IGCParseFix(buffer, fix) && fix.gps_valid;
+  return IGCParseFix(buffer, fix);
 }
 
 bool
@@ -134,14 +133,14 @@ IgcReplay::Update()
       return false;
     }
 
-    if (fix.pressure_altitude == 0 && fix.gps_altitude > 0)
+    if (fix.pressure_altitude == fixed_zero && positive(fix.gps_altitude))
       /* no pressure altitude was recorded - fall back to GPS
          altitude */
       fix.pressure_altitude = fix.gps_altitude;
 
     if (fix.time.Plausible())
       cli.Update(fixed(fix.time.GetSecondOfDay()), fix.location,
-                 fixed(fix.gps_altitude), fixed(fix.pressure_altitude));
+                 fix.gps_altitude, fix.pressure_altitude);
   }
 
   if (!positive(t_simulation))

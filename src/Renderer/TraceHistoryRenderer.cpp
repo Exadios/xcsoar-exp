@@ -36,8 +36,8 @@ TraceHistoryRenderer::scale_chart(ChartRenderer &chart,
                                   const TraceVariableHistory& var,
                                   const bool centered) const
 {
-  chart.padding_bottom = 0;
-  chart.padding_left = 0;
+  chart.PaddingBottom = 0;
+  chart.PaddingLeft = 0;
   chart.ScaleXFromValue(fixed(0));
   chart.ScaleXFromValue(fixed(var.capacity()-1));
 
@@ -123,9 +123,9 @@ TraceHistoryRenderer::render_filled_posneg(ChartRenderer &chart,
     y_last = y;
   }
   if (look.inverse)
-    chart.GetCanvas().SelectWhiteBrush();
+    chart.get_canvas().SelectWhiteBrush();
   else
-    chart.GetCanvas().SelectBlackBrush();
+    chart.get_canvas().SelectBlackBrush();
   chart.DrawDot(x_last, y_last, Layout::Scale(2));
 }
 

@@ -30,8 +30,8 @@ Copyright_License {
 #include "Form/Util.hpp"
 #include "Units/Units.hpp"
 #include "Math/FastMath.h"
-#include "Form/DataField/Base.hpp"
-#include "Form/DataField/Boolean.hpp"
+#include "DataField/Base.hpp"
+#include "DataField/Boolean.hpp"
 #include "Compatibility/string.h"
 #include "PeriodClock.hpp"
 #include "Components.hpp"
@@ -124,7 +124,7 @@ dlgBrightnessShowModal()
 {
   /* XXX this is ugly, non-Altair platforms should not even see the
      according menu item; not translating this superfluous message */
-  ShowMessageBox(_T("Only available on Altair"), _T("Brightness"),
+  MessageBoxX(_T("Only available on Altair"), _T("Brightness"),
               MB_OK|MB_ICONERROR);
 }
 

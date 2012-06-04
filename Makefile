@@ -114,7 +114,7 @@ include $(topdir)/build/install.mk
 
 ######## compiler flags
 
-INCLUDES += -I$(SRC) -I$(ENGINE_SRC_DIR)
+INCLUDES += -I$(SRC) -I$(ENGINE_SRC_DIR) -I$(SRC)/Waypoint
 
 ####### linker configuration
 
@@ -140,7 +140,6 @@ DIALOG_SOURCES = \
 	$(SRC)/Dialogs/Vega/VegaParametersWidget.cpp \
 	$(SRC)/Dialogs/Vega/VegaConfigurationDialog.cpp \
 	$(SRC)/Dialogs/Vega/VegaDemoDialog.cpp \
-	$(SRC)/Dialogs/FLARM/ConfigWidget.cpp \
 	$(SRC)/Dialogs/MapItemListDialog.cpp \
 	$(SRC)/Dialogs/WindSettingsPanel.cpp \
 	$(SRC)/Dialogs/dlgAirspace.cpp \
@@ -329,8 +328,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Logger/LoggerGRecord.cpp \
 	$(SRC)/Logger/LoggerEPE.cpp \
 	$(SRC)/Logger/LoggerImpl.cpp \
-	$(SRC)/Logger/IGCFileCleanup.cpp \
-	$(SRC)/IGC/IGCWriter.cpp \
+	$(SRC)/Logger/IGCWriter.cpp \
 	$(SRC)/Logger/MD5.cpp \
 	$(SRC)/Logger/NMEALogger.cpp \
 	$(SRC)/Logger/ExternalLogger.cpp \
@@ -353,7 +351,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/NMEA/Checksum.cpp \
 	$(SRC)/NMEA/Aircraft.cpp \
 	$(SRC)/Replay/Replay.cpp \
-	$(SRC)/IGC/IGCParser.cpp \
+	$(SRC)/Replay/IGCParser.cpp \
 	$(SRC)/Replay/IgcReplay.cpp \
 	$(SRC)/Replay/IgcReplayGlue.cpp \
 	$(SRC)/Replay/NmeaReplay.cpp \
@@ -362,11 +360,8 @@ XCSOAR_SOURCES := \
 	$(SRC)/Replay/DemoReplayGlue.cpp \
 	$(SRC)/Replay/TaskAutoPilot.cpp \
 	$(SRC)/Replay/AircraftSim.cpp \
-	$(SRC)/TeamCode.cpp \
-	$(SRC)/Waypoint/WaypointList.cpp \
+	$(SRC)/TeamCodeCalculation.cpp \
 	$(SRC)/Waypoint/WaypointGlue.cpp \
-	$(SRC)/Waypoint/LastUsed.cpp \
-	$(SRC)/Waypoint/HomeGlue.cpp \
 	$(SRC)/Waypoint/WaypointReader.cpp \
 	$(SRC)/Waypoint/WaypointReaderBase.cpp \
 	$(SRC)/Waypoint/WaypointReaderOzi.cpp \
@@ -382,9 +377,6 @@ XCSOAR_SOURCES := \
 	$(SRC)/Wind/WindEKF.cpp \
 	$(SRC)/Wind/WindEKFGlue.cpp \
 	\
-	$(SRC)/CrossSection/AirspaceXSRenderer.cpp \
-	$(SRC)/CrossSection/TerrainXSRenderer.cpp \
-	$(SRC)/CrossSection/CrossSectionRenderer.cpp \
 	$(SRC)/CrossSection/CrossSectionWindow.cpp \
 	\
 	$(SRC)/Gauge/ThermalAssistantWindow.cpp \
@@ -511,12 +503,12 @@ XCSOAR_SOURCES := \
 	$(SRC)/MapWindow/GlueMapWindowItems.cpp \
 	$(SRC)/MapWindow/GlueMapWindowEvents.cpp \
 	$(SRC)/MapWindow/GlueMapWindowOverlays.cpp \
+	$(SRC)/MapWindow/GlueMapWindowTarget.cpp \
 	$(SRC)/MapWindow/GlueMapWindowDisplayMode.cpp \
 	$(SRC)/MapWindow/TargetMapWindow.cpp \
 	$(SRC)/MapWindow/TargetMapWindowEvents.cpp \
 	$(SRC)/MapWindow/TargetMapWindowDrag.cpp \
 	$(SRC)/GestureManager.cpp \
-	$(SRC)/TrackingGestureManager.cpp \
 	$(SRC)/DrawThread.cpp \
 	\
 	$(SRC)/Computer/BasicComputer.cpp \
@@ -538,7 +530,6 @@ XCSOAR_SOURCES := \
 	$(SRC)/MapSettings.cpp \
 	$(SRC)/SystemSettings.cpp \
 	$(SRC)/ComputerSettings.cpp \
-	$(SRC)/TeamCodeSettings.cpp \
 	$(SRC)/MergeThread.cpp \
 	$(SRC)/CalculationThread.cpp \
 	$(SRC)/DisplayMode.cpp \
@@ -590,14 +581,11 @@ XCSOAR_SOURCES := \
 	$(SRC)/Formatter/Units.cpp \
 	$(SRC)/Formatter/UserUnits.cpp \
 	$(SRC)/Formatter/HexColor.cpp \
-	$(SRC)/Formatter/GlideRatioFormatter.cpp \
 	$(SRC)/Formatter/GeoPointFormatter.cpp \
 	$(SRC)/Formatter/ByteSizeFormatter.cpp \
 	$(SRC)/Formatter/UserGeoPointFormatter.cpp \
 	$(SRC)/Formatter/TimeFormatter.cpp \
 	$(SRC)/Formatter/IGCFilenameFormatter.cpp \
-	$(SRC)/Formatter/AirspaceFormatter.cpp \
-	$(SRC)/Formatter/AirspaceUserUnitsFormatter.cpp \
 	$(SRC)/Units/Descriptor.cpp \
 	$(SRC)/Units/System.cpp \
 	$(SRC)/Units/Settings.cpp \
@@ -638,6 +626,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/XML/Parser.cpp \
 	$(SRC)/XML/Writer.cpp \
 	$(SRC)/Thread/Thread.cpp \
+	$(SRC)/Thread/StoppableThread.cpp \
 	$(SRC)/Thread/SuspensibleThread.cpp \
 	$(SRC)/Thread/RecursivelySuspensibleThread.cpp \
 	$(SRC)/Thread/WorkerThread.cpp \
@@ -681,7 +670,6 @@ XCSOAR_SOURCES := \
 	$(SRC)/Look/AirspaceLook.cpp \
 	$(SRC)/Look/TrailLook.cpp \
 	$(SRC)/Look/CrossSectionLook.cpp \
-	$(SRC)/Look/GestureLook.cpp \
 	$(SRC)/Look/HorizonLook.cpp \
 	$(SRC)/Look/TaskLook.cpp \
 	$(SRC)/Look/TrafficLook.cpp \
@@ -740,9 +728,6 @@ ifeq ($(TARGET),ANDROID)
 XCSOAR_SOURCES += \
 	$(SRC)/Java/Global.cpp \
 	$(SRC)/Java/String.cpp \
-	$(SRC)/Java/File.cpp \
-	$(SRC)/Java/InputStream.cpp \
-	$(SRC)/Java/URL.cpp \
 	$(SRC)/Device/Port/AndroidPort.cpp \
 	$(SRC)/Device/Port/AndroidBluetoothPort.cpp \
 	$(SRC)/Android/Environment.cpp \
@@ -783,7 +768,6 @@ endif
 ifeq ($(HAVE_NET),y)
 XCSOAR_SOURCES += \
 	$(SRC)/Net/ToBuffer.cpp \
-	$(SRC)/Net/ToFile.cpp \
 	$(SRC)/Weather/NOAAGlue.cpp \
 	$(SRC)/Weather/METARParser.cpp \
 	$(SRC)/Weather/NOAAFormatter.cpp \
@@ -838,7 +822,6 @@ everything: $(OUTPUTS) debug build-check build-harness
 
 clean: FORCE
 	@$(NQ)echo "cleaning all"
-	$(Q)rm -rf build/local-config.mk
 	$(Q)rm -rf $(OUT)
 	$(RM) $(BUILDTESTS)
 

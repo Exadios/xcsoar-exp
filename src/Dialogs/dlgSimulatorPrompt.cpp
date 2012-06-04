@@ -51,7 +51,7 @@ static void
 OnLogoPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 {
   canvas.ClearWhite();
-  logo->draw(canvas, Sender->GetClientRect());
+  logo->draw(canvas, Sender->get_client_rect());
 }
 
 static void

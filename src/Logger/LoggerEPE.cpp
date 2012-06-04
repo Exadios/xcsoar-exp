@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-#include "IGC/IGCWriter.hpp"
+#include "Logger/IGCWriter.hpp"
 #include "NMEA/Info.hpp"
 
 /*
@@ -93,7 +93,7 @@ IGCWriter::GetIRecord()
 }
 
 fixed
-IGCWriter::GetEPE(const GPSState &gps)
+IGCWriter::GetEPE(const NMEAInfo& gps_info)
 {
   /*
    * EPE (Estimated Position Error in meters)
@@ -139,12 +139,12 @@ IGCWriter::GetEPE(const GPSState &gps)
    * 8 = Simulation mode
    */
 
-  switch (gps.fix_quality) {
-  case FixQuality::GPS:
-    return gps.hdop * fixed(18.2);
+  switch (gps_info.gps.fix_quality) {
+  case 1:
+    return gps_info.gps.hdop * fixed(18.2);
 
-  case FixQuality::DGPS:
-    return gps.hdop * fixed_four;
+  case 2:
+    return gps_info.gps.hdop * fixed_four;
 
   default:
     return fixed_zero;
@@ -152,16 +152,13 @@ IGCWriter::GetEPE(const GPSState &gps)
 }
 
 int
-IGCWriter::GetSIU(const GPSState &gps)
+IGCWriter::GetSIU(const NMEAInfo& gps_info)
 {
-  switch (gps.fix_quality) {
-  case FixQuality::GPS:
-  case FixQuality::DGPS:
-    if (gps.satellites_used_available)
-      return gps.satellites_used;
-
-  default:
-    break;
+  switch (gps_info.gps.fix_quality) {
+  case 1:
+  case 2:
+    if (gps_info.gps.satellites_used_available)
+      return gps_info.gps.satellites_used;
   }
 
   return 0;

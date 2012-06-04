@@ -26,7 +26,6 @@ Copyright_License {
 #include "DrawThread.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Look/Look.hpp"
-#include "Interface.hpp"
 
 GlueMapWindow::GlueMapWindow(const Look &look)
   :MapWindow(look.map, look.traffic),
@@ -35,10 +34,9 @@ GlueMapWindow::GlueMapWindow(const Look &look)
    drag_mode(DRAG_NONE),
    ignore_single_click(false),
    arm_mapitem_list(false),
-   display_mode(DM_CRUISE),
+   DisplayMode(DM_CRUISE),
    thermal_band_renderer(look.thermal_band, look.chart),
    final_glide_bar_renderer(look.final_glide_bar, look.map.task),
-   gesture_look(look.gesture),
    map_item_timer(*this)
 {
 }
@@ -48,7 +46,8 @@ GlueMapWindow::set(ContainerWindow &parent, const PixelRect &rc)
 {
   MapWindow::set(parent, rc);
 
-  visible_projection.SetScale(CommonInterface::GetMapSettings().cruise_scale);
+  LoadDisplayModeScales();
+  visible_projection.SetScale(zoomclimb.CruiseScale);
 }
 
 void

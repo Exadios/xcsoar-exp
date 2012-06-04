@@ -69,11 +69,11 @@ ReadAirspace(Airspaces &airspaces,
   }
 
   if (airspace_ok) {
-    airspaces.Optimise();
-    airspaces.SetFlightLevels(press);
+    airspaces.optimise();
+    airspaces.set_flight_levels(press);
 
     if (terrain != NULL)
-      airspaces.SetGroundLevels(*terrain);
+      airspaces.set_ground_levels(*terrain);
   } else
     // there was a problem
     airspaces.clear();

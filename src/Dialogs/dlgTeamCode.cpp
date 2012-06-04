@@ -27,13 +27,13 @@
 #include "Dialogs/Waypoint.hpp"
 #include "Dialogs/CallBackTable.hpp"
 #include "UIGlobals.hpp"
-#include "Form/DataField/Float.hpp"
+#include "DataField/Float.hpp"
 #include "FLARM/FlarmDetails.hpp"
 #include "ComputerSettings.hpp"
 #include "Screen/Layout.hpp"
-#include "Form/DataField/Base.hpp"
-#include "Util/StringUtil.hpp"
-#include "TeamCode.hpp"
+#include "DataField/Base.hpp"
+#include "StringUtil.hpp"
+#include "TeamCodeCalculation.hpp"
 #include "Compiler.h"
 #include "Profile/Profile.hpp"
 #include "Engine/Waypoint/Waypoint.hpp"
@@ -150,7 +150,7 @@ OnFlarmLockClicked(gcc_unused WndButton &button)
       return;
     }
   } else {
-    ShowMessageBox(_("Unknown Competition Number"),
+    MessageBoxX(_("Unknown Competition Number"),
                 _("Not Found"), MB_OK | MB_ICONINFORMATION);
   }
 

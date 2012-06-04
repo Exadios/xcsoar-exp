@@ -248,10 +248,10 @@ InfoBoxWindow::PaintComment(Canvas &canvas)
 void
 InfoBoxWindow::Paint(Canvas &canvas)
 {
-  if (HasFocus() || force_draw_selector)
-    canvas.Clear(look.focused_background_color);
+  if (has_focus() || force_draw_selector)
+    canvas.clear(look.focused_background_color);
   else
-    canvas.Clear(look.background_color);
+    canvas.clear(look.background_color);
 
   if (data.GetCustom() && content != NULL)
     content->OnCustomPaint(*this, canvas);
@@ -269,19 +269,19 @@ InfoBoxWindow::Paint(Canvas &canvas)
       height = canvas.get_height();
 
     if (border_kind & BORDERTOP) {
-      canvas.DrawLine(0, 0, width - 1, 0);
+      canvas.line(0, 0, width - 1, 0);
     }
 
     if (border_kind & BORDERRIGHT) {
-      canvas.DrawLine(width - 1, 0, width - 1, height);
+      canvas.line(width - 1, 0, width - 1, height);
     }
 
     if (border_kind & BORDERBOTTOM) {
-      canvas.DrawLine(0, height - 1, width - 1, height - 1);
+      canvas.line(0, height - 1, width - 1, height - 1);
     }
 
     if (border_kind & BORDERLEFT) {
-      canvas.DrawLine(0, 0, 0, height - 1);
+      canvas.line(0, 0, 0, height - 1);
     }
   }
 }
@@ -294,11 +294,11 @@ InfoBoxWindow::PaintInto(Canvas &dest, PixelScalar xoff, PixelScalar yoff,
   SubCanvas canvas(dest, xoff, yoff, width, height);
   Paint(canvas);
 #else
-  const PixelSize size = GetSize();
+  PixelSize size = get_size();
   BufferCanvas buffer(dest, size.cx, size.cy);
 
   Paint(buffer);
-  dest.Stretch(xoff, yoff, width, height, buffer, 0, 0, size.cx, size.cy);
+  dest.stretch(xoff, yoff, width, height, buffer, 0, 0, size.cx, size.cy);
 #endif
 }
 
@@ -382,7 +382,7 @@ InfoBoxWindow::OnResize(UPixelScalar width, UPixelScalar height)
 {
   PaintWindow::OnResize(width, height);
 
-  PixelRect rc = GetClientRect();
+  PixelRect rc = get_client_rect();
 
   if (border_kind & BORDERLEFT)
     rc.left += look.BORDER_WIDTH;
@@ -464,13 +464,13 @@ InfoBoxWindow::OnMouseDown(PixelScalar x, PixelScalar y)
 bool
 InfoBoxWindow::OnMouseUp(PixelScalar x, PixelScalar y)
 {
-  if (!HasFocus())
+  if (!has_focus())
     return PaintWindow::OnMouseUp(x, y);
 
   if (click_clock.IsDefined()) {
     ReleaseCapture();
 
-    if ((unsigned)x < GetWidth() && (unsigned)y < GetHeight() &&
+    if ((unsigned)x < get_width() && (unsigned)y < get_height() &&
         click_clock.Check(1000)) {
       force_draw_selector = true;
       InfoBoxManager::ShowDlgInfoBox(id);

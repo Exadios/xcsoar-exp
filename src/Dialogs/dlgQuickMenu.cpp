@@ -70,10 +70,10 @@ SetFormDefaultFocus()
     * pageSize + centerCol + centerRow * numColumns;
 
   if (centerPos < buttons.size()) {
-    if (wf->IsVisible()) {
+    if (wf->is_visible()) {
       buttons[centerPos]->SetFocus();
       grid_view->RefreshLayout();
-    } else if (buttons[centerPos]->IsEnabled())
+    } else if (buttons[centerPos]->is_enabled())
       wf->SetDefaultFocus(buttons[centerPos]);
   }
 }
@@ -139,12 +139,12 @@ dlgQuickMenuShowModal(SingleWindow &parent)
   dialogStyle.Hide();
   dialogStyle.ControlParent();
 
-  wf = new WndForm(parent, dialog_look, parent.GetClientRect(),
+  wf = new WndForm(parent, dialog_look, parent.get_client_rect(),
                    _T("Quick Menu"), dialogStyle);
 
   ContainerWindow &client_area = wf->GetClientAreaWindow();
 
-  PixelRect r = client_area.GetClientRect();
+  PixelRect r = client_area.get_client_rect();
 
   WindowStyle grid_view_style;
   grid_view_style.ControlParent();

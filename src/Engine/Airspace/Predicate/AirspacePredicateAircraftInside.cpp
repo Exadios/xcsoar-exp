@@ -29,7 +29,7 @@ AirspacePredicateAircraftInside::AirspacePredicateAircraftInside(
   :state(_state) {}
 
 bool 
-AirspacePredicateAircraftInside::operator()(const AbstractAirspace &airspace) const
+AirspacePredicateAircraftInside::condition(const AbstractAirspace &airspace) const
 {
   return airspace.Inside(state);
 }

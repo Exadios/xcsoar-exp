@@ -53,10 +53,10 @@ WarningComputer::Update(const ComputerSettings &settings_computer,
       !clock.CheckAdvance(basic.time))
     return;
 
-  airspaces.SetFlightLevels(settings_computer.pressure);
+  airspaces.set_flight_levels(settings_computer.pressure);
 
   AirspaceActivity day(calculated.date_time_local.day_of_week);
-  airspaces.SetActivity(day);
+  airspaces.set_activity(day);
 
   if (!settings_computer.airspace.enable_warnings ||
       !basic.location_available || !basic.NavAltitudeAvailable()) {

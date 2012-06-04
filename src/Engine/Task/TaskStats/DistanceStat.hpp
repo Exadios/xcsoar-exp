@@ -67,7 +67,7 @@ public:
    *
    * @param d Distance value (m)
    */
-  void SetDistance(const fixed d) {
+  void set_distance(const fixed d) {
     distance = d;
   }
 
@@ -76,7 +76,7 @@ public:
    *
    * @return Distance value (m)
    */
-  fixed GetDistance() const {
+  fixed get_distance() const {
     assert(IsDefined());
 
     return distance;
@@ -87,7 +87,7 @@ public:
    *
    * @return Speed (m/s)
    */
-  fixed GetSpeed() const {
+  fixed get_speed() const {
     assert(IsDefined());
 
     return speed;
@@ -99,7 +99,7 @@ public:
    *
    * @return Speed incremental (m/s)
    */
-  fixed GetSpeedIncremental() const {
+  fixed get_speed_incremental() const {
     assert(IsDefined());
 
     return speed_incremental;
@@ -133,7 +133,7 @@ public:
    *
    * @param es ElementStat (used for time access)
    */
-  void CalcSpeed(DistanceStat &data, fixed time);
+  void calc_speed(DistanceStat &data, fixed time);
 
   /**
    * Calculate incremental speed from previous step.
@@ -141,10 +141,10 @@ public:
    *
    * @param dt Time step (s)
    */
-  void CalcIncrementalSpeed(DistanceStat &data, const fixed dt);
+  void calc_incremental_speed(DistanceStat &data, const fixed dt);
 
 private:
-  void ResetIncrementalSpeed(DistanceStat &data);
+  void reset_incremental_speed(DistanceStat &data);
 };
 
 #endif

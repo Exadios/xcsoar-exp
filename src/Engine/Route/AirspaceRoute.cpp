@@ -66,9 +66,9 @@ public:
     visit_abstract(as);
   }
   void visit_abstract(const AbstractAirspace &as) {
-    assert(!intersections.empty());
+    assert(!m_intersections.empty());
 
-    GeoPoint point = intersections[0].first;
+    GeoPoint point = m_intersections[0].first;
 
     RouteLink l = rpolar.GenerateIntermediate(link.first,
                                                RoutePoint(proj.project(point), link.second.altitude),
@@ -130,7 +130,7 @@ const AbstractAirspace*
 AirspaceRoute::InsideOthers(const AGeoPoint& origin) const
 {
   AirspaceInsideOtherVisitor visitor;
-  m_airspaces.VisitWithinRange(origin, fixed_one, visitor);
+  m_airspaces.visit_within_range(origin, fixed_one, visitor);
   count_airspace++;
   return visitor.found();
 }
@@ -174,9 +174,11 @@ AirspaceRoute::FindClearingPair(const SearchPointVector& spv,
       }
     }
 
-    i = backwards ? spv.PreviousCircular(i) : spv.NextCircular(i);
+    if (backwards)
+      spv.PreviousCircular(i);
+    else
+      spv.NextCircular(i);
   }
-
   return p;
 }
 
@@ -201,10 +203,12 @@ AirspaceRoute::GetBackupPairs(const SearchPointVector& spv,
   SearchPointVector::const_iterator start = spv.NearestIndexConvex(intc);
   ClearingPair p(intc, intc);
 
-  SearchPointVector::const_iterator i_left = spv.NextCircular(start);
+  SearchPointVector::const_iterator i_left = start;
+  spv.NextCircular(i_left);
   p.first = AFlatGeoPoint(i_left->get_flatLocation(), _start.altitude); // @todo alt!
 
-  SearchPointVector::const_iterator i_right = spv.PreviousCircular(start);
+  SearchPointVector::const_iterator i_right = start;
+  spv.PreviousCircular(i_right);
   p.second = AFlatGeoPoint(i_right->get_flatLocation(), _start.altitude); // @todo alt!
 
   return p;
@@ -225,14 +229,14 @@ AirspaceRoute::AirspaceRoute(const Airspaces& master):
 AirspaceRoute::~AirspaceRoute()
 {
   // clean up, we dont need the clearances any more
-  m_airspaces.ClearClearances();
+  m_airspaces.clear_clearances();
 }
 
 void
 AirspaceRoute::Reset()
 {
   RoutePlanner::Reset();
-  m_airspaces.ClearClearances();
+  m_airspaces.clear_clearances();
   m_airspaces.clear();
 }
 
@@ -247,7 +251,7 @@ AirspaceRoute::Synchronise(const Airspaces& master,
   h_max = std::max(origin.altitude, std::max(destination.altitude, h_max));
   // @todo: have margin for h_max to allow for climb
   AirspacePredicateHeightRangeExcludeTwo condition(h_min, h_max, origin, destination);
-  if (m_airspaces.SynchroniseInRange(master, origin.Middle(destination),
+  if (m_airspaces.synchronise_in_range(master, origin.Middle(destination),
                                        half(origin.Distance(destination)),
                                        condition))
   {
@@ -260,8 +264,7 @@ void
 AirspaceRoute::AddNearbyAirspace(const RouteAirspaceIntersection &inx,
                                    const RouteLink &e)
 {
-  const SearchPointVector& fat =
-    inx.airspace->GetClearance(m_airspaces.GetProjection());
+  const SearchPointVector& fat = inx.airspace->GetClearance();
   const ClearingPair p = GetPairs(fat, e.first, e.second);
   const ClearingPair pb = GetBackupPairs(fat, e.first, inx.point);
 
@@ -332,7 +335,7 @@ AirspaceRoute::OnSolve(const AGeoPoint& origin,
     task_projection.reset(origin);
     task_projection.update_fast();
   } else {
-    task_projection = m_airspaces.GetProjection();
+    task_projection = m_airspaces.get_task_projection();
   }
 }
 

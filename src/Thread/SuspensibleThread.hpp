@@ -51,6 +51,10 @@ class SuspensibleThread : public Thread {
 #endif
 
 public:
+#ifndef HAVE_POSIX
+  SuspensibleThread();
+#endif
+
   bool Start(bool suspended=false);
 
   /**

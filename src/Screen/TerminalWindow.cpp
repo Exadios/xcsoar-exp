@@ -120,7 +120,7 @@ TerminalWindow::OnResize(UPixelScalar width, UPixelScalar height)
 void
 TerminalWindow::OnPaint(Canvas &canvas)
 {
-  OnPaint(canvas, GetClientRect());
+  OnPaint(canvas, get_client_rect());
 }
 
 void

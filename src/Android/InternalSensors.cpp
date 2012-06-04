@@ -33,7 +33,7 @@ Copyright_License {
 #include "Geo/Geoid.hpp"
 #include "Compiler.h"
 
-Java::TrivialClass InternalSensors::gps_cls, InternalSensors::sensors_cls;
+jclass InternalSensors::gps_cls, InternalSensors::sensors_cls;
 jmethodID InternalSensors::gps_ctor_id, InternalSensors::close_method;
 jmethodID InternalSensors::sensors_ctor_id;
 jmethodID InternalSensors::mid_sensors_getSubscribableSensors;
@@ -42,6 +42,19 @@ jmethodID InternalSensors::mid_sensors_cancelSensorSubscription_;
 jmethodID InternalSensors::mid_sensors_subscribedToSensor_;
 jmethodID InternalSensors::mid_sensors_cancelAllSensorSubscriptions_;
 
+static jclass
+FindGlobalClass(JNIEnv *env, const char *name)
+{
+  jclass local_class = env->FindClass(name);
+  if (local_class == NULL)
+    return NULL;
+
+  jclass global_class = (jclass)env->NewGlobalRef(local_class);
+  env->DeleteLocalRef(local_class);
+
+  return global_class;
+}
+
 bool
 InternalSensors::Initialise(JNIEnv *env)
 {
@@ -49,13 +62,15 @@ InternalSensors::Initialise(JNIEnv *env)
   assert(sensors_cls == NULL);
   assert(env != NULL);
 
-  gps_cls.Find(env, "org/xcsoar/InternalGPS");
+  gps_cls = FindGlobalClass(env, "org/xcsoar/InternalGPS");
+  assert(gps_cls != NULL);
 
   gps_ctor_id = env->GetMethodID(gps_cls, "<init>",
                                  "(Landroid/content/Context;I)V");
   close_method = env->GetMethodID(gps_cls, "close", "()V");
 
-  sensors_cls.Find(env, "org/xcsoar/NonGPSSensors");
+  sensors_cls = FindGlobalClass(env, "org/xcsoar/NonGPSSensors");
+  assert(sensors_cls != NULL);
 
   sensors_ctor_id = env->GetMethodID(sensors_cls, "<init>",
                                      "(Landroid/content/Context;I)V");
@@ -83,8 +98,11 @@ InternalSensors::Initialise(JNIEnv *env)
 void
 InternalSensors::Deinitialise(JNIEnv *env)
 {
-  gps_cls.Clear(env);
-  sensors_cls.Clear(env);
+  if (gps_cls != NULL)
+    env->DeleteGlobalRef(gps_cls);
+
+  if (sensors_cls != NULL)
+    env->DeleteGlobalRef(sensors_cls);
 }
 
 InternalSensors::InternalSensors(JNIEnv* env, jobject gps_obj, jobject sensors_obj)
@@ -281,9 +299,11 @@ JNIEXPORT void JNICALL
 Java_org_xcsoar_NonGPSSensors_setAcceleration(
     JNIEnv* env, jobject obj, jfloat ddx, jfloat ddy, jfloat ddz) {
   // TODO
+  /*
   const unsigned int index = getDeviceIndex(env, obj);
   ScopeLock protect(device_blackboard->mutex);
   NMEAInfo &basic = device_blackboard->SetRealState(index);
+  */
 }
 
 gcc_visibility_default
@@ -292,9 +312,11 @@ Java_org_xcsoar_NonGPSSensors_setRotation(
     JNIEnv* env, jobject obj,
     jfloat dtheta_x, jfloat dtheta_y, jfloat dtheta_z) {
   // TODO
+  /*
   const unsigned int index = getDeviceIndex(env, obj);
   ScopeLock protect(device_blackboard->mutex);
   NMEAInfo &basic = device_blackboard->SetRealState(index);
+  */
 }
 
 gcc_visibility_default

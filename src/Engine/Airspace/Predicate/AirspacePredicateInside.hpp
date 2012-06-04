@@ -35,7 +35,7 @@ class AirspacePredicateInside: public AirspacePredicate
 public:
   AirspacePredicateInside(const GeoPoint &_location);
 
-  bool operator()(const AbstractAirspace &airspace) const;
+  bool condition(const AbstractAirspace &airspace) const;
 };
 
 #endif

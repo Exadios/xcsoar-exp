@@ -15,7 +15,7 @@ static OrderedTask* task_load(OrderedTask* task) {
     return NULL;
 
   Deserialiser des(*root);
-  des.Deserialise(*task);
+  des.deserialise(*task);
   if (task->CheckTask()) {
     delete root;
     return task;

@@ -28,7 +28,7 @@ Copyright_License {
 #include "Form/Form.hpp"
 #include "Form/Util.hpp"
 #include "Units/Units.hpp"
-#include "Form/DataField/Boolean.hpp"
+#include "DataField/Boolean.hpp"
 #include "Interface.hpp"
 
 class WndButton;

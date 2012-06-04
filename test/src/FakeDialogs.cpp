@@ -25,7 +25,7 @@ Copyright_License {
 #include "Dialogs/TextEntry.hpp"
 
 int
-ShowMessageBox(const TCHAR *lpText, const TCHAR *lpCaption, unsigned uType)
+MessageBoxX(const TCHAR *lpText, const TCHAR *lpCaption, unsigned uType)
 {
   return -1;
 }

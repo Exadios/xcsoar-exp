@@ -25,7 +25,7 @@ Copyright_License {
 #define XCSOAR_VEGA_FLARM_ALERT_PARAMETERS_HPP
 
 #include "VegaParametersWidget.hpp"
-#include "Form/DataField/Enum.hpp"
+#include "DataField/Enum.hpp"
 #include "Language/Language.hpp"
 #include "Compiler.h"
 

@@ -143,13 +143,13 @@ AddClicked(gcc_unused WndButton &button)
     return;
 
   if (_tcslen(code) != 4) {
-    ShowMessageBox(_("Please enter the FOUR letter code of the desired station."),
+    MessageBoxX(_("Please enter the FOUR letter code of the desired station."),
                 _("Error"), MB_OK);
     return;
   }
 
   if (!NOAAStore::IsValidCode(code)) {
-    ShowMessageBox(_("Please don't use special characters in the four letter code of the desired station."),
+    MessageBoxX(_("Please don't use special characters in the four letter code of the desired station."),
                   _("Error"), MB_OK);
     return;
   }
@@ -183,7 +183,7 @@ RemoveClicked(gcc_unused WndButton &Sender)
   tmp.Format(_("Do you want to remove station %s?"),
              list[index].code.c_str());
 
-  if (ShowMessageBox(tmp, _("Remove"), MB_YESNO) == IDNO)
+  if (MessageBoxX(tmp, _("Remove"), MB_YESNO) == IDNO)
     return;
 
   noaa_store->erase(list[index].iterator);
@@ -268,7 +268,7 @@ dlgNOAAListShowModal(SingleWindow &parent)
 void
 dlgNOAAListShowModal(SingleWindow &parent)
 {
-  ShowMessageBox(_("This function is not available on your platform yet."),
+  MessageBoxX(_("This function is not available on your platform yet."),
               _("Error"), MB_OK);
 }
 #endif

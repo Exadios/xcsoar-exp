@@ -25,7 +25,6 @@ Copyright_License {
 #include "Device/Driver/Vega/Internal.hpp"
 #include "Language/Language.hpp"
 #include "OS/Sleep.h"
-#include "Operation/PopupOperationEnvironment.hpp"
 
 #include <assert.h>
 
@@ -117,8 +116,6 @@ WaitForSetting(VegaDevice &device, const char *name, unsigned timeout_ms)
 bool
 VegaParametersWidget::RequestAll()
 {
-  PopupOperationEnvironment env;
-
   /* long timeout for first response */
   unsigned timeout_ms = 3000;
 
@@ -138,8 +135,7 @@ VegaParametersWidget::RequestAll()
       ++start;
     }
 
-    if (!SettingExists(device, i->name) &&
-        !device.RequestSetting(i->name, env))
+    if (!SettingExists(device, i->name) && !device.RequestSetting(i->name))
       return false;
   }
 
@@ -207,7 +203,6 @@ VegaParametersWidget::Save(bool &changed_r, bool &require_restart)
   bool changed = false;
 
   /* see which parameters have been edited by the user */
-  PopupOperationEnvironment env;
   for (unsigned i = 0, end = parameters.size(); i != end; ++i) {
     Parameter &parameter = parameters[i];
     const int ui_value = GetValueInteger(i);
@@ -216,7 +211,7 @@ VegaParametersWidget::Save(bool &changed_r, bool &require_restart)
       continue;
 
     /* value has been changed by the user */
-    if (!device.SendSetting(parameter.name, ui_value, env))
+    if (!device.SendSetting(parameter.name, ui_value))
       /* error; should this be told to the user? */
       return false;
 

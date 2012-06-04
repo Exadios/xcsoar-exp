@@ -29,13 +29,13 @@ Copyright_License {
 
 class FlightStatistics {
 public:
-  LeastSquares thermal_average;
-  LeastSquares altitude;
-  LeastSquares altitude_base;
-  LeastSquares altitude_ceiling;
-  LeastSquares task_speed;
-  LeastSquares altitude_terrain;
-  mutable Mutex mutex;
+  LeastSquares ThermalAverage;
+  LeastSquares Altitude;
+  LeastSquares Altitude_Base;
+  LeastSquares Altitude_Ceiling;
+  LeastSquares Task_Speed;
+  LeastSquares Altitude_Terrain;
+  mutable Mutex mutexStats;
 
   void StartTask();
 

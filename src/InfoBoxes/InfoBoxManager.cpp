@@ -34,7 +34,8 @@ Copyright_License {
 #include "Hardware/Battery.hpp"
 #include "MainWindow.hpp"
 #include "Language/Language.hpp"
-#include "Form/DataField/ComboList.hpp"
+#include "DataField/Enum.hpp"
+#include "DataField/ComboList.hpp"
 #include "Dialogs/Dialogs.h"
 #include "Dialogs/ComboPicker.hpp"
 #include "Profile/InfoBoxConfig.hpp"
@@ -103,7 +104,7 @@ int
 InfoBoxManager::GetFocused()
 {
   for (unsigned i = 0; i < layout.count; i++)
-    if (InfoBoxes[i]->HasFocus())
+    if (InfoBoxes[i]->has_focus())
       return i;
 
   return -1;
@@ -216,9 +217,9 @@ InfoBoxManager::Event_Change(int i)
 
   k = panel.contents[InfoFocus];
   if (i > 0)
-    j = InfoBoxFactory::GetNext(k);
+    j = (InfoBoxFactory::t_InfoBox)InfoBoxFactory::GetNext(k);
   else if (i < 0)
-    j = InfoBoxFactory::GetPrevious(k);
+    j = (InfoBoxFactory::t_InfoBox)InfoBoxFactory::GetPrevious(k);
 
   // TODO code: if i==0, go to default or reset
 
@@ -342,7 +343,6 @@ InfoBoxManager::GetInfoBoxBorder(unsigned i)
 
   case InfoBoxSettings::Geometry::BOTTOM_8:
   case InfoBoxSettings::Geometry::BOTTOM_8_VARIO:
-  case InfoBoxSettings::Geometry::BOTTOM_4:
     border |= BORDERTOP;
 
     if (i != 3 && i != 7)
@@ -357,7 +357,6 @@ InfoBoxManager::GetInfoBoxBorder(unsigned i)
     break;
 
   case InfoBoxSettings::Geometry::TOP_8:
-  case InfoBoxSettings::Geometry::TOP_4:
     border |= BORDERBOTTOM;
 
     if (i != 3 && i != 7)
@@ -391,7 +390,6 @@ InfoBoxManager::GetInfoBoxBorder(unsigned i)
     break;
 
   case InfoBoxSettings::Geometry::LEFT_8:
-  case InfoBoxSettings::Geometry::LEFT_4:
     if (i != 3 && i != 7)
       border |= BORDERBOTTOM;
 
@@ -399,7 +397,6 @@ InfoBoxManager::GetInfoBoxBorder(unsigned i)
     break;
 
   case InfoBoxSettings::Geometry::RIGHT_8:
-  case InfoBoxSettings::Geometry::RIGHT_4:
     if (i != 3 && i != 7)
       border |= BORDERBOTTOM;
 

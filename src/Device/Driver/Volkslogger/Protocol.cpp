@@ -104,10 +104,9 @@ Volkslogger::ConnectAndFlush(Port &port, OperationEnvironment &env,
 }
 
 static bool
-SendWithCRC(Port &port, const void *data, size_t length,
-            OperationEnvironment &env)
+SendWithCRC(Port &port, const void *data, size_t length)
 {
-  if (!port.FullWrite(data, length, env, 2000))
+  if (!port.FullWrite(data, length, 2000))
     return false;
 
   uint16_t crc16 = UpdateCRC(data, length, 0);
@@ -140,7 +139,7 @@ Volkslogger::SendCommand(Port &port, OperationEnvironment &env,
 
   env.Sleep(delay);
 
-  if (!SendWithCRC(port, cmdarray, sizeof(cmdarray), env))
+  if (!SendWithCRC(port, cmdarray, sizeof(cmdarray)))
     return false;
 
   /* wait for confirmation */

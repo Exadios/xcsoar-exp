@@ -31,7 +31,7 @@ Copyright_License {
 #include "Form/CheckBox.hpp"
 #include "Screen/Layout.hpp"
 #include "Profile/Profile.hpp"
-#include "Form/DataField/FileReader.hpp"
+#include "DataField/FileReader.hpp"
 #include "LogFile.hpp"
 #include "Util/Macros.hpp"
 #include "ConfigPanels/ConfigPanel.hpp"
@@ -279,7 +279,7 @@ Save()
     Profile::Save();
     LogDebug(_T("Configuration: Changes saved"));
     if (requirerestart)
-      ShowMessageBox(_("Changes to configuration saved.  Restart XCSoar to apply changes."),
+      MessageBoxX(_("Changes to configuration saved.  Restart XCSoar to apply changes."),
                   _T(""), MB_OK);
   }
 }

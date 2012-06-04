@@ -586,7 +586,7 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
         // If the name of the new element differs from the name of
         // the current element we need to add the new element to
         // the current one and recurse
-        pNew = &node.AddChild(token.pStr, token_length,
+        pNew = &node.AddChild(DuplicateString(token.pStr, token_length),
                               is_declaration);
 
         while (true) {
@@ -633,7 +633,8 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
                 return true;
 
               // Add the new element and recurse
-              pNew = &node.AddChild(pXML->lpNewElement, pXML->cbNewElement,
+              pNew = &node.AddChild(DuplicateString(pXML->lpNewElement,
+                                                    pXML->cbNewElement),
                                     false);
               pXML->cbNewElement = 0;
             } else {
@@ -751,7 +752,7 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
           // Eg.  'Attribute AnotherAttribute'
         case eTokenText:
           // Add the unvalued attribute to the list
-          node.AddAttribute(temp, temp_length, _T(""), 0);
+          node.AddAttribute(DuplicateString(temp, temp_length), NULL);
           // Cache the token then indicate.  We are next to
           // look for the equals attribute
           temp = token.pStr;
@@ -769,7 +770,7 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
 
           if (temp_length)
             // Add the unvalued attribute to the list
-            node.AddAttribute(temp, temp_length, _T(""), 0);
+            node.AddAttribute(DuplicateString(temp, temp_length), NULL);
 
           // If this is the end of the tag then return to the caller
           if (type == eTokenShortHandClose)
@@ -820,11 +821,8 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
               token.pStr++;
               token_length -= 2;
             }
-
-            TCHAR *value = FromXMLString(token.pStr, token_length);
-            node.AddAttribute(temp, temp_length,
-                              value, _tcslen(value));
-            free(value);
+            node.AddAttribute(DuplicateString(temp, temp_length),
+                              FromXMLString(token.pStr, token_length));
           }
 
           // Indicate we are searching for a new attribute

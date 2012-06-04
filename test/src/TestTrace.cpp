@@ -20,8 +20,7 @@
 }
 */
 
-#include "IGC/IGCParser.hpp"
-#include "IGC/IGCFix.hpp"
+#include "Replay/IGCParser.hpp"
 #include "IO/FileLineReader.hpp"
 #include "Engine/Trace/Trace.hpp"
 #include "Engine/Trace/Vector.hpp"
@@ -80,12 +79,12 @@ TestTrace(const char *filename, unsigned ntrace, bool output=false)
     }
 
     IGCFix fix;
-    if (!IGCParseFix(line, fix) || !fix.gps_valid)
+    if (!IGCParseFix(line, fix))
       continue;
 
     OnAdvance(trace,
                fix.location, fixed(30), Angle::Zero(),
-               fixed(fix.gps_altitude), fixed(fix.pressure_altitude),
+               fix.gps_altitude, fix.pressure_altitude,
                fixed(fix.time.GetSecondOfDay()));
   }
   putchar('\n');

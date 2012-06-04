@@ -27,11 +27,11 @@
 
 Filter::Filter(const fixed cutoff_wavelength, const bool bessel)
 {
-  Design(cutoff_wavelength, bessel);
+  design(cutoff_wavelength, bessel);
 }
 
 bool
-Filter::Design(const fixed cutoff_wavelength, const bool bessel)
+Filter::design(const fixed cutoff_wavelength, const bool bessel)
 {
   static const fixed sample_freq = fixed_one;
   static const fixed n = fixed_one;
@@ -66,14 +66,14 @@ Filter::Design(const fixed cutoff_wavelength, const bool bessel)
   b[0] = a[1] * (fixed_one / K2 - fixed_one);
   b[1] = fixed_one - (a[0] + a[1] + a[2] + b[0]);
 
-  Reset(fixed_zero);
+  reset(fixed_zero);
   ok = true;
 
   return true;
 }
 
 fixed
-Filter::Reset(const fixed _x)
+Filter::reset(const fixed _x)
 {
   x[0] = _x;
   y[0] = _x;
@@ -85,7 +85,7 @@ Filter::Reset(const fixed _x)
 }
 
 fixed
-Filter::Update(const fixed _x)
+Filter::update(const fixed _x)
 {
   assert(ok);
 

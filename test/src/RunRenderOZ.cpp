@@ -179,8 +179,8 @@ OZWindow::OnPaint(Canvas &canvas)
   const ObservationZone::Boundary boundary = oz->GetBoundary();
   for (auto i = boundary.begin(), end = boundary.end(); i != end; ++i) {
     RasterPoint p = projection.GeoToScreen(*i);
-    canvas.DrawLine(p.x - 3, p.y - 3, p.x + 3, p.y + 3);
-    canvas.DrawLine(p.x + 3, p.y - 3, p.x - 3, p.y + 3);
+    canvas.line(p.x - 3, p.y - 3, p.x + 3, p.y + 3);
+    canvas.line(p.x + 3, p.y - 3, p.x - 3, p.y + 3);
   }
 }
 
@@ -241,7 +241,7 @@ public:
   void set(const DialogLook &look, PixelRect _rc) {
     SingleWindow::set(_T("RunRenderOZ"), _T("RunRenderOZ"), _rc);
 
-    const PixelRect rc = GetClientRect();
+    const PixelRect rc = get_client_rect();
 
     WindowStyle with_border;
     with_border.Border();

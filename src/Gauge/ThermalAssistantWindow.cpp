@@ -173,15 +173,15 @@ ThermalAssistantWindow::PaintRadarPlane(Canvas &canvas) const
 
   PixelScalar x = mid.x + (LeftTurn() ? radius : -radius);
 
-  canvas.DrawLine(x + Layout::FastScale(small ? 5 : 10),
+  canvas.line(x + Layout::FastScale(small ? 5 : 10),
               mid.y - Layout::FastScale(small ? 1 : 2),
               x - Layout::FastScale(small ? 5 : 10),
               mid.y - Layout::FastScale(small ? 1 : 2));
-  canvas.DrawLine(x,
+  canvas.line(x,
               mid.y - Layout::FastScale(small ? 3 : 6),
               x,
               mid.y + Layout::FastScale(small ? 3 : 6));
-  canvas.DrawLine(x + Layout::FastScale(small ? 2 : 4),
+  canvas.line(x + Layout::FastScale(small ? 2 : 4),
               mid.y + Layout::FastScale(small ? 2 : 4),
               x - Layout::FastScale(small ? 2 : 4),
               mid.y + Layout::FastScale(small ? 2 : 4));
@@ -190,13 +190,13 @@ ThermalAssistantWindow::PaintRadarPlane(Canvas &canvas) const
 void
 ThermalAssistantWindow::PaintRadarBackground(Canvas &canvas) const
 {
-  canvas.Clear(hbBackground);
+  canvas.clear(hbBackground);
   canvas.SelectHollowBrush();
 
   canvas.Select(hpInnerCircle);
-  canvas.DrawCircle(mid.x, mid.y, radius / 2);
+  canvas.circle(mid.x, mid.y, radius / 2);
   canvas.Select(hpOuterCircle);
-  canvas.DrawCircle(mid.x, mid.y, radius);
+  canvas.circle(mid.x, mid.y, radius);
 
   if (small)
     return;
@@ -231,13 +231,13 @@ ThermalAssistantWindow::PaintPoints(Canvas &canvas) const
 
   canvas.Select(hbPolygon);
   canvas.Select(hpPolygon);
-  canvas.DrawPolygon(lift_points, 36);
+  canvas.polygon(lift_points, 36);
 }
 
 void
 ThermalAssistantWindow::PaintAdvisor(Canvas &canvas) const
 {
-  canvas.DrawLine(mid.x, mid.y, lift_point_avg.x, lift_point_avg.y);
+  canvas.line(mid.x, mid.y, lift_point_avg.x, lift_point_avg.y);
 }
 
 void

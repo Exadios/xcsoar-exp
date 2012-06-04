@@ -19,9 +19,7 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
 */
-
 #include "TaskAutoPilot.hpp"
-#include "TaskAccessor.hpp"
 #include "Task/TaskStats/ElementStat.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
 
@@ -97,7 +95,7 @@ TaskAutoPilot::Start(const TaskAccessor& task)
 
   // reset the heading
   heading = Angle::Zero();
-  heading_filt.Reset(fixed_zero);
+  heading_filt.reset(fixed_zero);
 
   acstate = Cruise;
 }
@@ -140,7 +138,7 @@ TaskAutoPilot::heading_deviation()
     ? half(parms.bearing_noise)
     : parms.bearing_noise;
   fixed r = (fixed_two * rand() / RAND_MAX)-fixed_one;
-  fixed deviation = fixed(heading_filt.Update(noise_mag*r));
+  fixed deviation = fixed(heading_filt.update(noise_mag*r));
   return Angle::Degrees(deviation).AsDelta();
 }
 
@@ -274,7 +272,7 @@ TaskAutoPilot::far_from_target(const TaskAccessor& task, const AircraftState& st
   if (task.is_empty() || !task.leg_stats().remaining.IsDefined())
     return w[0].Distance(state.location)>state.ground_speed;
 
-  bool d_far = (task.leg_stats().remaining.GetDistance() > fixed(100));
+  bool d_far = (task.leg_stats().remaining.get_distance() > fixed(100));
 
   if (!task.is_ordered())
     // cheat for non-ordered tasks

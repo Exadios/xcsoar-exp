@@ -330,7 +330,7 @@ DeviceListWidget::ReconnectCurrent()
 
   DeviceDescriptor &device = *device_list[current];
   if (device.IsBorrowed()) {
-    ShowMessageBox(_("Device is occupied"), _("Reconnect"), MB_OK | MB_ICONERROR);
+    MessageBoxX(_("Device is occupied"), _("Reconnect"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -352,7 +352,7 @@ DeviceListWidget::DownloadFlightFromCurrent()
     return;
 
   if (!device.Borrow()) {
-    ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
+    MessageBoxX(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -407,7 +407,7 @@ DeviceListWidget::ManageCurrent()
     return;
 
   if (!descriptor.Borrow()) {
-    ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
+    MessageBoxX(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
     return;
   }
 

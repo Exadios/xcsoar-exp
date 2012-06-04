@@ -43,12 +43,6 @@ AirspaceWarningManager::AirspaceWarningManager(const Airspaces &_airspaces,
 {
 }
 
-const TaskProjection &
-AirspaceWarningManager::GetProjection() const
-{
-  return airspaces.GetProjection();
-}
-
 void
 AirspaceWarningManager::SetConfig(const AirspaceWarningConfig &_config)
 {
@@ -213,7 +207,7 @@ public:
       if (mode_inside) {
         airspace.Intercept(state, perf, solution, state.location, state.location);
       } else {
-        solution = Intercept(airspace, state, perf);
+        solution = intercept(airspace, state, perf);
       }
       if (!solution.IsValid())
         return;
@@ -291,7 +285,7 @@ AirspaceWarningManager::UpdatePredicted(const AircraftState& state,
   airspaces.VisitIntersecting(state.location, location_predicted, visitor);
 
   visitor.SetMode(true);
-  airspaces.VisitInside(state.location, visitor);
+  airspaces.visit_inside(state.location, visitor);
 
   return visitor.Found();
 }
@@ -373,7 +367,7 @@ AirspaceWarningManager::UpdateInside(const AircraftState& state,
 
   AirspacePredicateAircraftInside condition(state);
 
-  Airspaces::AirspaceVector results = airspaces.FindInside(state, condition);
+  Airspaces::AirspaceVector results = airspaces.find_inside(state, condition);
   for (auto it = results.begin(); it != results.end(); ++it) {
     const AbstractAirspace& airspace = *it->get_airspace();
 
@@ -386,10 +380,10 @@ AirspaceWarningManager::UpdateInside(const AircraftState& state,
     AirspaceWarning& warning = GetWarning(airspace);
 
     if (warning.IsStateAccepted(AirspaceWarning::WARNING_INSIDE)) {
-      GeoPoint c = airspace.ClosestPoint(state.location, GetProjection());
+      GeoPoint c = airspace.ClosestPoint(state.location);
       const AirspaceAircraftPerformanceGlide perf_glide(glide_polar);
       AirspaceInterceptSolution solution;
-      airspace.Intercept(state, c, GetProjection(), perf_glide, solution);
+      airspace.Intercept(state, c, perf_glide, solution);
 
       warning.UpdateSolution(AirspaceWarning::WARNING_INSIDE, solution);
       found = true;

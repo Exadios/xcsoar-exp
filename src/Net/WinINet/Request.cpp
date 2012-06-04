@@ -43,7 +43,8 @@ RequestCallback(HINTERNET hInternet,
 
 Net::Request::Request(Session &session, const TCHAR *url,
                       unsigned long timeout)
-  :last_error(ERROR_SUCCESS)
+  :opened_event(false), completed_event(false),
+   last_error(ERROR_SUCCESS)
 {
   INTERNET_STATUS_CALLBACK old_callback =
     session.handle.SetStatusCallback(RequestCallback);
@@ -64,7 +65,8 @@ Net::Request::Request(Session &session, const TCHAR *url,
 
 Net::Request::Request(Connection &connection, const char *file,
                       unsigned long timeout)
-  :last_error(ERROR_SUCCESS)
+  :opened_event(false), completed_event(false),
+   last_error(ERROR_SUCCESS)
 {
   INTERNET_STATUS_CALLBACK old_callback =
     connection.handle.SetStatusCallback(RequestCallback);

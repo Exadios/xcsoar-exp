@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "LocalPath.hpp"
 #include "Compatibility/path.h"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 #include "Asset.hpp"
 
 #include "OS/FileUtil.hpp"
@@ -167,7 +167,7 @@ ContractLocalPath(TCHAR* filein)
 
   // Get the relative file name and location (ptr)
   const TCHAR *ptr = StringAfterPrefix(filein, data_path);
-  if (ptr == NULL || !IsDirSeparator(*ptr))
+  if (ptr == NULL || !is_dir_separator(*ptr))
     return;
 
   // Replace the full local path by the code "%LOCAL_PATH%\\" (output)
@@ -183,9 +183,9 @@ InFlashNamed(const TCHAR *path, const TCHAR *name)
 {
   size_t name_length = _tcslen(name);
 
-  return IsDirSeparator(path[0]) &&
+  return is_dir_separator(path[0]) &&
     memcmp(path + 1, name, name_length * sizeof(name[0])) == 0 &&
-    IsDirSeparator(path[1 + name_length]);
+    is_dir_separator(path[1 + name_length]);
 }
 
 /**

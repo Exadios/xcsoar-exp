@@ -47,7 +47,7 @@ TaskClosePanel::RefreshStatus()
   wStatus->SetText(*task_modified ?
                    _("Task has been modified") : _("Task unchanged"));
 
-  cmdRevert->SetVisible(*task_modified);
+  cmdRevert->set_visible(*task_modified);
 }
 
 static void

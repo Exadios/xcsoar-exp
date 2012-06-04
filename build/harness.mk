@@ -1,11 +1,10 @@
 HARNESS_SOURCES = \
 	$(SRC)/Computer/FlyingComputer.cpp \
-	$(SRC)/IGC/IGCParser.cpp \
+	$(SRC)/Replay/IGCParser.cpp \
 	$(SRC)/Replay/IgcReplay.cpp \
 	$(SRC)/Replay/TaskAutoPilot.cpp \
 	$(SRC)/Replay/AircraftSim.cpp \
 	$(SRC)/ComputerSettings.cpp \
-	$(SRC)/TeamCodeSettings.cpp \
 	$(SRC)/Logger/Settings.cpp \
 	$(SRC)/Tracking/TrackingSettings.cpp \
 	$(SRC)/Computer/TraceComputer.cpp \

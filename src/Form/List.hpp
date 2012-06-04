@@ -242,7 +242,7 @@ public:
   }
 
   void SetPixelOrigin(int pixel_origin) {
-    int max = length * item_height - GetHeight();
+    int max = length * item_height - get_height();
     if (pixel_origin > max)
       pixel_origin = max;
 
@@ -288,7 +288,7 @@ protected:
     PixelRect rc;
     rc.left = 0;
     rc.top = (int)(i - origin) * item_height - pixel_pan;
-    rc.right = scroll_bar.GetLeft(GetSize());
+    rc.right = scroll_bar.GetLeft(get_size());
     rc.bottom = rc.top + item_height;
     return rc;
   }

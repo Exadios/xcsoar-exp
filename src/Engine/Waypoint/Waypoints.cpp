@@ -22,7 +22,7 @@
 
 #include "Waypoints.hpp"
 #include "WaypointVisitor.hpp"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 
 // global, used for test harness
 unsigned n_queries = 0;
@@ -244,13 +244,20 @@ Waypoints::FindHome()
 bool
 Waypoints::SetHome(const unsigned id)
 {
-  home = LookupId(id);
-  if (home == NULL)
-    return false;
+  home = NULL;
 
-  Waypoint &wp = const_cast<Waypoint &>(*home);
-  wp.flags.home = true;
-  return true;
+  for (auto found = waypoint_tree.begin();
+       found != waypoint_tree.end(); ++found) {
+    Waypoint &wp = *found;
+
+    if (wp.id == id) {
+      home = &wp;
+      wp.flags.home = true;
+      return true;
+    }
+  }
+
+  return false;
 }
 
 const Waypoint*
@@ -304,7 +311,7 @@ Waypoints::Clear()
 void
 Waypoints::Erase(const Waypoint& wp)
 {
-  if (home == &wp)
+  if (home != NULL && home->id == wp.id)
     home = NULL;
 
   const auto it = waypoint_tree.FindPointer(&wp);

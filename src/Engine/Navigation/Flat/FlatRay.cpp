@@ -92,15 +92,17 @@ FlatRay::IntersectsDistinct(const FlatRay& that) const
          (abs(r.first) < abs(r.second));
 }
 
-fixed
-FlatRay::DistinctIntersection(const FlatRay& that) const
+bool
+FlatRay::IntersectsDistinct(const FlatRay& that, fixed& t) const
 {
   std::pair<int, int> r = IntersectsRatio(that);
   if (r.second != 0 &&
       sgn(r.second) * r.first > 0 &&
       abs(r.first) < abs(r.second)) {
-    return fixed(r.first) / r.second;
+    t = ((fixed)r.first) / r.second;
+    return true;
   }
 
-  return fixed_minus_one;
+  t = -fixed_one;
+  return false;
 }

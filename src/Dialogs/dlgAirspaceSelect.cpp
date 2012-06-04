@@ -28,18 +28,16 @@ Copyright_License {
 #include "Airspace/AirspaceSorter.hpp"
 #include "Math/FastMath.h"
 #include "Math/Earth.hpp"
-#include "Form/DataField/String.hpp"
-#include "Form/DataField/Enum.hpp"
+#include "DataField/String.hpp"
+#include "DataField/Enum.hpp"
 #include "Engine/Airspace/Airspaces.hpp"
 #include "Engine/Airspace/AbstractAirspace.hpp"
-#include "Formatter/AirspaceFormatter.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Busy.hpp"
 #include "Compiler.h"
 #include "Util/Macros.hpp"
 #include "Units/Units.hpp"
 #include "Formatter/AngleFormatter.hpp"
-#include "Formatter/UserUnits.hpp"
 #include "UIGlobals.hpp"
 
 #include <assert.h>
@@ -104,30 +102,30 @@ OnAirspaceListEnter(unsigned i)
 
 static void UpdateList()
 {
-  AirspaceSelectInfo = airspace_sorter->GetList();
+  AirspaceSelectInfo = airspace_sorter->get_list();
 
   if (TypeFilterIdx != WILDCARD)
-    airspace_sorter->FilterByClass(AirspaceSelectInfo, (AirspaceClass)TypeFilterIdx);
+    airspace_sorter->filter_class(AirspaceSelectInfo, (AirspaceClass)TypeFilterIdx);
   
   bool sort_distance = false;
   if (positive(distance_filter)) {
     sort_distance = true;
-    airspace_sorter->FilterByDistance(AirspaceSelectInfo, distance_filter);
+    airspace_sorter->filter_distance(AirspaceSelectInfo, distance_filter);
   } 
   if (direction_filter != WILDCARD) {
     sort_distance = true;
     Angle a = direction_filter == 0
       ? CommonInterface::Calculated().heading
       : Angle::Degrees(fixed(direction_filter));
-    airspace_sorter->FilterByDirection(AirspaceSelectInfo, a);
+    airspace_sorter->filter_direction(AirspaceSelectInfo, a);
   }
   if (sort_distance) {
-    airspace_sorter->SortByDistance(AirspaceSelectInfo);
+    airspace_sorter->sort_distance(AirspaceSelectInfo);
   }
 
   const TCHAR *name_filter = wpName->GetDataField()->GetAsString();
   if (!StringIsEmpty(name_filter))
-    airspace_sorter->FilterByNamePrefix(AirspaceSelectInfo, name_filter);
+    airspace_sorter->FilterNamePrefix(AirspaceSelectInfo, name_filter);
 
   wAirspaceList->SetLength(max((size_t)1, AirspaceSelectInfo.size()));
   wAirspaceList->Invalidate();
@@ -178,7 +176,7 @@ static void OnFilterDistance(DataField *_Sender,
   switch(Mode){
     case DataField::daChange:
     distance_filter = (unsigned)Sender->GetAsInteger() != WILDCARD
-      ? Units::ToSysDistance(fixed(Sender->GetAsInteger()))
+      ? fixed(Sender->GetAsInteger())
       : fixed_minus_one;
     FilterMode(false);
     UpdateList();
@@ -244,22 +242,23 @@ OnPaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
     
   canvas.text_clipped(rc.left + Layout::FastScale(2),
                       rc.top + Layout::FastScale(2),
-                      x1 - Layout::FastScale(5),
-                      AirspaceFormatter::GetNameAndClass(airspace).c_str());
+                      x1 - Layout::FastScale(5), airspace.GetNameText().c_str());
     
   // left justified
   canvas.text(rc.left + x1, rc.top + Layout::FastScale(2), 
-              AirspaceFormatter::GetClassShort(airspace));
+              airspace.GetTypeText(true));
     
   StaticString<12> sTmp;
 
   // right justified after airspace type
-  FormatUserDistance(AirspaceSelectInfo[i].distance, sTmp.buffer(), true, 0);
+  sTmp.Format(_T("%d%s"),
+              (int)AirspaceSelectInfo[i].Distance,
+              Units::GetDistanceName());
   x2 = w0 - w3 - canvas.CalcTextWidth(sTmp);
   canvas.text(rc.left + x2, rc.top + Layout::FastScale(2), sTmp);
     
   // right justified after distance
-  FormatBearing(sTmp.buffer(), sTmp.MAX_SIZE, AirspaceSelectInfo[i].direction);
+  FormatBearing(sTmp.buffer(), sTmp.MAX_SIZE, AirspaceSelectInfo[i].Direction);
   x3 = w0 - canvas.CalcTextWidth(sTmp);
   canvas.text(rc.left + x3, rc.top + Layout::FastScale(2), sTmp);
 }
@@ -426,7 +425,8 @@ dlgAirspaceSelect(const Airspaces &airspace_database,
   PrepareAirspaceSelectDialog();
 
   GeoPoint Location = XCSoarInterface::Basic().location;
-  AirspaceSorter g_airspace_sorter(airspace_database, Location);
+  AirspaceSorter g_airspace_sorter(airspace_database, Location,
+                                   Units::ToUserDistance(fixed_one));
   airspace_sorter = &g_airspace_sorter;
 
   UpdateList();

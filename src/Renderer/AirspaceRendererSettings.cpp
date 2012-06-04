@@ -45,7 +45,6 @@ AirspaceRendererSettings::SetDefaults()
     0,
 #endif
     COLOR_RED,
-    2,
   };
 
   std::fill(classes, classes + AIRSPACECLASSCOUNT, default_settings);

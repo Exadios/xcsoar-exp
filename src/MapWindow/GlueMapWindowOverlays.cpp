@@ -42,31 +42,8 @@ Copyright_License {
 #include "Units/Units.hpp"
 #include "Terrain/RasterTerrain.hpp"
 #include "Util/Macros.hpp"
-#include "Look/GestureLook.hpp"
-#include "Input/InputEvents.hpp"
 
 #include <stdio.h>
-
-void
-GlueMapWindow::DrawGesture(Canvas &canvas) const
-{
-  if (!gestures.HasPoints())
-    return;
-
-  const TCHAR *gesture = gestures.GetGesture();
-  if (gesture != NULL && !InputEvents::IsGesture(gesture))
-    canvas.Select(gesture_look.invalid_pen);
-  else
-    canvas.Select(gesture_look.pen);
-
-  canvas.SelectHollowBrush();
-
-  const auto &points = gestures.GetPoints();
-  auto it = points.begin();
-  auto it_last = it++;
-  for (auto it_end = points.end(); it != it_end; it_last = it++)
-    canvas.DrawLinePiece(*it_last, *it);
-}
 
 void
 GlueMapWindow::DrawCrossHairs(Canvas &canvas) const
@@ -76,9 +53,9 @@ GlueMapWindow::DrawCrossHairs(Canvas &canvas) const
 
   const RasterPoint center = render_projection.GetScreenOrigin();
 
-  canvas.DrawLine(center.x + 20, center.y,
+  canvas.line(center.x + 20, center.y,
               center.x - 20, center.y);
-  canvas.DrawLine(center.x, center.y + 20,
+  canvas.line(center.x, center.y + 20,
               center.x, center.y - 20);
 }
 
@@ -240,13 +217,13 @@ GlueMapWindow::DrawMapScale(Canvas &canvas, const PixelRect &rc,
 {
   StaticString<80> buffer;
 
-  fixed map_width = projection.GetScreenWidthMeters();
+  fixed MapWidth = projection.GetScreenWidthMeters();
 
   canvas.Select(Fonts::map_bold);
-  FormatUserMapScale(map_width, buffer.buffer(), true);
-  PixelSize text_size = canvas.CalcTextSize(buffer);
+  FormatUserMapScale(MapWidth, buffer.buffer(), true);
+  PixelSize textSize = canvas.CalcTextSize(buffer);
 
-  const PixelScalar text_padding_x = Layout::Scale(2);
+  const PixelScalar textXPadding = Layout::Scale(2);
   const PixelScalar height = Fonts::map_bold.GetCapitalHeight() + Layout::Scale(2);
 
   PixelScalar x = 0;
@@ -254,16 +231,16 @@ GlueMapWindow::DrawMapScale(Canvas &canvas, const PixelRect &rc,
 
   x += look.map_scale_left_icon.GetSize().cx;
   canvas.DrawFilledRectangle(x, rc.bottom - height,
-                             x + 2 * text_padding_x + text_size.cx,
+                             x + 2 * textXPadding + textSize.cx,
                              rc.bottom, COLOR_WHITE);
 
   canvas.SetBackgroundTransparent();
   canvas.SetTextColor(COLOR_BLACK);
-  x += text_padding_x;
+  x += textXPadding;
   canvas.text(x, rc.bottom - Fonts::map_bold.GetAscentHeight() - Layout::Scale(1),
               buffer);
 
-  x += text_padding_x + text_size.cx;
+  x += textXPadding + textSize.cx;
   look.map_scale_right_icon.Draw(canvas, x, rc.bottom - height);
 
   buffer.clear();
@@ -317,7 +294,7 @@ GlueMapWindow::DrawMapScale(Canvas &canvas, const PixelRect &rc,
 void
 GlueMapWindow::DrawThermalEstimate(Canvas &canvas) const
 {
-  if (InCirclingMode()) {
+  if (GetDisplayMode() == DM_CIRCLING) {
     // in circling mode, draw thermal at actual estimated location
     const MapWindowProjection &projection = render_projection;
     const ThermalLocatorInfo &thermal_locator = Calculated().thermal_locator;
@@ -351,7 +328,7 @@ GlueMapWindow::RenderTrail(Canvas &canvas, const RasterPoint aircraft_pos)
   }
 
   DrawTrail(canvas, aircraft_pos, min_time,
-            GetMapSettings().trail_drift_enabled && InCirclingMode());
+            GetMapSettings().trail_drift_enabled && GetDisplayMode() == DM_CIRCLING);
 }
 
 void
@@ -399,6 +376,6 @@ GlueMapWindow::DrawStallRatio(Canvas &canvas, const PixelRect &rc) const
     PixelScalar m((rc.bottom - rc.top) * s * s);
 
     canvas.SelectBlackPen();
-    canvas.DrawLine(rc.right - 1, rc.bottom - m, rc.right - 11, rc.bottom - m);
+    canvas.line(rc.right - 1, rc.bottom - m, rc.right - 11, rc.bottom - m);
   }
 }

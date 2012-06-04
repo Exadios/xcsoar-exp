@@ -32,8 +32,8 @@ Copyright_License {
 
 #include <assert.h>
 
-static Java::TrivialClass cls;
-static jmethodID ctor;
+jclass AndroidTimer::Bridge::cls;
+jmethodID AndroidTimer::Bridge::ctor;
 jmethodID AndroidTimer::Bridge::install_method;
 jmethodID AndroidTimer::Bridge::uninstall_method;
 
@@ -43,7 +43,11 @@ AndroidTimer::Bridge::Initialise(JNIEnv *env)
   assert(cls == NULL);
   assert(env != NULL);
 
-  cls.Find(env, "org/xcsoar/Timer");
+  jclass _cls = env->FindClass("org/xcsoar/Timer");
+  assert(_cls != NULL);
+
+  cls = (jclass)env->NewGlobalRef(_cls);
+  env->DeleteLocalRef(_cls);
 
   ctor = env->GetMethodID(cls, "<init>", "(JI)V");
   install_method = env->GetMethodID(cls, "install", "()V");
@@ -53,14 +57,19 @@ AndroidTimer::Bridge::Initialise(JNIEnv *env)
 void
 AndroidTimer::Bridge::Deinitialise(JNIEnv *env)
 {
+  assert(cls != NULL);
   assert(env != NULL);
 
-  cls.Clear(env);
+  env->DeleteGlobalRef(cls);
 }
 
 AndroidTimer::Bridge::Bridge(JNIEnv *env, jlong ptr, jint period)
 {
-  jobject obj = env->NewObject(cls, ctor, ptr, period);
+  Java::Class cls(env, "org/xcsoar/Timer");
+  jmethodID cid = env->GetMethodID(cls, "<init>", "(JI)V");
+  assert(cid != NULL);
+
+  jobject obj = env->NewObject(cls, cid, ptr, period);
 
   Set(env, obj);
   env->DeleteLocalRef(obj);

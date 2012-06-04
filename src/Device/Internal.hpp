@@ -32,7 +32,6 @@ Copyright_License {
 #include <tchar.h>
 
 class Port;
-class OperationEnvironment;
 
 /**
  * Writes one line of NMEA data.
@@ -42,6 +41,6 @@ class OperationEnvironment;
  * @return true on success
  */
 bool
-PortWriteNMEA(Port &port, const char *line, OperationEnvironment &env);
+PortWriteNMEA(Port &port, const char *line);
 
 #endif

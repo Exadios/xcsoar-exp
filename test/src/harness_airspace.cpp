@@ -30,7 +30,6 @@
 #include "Airspace/AirspaceNearestSort.hpp"
 #include "Airspace/AirspaceSoonestSort.hpp"
 #include "Navigation/Geometry/GeoVector.hpp"
-#include "Formatter/AirspaceFormatter.hpp"
 
 static void
 airspace_random_properties(AbstractAirspace& as)
@@ -50,7 +49,7 @@ bool test_airspace_extra(Airspaces &airspaces) {
   AbstractAirspace* as;
   std::vector<GeoPoint> pts;
   as = new AirspacePolygon(pts);
-  airspaces.Add(as);
+  airspaces.insert(as);
 
   // try clearing now (we haven't called optimise())
 
@@ -91,7 +90,7 @@ void setup_airspaces(Airspaces& airspaces, const GeoPoint& center, const unsigne
       as = new AirspacePolygon(pts,true);
     }
     airspace_random_properties(*as);
-    airspaces.Add(as);
+    airspaces.insert(as);
     if (fin)
       *fin << *as;
   }
@@ -99,18 +98,15 @@ void setup_airspaces(Airspaces& airspaces, const GeoPoint& center, const unsigne
   delete fin;
 
   // try inserting nothing
-  airspaces.Add(NULL);
+  airspaces.insert(NULL);
 
-  airspaces.Optimise();
+  airspaces.optimise();
 
 }
 
 
 class AirspaceVisitorPrint: 
   public AirspaceVisitor {
-  std::ofstream *fout;
-  const bool do_report;
-
 public:
   AirspaceVisitorPrint(const char* fname,
                        const bool _do_report):
@@ -127,8 +123,8 @@ public:
   }
   virtual void visit_general(const AbstractAirspace& as) {
     if (do_report) {
-      *fout << "# Name: " << AirspaceFormatter::GetNameAndClass(as).c_str()
-            << " " << AirspaceFormatter::GetVerticalText(as).c_str()
+      *fout << "# Name: " << as.GetNameText().c_str()
+            << " " << as.GetVerticalText().c_str()
             << "\n";
     }
   }
@@ -144,18 +140,14 @@ public:
       visit_general(as);
     }
   }
+private:
+  std::ofstream *fout;
+  const bool do_report;
 };
 
 
 class AirspaceIntersectionVisitorPrint: 
   public AirspaceIntersectionVisitor {
-  std::ofstream *fout;
-  std::ofstream *yout;
-  std::ofstream *iout;
-  const bool do_report;
-  const AircraftState m_state;
-  const AirspaceAircraftPerformance &m_perf;
-
 public:
   AirspaceIntersectionVisitorPrint(const char* fname,
                                    const char* yname,
@@ -182,14 +174,14 @@ public:
   }
   virtual void intersection(const AbstractAirspace& as) {
     *fout << "# intersection point\n";
-    for (auto it = intersections.begin(); it != intersections.end(); ++it) {
+    for (auto it = m_intersections.begin(); it != m_intersections.end(); ++it) {
       const GeoPoint start = (it->first);
       const GeoPoint end = (it->second);
       *fout << start.longitude << " " << start.latitude << " " << "\n";
       *fout << end.longitude << " " << end.latitude << " " << "\n\n";
     }
 
-    AirspaceInterceptSolution solution = Intercept(as, m_state, m_perf);
+    AirspaceInterceptSolution solution = intercept(as, m_state, m_perf);
     if (solution.IsValid()) {
       *iout << "# intercept " << solution.elapsed_time << " h " << solution.altitude << "\n";
       *iout << solution.location.longitude << " " << solution.location.latitude << " " << "\n\n";
@@ -207,22 +199,22 @@ public:
       intersection(as);
     }
   }
+private:
+  std::ofstream *fout;
+  std::ofstream *yout;
+  std::ofstream *iout;
+  const bool do_report;
+  const AircraftState m_state;
+  const AirspaceAircraftPerformance &m_perf;
 };
 
 
 class AirspaceVisitorClosest: public AirspaceVisitor {
-  std::ofstream *fout;
-  const TaskProjection &projection;
-  const AircraftState& state;
-  const AirspaceAircraftPerformance &m_perf;
-
 public:
   AirspaceVisitorClosest(const char* fname,
-                         const TaskProjection &_projection,
                          const AircraftState &_state,
                          const AirspaceAircraftPerformance &perf):
     fout(NULL),
-    projection(_projection),
     state(_state),
     m_perf(perf)
     {
@@ -234,7 +226,7 @@ public:
       delete fout;
   }
   virtual void closest(const AbstractAirspace& as) {
-    GeoPoint c = as.ClosestPoint(state.location, projection);
+    GeoPoint c = as.ClosestPoint(state.location);
     if (fout) {
       *fout << "# closest point\n";
       *fout << c.longitude << " " << c.latitude << " " << "\n";
@@ -243,7 +235,7 @@ public:
     AirspaceInterceptSolution solution;
     GeoVector vec(state.location, c);
     vec.distance = fixed(20000); // set big distance (for testing)
-    if (as.Intercept(state, vec.EndPoint(state.location), projection, m_perf, solution)) {
+    if (as.Intercept(state, vec.EndPoint(state.location), m_perf, solution)) {
       if (fout) {
         *fout << "# intercept in " << solution.elapsed_time << " h " << solution.altitude << "\n";
       }
@@ -255,6 +247,10 @@ public:
   virtual void Visit(const AirspacePolygon& as) {
     closest(as);
   }
+private:
+  std::ofstream *fout;
+  const AircraftState& state;
+  const AirspaceAircraftPerformance &m_perf;
 };
 
 /**
@@ -280,7 +276,7 @@ void scan_airspaces(const AircraftState state,
 {
   const fixed range(20000.0);
 
-  const std::vector<Airspace> vn = airspaces.ScanNearest(state.location);
+  const std::vector<Airspace> vn = airspaces.scan_nearest(state.location);
   AirspaceVisitorPrint pvn("results/res-bb-nearest.txt",
                            do_report);
   std::for_each(vn.begin(), vn.end(), CallVisitor<AirspaceVisitor>(pvn));
@@ -288,17 +284,17 @@ void scan_airspaces(const AircraftState state,
   {
     AirspaceVisitorPrint pvisitor("results/res-bb-range.txt",
                                   do_report);
-    airspaces.VisitWithinRange(state.location, range, pvisitor);
+    airspaces.visit_within_range(state.location, range, pvisitor);
   }
 
   {
     AirspaceVisitorClosest pvisitor("results/res-bb-closest.txt",
-                                    airspaces.GetProjection(), state, perf);
-    airspaces.VisitWithinRange(state.location, range, pvisitor);
+                                    state, perf);
+    airspaces.visit_within_range(state.location, range, pvisitor);
   }
 
   {
-    const std::vector<Airspace> vi = airspaces.FindInside(state);
+    const std::vector<Airspace> vi = airspaces.find_inside(state);
     AirspaceVisitorPrint pvi("results/res-bb-inside.txt",
                              do_report);
     std::for_each(vi.begin(), vi.end(), CallVisitor<AirspaceVisitor>(pvi));

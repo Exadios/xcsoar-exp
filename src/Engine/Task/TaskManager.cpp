@@ -19,13 +19,10 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
-
 #include "TaskManager.hpp"
 #include "Visitors/TaskPointVisitor.hpp"
 #include "Tasks/TaskSolvers/TaskSolution.hpp"
 #include "Tasks/BaseTask/UnorderedTaskPoint.hpp"
-#include "Tasks/BaseTask/OrderedTaskPoint.hpp"
-#include "TaskPoints/AATPoint.hpp"
 #include "Util/StringUtil.hpp"
 
 // uses delegate pattern
@@ -143,7 +140,7 @@ TaskManager::UpdateCommonStatsTimes(const AircraftState &state)
     if (task_stats.total.remaining.IsDefined() &&
         positive(common_stats.aat_time_remaining))
       common_stats.aat_speed_remaining =
-          fixed(task_stats.total.remaining.GetDistance()) /
+          fixed(task_stats.total.remaining.get_distance()) /
           common_stats.aat_time_remaining;
     else
       common_stats.aat_speed_remaining = -fixed_one;
@@ -180,7 +177,7 @@ TaskManager::UpdateCommonStatsTimes(const AircraftState &state)
     task_ordered.update_summary(common_stats.ordered_summary);
 
   } else {
-    common_stats.ResetTask();
+    common_stats.reset_task();
   }
 }
 
@@ -387,7 +384,7 @@ TaskManager::Reset()
   task_ordered.Reset();
   task_goto.Reset();
   task_abort.Reset();
-  common_stats.Reset();
+  common_stats.reset();
   glide_polar.SetCruiseEfficiency(fixed_one);
 }
 
@@ -406,7 +403,7 @@ TaskManager::RandomPointInTask(const unsigned index, const fixed mag) const
   if (active_task == &task_ordered && task_ordered.IsValidIndex(index))
     return task_ordered.GetTaskPoint(index).GetRandomPointInSector(mag);
 
-  if (active_task != NULL && index <= active_task->TaskSize())
+  if (index <= TaskSize())
     return active_task->GetActiveTaskPoint()->GetLocation();
 
   GeoPoint null_location(Angle::Zero(), Angle::Zero());
@@ -448,6 +445,24 @@ TaskManager::UpdateAutoMC(const AircraftState& state_now,
   }
 
   return false;
+}
+
+GeoPoint
+TaskManager::GetTaskCenter(const GeoPoint& fallback_location) const
+{
+  if (active_task)
+    return active_task->GetTaskCenter(fallback_location);
+
+  return fallback_location;
+}
+
+fixed
+TaskManager::GetTaskRadius(const GeoPoint& fallback_location) const
+{
+  if (active_task)
+    return active_task->GetTaskRadius(fallback_location);
+
+  return fixed_zero;
 }
 
 bool

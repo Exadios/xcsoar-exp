@@ -25,7 +25,6 @@ Copyright_License {
 #include "Dialogs/Waypoint.hpp"
 #include "UIGlobals.hpp"
 #include "Waypoint/Waypoints.hpp"
-#include "Waypoint/LastUsed.hpp"
 
 /**
  * Opens up the WaypointDetails window of the nearest
@@ -46,7 +45,7 @@ PopupNearestWaypointDetails(const Waypoints &way_points,
   way_point = way_points.LookupLocation(location, fixed(range));
 
   if (way_point) {
-    LastUsedWaypoints::Add(*way_point);
+    dlgWaypointSelectAddToLastUsed(*way_point);
     dlgWaypointDetailsShowModal(UIGlobals::GetMainWindow(), *way_point);
     return true;
   }

@@ -37,28 +37,24 @@
 #include <algorithm>
 
 #include <assert.h>
-#include <stddef.h>
 
 /**
  * A first-in-first-out buffer: you can append data at the end, and
  * read data from the beginning.  This class automatically shifts the
  * buffer as needed.  It is not thread safe.
  */
-template<class T, size_t size>
+template<class T, unsigned size>
 class FifoBuffer : private NonCopyable {
-public:
-  typedef size_t size_type;
-
 public:
   struct Range {
     T *data;
 
-    size_type length;
+    unsigned length;
 
     Range() = default;
 
     gcc_constexpr_ctor
-    Range(T *_data, size_type _length):data(_data), length(_length) {}
+    Range(T *_data, unsigned _length):data(_data), length(_length) {}
 
     gcc_constexpr_method
     bool IsEmpty() const {
@@ -67,7 +63,7 @@ public:
   };
 
 protected:
-  size_type head, tail;
+  unsigned head, tail;
   T data[size];
 
 public:
@@ -115,7 +111,7 @@ public:
    * Expands the tail of the buffer, after data has been written to
    * the buffer returned by write().
    */
-  void Append(size_type n) {
+  void Append(unsigned n) {
     assert(tail <= size);
     assert(n <= size);
     assert(tail + n <= size);
@@ -134,7 +130,7 @@ public:
   /**
    * Marks a chunk as consumed.
    */
-  void Consume(size_type n) {
+  void Consume(unsigned n) {
     assert(tail <= size);
     assert(head <= tail);
     assert(n <= tail);

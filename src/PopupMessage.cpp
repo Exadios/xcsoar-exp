@@ -113,14 +113,14 @@ PopupMessage::set(const PixelRect _rc)
 
   EditWindowStyle style;
   style.Border();
-  style.SetCenter();
-  style.SetMultiLine();
-  style.SetReadOnly();
+  style.center();
+  style.multiline();
+  style.read_only();
   style.Hide();
 
   EditWindow::set(parent, GetRect(100), style);
 
-  SetFont(Fonts::map_bold);
+  set_font(Fonts::map_bold);
   InstallWndProc();
 }
 
@@ -166,34 +166,34 @@ PopupMessage::Resize()
   if (*msgText == _T('\0')) {
     Hide();
   } else {
-    SetText(msgText);
+    set_text(msgText);
 
     AnyCanvas canvas;
     canvas.Select(Fonts::map_bold);
     PixelSize tsize = canvas.CalcTextSize(msgText);
 
-    int linecount = max((unsigned)nvisible, max((unsigned)1, GetRowCount()));
+    int linecount = max((unsigned)nvisible, max((unsigned)1, get_row_count()));
 
     PixelScalar height = min((PixelScalar)((rc.bottom-rc.top) * 0.8),
                              (PixelScalar)(tsize.cy * (linecount + 1)));
 
     PixelRect rthis = GetRect(height);
 #ifdef USE_GDI
-    PixelRect old_rc = GetPosition();
+    PixelRect old_rc = get_position();
     if (rthis.left != old_rc.left || rthis.right != old_rc.right) {
       /* on Windows, the TEXT control can never change its text style
          after it has been created, so we have to destroy it and
          create a new one */
       reset();
       set(rc);
-      SetText(msgText);
+      set_text(msgText);
     }
 #endif
 
-    Move(rthis.left, rthis.top,
+    move(rthis.left, rthis.top,
          rthis.right - rthis.left,
          rthis.bottom - rthis.top);
-    ShowOnTop();
+    show_on_top();
   }
 }
 

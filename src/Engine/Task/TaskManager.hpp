@@ -32,6 +32,8 @@
 #include "TaskStats/CommonStats.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
 #include "TaskBehaviour.hpp"
+#include "Task/TaskPoints/AATPoint.hpp"
+#include "Task/ObservationZones/CylinderZone.hpp"
 
 class AbstractTaskFactory;
 class TaskEvents;
@@ -422,6 +424,24 @@ public:
    * Return required arrival height of final point in task
    */
   fixed GetFinishHeight() const;
+
+  /** 
+   * Find location of center of task (for rendering purposes)
+   * 
+   * @param fallback_location Location to use if no task active
+   * 
+   * @return Location of center of task
+   */
+  GeoPoint GetTaskCenter(const GeoPoint& fallback_location) const;
+
+  /** 
+   * Find approximate radius of task from center to edge (for rendering purposes)
+   * 
+   * @param fallback_location Location to use if no task active
+   * 
+   * @return Radius (m) from center to edge of task
+   */
+  fixed GetTaskRadius(const GeoPoint& fallback_location) const;
 
   /**
    * Check whether observer is within OZ of specified tp

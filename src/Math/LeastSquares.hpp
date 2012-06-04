@@ -48,8 +48,9 @@ Copyright_License {
 #ifndef _LEASTSQS_H
 #define _LEASTSQS_H
 
-#include "Util/StaticArray.hpp"
 #include "Math/fixed.hpp"
+
+#define MAX_STATISTICS 1000
 
 /**
  * A solver for least squares problems
@@ -76,9 +77,7 @@ class LeastSquares
 {
 public:
   fixed sum_xi, sum_yi, sum_xi_2, sum_xi_yi;
-
-  unsigned sum_n;
-
+  int sum_n;
   /**
   * \f[
   *     m = \frac{n * \sum_0^{i-1} (x_i*y_i) - \sum_0^{i-1} x_i* \sum_0^{i-1} y_i}
@@ -104,31 +103,13 @@ public:
 
   fixed y_ave;
 
-  struct Slot {
-    fixed x, y;
-
+  fixed xstore[MAX_STATISTICS];
+  fixed ystore[MAX_STATISTICS];
 #ifdef LEASTSQS_WEIGHT_STORE
-    fixed weight;
+  fixed weightstore[MAX_STATISTICS];
 #endif
-
-    Slot() = default;
-
-    gcc_constexpr_ctor
-    Slot(fixed _x, fixed _y, fixed _weight)
-      :x(_x), y(_y)
-#ifdef LEASTSQS_WEIGHT_STORE
-      , weight(_weight)
-#endif
-    {}
-  };
-
-  StaticArray<Slot, 1000> slots;
 
   LeastSquares();
-
-  bool IsEmpty() const {
-    return sum_n == 0;
-  }
 
   void Reset();
 

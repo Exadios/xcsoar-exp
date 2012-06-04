@@ -25,7 +25,7 @@ Copyright_License {
 
 class TaskProjection;
 class TaskManager;
-class AbstractTask;
+class OrderedTask;
 class OrderedTaskPoint;
 class ContestTraceVector;
 
@@ -50,7 +50,7 @@ public:
     Set(rc, task, fallback_loc);
   }
 
-  ChartProjection(const PixelRect &rc, const AbstractTask &task,
+  ChartProjection(const PixelRect &rc, const OrderedTask &task,
                   const GeoPoint &fallback_loc) {
     Set(rc, task, fallback_loc);
   }
@@ -66,12 +66,13 @@ public:
   void Set(const PixelRect &rc, const TaskManager &task,
            const GeoPoint &fallback_loc);
 
-  void Set(const PixelRect &rc, const AbstractTask &task,
+  void Set(const PixelRect &rc, const OrderedTask &task,
            const GeoPoint &fallback_loc);
 
   void Set(const PixelRect &rc, const OrderedTaskPoint &point,
            const GeoPoint &fallback_loc);
 
 private:
-  void Set(const PixelRect &rc, const GeoPoint &center, const fixed radius);
+  void set_projection(const PixelRect &rc, const GeoPoint &center,
+                      const fixed radius);
 };

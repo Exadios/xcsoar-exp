@@ -87,7 +87,7 @@ public:
     }
   }
 
-  virtual bool operator()(const AbstractAirspace &airspace) const {
+  virtual bool condition(const AbstractAirspace &airspace) const {
     return CheckAirspace(airspace) &&
       /* skip airspaces that we already entered */
       !airspace.Inside(location) &&
@@ -109,15 +109,14 @@ FindNearestHorizontalAirspace()
 
   /* find the nearest airspace */
   HorizontalAirspaceCondition condition(basic, CommonInterface::Calculated());
-  const Airspace *airspace = airspace_database.FindNearest(basic.location, condition);
+  const Airspace *airspace = airspace_database.find_nearest(basic.location, condition);
   if (airspace == NULL)
     return NearestAirspace();
 
   const AbstractAirspace &as = *airspace->get_airspace();
 
   /* calculate distance to the nearest point */
-  const GeoPoint closest = as.ClosestPoint(basic.location,
-                                           airspace_database.GetProjection());
+  const GeoPoint closest = as.ClosestPoint(basic.location);
   return NearestAirspace(as, basic.location.Distance(closest));
 }
 
@@ -204,7 +203,7 @@ FindNearestVerticalAirspace()
 
   /* find the nearest airspace */
   VerticalAirspaceVisitor visitor(basic, CommonInterface::Calculated());
-  airspace_database.VisitInside(basic.location, visitor);
+  airspace_database.visit_inside(basic.location, visitor);
   if (visitor.GetNearest() == NULL)
     return NearestAirspace();
 

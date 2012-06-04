@@ -65,18 +65,6 @@ struct SwitchInfo
   void Reset();
 };
 
-enum class FixQuality: uint8_t {
-  NO_FIX,
-  GPS,
-  DGPS,
-  PPS,
-  REAL_TIME_KINEMATIC,
-  FLOAT_RTK,
-  ESTIMATION,
-  MANUAL_INPUT,
-  SIMULATION,
-};
-
 /**
  * State of GPS fix
  */
@@ -89,9 +77,17 @@ struct GPSState
   //############
 
   /**
-   * Fix quality
+   * fix_quality
+   * 1 = GPS fix (SPS)
+   * 2 = DGPS fix
+   * 3 = PPS fix
+   * 4 = Real Time Kinematic
+   * 5 = Float RTK
+   * 6 = estimated (dead reckoning) (2.3 feature)
+   * 7 = Manual input mode
+   * 8 = Simulation mode
    */
-  FixQuality fix_quality;
+  int fix_quality;
   Validity fix_quality_available;
 
   /**

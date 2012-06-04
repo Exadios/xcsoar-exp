@@ -34,7 +34,7 @@ DockWindow::SetWidget(Widget *_widget)
   widget = _widget;
 
   if (widget != NULL) {
-    const PixelRect rc = GetClientRect();
+    const PixelRect rc = get_client_rect();
     widget->Initialise(*this, rc);
     widget->Prepare(*this, rc);
     widget->Show(rc);
@@ -58,7 +58,7 @@ DockWindow::MoveWidget()
 {
   assert(widget != NULL);
 
-  widget->Move(GetClientRect());
+  widget->Move(get_client_rect());
 }
 
 void
@@ -67,7 +67,7 @@ DockWindow::OnResize(UPixelScalar width, UPixelScalar height)
   ContainerWindow::OnResize(width, height);
 
   if (widget != NULL)
-    widget->Move(GetClientRect());
+    widget->Move(get_client_rect());
 }
 
 void

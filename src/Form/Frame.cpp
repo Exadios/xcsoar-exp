@@ -65,7 +65,7 @@ WndFrame::SetText(const TCHAR *_text)
 unsigned
 WndFrame::GetTextHeight()
 {
-  PixelRect rc = GetClientRect();
+  PixelRect rc = get_client_rect();
   ::InflateRect(&rc, -2, -2); // todo border width
 
   AnyCanvas canvas;
@@ -79,7 +79,7 @@ void
 WndFrame::OnPaint(Canvas &canvas)
 {
 #ifdef HAVE_CLIPPING
-  canvas.Clear(look.background_brush);
+  canvas.clear(look.background_brush);
 #endif
 
   canvas.SetTextColor(caption_color);
@@ -87,7 +87,7 @@ WndFrame::OnPaint(Canvas &canvas)
 
   canvas.Select(*font);
 
-  PixelRect rc = GetClientRect();
+  PixelRect rc = get_client_rect();
   InflateRect(&rc, -2, -2); // todo border width
 
   canvas.formatted_text(&rc, text.c_str(), mCaptionStyle);

@@ -24,7 +24,6 @@ Copyright_License {
 #include "Screen/EditWindow.hpp"
 
 #include <commctrl.h>
-#include <windowsx.h>
 
 void
 EditWindow::set(ContainerWindow &parent,
@@ -43,11 +42,11 @@ EditWindow::set(ContainerWindow &parent, const PixelRect rc,
 }
 
 void
-EditWindow::SetText(const TCHAR *text)
+EditWindow::set_text(const TCHAR *text)
 {
-  AssertNoneLocked();
+  assert_none_locked();
 
-  if (!IsMultiLine()) {
+  if ((get_window_style()  & ES_MULTILINE) == 0) {
     ::SetWindowText(hWnd, text);
     return;
   }
@@ -74,10 +73,4 @@ EditWindow::SetText(const TCHAR *text)
   *p3 = _T('\0');
 
   ::SetWindowText(hWnd, buffer);
-}
-
-void
-EditWindow::ScrollVertically(int delta_lines)
-{
-  Edit_Scroll(*this, delta_lines, 0);
 }

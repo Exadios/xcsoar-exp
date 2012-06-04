@@ -36,7 +36,7 @@ IsKeyMessage(const MSG &msg)
 bool
 EventLoop::Get(MSG &msg)
 {
-  AssertNoneLocked();
+  assert_none_locked();
 
   if (!::GetMessage(&msg, NULL, 0, 0))
     return false;
@@ -63,10 +63,10 @@ EventLoop::Get(MSG &msg)
 void
 EventLoop::Dispatch(const MSG &msg)
 {
-  AssertNoneLocked();
+  assert_none_locked();
   ::TranslateMessage(&msg);
   ::DispatchMessage(&msg);
-  AssertNoneLocked();
+  assert_none_locked();
 }
 
 /**
@@ -89,10 +89,10 @@ AllowDialogMessage(const MSG &msg)
 void
 DialogEventLoop::Dispatch(MSG &msg)
 {
-  AssertNoneLocked();
+  assert_none_locked();
 
   if (AllowDialogMessage(msg) && ::IsDialogMessage(dialog, &msg)) {
-    AssertNoneLocked();
+    assert_none_locked();
     return;
   }
 
@@ -119,7 +119,7 @@ HandleMessages(UINT wMsgFilterMin, UINT wMsgFilterMax)
 void
 EventQueue::HandlePaintMessages()
 {
-  AssertNoneLocked();
+  assert_none_locked();
 
   HandleMessages(WM_SIZE, WM_SIZE);
   HandleMessages(WM_PAINT, WM_PAINT);

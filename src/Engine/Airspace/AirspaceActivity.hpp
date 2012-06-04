@@ -19,12 +19,11 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
-
 #ifndef AIRSPACE_ACTIVITY_HPP
 #define AIRSPACE_ACTIVITY_HPP
 
 class AirspaceActivity {
-  struct Days
+  struct days
   {
     unsigned sunday:1;
     unsigned monday:1;
@@ -35,72 +34,72 @@ class AirspaceActivity {
     unsigned saturday:1;
   };
 
-  union
+  union untype
   {
-    Days days;
-    unsigned char value;
-  } mask;
+    days un_bitstruct;
+    unsigned char bits;
+  } v;
 
 public:
   AirspaceActivity() {
-    SetAll();
+    set_all();
   };
 
-  bool equals(const AirspaceActivity _mask) const {
-    return mask.value == _mask.mask.value;
+  bool equals(const AirspaceActivity mask) const {
+    return v.bits == mask.v.bits;
   }
 
-  AirspaceActivity(unsigned char day_of_week) {
+  AirspaceActivity(const unsigned char day_of_week) {
     // setter from BrokenDate format day
-    mask.value = 0;
+    v.bits = 0;
     switch(day_of_week) {
     case 0:
-      mask.days.sunday = 1;
+      v.un_bitstruct.sunday = 1;
       break;
     case 1:
-      mask.days.monday = 1;
+      v.un_bitstruct.monday = 1;
       break;
     case 2:
-      mask.days.tuesday = 1;
+      v.un_bitstruct.tuesday = 1;
       break;
     case 3:
-      mask.days.wednesday = 1;
+      v.un_bitstruct.wednesday = 1;
       break;
     case 4:
-      mask.days.thursday = 1;
+      v.un_bitstruct.thursday = 1;
       break;
     case 5:
-      mask.days.friday = 1;
+      v.un_bitstruct.friday = 1;
       break;
     case 6:
-      mask.days.saturday = 1;
+      v.un_bitstruct.saturday = 1;
       break;
     default:
       break;
     }
   }
 
-  void SetAll() {
-    mask.value = 0xFF;
+  void set_all() {
+    v.bits = 0xFF;
   }
 
-  void SetWeekdays() {
-    mask.value = 0;
-    mask.days.monday = 1;
-    mask.days.tuesday = 1;
-    mask.days.wednesday = 1;
-    mask.days.thursday = 1;
-    mask.days.friday = 1;
+  void set_weekdays() {
+    v.bits = 0;
+    v.un_bitstruct.monday = 1;
+    v.un_bitstruct.tuesday = 1;
+    v.un_bitstruct.wednesday = 1;
+    v.un_bitstruct.thursday = 1;
+    v.un_bitstruct.friday = 1;
   }
 
-  void SetWeekend() {
-    mask.value = 0;
-    mask.days.saturday = 1;
-    mask.days.sunday = 1;
+  void set_weekend() {
+    v.bits = 0;
+    v.un_bitstruct.saturday = 1;
+    v.un_bitstruct.sunday = 1;
   }
 
-  bool Matches(AirspaceActivity _mask) const {
-    return mask.value & _mask.mask.value;
+  bool matches(AirspaceActivity mask) const {
+    return v.bits & mask.v.bits;
   }
 };
 

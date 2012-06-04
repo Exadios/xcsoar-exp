@@ -157,14 +157,14 @@ TrailRenderer::Draw(Canvas &canvas, const TraceComputer &trace_computer,
         else
           canvas.Select(look.hpSnailVario[GetSnailColorIndex(colour_vario)]);
       }
-      canvas.DrawLinePiece(last_point, pt);
+      canvas.line_piece(last_point, pt);
     }
     last_point = pt;
     last_valid = true;
   }
 
   if (last_valid)
-    canvas.DrawLine(last_point, pos);
+    canvas.line(last_point, pos);
 }
 
 void

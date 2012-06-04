@@ -31,7 +31,6 @@ Copyright_License {
 #include "Engine/Airspace/Predicate/AirspacePredicateInside.hpp"
 #include "Engine/Airspace/Airspaces.hpp"
 #include "Engine/Airspace/AirspaceWarningManager.hpp"
-#include "Engine/Task/Tasks/BaseTask/OrderedTaskPoint.hpp"
 #include "Airspace/AirspaceVisibility.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
 #include "Engine/Waypoint/WaypointVisitor.hpp"
@@ -88,7 +87,7 @@ public:
   AirspaceWarningPredicate(const AirspaceWarningList &_warnings)
     :warnings(_warnings) {}
 
-  bool operator()(const AbstractAirspace& airspace) const {
+  bool condition(const AbstractAirspace& airspace) const {
     return warnings.ContainsInside(airspace) ||
            warnings.ContainsWarning(airspace);
   }
@@ -110,7 +109,7 @@ public:
      warning_predicate(_warnings),
      inside_predicate(_location) {}
 
-  bool operator()(const AbstractAirspace& airspace) const {
+  bool condition(const AbstractAirspace& airspace) const {
     // Airspace should be visible or have a warning/inside status
     // and airspace needs to be at specified location
 
@@ -237,7 +236,7 @@ MapItemListBuilder::AddVisibleAirspace(
                                      warnings, location);
 
   AirspaceListBuilderVisitor builder(list);
-  airspaces.VisitWithinRange(location, fixed(100.0), builder, predicate);
+  airspaces.visit_within_range(location, fixed(100.0), builder, predicate);
 }
 
 void

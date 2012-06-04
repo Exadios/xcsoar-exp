@@ -55,7 +55,7 @@ WidgetDialog::WidgetDialog(const TCHAR *caption, const PixelRect &rc,
 
 WidgetDialog::WidgetDialog(const TCHAR *caption, Widget *_widget)
   :WndForm(UIGlobals::GetMainWindow(), UIGlobals::GetDialogLook(),
-           UIGlobals::GetMainWindow().GetClientRect(),
+           UIGlobals::GetMainWindow().get_client_rect(),
            caption, GetDialogStyle()),
    buttons(GetClientAreaWindow(), UIGlobals::GetDialogLook()),
    widget(GetClientAreaWindow(), _widget),
@@ -88,7 +88,7 @@ WidgetDialog::AutoSize()
     if (remaining_size.cx > max_size.cx)
       rc.right -= remaining_size.cx - max_size.cx;
 
-    Move(rc);
+    move(rc);
     widget.Move(buttons.LeftLayout());
     return;
   }
@@ -105,7 +105,7 @@ WidgetDialog::AutoSize()
   if (remaining_size.cy > max_size.cy)
     rc.bottom -= remaining_size.cy - max_size.cy;
 
-  Move(rc);
+  move(rc);
   widget.Move(buttons.BottomLayout());
 }
 

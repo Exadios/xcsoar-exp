@@ -27,7 +27,7 @@ Copyright_License {
 #ifdef NDEBUG
 
 static inline void
-AssertNoneLocked()
+assert_none_locked()
 {
 }
 
@@ -38,7 +38,7 @@ AssertNoneLocked()
  * Add a call to this function before invoking blocking system calls.
  */
 void
-AssertNoneLocked();
+assert_none_locked();
 
 #endif /* !NDEBUG */
 

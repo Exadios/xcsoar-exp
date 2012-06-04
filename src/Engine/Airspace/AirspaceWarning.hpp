@@ -24,9 +24,8 @@
 #define AIRSPACE_WARNING_HPP
 
 #include "AirspaceInterceptSolution.hpp"
+#include "Util/TinyEnum.hpp"
 #include "Compiler.h"
-
-#include <stdint.h>
 
 #ifdef DO_PRINT
 #include <iostream>
@@ -43,7 +42,7 @@ public:
   /**
    * Enumeration of airspace warning types
    */
-  enum State : uint8_t {
+  enum State {
     WARNING_CLEAR=0, /**< No warning active */
     WARNING_TASK, /**< Warning that task intersects airspace */
     WARNING_FILTER, /**< Warning that filtered state intersects airspace */
@@ -53,8 +52,8 @@ public:
 
 private:
   const AbstractAirspace& airspace;
-  State state;
-  State state_last;
+  TinyEnum<State> state;
+  TinyEnum<State> state_last;
   AirspaceInterceptSolution solution;
 
   unsigned acktime_warning;

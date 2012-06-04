@@ -25,7 +25,7 @@ Copyright_License {
 #define XCSOAR_FORM_UTIL_HPP
 
 #include "Util/StaticString.hpp"
-#include "Units/Group.hpp"
+#include "Units/Settings.hpp"
 #include "Math/fixed.hpp"
 #include "Compiler.h"
 

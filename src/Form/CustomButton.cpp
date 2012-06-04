@@ -33,19 +33,19 @@ WndCustomButton::OnPaint(Canvas &canvas)
 {
 #ifdef HAVE_CLIPPING
   /* background and selector */
-  canvas.Clear(look.background_brush);
+  canvas.clear(look.background_brush);
 #endif
 
-  PixelRect rc = GetClientRect();
+  PixelRect rc = get_client_rect();
 
   // Draw focus rectangle
-  if (HasFocus()) {
+  if (has_focus()) {
     canvas.DrawFilledRectangle(rc, look.focused.background_color);
-    canvas.SetTextColor(IsEnabled()
+    canvas.SetTextColor(is_enabled()
                         ? look.focused.text_color : look.button.disabled.color);
   } else {
     canvas.DrawFilledRectangle(rc, look.background_color);
-    canvas.SetTextColor(IsEnabled() ? look.text_color : look.button.disabled.color);
+    canvas.SetTextColor(is_enabled() ? look.text_color : look.button.disabled.color);
   }
 
   // If button has text on it
@@ -60,7 +60,7 @@ WndCustomButton::OnPaint(Canvas &canvas)
   canvas.SelectNullPen();
   canvas.SetBackgroundTransparent();
 #ifndef USE_GDI
-  canvas.formatted_text(&rc, caption.c_str(), GetTextStyle());
+  canvas.formatted_text(&rc, caption.c_str(), get_text_style());
 #else
   unsigned s = DT_CENTER | DT_NOCLIP | DT_WORDBREAK;
   canvas.Select(*(look.button.font));

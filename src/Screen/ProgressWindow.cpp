@@ -34,7 +34,7 @@ ProgressWindow::ProgressWindow(ContainerWindow &parent)
    background_brush(background_color),
    position(0)
 {
-  PixelRect rc = parent.GetClientRect();
+  PixelRect rc = parent.get_client_rect();
   WindowStyle style;
   style.Hide();
   set(parent, rc, style);
@@ -66,7 +66,7 @@ ProgressWindow::ProgressWindow(ContainerWindow &parent)
               width, text_height, message_style);
 
 #ifndef USE_GDI
-  message.SetFont(font);
+  message.set_font(font);
 #endif
 
   // Initialize progress bar
@@ -83,13 +83,13 @@ ProgressWindow::ProgressWindow(ContainerWindow &parent)
   set_step(50);
 
   // Show dialog
-  ShowOnTop();
+  show_on_top();
 }
 
 void
 ProgressWindow::set_message(const TCHAR *text)
 {
-  AssertNoneLocked();
+  assert_none_locked();
   AssertThread();
 
   message.set_text(text);
@@ -110,7 +110,7 @@ ProgressWindow::set_step(unsigned size)
 void
 ProgressWindow::set_pos(unsigned value)
 {
-  AssertNoneLocked();
+  assert_none_locked();
   AssertThread();
 
   if (value == position)
@@ -137,11 +137,11 @@ ProgressWindow::OnResize(UPixelScalar width, UPixelScalar height)
   progress_border_height = progress_height * 2;
 
   if (message.IsDefined())
-    message.Move(0, height - progress_border_height - text_height - (height/48),
+    message.move(0, height - progress_border_height - text_height - (height/48),
                  width, text_height);
 
   if (progress_bar.IsDefined())
-    progress_bar.Move(progress_horizontal_border,
+    progress_bar.move(progress_horizontal_border,
                       height - progress_border_height + progress_horizontal_border,
                       width - progress_height,
                       progress_height);
@@ -152,7 +152,7 @@ ProgressWindow::OnResize(UPixelScalar width, UPixelScalar height)
 void
 ProgressWindow::OnPaint(Canvas &canvas)
 {
-  canvas.Clear(background_color);
+  canvas.clear(background_color);
 
   // Determine window size
   UPixelScalar window_width = canvas.get_width();
@@ -166,7 +166,7 @@ ProgressWindow::OnPaint(Canvas &canvas)
   logo.draw(canvas, logo_rect);
 
   // Draw progress bar background
-  canvas.Stretch(0, (window_height - progress_border_height),
+  canvas.stretch(0, (window_height - progress_border_height),
                  window_width, progress_border_height,
                  bitmap_progress_border);
 

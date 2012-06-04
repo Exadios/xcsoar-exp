@@ -39,7 +39,7 @@ namespace IMI
    *
    * @return Operation status
    */
-  bool Send(Port &port, const TMsg &msg, OperationEnvironment &env);
+  bool Send(Port &port, const TMsg &msg);
 
   /**
    * @brief Prepares and sends the message to a device
@@ -54,8 +54,7 @@ namespace IMI
    *
    * @return Operation status
    */
-  bool Send(Port &port, OperationEnvironment &env,
-            IMIBYTE msgID, const void *payload = 0,
+  bool Send(Port &port, IMIBYTE msgID, const void *payload = 0,
             IMIWORD payloadSize = 0, IMIBYTE parameter1 = 0,
             IMIWORD parameter2 = 0, IMIWORD parameter3 = 0);
   /**
@@ -95,8 +94,8 @@ namespace IMI
                       IMIWORD parameter2 = 0, IMIWORD parameter3 = 0,
                       unsigned extraTimeout = 300, int retry = 4);
 
-  bool FlashRead(Port &port, void *buffer, unsigned address, unsigned size,
-                 OperationEnvironment &env);
+  bool FlashRead(Port &port, OperationEnvironment &env,
+                 void *buffer, unsigned address, unsigned size);
 }
 
 #endif

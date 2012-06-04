@@ -77,14 +77,13 @@ LoadFiles(Airspaces &airspace_database)
 {
   NullOperationEnvironment operation;
 
-  TLineReader *reader = OpenConfiguredTextFile(szProfileAirspaceFile,
-                                               ConvertLineReader::AUTO);
+  TLineReader *reader = OpenConfiguredTextFile(szProfileAirspaceFile);
   if (reader != NULL) {
     AirspaceParser parser(airspace_database);
     parser.Parse(*reader, operation);
     delete reader;
 
-    airspace_database.Optimise();
+    airspace_database.optimise();
   }
 }
 

@@ -25,9 +25,9 @@
 
 #include "Compiler.h"
 
-#include <stdint.h>
+#include <tchar.h>
 
-enum AirspaceClass : uint8_t
+enum AirspaceClass 
 {
   OTHER = 0,
   RESTRICT,
@@ -47,5 +47,9 @@ enum AirspaceClass : uint8_t
   CLASSG,
   AIRSPACECLASSCOUNT
 };
+
+gcc_const
+const TCHAR *
+AirspaceClassAsText(const AirspaceClass item, const bool consise = false);
 
 #endif

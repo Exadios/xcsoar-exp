@@ -26,8 +26,7 @@
 
 #include "Screen/PaintWindow.hpp"
 #include "FLARM/State.hpp"
-#include "FLARM/Friends.hpp"
-#include "TeamCodeSettings.hpp"
+#include "ComputerSettings.hpp"
 #include "Math/FastRotation.hpp"
 #include "FlarmTrafficLook.hpp"
 
@@ -70,10 +69,7 @@ protected:
   TeamCodeSettings settings;
 
 public:
-  enum SideInfoType {
-    SIDE_INFO_RELATIVE_ALTITUDE,
-    SIDE_INFO_VARIO,
-  } side_display_type;
+  int side_display_type;
 
 public:
   FlarmTrafficWindow(const FlarmTrafficLook &_look,
@@ -120,18 +116,9 @@ protected:
   void PaintRadarTarget(Canvas &canvas, const FlarmTraffic &traffic,
                         unsigned i);
   void PaintRadarTraffic(Canvas &canvas);
-
-  void PaintTargetInfoSmall(
-      Canvas &canvas, const FlarmTraffic &traffic, unsigned i,
-      const Color &text_color, const Brush &arrow_brush);
-
   void PaintRadarPlane(Canvas &canvas) const;
   void PaintRadarBackground(Canvas &canvas) const;
   void PaintNorth(Canvas &canvas) const;
-
-  FlarmFriends::Color GetTeamColor(const FlarmId &id) const;
-  static FlarmFriends::Color GetTeamColor(const FlarmId &id,
-                                          const TeamCodeSettings &settings);
 
 protected:
   virtual void OnResize(UPixelScalar width, UPixelScalar height);

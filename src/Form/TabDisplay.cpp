@@ -160,7 +160,7 @@ TabDisplay::PaintButton(Canvas &canvas, const unsigned CaptionStyle,
                        bitmap_size.cx / 2, 0);
 
     else
-      canvas.CopyAnd(rc.left + offsetx,
+      canvas.copy_and(rc.left + offsetx,
                       rc.top + offsety,
                       bitmap_size.cx / 2,
                       bitmap_size.cy,
@@ -195,13 +195,13 @@ TabDisplay::GetButtonIndexAt(RasterPoint p) const
 void
 TabDisplay::OnPaint(Canvas &canvas)
 {
-  canvas.Clear(COLOR_BLACK);
+  canvas.clear(COLOR_BLACK);
   canvas.Select(*look.button.font);
 
   const unsigned CaptionStyle = DT_EXPANDTABS | DT_CENTER | DT_NOCLIP
       | DT_WORDBREAK;
 
-  const bool is_focused = HasFocus();
+  const bool is_focused = has_focus();
   for (unsigned i = 0; i < buttons.size(); i++) {
     const OneTabButton &button = *buttons[i];
 

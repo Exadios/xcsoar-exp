@@ -41,7 +41,7 @@ TrackLineRenderer::Draw(Canvas &canvas, const Angle screen_angle,
   end.y = pos.y - iround(y * fixed_int_constant(400));
 
   canvas.Select(look.track_line_pen);
-  canvas.DrawLine(pos, end);
+  canvas.line(pos, end);
 }
 
 void

@@ -36,7 +36,7 @@ class AirspacePredicateAircraftInside: public AirspacePredicate
 public:
   AirspacePredicateAircraftInside(const AircraftState &_state);
 
-  bool operator()(const AbstractAirspace &airspace) const;
+  bool condition(const AbstractAirspace &airspace) const;
 };
 
 #endif

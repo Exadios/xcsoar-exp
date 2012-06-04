@@ -30,7 +30,6 @@ class WindSettingsPanel : public RowFormWidget {
   enum ControlIndex {
     AutoWind,
     ExternalWind,
-    TrailDrift,
     Speed,
     Direction,
   };

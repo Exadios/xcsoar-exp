@@ -31,7 +31,6 @@
 #define XCSOAR_BATCH_BUFFER_HPP
 
 #include <algorithm>
-#include <stddef.h>
 
 /**
  * A fixed-size buffer which gets flushed by the caller after it
@@ -39,14 +38,11 @@
  *
  * Not thread safe.
  */
-template<class T, size_t size>
+template<class T, unsigned size>
 class BatchBuffer {
-public:
-  typedef size_t size_type;
-
 protected:
   T data[size];
-  size_type tail;
+  unsigned tail;
 
 public:
   BatchBuffer()
@@ -58,7 +54,7 @@ public:
   }
 
 protected:
-  static size_type Next(size_type i) {
+  static unsigned Next(unsigned i) {
     return (i + 1) % size;
   }
 
@@ -71,11 +67,11 @@ public:
     return tail == size;
   }
 
-  size_type Length() const {
+  unsigned Length() const {
     return tail;
   }
 
-  const T &operator[](size_type i) const {
+  const T &operator[](unsigned i) const {
     return data[i];
   }
 

@@ -80,7 +80,7 @@ Canvas::FadeToWhite(GLubyte alpha)
 {
   const GLEnable blend(GL_BLEND);
   const Color color(0xff, 0xff, 0xff, alpha);
-  Clear(color);
+  clear(color);
 }
 
 void
@@ -121,7 +121,7 @@ Canvas::DrawPolyline(const RasterPoint *points, unsigned num_points)
 }
 
 void
-Canvas::DrawPolygon(const RasterPoint *points, unsigned num_points)
+Canvas::polygon(const RasterPoint *points, unsigned num_points)
 {
   if (brush.IsHollow() && !pen.IsDefined())
     return;
@@ -189,7 +189,7 @@ Canvas::DrawTriangleFan(const RasterPoint *points, unsigned num_points)
 }
 
 void
-Canvas::DrawLine(PixelScalar ax, PixelScalar ay, PixelScalar bx, PixelScalar by)
+Canvas::line(PixelScalar ax, PixelScalar ay, PixelScalar bx, PixelScalar by)
 {
   pen.Bind();
 
@@ -205,7 +205,7 @@ Canvas::DrawLine(PixelScalar ax, PixelScalar ay, PixelScalar bx, PixelScalar by)
  * gaps between consecutive lines.
  */
 void
-Canvas::DrawLinePiece(const RasterPoint a, const RasterPoint b)
+Canvas::line_piece(const RasterPoint a, const RasterPoint b)
 {
   pen.Bind();
 
@@ -240,7 +240,7 @@ Canvas::DrawTwoLines(PixelScalar ax, PixelScalar ay,
 }
 
 void
-Canvas::DrawCircle(PixelScalar x, PixelScalar y, UPixelScalar radius)
+Canvas::circle(PixelScalar x, PixelScalar y, UPixelScalar radius)
 {
   if (pen_over_brush() && pen.GetWidth() > 2) {
     GLDonutVertices vertices(x, y,
@@ -555,7 +555,7 @@ Canvas::TextClipped(PixelScalar x, PixelScalar y,
 }
 
 void
-Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::stretch(PixelScalar dest_x, PixelScalar dest_y,
                 UPixelScalar dest_width, UPixelScalar dest_height,
                 const GLTexture &texture,
                 PixelScalar src_x, PixelScalar src_y,
@@ -571,11 +571,11 @@ Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
 }
 
 void
-Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::stretch(PixelScalar dest_x, PixelScalar dest_y,
                 UPixelScalar dest_width, UPixelScalar dest_height,
                 const GLTexture &texture)
 {
-  Stretch(dest_x, dest_y, dest_width, dest_height,
+  stretch(dest_x, dest_y, dest_width, dest_height,
           texture, 0, 0, texture.GetWidth(), texture.GetHeight());
 }
 
@@ -584,7 +584,7 @@ Canvas::copy(PixelScalar dest_x, PixelScalar dest_y,
              UPixelScalar dest_width, UPixelScalar dest_height,
              const Bitmap &src, PixelScalar src_x, PixelScalar src_y)
 {
-  Stretch(dest_x, dest_y, dest_width, dest_height,
+  stretch(dest_x, dest_y, dest_width, dest_height,
           src, src_x, src_y, dest_width, dest_height);
 }
 
@@ -600,7 +600,7 @@ Canvas::stretch_transparent(const Bitmap &src, Color key)
   assert(src.IsDefined());
 
   // XXX
-  Stretch(src);
+  stretch(src);
 }
 
 void
@@ -610,11 +610,11 @@ Canvas::invert_stretch_transparent(const Bitmap &src, Color key)
 
   // XXX
   GLLogicOp invert(GL_COPY_INVERTED);
-  Stretch(src);
+  stretch(src);
 }
 
 void
-Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::stretch(PixelScalar dest_x, PixelScalar dest_y,
                 UPixelScalar dest_width, UPixelScalar dest_height,
                 const Bitmap &src, PixelScalar src_x, PixelScalar src_y,
                 UPixelScalar src_width, UPixelScalar src_height)
@@ -635,7 +635,7 @@ Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
 }
 
 void
-Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::stretch(PixelScalar dest_x, PixelScalar dest_y,
                 UPixelScalar dest_width, UPixelScalar dest_height,
                 const Bitmap &src)
 {
@@ -662,7 +662,7 @@ Canvas::StretchAnd(PixelScalar dest_x, PixelScalar dest_y,
                    UPixelScalar src_width, UPixelScalar src_height)
 {
   GLLogicOp logic_op(GL_AND);
-  Stretch(dest_x, dest_y, dest_width, dest_height,
+  stretch(dest_x, dest_y, dest_width, dest_height,
           src, src_x, src_y, src_width, src_height);
 }
 
@@ -674,7 +674,7 @@ Canvas::StretchNotOr(PixelScalar dest_x, PixelScalar dest_y,
                      UPixelScalar src_width, UPixelScalar src_height)
 {
   GLLogicOp logic_op(GL_OR_INVERTED);
-  Stretch(dest_x, dest_y, dest_width, dest_height,
+  stretch(dest_x, dest_y, dest_width, dest_height,
           src, src_x, src_y, src_width, src_height);
 }
 
@@ -748,7 +748,7 @@ Canvas::StretchMono(PixelScalar dest_x, PixelScalar dest_y,
 }
 
 void
-Canvas::CopyOr(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::copy_or(PixelScalar dest_x, PixelScalar dest_y,
                 UPixelScalar dest_width, UPixelScalar dest_height,
                 const Bitmap &src, PixelScalar src_x, PixelScalar src_y)
 {
@@ -772,7 +772,7 @@ Canvas::CopyNotOr(PixelScalar dest_x, PixelScalar dest_y,
 }
 
 void
-Canvas::CopyAnd(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::copy_and(PixelScalar dest_x, PixelScalar dest_y,
                  UPixelScalar dest_width, UPixelScalar dest_height,
                  const Bitmap &src, PixelScalar src_x, PixelScalar src_y)
 {
@@ -784,7 +784,7 @@ Canvas::CopyAnd(PixelScalar dest_x, PixelScalar dest_y,
 }
 
 void
-Canvas::CopyNot(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::copy_not(PixelScalar dest_x, PixelScalar dest_y,
                  UPixelScalar dest_width, UPixelScalar dest_height,
                  const Bitmap &src, PixelScalar src_x, PixelScalar src_y)
 {

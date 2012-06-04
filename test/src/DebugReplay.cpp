@@ -30,8 +30,7 @@ Copyright_License {
 #include "Device/Port/NullPort.hpp"
 #include "Device/Parser.hpp"
 #include "Profile/DeviceConfig.hpp"
-#include "IGC/IGCParser.hpp"
-#include "IGC/IGCFix.hpp"
+#include "Replay/IGCParser.hpp"
 
 static DeviceConfig config;
 static NullPort port;
@@ -142,18 +141,11 @@ DebugReplayIGC::Next()
   while ((line = reader->read()) != NULL) {
     if (line[0] == 'B') {
       IGCFix fix;
-      if (IGCParseFix(line, fix) && fix.gps_valid) {
+      if (IGCParseFix(line, fix)) {
         CopyFromFix(fix);
 
         Compute();
         return true;
-      }
-    } else if (line[0] == 'H') {
-      BrokenDate date;
-      if (memcmp(line, "HFDTE", 5) == 0 &&
-          IGCParseDate(line, date)) {
-        (BrokenDate &)basic.date_time_utc = date;
-        basic.date_available = true;
       }
     }
   }
@@ -166,15 +158,19 @@ DebugReplayIGC::CopyFromFix(const IGCFix &fix)
 {
   basic.clock = basic.time = fixed(fix.time.GetSecondOfDay());
   basic.time_available.Update(basic.clock);
+  basic.date_time_utc.year = 2011;
+  basic.date_time_utc.month = 6;
+  basic.date_time_utc.day = 5;
   basic.date_time_utc.hour = fix.time.hour;
   basic.date_time_utc.minute = fix.time.minute;
   basic.date_time_utc.second = fix.time.second;
+  basic.date_available = true;
   basic.alive.Update(basic.clock);
   basic.location = fix.location;
   basic.location_available.Update(basic.clock);
-  basic.gps_altitude = fixed(fix.gps_altitude);
+  basic.gps_altitude = fix.gps_altitude;
   basic.gps_altitude_available.Update(basic.clock);
-  basic.pressure_altitude = basic.baro_altitude = fixed(fix.pressure_altitude);
+  basic.pressure_altitude = basic.baro_altitude = fix.pressure_altitude;
   basic.pressure_altitude_available.Update(basic.clock);
   basic.baro_altitude_available.Update(basic.clock);
 }

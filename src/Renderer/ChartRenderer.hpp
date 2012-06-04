@@ -24,7 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_CHART_RENDERER_HPP
 #define XCSOAR_CHART_RENDERER_HPP
 
-#include "Util/ReusableArray.hpp"
 #include "Math/fixed.hpp"
 #include "Math/Angle.hpp"
 #include "Screen/Point.hpp"
@@ -41,23 +40,15 @@ class Pen;
 
 class ChartRenderer
 {
+private:
   const ChartLook &look;
 
   Canvas &canvas;
   PixelRect rc;
 
-  ReusableArray<RasterPoint> point_buffer;
-
-  fixed yscale;
-  fixed xscale;
-  fixed y_min, x_min;
-  fixed x_max, y_max;
-  bool unscaled_x;
-  bool unscaled_y;
-
 public:
-  int padding_left;
-  int padding_bottom;
+  int PaddingLeft;
+  int PaddingBottom;
 
 public:
   ChartRenderer(const ChartLook &look, Canvas &the_canvas,
@@ -116,23 +107,29 @@ public:
                  const Angle angle, ChartLook::Style Style);
   void DrawNoData();
 
-  fixed GetYMin() const { return y_min; }
-  fixed GetYMax() const { return y_max; }
-  fixed GetXMin() const { return x_min; }
-  fixed GetXMax() const { return x_max; }
+  fixed getYmin() const { return y_min; }
+  fixed getYmax() const { return y_max; }
+  fixed getXmin() const { return x_min; }
+  fixed getXmax() const { return x_max; }
 
   gcc_pure
-  PixelScalar ScreenX(fixed x) const;
+  long screenX(fixed x) const;
 
   gcc_pure
-  PixelScalar ScreenY(fixed y) const;
+  long screenY(fixed y) const;
 
   gcc_pure
-  RasterPoint ToScreen(fixed x, fixed y) const {
-    return RasterPoint{ ScreenX(x), ScreenY(y) };
-  }
+  long screenS(fixed s) const;
 
-  Canvas& GetCanvas() { return canvas; }
+  Canvas& get_canvas() { return canvas; }
+
+private:
+  fixed yscale;
+  fixed xscale;
+  fixed y_min, x_min;
+  fixed x_max, y_max;
+  bool unscaled_x;
+  bool unscaled_y;
 };
 
 #endif

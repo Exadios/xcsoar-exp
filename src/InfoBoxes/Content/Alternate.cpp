@@ -139,7 +139,7 @@ InfoBoxContentAlternateGR::Update(InfoBoxData &data)
     return;
   }
   if (::GradientValid(gradient)) {
-    data.SetValueFromGlideRatio(gradient);
+    data.UnsafeFormatValue(_T("%d"), (int)gradient);
   } else {
     data.SetInvalid();
   }

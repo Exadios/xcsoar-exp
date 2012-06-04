@@ -28,42 +28,42 @@ DistanceStatComputer::DistanceStatComputer(const bool _is_positive)
    is_positive(_is_positive) {}
 
 void
-DistanceStatComputer::CalcIncrementalSpeed(DistanceStat &data, const fixed dt)
+DistanceStatComputer::calc_incremental_speed(DistanceStat &data, const fixed dt)
 {
   if ((dt + fixed_half >= fixed_one) && data.IsDefined()) {
-    if (av_dist.Update(data.distance)) {
-      const fixed d_av = av_dist.Average() / N_AV;
-      av_dist.Reset();
+    if (av_dist.update(data.distance)) {
+      const fixed d_av = av_dist.average() / N_AV;
+      av_dist.reset();
 
       fixed v_f = fixed_zero;
       for (unsigned i = 0; i < (unsigned)(dt + fixed_half); ++i) {
-        const fixed v = df.Update(d_av);
-        v_f = v_lpf.Update(v);
+        const fixed v = df.update(d_av);
+        v_f = v_lpf.update(v);
       }
       data.speed_incremental = (is_positive ? -v_f : v_f);
     }
   } else if (!positive(dt) || !data.IsDefined()) {
-    ResetIncrementalSpeed(data);
+    reset_incremental_speed(data);
   }
 }
 
 void
-DistanceStatComputer::ResetIncrementalSpeed(DistanceStat &data)
+DistanceStatComputer::reset_incremental_speed(DistanceStat &data)
 {
-  fixed distance = data.IsDefined() ? data.GetDistance() : fixed_zero;
-  fixed speed = data.IsDefined() ? data.GetSpeed() : fixed_zero;
+  fixed distance = data.IsDefined() ? data.get_distance() : fixed_zero;
+  fixed speed = data.IsDefined() ? data.get_speed() : fixed_zero;
 
-  df.Reset(distance, (is_positive ? -1 : 1) * speed);
-  v_lpf.Reset((is_positive ? -1 : 1) * speed);
+  df.reset(distance, (is_positive ? -1 : 1) * speed);
+  v_lpf.reset((is_positive ? -1 : 1) * speed);
   data.speed_incremental = fixed_zero; // data.speed;
-  av_dist.Reset();
+  av_dist.reset();
 }
 
 void
-DistanceStatComputer::CalcSpeed(DistanceStat &data, fixed time)
+DistanceStatComputer::calc_speed(DistanceStat &data, fixed time)
 {
   if (positive(time) && data.IsDefined())
-    data.speed = data.GetDistance() / time;
+    data.speed = data.get_distance() / time;
   else
     data.speed = fixed_zero;
 }

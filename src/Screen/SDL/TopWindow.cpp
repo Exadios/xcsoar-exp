@@ -176,7 +176,7 @@ TopWindow::OnEvent(const SDL_Event &event)
     if (w == NULL)
       w = this;
 
-    if (!w->IsEnabled())
+    if (!w->is_enabled())
       return false;
 
     return w->OnKeyDown(event.key.keysym.sym);
@@ -186,7 +186,7 @@ TopWindow::OnEvent(const SDL_Event &event)
     if (w == NULL)
       w = this;
 
-    if (!w->IsEnabled())
+    if (!w->is_enabled())
       return false;
 
     return w->OnKeyUp(event.key.keysym.sym);
@@ -218,7 +218,7 @@ TopWindow::OnEvent(const SDL_Event &event)
     return OnClose();
 
   case SDL_VIDEORESIZE:
-    Resize(event.resize.w, event.resize.h);
+    resize(event.resize.w, event.resize.h);
     return true;
   }
 

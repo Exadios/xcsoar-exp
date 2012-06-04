@@ -35,6 +35,8 @@ class StoppableThread : public Thread {
   Trigger stop_trigger;
 
 public:
+  StoppableThread();
+
   bool Start() {
     stop_trigger.Reset();
     return Thread::Start();
@@ -52,7 +54,7 @@ protected:
   /**
    * Check this thread has received the "Stop" comand.
    */
-  bool CheckStopped() const {
+  bool CheckStopped() {
     return stop_trigger.Test();
   }
 

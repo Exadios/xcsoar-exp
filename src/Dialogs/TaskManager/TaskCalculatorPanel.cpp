@@ -28,7 +28,7 @@ Copyright_License {
 #include "Interface.hpp"
 #include "Units/Units.hpp"
 #include "Formatter/UserUnits.hpp"
-#include "Form/DataField/Float.hpp"
+#include "DataField/Float.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Components.hpp"
 #include "Screen/Layout.hpp"
@@ -105,11 +105,11 @@ TaskCalculatorPanel::Refresh()
 
   if (task_stats.total.remaining_effective.IsDefined())
     LoadFormProperty(form, _T("prpSpeedRemaining"), UnitGroup::TASK_SPEED,
-                     task_stats.total.remaining_effective.GetSpeed());
+                     task_stats.total.remaining_effective.get_speed());
 
   if (task_stats.total.travelled.IsDefined())
     LoadFormProperty(form, _T("prpSpeedAchieved"), UnitGroup::TASK_SPEED,
-                     task_stats.total.travelled.GetSpeed());
+                     task_stats.total.travelled.get_speed());
 
   LoadFormProperty(form, _T("prpCruiseEfficiency"),
                    task_stats.cruise_efficiency * 100);
@@ -180,7 +180,7 @@ OnWarningPaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
     const MaskedIcon *bmp = &look.intercept_icon;
     const int offsetx = bmp->GetSize().cx;
     const int offsety = canvas.get_height() - bmp->GetSize().cy;
-    canvas.Clear(COLOR_YELLOW);
+    canvas.clear(COLOR_YELLOW);
     bmp->Draw(canvas, offsetx, offsety);
 
     canvas.SetBackgroundColor(COLOR_YELLOW);
@@ -190,7 +190,7 @@ OnWarningPaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
                 message);
   }
   else {
-    canvas.Clear(instance->GetLook().background_color);
+    canvas.clear(instance->GetLook().background_color);
   }
 }
 

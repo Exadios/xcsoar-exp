@@ -28,8 +28,8 @@ Copyright_License {
 #include "Look/MapLook.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
-#include "Form/DataField/Enum.hpp"
-#include "Form/DataField/Float.hpp"
+#include "DataField/Enum.hpp"
+#include "DataField/Float.hpp"
 #include "MapWindow/TargetMapWindow.hpp"
 #include "Components.hpp"
 #include "Task/TaskPoints/AATPoint.hpp"
@@ -244,7 +244,7 @@ RefreshCalculator()
   }
 
   if (chkbOptimized) {
-    chkbOptimized->SetVisible(bAAT);
+    chkbOptimized->set_visible(bAAT);
     chkbOptimized->SetState(!IsLocked);
   }
 
@@ -255,7 +255,7 @@ RefreshCalculator()
     DataFieldFloat *df = (DataFieldFloat *)wp->GetDataField();
     df->Set(Range * fixed(100));
     wp->RefreshDisplay();
-    wp->SetVisible(!nodisplay);
+    wp->set_visible(!nodisplay);
   }
 
   wp = (WndProperty*)wf->FindByName(_T("prpRadial"));
@@ -269,7 +269,7 @@ RefreshCalculator()
     DataFieldFloat *df = (DataFieldFloat *)wp->GetDataField();
     df->Set(rTemp);
     wp->RefreshDisplay();
-    wp->SetVisible(!nodisplay);
+    wp->set_visible(!nodisplay);
   }
 
   // update outputs
@@ -286,11 +286,11 @@ RefreshCalculator()
   const ElementStat &total = CommonInterface::Calculated().task_stats.total;
   if (total.remaining_effective.IsDefined())
     LoadFormProperty(*wf, _T("prpSpeedRemaining"), UnitGroup::TASK_SPEED,
-                     total.remaining_effective.GetSpeed());
+                     total.remaining_effective.get_speed());
 
   if (total.travelled.IsDefined())
     LoadOptionalFormProperty(*wf, _T("prpSpeedAchieved"), UnitGroup::TASK_SPEED,
-                             total.travelled.GetSpeed());
+                             total.travelled.get_speed());
 }
 
 static void
@@ -502,14 +502,14 @@ drawBtnNext()
 
   if (IsAltair())
     // altair already has < and > buttons on WndProperty
-    btnNext->SetVisible(false);
+    btnNext->set_visible(false);
 
   btnPrev = (WndSymbolButton*)wf->FindByName(_T("btnPrev"));
   assert(btnPrev != NULL);
 
   if (IsAltair())
     // altair already has < and > buttons on WndProperty
-    btnPrev->SetVisible(false);
+    btnPrev->set_visible(false);
 }
 
 void

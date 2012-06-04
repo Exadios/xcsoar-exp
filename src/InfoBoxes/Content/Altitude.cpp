@@ -73,32 +73,6 @@ InfoBoxContentAltitude::GetDialogContent() {
 }
 
 void
-InfoBoxContentAltitudeNav::Update(InfoBoxData &data)
-{
-  const MoreData &basic = CommonInterface::Basic();
-
-  if (!basic.NavAltitudeAvailable()) {
-    data.SetInvalid();
-
-    if (basic.pressure_altitude_available)
-      data.SetComment(_("no QNH"));
-
-    return;
-  }
-
-  const ComputerSettings &settings_computer = CommonInterface::GetComputerSettings();
-
-  if (basic.baro_altitude_available &&
-      settings_computer.features.nav_baro_altitude_enabled)
-    data.SetTitle(InfoBoxFactory::MetaData[InfoBoxFactory::e_H_Baro].caption);
-  else
-    data.SetTitle(InfoBoxFactory::MetaData[InfoBoxFactory::e_HeightGPS].caption);
-
-  data.SetValueFromAltitude(basic.nav_altitude);
-  data.SetCommentFromAlternateAltitude(basic.nav_altitude);
-}
-
-void
 InfoBoxContentAltitudeGPS::Update(InfoBoxData &data)
 {
   const NMEAInfo &basic = CommonInterface::Basic();

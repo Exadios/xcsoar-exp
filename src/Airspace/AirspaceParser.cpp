@@ -144,7 +144,7 @@ struct TempAirspaceType
   void
   reset()
   {
-    days_of_operation.SetAll();
+    days_of_operation.set_all();
     Radio = _T("");
     Type = OTHER;
     points.clear();
@@ -172,7 +172,7 @@ struct TempAirspaceType
     as->SetProperties(Name, Type, Base, Top);
     as->SetRadio(Radio);
     as->SetDays(days_of_operation);
-    airspace_database.Add(as);
+    airspace_database.insert(as);
   }
 
   void
@@ -182,7 +182,7 @@ struct TempAirspaceType
     as->SetProperties(Name, Type, Base, Top);
     as->SetRadio(Radio);
     as->SetDays(days_of_operation);
-    airspace_database.Add(as);
+    airspace_database.insert(as);
   }
 
   void
@@ -238,7 +238,7 @@ ShowParseWarning(int line, const TCHAR* str)
   StaticString<256> buffer;
   buffer.Format(_T("%s: %d\r\n\"%s\"\r\n%s."),
                 _("Parse Error at Line"), line, str, _("Line skipped."));
-  return (ShowMessageBox(buffer, _("Airspace"), MB_OKCANCEL) == IDOK);
+  return (MessageBoxX(buffer, _("Airspace"), MB_OKCANCEL) == IDOK);
 
 }
 
@@ -803,11 +803,11 @@ ParseLineTNP(Airspaces &airspace_database, TCHAR *line,
     temp_area.Radio = parameter;
   } else if ((parameter = StringAfterPrefixCI(line, _T("ACTIVE="))) != NULL) {
     if (_tcsicmp(parameter, _T("WEEKEND")) == 0)
-      temp_area.days_of_operation.SetWeekend();
+      temp_area.days_of_operation.set_weekend();
     else if (_tcsicmp(parameter, _T("WEEKDAY")) == 0)
-      temp_area.days_of_operation.SetWeekdays();
+      temp_area.days_of_operation.set_weekdays();
     else if (_tcsicmp(parameter, _T("EVERYDAY")) == 0)
-      temp_area.days_of_operation.SetAll();
+      temp_area.days_of_operation.set_all();
   }
 
   return true;

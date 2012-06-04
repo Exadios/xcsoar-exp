@@ -31,8 +31,8 @@ Copyright_License {
 #include "Form/Edit.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/SingleWindow.hpp"
-#include "Form/DataField/Enum.hpp"
-#include "Form/DataField/String.hpp"
+#include "DataField/Enum.hpp"
+#include "DataField/String.hpp"
 #include "Compiler.h"
 #include "InfoBoxes/InfoBoxSettings.hpp"
 #include "InfoBoxes/InfoBoxLayout.hpp"
@@ -112,7 +112,7 @@ OnPaste(gcc_unused WndButton &button)
   if (clipboard_size == 0)
     return;
 
-  if(ShowMessageBox(_("Overwrite?"), _("InfoBox paste"),
+  if(MessageBoxX(_("Overwrite?"), _("InfoBox paste"),
                  MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
 
@@ -186,7 +186,7 @@ InfoBoxPreview::OnPaint(Canvas &canvas)
   const bool is_current = i == current_preview;
 
   if (is_current)
-    canvas.Clear(COLOR_BLACK);
+    canvas.clear(COLOR_BLACK);
   else
     canvas.ClearWhite();
 
@@ -301,7 +301,7 @@ dlgConfigInfoboxesShowModal(SingleWindow &parent,
   look = &_look;
   data = data_r;
 
-  PixelRect rc = parent.GetClientRect();
+  PixelRect rc = parent.get_client_rect();
   wf = new WndForm(parent, dialog_look, rc);
 
 #ifdef _WIN32_WCE
@@ -310,7 +310,7 @@ dlgConfigInfoboxesShowModal(SingleWindow &parent,
 #endif
 
   ContainerWindow &client_area = wf->GetClientAreaWindow();
-  rc = client_area.GetClientRect();
+  rc = client_area.get_client_rect();
 
   InflateRect(&rc, Layout::FastScale(-2), Layout::FastScale(-2));
   info_box_layout = InfoBoxLayout::Calculate(rc, geometry);
@@ -330,7 +330,7 @@ dlgConfigInfoboxesShowModal(SingleWindow &parent,
   style.ControlParent();
 
   EditWindowStyle edit_style;
-  edit_style.SetVerticalCenter();
+  edit_style.vertical_center();
   edit_style.TabStop();
 
   if (IsEmbedded() || Layout::scale_1024 < 2048)

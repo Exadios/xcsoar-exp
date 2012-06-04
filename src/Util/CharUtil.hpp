@@ -26,23 +26,7 @@ Copyright_License {
 
 #include "Compiler.h"
 
-#ifdef _UNICODE
 #include <tchar.h>
-#endif
-
-static inline bool
-IsWhitespaceOrNull(const char ch)
-{
-  return (unsigned char)ch <= 0x20;
-}
-
-static inline bool
-IsWhitespaceNotNull(const char ch)
-{
-  return ch > 0 && ch <= 0x20;
-}
-
-#ifdef _UNICODE
 
 static inline bool
 IsWhitespaceOrNull(const TCHAR ch)
@@ -52,6 +36,20 @@ IsWhitespaceOrNull(const TCHAR ch)
 
 static inline bool
 IsWhitespaceNotNull(const TCHAR ch)
+{
+  return ch > 0 && ch <= 0x20;
+}
+
+#ifdef _UNICODE
+
+static inline bool
+IsWhitespaceOrNull(const char ch)
+{
+  return (unsigned char)ch <= 0x20;
+}
+
+static inline bool
+IsWhitespaceNotNull(const char ch)
 {
   return ch > 0 && ch <= 0x20;
 }

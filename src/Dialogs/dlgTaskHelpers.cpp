@@ -368,7 +368,7 @@ OrderedTaskSave(SingleWindow &parent, const OrderedTask& task, bool noask)
   assert(protected_task_manager != NULL);
 
   if (!noask
-      && ShowMessageBox(_("Save task?"), _("Task Selection"),
+      && MessageBoxX(_("Save task?"), _("Task Selection"),
                      MB_YESNO | MB_ICONQUESTION) != IDYES)
     return false;
 

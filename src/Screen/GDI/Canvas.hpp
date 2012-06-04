@@ -271,19 +271,19 @@ public:
     DrawFilledRectangle(rc, brush);
   }
 
-  void Clear() {
+  void clear() {
     Rectangle(0, 0, width, height);
   }
 
-  void Clear(const HWColor color) {
+  void clear(const HWColor color) {
     DrawFilledRectangle(0, 0, width, height, color);
   }
 
-  void Clear(const Color color) {
+  void clear(const Color color) {
     DrawFilledRectangle(0, 0, width, height, color);
   }
 
-  void Clear(const Brush &brush) {
+  void clear(const Brush &brush) {
     DrawFilledRectangle(0, 0, width, height, brush);
   }
 
@@ -314,23 +314,23 @@ public:
     ::Polyline(dc, lppt, cPoints);
   }
 
-  void DrawPolygon(const RasterPoint *lppt, unsigned cPoints) {
+  void polygon(const RasterPoint *lppt, unsigned cPoints) {
     assert(IsDefined());
 
     ::Polygon(dc, lppt, cPoints);
   }
 
   void DrawTriangleFan(const RasterPoint *points, unsigned num_points) {
-    DrawPolygon(points, num_points);
+    polygon(points, num_points);
   }
 
-  void DrawLine(PixelScalar ax, PixelScalar ay, PixelScalar bx, PixelScalar by);
-  void DrawLine(const RasterPoint a, const RasterPoint b) {
-    DrawLine(a.x, a.y, b.x, b.y);
+  void line(PixelScalar ax, PixelScalar ay, PixelScalar bx, PixelScalar by);
+  void line(const RasterPoint a, const RasterPoint b) {
+    line(a.x, a.y, b.x, b.y);
   }
 
-  void DrawLinePiece(const RasterPoint a, const RasterPoint b) {
-    DrawLine(a, b);
+  void line_piece(const RasterPoint a, const RasterPoint b) {
+    line(a.x, a.y, b.x, b.y);
   }
 
   void DrawTwoLines(PixelScalar ax, PixelScalar ay,
@@ -341,7 +341,7 @@ public:
     DrawTwoLines(a.x, a.y, b.x, b.y, c.x, c.y);
   }
 
-  void DrawCircle(PixelScalar x, PixelScalar y, UPixelScalar radius) {
+  void circle(PixelScalar x, PixelScalar y, UPixelScalar radius) {
     assert(IsDefined());
 
     ::Ellipse(dc, x - radius, y - radius, x + radius, y + radius);
@@ -466,7 +466,7 @@ public:
     assert(src.IsDefined());
 
     Stretch(dest_x, dest_y, dest_width, dest_height,
-            src.dc, src_x, src_y, src_width, src_height,
+            (HDC)src, src_x, src_y, src_width, src_height,
             dwRop);
   }
 
@@ -484,7 +484,7 @@ public:
                UPixelScalar src_width, UPixelScalar src_height,
                DWORD dwRop=SRCCOPY);
 
-  void Stretch(PixelScalar dest_x, PixelScalar dest_y,
+  void stretch(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
                HDC src,
                PixelScalar src_x, PixelScalar src_y,
@@ -497,23 +497,50 @@ public:
             SRCCOPY);
   }
 
-  void Stretch(const Canvas &src,
+  void stretch(PixelScalar dest_x, PixelScalar dest_y,
+               UPixelScalar dest_width, UPixelScalar dest_height,
+               const Canvas &src,
+               PixelScalar src_x, PixelScalar src_y,
+               UPixelScalar src_width, UPixelScalar src_height) {
+    stretch(dest_x, dest_y, dest_width, dest_height,
+            src.dc, src_x, src_y, src_width, src_height);
+  }
+
+  void stretch(const Canvas &src,
                PixelScalar src_x, PixelScalar src_y,
                UPixelScalar src_width, UPixelScalar src_height);
 
-  void Stretch(const Canvas &src);
+  void stretch(const Canvas &src);
 
-  void Stretch(const Bitmap &src,
+  void stretch(PixelScalar dest_x, PixelScalar dest_y,
+               UPixelScalar dest_width, UPixelScalar dest_height,
+               HBITMAP src,
                PixelScalar src_x, PixelScalar src_y,
                UPixelScalar src_width, UPixelScalar src_height) {
-    Stretch(0, 0, width, height, src, src_x, src_y, src_width, src_height);
+    Stretch(dest_x, dest_y, dest_width, dest_height,
+            src, src_x, src_y, src_width, src_height);
   }
 
-  void Stretch(PixelScalar dest_x, PixelScalar dest_y,
+  void stretch(PixelScalar dest_x, PixelScalar dest_y,
+               UPixelScalar dest_width, UPixelScalar dest_height,
+               const Bitmap &src,
+               PixelScalar src_x, PixelScalar src_y,
+               UPixelScalar src_width, UPixelScalar src_height) {
+    Stretch(dest_x, dest_y, dest_width, dest_height,
+            src, src_x, src_y, src_width, src_height);
+  }
+
+  void stretch(const Bitmap &src,
+               PixelScalar src_x, PixelScalar src_y,
+               UPixelScalar src_width, UPixelScalar src_height) {
+    stretch(0, 0, width, height, src, src_x, src_y, src_width, src_height);
+  }
+
+  void stretch(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
                const Bitmap &src);
 
-  void Stretch(const Bitmap &src);
+  void stretch(const Bitmap &src);
 
   void StretchAnd(PixelScalar dest_x, PixelScalar dest_y,
                   UPixelScalar dest_width, UPixelScalar dest_height,
@@ -552,12 +579,12 @@ public:
                    Color fg_color, Color bg_color);
 
 #ifdef HAVE_ALPHA_BLEND
-  void AlphaBlend(PixelScalar dest_x, PixelScalar dest_y,
-                  UPixelScalar dest_width, UPixelScalar dest_height,
-                  HDC src,
-                  PixelScalar src_x, PixelScalar src_y,
-                  UPixelScalar src_width, UPixelScalar src_height,
-                  uint8_t alpha) {
+  void alpha_blend(PixelScalar dest_x, PixelScalar dest_y,
+                   UPixelScalar dest_width, UPixelScalar dest_height,
+                   HDC src,
+                   PixelScalar src_x, PixelScalar src_y,
+                   UPixelScalar src_width, UPixelScalar src_height,
+                   uint8_t alpha) {
     assert(AlphaBlendAvailable());
 
     BLENDFUNCTION fn;
@@ -571,32 +598,32 @@ public:
                        fn);
   }
 
-  void AlphaBlend(PixelScalar dest_x, PixelScalar dest_y,
-                  UPixelScalar dest_width, UPixelScalar dest_height,
-                  const Canvas &src,
-                  PixelScalar src_x, PixelScalar src_y,
-                  UPixelScalar src_width, UPixelScalar src_height,
-                  uint8_t alpha) {
-    AlphaBlend(dest_x, dest_y, dest_width, dest_height,
+  void alpha_blend(PixelScalar dest_x, PixelScalar dest_y,
+                   UPixelScalar dest_width, UPixelScalar dest_height,
+                   const Canvas &src,
+                   PixelScalar src_x, PixelScalar src_y,
+                   UPixelScalar src_width, UPixelScalar src_height,
+                   uint8_t alpha) {
+    alpha_blend(dest_x, dest_y, dest_width, dest_height,
                 src.dc, src_x, src_y, src_width, src_height,
                 alpha);
   }
 #endif
 
-  void CopyOr(PixelScalar dest_x, PixelScalar dest_y,
+  void copy_or(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
                const Canvas &src, PixelScalar src_x, PixelScalar src_y) {
     copy(dest_x, dest_y, dest_width, dest_height,
          src, src_x, src_y, SRCPAINT);
   }
 
-  void CopyOr(const Canvas &src) {
-    CopyOr(0, 0, get_width(), get_height(), src, 0, 0);
+  void copy_or(const Canvas &src) {
+    copy_or(0, 0, get_width(), get_height(), src, 0, 0);
   }
 
-  void CopyOr(PixelScalar dest_x, PixelScalar dest_y,
-              UPixelScalar dest_width, UPixelScalar dest_height,
-              const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
+  void copy_or(PixelScalar dest_x, PixelScalar dest_y,
+               UPixelScalar dest_width, UPixelScalar dest_height,
+               const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
     copy(dest_x, dest_y, dest_width, dest_height,
          src, src_x, src_y,
          SRCPAINT);
@@ -614,7 +641,7 @@ public:
          MERGEPAINT);
   }
 
-  void CopyNot(PixelScalar dest_x, PixelScalar dest_y,
+  void copy_not(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
                const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
     copy(dest_x, dest_y, dest_width, dest_height,
@@ -622,32 +649,32 @@ public:
          NOTSRCCOPY);
   }
 
-  void CopyAnd(PixelScalar dest_x, PixelScalar dest_y,
-               UPixelScalar dest_width, UPixelScalar dest_height,
-               const Canvas &src, PixelScalar src_x, PixelScalar src_y) {
+  void copy_and(PixelScalar dest_x, PixelScalar dest_y,
+                UPixelScalar dest_width, UPixelScalar dest_height,
+                const Canvas &src, PixelScalar src_x, PixelScalar src_y) {
     copy(dest_x, dest_y, dest_width, dest_height,
          src.dc, src_x, src_y, SRCAND);
   }
 
-  void CopyAnd(const Canvas &src) {
-    CopyAnd(0, 0, get_width(), get_height(), src, 0, 0);
+  void copy_and(const Canvas &src) {
+    copy_and(0, 0, get_width(), get_height(), src, 0, 0);
   }
 
-  void CopyAnd(PixelScalar dest_x, PixelScalar dest_y,
-               UPixelScalar dest_width, UPixelScalar dest_height,
-               const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
+  void copy_and(PixelScalar dest_x, PixelScalar dest_y,
+                UPixelScalar dest_width, UPixelScalar dest_height,
+                const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
     copy(dest_x, dest_y, dest_width, dest_height,
          src, src_x, src_y,
          SRCAND);
   }
 
-  void ScaleCopy(PixelScalar dest_x, PixelScalar dest_y,
-                 const Bitmap &src,
-                 PixelScalar src_x, PixelScalar src_y,
-                 UPixelScalar src_width, UPixelScalar src_height);
+  void scale_copy(PixelScalar dest_x, PixelScalar dest_y,
+                  const Bitmap &src,
+                  PixelScalar src_x, PixelScalar src_y,
+                  UPixelScalar src_width, UPixelScalar src_height);
 
   gcc_pure
-  HWColor GetPixel(PixelScalar x, PixelScalar y) const {
+  HWColor get_pixel(PixelScalar x, PixelScalar y) const {
     return HWColor(::GetPixel(dc, x, y));
   }
 };

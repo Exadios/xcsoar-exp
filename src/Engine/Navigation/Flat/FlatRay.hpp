@@ -31,13 +31,13 @@
 class FlatRay {
 public:
   /** Origin of ray */
-  FlatGeoPoint point;
+  const FlatGeoPoint point;
   /** Vector representing ray direction and length */
-  FlatGeoPoint vector;
+  const FlatGeoPoint vector;
   /** speedups for box intersection test */
-  fixed fx;
+  const fixed fx;
   /** speedups for box intersection test */
-  fixed fy;
+  const fixed fy;
 
   /**
    * Constructor given start/end locations
@@ -82,13 +82,8 @@ public:
   gcc_pure
   bool IntersectsDistinct(const FlatRay& that) const;
 
-  /**
-   * Determine if two rays intersect away from their nodes, and return
-   * the "t" parameter.  Returns a negative number if the rays to not
-   * intersect.
-   */
-  gcc_pure
-  fixed DistinctIntersection(const FlatRay& that) const;
+  // as above, but if true, also calculates t parameter
+  bool IntersectsDistinct(const FlatRay& that, fixed& t) const;
 
 private:
   gcc_pure

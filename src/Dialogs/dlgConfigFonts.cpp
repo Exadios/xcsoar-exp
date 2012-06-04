@@ -29,7 +29,7 @@ Copyright_License {
 #include "Profile/FontConfig.hpp"
 #include "Screen/Layout.hpp"
 #include "UIGlobals.hpp"
-#include "Form/DataField/Boolean.hpp"
+#include "DataField/Boolean.hpp"
 #include "Util/StringUtil.hpp"
 #include "Compiler.h"
 
@@ -294,7 +294,7 @@ void dlgConfigFontsShowModal()
   if (changed) {
     Profile::Save();
 
-    ShowMessageBox(_("Changes to configuration saved.  Restart XCSoar to apply changes."),
+    MessageBoxX(_("Changes to configuration saved.  Restart XCSoar to apply changes."),
                 _T(""), MB_OK);
   }
 

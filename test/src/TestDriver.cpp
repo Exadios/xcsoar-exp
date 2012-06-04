@@ -31,7 +31,6 @@
 #include "Device/Driver/FlymasterF1.hpp"
 #include "Device/Driver/FlyNet.hpp"
 #include "Device/Driver/Flytec.hpp"
-#include "Device/Driver/GTAltimeter.hpp"
 #include "Device/Driver/Leonardo.hpp"
 #include "Device/Driver/LX.hpp"
 #include "Device/Driver/ILEC.hpp"
@@ -152,7 +151,8 @@ TestFLARM()
   ok1(nmea_info.flarm.new_traffic);
   ok1(nmea_info.flarm.GetActiveTrafficCount() == 1);
 
-  FlarmId id = FlarmId::Parse("DDA85C", NULL);
+  FlarmId id;
+  id.Parse("DDA85C", NULL);
 
   FlarmTraffic *traffic = nmea_info.flarm.FindTraffic(id);
   if (ok1(traffic != NULL)) {
@@ -179,7 +179,7 @@ TestFLARM()
                                       nmea_info));
   ok1(nmea_info.flarm.GetActiveTrafficCount() == 2);
 
-  id = FlarmId::Parse("DEADFF", NULL);
+  id.Parse("DEADFF", NULL);
   traffic = nmea_info.flarm.FindTraffic(id);
   if (ok1(traffic != NULL)) {
     ok1(traffic->valid);
@@ -201,7 +201,7 @@ TestFLARM()
                        nmea_info));
   ok1(nmea_info.flarm.GetActiveTrafficCount() == 3);
 
-  id = FlarmId::Parse("DDAED5", NULL);
+  id.Parse("DDAED5", NULL);
   traffic = nmea_info.flarm.FindTraffic(id);
   if (ok1(traffic != NULL)) {
     ok1(traffic->valid);
@@ -221,44 +221,6 @@ TestFLARM()
   } else {
     skip(15, 0, "traffic == NULL");
   }
-}
-
-static void
-TestGTAltimeter()
-{
-  NullPort null;
-  Device *device = gt_altimeter_device_driver.CreateOnPort(dummy_config, null);
-  ok1(device != NULL);
-
-  NMEAInfo nmea_info;
-  nmea_info.Reset();
-  nmea_info.clock = fixed_one;
-
-  ok1(device->ParseNMEA("$LK8EX1,99545,149,1,26,5.10*18", nmea_info));
-  ok1(nmea_info.static_pressure_available);
-  ok1(equals(nmea_info.static_pressure.GetHectoPascal(), 995.45));
-  ok1(!nmea_info.pressure_altitude_available);
-  ok1(nmea_info.netto_vario_available);
-  ok1(equals(nmea_info.netto_vario, 0.01));
-  ok1(nmea_info.temperature_available);
-  ok1(equals(nmea_info.temperature, 26));
-  ok1(!nmea_info.battery_level_available);
-  ok1(nmea_info.voltage_available);
-  ok1(equals(nmea_info.voltage, 5.1));
-
-  nmea_info.Reset();
-  nmea_info.clock = fixed_one;
-
-  ok1(device->ParseNMEA("$LK8EX1,999999,149,-123,,1076,*32", nmea_info));
-  ok1(!nmea_info.static_pressure_available);
-  ok1(nmea_info.pressure_altitude_available);
-  ok1(equals(nmea_info.pressure_altitude, 149));
-  ok1(nmea_info.netto_vario_available);
-  ok1(equals(nmea_info.netto_vario, -1.23));
-  ok1(!nmea_info.temperature_available);
-  ok1(nmea_info.battery_level_available);
-  ok1(equals(nmea_info.battery_level, 76));
-  ok1(!nmea_info.voltage_available);
 }
 
 static void
@@ -992,12 +954,11 @@ TestFlightList(const struct DeviceRegister &driver)
 
 int main(int argc, char **argv)
 {
-  plan_tests(505);
+  plan_tests(483);
 
   TestGeneric();
   TestTasman();
   TestFLARM();
-  TestGTAltimeter();
   TestBorgeltB50();
   TestCAI302();
   TestFlymasterF1();

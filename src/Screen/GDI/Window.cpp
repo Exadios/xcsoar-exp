@@ -79,7 +79,7 @@ Window::SetEnabled(bool enabled)
 {
   AssertThread();
 
-  const bool was_focused = !enabled && HasFocus();
+  const bool was_focused = !enabled && has_focus();
 
   ::EnableWindow(hWnd, enabled);
 
@@ -103,7 +103,7 @@ Window::SetEnabled(bool enabled)
 }
 
 void
-Window::Created(HWND _hWnd)
+Window::created(HWND _hWnd)
 {
   assert(hWnd == NULL);
   hWnd = _hWnd;
@@ -268,7 +268,7 @@ Window::WndProc(HWND _hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
   };
 
-  AssertNoneLocked();
+  assert_none_locked();
 
   if (message == WM_GETMINMAXINFO)
     /* WM_GETMINMAXINFO is called before WM_CREATE, and we havn't set
@@ -280,14 +280,14 @@ Window::WndProc(HWND _hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     LPCREATESTRUCT cs = (LPCREATESTRUCT)lParam;
 
     window = (Window *)cs->lpCreateParams;
-    window->Created(_hWnd);
-    window->SetUserData(window);
+    window->created(_hWnd);
+    window->set_userdata(window);
   } else {
-    window = GetUnchecked(_hWnd);
+    window = get_unchecked(_hWnd);
   }
 
   LRESULT result = window->OnMessage(_hWnd, message, wParam, lParam);
-  AssertNoneLocked();
+  assert_none_locked();
 
   return result;
 }
@@ -297,6 +297,6 @@ Window::InstallWndProc()
 {
   assert(prev_wndproc == NULL);
 
-  SetUserData(this);
-  prev_wndproc = SetWndProc(WndProc);
+  set_userdata(this);
+  prev_wndproc = set_wndproc(WndProc);
 }

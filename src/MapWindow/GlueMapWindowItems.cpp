@@ -56,7 +56,7 @@ GlueMapWindow::ShowMapItems(const GeoPoint &location,
   const Airspaces *airspace_database = airspace_renderer.GetAirspaces();
   if (airspace_database)
     builder.AddVisibleAirspace(*airspace_database,
-                               airspace_renderer.GetWarningManager(),
+                               airspace_renderer.GetAirspaceWarnings(),
                                GetComputerSettings().airspace,
                                GetMapSettings().airspace, Basic(),
                                Calculated());
@@ -79,7 +79,7 @@ GlueMapWindow::ShowMapItems(const GeoPoint &location,
   // Show the list dialog
   if (list.empty()) {
     if (show_empty_message)
-      ShowMessageBox(_("There is nothing interesting near this location."),
+      MessageBoxX(_("There is nothing interesting near this location."),
                   _("Map elements at this location"), MB_OK | MB_ICONINFORMATION);
 
     return false;
@@ -87,7 +87,7 @@ GlueMapWindow::ShowMapItems(const GeoPoint &location,
 
   ShowMapItemListDialog(UIGlobals::GetMainWindow(), list,
                         UIGlobals::GetDialogLook(), look, traffic_look,
-                        final_glide_bar_renderer.GetLook(), GetMapSettings(),
+                        GetMapSettings(),
                         glide_computer != NULL
                         ? &glide_computer->GetAirspaceWarnings() : NULL);
   return true;

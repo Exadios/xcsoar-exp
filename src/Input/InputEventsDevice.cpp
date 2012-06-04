@@ -29,7 +29,6 @@ Copyright_License {
 #include "Device/device.hpp"
 #include "Device/List.hpp"
 #include "Device/Descriptor.hpp"
-#include "Operation/PopupOperationEnvironment.hpp"
 
 #include <assert.h>
 
@@ -42,10 +41,8 @@ Copyright_License {
 void
 InputEvents::eventSendNMEA(const TCHAR *misc)
 {
-  if (misc != NULL) {
-    PopupOperationEnvironment env;
-    VarioWriteNMEA(misc, env);
-  }
+  if (misc)
+    VarioWriteNMEA(misc);
 }
 
 void
@@ -53,10 +50,8 @@ InputEvents::eventSendNMEAPort1(const TCHAR *misc)
 {
   const unsigned i = 0;
 
-  if (misc != NULL && i < NUMDEV) {
-    PopupOperationEnvironment env;
-    device_list[i]->WriteNMEA(misc, env);
-  }
+  if (misc != NULL && i < NUMDEV)
+    device_list[i]->WriteNMEA(misc);
 }
 
 void
@@ -64,10 +59,8 @@ InputEvents::eventSendNMEAPort2(const TCHAR *misc)
 {
   const unsigned i = 1;
 
-  if (misc != NULL && i < NUMDEV) {
-    PopupOperationEnvironment env;
-    device_list[i]->WriteNMEA(misc, env);
-  }
+  if (misc != NULL && i < NUMDEV)
+    device_list[i]->WriteNMEA(misc);
 }
 
 void

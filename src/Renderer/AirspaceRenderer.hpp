@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_AIRSPACE_RENDERER_HPP
 #define XCSOAR_AIRSPACE_RENDERER_HPP
 
-#include "Util/StaticArray.hpp"
+#include "StaticArray.hpp"
 #include "Engine/Navigation/GeoPoint.hpp"
 
 struct AirspaceLook;
@@ -41,40 +41,42 @@ class WindowProjection;
 
 class AirspaceRenderer
 {
-  const AirspaceLook &look;
+  const AirspaceLook &airspace_look;
 
-  const Airspaces *airspaces;
-  const ProtectedAirspaceWarningManager *warning_manager;
+  const Airspaces *airspace_database;
+  const ProtectedAirspaceWarningManager *airspace_warnings;
 
-  StaticArray<GeoPoint,32> intersections;
+  StaticArray<GeoPoint,32> m_airspace_intersections;
 
 public:
-  AirspaceRenderer(const AirspaceLook &_look)
-    :look(_look), airspaces(NULL), warning_manager(NULL) {}
+  AirspaceRenderer(const AirspaceLook &_airspace_look)
+    :airspace_look(_airspace_look),
+     airspace_database(NULL), airspace_warnings(NULL)
+  {}
 
   const AirspaceLook &GetLook() const {
-    return look;
+    return airspace_look;
   }
 
   const Airspaces *GetAirspaces() const {
-    return airspaces;
+    return airspace_database;
   }
 
-  const ProtectedAirspaceWarningManager *GetWarningManager() const {
-    return warning_manager;
+  const ProtectedAirspaceWarningManager *GetAirspaceWarnings() const {
+    return airspace_warnings;
   }
 
-  void SetAirspaces(const Airspaces *_airspaces) {
-    airspaces = _airspaces;
+  void SetAirspaces(const Airspaces *_airspace_database) {
+    airspace_database = _airspace_database;
   }
 
-  void SetAirspaceWarnings(const ProtectedAirspaceWarningManager *_warning_manager) {
-    warning_manager = _warning_manager;
+  void SetAirspaceWarnings(const ProtectedAirspaceWarningManager *_airspace_warnings) {
+    airspace_warnings = _airspace_warnings;
   }
 
   void Clear() {
-    airspaces = NULL;
-    warning_manager = NULL;
+    airspace_database = NULL;
+    airspace_warnings = NULL;
   }
 
   /**

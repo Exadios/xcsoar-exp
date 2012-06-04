@@ -25,7 +25,6 @@
 #include "Components.hpp"
 #include "Dialogs/Internal.hpp"
 #include "Protection.hpp"
-#include "Engine/Task/Tasks/BaseTask/OrderedTaskPoint.hpp"
 
 static const TaskBehaviour&
 GetTaskBehaviour()

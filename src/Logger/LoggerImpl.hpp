@@ -26,9 +26,9 @@ Copyright_License {
 
 #include "DateTime.hpp"
 #include "Navigation/GeoPoint.hpp"
-#include "IGC/IGCWriter.hpp"
-#include "Util/OverwritingRingBuffer.hpp"
-#include "Util/BatchBuffer.hpp"
+#include "Logger/IGCWriter.hpp"
+#include "OverwritingRingBuffer.hpp"
+#include "BatchBuffer.hpp"
 #include "NMEA/Info.hpp"
 
 #include <tchar.h>
@@ -46,8 +46,11 @@ class LoggerImpl
 {
 public:
   enum {
-    /** Buffer size (s) of points recorded before takeoff */
+    /**< Buffer size (s) of points recorded before takeoff */
     PRETAKEOFF_BUFFER_MAX = 60,
+    /**< Number of records in disk buffer */
+    DISK_BUFFER_NUM_RECS = 10,
+    MAX_IGC_BUFF = 255,
   };
 
   /** Buffer for points recorded before takeoff */
@@ -69,7 +72,7 @@ public:
     /** GPS fix state */
     int nav_warning;
     /** GPS fix quality */
-    FixQuality fix_quality;
+    int fix_quality;
     /** GPS fix state */
     int satellites_used;
     bool satellites_used_available;
@@ -92,19 +95,7 @@ public:
   };
 
 private:
-  TCHAR filename[MAX_PATH];
   IGCWriter *writer;
-
-  OverwritingRingBuffer<PreTakeoffBuffer, PRETAKEOFF_BUFFER_MAX> pre_takeoff_buffer;
-
-  LoggerFRecord frecord;
-
-  /**
-   * If at least one GPS fix came from the simulator
-   * (NMEA_INFO.Simulator), then this flag is true, and signing is
-   * disabled.
-   */
-  bool simulator;
 
 public:
   /** Default constructor */
@@ -119,6 +110,13 @@ public:
     return writer != NULL;
   }
 
+  /**
+   * Deletes old IGC files until at least LOGGER_MINFREESTORAGE KiB of space are
+   * available
+   * @param gps_info Current NMEA_INFO
+   * @return True if enough space could be cleared, False otherwise
+   */
+  static bool LoggerClearFreeSpace(const NMEAInfo &gps_info);
   void StartLogger(const NMEAInfo &gps_info, const LoggerSettings &settings,
                    const TCHAR *asset_number, const Declaration &decl);
 
@@ -140,7 +138,10 @@ private:
   
 private:
   void LogPointToBuffer(const NMEAInfo &gps_info);
-  void WritePoint(const NMEAInfo &gps_info);
+
+private:
+  TCHAR filename[MAX_PATH];
+  OverwritingRingBuffer<PreTakeoffBuffer, PRETAKEOFF_BUFFER_MAX> pre_takeoff_buffer;
 };
 
 #endif

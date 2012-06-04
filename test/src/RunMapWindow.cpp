@@ -27,16 +27,22 @@ Copyright_License {
 #include "Screen/Fonts.hpp"
 #include "Screen/Init.hpp"
 #include "ResourceLoader.hpp"
+#include "InfoBoxes/InfoBoxLayout.hpp"
+#include "Logger/Logger.hpp"
 #include "Terrain/RasterWeather.hpp"
 #include "Terrain/RasterTerrain.hpp"
+#include "UtilsSystem.hpp"
 #include "Profile/ProfileKeys.hpp"
-#include "Profile/ComputerProfile.hpp"
-#include "Profile/MapProfile.hpp"
 #include "LocalPath.hpp"
 #include "LocalTime.hpp"
-#include "Waypoint/WaypointGlue.hpp"
+#include "WaypointGlue.hpp"
+#include "Device/device.hpp"
 #include "Topography/TopographyStore.hpp"
 #include "Topography/TopographyGlue.hpp"
+#include "Dialogs/Dialogs.h"
+#include "Logger/LoggerImpl.hpp"
+#include "Audio/Sound.hpp"
+#include "Menu/ButtonLabel.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Airspace/AirspaceParser.hpp"
 #include "Profile/Profile.hpp"
@@ -44,20 +50,38 @@ Copyright_License {
 #include "Engine/Airspace/Airspaces.hpp"
 #include "Engine/Task/TaskManager.hpp"
 #include "LogFile.hpp"
+#include "IO/FileLineReader.hpp"
 #include "IO/ConfiguredFile.hpp"
 #include "Operation/Operation.hpp"
 #include "Look/MapLook.hpp"
 #include "Look/TrafficLook.hpp"
+
+#ifndef _MSC_VER
+#include <algorithm>
+using std::min;
+#endif
+
+DeviceBlackboard *device_blackboard;
+
+ProtectedTaskManager *protected_task_manager;
+ProtectedAirspaceWarningManager *airspace_warnings;
 
 void
 DeviceBlackboard::SetStartupLocation(const GeoPoint &loc, const fixed alt) {}
 
 static Waypoints way_points;
 
+static TaskManager task_manager(way_points);
+
 static Airspaces airspace_database;
 
 static TopographyStore *topography;
 static RasterTerrain *terrain;
+
+bool PlayResource(const TCHAR* lpName)
+{
+  return false;
+}
 
 unsigned
 TimeLocal(int d)
@@ -127,7 +151,7 @@ public:
 
     SingleWindow::set(_T("RunMapWindow"), _T("RunMapWindow"), _rc, style);
 
-    PixelRect rc = GetClientRect();
+    PixelRect rc = get_client_rect();
     map.set(*this, rc);
     map.SetWaypoints(&way_points);
     map.SetAirspaces(&airspace_database);
@@ -141,7 +165,7 @@ public:
     rc.right = rc.left + 60;
     rc.bottom = rc.top + 20;
     close_button.set(*this, _T("Close"), ID_CLOSE, rc);
-    close_button.SetFont(Fonts::map);
+    close_button.set_font(Fonts::map);
     close_button.BringToTop();
   }
 
@@ -158,7 +182,7 @@ protected:
 
   virtual void OnResize(UPixelScalar width, UPixelScalar height) {
     SingleWindow::OnResize(width, height);
-    map.Resize(width, height);
+    map.resize(width, height);
 
 #ifndef ENABLE_OPENGL
   if (initialised)
@@ -168,7 +192,19 @@ protected:
 };
 
 static void
-LoadFiles(ComputerSettings &settings)
+SetDefaults(MapSettings &settings_map)
+{
+  settings_map.cruise_orientation = NORTHUP;
+  settings_map.circling_orientation = NORTHUP;
+  settings_map.waypoint.SetDefaults();
+  settings_map.topography_enabled = true;
+  settings_map.terrain.SetDefaults();
+  settings_map.terrain.enable = true;
+  settings_map.terrain.slope_shading = SlopeShading::FIXED;
+}
+
+static void
+LoadFiles()
 {
   NullOperationEnvironment operation;
 
@@ -178,38 +214,30 @@ LoadFiles(ComputerSettings &settings)
   terrain = RasterTerrain::OpenTerrain(NULL, operation);
 
   WaypointGlue::LoadWaypoints(way_points, terrain, operation);
-  WaypointGlue::SetHome(way_points, terrain, settings, NULL, false);
 
-  TLineReader *reader = OpenConfiguredTextFile(szProfileAirspaceFile,
-                                               ConvertLineReader::AUTO);
+  TLineReader *reader = OpenConfiguredTextFile(szProfileAirspaceFile);
   if (reader != NULL) {
     AirspaceParser parser(airspace_database);
     parser.Parse(*reader, operation);
     delete reader;
 
-    airspace_database.Optimise();
+    airspace_database.optimise();
   }
 }
 
 static void
-GenerateBlackboard(MapWindow &map, const ComputerSettings &settings_computer,
-                   const MapSettings &settings_map)
+GenerateBlackboard(MapWindow &map, const MapSettings &settings_map)
 {
   MoreData nmea_info;
   DerivedInfo derived_info;
+  ComputerSettings settings_computer;
 
   nmea_info.Reset();
   nmea_info.clock = fixed_one;
   nmea_info.time = fixed(1297230000);
   nmea_info.alive.Update(nmea_info.clock);
-
-  if (settings_computer.poi.home_location_available)
-    nmea_info.location = settings_computer.poi.home_location;
-  else {
-    nmea_info.location.latitude = Angle::Degrees(fixed(51.2));
-    nmea_info.location.longitude = Angle::Degrees(fixed(7.7));
-  }
-
+  nmea_info.location.latitude = Angle::Degrees(fixed(51.2));
+  nmea_info.location.longitude = Angle::Degrees(fixed(7.7));
   nmea_info.location_available.Update(nmea_info.clock);
   nmea_info.track = Angle::Degrees(fixed_90);
   nmea_info.track_available.Update(nmea_info.clock);
@@ -218,8 +246,10 @@ GenerateBlackboard(MapWindow &map, const ComputerSettings &settings_computer,
   nmea_info.gps_altitude = fixed(1500);
   nmea_info.gps_altitude_available.Update(nmea_info.clock);
 
-  derived_info.Reset();
+  memset(&derived_info, 0, sizeof(derived_info));
   derived_info.terrain_valid = true;
+
+  memset(&settings_computer, 0, sizeof(settings_computer));
 
   if (terrain != NULL) {
     RasterTerrain::UnprotectedLease lease(*terrain);
@@ -228,9 +258,10 @@ GenerateBlackboard(MapWindow &map, const ComputerSettings &settings_computer,
     } while (lease->IsDirty());
   }
 
+  settings_computer.airspace.SetDefaults();
+
   map.ReadBlackboard(nmea_info, derived_info, settings_computer,
                      settings_map);
-  map.SetLocation(nmea_info.location);
 }
 
 #ifndef WIN32
@@ -250,15 +281,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   Profile::SetFiles(_T(""));
   Profile::Load();
 
-  ComputerSettings settings_computer;
-  settings_computer.SetDefaults();
-  Profile::Load(settings_computer);
-
-  MapSettings settings_map;
-  settings_map.SetDefaults();
-  Profile::Load(settings_map);
-
-  LoadFiles(settings_computer);
+  LoadFiles();
 
   ScreenGlobalInit screen_init;
 
@@ -270,6 +293,10 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   TestWindow::register_class(hInstance);
 #endif
 
+  MapSettings settings_map;
+  settings_map.SetDefaults();
+  SetDefaults(settings_map);
+
   MapLook *map_look = new MapLook();
   map_look->Initialise(settings_map);
 
@@ -279,7 +306,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   TestWindow window(*map_look, *traffic_look);
   window.set(PixelRect{0, 0, 640, 480});
 
-  GenerateBlackboard(window.map, settings_computer, settings_map);
+  GenerateBlackboard(window.map, settings_map);
   Fonts::Initialize();
 #ifndef ENABLE_OPENGL
   DrawThread::Draw(window.map);

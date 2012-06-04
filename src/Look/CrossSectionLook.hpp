@@ -42,7 +42,6 @@ struct CrossSectionLook {
   Brush terrain_brush;
 
   Color sea_color;
-  Brush sea_brush;
 
   /** Pen used to draw the grid */
   Pen grid_pen;

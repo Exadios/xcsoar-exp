@@ -42,24 +42,23 @@ public:
 
   void operator()(Airspace as) {
     AbstractAirspace &aas = *as.get_airspace();
-    if (predicate->operator()(aas))
+    if (predicate->condition(aas))
       visitor->Visit(as);
   }
 };
 
 void 
-Airspaces::VisitWithinRange(const GeoPoint &location, fixed range,
-                            AirspaceVisitor& visitor,
-                            const AirspacePredicate &predicate) const
+Airspaces::visit_within_range(const GeoPoint &loc, 
+                              const fixed range,
+                              AirspaceVisitor& visitor,
+                              const AirspacePredicate &predicate) const
 {
-  if (empty())
-    // nothing to do
-    return;
+  if (empty()) return; // nothing to do
 
-  Airspace bb_target(location, task_projection);
-  int projected_range = task_projection.project_range(location, range);
+  Airspace bb_target(loc, task_projection);
+  int mrange = task_projection.project_range(loc, range);
   AirspacePredicateVisitorAdapter adapter(predicate, visitor);
-  airspace_tree.visit_within_range(bb_target, -projected_range, adapter);
+  airspace_tree.visit_within_range(bb_target, -mrange, adapter);
 
 #ifdef INSTRUMENT_TASK
   n_queries++;
@@ -68,22 +67,19 @@ Airspaces::VisitWithinRange(const GeoPoint &location, fixed range,
 
 class IntersectingAirspaceVisitorAdapter {
   GeoPoint start, end;
-  const TaskProjection *projection;
-  FlatRay ray;
+  const FlatRay *ray;
   AirspaceIntersectionVisitor *visitor;
 
 public:
   IntersectingAirspaceVisitorAdapter(const GeoPoint &_loc,
                                      const GeoPoint &_end,
-                                     const TaskProjection &_projection,
+                                     const FlatRay &_ray,
                                      AirspaceIntersectionVisitor &_visitor)
-    :start(_loc), end(_end), projection(&_projection),
-     ray(projection->project(start), projection->project(end)),
-     visitor(&_visitor) {}
+    :start(_loc), end(_end), ray(&_ray), visitor(&_visitor) {}
 
   void operator()(Airspace as) {
-    if (as.intersects(ray) &&
-        visitor->SetIntersections(as.Intersects(start, end, *projection)))
+    if (as.intersects(*ray) &&
+        visitor->set_intersections(as.Intersects(start, end)))
       visitor->Visit(as);
   }
 };
@@ -92,15 +88,15 @@ void
 Airspaces::VisitIntersecting(const GeoPoint &loc, const GeoPoint &end,
                              AirspaceIntersectionVisitor& visitor) const
 {
-  if (empty())
-    // nothing to do
-    return;
+  if (empty()) return; // nothing to do
+
+  FlatRay ray(task_projection.project(loc), task_projection.project(end));
 
   const GeoPoint c = loc.Middle(end);
   Airspace bb_target(c, task_projection);
-  int projected_range = task_projection.project_range(c, loc.Distance(end) / 2);
-  IntersectingAirspaceVisitorAdapter adapter(loc, end, task_projection, visitor);
-  airspace_tree.visit_within_range(bb_target, -projected_range, adapter);
+  int mrange = task_projection.project_range(c, loc.Distance(end) / 2);
+  IntersectingAirspaceVisitorAdapter adapter(loc, end, ray, visitor);
+  airspace_tree.visit_within_range(bb_target, -mrange, adapter);
 
 #ifdef INSTRUMENT_TASK
   n_queries++;
@@ -121,29 +117,28 @@ struct AirspacePredicateAdapter {
 };
 
 const Airspace *
-Airspaces::FindNearest(const GeoPoint &location,
-                       const AirspacePredicate &condition) const
+Airspaces::find_nearest(const GeoPoint &location,
+                        const AirspacePredicate &condition) const
 {
   if (empty())
     return NULL;
 
   const Airspace bb_target(location, task_projection);
-  int projected_range = task_projection.project_range(location, fixed(30000));
+  const int mrange = task_projection.project_range(location, fixed(30000));
   const AirspacePredicateAdapter predicate(condition);
   std::pair<AirspaceTree::const_iterator, AirspaceTree::distance_type> found =
-    airspace_tree.find_nearest_if(bb_target, BBDist(0, projected_range),
-                                  predicate);
+    airspace_tree.find_nearest_if(bb_target, BBDist(0, mrange), predicate);
 
-  return found.first != airspace_tree.end() ? &*found.first : NULL;
+  return found.first != airspace_tree.end()
+    ? &*found.first
+    : NULL;
 }
 
 const Airspaces::AirspaceVector
-Airspaces::ScanNearest(const GeoPoint &location,
-                       const AirspacePredicate &condition) const
+Airspaces::scan_nearest(const GeoPoint &location,
+                        const AirspacePredicate &condition) const 
 {
-  if (empty())
-    // nothing to do
-    return AirspaceVector();
+  if (empty()) return AirspaceVector(); // nothing to do
 
   Airspace bb_target(location, task_projection);
 
@@ -158,30 +153,29 @@ Airspaces::ScanNearest(const GeoPoint &location,
   if (found.first != airspace_tree.end()) {
     // also should do scan_range with range = 0 since there
     // could be more than one with zero dist
-    if (found.second.is_zero())
-      return ScanRange(location, fixed_zero, condition);
-
-    if (condition(*found.first->get_airspace()))
-      res.push_back(*found.first);
+    if (found.second.is_zero()) {
+      return scan_range(location, fixed_zero, condition);
+    } else {
+      if (condition(*found.first->get_airspace()))
+        res.push_back(*found.first);
+    }
   }
 
   return res;
 }
 
 const Airspaces::AirspaceVector
-Airspaces::ScanRange(const GeoPoint &location, fixed range,
-                     const AirspacePredicate &condition) const
+Airspaces::scan_range(const GeoPoint &location,
+                      const fixed range,
+                      const AirspacePredicate &condition) const
 {
-  if (empty())
-    // nothing to do
-    return AirspaceVector();
+  if (empty()) return AirspaceVector(); // nothing to do
 
   Airspace bb_target(location, task_projection);
-  int projected_range = task_projection.project_range(location, range);
+  int mrange = task_projection.project_range(location, range);
   
   std::deque< Airspace > vectors;
-  airspace_tree.find_within_range(bb_target, -projected_range,
-                                  std::back_inserter(vectors));
+  airspace_tree.find_within_range(bb_target, -mrange, std::back_inserter(vectors));
 
 #ifdef INSTRUMENT_TASK
   n_queries++;
@@ -204,8 +198,8 @@ Airspaces::ScanRange(const GeoPoint &location, fixed range,
 }
 
 const Airspaces::AirspaceVector
-Airspaces::FindInside(const AircraftState &state,
-                      const AirspacePredicate &condition) const
+Airspaces::find_inside(const AircraftState &state,
+                       const AirspacePredicate &condition) const
 {
   Airspace bb_target(state.location, task_projection);
 
@@ -232,9 +226,9 @@ Airspaces::FindInside(const AircraftState &state,
 }
 
 void 
-Airspaces::Optimise()
+Airspaces::optimise()
 {
-  if (!owns_children || task_projection.update_fast()) {
+  if (!m_owner || task_projection.update_fast()) {
     // dont update task_projection if not owner!
 
     // task projection changed, so need to push items back onto stack
@@ -257,28 +251,28 @@ Airspaces::Optimise()
 }
 
 void 
-Airspaces::Add(AbstractAirspace *airspace)
+Airspaces::insert(AbstractAirspace* asp)
 {
-  if (!airspace)
+  if (!asp)
     // nothing to add
     return;
 
   // reset QNH to zero so set_pressure_levels will be triggered next update
   // this allows for airspaces to be add at any time
-  qnh = AtmosphericPressure::Zero();
+  m_QNH = AtmosphericPressure::Zero();
 
   // reset day to all so set_activity will be triggered next update
   // this allows for airspaces to be add at any time
-  activity_mask.SetAll();
+  m_day.set_all();
 
-  if (owns_children) {
+  if (m_owner) {
     if (empty())
-      task_projection.reset(airspace->GetCenter());
+      task_projection.reset(asp->GetCenter());
 
-    task_projection.scan_location(airspace->GetCenter());
+    task_projection.scan_location(asp->GetCenter());
   }
 
-  tmp_as.push_back(airspace);
+  tmp_as.push_back(asp);
 }
 
 void
@@ -286,7 +280,7 @@ Airspaces::clear()
 {
   // delete temporaries in case they were added without an optimise() call
   while (!tmp_as.empty()) {
-    if (owns_children) {
+    if (m_owner) {
       AbstractAirspace *aa = tmp_as.front();
       delete aa;
     }
@@ -294,7 +288,7 @@ Airspaces::clear()
   }
 
   // delete items in the tree
-  if (owns_children) {
+  if (m_owner) {
     for (auto v = airspace_tree.begin(); v != airspace_tree.end(); ++v) {
       Airspace a = *v;
       a.destroy();
@@ -323,10 +317,10 @@ Airspaces::~Airspaces()
 }
 
 void 
-Airspaces::SetFlightLevels(const AtmosphericPressure &press)
+Airspaces::set_flight_levels(const AtmosphericPressure &press)
 {
-  if ((int)press.GetHectoPascal() != (int)qnh.GetHectoPascal()) {
-    qnh = press;
+  if ((int)press.GetHectoPascal() != (int)m_QNH.GetHectoPascal()) {
+    m_QNH = press;
 
     for (auto v = airspace_tree.begin(); v != airspace_tree.end(); ++v)
       v->set_flight_level(press);
@@ -334,10 +328,10 @@ Airspaces::SetFlightLevels(const AtmosphericPressure &press)
 }
 
 void
-Airspaces::SetActivity(const AirspaceActivity mask)
+Airspaces::set_activity(const AirspaceActivity mask)
 {
-  if (!mask.equals(activity_mask)) {
-    activity_mask = mask;
+  if (!mask.equals(m_day)) {
+    m_day = mask;
 
     for (auto v = airspace_tree.begin(); v != airspace_tree.end(); ++v)
       v->set_activity(mask);
@@ -356,16 +350,17 @@ Airspaces::end() const
   return airspace_tree.end();
 }
 
-Airspaces::Airspaces(const Airspaces& master, bool _owns_children):
-  qnh(master.qnh),
-  activity_mask(master.activity_mask),
-  owns_children(_owns_children),
+Airspaces::Airspaces(const Airspaces& master,
+  bool owner):
+  m_QNH(master.m_QNH),
+  m_day(master.m_day),
+  m_owner(owner),
   task_projection(master.task_projection)
 {
 }
 
 void
-Airspaces::ClearClearances()
+Airspaces::clear_clearances()
 {
   for (auto v = airspace_tree.begin(); v != airspace_tree.end(); ++v)
     v->clear_clearance();
@@ -373,13 +368,13 @@ Airspaces::ClearClearances()
 
 
 bool
-Airspaces::SynchroniseInRange(const Airspaces& master,
+Airspaces::synchronise_in_range(const Airspaces& master,
                                 const GeoPoint &location,
                                 const fixed range,
                                 const AirspacePredicate &condition)
 {
   bool changed = false;
-  const AirspaceVector contents_master = master.ScanRange(location, range, condition);
+  const AirspaceVector contents_master = master.scan_range(location, range, condition);
   AirspaceVector contents_self;
   contents_self.reserve(max(airspace_tree.size(), contents_master.size()));
 
@@ -402,7 +397,7 @@ Airspaces::SynchroniseInRange(const Airspaces& master,
       }
     }
     if (!found && other->IsActive()) {
-      Add(v->get_airspace());
+      insert(v->get_airspace());
       changed = true;
     }
   }
@@ -427,12 +422,12 @@ Airspaces::SynchroniseInRange(const Airspaces& master,
     changed = true;
   }
   if (changed)
-    Optimise();
+    optimise();
   return changed;
 }
 
 void
-Airspaces::VisitInside(const GeoPoint &loc,
+Airspaces::visit_inside(const GeoPoint &loc,
                         AirspaceVisitor& visitor) const
 {
   if (empty()) return; // nothing to do

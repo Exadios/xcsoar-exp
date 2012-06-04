@@ -25,7 +25,7 @@ Copyright_License {
 #define XCSOAR_DEVICE_LINE_HANDLER_HPP
 
 #include "Port.hpp"
-#include "Util/FifoBuffer.hpp"
+#include "FifoBuffer.hpp"
 
 class PortLineHandler : public Port::Handler {
   typedef FifoBuffer<char, 256u> Buffer;

@@ -51,8 +51,6 @@ struct AirspaceClassRendererSettings
 #endif
 
   Color color;
-
-  unsigned border_width;
 };
 
 /**

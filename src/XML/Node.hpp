@@ -52,18 +52,20 @@ protected:
   struct Data : private NonCopyable {
     /** Structure for XML attribute. */
     struct Attribute : private NonCopyable {
-      tstring name, value;
+      TCHAR *name;
+      TCHAR *value;
 
-      Attribute(const TCHAR *_name, const TCHAR *_value)
+      Attribute(TCHAR *_name, TCHAR *_value)
         :name(_name), value(_value) {}
 
-      Attribute(const TCHAR *_name, size_t name_length,
-                const TCHAR *_value, size_t value_length)
-        :name(_name, name_length), value(_value, value_length) {}
+      ~Attribute() {
+        free(name);
+        free(value);
+      }
     };
 
     /** Element name (=NULL if root) */
-    tstring name;
+    const TCHAR *name;
 
     /** Whether node is an XML declaration - '<?xml ?>' */
     bool is_declaration;
@@ -83,15 +85,7 @@ protected:
       :name(_name),
        is_declaration(_is_declaration),
        ref_count(1) {}
-
-    Data(const TCHAR *_name, size_t name_length, bool _is_declaration)
-      :name(_name, name_length),
-       is_declaration(_is_declaration),
-       ref_count(1) {}
-
-    ~Data() {
-      assert(ref_count == 0);
-    }
+    ~Data();
 
     void Ref();
     void Unref();
@@ -100,13 +94,8 @@ protected:
       return !children.empty() || !text.empty();
     }
 
-    void AddAttribute(const TCHAR *name, const TCHAR *value) {
+    void AddAttribute(TCHAR *name, TCHAR *value) {
       attributes.emplace_front(name, value);
-    }
-
-    void AddAttribute(const TCHAR *name, size_t name_length,
-                      const TCHAR *value, size_t value_length) {
-      attributes.emplace_front(name, name_length, value, value_length);
     }
 
     typedef std::list<XMLNode>::const_iterator const_iterator;
@@ -128,11 +117,9 @@ protected:
    */
   XMLNode(const TCHAR *name, bool is_declaration);
 
-  XMLNode(const TCHAR *name, size_t name_length, bool is_declaration);
-
 public:
   static inline XMLNode Null() {
-    return XMLNode(_T(""), false);
+    return XMLNode(NULL, false);
   }
 
   static XMLNode CreateRoot(const TCHAR *name);
@@ -143,7 +130,7 @@ public:
   const TCHAR *GetName() const {
     assert(d != NULL);
 
-    return d->name.c_str();
+    return d->name;
   }
 
   typedef Data::const_iterator const_iterator;
@@ -196,10 +183,10 @@ public:
    *
    * @param writer the stream to write the XML text to
 
-   * @param format false if no formatting is required, true
+   * @param format 0 if no formatting is required, otherwise nonzero
    * for formatted text with carriage returns and indentation.
    */
-  void Serialise(TextWriter &writer, bool format) const;
+  void Serialise(TextWriter &writer, int format) const;
 
   gcc_pure
   bool IsDeclaration() const {
@@ -248,28 +235,12 @@ public:
   /**
    * Add a child node to the given element.
    */
-  XMLNode &AddChild(const TCHAR *name, bool is_declaration=false);
-
-  XMLNode &AddChild(const TCHAR *name, size_t name_length,
-                    bool is_declaration=false);
+  XMLNode &AddChild(const TCHAR *name, bool is_declaration);
 
   /**
    * Add an attribute to an element.
    */
-  void AddAttribute(const TCHAR *name, const TCHAR *value) {
-    assert(name != NULL);
-    assert(value != NULL);
-
-    d->AddAttribute(name, value);
-  }
-
-  void AddAttribute(const TCHAR *name, size_t name_length,
-                    const TCHAR *value, size_t value_length) {
-    assert(name != NULL);
-    assert(value != NULL);
-
-    d->AddAttribute(name, name_length, value, value_length);
-  }
+  void AddAttribute(TCHAR *name, TCHAR *value);
 
   /**
    * Add text to the element.

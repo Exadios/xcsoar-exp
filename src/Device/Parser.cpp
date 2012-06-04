@@ -31,7 +31,7 @@ Copyright_License {
 #include "NMEA/Info.hpp"
 #include "NMEA/Checksum.hpp"
 #include "NMEA/InputLine.hpp"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 #include "Compatibility/string.h" /* for _ttoi() */
 #include "Units/System.hpp"
 #include "OS/Clock.hpp"
@@ -509,17 +509,11 @@ NMEAParser::GGA(NMEAInputLine &line, NMEAInfo &info)
   GeoPoint location;
   bool valid_location = ReadGeoPoint(line, location);
 
-  unsigned fix_quality;
-  if (line.read_checked(fix_quality)) {
-    gps.fix_quality = (FixQuality)fix_quality;
+  if (line.read_checked(gps.fix_quality))
     gps.fix_quality_available.Update(info.clock);
-  }
 
-  unsigned satellites_used;
-  if (line.read_checked(satellites_used)) {
-    info.gps.satellites_used = satellites_used;
-    info.gps.satellites_used_available.Update(info.clock);
-  }
+  gps.satellites_used_available.Update(info.clock);
+  gps.satellites_used = min(16, line.read(-1));
 
   if (!TimeHasAdvanced(this_time, info))
     return true;
@@ -713,7 +707,7 @@ NMEAParser::PFLAA(NMEAInputLine &line, NMEAInfo &info)
   // 5 id, 6 digit hex
   char id_string[16];
   line.read(id_string, 16);
-  traffic.id = FlarmId::Parse(id_string, NULL);
+  traffic.id.Parse(id_string, NULL);
 
   traffic.track_received = line.read_checked(value);
   if (!traffic.track_received) {

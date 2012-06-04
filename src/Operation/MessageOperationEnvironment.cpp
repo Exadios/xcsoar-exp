@@ -27,5 +27,5 @@ Copyright_License {
 void
 MessageOperationEnvironment::SetErrorMessage(const TCHAR *text)
 {
-  ShowMessageBox(text, _T(""), MB_OK|MB_ICONERROR);
+  MessageBoxX(text, _T(""), MB_OK|MB_ICONERROR);
 }

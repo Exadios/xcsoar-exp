@@ -45,13 +45,13 @@ ContainerWindow::FindControl(std::list<Window*>::const_iterator i,
 {
   for (; i != end; ++i) {
     Window &child = **i;
-    if (!child.IsVisible() || !child.IsEnabled())
+    if (!child.is_visible() || !child.is_enabled())
       continue;
 
-    if (child.IsTabStop())
+    if (child.is_tab_stop())
       return &child;
 
-    if (child.IsControlParent()) {
+    if (child.is_control_parent()) {
       ContainerWindow &container = (ContainerWindow &)child;
       Window *control = container.FindFirstControl();
       if (control != NULL)
@@ -69,13 +69,13 @@ ContainerWindow::FindControl(std::list<Window*>::const_reverse_iterator i,
 {
   for (; i != end; ++i) {
     Window &child = **i;
-    if (!child.IsVisible() || !child.IsEnabled())
+    if (!child.is_visible() || !child.is_enabled())
       continue;
 
-    if (child.IsTabStop())
+    if (child.is_tab_stop())
       return &child;
 
-    if (child.IsControlParent()) {
+    if (child.is_control_parent()) {
       ContainerWindow &container = (ContainerWindow &)child;
       Window *control = container.FindLastControl();
       if (control != NULL)
@@ -253,7 +253,7 @@ ContainerWindow::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
 {
   Window *child = EventChildAt(x, y);
   if (child != NULL) {
-    child->OnMouseMove(x - child->GetLeft(), y - child->GetTop(), keys);
+    child->OnMouseMove(x - child->get_left(), y - child->get_top(), keys);
     return true;
   }
 
@@ -265,7 +265,7 @@ ContainerWindow::OnMouseDown(PixelScalar x, PixelScalar y)
 {
   Window *child = EventChildAt(x, y);
   if (child != NULL) {
-    child->OnMouseDown(x - child->GetLeft(), y - child->GetTop());
+    child->OnMouseDown(x - child->get_left(), y - child->get_top());
     return true;
   }
 
@@ -277,7 +277,7 @@ ContainerWindow::OnMouseUp(PixelScalar x, PixelScalar y)
 {
   Window *child = EventChildAt(x, y);
   if (child != NULL) {
-    child->OnMouseUp(x - child->GetLeft(), y - child->GetTop());
+    child->OnMouseUp(x - child->get_left(), y - child->get_top());
     return true;
   }
 
@@ -289,7 +289,7 @@ ContainerWindow::OnMouseDouble(PixelScalar x, PixelScalar y)
 {
   Window *child = EventChildAt(x, y);
   if (child != NULL) {
-    child->OnMouseDouble(x - child->GetLeft(), y - child->GetTop());
+    child->OnMouseDouble(x - child->get_left(), y - child->get_top());
     return true;
   }
 
@@ -301,7 +301,7 @@ ContainerWindow::OnMouseWheel(PixelScalar x, PixelScalar y, int delta)
 {
   Window *child = EventChildAt(x, y);
   if (child != NULL) {
-    child->OnMouseWheel(x - child->GetLeft(), y - child->GetTop(), delta);
+    child->OnMouseWheel(x - child->get_left(), y - child->get_top(), delta);
     return true;
   }
 
@@ -345,15 +345,15 @@ ContainerWindow::OnPaint(Canvas &canvas)
      behind it */
   for (auto i = children.rbegin(); i != children.rend(); ++i) {
     Window &child = **i;
-    if (child.IsVisible() &&
-        child.GetLeft() <= 0 && child.GetRight() >= (int)GetWidth() &&
-        child.GetTop() <= 0 && child.GetBottom() >= (int)GetHeight())
+    if (child.is_visible() &&
+        child.get_left() <= 0 && child.get_right() >= (int)get_width() &&
+        child.get_top() <= 0 && child.get_bottom() >= (int)get_height())
       full = &child;
   }
 
   for (auto i = children.rbegin(); i != children.rend(); ++i) {
     Window &child = **i;
-    if (!child.IsVisible())
+    if (!child.is_visible())
       continue;
 
     if (full != NULL) {
@@ -365,8 +365,8 @@ ContainerWindow::OnPaint(Canvas &canvas)
         continue;
     }
 
-    SubCanvas sub_canvas(canvas, child.GetLeft(), child.GetTop(),
-                         child.GetWidth(), child.GetHeight());
+    SubCanvas sub_canvas(canvas, child.get_left(), child.get_top(),
+                         child.get_width(), child.get_height());
     child.Setup(sub_canvas);
     child.OnPaint(sub_canvas);
   }
@@ -376,7 +376,7 @@ ContainerWindow::OnPaint(Canvas &canvas)
   if (HasBorder()) {
     canvas.SelectBlackPen();
     canvas.SelectHollowBrush();
-    canvas.Rectangle(0, 0, GetWidth() - 1, GetHeight() - 1);
+    canvas.Rectangle(0, 0, get_width() - 1, get_height() - 1);
   }
 }
 
@@ -415,10 +415,10 @@ ContainerWindow::ChildAt(PixelScalar x, PixelScalar y)
 {
   for (auto i = children.begin(); i != children.end(); ++i) {
     Window &child = **i;
-    if (child.IsVisible() &&
-        x >= child.GetLeft() && x < child.GetRight() &&
-        y >= child.GetTop() && y < child.GetBottom())
-      return child.IsEnabled() ? &child : NULL;
+    if (child.is_visible() &&
+        x >= child.get_left() && x < child.get_right() &&
+        y >= child.get_top() && y < child.get_bottom())
+      return child.is_enabled() ? &child : NULL;
   }
 
   return NULL;

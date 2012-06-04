@@ -30,7 +30,6 @@ Copyright_License {
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Checksum.hpp"
 #include "Util/Macros.hpp"
-#include "Operation/ConsoleOperationEnvironment.hpp"
 
 #include <string>
 #include <map>
@@ -53,11 +52,9 @@ private:
 
     settings[name] = value;
 
-    ConsoleOperationEnvironment env;
-
     char buffer[512];
     snprintf(buffer, ARRAY_SIZE(buffer), "PDVSC,A,%s,%s", name, value);
-    PortWriteNMEA(*port, buffer, env);
+    PortWriteNMEA(*port, buffer);
   }
 
   void PDVSC_R(NMEAInputLine &line) {
@@ -70,11 +67,9 @@ private:
 
     const char *value = i->second.c_str();
 
-    ConsoleOperationEnvironment env;
-
     char buffer[512];
     snprintf(buffer, ARRAY_SIZE(buffer), "PDVSC,A,%s,%s", name, value);
-    PortWriteNMEA(*port, buffer, env);
+    PortWriteNMEA(*port, buffer);
   }
 
   void PDVSC(NMEAInputLine &line) {

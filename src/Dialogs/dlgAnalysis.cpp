@@ -37,7 +37,7 @@ Copyright_License {
 #include "Look/Look.hpp"
 #include "Computer/GlideComputer.hpp"
 #include "Protection.hpp"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 #include "Compiler.h"
 #include "Formatter/Units.hpp"
 #include "Renderer/FlightStatisticsRenderer.hpp"
@@ -55,18 +55,18 @@ Copyright_License {
 
 #include <stdio.h>
 
-enum class AnalysisPage: uint8_t {
-  BAROGRAPH,
-  CLIMB,
-  THERMAL_BAND,
-  TASK_SPEED,
-  WIND,
-  POLAR,
-  TEMPTRACE,
-  TASK,
-  OLC,
-  AIRSPACE,
-  COUNT
+enum analysis_page {
+  ANALYSIS_PAGE_BAROGRAPH,
+  ANALYSIS_PAGE_CLIMB,
+  ANALYSIS_PAGE_THERMAL_BAND,
+  ANALYSIS_PAGE_TASK_SPEED,
+  ANALYSIS_PAGE_WIND,
+  ANALYSIS_PAGE_POLAR,
+  ANALYSIS_PAGE_TEMPTRACE,
+  ANALYSIS_PAGE_TASK,
+  ANALYSIS_PAGE_OLC,
+  ANALYSIS_PAGE_AIRSPACE,
+  ANALYSIS_PAGE_COUNT
 };
 
 class ChartControl;
@@ -78,7 +78,7 @@ static const ProtectedTaskManager *protected_task_manager;
 static const Airspaces *airspaces;
 static const RasterTerrain *terrain;
 
-static AnalysisPage page = AnalysisPage::BAROGRAPH;
+static enum analysis_page page = ANALYSIS_PAGE_BAROGRAPH;
 static WndForm *wf = NULL;
 static ChartControl *wGrid = NULL;
 static WndFrame *wInfo;
@@ -148,7 +148,7 @@ static void
 SetCalcVisibility(const bool visible)
 {
   assert(wCalc != NULL);
-  wCalc->SetVisible(visible);
+  wCalc->set_visible(visible);
 }
 
 static void
@@ -174,25 +174,25 @@ ChartControl::OnPaint(Canvas &canvas)
   GLCanvasScissor scissor(canvas);
 #endif
 
-  canvas.Clear(COLOR_WHITE);
+  canvas.clear(COLOR_WHITE);
   canvas.SetTextColor(COLOR_BLACK);
 
-  PixelRect rcgfx = GetClientRect();
+  PixelRect rcgfx = get_client_rect();
 
   // background is painted in the base-class
 
   switch (page) {
-  case AnalysisPage::BAROGRAPH:
+  case ANALYSIS_PAGE_BAROGRAPH:
     RenderBarograph(canvas, rcgfx, chart_look, look->cross_section,
                     glide_computer->GetFlightStats(),
                     basic, calculated, protected_task_manager);
     break;
-  case AnalysisPage::CLIMB:
+  case ANALYSIS_PAGE_CLIMB:
     RenderClimbChart(canvas, rcgfx, chart_look,
                      glide_computer->GetFlightStats(),
                      settings_computer.polar.glide_polar_task);
     break;
-  case AnalysisPage::THERMAL_BAND:
+  case ANALYSIS_PAGE_THERMAL_BAND:
   {
     OrderedTaskBehaviour otb;
     if (protected_task_manager != NULL) {
@@ -209,22 +209,22 @@ ChartControl::OnPaint(Canvas &canvas)
                              &otb);
   }
     break;
-  case AnalysisPage::WIND:
+  case ANALYSIS_PAGE_WIND:
     RenderWindChart(canvas, rcgfx, chart_look,
                     glide_computer->GetFlightStats(),
                     basic, glide_computer->GetWindStore());
     break;
-  case AnalysisPage::POLAR:
+  case ANALYSIS_PAGE_POLAR:
     RenderGlidePolar(canvas, rcgfx, look->chart,
                      calculated.climb_history,
                      settings_computer,
                      settings_computer.polar.glide_polar_task);
     break;
-  case AnalysisPage::TEMPTRACE:
+  case ANALYSIS_PAGE_TEMPTRACE:
     RenderTemperatureChart(canvas, rcgfx, chart_look,
                            glide_computer->GetCuSonde());
     break;
-  case AnalysisPage::TASK:
+  case ANALYSIS_PAGE_TASK:
     if (protected_task_manager != NULL) {
       const TraceComputer *trace_computer = glide_computer != NULL
         ? &glide_computer->GetTraceComputer()
@@ -237,7 +237,7 @@ ChartControl::OnPaint(Canvas &canvas)
                     trace_computer);
     }
     break;
-  case AnalysisPage::OLC:
+  case ANALYSIS_PAGE_OLC:
     if (glide_computer != NULL) {
       const FlightStatisticsRenderer fs(glide_computer->GetFlightStats(),
                                         chart_look, look->map);
@@ -247,7 +247,7 @@ ChartControl::OnPaint(Canvas &canvas)
                    glide_computer->GetTraceComputer());
     }
     break;
-  case AnalysisPage::TASK_SPEED:
+  case ANALYSIS_PAGE_TASK_SPEED:
     if (protected_task_manager != NULL) {
       ProtectedTaskManager::Lease task(*protected_task_manager);
       RenderSpeed(canvas, rcgfx, chart_look,
@@ -271,8 +271,9 @@ UpdateCrossSection()
   csw->ReadBlackboard(basic, calculated, blackboard->GetMapSettings().airspace);
 
   if (basic.location_available && basic.track_available) {
-    csw->SetDirection(basic.track);
-    csw->SetStart(basic.location);
+    csw->set_direction(basic.track);
+    csw->set_start(basic.location);
+    csw->SetValid();
   } else
     csw->SetInvalid();
 }
@@ -292,7 +293,7 @@ Update()
   const DerivedInfo &calculated = blackboard->Calculated();
 
   switch (page) {
-  case AnalysisPage::BAROGRAPH:
+  case ANALYSIS_PAGE_BAROGRAPH:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               _("Barograph"));
     wf->SetCaption(sTmp);
@@ -301,7 +302,7 @@ Update()
     SetCalcCaption(_("Settings"));
     break;
 
-  case AnalysisPage::CLIMB:
+  case ANALYSIS_PAGE_CLIMB:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               _("Climb"));
     wf->SetCaption(sTmp);
@@ -310,7 +311,7 @@ Update()
     SetCalcCaption(_("Task Calc"));
     break;
 
-  case AnalysisPage::THERMAL_BAND:
+  case ANALYSIS_PAGE_THERMAL_BAND:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               _("Thermal Band"));
     wf->SetCaption(sTmp);
@@ -319,7 +320,7 @@ Update()
     SetCalcCaption(_T(""));
     break;
 
-  case AnalysisPage::WIND:
+  case ANALYSIS_PAGE_WIND:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               _("Wind At Altitude"));
     wf->SetCaption(sTmp);
@@ -327,7 +328,7 @@ Update()
     SetCalcCaption(_("Set Wind"));
     break;
 
-  case AnalysisPage::POLAR:
+  case ANALYSIS_PAGE_POLAR:
     _stprintf(sTmp, _T("%s: %s (%s %d kg)"), _("Analysis"),
               _("Glide Polar"), _("Mass"),
               (int)settings_computer.polar.glide_polar_task.GetTotalMass());
@@ -337,7 +338,7 @@ Update()
     SetCalcCaption(_("Settings"));
    break;
 
-  case AnalysisPage::TEMPTRACE:
+  case ANALYSIS_PAGE_TEMPTRACE:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               _("Temp Trace"));
     wf->SetCaption(sTmp);
@@ -346,7 +347,7 @@ Update()
     SetCalcCaption(_("Settings"));
     break;
 
-  case AnalysisPage::TASK_SPEED:
+  case ANALYSIS_PAGE_TASK_SPEED:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               _("Task Speed"));
     wf->SetCaption(sTmp);
@@ -354,7 +355,7 @@ Update()
     SetCalcCaption(_("Task Calc"));
     break;
 
-  case AnalysisPage::TASK:
+  case ANALYSIS_PAGE_TASK:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               _("Task"));
     wf->SetCaption(sTmp);
@@ -363,7 +364,7 @@ Update()
     SetCalcCaption(_("Task calc"));
     break;
 
-  case AnalysisPage::OLC:
+  case ANALYSIS_PAGE_OLC:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               ContestToString(settings_computer.task.contest));
     wf->SetCaption(sTmp);
@@ -372,7 +373,7 @@ Update()
     wInfo->SetCaption(sTmp);
     break;
 
-  case AnalysisPage::AIRSPACE:
+  case ANALYSIS_PAGE_AIRSPACE:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
               _("Airspace"));
     wf->SetCaption(sTmp);
@@ -380,13 +381,13 @@ Update()
     SetCalcCaption(_("Warnings"));
     break;
 
-  case AnalysisPage::COUNT:
+  case ANALYSIS_PAGE_COUNT:
     assert(false);
     break;
   }
 
   switch (page) {
-  case AnalysisPage::AIRSPACE:
+  case ANALYSIS_PAGE_AIRSPACE:
     UpdateCrossSection();
     csw->Invalidate();
     csw->Show();
@@ -406,11 +407,11 @@ NextPage(int Step)
 {
   int new_page = (int)page + Step;
 
-  if (new_page >= (int)AnalysisPage::COUNT)
+  if (new_page >= ANALYSIS_PAGE_COUNT)
     new_page = 0;
   if (new_page < 0)
-    new_page = (int)AnalysisPage::COUNT - 1;
-  page = (AnalysisPage)new_page;
+    new_page = ANALYSIS_PAGE_COUNT - 1;
+  page = (enum analysis_page)new_page;
 
   Update();
 }
@@ -522,31 +523,31 @@ OnCalcClicked(gcc_unused WndButton &Sender)
 {
   assert(wf != NULL);
 
-  if (page == AnalysisPage::BAROGRAPH)
+  if (page == ANALYSIS_PAGE_BAROGRAPH)
     dlgBasicSettingsShowModal();
 
-  if (page == AnalysisPage::CLIMB) {
+  if (page == ANALYSIS_PAGE_CLIMB) {
     wf->Hide();
     dlgTaskManagerShowModal(*(SingleWindow *)wf->GetRootOwner());
     wf->Show();
   }
 
-  if (page == AnalysisPage::WIND)
+  if (page == ANALYSIS_PAGE_WIND)
     dlgWindSettingsShowModal();
 
-  if (page == AnalysisPage::POLAR)
+  if (page == ANALYSIS_PAGE_POLAR)
     dlgBasicSettingsShowModal();
 
-  if (page == AnalysisPage::TEMPTRACE)
+  if (page == ANALYSIS_PAGE_TEMPTRACE)
     dlgBasicSettingsShowModal();
 
-  if ((page == AnalysisPage::TASK) || (page == AnalysisPage::TASK_SPEED)) {
+  if ((page == ANALYSIS_PAGE_TASK) || (page == ANALYSIS_PAGE_TASK_SPEED)) {
     wf->Hide();
     dlgTaskManagerShowModal(*(SingleWindow *)wf->GetRootOwner());
     wf->Show();
   }
 
-  if (page == AnalysisPage::AIRSPACE)
+  if (page == ANALYSIS_PAGE_AIRSPACE)
     dlgAirspaceWarningsShowModal(wf->GetMainWindow(),
                                  glide_computer->GetAirspaceWarnings());
 
@@ -562,8 +563,8 @@ OnCreateCrossSectionControl(ContainerWindow &parent,
   csw = new CrossSectionControl(look->cross_section, look->map.airspace,
                                 look->chart);
   csw->set(parent, left, top, width, height, style);
-  csw->SetAirspaces(airspaces);
-  csw->SetTerrain(terrain);
+  csw->set_airspaces(airspaces);
+  csw->set_terrain(terrain);
   UpdateCrossSection();
   return csw;
 }
@@ -624,7 +625,7 @@ dlgAnalysisShowModal(SingleWindow &parent, const Look &_look,
   wCalc = (WndButton *)wf->FindByName(_T("cmdCalc"));
 
   if (_page >= 0)
-    page = (AnalysisPage)_page;
+    page = (analysis_page)_page;
 
   Update();
 

@@ -28,7 +28,7 @@ Copyright_License {
 #include "Screen/Fonts.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/TextInBox.hpp"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
 #include "Formatter/UserUnits.hpp"
 #include "Look/TrafficLook.hpp"
@@ -100,14 +100,14 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
       // If FLARM callsign/name available draw it to the canvas
       if (traffic.HasName() && !StringIsEmpty(traffic.name))
         TextInBox(canvas, traffic.name, sc_name.x, sc_name.y,
-                  mode, GetClientRect());
+                  mode, get_client_rect());
 
       if (traffic.climb_rate_avg30s >= fixed(0.1)) {
         // If average climb data available draw it to the canvas
         TCHAR label_avg[100];
         FormatUserVerticalSpeed(traffic.climb_rate_avg30s,
                                        label_avg, false);
-        TextInBox(canvas, label_avg, sc_av.x, sc_av.y, mode, GetClientRect());
+        TextInBox(canvas, label_avg, sc_av.x, sc_av.y, mode, get_client_rect());
       }
     }
 

@@ -24,6 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_MAP_WINDOW_HPP
 #define XCSOAR_MAP_WINDOW_HPP
 
+#include "Util/StaticArray.hpp"
 #include "Projection/MapWindowProjection.hpp"
 #include "MapWindowTimer.hpp"
 #include "Renderer/AirspaceRenderer.hpp"
@@ -34,10 +35,12 @@ Copyright_License {
 #include "Screen/LabelBlock.hpp"
 #include "Screen/StopWatch.hpp"
 #include "MapWindowBlackboard.hpp"
+#include "NMEA/Derived.hpp"
 #include "Renderer/BackgroundRenderer.hpp"
 #include "Renderer/WaypointRenderer.hpp"
 #include "Renderer/TrailRenderer.hpp"
 #include "Compiler.h"
+#include <vector>
 
 struct MapLook;
 struct TrafficLook;

@@ -83,7 +83,7 @@ public:
   void set(PixelRect _rc) {
     SingleWindow::set(_T("RunCanvas"), _T("RunCanvas"), _rc);
 
-    PixelRect rc = GetClientRect();
+    PixelRect rc = get_client_rect();
 
     PixelRect button_rc = rc;
     button_rc.bottom -= 5;
@@ -109,7 +109,7 @@ private:
 
     Brush red_brush(COLOR_RED);
 
-    const PixelRect rc = GetClientRect();
+    const PixelRect rc = get_client_rect();
     const UPixelScalar width = rc.right - rc.left;
     const UPixelScalar height = rc.bottom - rc.top;
     const UPixelScalar hmiddle = (rc.left + rc.right) / 2;
@@ -146,7 +146,7 @@ private:
       break;
 
     case 2:
-      canvas.DrawCircle(hmiddle, vmiddle,
+      canvas.circle(hmiddle, vmiddle,
                     min(width, height) / 3);
       label = _T("circle");
       break;
@@ -165,13 +165,13 @@ private:
 
     case 5:
       canvas.Select(red_brush);
-      canvas.DrawPolygon(p1, 3);
+      canvas.polygon(p1, 3);
       label = _T("big polygon");
       break;
 
     case 6:
       canvas.Select(red_brush);
-      canvas.DrawPolygon(p2, 3);
+      canvas.polygon(p2, 3);
       label = _T("huge polygon");
       break;
     }

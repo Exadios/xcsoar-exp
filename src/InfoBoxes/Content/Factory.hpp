@@ -138,7 +138,6 @@ namespace InfoBoxFactory
     e_HeadWind,
 
     TerrainCollision,
-    NavAltitude,
 
     e_NUM_TYPES /* Last item */
   };

@@ -33,7 +33,7 @@ class Waypoints;
  */
 class Deserialiser
 {
-  DataNode &node;
+  DataNode &m_node;
 
   const Waypoints *waypoints;
 
@@ -46,15 +46,15 @@ public:
    * 
    * @return Initialised object
    */
-  Deserialiser(DataNode &_node, const Waypoints *_waypoints=NULL)
-    :node(_node), waypoints(_waypoints) {}
+  Deserialiser(DataNode& the_node, const Waypoints *_waypoints=NULL)
+    :m_node(the_node), waypoints(_waypoints) {}
 
   /** 
    * De-serialise a task (create a task to reflect the DataNode structure)
    * 
    * @param data OrderedTask to serialise
    */
-  void Deserialise(OrderedTask &task);
+  void deserialise(OrderedTask &task);
 
 protected:
   /** 
@@ -62,21 +62,21 @@ protected:
    * 
    * @param data Item to deserialise
    */
-  void Deserialise(OrderedTaskBehaviour &data);
+  void deserialise(OrderedTaskBehaviour& data);
 
   /** 
    * Deserialise a Waypoint; client responsible for deletion
    * 
    * @return Newly constructed Waypoint or NULL on failure
    */
-  Waypoint* DeserialiseWaypoint();
+  Waypoint* deserialise_waypoint();
 
   /** 
    * Deserialise a GeoPoint
    * 
    * @param data Item to deserialise
    */
-  void Deserialise(GeoPoint &data);
+  void deserialise(GeoPoint& data);
 
   /** 
    * Deserialise an ObservationZonePoint; client responsible for deletion
@@ -86,18 +86,18 @@ protected:
    *
    * @return Newly constructed ObservationZonePoint or NULL on failure
    */
-  ObservationZonePoint* DeserialiseOZ(const Waypoint &wp, bool is_turnpoint);
+  ObservationZonePoint* deserialise_oz(const Waypoint& wp, const bool is_turnpoint);
 
   /** 
    * Deserialise a point, appending it to the task
    * 
    * @param data OrderedTask to append to
    */
-  void DeserialiseTaskpoint(OrderedTask &data);
+  void deserialise_point(OrderedTask& data);
 
 private:
-  HeightReferenceType GetHeightRef(const TCHAR *nodename) const;
-  TaskFactoryType GetTaskFactoryType() const;
+  HeightReferenceType height_ref(const TCHAR *nodename) const;
+  TaskFactoryType task_factory_type() const;
 };
 
 #endif

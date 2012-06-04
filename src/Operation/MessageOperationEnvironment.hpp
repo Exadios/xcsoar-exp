@@ -28,7 +28,7 @@ Copyright_License {
 
 /**
  * A #OperationEnvironment implementation that displays error messages
- * with ShowMessageBox().
+ * with MessageBoxX().
  */
 class MessageOperationEnvironment : public QuietOperationEnvironment {
 public:

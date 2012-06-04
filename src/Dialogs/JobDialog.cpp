@@ -88,7 +88,7 @@ JobDialog(SingleWindow &parent, const DialogLook &dialog_look,
   WindowStyle form_style;
   form_style.Hide();
   WndForm form(parent, dialog_look,
-               parent.GetClientRect(),
+               parent.get_client_rect(),
                caption);
 
   ContainerWindow &client_area = form.GetClientAreaWindow();
@@ -102,14 +102,14 @@ JobDialog(SingleWindow &parent, const DialogLook &dialog_look,
     ButtonWindowStyle style;
     style.TabStop();
 
-    PixelRect rc = client_area.GetClientRect();
+    PixelRect rc = client_area.get_client_rect();
     rc.right -= Layout::Scale(2);
     rc.left = rc.right - Layout::Scale(78);
     rc.top += Layout::Scale(2);
     rc.bottom = rc.top + Layout::Scale(35);
     cancel_button.set(client_area, _("Cancel"), rc,
                       style);
-    cancel_button.SetFont(*dialog_look.button.font);
+    cancel_button.set_font(*dialog_look.button.font);
     cancel_button.BringToTop();
   }
 

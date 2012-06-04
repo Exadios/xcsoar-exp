@@ -43,9 +43,9 @@ LXDevice::LinkTimeout()
  * equally well, we don't bother to switch.
  */
 static bool
-ModeColibri(Port &port, OperationEnvironment &env)
+ModeColibri(Port &port)
 {
-  return PortWriteNMEA(port, "PFLX0,COLIBRI", env);
+  return PortWriteNMEA(port, "PFLX0,COLIBRI");
 }
 
 /**
@@ -55,7 +55,7 @@ ModeColibri(Port &port, OperationEnvironment &env)
  * back to the "real" baud rate.
  */
 static bool
-ModeLX1600(Port &port, OperationEnvironment &env)
+ModeLX1600(Port &port)
 {
   unsigned old_baud_rate = port.GetBaudrate();
   if (old_baud_rate == 4800)
@@ -63,7 +63,7 @@ ModeLX1600(Port &port, OperationEnvironment &env)
   else if (!port.SetBaudrate(4800))
     return false;
 
-  const bool success = PortWriteNMEA(port, "PFLX0,LX1600", env);
+  const bool success = PortWriteNMEA(port, "PFLX0,LX1600");
 
   if (old_baud_rate != 0)
     port.SetBaudrate(old_baud_rate);
@@ -72,13 +72,13 @@ ModeLX1600(Port &port, OperationEnvironment &env)
 }
 
 static bool
-EnableLXWP(Port &port, OperationEnvironment &env)
+EnableLXWP(Port &port)
 {
-  return PortWriteNMEA(port, "PFLX0,LXWP0,1,LXWP2,3,LXWP3,4", env);
+  return PortWriteNMEA(port, "PFLX0,LXWP0,1,LXWP2,3,LXWP3,4");
 }
 
 bool
-LXDevice::EnableNMEA(OperationEnvironment &env)
+LXDevice::EnableNMEA(gcc_unused OperationEnvironment &env)
 {
   unsigned old_baud_rate;
 
@@ -94,13 +94,13 @@ LXDevice::EnableNMEA(OperationEnvironment &env)
   }
 
   /* just in case the LX1600 is still in pass-through mode: */
-  ModeLX1600(port, env);
+  ModeLX1600(port);
 
   // This line initiates the Color Vario to send out LXWP2 and LXWP3
   // LXWP0 once started, is repeated every second
   // This is a copy of the initiation done in LK8000, realized by Lx developers
   // We have no documentation and so we do not know what this exactly means
-  EnableLXWP(port, env);
+  EnableLXWP(port);
 
   if (old_baud_rate != 0)
     port.SetBaudrate(old_baud_rate);
@@ -125,7 +125,7 @@ LXDevice::OnSysTicker(const DerivedInfo &calculated)
 bool
 LXDevice::EnablePassThrough(OperationEnvironment &env)
 {
-  return ModeColibri(port, env);
+  return ModeColibri(port);
 }
 
 bool
@@ -139,7 +139,7 @@ LXDevice::EnableCommandMode(OperationEnvironment &env)
 
   port.StopRxThread();
 
-  if (!ModeColibri(port, env)) {
+  if (!ModeColibri(port)) {
     mode = Mode::UNKNOWN;
     return false;
   }

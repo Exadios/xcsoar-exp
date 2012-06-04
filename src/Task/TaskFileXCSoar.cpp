@@ -50,7 +50,7 @@ TaskFileXCSoar::GetTask(const TaskBehaviour &task_behaviour,
 
   // Read the task from the XML file
   Deserialiser des(*root, waypoints);
-  des.Deserialise(*task);
+  des.deserialise(*task);
 
   // Check if the task is valid
   if (!task->CheckTask()) {

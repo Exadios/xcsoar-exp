@@ -24,7 +24,6 @@
 #define MD5_HPP
 
 #include <stdint.h>
-#include <stddef.h>
 
 class MD5
 {
@@ -34,29 +33,23 @@ public:
   };
 
 private:
-  uint8_t buff512bits[64];
+  unsigned char buff512bits[64];
+  uint32_t a, b, c, d;
   uint32_t h0, h1, h2, h3;
-  uint64_t message_length;
+  uint32_t f, g;
+  // max message size = 536870912
+  // because of 32-bit length tracking (MD5 standard is 64-bits)
+  uint32_t message_length_bits;
 
-  void Process512(const uint8_t *in);
+  void Process512(const unsigned char *in);
 
 public:
-  /**
-   * Initialise with the default key.
-   */
-  void InitKey();
-
-  /**
-   * Initialise with a custom key.
-   */
   void InitKey(uint32_t h0in, uint32_t h1in, uint32_t h2in, uint32_t h3in);
 
-  void Append(uint8_t ch);
-  void Append(const void *data, size_t length);
-  void AppendString(const unsigned char *in, bool skip_invalid_igc_chars); // must be NULL-terminated string!
-
+  void InitDigest();
+  void AppendString(const unsigned char *in, int skip_invalid_igc_chars); // must be NULL-terminated string!
   void Finalize();
-  void GetDigest(char *buffer);
+  int GetDigest(char *buffer);
   static bool IsValidIGCChar(char c);
 };
 

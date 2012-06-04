@@ -27,19 +27,25 @@ Copyright_License {
 #include "Java/Class.hpp"
 
 namespace BluetoothHelper {
-  static Java::TrivialClass cls;
+  static jclass cls;
   static jmethodID list_method, connect_method;
 }
 
 bool
 BluetoothHelper::Initialise(JNIEnv *env)
 {
-  assert(!cls.IsDefined());
+  assert(cls == NULL);
   assert(env != NULL);
 
-  if (!cls.FindOptional(env, "org/xcsoar/BluetoothHelper"))
+  jclass _cls = env->FindClass("org/xcsoar/BluetoothHelper");
+  if (_cls == NULL) {
     /* Android < 2.0 doesn't have Bluetooth support */
+    env->ExceptionClear();
     return false;
+  }
+
+  cls = (jclass)env->NewGlobalRef(_cls);
+  env->DeleteLocalRef(_cls);
 
   list_method = env->GetStaticMethodID(cls, "list", "()[Ljava/lang/String;");
   connect_method = env->GetStaticMethodID(cls, "connect",
@@ -50,13 +56,14 @@ BluetoothHelper::Initialise(JNIEnv *env)
 void
 BluetoothHelper::Deinitialise(JNIEnv *env)
 {
-  cls.ClearOptional(env);
+  if (cls != NULL)
+    env->DeleteGlobalRef(cls);
 }
 
 jobjectArray
 BluetoothHelper::list(JNIEnv *env)
 {
-  if (!cls.IsDefined())
+  if (cls == NULL)
     return NULL;
 
   /* call BluetoothHelper.connect() */

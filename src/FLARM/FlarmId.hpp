@@ -66,9 +66,9 @@ public:
     return value < other.value;
   }
 
-  static FlarmId Parse(const char *input, char **endptr_r);
+  void Parse(const char *input, char **endptr_r);
 #ifdef _UNICODE
-  static FlarmId Parse(const TCHAR *input, TCHAR **endptr_r);
+  void Parse(const TCHAR *input, TCHAR **endptr_r);
 #endif
 
   const TCHAR *Format(TCHAR *buffer) const;

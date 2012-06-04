@@ -30,7 +30,7 @@ Copyright_License {
 #include "Navigation/SearchPointVector.hpp"
 
 void
-MapCanvas::DrawLine(GeoPoint a, GeoPoint b)
+MapCanvas::line(GeoPoint a, GeoPoint b)
 {
   if (!clip.ClipLine(a, b))
     return;
@@ -39,11 +39,11 @@ MapCanvas::DrawLine(GeoPoint a, GeoPoint b)
   pts[0] = projection.GeoToScreen(a);
   pts[1] = projection.GeoToScreen(b);
 
-  canvas.DrawLine(pts[0], pts[1]);
+  canvas.line(pts[0], pts[1]);
 }
 
 void
-MapCanvas::DrawLineWithOffset(GeoPoint a, GeoPoint b)
+MapCanvas::offset_line(GeoPoint a, GeoPoint b)
 {
   if (!clip.ClipLine(a, b))
     return;
@@ -52,20 +52,20 @@ MapCanvas::DrawLineWithOffset(GeoPoint a, GeoPoint b)
   pts[0] = projection.GeoToScreen(a);
   pts[1] = projection.GeoToScreen(b);
   ScreenClosestPoint(pts[0], pts[1], pts[0], &pts[2], Layout::Scale(20));
-  canvas.DrawLine(pts[2], pts[1]);
+  canvas.line(pts[2], pts[1]);
 }
 
 
 void
-MapCanvas::DrawCircle(const GeoPoint &center, fixed radius)
+MapCanvas::circle(const GeoPoint &center, fixed radius)
 {
   RasterPoint screen_center = projection.GeoToScreen(center);
   unsigned screen_radius = projection.GeoToScreenDistance(radius);
-  canvas.DrawCircle(screen_center.x, screen_center.y, screen_radius);
+  canvas.circle(screen_center.x, screen_center.y, screen_radius);
 }
 
 void
-MapCanvas::Project(const Projection &projection,
+MapCanvas::project(const Projection &projection,
                    const SearchPointVector &points, RasterPoint *screen)
 {
   for (auto it = points.begin(); it != points.end(); ++it)
@@ -73,7 +73,7 @@ MapCanvas::Project(const Projection &projection,
 }
 
 static void
-UpdateBounds(PixelRect &bounds, const RasterPoint &pt)
+update_bounds(PixelRect &bounds, const RasterPoint &pt)
 {
   if (pt.x < bounds.left)
     bounds.left = pt.x;
@@ -86,8 +86,8 @@ UpdateBounds(PixelRect &bounds, const RasterPoint &pt)
 }
 
 bool
-MapCanvas::IsVisible(const Canvas &canvas,
-                     const RasterPoint *screen, unsigned num)
+MapCanvas::visible(const Canvas &canvas,
+                   const RasterPoint *screen, unsigned num)
 {
   PixelRect bounds;
   bounds.left = 0x7fff;
@@ -96,14 +96,14 @@ MapCanvas::IsVisible(const Canvas &canvas,
   bounds.bottom = -1;
 
   for (unsigned i = 0; i < num; ++i)
-    UpdateBounds(bounds, screen[i]);
+    update_bounds(bounds, screen[i]);
 
   return bounds.left < (int)canvas.get_width() && bounds.right >= 0 &&
     bounds.top < (int)canvas.get_height() && bounds.bottom >= 0;
 }
 
 bool
-MapCanvas::PreparePolygon(const SearchPointVector &points)
+MapCanvas::prepare_polygon(const SearchPointVector &points)
 {
   unsigned num_points = points.size();
   if (num_points < 3)
@@ -126,12 +126,12 @@ MapCanvas::PreparePolygon(const SearchPointVector &points)
   for (unsigned i = 0; i < num_raster_points; ++i)
     raster_points[i] = projection.GeoToScreen(geo_points[i]);
 
-  return IsVisible(raster_points.begin(), num_raster_points);
+  return visible(raster_points.begin(), num_raster_points);
 }
 
 void
-MapCanvas::DrawPrepared()
+MapCanvas::draw_prepared()
 {
   /* draw it all */
-  canvas.DrawPolygon(raster_points.begin(), num_raster_points);
+  canvas.polygon(raster_points.begin(), num_raster_points);
 }

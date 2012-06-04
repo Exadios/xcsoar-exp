@@ -28,14 +28,6 @@ Copyright_License {
 
 #include <tchar.h>
 
-struct BrokenDateTime;
-
-/**
- * Format a UTC time stamp in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ).
- */
-void
-FormatISO8601(TCHAR *buffer, const BrokenDateTime &stamp);
-
 void FormatTime(TCHAR* buffer, fixed time);
 void FormatTimeLong(TCHAR* buffer, fixed time);
 

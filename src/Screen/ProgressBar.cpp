@@ -63,7 +63,7 @@ ProgressBar::set(ContainerWindow &parent,
 void
 ProgressBar::set_range(unsigned min_value, unsigned max_value)
 {
-  AssertNoneLocked();
+  assert_none_locked();
   AssertThread();
 
 #ifndef USE_GDI
@@ -81,7 +81,7 @@ ProgressBar::set_range(unsigned min_value, unsigned max_value)
 void
 ProgressBar::set_position(unsigned value)
 {
-  AssertNoneLocked();
+  assert_none_locked();
   AssertThread();
 
 #ifndef USE_GDI
@@ -95,7 +95,7 @@ ProgressBar::set_position(unsigned value)
 void
 ProgressBar::set_step(unsigned size)
 {
-  AssertNoneLocked();
+  assert_none_locked();
   AssertThread();
 
 #ifndef USE_GDI
@@ -109,7 +109,7 @@ ProgressBar::set_step(unsigned size)
 void
 ProgressBar::step()
 {
-  AssertNoneLocked();
+  assert_none_locked();
   AssertThread();
 
 #ifndef USE_GDI
@@ -132,28 +132,28 @@ ProgressBar::OnPaint(Canvas &canvas)
     else if (value > max_value)
       value = max_value;
 #ifdef EYE_CANDY
-    position = (value - min_value) * (GetWidth() - GetHeight()) /
+    position = (value - min_value) * (get_width() - get_height()) /
                (max_value - min_value);
 #else
-    position = (value - min_value) * GetWidth() / (max_value - min_value);
+    position = (value - min_value) * get_width() / (max_value - min_value);
 #endif
   }
 
 #ifdef EYE_CANDY
-  unsigned margin = GetHeight() / 9;
+  unsigned margin = get_height() / 9;
 
   canvas.SelectNullPen();
   canvas.SelectWhiteBrush();
-  canvas.DrawRoundRectangle(0, 0, GetWidth(), GetHeight(),
-                            GetHeight(), GetHeight());
+  canvas.DrawRoundRectangle(0, 0, get_width(), get_height(),
+                            get_height(), get_height());
 
   Brush progress_brush(COLOR_XCSOAR_LIGHT);
   canvas.Select(progress_brush);
   canvas.DrawRoundRectangle(margin, margin, margin + position,
-                            GetHeight() - margin, GetHeight(), GetHeight());
+                            get_height() - margin, get_height(), get_height());
 #else
-  canvas.DrawFilledRectangle(0, 0, position, GetHeight(), COLOR_GREEN);
-  canvas.DrawFilledRectangle(position, 0, GetWidth(), GetHeight(), COLOR_WHITE);
+  canvas.DrawFilledRectangle(0, 0, position, get_height(), COLOR_GREEN);
+  canvas.DrawFilledRectangle(position, 0, get_width(), get_height(), COLOR_WHITE);
 #endif
 }
 #endif

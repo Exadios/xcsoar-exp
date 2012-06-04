@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "Form/Keyboard.hpp"
 #include "Look/DialogLook.hpp"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 #include "Screen/ButtonWindow.hpp"
 #include "Screen/Layout.hpp"
 
@@ -67,8 +67,8 @@ void
 KeyboardControl::SetAllowedCharacters(const TCHAR *allowed)
 {
   for (unsigned i = 0; i < num_buttons; ++i)
-    buttons[i].SetVisible(allowed == NULL ||
-                          _tcschr(allowed, button_values[i]) != NULL);
+    buttons[i].set_visible(allowed == NULL ||
+                           _tcschr(allowed, button_values[i]) != NULL);
 }
 
 ButtonWindow *
@@ -96,7 +96,7 @@ KeyboardControl::move_button(TCHAR ch, PixelScalar left, PixelScalar top)
 {
   ButtonWindow *kb = get_button(ch);
   if (kb)
-    kb->Move(left, top);
+    kb->move(left, top);
 }
 
 /**
@@ -113,14 +113,14 @@ KeyboardControl::resize_button(TCHAR ch,
 {
   ButtonWindow *kb = get_button(ch);
   if (kb)
-    kb->Resize(width, height);
+    kb->resize(width, height);
 }
 
 void
 KeyboardControl::resize_buttons()
 {
   for (unsigned i = 0; i < num_buttons; ++i)
-    buttons[i].Resize(button_width, button_height);
+    buttons[i].resize(button_width, button_height);
 }
 
 /**
@@ -133,8 +133,8 @@ KeyboardControl::resize_buttons()
 void
 KeyboardControl::set_buttons_size()
 {
-  button_width = GetWidth() / 10;
-  button_height = GetHeight() / 5;
+  button_width = get_width() / 10;
+  button_height = get_height() / 5;
 }
 
 void
@@ -150,7 +150,7 @@ KeyboardControl::move_buttons_to_row(const TCHAR* buttons, int row,
     if (!kb)
       continue;
 
-    kb->Move(i * button_width + offset, row * button_height);
+    kb->move(i * button_width + offset, row * button_height);
   }
 }
 
@@ -178,7 +178,7 @@ KeyboardControl::move_buttons()
 void
 KeyboardControl::OnPaint(Canvas &canvas)
 {
-  canvas.Clear(look.background_color);
+  canvas.clear(look.background_color);
 
   ContainerWindow::OnPaint(canvas);
 }
@@ -203,7 +203,7 @@ KeyboardControl::OnResize(UPixelScalar width, UPixelScalar height)
 
 bool
 KeyboardControl::is_landscape() {
-  return GetWidth() >= GetHeight();
+  return get_width() >= get_height();
 }
 
 void
@@ -221,5 +221,5 @@ KeyboardControl::add_button(const TCHAR* caption)
 
   ButtonWindow *button = &buttons[num_buttons++];
   button->set(*this, caption, (unsigned)caption[0], rc);
-  button->SetFont(*look.button.font);
+  button->set_font(*look.button.font);
 }

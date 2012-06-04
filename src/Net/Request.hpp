@@ -80,6 +80,8 @@ namespace Net {
     JNIEnv *env;
 
     jobject connection, input_stream;
+
+    jmethodID set_timeout_method, read_method, close_method;
 #endif
 
   public:

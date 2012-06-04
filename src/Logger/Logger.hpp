@@ -50,7 +50,7 @@ public:
   gcc_pure
   bool IsLoggerActive() const;
 
-  bool LoggerClearFreeSpace(unsigned current_year);
+  bool LoggerClearFreeSpace(const NMEAInfo &gps_info);
   void GUIStartLogger(const NMEAInfo& gps_info,
                       const ComputerSettings& settings,
                       const ProtectedTaskManager &protected_task_manager,

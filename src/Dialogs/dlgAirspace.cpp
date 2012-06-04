@@ -35,7 +35,6 @@ Copyright_License {
 #include "Look/Look.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
 #include "Airspace/AirspaceClass.hpp"
-#include "Formatter/AirspaceFormatter.hpp"
 #include "Engine/Airspace/AirspaceWarningManager.hpp"
 #include "Components.hpp"
 #include "Computer/GlideComputer.hpp"
@@ -95,8 +94,8 @@ OnAirspacePaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
   }
 
   canvas.text_clipped(rc.left + Layout::FastScale(2),
-                      rc.top + Layout::FastScale(2), x0 - Layout::FastScale(10),
-                      AirspaceFormatter::GetClass((AirspaceClass)i));
+      rc.top + Layout::FastScale(2), x0 - Layout::FastScale(10),
+                      AirspaceClassAsText((AirspaceClass)i, false));
 }
 
 static void

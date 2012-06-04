@@ -25,7 +25,7 @@ Copyright_License {
 #define NOAA_FORMATTER_HPP
 
 #include "NOAAStore.hpp"
-#include "Util/tstring.hpp"
+#include "tstring.hpp"
 
 namespace NOAAFormatter
 {

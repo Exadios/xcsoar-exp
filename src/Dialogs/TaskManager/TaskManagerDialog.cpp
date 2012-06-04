@@ -89,18 +89,18 @@ dlgTaskManager::OnTaskViewClick(WndOwnerDrawFrame *Sender,
                                 PixelScalar x, PixelScalar y)
 {
   if (TaskViewRect.right == 0)
-    TaskViewRect = Sender->GetPosition();
+    TaskViewRect = Sender->get_position();
 
   if (!fullscreen) {
     const UPixelScalar xoffset = Layout::landscape ? wTabBar->GetTabWidth() : 0;
     const UPixelScalar yoffset = !Layout::landscape ? wTabBar->GetTabHeight() : 0;
-    Sender->Move(xoffset, yoffset,
-                 wf->GetClientAreaWindow().GetWidth() - xoffset,
-                 wf->GetClientAreaWindow().GetHeight() - yoffset);
+    Sender->move(xoffset, yoffset,
+                 wf->GetClientAreaWindow().get_width() - xoffset,
+                 wf->GetClientAreaWindow().get_height() - yoffset);
     fullscreen = true;
-    Sender->ShowOnTop();
+    Sender->show_on_top();
   } else {
-    Sender->Move(TaskViewRect.left, TaskViewRect.top,
+    Sender->move(TaskViewRect.left, TaskViewRect.top,
                  TaskViewRect.right - TaskViewRect.left,
                  TaskViewRect.bottom - TaskViewRect.top);
     fullscreen = false;
@@ -113,12 +113,12 @@ void
 dlgTaskManager::TaskViewRestore(WndOwnerDrawFrame *wTaskView)
 {
   if (TaskViewRect.right == 0) {
-    TaskViewRect = wTaskView->GetPosition();
+    TaskViewRect = wTaskView->get_position();
     return;
   }
 
   fullscreen = false;
-  wTaskView->Move(TaskViewRect.left, TaskViewRect.top,
+  wTaskView->move(TaskViewRect.left, TaskViewRect.top,
                   TaskViewRect.right - TaskViewRect.left,
                   TaskViewRect.bottom - TaskViewRect.top);
 }
@@ -133,7 +133,7 @@ dlgTaskManager::OnTaskPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 
   const MapLook &look = UIGlobals::GetMapLook();
   const NMEAInfo &basic = CommonInterface::Basic();
-  PaintTask(canvas, Sender->GetClientRect(), *active_task,
+  PaintTask(canvas, Sender->get_client_rect(), *active_task,
             basic.location_available, basic.location,
             XCSoarInterface::GetMapSettings(),
             look.task, look.airspace,
@@ -164,11 +164,11 @@ dlgTaskManager::CommitTaskChanges()
     return true;
   }
 
-  ShowMessageBox(getTaskValidationErrors(
+  MessageBoxX(getTaskValidationErrors(
     active_task->GetFactory().GetValidationErrors()),
     _("Validation Errors"), MB_ICONEXCLAMATION);
 
-  return (ShowMessageBox(_("Task not valid. Changes will be lost.\nContinue?"),
+  return (MessageBoxX(_("Task not valid. Changes will be lost.\nContinue?"),
                       _("Task Manager"), MB_YESNO | MB_ICONQUESTION) == IDYES);
 }
 

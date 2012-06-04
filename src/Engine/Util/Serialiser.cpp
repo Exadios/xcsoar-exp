@@ -36,56 +36,56 @@
 #include <assert.h>
 
 void
-Serialiser::Visit(const StartPoint &data)
+Serialiser::Visit(const StartPoint& data)
 {
-  Serialise(data, mode_optional_start ? _T("OptionalStart"): _T("Start"));
+  serialise(data, mode_optional_start ? _T("OptionalStart"): _T("Start"));
 }
 
 void
-Serialiser::Visit(const ASTPoint &data)
+Serialiser::Visit(const ASTPoint& data)
 {
-  Serialise(data, _T("Turn"));
+  serialise(data, _T("Turn"));
 }
 
 void
-Serialiser::Visit(const AATPoint &data)
+Serialiser::Visit(const AATPoint& data)
 {
-  Serialise(data, _T("Area"));
+  serialise(data, _T("Area"));
 }
 
 void
-Serialiser::Visit(const FinishPoint &data)
+Serialiser::Visit(const FinishPoint& data)
 {
-  Serialise(data, _T("Finish"));
+  serialise(data, _T("Finish"));
 }
 
 void
-Serialiser::Visit(gcc_unused const UnorderedTaskPoint &data)
+Serialiser::Visit(gcc_unused const UnorderedTaskPoint& data)
 {
 }
 
 void
-Serialiser::Serialise(const OrderedTaskPoint &data, const TCHAR* name)
+Serialiser::serialise(const OrderedTaskPoint& data, const TCHAR* name)
 {
   // do nothing
-  DataNode *child = node.AppendChild(_T("Point"));
+  DataNode *child = m_node.AppendChild(_T("Point"));
   child->SetAttribute(_T("type"), name);
 
   DataNode *wchild = child->AppendChild(_T("Waypoint"));
   Serialiser wser(*wchild);
-  wser.Serialise(data.GetWaypoint());
+  wser.serialise(data.GetWaypoint());
   delete wchild;
 
   DataNode *ochild = child->AppendChild(_T("ObservationZone"));
   Serialiser oser(*ochild);
-  oser.Serialise(*data.GetOZPoint());
+  oser.serialise(*data.GetOZPoint());
   delete ochild;
 
   delete child;
 }
 
 void 
-Serialiser::Serialise(const ObservationZonePoint &data)
+Serialiser::serialise(const ObservationZonePoint& data) 
 {
   switch (data.shape) {
   case ObservationZonePoint::FAI_SECTOR:
@@ -127,110 +127,110 @@ Serialiser::Serialise(const ObservationZonePoint &data)
 } 
 
 void 
-Serialiser::Visit(gcc_unused const FAISectorZone &data)
+Serialiser::Visit(gcc_unused const FAISectorZone& data)
 {
-  node.SetAttribute(_T("type"), _T("FAISector"));
+  m_node.SetAttribute(_T("type"), _T("FAISector"));
 }
 
 void 
-Serialiser::Visit(gcc_unused const KeyholeZone &data)
+Serialiser::Visit(gcc_unused const KeyholeZone& data)
 {
-  node.SetAttribute(_T("type"), _T("Keyhole"));
+  m_node.SetAttribute(_T("type"), _T("Keyhole"));
 }
 
 void 
-Serialiser::Visit(gcc_unused const BGAFixedCourseZone &data)
+Serialiser::Visit(gcc_unused const BGAFixedCourseZone& data)
 {
-  node.SetAttribute(_T("type"), _T("BGAFixedCourse"));
+  m_node.SetAttribute(_T("type"), _T("BGAFixedCourse"));
 }
 
 void 
-Serialiser::Visit(gcc_unused const BGAEnhancedOptionZone &data)
+Serialiser::Visit(gcc_unused const BGAEnhancedOptionZone& data)
 {
-  node.SetAttribute(_T("type"), _T("BGAEnhancedOption"));
+  m_node.SetAttribute(_T("type"), _T("BGAEnhancedOption"));
 }
 
 void 
-Serialiser::Visit(gcc_unused const BGAStartSectorZone &data)
+Serialiser::Visit(gcc_unused const BGAStartSectorZone& data)
 {
-  node.SetAttribute(_T("type"), _T("BGAStartSector"));
+  m_node.SetAttribute(_T("type"), _T("BGAStartSector"));
 }
 
 void
-Serialiser::Visit(const SectorZone &data)
+Serialiser::Visit(const SectorZone& data)
 {
-  node.SetAttribute(_T("type"), _T("Sector"));
-  node.SetAttribute(_T("radius"), data.GetRadius());
-  node.SetAttribute(_T("start_radial"), data.GetStartRadial());
-  node.SetAttribute(_T("end_radial"), data.GetEndRadial());
+  m_node.SetAttribute(_T("type"), _T("Sector"));
+  m_node.SetAttribute(_T("radius"), data.GetRadius());
+  m_node.SetAttribute(_T("start_radial"), data.GetStartRadial());
+  m_node.SetAttribute(_T("end_radial"), data.GetEndRadial());
 }
 
 void
-Serialiser::Visit(const AnnularSectorZone &data)
+Serialiser::Visit(const AnnularSectorZone& data)
 {
   Visit((const SectorZone&)data);
-  node.SetAttribute(_T("inner_radius"), data.GetInnerRadius());
+  m_node.SetAttribute(_T("inner_radius"), data.GetInnerRadius());
 }
 
 void 
-Serialiser::Visit(const LineSectorZone &data)
+Serialiser::Visit(const LineSectorZone& data)
 {
-  node.SetAttribute(_T("type"), _T("Line"));
-  node.SetAttribute(_T("length"), data.GetLength());
+  m_node.SetAttribute(_T("type"), _T("Line"));
+  m_node.SetAttribute(_T("length"), data.GetLength());
 }
 
 void 
-Serialiser::Visit(const CylinderZone &data)
+Serialiser::Visit(const CylinderZone& data)
 {
-  node.SetAttribute(_T("type"), _T("Cylinder"));
-  node.SetAttribute(_T("radius"), data.GetRadius());
+  m_node.SetAttribute(_T("type"), _T("Cylinder"));
+  m_node.SetAttribute(_T("radius"), data.GetRadius());
 }
 
 void 
-Serialiser::Serialise(const GeoPoint &data)
+Serialiser::serialise(const GeoPoint& data)
 {
-  node.SetAttribute(_T("longitude"), data.longitude);
-  node.SetAttribute(_T("latitude"), data.latitude);
+  m_node.SetAttribute(_T("longitude"), data.longitude);
+  m_node.SetAttribute(_T("latitude"), data.latitude);
 }
 
 void 
-Serialiser::Serialise(const Waypoint &data)
+Serialiser::serialise(const Waypoint& data)
 {
-  node.SetAttribute(_T("name"), data.name.c_str());
-  node.SetAttribute(_T("id"), data.id);
-  node.SetAttribute(_T("comment"), data.comment.c_str());
-  node.SetAttribute(_T("altitude"), data.elevation);
+  m_node.SetAttribute(_T("name"), data.name.c_str());
+  m_node.SetAttribute(_T("id"), data.id);
+  m_node.SetAttribute(_T("comment"), data.comment.c_str());
+  m_node.SetAttribute(_T("altitude"), data.elevation);
 
-  DataNode *child = node.AppendChild(_T("Location"));
+  DataNode *child = m_node.AppendChild(_T("Location"));
   Serialiser ser(*child);
-  ser.Serialise(data.location);
+  ser.serialise(data.location);
   delete child;
 }
 
 void 
-Serialiser::Serialise(const OrderedTaskBehaviour &data)
+Serialiser::serialise(const OrderedTaskBehaviour& data)
 {
-  node.SetAttribute(_T("task_scored"), data.task_scored);
-  node.SetAttribute(_T("aat_min_time"), data.aat_min_time);
-  node.SetAttribute(_T("start_max_speed"), data.start_max_speed);
-  node.SetAttribute(_T("start_max_height"), data.start_max_height);
-  node.SetAttribute(_T("start_max_height_ref"),
-                       GetHeightRef(data.start_max_height_ref));
-  node.SetAttribute(_T("finish_min_height"), data.finish_min_height);
-  node.SetAttribute(_T("finish_min_height_ref"),
-                       GetHeightRef(data.finish_min_height_ref));
-  node.SetAttribute(_T("fai_finish"), data.fai_finish);
-  node.SetAttribute(_T("min_points"), data.min_points);
-  node.SetAttribute(_T("max_points"), data.max_points);
-  node.SetAttribute(_T("homogeneous_tps"), data.homogeneous_tps);
-  node.SetAttribute(_T("is_closed"), data.is_closed);
+  m_node.SetAttribute(_T("task_scored"), data.task_scored);
+  m_node.SetAttribute(_T("aat_min_time"), data.aat_min_time);
+  m_node.SetAttribute(_T("start_max_speed"), data.start_max_speed);
+  m_node.SetAttribute(_T("start_max_height"), data.start_max_height);
+  m_node.SetAttribute(_T("start_max_height_ref"),
+                       height_ref(data.start_max_height_ref));
+  m_node.SetAttribute(_T("finish_min_height"), data.finish_min_height);
+  m_node.SetAttribute(_T("finish_min_height_ref"),
+                       height_ref(data.finish_min_height_ref));
+  m_node.SetAttribute(_T("fai_finish"), data.fai_finish);
+  m_node.SetAttribute(_T("min_points"), data.min_points);
+  m_node.SetAttribute(_T("max_points"), data.max_points);
+  m_node.SetAttribute(_T("homogeneous_tps"), data.homogeneous_tps);
+  m_node.SetAttribute(_T("is_closed"), data.is_closed);
 }
 
 void 
-Serialiser::Serialise(const OrderedTask &task)
+Serialiser::serialise(const OrderedTask &task)
 {
-  node.SetAttribute(_T("type"), GetTaskFactoryType(task.get_factory_type()));
-  Serialise(task.get_ordered_task_behaviour());
+  m_node.SetAttribute(_T("type"), task_factory_type(task.get_factory_type()));
+  serialise(task.get_ordered_task_behaviour());
   mode_optional_start = false;
   task.AcceptTaskPointVisitor(*this);
   mode_optional_start = true;
@@ -238,9 +238,9 @@ Serialiser::Serialise(const OrderedTask &task)
 }
 
 const TCHAR*
-Serialiser::GetHeightRef(HeightReferenceType height_ref) const
+Serialiser::height_ref(HeightReferenceType the_height_ref) const
 {
-  switch(height_ref) {
+  switch(the_height_ref) {
   case HeightReferenceType::AGL:
     return _T("AGL");
   case HeightReferenceType::MSL:
@@ -250,9 +250,9 @@ Serialiser::GetHeightRef(HeightReferenceType height_ref) const
 }
 
 const TCHAR* 
-Serialiser::GetTaskFactoryType(TaskFactoryType type) const
+Serialiser::task_factory_type(TaskFactoryType the_type) const
 {
-  switch(type) {
+  switch(the_type) {
   case TaskFactoryType::FAI_GENERAL:
     return _T("FAIGeneral");
   case TaskFactoryType::FAI_TRIANGLE:

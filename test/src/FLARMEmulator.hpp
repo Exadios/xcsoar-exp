@@ -59,7 +59,7 @@ private:
 
     char buffer[512];
     snprintf(buffer, ARRAY_SIZE(buffer), "PFLAC,A,%s,%s", name, value);
-    PortWriteNMEA(*port, buffer, *env);
+    PortWriteNMEA(*port, buffer);
   }
 
   void PFLAC_R(NMEAInputLine &line) {
@@ -74,7 +74,7 @@ private:
 
     char buffer[512];
     snprintf(buffer, ARRAY_SIZE(buffer), "PFLAC,A,%s,%s", name, value);
-    PortWriteNMEA(*port, buffer, *env);
+    PortWriteNMEA(*port, buffer);
   }
 
   void PFLAC(NMEAInputLine &line) {

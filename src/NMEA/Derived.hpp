@@ -38,7 +38,7 @@ Copyright_License {
 #include "NMEA/ThermalLocator.hpp"
 #include "NMEA/Validity.hpp"
 #include "NMEA/ClimbHistory.hpp"
-#include "TeamCode.hpp"
+#include "TeamCodeCalculation.hpp"
 #include "Engine/Navigation/TraceHistory.hpp"
 #include "DateTime.hpp"
 #include "Engine/GlideSolvers/GlidePolar.hpp"
@@ -209,6 +209,8 @@ struct DerivedInfo:
    * @todo Reset to cleared state
    */
   void Reset();
+
+  void ResetFlight(bool full);
 
   void Expire(fixed Time);
 

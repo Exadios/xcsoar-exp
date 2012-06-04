@@ -33,7 +33,7 @@ CheckBoxControl::CheckBoxControl(ContainerWindow &parent,
   :click_notify_callback(_click_notify_callback)
 {
   set(parent, caption, rc, style);
-  SetFont(*look.text_font);
+  set_font(*look.text_font);
 }
 
 bool

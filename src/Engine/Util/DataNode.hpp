@@ -23,7 +23,7 @@
 #ifndef DATANODE_HPP
 #define DATANODE_HPP
 
-#include "Util/tstring.hpp"
+#include "tstring.hpp"
 #include "Math/fixed.hpp"
 #include "Math/Angle.hpp"
 #include "Util/NonCopyable.hpp"

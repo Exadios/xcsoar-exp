@@ -44,7 +44,7 @@ SwitchInfo::Reset()
 void
 GPSState::Reset()
 {
-  fix_quality = FixQuality::NO_FIX;
+  fix_quality = 0;
   fix_quality_available.Clear();
   real = false;
   simulator = false;
@@ -60,10 +60,10 @@ void
 GPSState::Expire(fixed now)
 {
   if (fix_quality_available.Expire(now, fixed(5)))
-    fix_quality = FixQuality::NO_FIX;
+    fix_quality = 0;
 
   satellites_used_available.Expire(now, fixed(5));
-  satellite_ids_available.Expire(now, fixed(60));
+  satellite_ids_available.Expire(now, fixed(5));
 }
 
 void

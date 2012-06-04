@@ -29,11 +29,11 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Terrain/RasterTerrain.hpp"
 #include "Math/FastMath.h"
-#include "Form/DataField/Enum.hpp"
+#include "DataField/Enum.hpp"
 #include "UIGlobals.hpp"
 #include "Components.hpp"
 #include "Waypoint/Waypoint.hpp"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 #include "Compiler.h"
 #include "Sizes.h"
 
@@ -377,7 +377,7 @@ dlgWaypointEditShowModal(Waypoint &way_point)
 
   if (CommonInterface::GetUISettings().coordinate_format ==
       CoordinateFormat::UTM) {
-    ShowMessageBox(
+    MessageBoxX(
         _("Sorry, the waypoint editor is not yet available for the UTM coordinate format."),
         _("Waypoint Editor"), MB_OK);
     return false;

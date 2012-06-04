@@ -153,11 +153,11 @@ HaveCondorDevice()
 }
 
 void
-VarioWriteNMEA(const TCHAR *text, OperationEnvironment &env)
+VarioWriteNMEA(const TCHAR *text)
 {
   for (int i = 0; i < NUMDEV; i++)
     if (device_list[i]->IsVega())
-      device_list[i]->WriteNMEA(text, env);
+      device_list[i]->WriteNMEA(text);
 }
 
 DeviceDescriptor *

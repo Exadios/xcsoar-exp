@@ -26,7 +26,7 @@ Copyright_License {
 #include "NMEA/Info.hpp"
 #include "NMEA/Derived.hpp"
 #include "ConditionMonitor/ConditionMonitors.hpp"
-#include "TeamCode.hpp"
+#include "TeamCodeCalculation.hpp"
 #include "PeriodClock.hpp"
 #include "GlideComputerInterface.hpp"
 #include "ComputerSettings.hpp"

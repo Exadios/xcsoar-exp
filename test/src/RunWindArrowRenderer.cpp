@@ -68,7 +68,7 @@ protected:
 
     canvas.SelectBlackPen();
     canvas.SelectHollowBrush();
-    canvas.DrawCircle(pt.x, pt.y, 2);
+    canvas.circle(pt.x, pt.y, 2);
 
     renderer.Draw(canvas, Angle::Zero(), wind, pt, rc, false);
   }
@@ -123,7 +123,7 @@ public:
     SingleWindow::set(_T("RunWindArrowRenderer"), _T("RunWindArrowRenderer"),
                       _rc, style);
 
-    const PixelRect rc = GetClientRect();
+    const PixelRect rc = get_client_rect();
 
     WindowStyle with_border;
     with_border.Border();
@@ -164,7 +164,7 @@ protected:
 
   virtual void OnResize(UPixelScalar width, UPixelScalar height) {
     SingleWindow::OnResize(width, height);
-    wind.Resize(width, height);
+    wind.resize(width, height);
   }
 };
 

@@ -29,19 +29,17 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Compatibility/string.h"
 #include "Math/FastMath.h"
-#include "Form/DataField/Base.hpp"
+#include "DataField/Base.hpp"
 #include "Profile/Profile.hpp"
 #include "OS/PathName.hpp"
 #include "Compatibility/path.h"
-#include "Waypoint/LastUsed.hpp"
-#include "Waypoint/WaypointList.hpp"
 #include "Waypoint/Waypoints.hpp"
 #include "Waypoint/WaypointVisitor.hpp"
 #include "Components.hpp"
 #include "Compiler.h"
-#include "Form/DataField/Enum.hpp"
+#include "DataField/Enum.hpp"
 #include "LogFile.hpp"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 #include "Engine/Task/Tasks/BaseTask/OrderedTaskPoint.hpp"
 #include "Task/Tasks/OrderedTask.hpp"
 #include "Task/FAITriangleValidator.hpp"
@@ -65,7 +63,7 @@ class FAITrianglePointValidator;
 static GeoPoint location;
 static FAITrianglePointValidator *triangle_validator = NULL;
 static WndForm *dialog = NULL;
-static ListControl *waypoint_list_control = NULL;
+static ListControl *waypoint_list = NULL;
 static WndButton *name_button;
 static WndProperty *distance_filter;
 static WndProperty *direction_filter;
@@ -129,24 +127,59 @@ struct WaypointFilterData
 
   bool IsDefined() const {
     return !StringIsEmpty(name) || distance_index > 0 ||
-      direction_index > 0 || type_index != TF_ALL;
+      direction_index > 0 || type_index > 0;
   }
 };
 
 static WaypointFilterData filter_data;
-static WaypointList waypoint_list;
+
+/**
+ * Structure to hold Waypoint sorting information
+ */
+struct WaypointSelectInfo
+{
+  /** Pointer to actual waypoint (unprotected!) */
+  const Waypoint* waypoint;
+  /** Distance in user units from observer to waypoint */
+  fixed distance;
+  /** Bearing (deg true north) from observer to waypoint */
+  Angle direction;
+};
+
+struct WaypointSelectInfoVector :
+  public std::vector<WaypointSelectInfo>
+{
+  void push_back(const Waypoint &waypoint, const GeoPoint &location) {
+    WaypointSelectInfo info;
+
+    info.waypoint = &waypoint;
+
+    const GeoVector vec(location, waypoint.location);
+
+    info.distance = vec.distance;
+    info.direction = vec.bearing;
+
+    std::vector<WaypointSelectInfo>::push_back(info);
+  }
+};
+
+static WaypointSelectInfoVector waypoint_select_info;
+static std::list<unsigned int> last_used_waypoint_ids;
 
 static TCHAR *
-GetDirectionData(TCHAR *buffer, size_t size, int direction_filter_index)
+GetDirectionData(int direction_filter_index)
 {
+  static TCHAR buffer[12];
+
   if (direction_filter_index == 0)
-    _tcscpy(buffer, _T("*"));
+    _stprintf(buffer, _T("%c"), '*');
   else if (direction_filter_index == 1) {
     TCHAR bearing[8];
     FormatBearing(bearing, ARRAY_SIZE(bearing), last_heading);
     _stprintf(buffer, _T("HDG(%s)"), bearing);
   } else
-    FormatBearing(buffer, size, direction_filter_items[direction_filter_index]);
+    FormatBearing(buffer, ARRAY_SIZE(buffer),
+                  direction_filter_items[direction_filter_index]);
 
   return buffer;
 }
@@ -156,17 +189,15 @@ InitializeDirection(bool only_heading)
 {
   // initialize datafieldenum for Direction
   if (direction_filter) {
-    TCHAR buffer[12];
-
     DataFieldEnum* data_field = (DataFieldEnum*)direction_filter->GetDataField();
     if (!only_heading) {
       for (unsigned int i = 0; i < ARRAY_SIZE(direction_filter_items); i++)
-        data_field->addEnumText(GetDirectionData(buffer, ARRAY_SIZE(buffer), i));
+        data_field->addEnumText(GetDirectionData(i));
 
       data_field->SetAsInteger(filter_data.direction_index);
     }
     // update heading value to current heading
-    data_field->replaceEnumText(1,GetDirectionData(buffer, ARRAY_SIZE(buffer), 1));
+    data_field->replaceEnumText(1,GetDirectionData(1));
     direction_filter->RefreshDisplay();
   }
 }
@@ -194,6 +225,8 @@ GetProfilePathBase(const TCHAR *key)
 static void
 PrepareData()
 {
+  TCHAR buffer[15];
+
   filter_data.name[0] = _T('\0');
 
   name_button->SetCaption(_T("*"));
@@ -202,14 +235,11 @@ PrepareData()
   if (distance_filter) {
     DataFieldEnum* data_field = (DataFieldEnum*)distance_filter->GetDataField();
     data_field->addEnumText(_T("*"));
-
-    TCHAR buffer[15];
     for (unsigned i = 1; i < ARRAY_SIZE(distance_filter_items); i++) {
       _stprintf(buffer, _T("%.0f%s"), (double)distance_filter_items[i],
                 Units::GetDistanceName());
       data_field->addEnumText(buffer);
     }
-
     data_field->SetAsInteger(filter_data.distance_index);
     distance_filter->RefreshDisplay();
   }
@@ -447,7 +477,7 @@ class FilterWaypointVisitor:
 {
   const GeoPoint location;
   const Angle heading;
-  WaypointList &waypoint_list;
+  WaypointSelectInfoVector &vector;
 
 private:
   static bool
@@ -517,33 +547,27 @@ private:
 public:
   FilterWaypointVisitor(const WaypointFilterData &filter,
                         GeoPoint _location, Angle _heading,
-                        WaypointList &_waypoint_list)
+                        WaypointSelectInfoVector &_vector)
     :WaypointFilterData(filter), location(_location), heading(_heading),
-     waypoint_list(_waypoint_list) {}
+     vector(_vector) {}
 
   void Visit(const Waypoint &waypoint) {
     if (CompareType(waypoint, type_index) &&
         (filter_data.distance_index == 0 || CompareName(waypoint, name)) &&
         CompareDirection(waypoint, direction_index, location, heading))
-      waypoint_list.push_back(WaypointListItem(waypoint));
+      vector.push_back(waypoint, location);
   }
 };
 
-class WaypointDistanceCompare
+static bool
+WaypointDistanceCompare(const struct WaypointSelectInfo &a,
+                        const struct WaypointSelectInfo &b)
 {
-  const GeoPoint &location;
-
-public:
-  WaypointDistanceCompare(const GeoPoint &_location):location(_location) {}
-
-  bool operator()(const WaypointListItem &a,
-                  const WaypointListItem &b) const {
-    return a.GetVector(location).distance < b.GetVector(location).distance;
-  }
-};
+  return a.distance < b.distance;
+}
 
 static void
-FillList(WaypointList &list, const Waypoints &src,
+FillList(WaypointSelectInfoVector &list, const Waypoints &src,
          GeoPoint location, Angle heading, const WaypointFilterData &filter)
 {
   list.clear();
@@ -560,22 +584,25 @@ FillList(WaypointList &list, const Waypoints &src,
     src.VisitNamePrefix(filter.name, visitor);
 
   if (filter.distance_index > 0 || filter.direction_index > 0)
-    std::sort(list.begin(), list.end(), WaypointDistanceCompare(location));
+    std::sort(list.begin(), list.end(), WaypointDistanceCompare);
 }
 
 static void
-FillLastUsedList(WaypointList &list,
-                 const WaypointIDList &last_used_ids,
-                 const Waypoints &waypoints)
+FillLastUsedList(WaypointSelectInfoVector &list,
+                 const std::list<unsigned int> &last_used_ids,
+                 const Waypoints &waypoints, const GeoPoint location)
 {
   list.clear();
+
+  if (last_used_ids.empty())
+    return;
 
   for (auto it = last_used_ids.rbegin(); it != last_used_ids.rend(); it++) {
     const Waypoint* waypoint = waypoints.LookupId(*it);
     if (waypoint == NULL)
       continue;
 
-    list.push_back(WaypointListItem(*waypoint));
+    list.push_back(*waypoint, location);
   }
 }
 
@@ -583,16 +610,16 @@ static void
 UpdateList()
 {
   if (filter_data.type_index == TF_LAST_USED)
-    FillLastUsedList(waypoint_list, LastUsedWaypoints::GetList(),
-                     way_points);
+    FillLastUsedList(waypoint_select_info, last_used_waypoint_ids,
+                     way_points, location);
   else
-    FillList(waypoint_list, way_points, location, last_heading,
+    FillList(waypoint_select_info, way_points, location, last_heading,
              filter_data);
 
-  waypoint_list_control->SetLength(std::max(1, (int)waypoint_list.size()));
-  waypoint_list_control->SetOrigin(0);
-  waypoint_list_control->SetCursorIndex(0);
-  waypoint_list_control->Invalidate();
+  waypoint_list->SetLength(std::max(1, (int)waypoint_select_info.size()));
+  waypoint_list->SetOrigin(0);
+  waypoint_list->SetCursorIndex(0);
+  waypoint_list->Invalidate();
 }
 
 static const TCHAR *
@@ -716,7 +743,7 @@ OnFilterType(DataField *sender, DataField::DataAccessMode mode)
 static void
 OnPaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
 {
-  if (waypoint_list.empty()) {
+  if (waypoint_select_info.empty()) {
     assert(i == 0);
 
     const UPixelScalar line_height = rc.bottom - rc.top;
@@ -731,12 +758,12 @@ OnPaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
     return;
   }
 
-  assert(i < waypoint_list.size());
+  assert(i < waypoint_select_info.size());
 
-  const struct WaypointListItem &info = waypoint_list[i];
+  const struct WaypointSelectInfo &info = waypoint_select_info[i];
 
   WaypointListRenderer::Draw(canvas, rc, *info.waypoint,
-                             info.GetVector(location),
+                             GeoVector(info.distance, info.direction),
                              UIGlobals::GetDialogLook(),
                              UIGlobals::GetMapLook().waypoint,
                              CommonInterface::GetMapSettings().waypoint);
@@ -745,7 +772,7 @@ OnPaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
 static void
 OnWaypointListEnter(gcc_unused unsigned i)
 {
-  if (waypoint_list.size() > 0)
+  if (waypoint_select_info.size() > 0)
     dialog->SetModalResult(mrOK);
   else
     OnFilterNameButton(*name_button);
@@ -813,6 +840,13 @@ FormKeyDown(WndForm &sender, unsigned key_code)
 
 #endif /* GNAV */
 
+void
+dlgWaypointSelectAddToLastUsed(const Waypoint &waypoint)
+{
+  last_used_waypoint_ids.remove(waypoint.id);
+  last_used_waypoint_ids.push_back(waypoint.id);
+}
+
 static gcc_constexpr_data CallBackTableEntry callback_table[] = {
   DeclareCallBackEntry(OnFilterDistance),
   DeclareCallBackEntry(OnFilterDirection),
@@ -838,11 +872,11 @@ dlgWaypointSelect(SingleWindow &parent, const GeoPoint &_location,
 
   const DialogLook &dialog_look = UIGlobals::GetDialogLook();
 
-  waypoint_list_control = (ListControl*)dialog->FindByName(_T("frmWaypointList"));
-  assert(waypoint_list_control != NULL);
-  waypoint_list_control->SetActivateCallback(OnWaypointListEnter);
-  waypoint_list_control->SetPaintItemCallback(OnPaintListItem);
-  waypoint_list_control->SetItemHeight(WaypointListRenderer::GetHeight(dialog_look));
+  waypoint_list = (ListControl*)dialog->FindByName(_T("frmWaypointList"));
+  assert(waypoint_list != NULL);
+  waypoint_list->SetActivateCallback(OnWaypointListEnter);
+  waypoint_list->SetPaintItemCallback(OnPaintListItem);
+  waypoint_list->SetItemHeight(WaypointListRenderer::GetHeight(dialog_look));
 
   name_button = (WndButton*)dialog->FindByName(_T("cmdFltName"));
   name_button->SetOnLeftNotify(OnFilterNameButtonLeft);
@@ -868,15 +902,15 @@ dlgWaypointSelect(SingleWindow &parent, const GeoPoint &_location,
     return NULL;
   }
 
-  unsigned index = waypoint_list_control->GetCursorIndex();
+  unsigned index = waypoint_list->GetCursorIndex();
 
   delete dialog;
   delete triangle_validator;
 
   const Waypoint* retval = NULL;
 
-  if (index < waypoint_list.size())
-    retval = waypoint_list[index].waypoint;
+  if (index < waypoint_select_info.size())
+    retval = waypoint_select_info[index].waypoint;
 
   return retval;
 }

@@ -65,11 +65,11 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   main_window.set(_T("STATIC"), _T("RunListControl"), screen_rc);
   main_window.Show();
 
-  WndForm form(main_window, *dialog_look, main_window.GetClientRect(),
+  WndForm form(main_window, *dialog_look, main_window.get_client_rect(),
                _T("RunListControl"));
   ContainerWindow &client_area = form.GetClientAreaWindow();
 
-  PixelRect list_rc = client_area.GetClientRect();
+  PixelRect list_rc = client_area.get_client_rect();
   InflateRect(&list_rc, -2, -2);
 
   WindowStyle style;

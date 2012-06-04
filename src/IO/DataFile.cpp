@@ -24,7 +24,7 @@ Copyright_License {
 #include "DataFile.hpp"
 #include "FileLineReader.hpp"
 #include "TextWriter.hpp"
-#include "Util/StringUtil.hpp"
+#include "StringUtil.hpp"
 #include "LocalPath.hpp"
 
 #include <assert.h>

@@ -26,7 +26,6 @@ Copyright_License {
 #include "Device/Driver/Vega/Internal.hpp"
 #include "OS/Args.hpp"
 #include "Profile/DeviceConfig.hpp"
-#include "Operation/ConsoleOperationEnvironment.hpp"
 
 #include <stdio.h>
 #include <string.h>
@@ -44,18 +43,16 @@ int main(int argc, char **argv)
 
   VegaDevice device(*port);
 
-  ConsoleOperationEnvironment env;
-
   while (!args.IsEmpty()) {
     const char *p = args.GetNext();
     char *q = strdup(p);
     char *v = strchr(q, '=');
     if (v == NULL) {
-      if (!device.RequestSetting(q, env))
+      if (!device.RequestSetting(q))
         printf("Error\n");
     } else {
       *v++ = 0;
-      if (!device.SendSetting(q, atoi(v), env))
+      if (!device.SendSetting(q, atoi(v)))
         printf("Error\n");
     }
 

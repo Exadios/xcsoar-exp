@@ -86,7 +86,7 @@ TopWindow::RefreshSize()
     height = new_height;
   }
 
-  Resize(width, height);
+  resize(width, height);
 }
 
 void
@@ -212,7 +212,7 @@ TopWindow::OnEvent(const Event &event)
          resumed */
       return true;
 
-    if ((unsigned)event.x == GetWidth() && (unsigned)event.y == GetHeight())
+    if ((unsigned)event.x == get_width() && (unsigned)event.y == get_height())
       /* no-op */
       return true;
 
@@ -222,7 +222,7 @@ TopWindow::OnEvent(const Event &event)
        something */
     screen.Flip();
 
-    Resize(event.x, event.y);
+    resize(event.x, event.y);
     return true;
 
   case Event::PAUSE:

@@ -100,7 +100,7 @@ TabbedControl::Save(bool &changed, bool &require_restart)
 void
 TabbedControl::UpdateLayout()
 {
-  pager.Move(GetClientRect());
+  pager.Move(get_client_rect());
 }
 
 void
@@ -116,7 +116,7 @@ TabbedControl::OnCreate()
 {
   ContainerWindow::OnCreate();
 
-  const PixelRect rc = GetClientRect();
+  const PixelRect rc = get_client_rect();
   pager.Initialise(*this, rc);
   pager.Prepare(*this, rc);
   pager.Show(rc);

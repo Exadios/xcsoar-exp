@@ -34,7 +34,6 @@ struct ComputerSettings;
 struct PlacesOfInterestSettings;
 
 class WaypointReaderBase;
-class DeviceBlackboard;
 
 /**
  * This class is used to parse different waypoint files
@@ -85,9 +84,7 @@ namespace WaypointGlue {
    * it resets all special waypoints indices
    */
   void SetHome(Waypoints &way_points, const RasterTerrain *terrain,
-               ComputerSettings &settings,
-               DeviceBlackboard *device_blackboard,
-               const bool reset);
+               ComputerSettings &settings, const bool reset);
 
   /**
    * Save the home waypoint and the teamcode reference location to the

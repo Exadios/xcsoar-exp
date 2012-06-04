@@ -28,11 +28,10 @@ Copyright_License {
 #include "Units/Units.hpp"
 #include "Device/device.hpp"
 #include "Math/FastMath.h"
-#include "Form/DataField/Boolean.hpp"
-#include "Form/DataField/Float.hpp"
+#include "DataField/Boolean.hpp"
+#include "DataField/Float.hpp"
 #include "PeriodClock.hpp"
 #include "Form/Util.hpp"
-#include "Operation/PopupOperationEnvironment.hpp"
 
 static WndForm *wf;
 
@@ -57,9 +56,7 @@ VegaWriteDemo()
   _stprintf(dbuf, _T("PDVDD,%d,%d"),
             iround(VegaDemoW * 10),
             iround(VegaDemoV * 10));
-
-  PopupOperationEnvironment env;
-  VarioWriteNMEA(dbuf, env);
+  VarioWriteNMEA(dbuf);
 }
 
 static void
@@ -124,9 +121,8 @@ dlgVegaDemoShowModal()
 
   if (!wf) return;
 
-  PopupOperationEnvironment env;
-  VarioWriteNMEA(_T("PDVSC,S,DemoMode,0"), env);
-  VarioWriteNMEA(_T("PDVSC,S,DemoMode,3"), env);
+  VarioWriteNMEA(_T("PDVSC,S,DemoMode,0"));
+  VarioWriteNMEA(_T("PDVSC,S,DemoMode,3"));
 
   LoadFormProperty(*wf, _T("prpVegaDemoW"), UnitGroup::VERTICAL_SPEED, VegaDemoW);
   LoadFormProperty(*wf, _T("prpVegaDemoV"), UnitGroup::VERTICAL_SPEED, VegaDemoV);
@@ -136,5 +132,5 @@ dlgVegaDemoShowModal()
   delete wf;
 
   // deactivate demo.
-  VarioWriteNMEA(_T("PDVSC,S,DemoMode,0"), env);
+  VarioWriteNMEA(_T("PDVSC,S,DemoMode,0"));
 }

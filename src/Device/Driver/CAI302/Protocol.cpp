@@ -32,10 +32,10 @@ Copyright_License {
 #include <stdio.h>
 
 bool
-CAI302::WriteString(Port &port, const char *p, OperationEnvironment &env)
+CAI302::WriteString(Port &port, const char *p)
 {
   size_t length = strlen(p);
-  return port.FullWrite(p, length, env, 2000);
+  return port.FullWrite(p, length, 2000);
 }
 
 bool
@@ -66,7 +66,7 @@ CAI302::SendCommandQuick(Port &port, const char *cmd,
     return false;
 
   port.Flush();
-  return WriteString(port, cmd, env);
+  return WriteString(port, cmd);
 }
 
 bool
@@ -78,9 +78,9 @@ CAI302::SendCommand(Port &port, const char *cmd,
 }
 
 bool
-CAI302::LogModeQuick(Port &port, OperationEnvironment &env)
+CAI302::LogModeQuick(Port &port)
 {
-  return CommandModeQuick(port) && WriteString(port, "LOG 0\r", env);
+  return CommandModeQuick(port) && WriteString(port, "LOG 0\r");
 }
 
 bool
@@ -169,7 +169,7 @@ CAI302::UploadShort(Port &port, const char *command,
                     OperationEnvironment &env, unsigned timeout_ms)
 {
   port.Flush();
-  if (!WriteString(port, command, env))
+  if (!WriteString(port, command))
     return -1;
 
   int nbytes = ReadShortReply(port, response, max_size, env, timeout_ms);
@@ -188,7 +188,7 @@ CAI302::UploadLarge(Port &port, const char *command,
                     OperationEnvironment &env, unsigned timeout_ms)
 {
   port.Flush();
-  if (!WriteString(port, command, env))
+  if (!WriteString(port, command))
     return -1;
 
   int nbytes = ReadLargeReply(port, response, max_size, env, timeout_ms);
@@ -323,7 +323,7 @@ bool
 CAI302::DownloadCommand(Port &port, const char *command,
                         OperationEnvironment &env, unsigned timeout_ms)
 {
-  return WriteString(port, command, env) && WaitDownloadPrompt(port, env);
+  return WriteString(port, command) && WaitDownloadPrompt(port, env);
 }
 
 bool

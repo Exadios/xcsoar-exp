@@ -123,11 +123,11 @@ public:
 
 public:
   UPixelScalar GetTabHeight() const {
-    return this->GetHeight();
+    return this->get_height();
   }
 
   UPixelScalar GetTabWidth() const {
-    return this->GetWidth();
+    return this->get_width();
   }
 
 private:

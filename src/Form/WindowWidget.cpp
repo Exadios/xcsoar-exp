@@ -27,7 +27,7 @@ Copyright_License {
 WindowWidget::WindowWidget(Window *_window)
   :window(_window) {
   assert(window != NULL);
-  assert(!window->IsVisible());
+  assert(!window->is_visible());
 }
 
 void
@@ -41,7 +41,7 @@ void
 WindowWidget::Show(const PixelRect &rc)
 {
   assert(window != NULL);
-  assert(!window->IsVisible());
+  assert(!window->is_visible());
 
   window->MoveAndShow(rc);
 }
@@ -50,7 +50,7 @@ void
 WindowWidget::Hide()
 {
   assert(window != NULL);
-  assert(window->IsVisible());
+  assert(window->is_visible());
 
   window->FastHide();
 }
@@ -59,7 +59,7 @@ void
 WindowWidget::Move(const PixelRect &rc)
 {
   assert(window != NULL);
-  assert(window->IsVisible());
+  assert(window->is_visible());
 
-  window->Move(rc);
+  window->move(rc);
 }

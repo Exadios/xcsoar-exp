@@ -26,10 +26,22 @@ Copyright_License {
 
 #include "Geo/CoordinateFormat.hpp"
 #include "Unit.hpp"
-#include "Group.hpp"
 #include "Compiler.h"
 
 #include <stdint.h>
+
+enum class UnitGroup: uint8_t
+{
+  NONE,
+  DISTANCE,
+  ALTITUDE,
+  TEMPERATURE,
+  HORIZONTAL_SPEED,
+  VERTICAL_SPEED,
+  WIND_SPEED,
+  TASK_SPEED,
+  PRESSURE,
+};
 
 struct UnitSetting
 {

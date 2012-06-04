@@ -32,7 +32,6 @@ Copyright_License {
 #include "Language/Language.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Form/Util.hpp"
-#include "Engine/Task/Tasks/BaseTask/OrderedTaskPoint.hpp"
 
 void
 RulesStatusPanel::Refresh()

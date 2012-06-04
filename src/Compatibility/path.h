@@ -37,7 +37,7 @@ Copyright_License {
 #endif /* !_WIN32 */
 
 static inline bool
-IsDirSeparator(TCHAR ch)
+is_dir_separator(TCHAR ch)
 {
 #ifdef WIN32
 #if defined(__WINE__) || defined(_WIN32_WCE)

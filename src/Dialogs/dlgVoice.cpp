@@ -29,7 +29,7 @@ Copyright_License {
 #include "Profile/ProfileKeys.hpp"
 #include "Profile/Profile.hpp"
 #include "Audio/VegaVoice.hpp"
-#include "Form/DataField/Base.hpp"
+#include "DataField/Base.hpp"
 #include "LogFile.hpp"
 
 static WndForm *wf=NULL;

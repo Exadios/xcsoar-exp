@@ -44,7 +44,7 @@ class AnnularSectorZone;
 class Serialiser:
   public TaskPointConstVisitor
 {
-  DataNode &node;
+  DataNode &m_node;
 
   bool mode_optional_start;
 
@@ -57,30 +57,30 @@ public:
    * 
    * @return Initialised object
    */
-  Serialiser(DataNode &_node)
-    :node(_node), mode_optional_start(false) {};
+  Serialiser(DataNode& the_node)
+    :m_node(the_node), mode_optional_start(false) {};
 
   /** 
    * Serialise a task (create a DataNode structure to reflect the task)
    * 
    * @param data OrderedTask to serialise
    */
-  void Serialise(const OrderedTask &task);
+  void serialise(const OrderedTask &task);
 
-  void Visit(const StartPoint &data);
-  void Visit(const ASTPoint &data);
-  void Visit(const AATPoint &data);
-  void Visit(const FinishPoint &data);
-  void Visit(const UnorderedTaskPoint &data);
-  void Visit(const FAISectorZone &data);
-  void Visit(const KeyholeZone &data);
-  void Visit(const BGAFixedCourseZone &data);
-  void Visit(const BGAEnhancedOptionZone &data);
-  void Visit(const BGAStartSectorZone &data);
-  void Visit(const SectorZone &data);
-  void Visit(const LineSectorZone &data);
-  void Visit(const CylinderZone &data);
-  void Visit(const AnnularSectorZone &data);
+  void Visit(const StartPoint& data);
+  void Visit(const ASTPoint& data);
+  void Visit(const AATPoint& data);
+  void Visit(const FinishPoint& data);
+  void Visit(const UnorderedTaskPoint& data);
+  void Visit(const FAISectorZone& data);
+  void Visit(const KeyholeZone& data);
+  void Visit(const BGAFixedCourseZone& data);
+  void Visit(const BGAEnhancedOptionZone& data);
+  void Visit(const BGAStartSectorZone& data);
+  void Visit(const SectorZone& data);
+  void Visit(const LineSectorZone& data);
+  void Visit(const CylinderZone& data);
+  void Visit(const AnnularSectorZone& data);
 
 protected:
   /** 
@@ -88,28 +88,28 @@ protected:
    * 
    * @param data Item to serialise
    */
-  void Serialise(const OrderedTaskBehaviour &data);
+  void serialise(const OrderedTaskBehaviour& data);
 
   /** 
    * Serialise a Waypoint
    * 
    * @param data Item to serialise
    */
-  void Serialise(const Waypoint &data);
+  void serialise(const Waypoint& data);
 
   /** 
    * Serialise a GeoPoint
    * 
    * @param data Item to serialise
    */
-  void Serialise(const GeoPoint &data);
+  void serialise(const GeoPoint& data);
 
   /** 
    * Serialise an ObservationZonePoint
    * 
    * @param data Item to serialise
    */
-  void Serialise(const ObservationZonePoint &data);
+  void serialise(const ObservationZonePoint& data);
 
   /** 
    * Serialise an OrderedTaskPoint
@@ -117,11 +117,12 @@ protected:
    * @param data Item to serialise
    * @param name Type of point
    */
-  void Serialise(const OrderedTaskPoint &data, const TCHAR* name);
+  void serialise(const OrderedTaskPoint& data, const TCHAR* name);
 
 private:
-  const TCHAR *GetTaskFactoryType(TaskFactoryType type) const;
-  const TCHAR *GetHeightRef(HeightReferenceType height_ref) const;
+  TaskFactoryType task_factory_type() const;
+  const TCHAR* task_factory_type(TaskFactoryType the_type) const;
+  const TCHAR* height_ref(HeightReferenceType the_height_ref) const;
 };
 
 #endif

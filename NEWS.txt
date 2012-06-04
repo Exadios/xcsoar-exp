@@ -2,20 +2,6 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
-Version 6.4 - not yet released
-* devices
-  - buffered serial port I/O
-  - FLARM: new FLARM setup dialog
-  - added driver for GliderTools GT Altimeter
-* user interface
-  - added "Airspace On/Off" menu button
-  - save Flarm team mates in the profile (#1997)
-  - added para- and hang glider and aircraft symbols (#1626)
-* infoboxes
-  - added automatic altitude infobox (baro. altitude with GPS fallback)
-* Android
-  - support x86 and MIPS CPUs
-
 Version 6.3.4 - 2012/05/24
 * calculations
   - fix overflow in ETE/ETA calculations on big tasks (#2066)
@@ -156,9 +142,6 @@ Version 6.3 - 2012/03/29
   - fix configuration dialog navigation
 * LX MiniMap
   - support for the hardware buttons
-
-Version 6.2.6-restricted - 2012/03/13
-This is Version 6.2.6 with the artificial horizon display removed.
 
 Version 6.2.6 - 2012/02/25
 * calculations

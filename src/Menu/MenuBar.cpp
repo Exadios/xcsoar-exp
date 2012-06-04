@@ -117,7 +117,7 @@ MenuBar::Button::OnMessage(HWND hWnd, UINT message,
 
 MenuBar::MenuBar(ContainerWindow &parent)
 {
-  const PixelRect rc = parent.GetClientRect();
+  const PixelRect rc = parent.get_client_rect();
 
   ButtonWindowStyle style;
   style.Hide();
@@ -134,7 +134,7 @@ void
 MenuBar::SetFont(const Font &font)
 {
   for (unsigned i = 0; i < MAX_BUTTONS; i++)
-    buttons[i].SetFont(font);
+    buttons[i].set_font(font);
 }
 
 void
@@ -148,7 +148,7 @@ MenuBar::ShowButton(unsigned i, bool enabled, const TCHAR *text,
   button.set_text(text);
   button.SetEnabled(enabled && event > 0);
   button.SetEvent(event);
-  button.ShowOnTop();
+  button.show_on_top();
 }
 
 void
@@ -163,5 +163,5 @@ void
 MenuBar::OnResize(const PixelRect &rc)
 {
   for (unsigned i = 0; i < MAX_BUTTONS; ++i)
-    buttons[i].Move(GetButtonPosition(i, rc));
+    buttons[i].move(GetButtonPosition(i, rc));
 }

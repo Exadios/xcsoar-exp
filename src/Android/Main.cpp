@@ -22,7 +22,6 @@ Copyright_License {
 */
 
 #include "Android/Main.hpp"
-#include "Android/Environment.hpp"
 #include "Android/Context.hpp"
 #include "Android/NativeView.hpp"
 #include "Android/Timer.hpp"
@@ -32,7 +31,6 @@ Copyright_License {
 #include "Android/PortBridge.hpp"
 #include "Android/BluetoothHelper.hpp"
 #include "Android/NativeInputListener.hpp"
-#include "Android/TextUtil.hpp"
 #include "Language/Language.hpp"
 #include "LocalPath.hpp"
 #include "LogFile.hpp"
@@ -46,9 +44,6 @@ Copyright_License {
 #include "MainWindow.hpp"
 #include "Interface.hpp"
 #include "Java/Global.hpp"
-#include "Java/File.hpp"
-#include "Java/InputStream.hpp"
-#include "Java/URL.hpp"
 #include "Compiler.h"
 #include "org_xcsoar_NativeView.h"
 
@@ -68,6 +63,8 @@ Context *context;
 NativeView *native_view;
 
 EventQueue *event_queue;
+
+SoundUtil *sound_util;
 
 Vibrator *vibrator;
 bool os_haptic_feedback_enabled;
@@ -94,12 +91,7 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
                                             jint sdk_version, jstring product)
 {
   Java::Init(env);
-  Java::File::Initialise(env);
-  Java::InputStream::Initialise(env);
-  Java::URL::Initialise(env);
-  Java::URLConnection::Initialise(env);
 
-  Environment::Initialise(env);
   AndroidTimer::Initialise(env);
   InternalSensors::Initialise(env);
   NativeInputListener::Initialise(env);
@@ -116,7 +108,6 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
   LogStartUp(_T("Starting XCSoar %s"), XCSoar_VersionString);
 
   OpenGL::Initialise();
-  TextUtil::Initialise(env);
 
   assert(native_view == NULL);
   native_view = new NativeView(env, obj, width, height, xdpi, ydpi,
@@ -124,7 +115,7 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
 
   event_queue = new EventQueue();
 
-  SoundUtil::Initialise(env);
+  sound_util = new SoundUtil(env);
   vibrator = Vibrator::Create(env, *context);
 
 #ifdef IOIOLIB
@@ -158,12 +149,11 @@ Java_org_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
   ioio_helper = NULL;
 #endif
 
-  SoundUtil::Deinitialise(env);
+  delete sound_util;
   delete event_queue;
   event_queue = NULL;
   delete native_view;
 
-  TextUtil::Deinitialise(env);
   OpenGL::Deinitialise();
   ScreenDeinitialized();
   DeinitialiseDataPath();
@@ -177,8 +167,6 @@ Java_org_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
   NativeInputListener::Deinitialise(env);
   InternalSensors::Deinitialise(env);
   AndroidTimer::Deinitialise(env);
-  Environment::Deinitialise(env);
-  Java::URL::Deinitialise(env);
 }
 
 gcc_visibility_default

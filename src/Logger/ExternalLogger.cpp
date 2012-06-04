@@ -22,7 +22,7 @@
 */
 
 #include "Logger/ExternalLogger.hpp"
-#include "Form/DataField/ComboList.hpp"
+#include "DataField/ComboList.hpp"
 #include "Dialogs/Message.hpp"
 #include "Dialogs/ComboPicker.hpp"
 #include "Language/Language.hpp"
@@ -39,8 +39,7 @@
 #include "Job/Job.hpp"
 #include "OS/FileUtil.hpp"
 #include "IO/FileLineReader.hpp"
-#include "IGC/IGCParser.hpp"
-#include "IGC/IGCHeader.hpp"
+#include "Replay/IGCParser.hpp"
 #include "Formatter/IGCFilenameFormatter.hpp"
 
 #include <windef.h> /* for MAX_PATH */
@@ -85,7 +84,7 @@ DeviceDeclare(DeviceDescriptor &dev, const Declaration &declaration,
   if (dev.IsOccupied())
     return false;
 
-  if (ShowMessageBox(_("Declare task?"), dev.GetDisplayName(),
+  if (MessageBoxX(_("Declare task?"), dev.GetDisplayName(),
                   MB_YESNO | MB_ICONQUESTION) != IDYES)
     return false;
 
@@ -100,12 +99,12 @@ DeviceDeclare(DeviceDescriptor &dev, const Declaration &declaration,
   dev.Return();
 
   if (!success) {
-    ShowMessageBox(_("Error occured,\nTask NOT declared!"),
+    MessageBoxX(_("Error occured,\nTask NOT declared!"),
                 caption, MB_OK | MB_ICONERROR);
     return false;
   }
 
-  ShowMessageBox(_("Task declared!"),
+  MessageBoxX(_("Task declared!"),
               caption, MB_OK | MB_ICONINFORMATION);
   return true;
 }
@@ -125,7 +124,7 @@ ExternalLogger::Declare(const Declaration &decl, const Waypoint *home)
   }
 
   if (!found_logger)
-    ShowMessageBox(_("No logger connected"),
+    MessageBoxX(_("No logger connected"),
                 _("Declare task"), MB_OK | MB_ICONINFORMATION);
 }
 
@@ -269,7 +268,7 @@ ExternalLogger::DownloadFlightFrom(DeviceDescriptor &device)
   RecordedFlightList flight_list;
   if (!DoReadFlightList(device, flight_list)) {
     device.EnableNMEA(env);
-    ShowMessageBox(_("Failed to download flight list."),
+    MessageBoxX(_("Failed to download flight list."),
                 _("Download flight"), MB_OK | MB_ICONERROR);
     return;
   }
@@ -277,7 +276,7 @@ ExternalLogger::DownloadFlightFrom(DeviceDescriptor &device)
   // The logger seems to be empty -> cancel
   if (flight_list.empty()) {
     device.EnableNMEA(env);
-    ShowMessageBox(_("Logger is empty."),
+    MessageBoxX(_("Logger is empty."),
                 _("Download flight"), MB_OK | MB_ICONINFORMATION);
     return;
   }
@@ -294,7 +293,7 @@ ExternalLogger::DownloadFlightFrom(DeviceDescriptor &device)
     if (!DoDownloadFlight(device, *flight, path)) {
       // Delete temporary file
       File::Delete(path);
-      ShowMessageBox(_("Failed to download flight."),
+      MessageBoxX(_("Failed to download flight."),
                   _("Download flight"), MB_OK | MB_ICONERROR);
       continue;
     }
@@ -321,7 +320,7 @@ ExternalLogger::DownloadFlightFrom(DeviceDescriptor &device)
     // Rename the temporary file to the actual filename
     File::Rename(path, final_path);
 
-    if (ShowMessageBox(_("Do you want to download another flight?"),
+    if (MessageBoxX(_("Do you want to download another flight?"),
                     _("Download flight"), MB_YESNO | MB_ICONQUESTION) != IDYES)
       break;
   }

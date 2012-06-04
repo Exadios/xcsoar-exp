@@ -72,12 +72,10 @@ public:
    * 
    * @return Vector of intersection pairs if the line intersects the airspace
    */
-  virtual AirspaceIntersectionVector Intersects(const GeoPoint &g1,
-                                                const GeoPoint &end,
-                                                const TaskProjection &projection) const;
+  AirspaceIntersectionVector Intersects(const GeoPoint &g1,
+                                        const GeoPoint &end) const;
 
-  virtual GeoPoint ClosestPoint(const GeoPoint &loc,
-                                const TaskProjection &projection) const;
+  GeoPoint ClosestPoint(const GeoPoint &loc) const;
 
 public:
 #ifdef DO_PRINT
