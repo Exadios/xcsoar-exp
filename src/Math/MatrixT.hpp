@@ -29,8 +29,10 @@
  * Classes to implement template matrices.
  */
 
+template<typename T> class slice_iter;
+template<typename T> class Cslice_iter;
 
-template<typename T> class MatrixT
+template<class T> class MatrixT
 {
   public:
     /**
@@ -66,44 +68,60 @@ template<typename T> class MatrixT
     /**
      * Index assignment.
      * @param i Row index.
+     * @param j Column index.
      * @return The matrix row.
      */
-    slice_iter operator()(size_t i);
+    T operator()(size_t i, size_t j);
 
     /**
      * Index value.
      * @param i Row index.
+     * @param j Column index.
      * @return The matrix row.
      */
-    slice_iter operator()(size_t i) const;
+    T operator()(size_t i, size_t j) const;
 
     /**
      * Index assignment.
      * @param i Row index.
      * @return The iterator.
      */
-    slice_iter operator[](size_t i);
+    slice_iter<T> operator[](size_t i);
 
     /**
      * Index value.
      * @param i Row index.
      * @return The iterator.
      */
-    slice_iter operator[](size_t i) const;
+    Cslice_iter<T> operator[](size_t i) const;
 
     /**
      * Give the row.
      * @param i The row index.
      * @return The row.
      */
-    slice_iter row(size_t i);
+    slice_iter<T> row(size_t i);
 
     /**
      * Give the row.
      * @param i The row index.
      * @return The row.
      */
-    slice_iter row(size_t i) const;
+    Cslice_iter<T> row(size_t i) const;
+
+    /**
+     * Give the column.
+     * @param i Column index.
+     * @return The column.
+     */
+    slice_iter<T> column(size_t i);
+
+    /**
+     * Give the column.
+     * @param i Column index.
+     * @return The column.
+     */
+    Cslice_iter<T> column(size_t i) const;
 
   private:
     /**
@@ -112,7 +130,7 @@ template<typename T> class MatrixT
     std::valarray<T> a;
 };
 
-template<typename T> class slice_iter
+template<class T> class slice_iter
 {
   public:
     /**
@@ -120,7 +138,7 @@ template<typename T> class slice_iter
      * @param a The array.
      * @param s The slice of the array.
      */
-    slice_iter(std::valarray<T> *a, slice s);
+    slice_iter(std::valarray<T> *a, std::slice s);
 
     /**
      * Dtor.
@@ -170,7 +188,7 @@ template<typename T> class slice_iter
     /**
      * The current slice.
      */
-    slice s;
+    std::slice s;
 
     /**
      * The current index.
@@ -193,7 +211,7 @@ template<typename T> class Cslice_iter
      * @param a The array.
      * @param s The slice of the array.
      */
-    Cslice_iter(const std::valarray<T> *v, slice s);
+    Cslice_iter(const std::valarray<T> *v, std::slice s);
 
     /**
      * Dtor.
@@ -242,7 +260,7 @@ template<typename T> class Cslice_iter
     /**
      * The current slice.
      */
-    slice s;
+    std::slice s;
 
     /**
      * The current index.

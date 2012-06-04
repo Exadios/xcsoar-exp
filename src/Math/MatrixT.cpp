@@ -23,31 +23,21 @@
 #include "Math/MatrixT.hpp"
 
 //------------------------------------------------------------------------------
-MatrixT::MatrixT(const MatrixT& rhs)
+template<class T>
+MatrixT<T>::MatrixT(const MatrixT<T>& rhs)
   {
   this->a = rhs.a;
   }
 
 //------------------------------------------------------------------------------
-MatrixT::~MatrixT()
+template<class T>
+MatrixT<T>::~MatrixT()
   {
   }
 
 //------------------------------------------------------------------------------
-slice_iter::slice_iter(std::valarray<T> *v, slice s)
-  {
-  this->v = v;
-  this->s = s;
-  this->i = 0;
-  }
-
-//------------------------------------------------------------------------------
-slice_iter::~slice_iter()
-  {
-  }
-
-//------------------------------------------------------------------------------
-Cslice_iter::Cslice_iter(const std::valarray<T> *v, slice s)
+template<class T>
+slice_iter<T>::slice_iter(std::valarray<T> *v, std::slice s)
   {
   this->v = v;
   this->s = s;
@@ -55,7 +45,23 @@ Cslice_iter::Cslice_iter(const std::valarray<T> *v, slice s)
   }
 
 //------------------------------------------------------------------------------
-Cslice_iter::~Cslice_iter()
+template<class T>
+slice_iter<T>::~slice_iter()
+  {
+  }
+
+//------------------------------------------------------------------------------
+template<class T>
+Cslice_iter<T>::Cslice_iter(const std::valarray<T> *v, std::slice s)
+  {
+  this->v = v;
+  this->s = s;
+  this->i = 0;
+  }
+
+//------------------------------------------------------------------------------
+template<class T>
+Cslice_iter<T>::~Cslice_iter()
   {
   }
 

@@ -26,7 +26,7 @@ Copyright_License {
 
 #include <valarray>
 
-template<typename T> class VectorT
+template<class T> class VectorT
 {
   public:
     /**
@@ -100,6 +100,6 @@ template<typename T> class VectorT
     std::valarray<T> v;
 };
 
-#include "./VectorT.i.hpp"
+#include "./VectorT.i.cpp"
 
 #endif // VECTORT_HPP

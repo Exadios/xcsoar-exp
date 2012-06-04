@@ -22,38 +22,37 @@
 
 
 //------------------------------------------------------------------------------
-inline VectorT&
-VectorT::operator=(const VectorT& rhs)
+template<class T> inline VectorT<T>&
+VectorT<T>::operator=(const VectorT<T>& rhs)
   {
-  for (int i = 1; i <= 3; i++)
-    this->v[i] = rhs[i];
+  this->v = rhs.v;
   return *this;
   }
 
 //------------------------------------------------------------------------------
-inline T&
-VectorT::operator[](size_t i)
+template<class T> inline T&
+VectorT<T>::operator[](size_t i)
   {
   return this->v[i];
   }
 
 //------------------------------------------------------------------------------
-inline const T&
-VectorT::operator[](size_t i) const
+template<class T> inline const T&
+VectorT<T>::operator[](size_t i) const
   {
   return this->v[i];
   }
 
 //------------------------------------------------------------------------------
-inline T&
-VectorT::operator()(size_t i)
+template<class T> inline T&
+VectorT<T>::operator()(size_t i)
   {
   return this->v[i];
   }
 
 //------------------------------------------------------------------------------
-inline const T&
-VectorT::operator()(size_t i) const
+template<class T> inline const T&
+VectorT<T>::operator()(size_t i) const
   {
   return this->v[i];
   }

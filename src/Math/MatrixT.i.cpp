@@ -21,58 +21,58 @@
  */
 
 //------------------------------------------------------------------------------
-inline MatrixT&
-MatrixT::operator=(const MatrixT& rhs)
+template<class T> inline MatrixT<T>&
+MatrixT<T>::operator=(const MatrixT<T>& rhs)
   {
   this->a = rhs.a;
   return *this;
   }
 
 //------------------------------------------------------------------------------
-inline slice_iter
-MatrixT::operator()(size_t i)
+template<class T> inline T
+MatrixT<T>::operator()(size_t i, size_t j)
+  {
+  return (row(i))[j];
+  }
+
+//------------------------------------------------------------------------------
+template<class T> inline T
+MatrixT<T>::operator()(size_t i, size_t j) const
+  {
+  return (row(i))[j];
+  }
+
+//------------------------------------------------------------------------------
+template<class T> inline slice_iter<T>
+MatrixT<T>::operator[](size_t i)
   {
   return row(i);
   }
 
 //------------------------------------------------------------------------------
-inline Cslice_iter
-MatrixT::operator()(size_t i) const
+template<class T> inline Cslice_iter<T>
+MatrixT<T>::operator[](size_t i) const
   {
   return row(i);
   }
 
 //------------------------------------------------------------------------------
-inline slice_iter
-MatrixT::operator[](size_t i)
+template<class T> inline slice_iter<T>
+MatrixT<T>::row(size_t i)
   {
-  return row(i);
+  return slice_iter<T>(&this->a, std::slice(i, 3, 3));
   }
 
 //------------------------------------------------------------------------------
-inline Cslice_iter
-MatrixT::operator[](size_t i) const
+template<class T> inline Cslice_iter<T>
+MatrixT<T>::row(size_t i) const
   {
-  return row(i);
+  return Cslice_iter<T>(&(this->a), std::slice(i, 3, 3));
   }
 
 //------------------------------------------------------------------------------
-inline slice_iter
-MatrixT::row(size_t i)
-  {
-  return slice_iter(&this->a, slice(i, 3, 3));
-  }
-
-//------------------------------------------------------------------------------
-inline Cslice_iter
-MatrixT::row(size_t i) const
-  {
-  return Cslice_iter(&(this->a), slice(i, 3, 3));
-  }
-
-//------------------------------------------------------------------------------
-inline slice_iter
-slice_iter::end()
+template<class T> inline slice_iter<T>
+slice_iter<T>::end()
   {
   slice_iter t = *this;
   t.i = s.size();
@@ -80,44 +80,44 @@ slice_iter::end()
   }
 
 //------------------------------------------------------------------------------
-inline slice_iter&
-slice_iter::operator++()
+template<class T> inline slice_iter<T>&
+slice_iter<T>::operator++()
   {
   this->i++;
   return *this;
   }
 
 //------------------------------------------------------------------------------
-inline T&
-slice_iter::operator[](size_t i)
+template<class T> inline T&
+slice_iter<T>::operator[](size_t i)
   {
   return this->deref(this->i = i);
   }
 
 //------------------------------------------------------------------------------
-inline T&
-slice_iter::operator()(size_t i)
+template<class T> inline T&
+slice_iter<T>::operator()(size_t i)
   {
   return this->deref(this->i = i);
   }
 
 //------------------------------------------------------------------------------
-inline T&
-slice_iter::operator*()
+template<class T> inline T&
+slice_iter<T>::operator*()
   {
   return this->deref(this->i);
   }
 
 //------------------------------------------------------------------------------
-inline T&
-slice_iter::deref(size_t i) const
+template<class T> inline T&
+slice_iter<T>::deref(size_t i) const
   {
   return (*this->a)[this->s.start() + i * this->s.stride()];
   }
 
 //------------------------------------------------------------------------------
-inline const Cslice_iter
-Cslice_iter::end()
+template<class T> inline const Cslice_iter<T>
+Cslice_iter<T>::end()
   {
   Cslice_iter t = *this;
   t.i = s.size();
@@ -125,37 +125,37 @@ Cslice_iter::end()
   }
 
 //------------------------------------------------------------------------------
-inline const Cslice_iter&
-Cslice_iter::operator++()
+template<class T> inline const Cslice_iter<T>&
+Cslice_iter<T>::operator++()
   {
   this->i++;
   return *this;
   }
 
 //------------------------------------------------------------------------------
-inline const T&
-Cslice_iter::operator[](size_t i)
+template<class T> inline const T&
+Cslice_iter<T>::operator[](size_t i)
   {
   return this->deref(this->i = i);
   }
 
 //------------------------------------------------------------------------------
-inline const T&
-Cslice_iter::operator()(size_t i)
+template<class T> inline const T&
+Cslice_iter<T>::operator()(size_t i)
   {
   return this->deref(this->i = i);
   }
 
 //------------------------------------------------------------------------------
-inline const T&
-Cslice_iter::operator*() const
+template<class T> inline const T&
+Cslice_iter<T>::operator*() const
   {
   return this->deref(this->i);
   }
 
 //------------------------------------------------------------------------------
-inline const T&
-Cslice_iter::deref(size_t i) const
+template<class T> inline const T&
+Cslice_iter<T>::deref(size_t i) const
   {
   return (*this->a)[this->s.start() + i * this->s.stride()];
   }
