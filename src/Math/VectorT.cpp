@@ -23,24 +23,24 @@
 #include "Math/VectorT.hpp"
 
 //------------------------------------------------------------------------------
-template<class T>
-VectorT<T>::VectorT()
+template<class T, size_t Trow>
+VectorT<T, Trow>::VectorT()
   {
-  this->v.resize(3);
+  this->v.resize(Trow);
   this->v = T(0);
   }
 
 //------------------------------------------------------------------------------
-template<class T>
-VectorT<T>::VectorT(const VectorT<T>& rhs)
+template<class T, size_t Trow>
+VectorT<T, Trow>::VectorT(const VectorT<T, Trow>& rhs)
   {
-  for (size_t i = 1; i <= 3; i++)
+  for (size_t i = 0; i < Trow; i++)
     this->v[i] = rhs[i];
   }
 
 //------------------------------------------------------------------------------
-template<class T>
-VectorT<T>::~VectorT()
+template<class T, size_t Trow>
+VectorT<T, Trow>::~VectorT()
   {
   }
 

@@ -25,8 +25,9 @@ Copyright_License {
 #define VECTORT_HPP
 
 #include <valarray>
+#include <assert.h>
 
-template<class T> class VectorT
+template<class T, size_t Trow> class VectorT
 {
   public:
     /**

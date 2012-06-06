@@ -21,53 +21,61 @@
  */
 
 //------------------------------------------------------------------------------
-template<class T> inline MatrixT<T>&
-MatrixT<T>::operator=(const MatrixT<T>& rhs)
+template<class T, size_t Trow, size_t Tcol> inline MatrixT<T, Trow, Tcol>&
+MatrixT<T, Trow, Tcol>::operator=(const MatrixT<T, Trow, Tcol>& rhs)
   {
   this->a = rhs.a;
   return *this;
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline T
-MatrixT<T>::operator()(size_t i, size_t j)
+template<class T, size_t Trow, size_t Tcol> inline T
+MatrixT<T, Trow, Tcol>::operator()(size_t i, size_t j)
   {
+  assert(i < Trow);
+  assert(j < Tcol);
   return (row(i))[j];
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline T
-MatrixT<T>::operator()(size_t i, size_t j) const
+template<class T, size_t Trow, size_t Tcol> inline T
+MatrixT<T, Trow, Tcol>::operator()(size_t i, size_t j) const
   {
+  assert(i < Trow);
+  assert(j < Tcol);
   return (row(i))[j];
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline slice_iter<T>
-MatrixT<T>::operator[](size_t i)
+template<class T, size_t Trow, size_t Tcol> inline slice_iter<T>
+MatrixT<T, Trow, Tcol>::operator[](size_t i)
   {
+  assert(i < Trow);
   return row(i);
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline Cslice_iter<T>
-MatrixT<T>::operator[](size_t i) const
+template<class T, size_t Trow, size_t Tcol> inline Cslice_iter<T>
+MatrixT<T, Trow, Tcol>::operator[](size_t i) const
   {
+  assert(i < Trow);
   return row(i);
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline slice_iter<T>
-MatrixT<T>::row(size_t i)
+template<class T, size_t Trow, size_t Tcol> inline slice_iter<T>
+MatrixT<T, Trow, Tcol>::row(size_t i)
   {
-  return slice_iter<T>(&this->a, std::slice(i, 3, 3));
+  assert(i < Trow);
+  return slice_iter<T>(&this->a, std::slice(i, Trow, Tcol));
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline Cslice_iter<T>
-MatrixT<T>::row(size_t i) const
+template<class T, size_t Trow, size_t Tcol> inline Cslice_iter<T>
+MatrixT<T, Trow, Tcol>::row(size_t i) const
   {
-  return Cslice_iter<T>(&(this->a), std::slice(i, 3, 3));
+  assert(i < Trow);
+  return Cslice_iter<T>(&(this->a), std::slice(i, Trow, Tcol));
   }
 
 //------------------------------------------------------------------------------

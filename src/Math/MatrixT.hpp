@@ -23,6 +23,7 @@
 #define MATRIXT_HPP
 
 #include <valarray>
+#include <assert.h>
 
 /**
  * @file
@@ -32,20 +33,13 @@
 template<typename T> class slice_iter;
 template<typename T> class Cslice_iter;
 
-template<class T> class MatrixT
+template<class T, size_t Trow, size_t Tcol> class MatrixT
 {
   public:
     /**
      * Default Ctor. Elements are initialized to 0.
      */
     MatrixT();
-
-    /**
-     * Ctor.
-     * @param m Number of rows.
-     * @param n Number of columns
-     */
-    explicit MatrixT(size_t m, size_t n);
 
     /**
      * Copy Ctor.
@@ -183,7 +177,7 @@ template<class T> class slice_iter
     /**
      * Reference to the array.
      */
-    std::valarray<T> *v;
+    std::valarray<T> *a;
 
     /**
      * The current slice.
@@ -211,7 +205,7 @@ template<typename T> class Cslice_iter
      * @param a The array.
      * @param s The slice of the array.
      */
-    Cslice_iter(const std::valarray<T> *v, std::slice s);
+    Cslice_iter(const std::valarray<T> *a, std::slice s);
 
     /**
      * Dtor.

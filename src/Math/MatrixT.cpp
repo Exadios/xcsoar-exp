@@ -23,15 +23,22 @@
 #include "Math/MatrixT.hpp"
 
 //------------------------------------------------------------------------------
-template<class T>
-MatrixT<T>::MatrixT(const MatrixT<T>& rhs)
+template<class T, size_t Trow, size_t Tcol>
+MatrixT<T, Trow, Tcol>::MatrixT()
+  {
+  this->a.resize(Trow * Tcol);
+  }
+
+//------------------------------------------------------------------------------
+template<class T, size_t Trow, size_t Tcol>
+MatrixT<T, Trow, Tcol>::MatrixT(const MatrixT<T, Trow, Tcol>& rhs)
   {
   this->a = rhs.a;
   }
 
 //------------------------------------------------------------------------------
-template<class T>
-MatrixT<T>::~MatrixT()
+template<class T, size_t Trow, size_t Tcol>
+MatrixT<T, Trow, Tcol>::~MatrixT()
   {
   }
 
@@ -39,7 +46,7 @@ MatrixT<T>::~MatrixT()
 template<class T>
 slice_iter<T>::slice_iter(std::valarray<T> *v, std::slice s)
   {
-  this->v = v;
+  this->a = a;
   this->s = s;
   this->i = 0;
   }
@@ -52,9 +59,9 @@ slice_iter<T>::~slice_iter()
 
 //------------------------------------------------------------------------------
 template<class T>
-Cslice_iter<T>::Cslice_iter(const std::valarray<T> *v, std::slice s)
+Cslice_iter<T>::Cslice_iter(const std::valarray<T> *a, std::slice s)
   {
-  this->v = v;
+  this->a = a;
   this->s = s;
   this->i = 0;
   }

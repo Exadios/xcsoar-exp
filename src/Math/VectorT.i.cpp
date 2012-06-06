@@ -22,38 +22,42 @@
 
 
 //------------------------------------------------------------------------------
-template<class T> inline VectorT<T>&
-VectorT<T>::operator=(const VectorT<T>& rhs)
+template<class T, size_t Trow> inline VectorT<T, Trow>&
+VectorT<T, Trow>::operator=(const VectorT<T, Trow>& rhs)
   {
   this->v = rhs.v;
   return *this;
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline T&
-VectorT<T>::operator[](size_t i)
+template<class T, size_t Trow> inline T&
+VectorT<T, Trow>::operator[](size_t i)
   {
+  assert(i < Trow);
   return this->v[i];
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline const T&
-VectorT<T>::operator[](size_t i) const
+template<class T, size_t Trow> inline const T&
+VectorT<T, Trow>::operator[](size_t i) const
   {
+  assert(i < Trow);
   return this->v[i];
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline T&
-VectorT<T>::operator()(size_t i)
+template<class T, size_t Trow> inline T&
+VectorT<T, Trow>::operator()(size_t i)
   {
+  assert(i < Trow);
   return this->v[i];
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline const T&
-VectorT<T>::operator()(size_t i) const
+template<class T, size_t Trow> inline const T&
+VectorT<T, Trow>::operator()(size_t i) const
   {
+  assert(i < Trow);
   return this->v[i];
   }
 
