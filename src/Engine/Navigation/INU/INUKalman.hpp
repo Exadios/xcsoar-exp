@@ -23,12 +23,17 @@
 #define KALMAN_HPP
 
 #include <Math/fixed.hpp>
+#include <Math/VectorT.hpp>
+#include <Math/MatrixT.hpp>
 #include "IMUmatrix.hpp"
 
 /**
  * A class designed to take INU and GPS data and merge those two data in an
  * optimal manner.
  */
+
+typedef VectorT<fixed, 6> INUKalmanState;
+typedef VectorT<fixed, 3> INUUpdate;
 
 class INUKalman 
   {
@@ -44,10 +49,24 @@ class INUKalman
     virtual ~INUKalman();
 
     /**
-     * Predict.
+     * Initialization. Set the system state to \f$t_0\f$.
+     */
+    void Initialize();
+
+    /**
+     * Inovate. Compute \f$\hat{x} \left(t_k | t_{k - 1} \right)\f$ and 
+     * \f$P \left( (t_k | t_{k - 1} \right)\f$.
      * @param u The control input to the plant model.
      * @return The predicted state vector.
      */
+    INUKalmanState& Inovate(const INUUpdate& u);
+
+    /**
+     * Update. Compute \f$K \left( t_k \right) \f$,
+     * \f$P \left( t_k | t_k \right ) \f$ and
+     * \f$\hat{x} \left( t_k | t_k \right) \f$.
+     */
+    void Update();
 
   private:
     /**
