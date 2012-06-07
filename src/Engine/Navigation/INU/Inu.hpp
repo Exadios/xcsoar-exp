@@ -24,112 +24,11 @@
 
 #include <valarray>
 #include <Math/fixed.hpp>
-#include "./IMUmatrix.hpp"
+#include <Math/VectorT.hpp>
+#include <Math/MatrixT.hpp>
 
-#if 0
-class IMUvector;
-class IMUmatrix;
-
-
-class IMUvector
-{
-  public:
-    /**
-     * Default Ctor. Elements are initialized to 0.
-     */
-    IMUvector();
-
-    /**
-     * Initialization Ctor.
-     * @param x0 The first element.
-     * @param x1 The second element.
-     * @param x2 The third element.
-     */
-    IMUvector(fixed x0, fixed x1, fixed x2);
-
-    /**
-     * Copy Ctor.
-     * @param rhs The right hand side.
-     */
-    IMUvector(const IMUvector& rhs);
-
-    /**
-     * Dtor.
-     */
-    ~IMUvector();
-
-    /**
-     * Copy operator.
-     * @param rhs The right hand side.
-     * @return The value of this object.
-     */
-    IMUvector &operator=(const IMUvector& rhs);
-
-    /**
-     * Index assignment.
-     * @param i Index.
-     * @return The vector element.
-     */
-    fixed& operator[](size_t i);
-
-    /**
-     * Index value.
-     * @param i Index.
-     * @return The value of the indexed element.
-     */
-    fixed operator[](size_t i) const;
-
-  private:
-    /**
-     * The vector.
-     */
-    fixed v[3];
-};
-
-class IMUmatrix
-{
-  public:
-    /**
-     * Default Ctor. Elements are initialized to 0.
-     */
-    IMUmatrix();
-
-    /**
-     * Copy Ctor.
-     * @param rhs Right hand side.
-     */
-    IMUmatrix(const IMUmatrix& rhs);
-
-    /**
-     * Dtor.
-     */
-    virtual ~IMUmatrix();
-
-    /**
-     * Copy operator.
-     * @param rhs The right hand side.
-     * @return The value of this object.
-     */
-    IMUmatrix& operator=(const IMUmatrix &rhs);
-
-    /**
-     * Index assignment.
-     * @param i Index.
-     * @return The matrix row.
-     */
-    IMUvector& operator[](size_t i);
-
-    /**
-     * Index value.
-     * @param i Index.
-     * @return The matrix row.
-     */
-    IMUvector operator[](size_t i) const;
-
-  private:
-    IMUvector a[3];
-};
-#endif
+typedef VectorT<fixed, 3> IMUvector;
+typedef MatrixT<fixed, 3, 3> IMUmatrix;
 
 /**
  * @file
