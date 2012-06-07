@@ -923,7 +923,7 @@ OrderedTask::OrderedTask(const TaskBehaviour &tb):
   AbstractTask(ORDERED, tb),
   taskpoint_start(NULL),
   taskpoint_finish(NULL),
-  factory_mode(TaskFactoryType::RACING),
+  factory_mode(tb.task_type_default),
   active_factory(NULL),
   m_ordered_behaviour(tb.ordered_defaults),
   task_advance(m_ordered_behaviour),
@@ -1373,6 +1373,7 @@ OrderedTask::Clear()
 
   Reset();
   m_ordered_behaviour = task_behaviour.ordered_defaults;
+  active_factory->UpdateOrderedTaskBehaviour(m_ordered_behaviour);
 }
 
 OrderedTaskPoint* 

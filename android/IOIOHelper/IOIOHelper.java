@@ -91,6 +91,9 @@ final class IOIOHelper extends Thread {
   }
 
   private synchronized boolean waitCompletion(int timeout_ms) {
+    if (command == Command.NONE)
+      return true;
+
     try {
       wait(timeout_ms);
     } catch (InterruptedException e) {
@@ -102,7 +105,11 @@ final class IOIOHelper extends Thread {
 
   private synchronized boolean runCommand(Command _cmd)
     throws InterruptedException {
-    if (command != _cmd && !waitCompletion())
+    if (command == _cmd)
+      /* another thread is already running this command */
+      return waitCompletion();
+
+    if (!waitCompletion())
       return false;
 
     command = _cmd;
@@ -111,6 +118,10 @@ final class IOIOHelper extends Thread {
   }
 
   private synchronized boolean runCommand(Command _cmd, int timeout_ms) {
+    if (command == _cmd)
+      /* another thread is already running this command */
+      return waitCompletion(timeout_ms);
+
     if (!waitCompletion(timeout_ms))
       return false;
 
@@ -166,8 +177,10 @@ final class IOIOHelper extends Thread {
       }
     } catch (ConnectionLostException e) {
       Log.w(TAG, "IOIOJWaitConnect() Connection Lost", e);
+      ioio.disconnect();
     } catch (IncompatibilityException e) {
       Log.e(TAG, "IOIOJWaitConnect() Incompatibility detected", e);
+      ioio.disconnect();
     } finally {
       connecting = null;
     }
@@ -239,6 +252,10 @@ final class IOIOHelper extends Thread {
    * connect after 3000ms.
    */
   public synchronized boolean open() {
+    if (command == Command.OPEN)
+      /* another thread is already opening the connecting */
+      return waitCompletion();
+
     if (command == Command.NONE && ioio_ != null)
       return true;
 
@@ -393,7 +410,13 @@ final class IOIOHelper extends Thread {
     public boolean setBaudRate(int baud) {
       doClose();
       baudrate = baud;
-      return doOpen();
+      boolean success = doOpen();
+
+      /* check if the IOIO connection can be closed, just in case
+         doOpen() has failed */
+      autoClose();
+
+      return success;
     }
 
     public int getBaudRate() {
