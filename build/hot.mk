@@ -21,9 +21,8 @@ HOT_SOURCES = \
 	$(ENGINE_SRC_DIR)/Navigation/ConvexHull/GrahamScan.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/ConvexHull/PolygonInterior.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/Flat/FlatRay.cpp \
-	$(ENGINE_SRC_DIR)/Navigation/INU/IMUmatrix.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/INU/Inu.cpp \
-	$(ENGINE_SRC_DIR)/Navigation/INU/Kalman.cpp \
+	$(ENGINE_SRC_DIR)/Navigation/INU/INUKalman.cpp \
 	$(ENGINE_SRC_DIR)/Route/FlatTriangleFan.cpp \
 	$(ENGINE_SRC_DIR)/Route/FlatTriangleFanTree.cpp \
 	$(ENGINE_SRC_DIR)/Route/ReachFan.cpp \
