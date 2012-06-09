@@ -117,6 +117,18 @@ template<class T, size_t Trow, size_t Tcol> class MatrixT
      */
     Cslice_iter<T> column(size_t i) const;
 
+     /**
+      * Give the number of rows in this object.
+      * @return Number of rows.
+      */
+     size_t nrow() const;
+
+     /**
+      * Give the number of columns in this object.
+      * @return Number of columns.
+      */
+     size_t ncol() const;
+
   private:
     /**
      * The matrix.

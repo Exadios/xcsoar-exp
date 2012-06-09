@@ -79,6 +79,20 @@ MatrixT<T, Trow, Tcol>::row(size_t i) const
   }
 
 //------------------------------------------------------------------------------
+template<class T, size_t Trow, size_t Tcol> inline size_t
+MatrixT<T, Trow, Tcol>::nrow() const
+  {
+  return Trow;
+  }
+
+//------------------------------------------------------------------------------
+template<class T, size_t Trow, size_t Tcol> inline size_t
+MatrixT<T, Trow, Tcol>::ncol() const
+  {
+  return Tcol;
+  }
+
+//------------------------------------------------------------------------------
 template<class T> inline slice_iter<T>
 slice_iter<T>::end()
   {
