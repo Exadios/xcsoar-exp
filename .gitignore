@@ -41,3 +41,4 @@ build/local-config.mk
 *.zip
 *.swp
 doc/Design/*.png
+Workings.txt
