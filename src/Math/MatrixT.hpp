@@ -90,6 +90,24 @@ template<class T, size_t Trow, size_t Tcol> class MatrixT
     Cslice_iter<T> operator[](size_t i) const;
 
     /**
+     * Unitary addition.
+     * @param rhs The right hand side of the operator.
+     */
+    void operator+(const MatrixT<T, Trow, Tcol>& rhs);
+
+    /**
+     * Unitary subtraction.
+     * @param rhs The right hand side of the operator.
+     */
+    void operator-(const MatrixT<T, Trow, Tcol>& rhs);
+
+    /**
+     * Unitary multiplication.
+     * @param rhs The right hand side of the operator.
+     */
+    void operator*(const MatrixT<T, Trow, Tcol>& rhs);
+
+    /**
      * Give the row.
      * @param i The row index.
      * @return The row.
