@@ -1,6 +1,7 @@
 name-to-bin = $(patsubst %,$(TARGET_BIN_DIR)/%$(TARGET_EXEEXT),$(1))
 
 TESTFAST = \
+	test_matrixt \
 	test_normalise \
 	test_fixed \
 	test_waypoints \
@@ -58,6 +59,7 @@ endef
 $(foreach name,$(HARNESS_PROGRAMS),$(eval $(call link-harness-program,$(name))))
 
 TEST_NAMES = \
+	test_matrixt \
 	test_fixed \
 	test_normalise \
 	test_waypoints \
