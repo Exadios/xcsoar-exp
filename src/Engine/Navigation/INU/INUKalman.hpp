@@ -22,26 +22,30 @@
 #ifndef KALMAN_HPP
 #define KALMAN_HPP
 
+#include <Thread/Mutex.hpp>
 #include <Math/fixed.hpp>
 #include <Math/VectorT.hpp>
 #include <Math/MatrixT.hpp>
-#include "IMUmatrix.hpp"
 
 /**
  * A class designed to take INU and GPS data and merge those two data in an
  * optimal manner.
  */
 
-typedef VectorT<fixed, 6> INUKalmanState;
+typedef VectorT<fixed, 14> INUKalmanState;
 typedef VectorT<fixed, 3> INUUpdate;
+typedef VectorT<fixed, 8> INUObservation;
+typedef MatrixT<fixed, 14, 14>INUSystemMatrix;
 
 class INUKalman 
   {
   public:
     /**
      * Ctor.
+     * @param dT the IMU sample period in seconds.
+     * @param m The ratio between the IMU sample period and the GPS sample rate.
      */
-    INUKalman();
+    INUKalman(fixed dT, int m);
 
     /**
      * Dtor.
@@ -50,25 +54,46 @@ class INUKalman
 
     /**
      * Initialization. Set the system state to \f$t_0\f$.
+     * @param x The system state vector at time zero.
+     * @param P The error covariance at time zero.
      */
-    void Initialize();
+    void Initialize(const INUKalmanState& x, const INUSystemMatrix& P);
 
     /**
-     * Inovate. Compute \f$\hat{x} \left(t_k | t_{k - 1} \right)\f$ and 
+     * Innovate. Compute \f$\hat{x} \left(t_k | t_{k - 1} \right)\f$ and 
      * \f$P \left( (t_k | t_{k - 1} \right)\f$.
      * @param u The control input to the plant model.
      * @return The predicted state vector.
      */
-    INUKalmanState& Inovate(const INUUpdate& u);
+    INUKalmanState& Innovate(const INUUpdate& u);
 
     /**
      * Update. Compute \f$K \left( t_k \right) \f$,
      * \f$P \left( t_k | t_k \right ) \f$ and
      * \f$\hat{x} \left( t_k | t_k \right) \f$.
+     * @param z The obsevation vector.
      */
-    void Update();
+    void Update(const INUObservation& z);
+
+    /**
+     * Compute a step (sample) by calling Inovate() and Update().
+     * @param u The control input to the plant model.
+     * @param z The obsevation vector.
+     */
+    void Step(const INUUpdate& u, const INUObservation& z);
+
+    /**
+     * Give the system state vector.
+     * @return The system state vector, \f$\hat{x} \left( t_k \right) \f$.
+     */
+    const INUKalmanState& State() const;
 
   private:
+    /**
+     * Not default Ctor.
+     */
+    INUKalman();
+
     /**
      * No copy Ctor.
      */
@@ -79,5 +104,54 @@ class INUKalman
      */
     INUKalman &operator=(const INUKalman &rhs);
     INUKalman operator=(const INUKalman &rhs) const;
+
+    /**
+     * The system state vector, \f$\hat{x} \left( t_k \right) \f$.
+     */
+    INUKalmanState x;
+
+    /**
+     * The error covariance matrix, \$P \left( t_k \right) \f$.
+     */
+    INUSystemMatrix P;
+
+    /**
+     * The plant noise covariance matrix, \f$Q\f$.
+     */
+    INUSystemMatrix Q;
+
+    /**
+     * The Kalman gain, \f$K \left( t_k \right) \f$.
+     */
+    INUSystemMatrix K;
+
+    /**
+     * The IMU sample period, \f$\delta T\f$.
+     */
+    fixed dT;
+
+    /**
+     * The integer ratio (assuming synchronous sampling) between the IMU sample
+     * period, \f$\delta T\f$, and the GPS sample period, \f$\Delta T\f$.
+     *
+     * \f$m = \Delta T / \delta t \f$
+     */
+    int m;
+
+    /**
+     * The GPS sample period, \f$\Delta T\f$.
+     */
+    fixed DT;
+
+    /**
+
+     * IMU sample counter.
+     */
+    int s;
+
+    /**
+     * A guard for 's' above
+     */
+    Mutex sl;
   };
 #endif // KALMAN_HPP
