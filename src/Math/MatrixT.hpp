@@ -32,8 +32,16 @@
 
 template<typename T> class slice_iter;
 template<typename T> class Cslice_iter;
+template<typename T, size_t Trow, size_t Tcol> class MatrixT;
 
-template<class T, size_t Trow, size_t Tcol> class MatrixT
+template<typename T, size_t Trow, size_t Tcol> 
+MatrixT<T, Trow, Tcol> operator+(const MatrixT<T, Trow, Tcol>&, const MatrixT<T, Trow, Tcol>&);
+template<typename T, size_t Trow, size_t Tcol> 
+MatrixT<T, Trow, Tcol> operator-(const MatrixT<T, Trow, Tcol>&, const MatrixT<T, Trow, Tcol>&);
+template<typename T, size_t Trow, size_t Tcol> 
+MatrixT<T, Trow, Tcol> operator*(const MatrixT<T, Trow, Tcol>&, const MatrixT<T, Trow, Tcol>&);
+
+template<typename T, size_t Trow, size_t Tcol> class MatrixT
 {
   public:
     /**
@@ -89,6 +97,7 @@ template<class T, size_t Trow, size_t Tcol> class MatrixT
      */
     Cslice_iter<T> operator[](size_t i) const;
 
+#if 0	// The unitary operators conflict with the lvalue operators using gcc.
     /**
      * Unitary addition.
      * @param rhs The right hand side of the operator.
@@ -106,6 +115,7 @@ template<class T, size_t Trow, size_t Tcol> class MatrixT
      * @param rhs The right hand side of the operator.
      */
     void operator*(const MatrixT<T, Trow, Tcol>& rhs);
+#endif
 
     /**
      * Give the row.
@@ -147,6 +157,30 @@ template<class T, size_t Trow, size_t Tcol> class MatrixT
       */
      size_t ncol() const;
 
+     /**
+      * Lvalue addition.
+      * @param lhs The left hand operand.
+      * @param rhs The right hand operand.
+      * @return The lvalue.
+      */
+     friend MatrixT<T, Trow, Tcol> operator+<>(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs);
+
+     /**
+      * Lvalue subtraction.
+      * @param lhs The left hand operand.
+      * @param rhs The right hand operand.
+      * @return The lvalue.
+      */
+     friend MatrixT<T, Trow, Tcol> operator-<>(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs);
+
+     /**
+      * Lvalue multiplication. Both operands must be square.
+      * @param lhs The left hand operand.
+      * @param rhs The right hand operand.
+      * @return The lvalue.
+      */
+     friend MatrixT<T, Trow, Tcol> operator*<>(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs);
+
   private:
     /**
      * The matrix.
@@ -154,7 +188,7 @@ template<class T, size_t Trow, size_t Tcol> class MatrixT
     std::valarray<T> a;
 };
 
-template<class T> class slice_iter
+template<typename T> class slice_iter
 {
   public:
     /**

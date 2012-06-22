@@ -21,7 +21,27 @@
  */
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline MatrixT<T, Trow, Tcol>&
+template<typename T, size_t Trow, size_t Tcol>
+MatrixT<T, Trow, Tcol>::MatrixT()
+  {
+  this->a.resize(Trow * Tcol);
+  }
+
+//------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol>
+MatrixT<T, Trow, Tcol>::MatrixT(const MatrixT<T, Trow, Tcol>& rhs)
+  {
+  this->a = rhs.a;
+  }
+
+//------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol>
+MatrixT<T, Trow, Tcol>::~MatrixT()
+  {
+  }
+
+//------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol> inline MatrixT<T, Trow, Tcol>&
 MatrixT<T, Trow, Tcol>::operator=(const MatrixT<T, Trow, Tcol>& rhs)
   {
   this->a = rhs.a;
@@ -29,7 +49,7 @@ MatrixT<T, Trow, Tcol>::operator=(const MatrixT<T, Trow, Tcol>& rhs)
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline T
+template<typename T, size_t Trow, size_t Tcol> inline T
 MatrixT<T, Trow, Tcol>::operator()(size_t i, size_t j)
   {
   assert(i < Trow);
@@ -38,7 +58,7 @@ MatrixT<T, Trow, Tcol>::operator()(size_t i, size_t j)
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline T
+template<typename T, size_t Trow, size_t Tcol> inline T
 MatrixT<T, Trow, Tcol>::operator()(size_t i, size_t j) const
   {
   assert(i < Trow);
@@ -47,7 +67,7 @@ MatrixT<T, Trow, Tcol>::operator()(size_t i, size_t j) const
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline slice_iter<T>
+template<typename T, size_t Trow, size_t Tcol> inline slice_iter<T>
 MatrixT<T, Trow, Tcol>::operator[](size_t i)
   {
   assert(i < Trow);
@@ -55,49 +75,51 @@ MatrixT<T, Trow, Tcol>::operator[](size_t i)
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline Cslice_iter<T>
+template<typename T, size_t Trow, size_t Tcol> inline Cslice_iter<T>
 MatrixT<T, Trow, Tcol>::operator[](size_t i) const
   {
   assert(i < Trow);
   return row(i);
   }
 
+#if 0
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline void
+template<typename T, size_t Trow, size_t Tcol> inline void
 MatrixT<T, Trow, Tcol>::operator+(const MatrixT<T, Trow, Tcol>& rhs)
   {
   assert(rhs.nrow() == Trow);
   assert(rhs.ncol() == Tcol);
-  for (int i = 0; i < Trow; i++)
-    for (int j = 0; j < Tcol; j++)
+  for (size_t i = 0; i < Trow; i++)
+    for (size_t j = 0; j < Tcol; j++)
       (*this)[i][j] = (*this)[i][j] + rhs[i][j];
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline void
+template<typename T, size_t Trow, size_t Tcol> inline void
 MatrixT<T, Trow, Tcol>::operator-(const MatrixT<T, Trow, Tcol>& rhs)
   {
   assert(rhs.nrow() == Trow);
   assert(rhs.ncol() == Tcol);
-  for (int i = 0; i < Trow; i++)
-    for (int j = 0; j < Tcol; j++)
+  for (size_t i = 0; i < Trow; i++)
+    for (size_t j = 0; j < Tcol; j++)
       (*this)[i][j] = (*this)[i][j] - rhs[i][j];
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline void
+template<typename T, size_t Trow, size_t Tcol> inline void
 MatrixT<T, Trow, Tcol>::operator*(const MatrixT<T, Trow, Tcol>& rhs)
   {
   assert(rhs.nrow() == Tcol);
   assert(rhs.ncol() == Trow);
-  for (int i = 0; i < Trow; i++)
-    for (int j = 0; j < Tcol; j++)
-      for (int k = 0; k < Tcol; k++)
+  for (size_t i = 0; i < Trow; i++)
+    for (size_t j = 0; j < Tcol; j++)
+      for (size_t k = 0; k < Tcol; k++)
         (*this)[i][j] = (*this)[i][k] * rhs[k][j];
   }
+#endif
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline slice_iter<T>
+template<typename T, size_t Trow, size_t Tcol> inline slice_iter<T>
 MatrixT<T, Trow, Tcol>::row(size_t i)
   {
   assert(i < Trow);
@@ -105,7 +127,7 @@ MatrixT<T, Trow, Tcol>::row(size_t i)
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline Cslice_iter<T>
+template<typename T, size_t Trow, size_t Tcol> inline Cslice_iter<T>
 MatrixT<T, Trow, Tcol>::row(size_t i) const
   {
   assert(i < Trow);
@@ -113,21 +135,36 @@ MatrixT<T, Trow, Tcol>::row(size_t i) const
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline size_t
+template<typename T, size_t Trow, size_t Tcol> inline size_t
 MatrixT<T, Trow, Tcol>::nrow() const
   {
   return Trow;
   }
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol> inline size_t
+template<typename T, size_t Trow, size_t Tcol> inline size_t
 MatrixT<T, Trow, Tcol>::ncol() const
   {
   return Tcol;
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline slice_iter<T>
+template<typename T> inline
+slice_iter<T>::slice_iter(std::valarray<T> *a, std::slice s)
+  : a(a),
+    s(s),
+    i(0)
+  {
+  }
+
+//------------------------------------------------------------------------------
+template<typename T> inline
+slice_iter<T>::~slice_iter()
+  {
+  }
+
+//------------------------------------------------------------------------------
+template<typename T> inline slice_iter<T>
 slice_iter<T>::end()
   {
   slice_iter t = *this;
@@ -136,7 +173,7 @@ slice_iter<T>::end()
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline slice_iter<T>&
+template<typename T> inline slice_iter<T>&
 slice_iter<T>::operator++()
   {
   this->i++;
@@ -144,35 +181,50 @@ slice_iter<T>::operator++()
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline T&
+template<typename T> inline T&
 slice_iter<T>::operator[](size_t i)
   {
   return this->deref(this->i = i);
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline T&
+template<typename T> inline T&
 slice_iter<T>::operator()(size_t i)
   {
   return this->deref(this->i = i);
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline T&
+template<typename T> inline T&
 slice_iter<T>::operator*()
   {
   return this->deref(this->i);
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline T&
+template<typename T> inline T&
 slice_iter<T>::deref(size_t i) const
   {
   return (*this->a)[this->s.start() + i * this->s.stride()];
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline const Cslice_iter<T>
+template<typename T> inline
+Cslice_iter<T>::Cslice_iter(const std::valarray<T> *a, std::slice s)
+  : a(a),
+    s(s),
+    i(0)
+  {
+  }
+
+//------------------------------------------------------------------------------
+template<typename T> inline
+Cslice_iter<T>::~Cslice_iter()
+  {
+  }
+
+//------------------------------------------------------------------------------
+template<typename T> inline const Cslice_iter<T>
 Cslice_iter<T>::end()
   {
   Cslice_iter t = *this;
@@ -181,7 +233,7 @@ Cslice_iter<T>::end()
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline const Cslice_iter<T>&
+template<typename T> inline const Cslice_iter<T>&
 Cslice_iter<T>::operator++()
   {
   this->i++;
@@ -189,30 +241,73 @@ Cslice_iter<T>::operator++()
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline const T&
+template<typename T> inline const T&
 Cslice_iter<T>::operator[](size_t i)
   {
   return this->deref(this->i = i);
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline const T&
+template<typename T> inline const T&
 Cslice_iter<T>::operator()(size_t i)
   {
   return this->deref(this->i = i);
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline const T&
+template<typename T> inline const T&
 Cslice_iter<T>::operator*() const
   {
   return this->deref(this->i);
   }
 
 //------------------------------------------------------------------------------
-template<class T> inline const T&
+template<typename T> inline const T&
 Cslice_iter<T>::deref(size_t i) const
   {
   return (*this->a)[this->s.start() + i * this->s.stride()];
   }
 
+//------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol> inline MatrixT<T, Trow, Tcol>
+operator+(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs)
+  {
+  assert(rhs.nrow() == Trow);
+  assert(rhs.ncol() == Tcol);
+  MatrixT<T, Trow, Tcol> R;
+  for (size_t i = 0; i < Trow; i++)
+    for (size_t j = 0; j < Tcol; j++)
+      R[i][j] = lhs[i][j] + rhs[i][j];
+  return R;
+  }
+
+//------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol> inline MatrixT<T, Trow, Tcol>
+operator-(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs)
+  {
+  assert(rhs.nrow() == Trow);
+  assert(rhs.ncol() == Tcol);
+  MatrixT<T, Trow, Tcol> R;
+  for (size_t i = 0; i < Trow; i++)
+    for (size_t j = 0; j < Tcol; j++)
+      R[i][j] = lhs[i][j] - rhs[i][j];
+  return R;
+  }
+
+//------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol> inline MatrixT<T, Trow, Tcol>
+operator*(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs)
+  {
+  assert(rhs.nrow() == lhs.ncol());
+  assert(rhs.ncol() == lhs.nrow());
+  MatrixT<T, Trow, Tcol> R;
+  for (size_t i = 0; i < Trow; i++)
+    {
+    for (size_t j = 0; j < Tcol; j++)
+      {
+      for (size_t k; k < Tcol; k++)
+        R[i][j] = lhs[i][k] * rhs[k][j];
+      }
+    }
+  return R; 
+  }

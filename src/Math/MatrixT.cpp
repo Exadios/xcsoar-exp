@@ -23,26 +23,6 @@
 #include "Math/MatrixT.hpp"
 
 //------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol>
-MatrixT<T, Trow, Tcol>::MatrixT()
-  {
-  this->a.resize(Trow * Tcol);
-  }
-
-//------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol>
-MatrixT<T, Trow, Tcol>::MatrixT(const MatrixT<T, Trow, Tcol>& rhs)
-  {
-  this->a = rhs.a;
-  }
-
-//------------------------------------------------------------------------------
-template<class T, size_t Trow, size_t Tcol>
-MatrixT<T, Trow, Tcol>::~MatrixT()
-  {
-  }
-
-//------------------------------------------------------------------------------
 template<class T>
 slice_iter<T>::slice_iter(std::valarray<T> *v, std::slice s)
   {
