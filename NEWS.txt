@@ -2,6 +2,9 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
+Version 6.3.8 - 2012/06/22
+* fix broken graphics (#2182, #2184, #2185)
+
 Version 6.3.7 - 2012/06/21
 * calculations
   - show altitude difference to target point, not area centre
