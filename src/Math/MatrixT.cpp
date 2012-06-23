@@ -22,33 +22,3 @@
 
 #include "Math/MatrixT.hpp"
 
-//------------------------------------------------------------------------------
-template<class T>
-slice_iter<T>::slice_iter(std::valarray<T> *v, std::slice s)
-  {
-  this->a = a;
-  this->s = s;
-  this->i = 0;
-  }
-
-//------------------------------------------------------------------------------
-template<class T>
-slice_iter<T>::~slice_iter()
-  {
-  }
-
-//------------------------------------------------------------------------------
-template<class T>
-Cslice_iter<T>::Cslice_iter(const std::valarray<T> *a, std::slice s)
-  {
-  this->a = a;
-  this->s = s;
-  this->i = 0;
-  }
-
-//------------------------------------------------------------------------------
-template<class T>
-Cslice_iter<T>::~Cslice_iter()
-  {
-  }
-
