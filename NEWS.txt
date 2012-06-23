@@ -2,6 +2,20 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
+Version 6.3.7 - 2012/06/21
+* calculations
+  - show altitude difference to target point, not area centre
+  - enforce the 150 minutes limit for OLC league (#2174)
+  - fix airspace warnings on old ARM CPUs (#2127)
+* devices
+  - LX: improved LXNav V7 support
+  - skip failed devices for task declaration
+* replay
+  - fix parsing of flight date in IGC files
+* Android
+  - fix crash during METAR download (#2156)
+  - fix map flipping (#2154)
+
 Version 6.3.6 - 2012/06/06
 * calculations
   - fix task start arming inconsistency

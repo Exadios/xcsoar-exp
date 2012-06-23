@@ -43,11 +43,13 @@ static Trace full_trace(60, Trace::null_time, 512);
 static Trace sprint_trace(0, 9000, 128);
 #endif
 
-ContestManager olc_classic(OLC_Classic, full_trace, sprint_trace);
-ContestManager olc_fai(OLC_FAI, full_trace, sprint_trace);
-ContestManager olc_sprint(OLC_Sprint, full_trace, sprint_trace);
-ContestManager olc_league(OLC_League, full_trace, sprint_trace);
-ContestManager olc_plus(OLC_Plus, full_trace, sprint_trace);
+static ContestManager olc_classic(OLC_Classic, full_trace, sprint_trace);
+static ContestManager olc_fai(OLC_FAI, full_trace, sprint_trace);
+static ContestManager olc_sprint(OLC_Sprint, full_trace, sprint_trace);
+static ContestManager olc_league(OLC_League, full_trace, sprint_trace);
+static ContestManager olc_plus(OLC_Plus, full_trace, sprint_trace);
+static ContestManager xcontest(OLC_XContest, full_trace, sprint_trace);
+static ContestManager sis_at(OLC_SISAT, full_trace, sprint_trace);
 
 static int
 TestOLC(DebugReplay &replay)
@@ -64,25 +66,45 @@ TestOLC(DebugReplay &replay)
     sprint_trace.append(state);
 
     olc_sprint.UpdateIdle();
+    olc_league.UpdateIdle();
   }
 
   olc_classic.SolveExhaustive();
   olc_fai.SolveExhaustive();
   olc_league.SolveExhaustive();
   olc_plus.SolveExhaustive();
+  xcontest.SolveExhaustive();
+  sis_at.SolveExhaustive();
 
   putchar('\n');
 
   std::cout << "classic\n";
   PrintHelper::print(olc_classic.GetStats().GetResult());
   std::cout << "league\n";
-  PrintHelper::print(olc_league.GetStats().GetResult());
+  std::cout << "# league\n";
+  PrintHelper::print(olc_league.GetStats().GetResult(0));
+  std::cout << "# classic\n";
+  PrintHelper::print(olc_league.GetStats().GetResult(1));
   std::cout << "fai\n";
   PrintHelper::print(olc_fai.GetStats().GetResult());
   std::cout << "sprint\n";
   PrintHelper::print(olc_sprint.GetStats().GetResult());
   std::cout << "plus\n";
-  PrintHelper::print(olc_plus.GetStats().GetResult());
+  std::cout << "# classic\n";
+  PrintHelper::print(olc_plus.GetStats().GetResult(0));
+  std::cout << "# triangle\n";
+  PrintHelper::print(olc_plus.GetStats().GetResult(1));
+  std::cout << "# plus\n";
+  PrintHelper::print(olc_plus.GetStats().GetResult(2));
+
+  std::cout << "xcontest\n";
+  std::cout << "# free\n";
+  PrintHelper::print(xcontest.GetStats().GetResult(0));
+  std::cout << "# triangle\n";
+  PrintHelper::print(xcontest.GetStats().GetResult(1));
+
+  std::cout << "sis_at\n";
+  PrintHelper::print(sis_at.GetStats().GetResult(0));
 
   olc_classic.Reset();
   olc_fai.Reset();

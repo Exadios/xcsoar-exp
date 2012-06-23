@@ -1,4 +1,5 @@
-/* Copyright_License {
+/*
+Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
   Copyright (C) 2000-2012 The XCSoar Project
@@ -20,12 +21,43 @@
 }
 */
 
-#ifndef TEST_WAYPOINTS_HPP
-#define TEST_WAYPOINTS_HPP
+#ifndef XCSOAR_OPENGL_FRAME_BUFFER_HPP
+#define XCSOAR_OPENGL_FRAME_BUFFER_HPP
 
-#include "Waypoint/Waypoints.hpp"
+#include "FBO.hpp"
 
-const Waypoint* lookup_waypoint(const Waypoints& waypoints, unsigned id);
-bool SetupWaypoints(Waypoints &waypoints, const unsigned n=150);
+/**
+ * Wrapper for an OpenGL framebuffer object.  You must check
+ * OpenGL::frame_buffer_object before using this class.
+ */
+class GLFrameBuffer {
+  GLuint id;
+
+public:
+  GLFrameBuffer() {
+    Gen();
+  }
+
+  ~GLFrameBuffer() {
+    Delete();
+  }
+
+  void Bind() {
+    FBO::BindFramebuffer(FBO::FRAMEBUFFER, id);
+  }
+
+  static void Unbind() {
+    FBO::BindFramebuffer(FBO::FRAMEBUFFER, 0);
+  }
+
+protected:
+  void Gen() {
+    FBO::GenFramebuffers(1, &id);
+  }
+
+  void Delete() {
+    FBO::DeleteFramebuffers(1, &id);
+  }
+};
 
 #endif

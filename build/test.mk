@@ -4,7 +4,7 @@ TESTFAST = \
 	test_matrixt \
 	test_normalise \
 	test_fixed \
-	test_waypoints \
+	TestWaypoints \
 	test_pressure \
 	test_mc \
 	test_task \
@@ -62,7 +62,7 @@ TEST_NAMES = \
 	test_matrixt \
 	test_fixed \
 	test_normalise \
-	test_waypoints \
+	TestWaypoints \
 	test_pressure \
 	test_task \
 	TestOverwritingRingBuffer \
