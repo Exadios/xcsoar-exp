@@ -1,4 +1,4 @@
-#include $(topdir)/build/host.mk
+include $(topdir)/build/host.mk
 
 ifeq ($(TARGET),UNIX)
 
