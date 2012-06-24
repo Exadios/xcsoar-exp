@@ -2,6 +2,11 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
+Version 6.3.8-Exp - 2012/06/24
+* G-Meter Vario still not implemented.
+* Attempt to address bariometric Vario reposiveness (acceleration) for
+  paraglider pilots - based on my hypothesis of what the problem probably is.
+
 Version 6.3.8 - 2012/06/22
 * fix broken graphics (#2182, #2184, #2185)
 

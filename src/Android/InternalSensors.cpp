@@ -371,7 +371,7 @@ Java_org_xcsoar_NonGPSSensors_setBarometricPressure(
      turns out that the distribution is more heavy-tailed than a
      normal distribution, probably because glider pilots usually
      experience fairly constant pressure change most of the time. */
-  static const fixed KF_VAR_ACCEL(0.0075);
+  static const fixed KF_VAR_ACCEL(0.0300);
   static const fixed KF_MAX_DT(60);
 
   // XXX this shouldn't be a global variable
