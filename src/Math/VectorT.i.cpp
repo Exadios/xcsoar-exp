@@ -22,6 +22,28 @@
 
 
 //------------------------------------------------------------------------------
+template<class T, size_t Trow> inline
+VectorT<T, Trow>::VectorT()
+  {
+  this->v.resize(Trow);
+  this->v = T(0);
+  }
+
+//------------------------------------------------------------------------------
+template<class T, size_t Trow> inline
+VectorT<T, Trow>::VectorT(const VectorT<T, Trow>& rhs)
+  {
+  for (size_t i = 0; i < Trow; i++)
+    this->v[i] = rhs[i];
+  }
+
+//------------------------------------------------------------------------------
+template<class T, size_t Trow> inline
+VectorT<T, Trow>::~VectorT()
+  {
+  }
+
+//------------------------------------------------------------------------------
 template<class T, size_t Trow> inline VectorT<T, Trow>&
 VectorT<T, Trow>::operator=(const VectorT<T, Trow>& rhs)
   {
@@ -59,5 +81,12 @@ VectorT<T, Trow>::operator()(size_t i) const
   {
   assert(i < Trow);
   return this->v[i];
+  }
+
+//------------------------------------------------------------------------------
+template<class T, size_t Trow> size_t
+VectorT<T, Trow>::n() const
+  {
+  return Trow;
   }
 

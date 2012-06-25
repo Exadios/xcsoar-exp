@@ -94,6 +94,12 @@ template<class T, size_t Trow> class VectorT
      */
     const T& operator()(size_t i) const;
 
+    /**
+     * Number of elements in the vector.
+     * @return The number of elements.
+     */
+    size_t n() const;
+
   private:
     /**
      * The vector.
