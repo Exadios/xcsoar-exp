@@ -305,8 +305,9 @@ operator*(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs)
     {
     for (size_t j = 0; j < Tcol; j++)
       {
-      for (size_t k; k < Tcol; k++)
-        R[i][j] = lhs[i][k] * rhs[k][j];
+      R[i][j] = 0;
+      for (size_t k = 0; k < Tcol; k++)
+        R[i][j] += lhs[i][k] * rhs[k][j];
       }
     }
   return R; 
