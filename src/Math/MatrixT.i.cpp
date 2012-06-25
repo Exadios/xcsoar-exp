@@ -302,13 +302,27 @@ operator*(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs)
   assert(rhs.ncol() == lhs.nrow());
   MatrixT<T, Trow, Tcol> R;
   for (size_t i = 0; i < Trow; i++)
-    {
     for (size_t j = 0; j < Tcol; j++)
       {
       R[i][j] = 0;
       for (size_t k = 0; k < Tcol; k++)
         R[i][j] += lhs[i][k] * rhs[k][j];
       }
-    }
   return R; 
+  }
+
+//------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol> inline VectorT<T, Trow>
+operator*(const MatrixT<T, Trow, Tcol>& lhs, const VectorT<T, Trow>& rhs)
+  {
+  assert(rhs.n() == lhs.nrow());
+  VectorT<T, Trow> R;
+  for (size_t i = 0; i < Trow; i++)
+    {
+    R[i] = 0;
+    for (size_t j = 0; j < Tcol; j++)
+      R[i] += lhs[i][j] * rhs[j];
+    }
+
+  return R;
   }

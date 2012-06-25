@@ -33,6 +33,7 @@
 template<typename T> class slice_iter;
 template<typename T> class Cslice_iter;
 template<typename T, size_t Trow, size_t Tcol> class MatrixT;
+template<typename T, size_t Trow> class VectorT;
 
 template<typename T, size_t Trow, size_t Tcol> 
 MatrixT<T, Trow, Tcol> operator+(const MatrixT<T, Trow, Tcol>&, const MatrixT<T, Trow, Tcol>&);
@@ -40,6 +41,8 @@ template<typename T, size_t Trow, size_t Tcol>
 MatrixT<T, Trow, Tcol> operator-(const MatrixT<T, Trow, Tcol>&, const MatrixT<T, Trow, Tcol>&);
 template<typename T, size_t Trow, size_t Tcol> 
 MatrixT<T, Trow, Tcol> operator*(const MatrixT<T, Trow, Tcol>&, const MatrixT<T, Trow, Tcol>&);
+template<typename T, size_t Trow, size_t Tcol>
+VectorT<T, Trow> operator*(const MatrixT<T, Trow, Tcol>&, const VectorT<T, Trow>&);
 
 template<typename T, size_t Trow, size_t Tcol> class MatrixT
 {
@@ -180,6 +183,16 @@ template<typename T, size_t Trow, size_t Tcol> class MatrixT
       * @return The lvalue.
       */
      friend MatrixT<T, Trow, Tcol> operator*<>(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs);
+
+    /**
+     * Lvalue multiplication between a matrix and vector. The vector must be
+     * "vertical" (consisting of rows) and have the same number of rows as the
+     * matrix.
+     * @param lhs The left hand operand.
+     * @param rhs The right hand operand.
+     * @return The lvalue.
+     */
+    friend VectorT<T, Trow> operator*<>(const MatrixT<T, Trow, Tcol>& lhs, const VectorT<T, Trow>& rhs);
 
   private:
     /**
