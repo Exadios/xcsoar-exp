@@ -22,26 +22,3 @@
 
 #include "Math/VectorT.hpp"
 
-//------------------------------------------------------------------------------
-template<class T, size_t Trow>
-VectorT<T, Trow>::VectorT()
-  {
-  this->v.resize(Trow);
-  this->v = T(0);
-  }
-
-//------------------------------------------------------------------------------
-template<class T, size_t Trow>
-VectorT<T, Trow>::VectorT(const VectorT<T, Trow>& rhs)
-  {
-  for (size_t i = 0; i < Trow; i++)
-    this->v[i] = rhs[i];
-  }
-
-//------------------------------------------------------------------------------
-template<class T, size_t Trow>
-VectorT<T, Trow>::~VectorT()
-  {
-  }
-
-
