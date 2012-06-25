@@ -22,12 +22,14 @@
 
 #include "Math/fixed.hpp"
 #include "Math/MatrixT.hpp"
+#include "Math/VectorT.hpp"
 #include <iostream>
 
 bool test_basic_ctor();
 bool test_addition();
 bool test_subtraction();
 bool test_multiplication();
+bool test_matrix_vector_multiplication();
 
 bool
 test_basic_ctor()
@@ -106,19 +108,42 @@ test_multiplication()
 
   for (i = 0; i < 3; i++)
     for (j = 0; j < 3; j++)
-      std::cout << "C[" << i << "][" << j << "] = " << C[i][j] << std::endl;
-
-  for (i = 0; i < 3; i++)
-    for (j = 0; j < 3; j++)
       {
       size_t acc = 0;
       for (k = 0; k < 3; k++)
 	acc += (3 * i + k) * (3 * k + j);
-      std::cout << "C[" << i << "][" << j << "] = " << C[i][j] << ", acc = " << acc << std::endl;
       if (C[i][j] != acc)
         return false;
       }
 
+  return true;
+  }
+
+bool
+test_matrix_vector_multiplication()
+  {
+  MatrixT<size_t, 3, 3> A;
+  VectorT<size_t, 3>    B;
+  VectorT<size_t, 3>    C;
+  size_t i, j;
+
+  for (i = 0; i < 3; i++)
+    {
+    for (j = 0; j < 3; j++)
+      A[i][j] = j + 3 * i;
+    B[i] = i;
+    }
+  C = A * B;
+
+  for (i = 0; i < 3; i++)
+    {
+    size_t acc = 0;
+    for (j = 0; j < 3; j++)
+      acc += (j + 3 * i) * i;
+    if (C[i] != acc)
+      return false;
+    }
+  
   return true;
   }
 
