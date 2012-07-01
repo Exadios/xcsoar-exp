@@ -30,25 +30,25 @@ int main(int argc, const char *argv[])
   {
   Term zero("0");
   Term one("1");
-  Term dT("dT");
+  Term dT("this->dT");
   M A, P, At, R;
 
   for (int i = 0; i < 8; i++)
     for (int j = 0; j < 8; j++)
       {
-      A[i][j] = zero;
+      A[i][j]  = zero;
       At[i][j] = zero;
       }
 
   for (int i = 0; i < 8; i++)
     {
-    A[i][i] = one;
+    A[i][i]  = one;
     At[i][i] = one;
     }
 
   for (int i = 0; i < 4; i++)
     {
-    A[i][i + 4] = dT;
+    A[i][i + 4]  = dT;
     At[i + 4][i] = dT;
     }
 
@@ -57,7 +57,7 @@ int main(int argc, const char *argv[])
     for (int j = 0; j < 8; j++)
       {
       std::stringstream s;
-      s << "P[" << i << "][" << j << "]";
+      s << "this->P[" << i << "][" << j << "]";
       Term name(s.str());
       P[i][j] = name;
       }
@@ -67,6 +67,6 @@ int main(int argc, const char *argv[])
 
   for (size_t i = 0; i < 8; i++)
     for (size_t j = 0; j < 8; j++)
-      std::cout << R[i][j] << std::endl;
+      std::cout << "this->R[" << i << "][" << j << "] = " << R[i][j] << std::endl;
   return 0;
   }
