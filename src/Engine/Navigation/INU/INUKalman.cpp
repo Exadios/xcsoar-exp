@@ -79,17 +79,183 @@ INUKalman::Innovate(const INUUpdate& u)
     {
     }
 
+  // I am unsure of the APA^T expansion below. It does not look correct to my
+  // eye. Needs confirmation by manual checking of a sample.
   INUSystemMatrix R;
-
-  R[0][0] = P[0][0];
-  R[1][1] = P[1][1];
-  R[2][2] = P[2][2];
-  R[3][3] = P[3][3];
-  R[4][4] = P[4][4];
-  R[5][5] = P[5][5];
-  R[6][6] = P[6][6];
-  R[7][7] = P[7][7];
-
+  R[0][0] = this->P[0][0] + this->dT * this->P[4][0] + this->P[0][1] +
+            this->P[0][2] + this->P[0][3] + this->P[0][4] + 
+	    this->dT * this->P[4][4] * this->dT + this->P[0][5] +
+	    this->P[0][6] + this->P[0][7];
+  R[0][1] = this->P[0][0] + this->P[0][1] + this->dT * this->P[4][1] +
+            this->P[0][2] + this->P[0][3] + this->P[0][4] + this->P[0][5] +
+	    this->dT * this->P[4][5] * this->dT + this->P[0][6] + this->P[0][7];
+  R[0][2] = this->P[0][0] + this->P[0][1] + this->P[0][2] + 
+            this->dT * this->P[4][2] + this->P[0][3] + this->P[0][4] +
+	    this->P[0][5] + this->P[0][6] + this->dT * this->P[4][6] *
+	    this->dT + this->P[0][7];
+  R[0][3] = this->P[0][0] + this->P[0][1] + this->P[0][2] + this->P[0][3] +
+            this->dT * this->P[4][3] + this->P[0][4] + this->P[0][5] +
+	    this->P[0][6] + this->P[0][7] + this->dT * this->P[4][7] * this->dT;
+  R[0][4] = this->P[0][0] + this->P[0][1] + this->P[0][2] + this->P[0][3] +
+            this->P[0][4] + this->dT * this->P[4][4] + this->P[0][5] +
+	    this->P[0][6] + this->P[0][7];
+  R[0][5] = this->P[0][0] + this->P[0][1] + this->P[0][2] + this->P[0][3] +
+            this->P[0][4] + this->P[0][5] + this->dT * this->P[4][5] + 
+	    this->P[0][6] + this->P[0][7];
+  R[0][6] = this->P[0][0] + this->P[0][1] + this->P[0][2] + this->P[0][3] +
+            this->P[0][4] + this->P[0][5] + this->P[0][6] + 
+	    this->dT * this->P[4][6] + this->P[0][7];
+  R[0][7] = this->P[0][0] + this->P[0][1] + this->P[0][2] + this->P[0][3] +
+            this->P[0][4] + this->P[0][5] + this->P[0][6] + this->P[0][7] +
+	    this->dT * this->P[4][7];
+  R[1][0] = this->P[1][0] + this->dT * this->P[5][0] + this->P[1][1] + 
+            this->P[1][2] + this->P[1][3] + this->P[1][4] + 
+	    this->dT * this->P[5][4] * this->dT + this->P[1][5] +
+	    this->P[1][6] + this->P[1][7];
+  R[1][1] = this->P[1][0] + this->P[1][1] + this->dT * this->P[5][1] + 
+            this->P[1][2] + this->P[1][3] + this->P[1][4] + this->P[1][5] + 
+	    this->dT * this->P[5][5] * this->dT + this->P[1][6] + this->P[1][7];
+  R[1][2] = this->P[1][0] + this->P[1][1] + this->P[1][2] + 
+            this->dT * this->P[5][2] + this->P[1][3] + this->P[1][4] +
+	    this->P[1][5] + this->P[1][6] +
+	    this->dT * this->P[5][6] * this->dT + this->P[1][7];
+  R[1][3] = this->P[1][0] + this->P[1][1] + this->P[1][2] + this->P[1][3] +
+            this->dT * this->P[5][3] + this->P[1][4] + this->P[1][5] +
+	    this->P[1][6] + this->P[1][7] + this->dT * this->P[5][7] * this->dT;
+  R[1][4] = this->P[1][0] + this->P[1][1] + this->P[1][2] + this->P[1][3] + 
+            this->P[1][4] + this->dT * this->P[5][4] + this->P[1][5] + 
+	    this->P[1][6] + this->P[1][7];
+  R[1][5] = this->P[1][0] + this->P[1][1] + this->P[1][2] + this->P[1][3] + 
+            this->P[1][4] + this->P[1][5] + this->dT * this->P[5][5] + 
+	    this->P[1][6] + this->P[1][7];
+  R[1][6] = this->P[1][0] + this->P[1][1] + this->P[1][2] + this->P[1][3] + 
+            this->P[1][4] + this->P[1][5] + this->P[1][6] + 
+	    this->dT * this->P[5][6] + this->P[1][7];
+  R[1][7] = this->P[1][0] + this->P[1][1] + this->P[1][2] + this->P[1][3] + 
+            this->P[1][4] + this->P[1][5] + this->P[1][6] + this->P[1][7] + 
+	    this->dT * this->P[5][7];
+  R[2][0] = this->P[2][0] + this->dT * this->P[6][0] + this->P[2][1] + 
+            this->P[2][2] + this->P[2][3] + this->P[2][4] + 
+	    this->dT * this->P[6][4] * this->dT + this->P[2][5] + 
+	    this->P[2][6] + this->P[2][7];
+  R[2][1] = this->P[2][0] + this->P[2][1] + this->dT * this->P[6][1] + 
+            this->P[2][2] + this->P[2][3] + this->P[2][4] + this->P[2][5] +
+	    this->dT * this->P[6][5] * this->dT + this->P[2][6] + this->P[2][7];
+  R[2][2] = this->P[2][0] + this->P[2][1] + this->P[2][2] +
+            this->dT * this->P[6][2] + this->P[2][3] + this->P[2][4] +
+	    this->P[2][5] + this->P[2][6] + 
+	    this->dT * this->P[6][6] * this->dT + this->P[2][7];
+  R[2][3] = this->P[2][0] + this->P[2][1] + this->P[2][2] + this->P[2][3] +
+            this->dT * this->P[6][3] + this->P[2][4] + this->P[2][5] +
+	    this->P[2][6] + this->P[2][7] + this->dT * this->P[6][7] * this->dT;
+  R[2][4] = this->P[2][0] + this->P[2][1] + this->P[2][2] + this->P[2][3] + 
+            this->P[2][4] + this->dT * this->P[6][4] + this->P[2][5] + 
+	    this->P[2][6] + this->P[2][7];
+  R[2][5] = this->P[2][0] + this->P[2][1] + this->P[2][2] + this->P[2][3] + 
+            this->P[2][4] + this->P[2][5] + this->dT * this->P[6][5] + 
+	    this->P[2][6] + this->P[2][7];
+  R[2][6] = this->P[2][0] + this->P[2][1] + this->P[2][2] + this->P[2][3] + 
+            this->P[2][4] + this->P[2][5] + this->P[2][6] + 
+	    this->dT * this->P[6][6] + this->P[2][7];
+  R[2][7] = this->P[2][0] + this->P[2][1] + this->P[2][2] + this->P[2][3] + 
+            this->P[2][4] + this->P[2][5] + this->P[2][6] + this->P[2][7] + 
+	    this->dT * this->P[6][7];
+  R[3][0] = this->P[3][0] + this->dT * this->P[7][0] + this->P[3][1] + 
+            this->P[3][2] + this->P[3][3] + this->P[3][4] + 
+	    this->dT * this->P[7][4] * this->dT + this->P[3][5] + 
+	    this->P[3][6] + this->P[3][7];
+  R[3][1] = this->P[3][0] + this->P[3][1] + this->dT * this->P[7][1] + 
+            this->P[3][2] + this->P[3][3] + this->P[3][4] + this->P[3][5] + 
+	    this->dT * this->P[7][5] * this->dT + this->P[3][6] + this->P[3][7];
+  R[3][2] = this->P[3][0] + this->P[3][1] + this->P[3][2] + 
+            this->dT * this->P[7][2] + this->P[3][3] + this->P[3][4] + 
+	    this->P[3][5] + this->P[3][6] + 
+	    this->dT * this->P[7][6] * this->dT + this->P[3][7];
+  R[3][3] = this->P[3][0] + this->P[3][1] + this->P[3][2] + this->P[3][3] + 
+            this->dT * this->P[7][3] + this->P[3][4] + this->P[3][5] + 
+	    this->P[3][6] + this->P[3][7] + 
+	    this->dT * this->P[7][7] * this->dT;
+  R[3][4] = this->P[3][0] + this->P[3][1] + this->P[3][2] + this->P[3][3] + 
+            this->P[3][4] + this->dT * this->P[7][4] + this->P[3][5] + 
+	    this->P[3][6] + this->P[3][7];
+  R[3][5] = this->P[3][0] + this->P[3][1] + this->P[3][2] + this->P[3][3] + 
+            this->P[3][4] + this->P[3][5] + this->dT * this->P[7][5] + 
+	    this->P[3][6] + this->P[3][7];
+  R[3][6] = this->P[3][0] + this->P[3][1] + this->P[3][2] + this->P[3][3] + 
+            this->P[3][4] + this->P[3][5] + this->P[3][6] + 
+	    this->dT * this->P[7][6] + this->P[3][7];
+  R[3][7] = this->P[3][0] + this->P[3][1] + this->P[3][2] + this->P[3][3] + 
+            this->P[3][4] + this->P[3][5] + this->P[3][6] + this->P[3][7] + 
+	    this->dT * this->P[7][7];
+  R[4][0] = this->P[4][0] + this->P[4][1] * this->P[4][2] * this->P[4][3] *
+            this->P[4][4] * this->dT;
+  R[4][1] = this->P[4][0] * this->P[4][1] + this->P[4][2] * this->P[4][3] *
+            this->P[4][4] * this->P[4][5] * this->dT;
+  R[4][2] = this->P[4][0] * this->P[4][1] * this->P[4][2] + this->P[4][3] *
+            this->P[4][4] * this->P[4][5] * this->P[4][6] * this->dT;
+  R[4][3] = this->P[4][0] * this->P[4][1] * this->P[4][2] * this->P[4][3] +
+            this->P[4][4] * this->P[4][5] * this->P[4][6] * this->P[4][7] *
+	    this->dT;
+  R[4][4] = this->P[4][0] * this->P[4][1] * this->P[4][2] * this->P[4][3] *
+            this->P[4][4];
+  R[4][5] = this->P[4][0] * this->P[4][1] * this->P[4][2] * this->P[4][3] *
+            this->P[4][4] * this->P[4][5];
+  R[4][6] = this->P[4][0] * this->P[4][1] * this->P[4][2] * this->P[4][3] *
+            this->P[4][4] * this->P[4][5] * this->P[4][6];
+  R[4][7] = this->P[4][0] * this->P[4][1] * this->P[4][2] * this->P[4][3] *
+            this->P[4][4] * this->P[4][5] * this->P[4][6] * this->P[4][7];
+  R[5][0] = this->P[5][0] + this->P[5][1] * this->P[5][2] * this->P[5][3] *
+            this->P[5][4] * this->dT;
+  R[5][1] = this->P[5][0] * this->P[5][1] + this->P[5][2] * this->P[5][3] * 
+            this->P[5][4] * this->P[5][5] * this->dT;
+  R[5][2] = this->P[5][0] * this->P[5][1] * this->P[5][2] + this->P[5][3] *
+            this->P[5][4] * this->P[5][5] * this->P[5][6] * this->dT;
+  R[5][3] = this->P[5][0] * this->P[5][1] * this->P[5][2] * this->P[5][3] +
+            this->P[5][4] * this->P[5][5] * this->P[5][6] * this->P[5][7] *
+	    this->dT;
+  R[5][4] = this->P[5][0] * this->P[5][1] * this->P[5][2] * this->P[5][3] * 
+            this->P[5][4];
+  R[5][5] = this->P[5][0] * this->P[5][1] * this->P[5][2] * this->P[5][3] *
+            this->P[5][4] * this->P[5][5];
+  R[5][6] = this->P[5][0] * this->P[5][1] * this->P[5][2] * this->P[5][3] *
+            this->P[5][4] * this->P[5][5] * this->P[5][6];
+  R[5][7] = this->P[5][0] * this->P[5][1] * this->P[5][2] * this->P[5][3] *
+            this->P[5][4] * this->P[5][5] * this->P[5][6] * this->P[5][7];
+  R[6][0] = this->P[6][0] + this->P[6][1] * this->P[6][2] * this->P[6][3] *
+            this->P[6][4] * this->dT;
+  R[6][1] = this->P[6][0] * this->P[6][1] + this->P[6][2] * this->P[6][3] *
+            this->P[6][4] * this->P[6][5] * this->dT;
+  R[6][2] = this->P[6][0] * this->P[6][1] * this->P[6][2] + this->P[6][3] *
+            this->P[6][4] * this->P[6][5] * this->P[6][6] * this->dT;
+  R[6][3] = this->P[6][0] * this->P[6][1] * this->P[6][2] * this->P[6][3] +
+            this->P[6][4] * this->P[6][5] * this->P[6][6] * this->P[6][7] *
+	    this->dT;
+  R[6][4] = this->P[6][0] * this->P[6][1] * this->P[6][2] * this->P[6][3] *
+            this->P[6][4];
+  R[6][5] = this->P[6][0] * this->P[6][1] * this->P[6][2] * this->P[6][3] *
+            this->P[6][4] * this->P[6][5];
+  R[6][6] = this->P[6][0] * this->P[6][1] * this->P[6][2] * this->P[6][3] *
+            this->P[6][4] * this->P[6][5] * this->P[6][6];
+  R[6][7] = this->P[6][0] * this->P[6][1] * this->P[6][2] * this->P[6][3] *
+            this->P[6][4] * this->P[6][5] * this->P[6][6] * this->P[6][7];
+  R[7][0] = this->P[7][0] + this->P[7][1] * this->P[7][2] * this->P[7][3] *
+            this->P[7][4] * this->dT;
+  R[7][1] = this->P[7][0] * this->P[7][1] + this->P[7][2] * this->P[7][3] *
+            this->P[7][4] * this->P[7][5] * this->dT;
+  R[7][2] = this->P[7][0] * this->P[7][1] * this->P[7][2] + this->P[7][3] *
+            this->P[7][4] * this->P[7][5] * this->P[7][6] * this->dT;
+  R[7][3] = this->P[7][0] * this->P[7][1] * this->P[7][2] * this->P[7][3] +
+            this->P[7][4] * this->P[7][5] * this->P[7][6] * this->P[7][7] *
+	    this->dT;
+  R[7][4] = this->P[7][0] * this->P[7][1] * this->P[7][2] * this->P[7][3] *
+            this->P[7][4];
+  R[7][5] = this->P[7][0] * this->P[7][1] * this->P[7][2] * this->P[7][3] *
+            this->P[7][4] * this->P[7][5];
+  R[7][6] = this->P[7][0] * this->P[7][1] * this->P[7][2] * this->P[7][3] *
+            this->P[7][4] * this->P[7][5] * this->P[7][6];
+  R[7][7] = this->P[7][0] * this->P[7][1] * this->P[7][2] * this->P[7][3] *
+            this->P[7][4] * this->P[7][5] * this->P[7][6] * this->P[7][7];
+  this->P = R + this->Q;
   return this->x;
   }
 
