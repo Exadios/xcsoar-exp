@@ -35,14 +35,17 @@ class Term
 {
   public:
     Term();
+    Term(int);
     Term(const std::string& name);
     Term(const Term& rhs);
     virtual ~Term();
 
     Term& operator=(const Term& rhs);
-    void operator+(const Term& rhs);
-    void operator-(const Term& rhs);
-    void operator*(const Term& rhs);
+    void operator=(int a);
+    void operator()(int a);
+//    void operator+(const Term& rhs);
+//    void operator-(const Term& rhs);
+//    void operator*(const Term& rhs);
     friend const Term operator+(const Term& lhs, const Term& rhs);
     friend const Term operator-(const Term& lhs, const Term& rhs);
     friend const Term operator*(const Term& lhs, const Term& rhs);

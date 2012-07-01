@@ -21,10 +21,18 @@
  */
 
 #include "eqn-expansion.hpp"
+#include <sstream>
 
 Term::Term()
-  : name("")
   {
+  }
+
+Term::Term(int a)
+  {
+  std::stringstream s;
+
+  s << a;
+  this->name = s.str();
   }
 
 Term::Term(const std::string& name)
@@ -49,6 +57,25 @@ Term::operator=(const Term& rhs)
   }
 
 void
+Term::operator=(int a)
+  {
+  std::stringstream s;
+
+  s << a;
+  this->name = s.str();
+  }
+
+void
+Term::operator()(int a)
+  {
+  std::stringstream s;
+
+  s << a;
+  this->name = s.str();
+  }
+
+#if 0
+void
 Term::operator+(const Term& rhs)
   {
   this->name += " + " + rhs.name;
@@ -65,6 +92,7 @@ Term::operator*(const Term& rhs)
   {
   this->name += " * " + rhs.name;
   }
+#endif
 
 std::string&
 Term::Get()
@@ -84,31 +112,35 @@ operator<<(std::ostream& out, Term& term)
   out << term.Get();
   }
 
-const Term operator+(const Term& lhs, const Term& rhs)
+const Term
+operator+(const Term& lhs, const Term& rhs)
   {
   Term r;
 
-  r = lhs + rhs;
+  r = lhs.name + " + " + rhs.name;
   return r;
   }
 
-const Term operator-(const Term& lhs, const Term& rhs)
+const Term
+operator-(const Term& lhs, const Term& rhs)
   {
   Term r;
 
-  r = lhs - rhs;
+  r = lhs.name + " - " + rhs.name;
   return r;
   }
 
-const Term operator*(const Term& lhs, const Term& rhs)
+const Term
+operator*(const Term& lhs, const Term& rhs)
   {
   Term r;
 
-  r = lhs * rhs;
+  r = lhs.name + " * " + rhs.name;
   return r;
   }
 
-std::ostream& operator<<(std::ostream& out, const Term& rhs)
+std::ostream&
+operator<<(std::ostream& out, const Term& rhs)
   {
   out << rhs.Get();
   }
