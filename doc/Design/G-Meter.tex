@@ -386,9 +386,7 @@ z \left( t_k \right) = O^{\mathrm{T}} \left( t_k \right) x \left( t_k \right)
 \begin{equation}
 O^{\mathrm{T}} \left( t_k \right) =
 \begin{cases}
-\begin{bmatrix}
-I_{8 \times 8} & 0_{8 \times 6}\\
-\end{bmatrix} & \text{if $k = mN$}\\
+I_{8 \times 8} & \text{if $k = mN$}\\
 0 & \text{otherwise}\\
 \end{cases}
 \end{equation}
@@ -409,19 +407,19 @@ P \left( 0 | 0 \right) = P \left( 0 \right)
 \hat{x} \left( t_k | t_{k - 1} \right) = A \left( t_{k - 1} \right) \hat{x} \left( t_{k - 1} | t_{k - 1} \right) + B \left( t_{k - 1} \right) u \left( t_{k - 1} \right)
 \end{equation}
 \begin{equation}
-P \left( t_k | t_{k - 1} \right) = A_{11} P \left( t_{k - 1} | t_{k - 1} \right) A^{\mathrm{T}}_{11} + Q_P \left( t_{k - 1} \right)
+P_P \left( t_k | t_{k - 1} \right) = A_{11} P_P \left( t_{k - 1} | t_{k - 1} \right) A^{\mathrm{T}}_{11} + Q_P \left( t_{k - 1} \right)
 \end{equation}
 
 \subsection[Update]{Update}
 
 \begin{equation}
-K_P \left( t_k \right) = P_P \left( t_k | t_{k - 1} \right) O_P \left( t_k \right) \left[ C^{\mathrm{T}}_P \left( t_k \right) P_P \left( t_k | t_{k - 1} \right) O_P \left( t_k \right) + R \left( t_k \right) \right]^{-1}
+K_P \left( t_k \right) = P_P \left( t_k | t_{k - 1} \right) O_P \left( t_k \right) \left[ O^{\mathrm{T}}_P \left( t_k \right) P_P \left( t_k | t_{k - 1} \right) O_P \left( t_k \right) + R \left( t_k \right) \right]^{-1}
 \end{equation}
 \begin{equation}
 P_P \left( t_k | t_k \right) = \left[ I - K_P \left( t_k \right) O_P^{\mathrm{T}} \left( t_k \right) \right] P_P \left( t_k | t_{k - 1} \right)
 \end{equation}
 \begin{equation}
-\hat{x} \left( t_k | t_k \right) = \hat{x} \left( t_k | t_{k - 1} \right) + K \left( t_k \right) \left[ Z \left( t_k \right) - O_P^{\mathrm{T}} \left( t_k \right) \hat{x} \left( t_k | t_{k - 1} \right) \right]
+\hat{x} \left( t_k | t_k \right) = \hat{x} \left( t_k | t_{k - 1} \right) + K \left( t_k \right) \left[ z \left( t_k \right) - O_P^{\mathrm{T}} \left( t_k \right) \hat{x} \left( t_k | t_{k - 1} \right) \right]
 \end{equation}
 \begin{equation}
 K \left( t_k \right) = 
