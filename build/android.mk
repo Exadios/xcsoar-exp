@@ -201,10 +201,7 @@ $(ANDROID_JNI)/build.xml $(ANDROID_JNI)/AndroidManifest.xml: | $(ANDROID_JNI)/di
 
 $(ANDROID_JNI)/classes/$(CLASS_CLASS): $(NATIVE_SOURCES) $(ANDROID_JNI)/build.xml $(ANDROID_JNI)/AndroidManifest.xml $(ANDROID_BUILD)/build.xml
 	@$(NQ)echo "  ANT     $@"
-	$(Q)cd $(ANDROID_JNI) && mkdir classes || true
-	$(Q)cd $(ANDROID_JNI) && cat build.xml | grep "<include name=" | grep -v KalmanFilter.java | tr \" -d | sed -e 's:[---<>/]::g' | sed -e 's/include name=//' | sed -e 's/^ *//' | sed -e 's:^:../../../android/src/:' > ./sl
-	$(Q)cd $(ANDROID_JNI) && javac -d ./classes/ -classpath $(HOME)/opt/android-sdk-linux/tools/support/annotations.jar -sourcepath $(HOME)/src/XCSoar/xcsoar/android/src/ -bootclasspath $(HOME)/opt/android-sdk-linux/platforms/$(ANDROID_PLATFORM)/android.jar -encoding UTF-8 -g -source 1.5 @sl 
-	$(Q)cd $(ANDROID_JNI) && rm ./sl
+	$(Q)cd $(ANDROID_JNI) && $(ANT) compile-jni-classes
 
 $(patsubst %,$(NATIVE_PREFIX)%.h,$(NATIVE_CLASSES)): $(NATIVE_PREFIX)%.h: $(ANDROID_JNI)/classes/$(CLASS_CLASS)
 	@$(NQ)echo "  JAVAH   $@"
