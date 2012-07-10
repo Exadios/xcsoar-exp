@@ -42,3 +42,4 @@ build/local-config.mk
 *.swp
 doc/Design/*.png
 Workings.txt
+test/tools/*.o
