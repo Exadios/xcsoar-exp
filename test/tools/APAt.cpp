@@ -28,10 +28,10 @@ typedef MatrixT<Term, 8, 8> M;
 
 int main(int argc, const char *argv[])
   {
-  Term zero("0");
-  Term one("1");
+  Term zero("fixed(0)");
+  Term one("fixed(1)");
   Term dT("this->dT");
-  M A, P, At, R;
+  M A, P, At, R, T;
 
   for (int i = 0; i < 8; i++)
     for (int j = 0; j < 8; j++)
@@ -63,10 +63,15 @@ int main(int argc, const char *argv[])
       }
     }
 
-  R = A * P * At;
+  T = P * At;
+  R = A * T;
 
   for (size_t i = 0; i < 8; i++)
     for (size_t j = 0; j < 8; j++)
-      std::cout << "this->R[" << i << "][" << j << "] = " << R[i][j] << std::endl;
+      std::cout << "  R["
+                << i << "][" 
+		<< j << "] = "
+		<< R[i][j] <<
+		";" << std::endl;
   return 0;
   }

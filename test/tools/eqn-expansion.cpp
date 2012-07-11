@@ -24,25 +24,29 @@
 #include <sstream>
 
 Term::Term()
+  : type("fixed")
   {
   }
 
 Term::Term(int a)
+  : type("fixed")
   {
   std::stringstream s;
 
-  s << a;
+  s << this->type << "(" << a << ")";
   this->name = s.str();
   }
 
 Term::Term(const std::string& name)
-  : name(name)
+  : name(name),
+    type("fixed")
   {
   }
 
 Term::Term(const Term& rhs)
   {
   this->name = rhs.name;
+  this->type = rhs.type;
   }
 
 Term::~Term()
@@ -53,6 +57,7 @@ Term&
 Term::operator=(const Term& rhs)
   {
   this->name = rhs.name;
+  this->type = rhs.type;
   return *this;
   }
 
@@ -61,7 +66,7 @@ Term::operator=(int a)
   {
   std::stringstream s;
 
-  s << a;
+  s << this->type << "(" << a << ")";
   this->name = s.str();
   }
 
@@ -70,7 +75,7 @@ Term::operator()(int a)
   {
   std::stringstream s;
 
-  s << a;
+  s << this->type << "(" << a << ")";
   this->name = s.str();
   }
 
@@ -117,7 +122,7 @@ operator+(const Term& lhs, const Term& rhs)
   {
   Term r;
 
-  r = lhs.name + " + " + rhs.name;
+  r = "(" + lhs.name + " + " + rhs.name + ")";
   return r;
   }
 
@@ -126,7 +131,7 @@ operator-(const Term& lhs, const Term& rhs)
   {
   Term r;
 
-  r = lhs.name + " - " + rhs.name;
+  r = "(" + lhs.name + " - " + rhs.name + ")";
   return r;
   }
 

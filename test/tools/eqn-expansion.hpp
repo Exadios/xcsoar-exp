@@ -55,6 +55,7 @@ class Term
 
   private:
     std::string name;
+    std::string type;
 
 };
 
