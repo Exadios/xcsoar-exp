@@ -1,3 +1,10 @@
+ifneq ($(ANDROID_ABI3),armeabi)  # Do not bother for old ABI.
+INU_SOURCES = $(ENGINE_SRC_DIR)/Navigation/INU/Inu.cpp \
+	      $(ENGINE_SRC_DIR)/Navigation/INU/INUKalman.cpp
+else
+INU_SOURCES = 
+endif
+
 ENGINE_GLUE_SOURCES = \
 	$(ENGINE_SRC_DIR)/Airspace/AirspacesTerrain.cpp \
 	$(ENGINE_SRC_DIR)/Airspace/AirspaceAltitudeText.cpp
@@ -47,8 +54,7 @@ ENGINE_CORE_SOURCES = \
 	$(ENGINE_SRC_DIR)/Navigation/Flat/FlatPoint.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/Flat/FlatEllipse.cpp \
 	$(ENGINE_SRC_DIR)/Navigation/Flat/FlatLine.cpp \
-	$(ENGINE_SRC_DIR)/Navigation/INU/Inu.cpp \
-	$(ENGINE_SRC_DIR)/Navigation/INU/INUKalman.cpp \
+        $(INU_SOURCES) \
 	$(ENGINE_SRC_DIR)/Task/TaskAdvance.cpp \
 	$(ENGINE_SRC_DIR)/Task/TaskAdvanceLegacy.cpp \
 	$(ENGINE_SRC_DIR)/Task/TaskAdvanceSmart.cpp \
