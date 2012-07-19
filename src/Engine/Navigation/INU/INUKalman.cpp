@@ -64,7 +64,7 @@ INUKalman::Innovate(const INUUpdate& u)
   this->x[5] += u[1] * this->dT;
   this->x[6] += u[2] * this->dT;
   if (this->s == this->m)
-    {
+    {  // A GPS update.
     this->x[4]  += this->x[8]  * this->DT + this->x[11] * this->DT * this->DT;
     this->x[5]  += this->x[9]  * this->DT + this->x[12] * this->DT * this->DT;
     this->x[6]  += this->x[10] * this->DT + this->x[13] * this->DT * this->DT;
@@ -74,11 +74,14 @@ INUKalman::Innovate(const INUUpdate& u)
     this->x[11] += this->x[11] * QA * this->DT;
     this->x[12] += this->x[12] * QA * this->DT;
     this->x[13] += this->x[13] * QA * this->DT;
+    this->s = 1;
     }
   else
-    {
+    {  // An INU only update.
+    this->s++;
     }
 
+  // Covariance matrix P = APA^T + Q.
   // Expand APA^T in full and let the optimizer sort it out.
   INUSystemMatrix R;
 R[0][0] = ((((((((fixed(0) + fixed(1) * ((((((((fixed(0) + this->P[0][0] * fixed(1)) + this->P[0][1] * fixed(0)) + this->P[0][2] * fixed(0)) + this->P[0][3] * fixed(0)) + this->P[0][4] * this->dT) + this->P[0][5] * fixed(0)) + this->P[0][6] * fixed(0)) + this->P[0][7] * fixed(0))) + fixed(0) * ((((((((fixed(0) + this->P[1][0] * fixed(1)) + this->P[1][1] * fixed(0)) + this->P[1][2] * fixed(0)) + this->P[1][3] * fixed(0)) + this->P[1][4] * this->dT) + this->P[1][5] * fixed(0)) + this->P[1][6] * fixed(0)) + this->P[1][7] * fixed(0))) + fixed(0) * ((((((((fixed(0) + this->P[2][0] * fixed(1)) + this->P[2][1] * fixed(0)) + this->P[2][2] * fixed(0)) + this->P[2][3] * fixed(0)) + this->P[2][4] * this->dT) + this->P[2][5] * fixed(0)) + this->P[2][6] * fixed(0)) + this->P[2][7] * fixed(0))) + fixed(0) * ((((((((fixed(0) + this->P[3][0] * fixed(1)) + this->P[3][1] * fixed(0)) + this->P[3][2] * fixed(0)) + this->P[3][3] * fixed(0)) + this->P[3][4] * this->dT) + this->P[3][5] * fixed(0)) + this->P[3][6] * fixed(0)) + this->P[3][7] * fixed(0))) + this->dT * ((((((((fixed(0) + this->P[4][0] * fixed(1)) + this->P[4][1] * fixed(0)) + this->P[4][2] * fixed(0)) + this->P[4][3] * fixed(0)) + this->P[4][4] * this->dT) + this->P[4][5] * fixed(0)) + this->P[4][6] * fixed(0)) + this->P[4][7] * fixed(0))) + fixed(0) * ((((((((fixed(0) + this->P[5][0] * fixed(1)) + this->P[5][1] * fixed(0)) + this->P[5][2] * fixed(0)) + this->P[5][3] * fixed(0)) + this->P[5][4] * this->dT) + this->P[5][5] * fixed(0)) + this->P[5][6] * fixed(0)) + this->P[5][7] * fixed(0))) + fixed(0) * ((((((((fixed(0) + this->P[6][0] * fixed(1)) + this->P[6][1] * fixed(0)) + this->P[6][2] * fixed(0)) + this->P[6][3] * fixed(0)) + this->P[6][4] * this->dT) + this->P[6][5] * fixed(0)) + this->P[6][6] * fixed(0)) + this->P[6][7] * fixed(0))) + fixed(0) * ((((((((fixed(0) + this->P[7][0] * fixed(1)) + this->P[7][1] * fixed(0)) + this->P[7][2] * fixed(0)) + this->P[7][3] * fixed(0)) + this->P[7][4] * this->dT) + this->P[7][5] * fixed(0)) + this->P[7][6] * fixed(0)) + this->P[7][7] * fixed(0)));
@@ -156,9 +159,21 @@ void
 INUKalman::Update(const INUObservation& z)
   {
   this->sl.Lock();
-  s = 0;
+  this->s = 0;
   this->sl.Unlock();
 
+  // Compute K here.
+
+  if (s == m)
+    {
+    // Compute K here.
+    
+    // Compute P.
+    }
+  else
+    {
+    // Compute K here.
+    }
 
 
   }
