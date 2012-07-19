@@ -20,7 +20,7 @@ that have native methods, to prepare for calling "javah".
     <javac source="${java.source}" target="${java.target}"
            debug="true" extdirs=""
            destdir="${native.classes.dir}"
-	   bootclasspathref="project.target.class.path"
+           bootclasspathref="project.target.class.path"
            verbose="${verbose}">
       <src path="${src.dir}" />
       <include name="DifferentTouchInput.java"/>
@@ -29,7 +29,6 @@ that have native methods, to prepare for calling "javah".
       <include name="Timer.java"/>
       <include name="InternalGPS.java"/>
       <include name="NonGPSSensors.java"/>
-      <include name="KalmanFilter.java"/>
       <include name="Settings.java"/>
       <include name="SafeDestruct.java"/>
       <include name="InputListener.java"/>

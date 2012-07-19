@@ -1,6 +1,19 @@
 ============================================================================
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
+Version 6.3.9-Exp - 2012/07/19
+* G-Meter Vario still not implemented.
+* Attempt to address bariometric Vario reposiveness (acceleration) for
+  paraglider pilots.
+
+Version 6.3.9 - 2012/07/18
+* calculations
+  - show AAT/target info before the first GPS fix (#2183)
+* data files
+  - fix crash in the "Status File" loader
+* devices
+  - plausibility tests for NMEA input
+  - fixed Westerboer VW921 airspeed reading
 
 Version 6.3.8-Exp - 2012/06/24
 * G-Meter Vario still not implemented.

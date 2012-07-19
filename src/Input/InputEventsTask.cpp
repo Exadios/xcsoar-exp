@@ -47,7 +47,7 @@ static void
 trigger_redraw()
 {
   if (!XCSoarInterface::Basic().location_available)
-    TriggerGPSUpdate();
+    ForceCalculation();
   TriggerMapUpdate();
 }
 
@@ -101,6 +101,8 @@ void
 InputEvents::eventCalculator(gcc_unused const TCHAR *misc)
 {
   dlgTaskManagerShowModal(XCSoarInterface::main_window);
+
+  trigger_redraw();
 }
 
 void
