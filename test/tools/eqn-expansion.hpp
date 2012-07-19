@@ -26,39 +26,40 @@
 #include "Math/MatrixT.hpp"
 #include "Math/VectorT.hpp"
 
-class Term;
-const Term operator+(const Term& lhs, const Term& rhs);
-const Term operator-(const Term& lhs, const Term& rhs);
-const Term operator*(const Term& lhs, const Term& rhs);
+template <typename T> class Term;
+template <typename T> Term<T> operator+(const Term<T>& lhs, const Term<T>& rhs);
+template <typename T> Term<T> operator-(const Term<T>& lhs, const Term<T>& rhs);
+template <typename T> Term<T> operator*(const Term<T>& lhs, const Term<T>& rhs);
 
-class Term
+template <typename T> class Term
 {
   public:
     Term();
-    Term(int);
+    Term(int a);
     Term(const std::string& name);
     Term(const Term& rhs);
     virtual ~Term();
 
     Term& operator=(const Term& rhs);
     void operator=(int a);
+    void operator=(std::string name);
     void operator()(int a);
 //    void operator+(const Term& rhs);
 //    void operator-(const Term& rhs);
 //    void operator*(const Term& rhs);
-    friend const Term operator+(const Term& lhs, const Term& rhs);
-    friend const Term operator-(const Term& lhs, const Term& rhs);
-    friend const Term operator*(const Term& lhs, const Term& rhs);
+    friend Term<T> operator+<>(const Term<T>& lhs, const Term<T>& rhs);
+    friend Term<T> operator-<>(const Term<T>& lhs, const Term<T>& rhs);
+    friend Term<T> operator*<>(const Term<T>& lhs, const Term<T>& rhs);
 
-    std::string& Get();
-    const std::string& Get() const;
+    void Name(const std::string &name);
+    std::string Name() const;
 
   private:
     std::string name;
-    std::string type;
-
 };
 
-std::ostream& operator<<(std::ostream& out, const Term&);
+template <typename T> std::ostream& operator<<(std::ostream& out, const Term<T>&);
+
+//#include "eqn-expansion.i.cpp"
 
 #endif // EQN_EXPANSION_HPP

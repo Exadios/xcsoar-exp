@@ -22,15 +22,19 @@
 
 #include <sstream>
 #include <iostream>
+#include "Math/fixed.hpp"
 #include "eqn-expansion.hpp"
 
-typedef MatrixT<Term, 8, 8> M;
+typedef MatrixT<Term<fixed>, 8, 8> M;
+
+//template class Term<fixed>;
+//template class Term<double>;
 
 int main(int argc, const char *argv[])
   {
-  Term zero("fixed(0)");
-  Term one("fixed(1)");
-  Term dT("this->dT");
+  Term<fixed> zero(0);
+  Term<fixed> one(1);
+  Term<fixed> dT("this->dT");
   M A, P, At, R, T;
 
   for (int i = 0; i < 8; i++)
@@ -58,7 +62,7 @@ int main(int argc, const char *argv[])
       {
       std::stringstream s;
       s << "this->P[" << i << "][" << j << "]";
-      Term name(s.str());
+      Term<fixed> name(s.str());
       P[i][j] = name;
       }
     }

@@ -22,61 +22,81 @@
 
 #include "eqn-expansion.hpp"
 #include <sstream>
+#include <typeinfo>
+#include <string.h>
 
-Term::Term()
-  : type("fixed")
+// Necessary to instantiate for gcc v4.7.1 ??
+template class std::basic_string<char, std::char_traits<char>,
+                                 std::allocator<char>>;
+
+template <typename T>
+Term<T>::Term()
   {
+  std::ostringstream s;
+
+  s << typeid(T).name() << "(" << 0 << ")";
+  std::string x = s.str();
+  this->name = x;
   }
 
-Term::Term(int a)
-  : type("fixed")
+template <typename T>
+Term<T>::Term(int a)
   {
-  std::stringstream s;
+  std::ostringstream s;
 
-  s << this->type << "(" << a << ")";
-  this->name = s.str();
+  s << typeid(T).name() << "(" << a << ")";
+  std::string x = s.str();
+  this->name = x;
   }
 
-Term::Term(const std::string& name)
-  : name(name),
-    type("fixed")
+template <typename T>
+Term<T>::Term(const std::string& name)
   {
+  this->name = name;
   }
 
-Term::Term(const Term& rhs)
+template <typename T>
+Term<T>::Term(const Term<T>& rhs)
   {
   this->name = rhs.name;
-  this->type = rhs.type;
   }
 
-Term::~Term()
+template <typename T>
+Term<T>::~Term()
   {
   }
 
-Term&
-Term::operator=(const Term& rhs)
+template <typename T> Term<T>&
+Term<T>::operator=(const Term<T>& rhs)
   {
   this->name = rhs.name;
-  this->type = rhs.type;
   return *this;
   }
 
-void
-Term::operator=(int a)
+template <typename T> void
+Term<T>::operator=(int a)
   {
   std::stringstream s;
 
-  s << this->type << "(" << a << ")";
-  this->name = s.str();
+  s << typeid(T).name() << "(" << a << ")";
+  std::string x = s.str();
+  this->name = x;
   }
 
-void
-Term::operator()(int a)
+template <typename T> void
+Term<T>::operator=(std::string name)
+  {
+  this->name = name;
+  }
+
+template <typename T> void
+Term<T>::operator()(int a)
   {
   std::stringstream s;
 
-  s << this->type << "(" << a << ")";
-  this->name = s.str();
+  s << typeid(T).name() << "(" << a << ")";
+  std::string x = s.str();
+  this->name = x;
   }
 
 #if 0
@@ -99,54 +119,60 @@ Term::operator*(const Term& rhs)
   }
 #endif
 
-std::string&
-Term::Get()
+template <typename T> void
+Term<T>::Name(const std::string &name)
+  {
+  this->name = name;
+  }
+
+template <typename T> std::string
+Term<T>::Name() const
   {
   return this->name;
   }
 
-const std::string&
-Term::Get() const
+template <typename T> std::ostream&
+operator<<(std::ostream& out, Term<T>& term)
   {
-  return this->name;
+  out << term.Name();
   }
 
-std::ostream&
-operator<<(std::ostream& out, Term& term)
-  {
-  out << term.Get();
-  }
+template class Term<double>;
 
-const Term
-operator+(const Term& lhs, const Term& rhs)
+template <typename T> Term<T>
+operator+(const Term<T>& lhs, const Term<T>& rhs)
   {
-  Term r;
-
-  r = "(" + lhs.name + " + " + rhs.name + ")";
+  std::string x;
+  x = "(" + lhs.Name() + std::string(" + ") + rhs.Name() + ")";
+  Term<T> r(x);
   return r;
   }
 
-const Term
-operator-(const Term& lhs, const Term& rhs)
+template <typename T> Term<T>
+operator-(const Term<T>& lhs, const Term<T>& rhs)
   {
-  Term r;
-
-  r = "(" + lhs.name + " - " + rhs.name + ")";
+  std::string x;
+  x = "(" + lhs.Name() + " - " + rhs.Name() + ")";
+  Term<T> r(x);
   return r;
   }
 
-const Term
-operator*(const Term& lhs, const Term& rhs)
+template <typename T> Term<T>
+operator*(const Term<T>& lhs, const Term<T>& rhs)
   {
-  Term r;
-
-  r = lhs.name + " * " + rhs.name;
+  std::string x;
+  x = lhs.Name() + " * " + rhs.Name();
+  Term<T> r(x);
   return r;
   }
 
-std::ostream&
-operator<<(std::ostream& out, const Term& rhs)
+template <typename T> std::ostream&
+operator<<(std::ostream& out, const Term<T>& rhs)
   {
-  out << rhs.Get();
+  out << rhs.Name();
   }
 
+template Term<double> operator+<>(const Term<double>&, const Term<double>&);
+template Term<double> operator-<>(const Term<double>&, const Term<double>&);
+template Term<double> operator*<>(const Term<double>&, const Term<double>&);
+template std::ostream& operator<<<>(std::ostream&, const Term<double>&);
