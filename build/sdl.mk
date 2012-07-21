@@ -3,7 +3,7 @@ ENABLE_SDL ?= $(call bool_not,$(HAVE_WIN32))
 ifeq ($(ENABLE_SDL),y)
 ifeq ($(TARGET),UNIX)
 OPENGL ?= y
-$(eval $(call pkg-config-library,SDL,sdl SDL_image))
+$(eval $(call pkg-config-library,SDL,sdl SDL_image SDL_ttf))
 else
 ifeq ($(TARGET),ANDROID)
 OPENGL = y
@@ -33,12 +33,11 @@ ifneq ($(TARGET),ANDROID)
 ifeq ($(TARGET_IS_DARWIN),y)
 # the pkg-config file on MacPorts is broken, we must filter out the
 # -lSDL flag manually
-SDL_LDLIBS := $(filter-out -l%,$(SDL_LDLIBS))
-SDL_LDADD = /opt/local/lib/libSDL_ttf.a /opt/local/lib/libfreetype.a
+SDL_LDADD := $(patsubst -l%,/opt/local/lib/lib%.a,$(filter -l%,$(SDL_LDLIBS)))
 SDL_LDADD += /opt/local/lib/libbz2.a /opt/local/lib/libz.a
-SDL_LDADD += /opt/local/lib/libSDL_image.a
-else
-SDL_LDLIBS += -lSDL_ttf
+SDL_LDADD += /opt/local/lib/libfreetype.a
+SDL_LDADD += /opt/local/lib/libxcb.a /opt/local/lib/libXau.a /opt/local/lib/libXdmcp.a
+SDL_LDLIBS := $(filter-out -l% -R% -L%,$(SDL_LDLIBS))
 endif
 endif
 endif
