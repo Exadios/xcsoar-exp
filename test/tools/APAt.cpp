@@ -75,7 +75,7 @@ int main(int argc, const char *argv[])
       std::cout << "  R["
                 << i << "][" 
 		<< j << "] = "
-		<< R[i][j] <<
+		<< R[i][j].Name() <<
 		";" << std::endl;
   return 0;
   }
