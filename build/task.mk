@@ -71,6 +71,7 @@ ENGINE_CORE_SOURCES = \
 	$(ENGINE_SRC_DIR)/Task/Factory/AATTaskFactory.cpp \
 	$(ENGINE_SRC_DIR)/Task/Factory/MixedTaskFactory.cpp \
 	$(ENGINE_SRC_DIR)/Task/Factory/TouringTaskFactory.cpp \
+	$(ENGINE_SRC_DIR)/Task/Factory/Create.cpp \
 	$(ENGINE_SRC_DIR)/Task/Tasks/AbortTask.cpp \
 	$(ENGINE_SRC_DIR)/Task/Tasks/AlternateTask.cpp \
 	$(ENGINE_SRC_DIR)/Task/Tasks/AbstractTask.cpp \
@@ -90,6 +91,7 @@ ENGINE_CORE_SOURCES = \
 	$(ENGINE_SRC_DIR)/Task/TaskPoints/AATPoint.cpp \
 	$(ENGINE_SRC_DIR)/Task/TaskPoints/AATIsoline.cpp \
 	$(ENGINE_SRC_DIR)/Task/TaskPoints/AATIsolineSegment.cpp \
+	$(ENGINE_SRC_DIR)/Task/ObservationZones/Boundary.cpp \
 	$(ENGINE_SRC_DIR)/Task/ObservationZones/ObservationZoneClient.cpp \
 	$(ENGINE_SRC_DIR)/Task/ObservationZones/ObservationZonePoint.cpp \
 	$(ENGINE_SRC_DIR)/Task/ObservationZones/CylinderZone.cpp \
@@ -98,6 +100,7 @@ ENGINE_CORE_SOURCES = \
 	$(ENGINE_SRC_DIR)/Task/ObservationZones/SymmetricSectorZone.cpp \
 	$(ENGINE_SRC_DIR)/Task/ObservationZones/KeyholeZone.cpp \
 	$(ENGINE_SRC_DIR)/Task/ObservationZones/AnnularSectorZone.cpp \
+	$(ENGINE_SRC_DIR)/Task/ObservationZones/FAISectorZone.cpp \
 	$(ENGINE_SRC_DIR)/Contest/Solvers/Contests.cpp \
 	$(ENGINE_SRC_DIR)/Contest/Solvers/AbstractContest.cpp \
 	$(ENGINE_SRC_DIR)/Contest/Solvers/ContestDijkstra.cpp \

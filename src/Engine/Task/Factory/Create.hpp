@@ -1,4 +1,5 @@
-/* Copyright_License {
+/*
+Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
   Copyright (C) 2000-2012 The XCSoar Project
@@ -20,27 +21,19 @@
 }
  */
 
-#include "LineSectorZone.hpp"
-#include "Boundary.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
+#ifndef XCSOAR_TASK_FACTORY_CREATE_HPP
+#define XCSOAR_TASK_FACTORY_CREATE_HPP
 
-GeoPoint LineSectorZone::GetBoundaryParametric(fixed t) const
-{ 
-  return GetSectorStart().Interpolate(GetSectorEnd(), t);
-}
+#include "TaskFactoryType.hpp"
+#include "Compiler.h"
 
-OZBoundary
-LineSectorZone::GetBoundary() const
-{
-  OZBoundary boundary;
-  boundary.push_front(GetSectorEnd());
-  boundary.push_front(GetSectorStart());
-  boundary.push_front(GetReference());
-  return boundary;
-}
+class AbstractTaskFactory;
+class OrderedTask;
+struct TaskBehaviour;
 
-fixed
-LineSectorZone::ScoreAdjustment() const
-{
-  return fixed_zero;
-}
+gcc_malloc
+AbstractTaskFactory *
+CreateTaskFactory(TaskFactoryType type, OrderedTask &task,
+                  const TaskBehaviour &task_behaviour);
+
+#endif

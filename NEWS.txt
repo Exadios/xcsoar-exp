@@ -2,6 +2,25 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
+Version 6.3.11-Exp - 2012/07/29
+* G-Meter Vario still not implemented.
+* Attempt to address bariometric Vario reposiveness (acceleration) for
+  paraglider pilots.
+
+Version 6.3.11 - 2012/07/27
+* calculations
+  - fix freeze in glide solver
+  - fix transition in small cylinder for key hole observation zones
+    (e.g. BGA, #2229)
+  - fix AAT buttons in new tasks (#2183)
+* data files
+  - fix crash in CUP task loader
+* map
+  - fix rounding error in annulus renderer (#2221)
+  - redraw map after target was moved (#2216)
+  - fix bogus "around terrain: -1" map element (#2205)
+  - fix waypoint label style when no map is loaded
+
 Version 6.3.10-Exp - 2012/07/21
 * G-Meter Vario still not implemented.
 * Attempt to address bariometric Vario reposiveness (acceleration) for

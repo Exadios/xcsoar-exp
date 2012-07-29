@@ -425,7 +425,7 @@ AdvanceReaderToTask(FileLineReader &reader, const unsigned index)
   // Skip lines until n-th task
   unsigned count = 0;
   bool in_task_section = false;
-  static TCHAR *line;
+  TCHAR *line;
   for (unsigned i = 0; (line = reader.read()) != NULL; i++) {
     if (in_task_section) {
       if (line[0] == _T('\"') || line[0] == _T(',')) {
@@ -461,6 +461,8 @@ TaskFileSeeYou::GetTask(const TaskBehaviour &task_behaviour,
     return NULL;
 
   TCHAR *line = AdvanceReaderToTask(reader, index);
+  if (line == NULL)
+    return NULL;
 
   // Read waypoint list
   // e.g. "Club day 4 Racing task","085PRI","083BOJ","170D_K","065SKY","0844YY", "0844YY"

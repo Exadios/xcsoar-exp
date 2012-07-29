@@ -1,4 +1,5 @@
-/* Copyright_License {
+/*
+  Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
   Copyright (C) 2000-2012 The XCSoar Project
@@ -18,29 +19,23 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
- */
+*/
 
-#include "LineSectorZone.hpp"
 #include "Boundary.hpp"
 #include "Navigation/Geometry/GeoVector.hpp"
 
-GeoPoint LineSectorZone::GetBoundaryParametric(fixed t) const
-{ 
-  return GetSectorStart().Interpolate(GetSectorEnd(), t);
-}
-
-OZBoundary
-LineSectorZone::GetBoundary() const
+void
+OZBoundary::GenerateArcExcluding(const GeoPoint &center, fixed radius,
+                                 Angle start_radial, Angle end_radial)
 {
-  OZBoundary boundary;
-  boundary.push_front(GetSectorEnd());
-  boundary.push_front(GetSectorStart());
-  boundary.push_front(GetReference());
-  return boundary;
-}
+  const unsigned steps = 20;
+  const Angle delta = Angle::FullCircle() / steps;
+  const Angle start = start_radial.AsBearing();
+  Angle end = end_radial.AsBearing();
+  if (end <= start + Angle::FullCircle() / 512)
+    end += Angle::FullCircle();
 
-fixed
-LineSectorZone::ScoreAdjustment() const
-{
-  return fixed_zero;
+  GeoVector vector(radius, start + delta);
+  for (; vector.bearing < end; vector.bearing += delta)
+    push_front(vector.EndPoint(center));
 }
