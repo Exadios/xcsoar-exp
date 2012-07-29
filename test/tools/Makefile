@@ -9,7 +9,7 @@ CXXFLAGS = -ggdb $(INCLUDES) -std=gnu++11
 LDLIBS = -lstdc++
 
 HEADERS = eqn-expansion.hpp
-SOURCES = APAt.cpp eqn-expansion.cpp 3x3.cpp 3x3x3t.cpp
+SOURCES = APAt.cpp OtPO eqn-expansion.cpp 3x3.cpp 3x3x3t.cpp
 
 TOOL_PROGRAMS = APAt # 3x3 3x3x3t
 
@@ -18,6 +18,8 @@ TOOLS_LDADD = $(MATH_LIBS)
 build-tools: dependencies.make $(TOOL_PROGRAMS)
 
 APAt: eqn-expansion.o APAt.o
+
+OtPO: eqn-expansion.o OtPO.o
 
 3x3: eqn-expansion.o 3x3.o
 
