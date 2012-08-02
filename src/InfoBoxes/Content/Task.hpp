@@ -87,7 +87,7 @@ public:
   virtual void Update(InfoBoxData &data);
 };
 
-class InfoBoxContentNextLD: public InfoBoxContent
+class InfoBoxContentNextGR: public InfoBoxContent
 {
 public:
   virtual void Update(InfoBoxData &data);
@@ -123,7 +123,7 @@ public:
   virtual void Update(InfoBoxData &data);
 };
 
-class InfoBoxContentFinalLD: public InfoBoxContent
+class InfoBoxContentFinalGRTE: public InfoBoxContent
 {
 public:
   virtual void Update(InfoBoxData &data);
@@ -232,4 +232,9 @@ public:
   virtual void Update(InfoBoxData &data);
 };
 
+class InfoBoxContentCruiseEfficiency : public InfoBoxContent
+{
+public:
+  virtual void Update(InfoBoxData &data);
+};
 #endif

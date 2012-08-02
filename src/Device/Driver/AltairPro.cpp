@@ -72,8 +72,8 @@ static bool
 ReadAltitude(NMEAInputLine &line, fixed &value_r)
 {
   fixed value;
-  bool available = line.read_checked(value);
-  char unit = line.read_first_char();
+  bool available = line.ReadChecked(value);
+  char unit = line.ReadFirstChar();
   if (!available)
     return false;
 
@@ -81,6 +81,35 @@ ReadAltitude(NMEAInputLine &line, fixed &value_r)
     value = Units::ToSysUnit(value, Unit::FEET);
 
   value_r = value;
+  return true;
+}
+
+static bool
+PTFRS(NMEAInputLine &line, NMEAInfo &info)
+{
+  // $PTFRS,1,0,0,0,0,0,0,0,5,1,10,0,3,1338313437,0,0,0,,,2*4E
+  //
+  // $PTFRS,<sealed>,<downloadmode>,<event>,<neartp>,<sealing>,<baromode>,
+  //        <decllock>,<newrecavail>,<enl>,<rpm>,<interval>,<error>,<timbase>,
+  //        <time>,<secpower>,<secpowerint>,<usup>,<ulit>,
+  //        <chargerstate>,<antstate>*CS<CR><LF>
+
+  line.Skip(8);
+
+  unsigned enl;
+  if (line.ReadChecked(enl)) {
+    info.engine_noise_level = enl;
+    info.engine_noise_level_available.Update(info.clock);
+  }
+
+  line.Skip(7);
+
+  unsigned supply_voltage;
+  if (line.ReadChecked(supply_voltage) && supply_voltage != 0) {
+    info.voltage = fixed(supply_voltage) / 1000;
+    info.voltage_available.Update(info.clock);
+  }
+
   return true;
 }
 
@@ -92,7 +121,7 @@ AltairProDevice::ParseNMEA(const char *String, NMEAInfo &info)
 
   NMEAInputLine line(String);
   char type[16];
-  line.read(type, 16);
+  line.Read(type, 16);
 
   // no propriatary sentence
 
@@ -102,6 +131,8 @@ AltairProDevice::ParseNMEA(const char *String, NMEAInfo &info)
       info.ProvidePressureAltitude(value);
 
     return true;
+  } else if (StringIsEqual(type, "$PTFRS")) {
+    return PTFRS(line, info);
   }
 
   return false;
@@ -194,7 +225,7 @@ AltairProDevice::PropertySetGet(char *Buffer, size_t size,
   TimeoutClock timeout(5000);
 
   // eg $PDVSC,S,FOO,BAR*<cr>\r\n
-  if (!PortWriteNMEA(port, Buffer))
+  if (!PortWriteNMEA(port, Buffer, env))
     return false;
 
   Buffer[6] = _T('A');

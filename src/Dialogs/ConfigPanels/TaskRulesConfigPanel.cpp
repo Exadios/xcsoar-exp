@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "TaskRulesConfigPanel.hpp"
 #include "Profile/ProfileKeys.hpp"
-#include "DataField/Enum.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "Interface.hpp"
 #include "Language/Language.hpp"
 #include "Form/RowFormWidget.hpp"
@@ -40,7 +40,8 @@ enum ControlIndex {
   FinishMinHeight,
   FinishHeightRef,
   spacer_3,
-  Contests
+  Contests,
+  PREDICT_CONTEST,
 };
 
 class TaskRulesConfigPanel : public RowFormWidget {
@@ -88,7 +89,7 @@ TaskRulesConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
            fixed(task_behaviour.start_max_height_margin));
   SetExpertRow(StartMaxHeightMargin);
 
-  static gcc_constexpr_data StaticEnumChoice start_max_height_ref_list[] = {
+  static constexpr StaticEnumChoice start_max_height_ref_list[] = {
     { (unsigned)HeightReferenceType::AGL, N_("AGL"), N_("Reference AGL for start maximum height rule (above start point).") },
     { (unsigned)HeightReferenceType::MSL, N_("MSL"), N_("Reference MSL for start maximum height rule (above sea level).") },
     { 0 }
@@ -107,7 +108,7 @@ TaskRulesConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
            fixed(task_behaviour.ordered_defaults.finish_min_height));
   SetExpertRow(FinishMinHeight);
 
-  static gcc_constexpr_data StaticEnumChoice finish_min_height_ref_list[] = {
+  static constexpr StaticEnumChoice finish_min_height_ref_list[] = {
     { (unsigned)HeightReferenceType::AGL, N_("AGL"), N_("Reference AGL for finish minimum height rule (above finish point).") },
     { (unsigned)HeightReferenceType::MSL, N_("MSL"), N_("Reference MSL for finish minimum height rule (above sea level).") },
     { 0 }
@@ -133,12 +134,18 @@ TaskRulesConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
     { OLC_XContest, ContestToString(OLC_XContest), _T("tbd.") },
     { OLC_DHVXC, ContestToString(OLC_DHVXC), _T("tbd.") },
     { OLC_SISAT, ContestToString(OLC_SISAT), _T("tbd.") },
+    { OLC_NetCoupe, ContestToString(OLC_NetCoupe), N_("The FFVV NetCoupe \"libre\" competiton.") },
     { 0 }
   };
   AddEnum(_("On-Line Contest"),
       _("Select the rules used for calculating optimal points for the On-Line Contest. "
           "The implementation  conforms to the official release 2010, Sept.23."),
           contests_list, task_behaviour.contest);
+
+  AddBoolean(_("Predict Contest"),
+             _("If enabled, then the next task point is included in the "
+               "score calculation, assuming that you will reach it."),
+             task_behaviour.predict_contest);
 }
 
 
@@ -151,24 +158,26 @@ TaskRulesConfigPanel::Save(bool &_changed, bool &_require_restart)
   TaskBehaviour &task_behaviour = settings_computer.task;
   OrderedTaskBehaviour &otb = task_behaviour.ordered_defaults;
 
-  changed |= SaveValue(StartMaxSpeed, UnitGroup::HORIZONTAL_SPEED, szProfileStartMaxSpeed, otb.start_max_speed);
+  changed |= SaveValue(StartMaxSpeed, UnitGroup::HORIZONTAL_SPEED, ProfileKeys::StartMaxSpeed, otb.start_max_speed);
 
-  changed |= SaveValue(StartMaxSpeedMargin, UnitGroup::HORIZONTAL_SPEED, szProfileStartMaxSpeedMargin,
+  changed |= SaveValue(StartMaxSpeedMargin, UnitGroup::HORIZONTAL_SPEED, ProfileKeys::StartMaxSpeedMargin,
                        task_behaviour.start_max_speed_margin);
 
-  changed |= SaveValue(StartMaxHeight, UnitGroup::ALTITUDE, szProfileStartMaxHeight, otb.start_max_height);
+  changed |= SaveValue(StartMaxHeight, UnitGroup::ALTITUDE, ProfileKeys::StartMaxHeight, otb.start_max_height);
 
-  changed |= SaveValue(StartMaxHeightMargin, UnitGroup::ALTITUDE, szProfileStartMaxHeightMargin,
+  changed |= SaveValue(StartMaxHeightMargin, UnitGroup::ALTITUDE, ProfileKeys::StartMaxHeightMargin,
                        task_behaviour.start_max_height_margin);
 
-  changed |= SaveValueEnum(StartHeightRef, szProfileStartHeightRef, otb.start_max_height_ref);
+  changed |= SaveValueEnum(StartHeightRef, ProfileKeys::StartHeightRef, otb.start_max_height_ref);
 
-  changed |= SaveValue(FinishMinHeight, UnitGroup::ALTITUDE, szProfileFinishMinHeight,
+  changed |= SaveValue(FinishMinHeight, UnitGroup::ALTITUDE, ProfileKeys::FinishMinHeight,
                        otb.finish_min_height);
 
-  changed |= SaveValueEnum(FinishHeightRef, szProfileFinishHeightRef, otb.finish_min_height_ref);
+  changed |= SaveValueEnum(FinishHeightRef, ProfileKeys::FinishHeightRef, otb.finish_min_height_ref);
 
-  changed |= SaveValueEnum(Contests, szProfileOLCRules, task_behaviour.contest);
+  changed |= SaveValueEnum(Contests, ProfileKeys::OLCRules, task_behaviour.contest);
+  changed |= SaveValueEnum(PREDICT_CONTEST, ProfileKeys::PredictContest,
+                           task_behaviour.predict_contest);
 
   _changed |= changed;
   _require_restart |= require_restart;

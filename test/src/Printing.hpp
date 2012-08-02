@@ -46,11 +46,14 @@ class RoutePlanner;
 class ReachFan;
 class FlatTriangleFanTree;
 class FlatTriangleFan;
+struct Waypoint;
 
 #ifdef FIXED_MATH
 #include "Math/fixed.hpp"
 std::ostream& operator<<(std::ostream& os,fixed const& value);
 #endif
+
+std::ostream &operator<< (std::ostream &f, const Waypoint &wp);
 
 class PrintHelper {
 public:
@@ -73,7 +76,9 @@ public:
                              const AircraftState &state,
                              const TaskProjection &projection,
                              const int item=0);
-  static void contestmanager_print(const ContestManager& cm);
+  static void contestmanager_print(const ContestManager& cm,
+                                   const Trace &trace_full,
+                                   const Trace &trace_sprint);
   static void trace_print(const Trace& trace, const GeoPoint &loc);
   static void print(const ContestResult& result);
   static void print_route(RoutePlanner& r);
@@ -82,14 +87,5 @@ public:
   static void print(const FlatTriangleFanTree& r);
   static void print(const FlatTriangleFan& r, const unsigned depth);
 };
-
-struct FlatGeoPoint;
-class SearchPoint;
-class SearchPointVector;
-class AbstractAirspace;
-
-void write_point(const SearchPoint& sp, const FlatGeoPoint& p, const char* name);
-void write_spv (const SearchPointVector& spv);
-void write_border (const AbstractAirspace& as);
 
 #endif

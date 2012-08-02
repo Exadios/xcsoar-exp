@@ -22,7 +22,7 @@
 #ifndef AIRSPACE_HPP
 #define AIRSPACE_HPP
 
-#include "Navigation/Flat/FlatBoundingBox.hpp"
+#include "Geo/Flat/FlatBoundingBox.hpp"
 #include "Compiler.h"
 
 #ifdef DO_PRINT
@@ -33,9 +33,7 @@ struct AircraftState;
 class AtmosphericPressure;
 class AbstractAirspace;
 class AirspaceActivity;
-
-#include <vector>
-typedef std::vector< std::pair<GeoPoint,GeoPoint> > AirspaceIntersectionVector;
+class AirspaceIntersectionVector;
 
 /**
  * Single object container for actual airspaces, to be stored in Airspaces object
@@ -50,7 +48,7 @@ typedef std::vector< std::pair<GeoPoint,GeoPoint> > AirspaceIntersectionVector;
 class Airspace: 
   public FlatBoundingBox
 {
-  mutable AbstractAirspace *pimpl_airspace;
+  AbstractAirspace *airspace;
 
 public:
 
@@ -75,13 +73,13 @@ public:
    * 
    * @return dummy airspace envelope
    */
-  Airspace(const GeoPoint&loc, const TaskProjection& task_projection, const
-    fixed range=fixed_zero):
-    FlatBoundingBox(task_projection.project(loc),
-                    task_projection.project_range(loc,range)),
-    pimpl_airspace(NULL)
+  Airspace(const GeoPoint&loc, const TaskProjection& task_projection,
+           const fixed range=fixed_zero)
+    :FlatBoundingBox(task_projection.ProjectInteger(loc),
+                     task_projection.ProjectRangeInteger(loc, range)),
+     airspace(NULL)
   {
-  };
+  }
 
   /** 
    * Constructor for virtual airspaces for use in bounding-box
@@ -93,14 +91,13 @@ public:
    * 
    * @return dummy airspace envelope
    */
-  Airspace(const GeoPoint &ll, 
-           const GeoPoint &ur,
-           const TaskProjection& task_projection):
-    FlatBoundingBox(task_projection.project(ll),
-                    task_projection.project(ur)), 
-    pimpl_airspace(NULL)
+  Airspace(const GeoPoint &ll, const GeoPoint &ur,
+           const TaskProjection& task_projection)
+    :FlatBoundingBox(task_projection.ProjectInteger(ll),
+                     task_projection.ProjectInteger(ur)),
+     airspace(NULL)
   {
-  };
+  }
 
   /** 
    * Checks whether an aircraft is inside the airspace. 
@@ -110,7 +107,7 @@ public:
    * @return true if aircraft is inside airspace
    */
   gcc_pure
-  bool inside(const AircraftState &loc) const;
+  bool IsInside(const AircraftState &loc) const;
 
   /** 
    * Checks whether a point is inside the airspace lateral boundary. 
@@ -120,7 +117,7 @@ public:
    * @return true if location is inside airspace
    */
   gcc_pure
-  bool inside(const GeoPoint &loc) const;
+  bool IsInside(const GeoPoint &loc) const;
 
   /** 
    * Checks whether a flat-earth ray intersects with the airspace
@@ -131,7 +128,7 @@ public:
    * @return true if ray intersects or wholly enclosed by airspace
    */
   gcc_pure
-  bool intersects(const FlatRay& ray) const;
+  bool Intersects(const FlatRay& ray) const;
 
   /** 
    * Checks whether a line intersects with the airspace, by directing
@@ -143,7 +140,9 @@ public:
    * @return true if the line intersects the airspace
    */
   gcc_pure
-  AirspaceIntersectionVector Intersects(const GeoPoint& g1, const GeoPoint &end) const;
+  AirspaceIntersectionVector Intersects(const GeoPoint &g1,
+                                        const GeoPoint &end,
+                                        const TaskProjection &projection) const;
 
   /** 
    * Destroys concrete airspace enclosed by this instance if present.
@@ -152,15 +151,15 @@ public:
    * concrete airspace so have to be careful here.
    * 
    */
-  void destroy();
+  void Destroy();
 
-/** 
- * Accessor for contained AbstractAirspace 
- * 
- * @return Airspace letter
- */
-  AbstractAirspace *get_airspace() const {
-    return pimpl_airspace;
+  /**
+   * Accessor for contained AbstractAirspace
+   *
+   * @return Airspace letter
+   */
+  AbstractAirspace *GetAirspace() const {
+    return airspace;
   };
 
   /** 
@@ -168,32 +167,37 @@ public:
    * 
    * @param alt Height above MSL of terrain (m) at center
    */
-  void set_ground_level(const fixed alt) const;
+  void SetGroundLevel(const fixed alt) const;
+
+  /**
+   * Is it necessary to call SetGroundLevel() for this AbstractAirspace?
+   */
+  bool NeedGroundLevel() const;
 
   /** 
    * Set QNH pressure for FL-referenced airspace altitudes 
    * 
    * @param press Atmospheric pressure model and QNH
    */
-  void set_flight_level(const AtmosphericPressure &press) const;
+  void SetFlightLevel(const AtmosphericPressure &press) const;
 
   /**
    * Set activity based on day mask
    *
    * @param days Mask of activity
    */
-  void set_activity(const AirspaceActivity mask) const;
+  void SetActivity(const AirspaceActivity mask) const;
 
   /**
    * Clear the convex clearance polygon
    */
-  void clear_clearance() const;
+  void ClearClearance() const;
 
   /**
    * Equality operator, matches if contained airspace is the same
    */
   bool operator==(Airspace const& a) const {
-    return (get_airspace() == a.get_airspace());
+    return (GetAirspace() == a.GetAirspace());
   }
 
 public:

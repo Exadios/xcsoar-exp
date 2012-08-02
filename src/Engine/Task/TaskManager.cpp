@@ -19,10 +19,13 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
+
 #include "TaskManager.hpp"
 #include "Visitors/TaskPointVisitor.hpp"
-#include "Tasks/TaskSolvers/TaskSolution.hpp"
-#include "Tasks/BaseTask/UnorderedTaskPoint.hpp"
+#include "Solvers/TaskSolution.hpp"
+#include "Engine/Task/Unordered/UnorderedTaskPoint.hpp"
+#include "Ordered/Points/OrderedTaskPoint.hpp"
+#include "Ordered/Points/AATPoint.hpp"
 #include "Util/StringUtil.hpp"
 
 TaskManager::TaskManager(const TaskBehaviour &_task_behaviour,
@@ -133,18 +136,18 @@ TaskManager::UpdateCommonStatsTimes(const AircraftState &state)
     common_stats.ordered_has_targets = task_ordered.HasTargets();
 
     common_stats.aat_time_remaining =
-        task_ordered.get_ordered_task_behaviour().aat_min_time -
-        task_stats.total.time_elapsed;
+      task_ordered.GetOrderedTaskBehaviour().aat_min_time -
+      task_stats.total.time_elapsed;
 
     if (task_stats.total.remaining.IsDefined() &&
         positive(common_stats.aat_time_remaining))
       common_stats.aat_speed_remaining =
-          fixed(task_stats.total.remaining.get_distance()) /
+          fixed(task_stats.total.remaining.GetDistance()) /
           common_stats.aat_time_remaining;
     else
       common_stats.aat_speed_remaining = -fixed_one;
 
-    fixed aat_min_time = task_ordered.get_ordered_task_behaviour().aat_min_time;
+    fixed aat_min_time = task_ordered.GetOrderedTaskBehaviour().aat_min_time;
 
     if (positive(aat_min_time)) {
       common_stats.aat_speed_max = task_stats.distance_max / aat_min_time;
@@ -158,10 +161,12 @@ TaskManager::UpdateCommonStatsTimes(const AircraftState &state)
     common_stats.task_time_elapsed = task_stats.total.time_elapsed;
 
     const fixed start_max_height =
-        fixed(task_ordered.get_ordered_task_behaviour().start_max_height) +
-        fixed(task_ordered.get_ordered_task_behaviour().start_max_height_ref
-              == HeightReferenceType::MSL ? fixed_zero : task_ordered.get_tp(0)->GetElevation());
-    if (positive(start_max_height) && state.location.IsValid() && state.flying) {
+      fixed(task_ordered.GetOrderedTaskBehaviour().start_max_height) +
+      (task_ordered.GetOrderedTaskBehaviour().start_max_height_ref == HeightReferenceType::MSL
+       ? fixed_zero
+       : task_ordered.GetPoint(0).GetElevation());
+    if (positive(start_max_height) &&
+        state.location.IsValid() && state.flying) {
       if (!positive(common_stats.TimeUnderStartMaxHeight) &&
           state.altitude < start_max_height) {
         common_stats.TimeUnderStartMaxHeight = state.time;
@@ -173,10 +178,10 @@ TaskManager::UpdateCommonStatsTimes(const AircraftState &state)
       common_stats.TimeUnderStartMaxHeight = -fixed_one;
     }
 
-    task_ordered.update_summary(common_stats.ordered_summary);
+    task_ordered.UpdateSummary(common_stats.ordered_summary);
 
   } else {
-    common_stats.reset_task();
+    common_stats.ResetTask();
   }
 }
 
@@ -366,7 +371,7 @@ TaskManager::Reset()
   task_ordered.Reset();
   task_goto.Reset();
   task_abort.Reset();
-  common_stats.reset();
+  common_stats.Reset();
   glide_polar.SetCruiseEfficiency(fixed_one);
 }
 
@@ -385,7 +390,7 @@ TaskManager::RandomPointInTask(const unsigned index, const fixed mag) const
   if (active_task == &task_ordered && task_ordered.IsValidIndex(index))
     return task_ordered.GetTaskPoint(index).GetRandomPointInSector(mag);
 
-  if (index <= TaskSize())
+  if (active_task != NULL && index <= active_task->TaskSize())
     return active_task->GetActiveTaskPoint()->GetLocation();
 
   GeoPoint null_location(Angle::Zero(), Angle::Zero());
@@ -432,24 +437,6 @@ TaskManager::UpdateAutoMC(const AircraftState &state_now,
   return false;
 }
 
-GeoPoint
-TaskManager::GetTaskCenter(const GeoPoint &fallback_location) const
-{
-  if (active_task)
-    return active_task->GetTaskCenter(fallback_location);
-
-  return fallback_location;
-}
-
-fixed
-TaskManager::GetTaskRadius(const GeoPoint &fallback_location) const
-{
-  if (active_task)
-    return active_task->GetTaskRadius(fallback_location);
-
-  return fixed_zero;
-}
-
 bool
 TaskManager::IsInSector (const unsigned index, const AircraftState &ref,
                          const bool AATOnly) const
@@ -477,7 +464,7 @@ TaskManager::GetLocationTarget(const unsigned index,
 
   const AATPoint *ap = task_ordered.GetAATTaskPoint(index);
   if (ap)
-    return ap->get_location_target();
+    return ap->GetTargetLocation();
 
  return fallback_location;
 }
@@ -516,7 +503,7 @@ TaskManager::SetTarget(const unsigned index, const GeoPoint &loc,
 
   AATPoint *ap = task_ordered.GetAATTaskPoint(index);
   if (ap)
-    ap->set_target(loc, override_lock);
+    ap->SetTarget(loc, override_lock);
 
   return true;
 }
@@ -530,7 +517,7 @@ TaskManager::SetTarget(const unsigned index, const fixed range,
 
   AATPoint *ap = task_ordered.GetAATTaskPoint(index);
   if (ap)
-    ap->set_target(range, radial, task_ordered.GetTaskProjection());
+    ap->SetTarget(range, radial, task_ordered.GetTaskProjection());
 
   return true;
 }
@@ -544,7 +531,7 @@ TaskManager::GetTargetRangeRadial(const unsigned index, fixed &range,
 
   const AATPoint *ap = task_ordered.GetAATTaskPoint(index);
   if (ap)
-    ap->get_target_range_radial(range, radial);
+    ap->GetTargetRangeRadial(range, radial);
 
   return true;
 }
@@ -557,7 +544,7 @@ TaskManager::TargetLock(const unsigned index, bool do_lock)
 
   AATPoint *ap = task_ordered.GetAATTaskPoint(index);
   if (ap)
-    ap->target_lock(do_lock);
+    ap->LockTarget(do_lock);
 
   return true;
 }

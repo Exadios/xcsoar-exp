@@ -20,18 +20,9 @@
 }
 */
 #include "Printing.hpp"
-#include <fstream>
-
-#include "Engine/Task/TaskManager.hpp"
-#include "Task/Tasks/AbortTask.hpp"
-#include "Task/Tasks/GotoTask.hpp"
-#include "Task/Tasks/OrderedTask.hpp"
-#include "Task/Tasks/AbstractTask.hpp"
-#include "Task/Tasks/BaseTask/TaskPoint.hpp"
-#include "Task/Tasks/BaseTask/SampledTaskPoint.hpp"
-#include "Task/Tasks/BaseTask/OrderedTaskPoint.hpp"
-#include "Navigation/SearchPointVector.hpp"
 #include "Trace/Trace.hpp"
+
+#include <fstream>
 
 #ifdef FIXED_MATH
 std::ostream& operator<<(std::ostream& os,fixed const& value)
@@ -42,32 +33,32 @@ std::ostream& operator<<(std::ostream& os,fixed const& value)
 
 #include "Waypoint/Waypoint.hpp"
 
-std::ostream& operator<< (std::ostream& f, 
-                          const Waypoint& wp)
+std::ostream &
+operator<< (std::ostream& f, const Waypoint& wp)
 {
   f << wp.location.longitude << " " << wp.location.latitude << "\n";
   return f;
 }
 
-#include "Navigation/Flat/FlatBoundingBox.hpp"
-
 /*
+#include "Geo/Flat/FlatBoundingBox.hpp"
+
 void 
 FlatBoundingBox::print(std::ostream &f, const TaskProjection &task_projection) const {
-  FlatGeoPoint ll(bb_ll.Longitude,bb_ll.Latitude);
-  FlatGeoPoint lr(bb_ur.Longitude,bb_ll.Latitude);
-  FlatGeoPoint ur(bb_ur.Longitude,bb_ur.Latitude);
-  FlatGeoPoint ul(bb_ll.Longitude,bb_ur.Latitude);
+  FlatGeoPoint ll(bb_ll.longitude,bb_ll.latitude);
+  FlatGeoPoint lr(bb_ur.longitude,bb_ll.latitude);
+  FlatGeoPoint ur(bb_ur.longitude,bb_ur.latitude);
+  FlatGeoPoint ul(bb_ll.longitude,bb_ur.latitude);
   GeoPoint gll = task_projection.unproject(ll);
   GeoPoint glr = task_projection.unproject(lr);
   GeoPoint gur = task_projection.unproject(ur);
   GeoPoint gul = task_projection.unproject(ul);
   
-  f << gll.Longitude << " " << gll.Latitude << "\n";
-  f << glr.Longitude << " " << glr.Latitude << "\n";
-  f << gur.Longitude << " " << gur.Latitude << "\n";
-  f << gul.Longitude << " " << gul.Latitude << "\n";
-  f << gll.Longitude << " " << gll.Latitude << "\n";
+  f << gll.longitude << " " << gll.latitude << "\n";
+  f << glr.longitude << " " << glr.latitude << "\n";
+  f << gur.longitude << " " << gur.latitude << "\n";
+  f << gul.longitude << " " << gul.latitude << "\n";
+  f << gll.longitude << " " << gll.latitude << "\n";
   f << "\n";
 }
 */
@@ -96,8 +87,8 @@ static void
 PrintTracePoint(const TracePoint &point, std::ofstream& fs)
 {
   fs << point.GetTime()
-     << " " << point.get_location().longitude
-     << " " << point.get_location().latitude
+     << " " << point.GetLocation().longitude
+     << " " << point.GetLocation().latitude
      << " " << point.GetAltitude()
      << " " << point.GetVario()
      << "\n";
@@ -120,27 +111,6 @@ std::ostream& operator<< (std::ostream& o, const Angle& a)
   o << a.Degrees();
   return o;
 } 
-
-
-void write_point(const SearchPoint& sp, const FlatGeoPoint& p, const char* name)
-{
-  printf("%g %g %d %d # %s\n",
-         (double)sp.get_location().longitude.Degrees(),
-         (double)sp.get_location().latitude.Degrees(),
-         p.Longitude,
-         p.Latitude,
-         name);
-  fflush(stdout);
-}
-
-void write_spv (const SearchPointVector& spv)
-{
-  for (auto v = spv.begin(); v != spv.end(); ++v) {
-    write_point(*v, v->get_flatLocation(), "spv");
-  }
-  printf("spv\n");
-  fflush(stdout);
-}
 
 #include "Route/AirspaceRoute.hpp"
 
@@ -198,14 +168,14 @@ PrintHelper::print(const FlatTriangleFan& r, const unsigned depth) {
     return;
 
   if (depth) {
-    printf("%d %d # fcorner\n", r.vs[0].Longitude, r.vs[0].Latitude);
+    printf("%d %d # fcorner\n", r.vs[0].longitude, r.vs[0].latitude);
   }
 
   for (auto it = r.vs.begin(); it != r.vs.end(); ++it) {
     const FlatGeoPoint p = (*it);
-    printf("%d %d # ftri\n", p.Longitude, p.Latitude);
+    printf("%d %d # ftri\n", p.longitude, p.latitude);
   }
-  printf("%d %d # ftri\n", r.vs[0].Longitude, r.vs[0].Latitude);
+  printf("%d %d # ftri\n", r.vs[0].longitude, r.vs[0].latitude);
   printf("# ftri\n");
 }
 

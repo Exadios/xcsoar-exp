@@ -27,16 +27,16 @@ Copyright_License {
 #include <string.h>
 
 static const char *
-end_of_line(const char *line)
+EndOfLine(const char *line)
 {
   return line + strlen(line);
 }
 
 CSVLine::CSVLine(const char *line):
-  data(line), end(end_of_line(line)) {}
+  data(line), end(EndOfLine(line)) {}
 
 size_t
-CSVLine::skip()
+CSVLine::Skip()
 {
   const char* _seperator = strchr(data, ',');
   if (_seperator != NULL && _seperator < end) {
@@ -51,24 +51,24 @@ CSVLine::skip()
 }
 
 char
-CSVLine::read_first_char()
+CSVLine::ReadFirstChar()
 {
   char ch = *data;
-  return skip() > 0 ? ch : '\0';
+  return Skip() > 0 ? ch : '\0';
 }
 
 char
 CSVLine::ReadOneChar()
 {
   char ch = *data;
-  return skip() == 1 ? ch : '\0';
+  return Skip() == 1 ? ch : '\0';
 }
 
 void
-CSVLine::read(char *dest, size_t size)
+CSVLine::Read(char *dest, size_t size)
 {
   const char *src = data;
-  size_t length = skip();
+  size_t length = Skip();
   if (length >= size)
     length = size - 1;
   strncpy(dest, src, length);
@@ -76,23 +76,23 @@ CSVLine::read(char *dest, size_t size)
 }
 
 bool
-CSVLine::read_compare(const char *value)
+CSVLine::ReadCompare(const char *value)
 {
   size_t length = strlen(value);
   char buffer[length + 2];
-  read(buffer, length + 2);
+  Read(buffer, length + 2);
   return strcmp(buffer, value) == 0;
 }
 
 long
-CSVLine::read(long default_value)
+CSVLine::Read(long default_value)
 {
-  read_checked(default_value);
+  ReadChecked(default_value);
   return default_value;
 }
 
 long
-CSVLine::read_hex(long default_value)
+CSVLine::ReadHex(long default_value)
 {
   char *endptr;
   long value = strtol(data, &endptr, 16);
@@ -109,20 +109,20 @@ CSVLine::read_hex(long default_value)
     return value;
   } else {
     data = endptr;
-    skip();
+    Skip();
     return default_value;
   }
 }
 
 double
-CSVLine::read(double default_value)
+CSVLine::Read(double default_value)
 {
-  read_checked(default_value);
+  ReadChecked(default_value);
   return default_value;
 }
 
 bool
-CSVLine::read_checked(double &value_r)
+CSVLine::ReadChecked(double &value_r)
 {
   char *endptr;
   double value = strtod(data, &endptr);
@@ -135,7 +135,7 @@ CSVLine::read_checked(double &value_r)
     data = endptr + 1;
   } else {
     data = endptr;
-    skip();
+    Skip();
     return false;
   }
 
@@ -147,19 +147,19 @@ CSVLine::read_checked(double &value_r)
 #ifdef FIXED_MATH
 
 fixed
-CSVLine::read(fixed default_value)
+CSVLine::Read(fixed default_value)
 {
   double value;
-  return read_checked(value)
+  return ReadChecked(value)
     ? fixed(value)
     : default_value;
 }
 
 bool
-CSVLine::read_checked(fixed &value_r)
+CSVLine::ReadChecked(fixed &value_r)
 {
   double value;
-  if (read_checked(value)) {
+  if (ReadChecked(value)) {
     value_r = fixed(value);
     return true;
   } else
@@ -169,10 +169,10 @@ CSVLine::read_checked(fixed &value_r)
 #endif /* FIXED_MATH */
 
 bool
-CSVLine::read_checked(int &value_r)
+CSVLine::ReadChecked(int &value_r)
 {
   long lvalue;
-  if (!read_checked(lvalue))
+  if (!ReadChecked(lvalue))
     return false;
 
   value_r = lvalue;
@@ -180,7 +180,7 @@ CSVLine::read_checked(int &value_r)
 }
 
 bool
-CSVLine::read_checked(long &value_r)
+CSVLine::ReadChecked(long &value_r)
 {
   char *endptr;
   long value = strtol(data, &endptr, 10);
@@ -193,7 +193,7 @@ CSVLine::read_checked(long &value_r)
     data = endptr + 1;
   } else {
     data = endptr;
-    skip();
+    Skip();
     return false;
   }
 
@@ -203,7 +203,30 @@ CSVLine::read_checked(long &value_r)
 }
 
 bool
-CSVLine::read_checked(unsigned long &value_r)
+CSVLine::ReadHexChecked(long &value_r)
+{
+  char *endptr;
+  long value = strtol(data, &endptr, 16);
+  assert(endptr >= data && endptr <= end);
+
+  bool success = endptr > data;
+  if (endptr >= end) {
+    data = end;
+  } else if (*endptr == ',') {
+    data = endptr + 1;
+  } else {
+    data = endptr;
+    Skip();
+    return false;
+  }
+
+  if (success)
+    value_r = value;
+  return success;
+}
+
+bool
+CSVLine::ReadChecked(unsigned long &value_r)
 {
   char *endptr;
   unsigned long value = strtoul(data, &endptr, 10);
@@ -216,7 +239,7 @@ CSVLine::read_checked(unsigned long &value_r)
     data = endptr + 1;
   } else {
     data = endptr;
-    skip();
+    Skip();
     return false;
   }
 
@@ -226,10 +249,10 @@ CSVLine::read_checked(unsigned long &value_r)
 }
 
 bool
-CSVLine::read_checked(unsigned &value_r)
+CSVLine::ReadChecked(unsigned &value_r)
 {
   unsigned long lvalue;
-  if (!read_checked(lvalue))
+  if (!ReadChecked(lvalue))
     return false;
 
   value_r = lvalue;
@@ -237,17 +260,17 @@ CSVLine::read_checked(unsigned &value_r)
 }
 
 bool
-CSVLine::read_checked_compare(fixed &value_r, const char *string)
+CSVLine::ReadCheckedCompare(fixed &value_r, const char *string)
 {
   fixed value;
-  if (read_checked(value)) {
-    if (read_compare(string)) {
+  if (ReadChecked(value)) {
+    if (ReadCompare(string)) {
       value_r = value;
       return true;
     } else
       return false;
   } else {
-    skip();
+    Skip();
     return false;
   }
 }

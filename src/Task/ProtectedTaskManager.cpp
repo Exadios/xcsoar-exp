@@ -22,9 +22,9 @@ Copyright_License {
 */
 
 #include "ProtectedTaskManager.hpp"
-#include "Util/Serialiser.hpp"
-#include "Util/Deserialiser.hpp"
-#include "Util/DataNodeXML.hpp"
+#include "Serialiser.hpp"
+#include "Deserialiser.hpp"
+#include "XML/DataNodeXML.hpp"
 #include "Task/TaskFile.hpp"
 #include "LocalPath.hpp"
 #include "Task/RoutePlannerGlue.hpp"
@@ -49,13 +49,6 @@ ProtectedTaskManager::SetGlidePolar(const GlidePolar &glide_polar)
 {
   ExclusiveLease lease(*this);
   lease->SetGlidePolar(glide_polar);
-}
-
-TaskManager::TaskMode 
-ProtectedTaskManager::GetMode() const
-{
-  Lease lease(*this);
-  return lease->GetMode();
 }
 
 const OrderedTaskBehaviour 
@@ -111,7 +104,7 @@ ProtectedTaskManager::IncrementActiveTaskPointArm(int offset)
 {
   ExclusiveLease lease(*this);
 
-  switch (lease->GetTaskAdvance().get_advance_state()) {
+  switch (lease->GetTaskAdvance().GetState()) {
   case TaskAdvance::MANUAL:
   case TaskAdvance::AUTO:
     lease->IncrementActiveTaskPoint(offset);
@@ -119,7 +112,7 @@ ProtectedTaskManager::IncrementActiveTaskPointArm(int offset)
   case TaskAdvance::START_DISARMED:
   case TaskAdvance::TURN_DISARMED:
     if (offset>0) {
-      lease->GetTaskAdvance().set_armed(true);
+      lease->GetTaskAdvance().SetArmed(true);
     } else {
       lease->IncrementActiveTaskPoint(offset);
     }
@@ -129,7 +122,7 @@ ProtectedTaskManager::IncrementActiveTaskPointArm(int offset)
     if (offset>0) {
       lease->IncrementActiveTaskPoint(offset);
     } else {
-      lease->GetTaskAdvance().set_armed(false);
+      lease->GetTaskAdvance().SetArmed(false);
     }
     break;
   }
@@ -175,7 +168,7 @@ ProtectedTaskManager::TaskSave(const TCHAR* path, const OrderedTask& task)
 {
   DataNodeXML root(DataNodeXML::CreateRoot(_T("Task")));
   Serialiser tser(root);
-  tser.serialise(task);
+  tser.Serialise(task);
 
   return root.Save(path);
 }

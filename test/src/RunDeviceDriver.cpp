@@ -27,7 +27,6 @@ Copyright_License {
 #include "Device/Register.hpp"
 #include "Device/Parser.hpp"
 #include "Device/device.hpp"
-#include "Engine/Navigation/GeoPoint.hpp"
 #include "Engine/Waypoint/Waypoints.hpp"
 #include "Input/InputEvents.hpp"
 #include "OS/PathName.hpp"
@@ -135,13 +134,34 @@ Dump(const NMEAInfo &basic)
   if (basic.humidity_available)
     printf("RelativeHumidity=%d\n", (int)basic.humidity);
 
-  const FlarmState &flarm = basic.flarm;
-  if (flarm.available) {
-    printf("FLARM rx=%u tx=%u\n", flarm.rx, flarm.tx);
-    printf("FLARM gps=%u\n", (unsigned)flarm.gps);
-    printf("FLARM alarm=%u\n", (unsigned)flarm.alarm_level);
-    printf("FLARM traffic=%u new=%d\n",
-           flarm.traffic.size(), flarm.new_traffic);
+  const DeviceInfo &device = basic.device;
+  if (!device.product.empty())
+    printf("Device.Product=%s\n", device.product.c_str());
+  if (!device.serial.empty())
+    printf("Device.Serial=%s\n", device.serial.c_str());
+  if (!device.hardware_version.empty())
+    printf("Device.HardwareVersion=%s\n", device.hardware_version.c_str());
+  if (!device.software_version.empty())
+    printf("Device.SoftwareVersion=%s\n", device.software_version.c_str());
+
+  const DeviceInfo &device2 = basic.secondary_device;
+  if (!device2.product.empty())
+    printf("SecondaryDevice.Product=%s\n", device2.product.c_str());
+  if (!device2.serial.empty())
+    printf("SecondaryDevice.Serial=%s\n", device2.serial.c_str());
+  if (!device2.hardware_version.empty())
+    printf("SecondaryDevice.HardwareVersion=%s\n",
+           device2.hardware_version.c_str());
+  if (!device2.software_version.empty())
+    printf("SecondaryDevice.SoftwareVersion=%s\n",
+           device2.software_version.c_str());
+
+  const FlarmData &flarm = basic.flarm;
+  if (flarm.status.available) {
+    printf("FLARM rx=%u tx=%u\n", flarm.status.rx, flarm.status.tx);
+    printf("FLARM gps=%u\n", (unsigned)flarm.status.gps);
+    printf("FLARM alarm=%u\n", (unsigned)flarm.status.alarm_level);
+    printf("FLARM traffic=%u\n", flarm.traffic.list.size());
   }
 
   if (basic.engine_noise_level_available)

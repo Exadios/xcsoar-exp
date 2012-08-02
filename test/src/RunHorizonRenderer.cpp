@@ -111,7 +111,7 @@ public:
     SingleWindow::set(_T("RunHorizonRenderer"), _T("RunHorizonRenderer"),
                       _rc, style);
 
-    const PixelRect rc = get_client_rect();
+    const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();
@@ -127,7 +127,7 @@ protected:
   virtual bool OnCommand(unsigned id, unsigned code) {
     switch (id) {
     case ID_CLOSE:
-      close();
+      Close();
       return true;
     }
 
@@ -151,7 +151,7 @@ protected:
 
   virtual void OnResize(UPixelScalar width, UPixelScalar height) {
     SingleWindow::OnResize(width, height);
-    horizon.resize(width, height);
+    horizon.Resize(width, height);
   }
 };
 
@@ -184,7 +184,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   window.Set(PixelRect{0, 0, 160, 160});
 
   window.Show();
-  window.event_loop();
+  window.RunEventLoop();
 
   Fonts::Deinitialize();
 

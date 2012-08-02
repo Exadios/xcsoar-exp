@@ -23,16 +23,16 @@
 #include "ObservationZoneClient.hpp"
 #include "ObservationZonePoint.hpp"
 #include "Boundary.hpp"
-#include "Task/Tasks/BaseTask/TaskPoint.hpp"
+#include "Task/Points/TaskPoint.hpp"
 
 ObservationZoneClient::~ObservationZoneClient() {
   delete oz_point;
 }
 
 bool
-ObservationZoneClient::IsInSector(const AircraftState &ref) const
+ObservationZoneClient::IsInSector(const GeoPoint &location) const
 {
-  return oz_point->IsInSector(ref);
+  return oz_point->IsInSector(location);
 }
 
 bool
@@ -66,10 +66,10 @@ ObservationZoneClient::GetBoundary() const
 }
 
 bool
-ObservationZoneClient::TransitionConstraint(const AircraftState & ref_now,
-                                            const AircraftState & ref_last) const
+ObservationZoneClient::TransitionConstraint(const GeoPoint &location,
+                                            const GeoPoint &last_location) const
 {
-  return oz_point->TransitionConstraint(ref_now, ref_last);
+  return oz_point->TransitionConstraint(location, last_location);
 }
 
 void 

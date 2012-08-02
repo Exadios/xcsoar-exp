@@ -34,8 +34,12 @@ MapLook::Initialise(const MapSettings &settings)
   aircraft.Initialise();
   task.Initialise();
   marker.Initialise();
-  trail.Initialise(settings);
+  trail.Initialise(settings.trail);
   wind.Initialise();
+
+#ifdef HAVE_NOAA
+  noaa.Initialise();
+#endif
 
 #ifdef HAVE_HATCHED_BRUSH
   above_terrain_bitmap.Load(IDB_ABOVETERRAIN);
@@ -51,7 +55,7 @@ MapLook::Initialise(const MapSettings &settings)
   traffic_warning_icon.Load(IDB_TRAFFIC_WARNING, IDB_TRAFFIC_WARNING_HD, false);
   traffic_alarm_icon.Load(IDB_TRAFFIC_ALARM, IDB_TRAFFIC_ALARM_HD, false);
 
-  static gcc_constexpr_data Color clrSepia(0x78,0x31,0x18);
+  static constexpr Color clrSepia(0x78,0x31,0x18);
   reach_pen.Set(Pen::DASH, Layout::ScalePenWidth(1), clrSepia);
   reach_pen_thick.Set(Pen::DASH, Layout::ScalePenWidth(2), clrSepia);
 

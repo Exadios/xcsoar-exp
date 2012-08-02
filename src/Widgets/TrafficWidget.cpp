@@ -34,7 +34,7 @@
 #include "Profile/Profile.hpp"
 #include "Compiler.h"
 #include "FLARM/Friends.hpp"
-#include "Gauge/FlarmTrafficLook.hpp"
+#include "Look/FlarmTrafficLook.hpp"
 #include "Gauge/FlarmTrafficWindow.hpp"
 #include "Language/Language.hpp"
 #include "GestureManager.hpp"
@@ -63,7 +63,7 @@ protected:
   void CalcAutoZoom();
 
 public:
-  void Update(Angle new_direction, const FlarmState &new_data,
+  void Update(Angle new_direction, const TrafficList &new_data,
               const TeamCodeSettings &new_settings);
   void UpdateTaskDirection(bool show_task_direction, Angle bearing);
 
@@ -109,7 +109,7 @@ protected:
   virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
   virtual bool OnMouseDouble(PixelScalar x, PixelScalar y);
   virtual bool OnKeyDown(unsigned key_code);
-  bool on_mouse_gesture(const TCHAR* gesture);
+  bool OnMouseGesture(const TCHAR* gesture);
 };
 
 /** XXX this hack is needed because the form callbacks don't get a
@@ -123,7 +123,7 @@ FlarmTrafficControl2::OnCreate()
 
   const TrafficSettings &settings = CommonInterface::GetUISettings().traffic;
 
-  Profile::Get(szProfileFlarmSideData, side_display_type);
+  Profile::GetEnum(ProfileKeys::FlarmSideData, side_display_type);
   enable_auto_zoom = settings.auto_zoom;
   enable_north_up = settings.north_up;
 }
@@ -151,7 +151,7 @@ FlarmTrafficControl2::SetNorthUp(bool enabled)
 {
   TrafficSettings &settings = CommonInterface::SetUISettings().traffic;
   settings.north_up = enable_north_up = enabled;
-  Profile::Set(szProfileFlarmNorthUp, enabled);
+  Profile::Set(ProfileKeys::FlarmNorthUp, enabled);
   //north_up->SetState(enabled);
 }
 
@@ -160,7 +160,7 @@ FlarmTrafficControl2::SetAutoZoom(bool enabled)
 {
   TrafficSettings &settings = CommonInterface::SetUISettings().traffic;
   settings.auto_zoom = enable_auto_zoom = enabled;
-  Profile::Set(szProfileFlarmAutoZoom, enabled);
+  Profile::Set(ProfileKeys::FlarmAutoZoom, enabled);
   //auto_zoom->SetState(enabled);
 }
 
@@ -170,7 +170,7 @@ FlarmTrafficControl2::CalcAutoZoom()
   bool warning_mode = WarningMode();
   RoughDistance zoom_dist = fixed_zero;
 
-  for (auto it = data.traffic.begin(), end = data.traffic.end();
+  for (auto it = data.list.begin(), end = data.list.end();
       it != end; ++it) {
     if (warning_mode && !it->HasAlarm())
       continue;
@@ -188,7 +188,7 @@ FlarmTrafficControl2::CalcAutoZoom()
 }
 
 void
-FlarmTrafficControl2::Update(Angle new_direction, const FlarmState &new_data,
+FlarmTrafficControl2::Update(Angle new_direction, const TrafficList &new_data,
                             const TeamCodeSettings &new_settings)
 {
   FlarmTrafficWindow::Update(new_direction, new_data, new_settings);
@@ -264,7 +264,7 @@ FlarmTrafficControl2::PaintTaskDirection(Canvas &canvas) const
                                        Angle::Zero() : heading));
 
   // Draw the arrow
-  canvas.polygon(triangle, 4);
+  canvas.DrawPolygon(triangle, 4);
 }
 
 /**
@@ -279,7 +279,7 @@ FlarmTrafficControl2::PaintTrafficInfo(Canvas &canvas) const
     return;
 
   // Shortcut to the selected traffic
-  FlarmTraffic traffic = data.traffic[WarningMode() ? warning : selection];
+  FlarmTraffic traffic = data.list[WarningMode() ? warning : selection];
   assert(traffic.IsDefined());
 
   // Temporary string
@@ -323,7 +323,7 @@ FlarmTrafficControl2::PaintTrafficInfo(Canvas &canvas) const
   }
 
   // Distance
-  FormatUserDistanceSmart(traffic.distance, tmp, 20);
+  FormatUserDistanceSmart(traffic.distance, tmp, 20, fixed(1000));
   canvas.Select(look.info_values_font);
   sz = canvas.CalcTextSize(tmp);
   canvas.text(rc.left, rc.bottom - sz.cy, tmp);
@@ -365,25 +365,25 @@ FlarmTrafficControl2::PaintTrafficInfo(Canvas &canvas) const
     FlarmFriends::Color team_color = FlarmFriends::GetFriendColor(traffic.id);
 
     // If no color found but target is teammate
-    if (team_color == FlarmFriends::NONE &&
+    if (team_color == FlarmFriends::Color::NONE &&
         settings.team_flarm_tracking &&
         traffic.id == settings.team_flarm_id)
       // .. use yellow color
-      team_color = FlarmFriends::GREEN;
+      team_color = FlarmFriends::Color::GREEN;
 
     // If team color found -> draw a colored circle around the target
-    if (team_color != FlarmFriends::NONE) {
+    if (team_color != FlarmFriends::Color::NONE) {
       switch (team_color) {
-      case FlarmFriends::GREEN:
+      case FlarmFriends::Color::GREEN:
         canvas.Select(look.team_brush_green);
         break;
-      case FlarmFriends::BLUE:
+      case FlarmFriends::Color::BLUE:
         canvas.Select(look.team_brush_blue);
         break;
-      case FlarmFriends::YELLOW:
+      case FlarmFriends::Color::YELLOW:
         canvas.Select(look.team_brush_green);
         break;
-      case FlarmFriends::MAGENTA:
+      case FlarmFriends::Color::MAGENTA:
         canvas.Select(look.team_brush_magenta);
         break;
       default:
@@ -391,7 +391,7 @@ FlarmTrafficControl2::PaintTrafficInfo(Canvas &canvas) const
       }
 
       canvas.SelectNullPen();
-      canvas.circle(rc.left + Layout::FastScale(7), rc.top + (font_size / 2),
+      canvas.DrawCircle(rc.left + Layout::FastScale(7), rc.top + (font_size / 2),
                     Layout::FastScale(7));
 
       rc.left += Layout::FastScale(16);
@@ -454,11 +454,12 @@ TrafficWidget::NextTarget()
 void
 TrafficWidget::SwitchData()
 {
-  view->side_display_type++;
-  if (view->side_display_type > 2)
-    view->side_display_type = 1;
+  if (view->side_display_type == FlarmTrafficWindow::SIDE_INFO_VARIO)
+    view->side_display_type = FlarmTrafficWindow::SIDE_INFO_RELATIVE_ALTITUDE;
+  else
+    view->side_display_type = FlarmTrafficWindow::SIDE_INFO_VARIO;
 
-  Profile::Set(szProfileFlarmSideData, view->side_display_type);
+  Profile::SetEnum(ProfileKeys::FlarmSideData, view->side_display_type);
 }
 
 void
@@ -499,7 +500,7 @@ TrafficWidget::Update()
 #endif
 
   view->Update(basic.track,
-               basic.flarm,
+               basic.flarm.traffic,
                CommonInterface::GetComputerSettings().team_code);
 
   view->UpdateTaskDirection(calculated.task_stats.task_valid &&
@@ -529,7 +530,7 @@ bool
 FlarmTrafficControl2::OnMouseUp(PixelScalar x, PixelScalar y)
 {
   const TCHAR *gesture = gestures.Finish();
-  if (gesture && on_mouse_gesture(gesture))
+  if (gesture && OnMouseGesture(gesture))
     return true;
 
   if (!WarningMode())
@@ -546,7 +547,7 @@ FlarmTrafficControl2::OnMouseDouble(PixelScalar x, PixelScalar y)
 }
 
 bool
-FlarmTrafficControl2::on_mouse_gesture(const TCHAR* gesture)
+FlarmTrafficControl2::OnMouseGesture(const TCHAR* gesture)
 {
   if (StringIsEqual(gesture, _T("U"))) {
     ZoomIn();

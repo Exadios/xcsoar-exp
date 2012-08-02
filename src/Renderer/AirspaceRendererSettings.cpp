@@ -26,6 +26,19 @@ Copyright_License {
 #include <algorithm>
 
 void
+AirspaceClassRendererSettings::SetDefaults()
+{
+  display = true;
+#ifdef HAVE_HATCHED_BRUSH
+  brush = 0;
+#endif
+  border_color = COLOR_RED;
+  fill_color = COLOR_RED;
+  border_width = 2;
+  fill_mode = FillMode::PADDING;
+}
+
+void
 AirspaceRendererSettings::SetDefaults()
 {
   enable = true;
@@ -39,15 +52,8 @@ AirspaceRendererSettings::SetDefaults()
 
   fill_mode = FillMode::DEFAULT;
 
-  AirspaceClassRendererSettings default_settings = {
-    true,
-#ifdef HAVE_HATCHED_BRUSH
-    0,
-#endif
-    COLOR_RED,
-  };
-
-  std::fill(classes, classes + AIRSPACECLASSCOUNT, default_settings);
+  for (auto it = classes; it != classes + AIRSPACECLASSCOUNT; ++it)
+    it->SetDefaults();
 
   classes[CLASSG].display = false;
 
@@ -64,13 +70,13 @@ AirspaceRendererSettings::SetDefaults()
   classes[CLASSF].brush = 3;
 #endif
 
-  classes[OTHER].color = COLOR_CYAN;
-  classes[DANGER].color = DarkColor(COLOR_MAGENTA);
-  classes[CLASSC].color = DarkColor(COLOR_MAGENTA);
-  classes[CLASSD].color = COLOR_BLUE;
-  classes[CTR].color = DarkColor(COLOR_MAGENTA);
-  classes[WAVE].color = DarkColor(COLOR_YELLOW);
-  classes[AATASK].color = COLOR_YELLOW;
-  classes[CLASSE].color = DarkColor(COLOR_GREEN);
-  classes[CLASSF].color = DarkColor(COLOR_GREEN);
+  classes[OTHER].SetColors(COLOR_CYAN);
+  classes[DANGER].SetColors(DarkColor(COLOR_MAGENTA));
+  classes[CLASSC].SetColors(DarkColor(COLOR_MAGENTA));
+  classes[CLASSD].SetColors(COLOR_BLUE);
+  classes[CTR].SetColors(DarkColor(COLOR_MAGENTA));
+  classes[WAVE].SetColors(DarkColor(COLOR_YELLOW));
+  classes[AATASK].SetColors(COLOR_YELLOW);
+  classes[CLASSE].SetColors(DarkColor(COLOR_GREEN));
+  classes[CLASSF].SetColors(DarkColor(COLOR_GREEN));
 }

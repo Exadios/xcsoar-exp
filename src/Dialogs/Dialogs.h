@@ -32,14 +32,10 @@ void dlgAlternatesListShowModal(SingleWindow &parent);
 
 void dlgBasicSettingsShowModal();
 void dlgBrightnessShowModal();
-void dlgHelpShowModal(SingleWindow &parent, const TCHAR* Caption,
-    const TCHAR* HelpText);
 
 void dlgChecklistShowModal();
 void dlgConfigurationShowModal();
 void dlgConfigFontsShowModal();
-
-void dlgLoggerReplayShowModal();
 
 /**
  * @return true on success, false if the user has pressed the "Quit"
@@ -48,16 +44,11 @@ void dlgLoggerReplayShowModal();
 bool
 dlgStartupShowModal();
 
-void dlgWindSettingsShowModal();
+void ShowWindSettingsDialog();
 
 void dlgStatusShowModal(int page);
 
 void dlgSwitchesShowModal();
-
-void
-dlgInfoBoxAccessShowModeless(const int id);
-
-void dlgVoiceShowModal();
 
 void dlgCreditsShowModal(SingleWindow &parent);
 

@@ -26,6 +26,48 @@ Copyright_License {
 #include "Operation/Operation.hpp"
 
 bool
+FlarmDevice::EnableNMEA(OperationEnvironment &env)
+{
+  switch (mode) {
+  case Mode::UNKNOWN:
+    /* device could be in binary mode, we don't know, but this is the
+       best we can do: */
+    if (!BinaryReset(env, 500))
+      return false;
+
+    mode = Mode::NMEA;
+
+    /* request self-test results and version information from FLARM */
+    Send("PFLAE,R", env);
+    Send("PFLAV,R", env);
+    return true;
+
+  case Mode::NMEA:
+    return true;
+
+  case Mode::TEXT:
+    /* no real difference between NMEA and TEXT; in mode==TEXT, the
+       Port thread is stopped, but the caller is responsible for
+       restarting it, which means there's nothing to do for us */
+    mode = Mode::NMEA;
+    return true;
+
+  case Mode::BINARY:
+    if (!BinaryReset(env, 500)) {
+      mode = Mode::UNKNOWN;
+      return false;
+    }
+
+    mode = Mode::NMEA;
+    return true;
+  }
+
+  /* unreachable */
+  assert(false);
+  return false;
+}
+
+bool
 FlarmDevice::BinaryMode(OperationEnvironment &env)
 {
   if (mode == Mode::BINARY)
@@ -35,7 +77,8 @@ FlarmDevice::BinaryMode(OperationEnvironment &env)
 
   // "Binary mode is engaged by sending the text command "$PFLAX"
   // (including a newline character) to Flarm."
-  Send("PFLAX");
+  if (!Send("PFLAX", env))
+    return false;
 
   // Remember that we should now be in binary mode (for further assert() calls)
   mode = Mode::BINARY;

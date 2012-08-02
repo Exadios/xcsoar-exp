@@ -37,21 +37,24 @@ Copyright_License {
 #include "LimitParameters.hpp"
 #include "DisplayParameters.hpp"
 #include "Dialogs/CallBackTable.hpp"
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/Message.hpp"
+#include "Dialogs/XML.hpp"
 #include "Form/Tabbed.hpp"
+#include "Form/Form.hpp"
+#include "Form/Button.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Device/device.hpp"
 #include "Device/Descriptor.hpp"
 #include "Device/Driver/Vega/Internal.hpp"
 #include "Profile/Profile.hpp"
-#include "DataField/Enum.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "UIGlobals.hpp"
 #include "Simulator.hpp"
 #include "Compiler.h"
 #include "OS/Sleep.h"
 #include "Util/Macros.hpp"
+#include "Operation/MessageOperationEnvironment.hpp"
 
 #include <assert.h>
 #include <string.h>
@@ -96,7 +99,7 @@ static TabbedControl *tabbed;
 static void
 SetParametersScheme(int schemetype)
 {
-  if(MessageBoxX(_("Set new audio scheme?  Old values will be lost."),
+  if(ShowMessageBox(_("Set new audio scheme?  Old values will be lost."),
                  _T("Vega"),
                  MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
@@ -160,7 +163,8 @@ OnSaveClicked(gcc_unused WndButton &Sender)
   dirty |= changed;
 
   // make sure changes are sent to device
-  if (dirty && device->SendSetting("StoreToEeprom", 2))
+  MessageOperationEnvironment env;
+  if (dirty && device->SendSetting("StoreToEeprom", 2, env))
     dirty = false;
 }
 
@@ -276,7 +280,7 @@ OnCreatePager(ContainerWindow &parent,
   return tabbed;
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnNextClicked),
   DeclareCallBackEntry(OnPrevClicked),
   DeclareCallBackEntry(OnDemoClicked),

@@ -24,12 +24,18 @@ Copyright_License {
 #ifndef XCSOAR_TASK_CALCULATOR_PANEL_HPP
 #define XCSOAR_TASK_CALCULATOR_PANEL_HPP
 
-#include "Form/XMLWidget.hpp"
-#include "Form/Form.hpp"
+#include "Form/RowFormWidget.hpp"
+#include "Form/DataField/Listener.hpp"
+#include "Blackboard/BlackboardListener.hpp"
 #include "Math/fixed.hpp"
 
-class TaskCalculatorPanel : public XMLWidget {
-  WndForm &wf;
+class WndForm;
+class WndButton;
+
+class TaskCalculatorPanel : public RowFormWidget,
+                            private DataFieldListener,
+                            private NullBlackboardListener {
+  WndButton *target_button;
 
   const bool *task_modified;
 
@@ -37,11 +43,15 @@ class TaskCalculatorPanel : public XMLWidget {
   fixed cruise_efficiency;
 
 public:
-  TaskCalculatorPanel(WndForm &_wf, const bool *_task_modified)
-    :wf(_wf), task_modified(_task_modified) {}
+  TaskCalculatorPanel(const DialogLook &look, const bool *_task_modified)
+    :RowFormWidget(look),
+     target_button(NULL), task_modified(_task_modified) {}
 
-  const DialogLook &GetLook() {
-    return wf.GetLook();
+  void SetTargetButton(WndButton *_target_button) {
+    assert(target_button == NULL);
+    assert(_target_button != NULL);
+
+    target_button = _target_button;
   }
 
   bool IsTaskModified() const {
@@ -56,9 +66,21 @@ public:
 
   void Refresh();
 
+  /* virtual methods from Widget */
   virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
   virtual void Show(const PixelRect &rc);
   virtual void Hide();
+
+private:
+  /* virtual methods from DataFieldListener */
+  virtual void OnModified(DataField &df);
+  virtual void OnSpecial(DataField &df);
+
+  /* virtual methods from NullBlackboardListener */
+  virtual void OnCalculatedUpdate(const MoreData &basic,
+                                  const DerivedInfo &calculated) {
+    Refresh();
+  }
 };
 
 #endif

@@ -33,13 +33,15 @@ FORM_SOURCES = \
 	$(FORM_SRC_DIR)/TabBar.cpp \
 	$(FORM_SRC_DIR)/TabDisplay.cpp \
 	$(FORM_SRC_DIR)/TabMenu.cpp \
+	$(FORM_SRC_DIR)/TabMenuDisplay.cpp \
 	$(FORM_SRC_DIR)/Keyboard.cpp \
 	$(FORM_SRC_DIR)/UnitUtil.cpp \
 	$(FORM_SRC_DIR)/ProfileUtil.cpp \
 	$(FORM_SRC_DIR)/GridView.cpp \
 	$(FORM_SRC_DIR)/CustomButton.cpp \
+	$(FORM_SRC_DIR)/HLine.cpp \
 	$(FORM_SRC_DIR)/Util.cpp
 
-FORM_CPPFLAGS = $(SCREEN_CPPFLAGS)
+FORM_CPPFLAGS_INTERNAL = $(SCREEN_CPPFLAGS)
 
 $(eval $(call link-library,form,FORM))

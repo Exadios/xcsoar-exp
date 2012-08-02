@@ -24,7 +24,7 @@ Copyright_License {
 #include "Profile/ProfileKeys.hpp"
 #include "Profile/Profile.hpp"
 #include "Form/RowFormWidget.hpp"
-#include "DataField/Enum.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "Asset.hpp"
 #include "ExperimentalConfigPanel.hpp"
 #include "Language/Language.hpp"
@@ -79,7 +79,7 @@ ExperimentalConfigPanel::Save(bool &_changed, bool &_require_restart)
 
 #ifdef HAVE_MODEL_TYPE
   SystemSettings &system_settings = CommonInterface::SetSystemSettings();
-  changed |= SaveValueEnum(DeviceModelType, szProfileAppInfoBoxModel,
+  changed |= SaveValueEnum(DeviceModelType, ProfileKeys::AppInfoBoxModel,
                            system_settings.model_type);
   if (changed) {
     global_model_type = system_settings.model_type;

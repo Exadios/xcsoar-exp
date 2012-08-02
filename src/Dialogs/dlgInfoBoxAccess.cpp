@@ -23,7 +23,6 @@ Copyright_License {
 
 #include "Dialogs/Dialogs.h"
 #include "Dialogs/dlgInfoBoxAccess.hpp"
-#include "Dialogs/Internal.hpp"
 #include "UIGlobals.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
@@ -35,6 +34,8 @@ Copyright_License {
 #include "Form/Form.hpp"
 #include "Form/Panel.hpp"
 #include "Form/PanelWidget.hpp"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 
 #include <assert.h>
 #include <stdio.h>
@@ -79,20 +80,12 @@ static WndForm *wf = NULL;
 static TabBarControl* wTabBar = NULL;
 
 void
-dlgInfoBoxAccessShowModeless(const int id)
-{
-  dlgInfoBoxAccess::dlgInfoBoxAccessShowModeless(id);
-}
-
-void
-dlgInfoBoxAccess::dlgInfoBoxAccessShowModeless(const int id)
+dlgInfoBoxAccessShowModeless(const int id,
+                             const InfoBoxContent::DialogContent *dlgContent)
 {
   // check for another instance of this window
   if (wf != NULL) return;
   assert (id > -1);
-
-  const InfoBoxContent::DialogContent *dlgContent;
-  dlgContent = InfoBoxManager::GetDialogContent(id);
 
   const DialogLook &look = UIGlobals::GetDialogLook();
 
@@ -104,7 +97,7 @@ dlgInfoBoxAccess::dlgInfoBoxAccessShowModeless(const int id)
   WindowStyle tab_style;
   tab_style.ControlParent();
   ContainerWindow &client_area = wf->GetClientAreaWindow();
-  const PixelRect rc = client_area.get_client_rect();
+  const PixelRect rc = client_area.GetClientRect();
   wTabBar = new TabBarControl(client_area, look, rc.left, rc.top,
                               rc.right - rc.left, Layout::Scale(45),
                               tab_style, Layout::landscape);
@@ -124,7 +117,7 @@ dlgInfoBoxAccess::dlgInfoBoxAccessShowModeless(const int id)
 
   if (!wTabBar->GetTabCount()) {
     form_rc.top = form_rc.bottom - Layout::Scale(58);
-    wf->move(form_rc.left, form_rc.top, form_rc.right - form_rc.left, form_rc.bottom - form_rc.top);
+    wf->Move(form_rc);
 
     Widget *wSwitch = new SwitchInfoBox(id, *wf);
     wTabBar->AddTab(wSwitch, _("Switch InfoBox"));
@@ -136,7 +129,7 @@ dlgInfoBoxAccess::dlgInfoBoxAccessShowModeless(const int id)
   InfoBoxSettings &settings = CommonInterface::SetUISettings().info_boxes;
   const unsigned panel_index = InfoBoxManager::GetCurrentPanel();
   InfoBoxSettings::Panel &panel = settings.panels[panel_index];
-  const InfoBoxFactory::t_InfoBox old_type = panel.contents[id];
+  const InfoBoxFactory::Type old_type = panel.contents[id];
 
   StaticString<32> buffer;
   buffer = gettext(InfoBoxFactory::GetName(old_type));

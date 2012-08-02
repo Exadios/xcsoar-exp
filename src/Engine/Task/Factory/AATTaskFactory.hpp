@@ -45,8 +45,6 @@ public:
 
   ~AATTaskFactory() {};
 
-  void UpdateOrderedTaskBehaviour(OrderedTaskBehaviour& to); 
-
   /**
    * swaps non AAT OZs with either AAT_SEGMENT or AAT_CYLINDER
    * based on the shape of the input point
@@ -55,7 +53,7 @@ public:
    * similar to type of tp
    */
   virtual gcc_pure
-  LegalPointType GetMutatedPointType(const OrderedTaskPoint &tp) const;
+  TaskPointFactoryType GetMutatedPointType(const OrderedTaskPoint &tp) const;
 };
 
 

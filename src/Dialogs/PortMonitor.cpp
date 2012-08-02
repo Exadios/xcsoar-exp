@@ -33,7 +33,7 @@ Copyright_License {
 #include "Util/FifoBuffer.hpp"
 #include "Language/Language.hpp"
 #include "Operation/MessageOperationEnvironment.hpp"
-#include "Thread/Notify.hpp"
+#include "Thread/DelayedNotify.hpp"
 
 static DeviceDescriptor *device;
 static WndForm *dialog;
@@ -41,16 +41,17 @@ static TerminalWindow *terminal;
 static bool paused;
 
 /**
- * A bridge between Port::Handler and TerminalWindow: copy all data
+ * A bridge between DataHandler and TerminalWindow: copy all data
  * received from the Port to the TerminalWindow.
  */
-class PortTerminalBridge : public Port::Handler, Notify {
+class PortTerminalBridge : public DataHandler, private DelayedNotify {
   TerminalWindow &terminal;
   Mutex mutex;
   FifoBuffer<char, 1024> buffer;
 
 public:
-  PortTerminalBridge(TerminalWindow &_terminal):terminal(_terminal) {}
+  PortTerminalBridge(TerminalWindow &_terminal)
+    :DelayedNotify(100), terminal(_terminal) {}
   virtual ~PortTerminalBridge() {}
 
   virtual void DataReceived(const void *data, size_t length) {
@@ -104,7 +105,7 @@ static void
 OnReconnectClicked(gcc_unused WndButton &button)
 {
   if (device->IsOccupied()) {
-    MessageBoxX(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
+    ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -146,7 +147,7 @@ ShowPortMonitor(SingleWindow &parent, const DialogLook &dialog_look,
   caption.Format(_T("%s: %s"), _("Port monitor"),
                  device->GetConfig().GetPortName(buffer, ARRAY_SIZE(buffer)));
 
-  dialog = new WndForm(parent, dialog_look, parent.get_client_rect(),
+  dialog = new WndForm(parent, dialog_look, parent.GetClientRect(),
                        caption, dialog_style);
 
   ContainerWindow &client_area = dialog->GetClientAreaWindow();

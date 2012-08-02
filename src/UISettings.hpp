@@ -34,6 +34,7 @@ Copyright_License {
 #include "Util/TypeTraits.hpp"
 #include "Geo/CoordinateFormat.hpp"
 #include "DisplaySettings.hpp"
+#include "Audio/Settings.hpp"
 
 /**
  * User interface settings.
@@ -48,9 +49,6 @@ struct UISettings {
 
   /** Show ThermalAssistant if circling */
   bool enable_thermal_assistant_gauge;
-
-  /** Show FinalGlideBar mc0 arrow */
-  bool final_glide_bar_mc0_enabled;
 
   enum StateMessageAlign_t {
     smAlignCenter = 0,
@@ -73,6 +71,7 @@ struct UISettings {
   TrafficSettings traffic;
   PageSettings pages;
   DialogSettings dialog;
+  SoundSettings sound;
 
   void SetDefaults();
 };

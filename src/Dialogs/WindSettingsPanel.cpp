@@ -23,8 +23,8 @@ Copyright_License {
 
 #include "WindSettingsPanel.hpp"
 #include "Profile/ProfileKeys.hpp"
-#include "DataField/Enum.hpp"
-#include "DataField/Float.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/Float.hpp"
 #include "Interface.hpp"
 #include "Language/Language.hpp"
 #include "UIGlobals.hpp"
@@ -41,8 +41,9 @@ WindSettingsPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 
   const NMEAInfo &basic = CommonInterface::Basic();
   const WindSettings &settings = CommonInterface::GetComputerSettings().wind;
+  const MapSettings &map_settings = CommonInterface::GetMapSettings();
 
-  static gcc_constexpr_data StaticEnumChoice auto_wind_list[] = {
+  static constexpr StaticEnumChoice auto_wind_list[] = {
     { AUTOWIND_NONE, N_("Manual"),
       N_("When the algorithm is switched off, the pilot is responsible for setting the wind estimate.") },
     { AUTOWIND_CIRCLING, N_("Circling"),
@@ -62,6 +63,11 @@ WindSettingsPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
              _("If enabled, then the wind vector received from external devices overrides "
                  "XCSoar's internal wind calculation."),
              settings.use_external_wind);
+
+  AddBoolean(_("Trail drift"),
+             _("Determines whether the snail trail is drifted with the wind "
+               "when displayed in circling mode."),
+             map_settings.trail.wind_drift_enabled);
 
   if (edit_manual_wind) {
     external_wind = settings.use_external_wind &&
@@ -95,17 +101,21 @@ WindSettingsPanel::Save(bool &_changed, bool &_require_restart)
 {
   const NMEAInfo &basic = CommonInterface::Basic();
   WindSettings &settings = CommonInterface::SetComputerSettings().wind;
+  MapSettings &map_settings = CommonInterface::SetMapSettings();
 
   bool changed = false;
 
   unsigned auto_wind_mode = settings.GetLegacyAutoWindMode();
-  if (SaveValueEnum(AutoWind, szProfileAutoWind, auto_wind_mode)) {
+  if (SaveValueEnum(AutoWind, ProfileKeys::AutoWind, auto_wind_mode)) {
     settings.SetLegacyAutoWindMode(auto_wind_mode);
     changed = true;
   }
 
-  changed |= SaveValue(ExternalWind, szProfileExternalWind,
+  changed |= SaveValue(ExternalWind, ProfileKeys::ExternalWind,
                        settings.use_external_wind);
+
+  changed |= SaveValue(TrailDrift, ProfileKeys::TrailDrift,
+                       map_settings.trail.wind_drift_enabled);
 
   if (edit_manual_wind && !external_wind) {
     settings.manual_wind.norm = Units::ToSysWindSpeed(GetValueFloat(Speed));

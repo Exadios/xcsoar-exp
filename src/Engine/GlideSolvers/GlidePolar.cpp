@@ -24,10 +24,11 @@
 #include "GlideState.hpp"
 #include "GlideResult.hpp"
 #include "MacCready.hpp"
-#include "Util/ZeroFinder.hpp"
+#include "Math/ZeroFinder.hpp"
+#include "Math/Quadratic.hpp"
 #include "Util/Tolerances.hpp"
 #include "Navigation/Aircraft.hpp"
-#include "Util/Quadratic.hpp"
+
 #include <assert.h>
 
 GlidePolar::GlidePolar(const fixed _mc, const fixed _bugs, const fixed _ballast) :
@@ -297,11 +298,11 @@ public:
   }
 
   /**
-   * Glide ratio function
+   * Glide ratio over ground function
    *
    * @param V Speed over ground (m/s)
    *
-   * @return MacCready-adjusted inverse glide ratio
+   * @return MacCready-adjusted inverse glide ratio over ground
    */
   fixed
   f(const fixed V)
@@ -442,4 +443,24 @@ fixed
 GlidePolar::GetLDOverGround(const AircraftState &state) const
 {
   return GetLDOverGround(state.track, state.wind);
+}
+
+fixed
+GlidePolar::GetNextLegEqThermal(fixed current_wind, fixed next_wind) const
+{
+  assert(polar.IsValid());
+
+  const fixed no_wind_thermal =
+      mc - (mc + SbestLD) / VbestLD * current_wind;
+
+  /* calculate coefficients of the polar shifted to the right
+     by an amount equal to head wind (ground speed polar) */
+  const PolarCoefficients s_polar(polar.a,
+                                  polar.b - fixed_two * next_wind * polar.a,
+                                  polar.c + next_wind *
+                                  (next_wind * polar.a + polar.b));
+
+  const fixed v_opt = sqrt((s_polar.c + no_wind_thermal) / s_polar.a);
+  const fixed s_opt = v_opt * (v_opt * s_polar.a + s_polar.b) + s_polar.c;
+  return no_wind_thermal + (s_opt + no_wind_thermal) / v_opt * next_wind;
 }

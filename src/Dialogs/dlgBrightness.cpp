@@ -21,17 +21,19 @@ Copyright_License {
 }
 */
 
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/Dialogs.h"
 #include "Dialogs/CallBackTable.hpp"
+#include "Dialogs/XML.hpp"
 
 #ifdef GNAV
 
+#include "Form/Form.hpp"
 #include "Form/Util.hpp"
+#include "Form/Button.hpp"
 #include "Units/Units.hpp"
 #include "Math/FastMath.h"
-#include "DataField/Base.hpp"
-#include "DataField/Boolean.hpp"
+#include "Form/DataField/Base.hpp"
+#include "Form/DataField/Boolean.hpp"
 #include "Compatibility/string.h"
 #include "PeriodClock.hpp"
 #include "Components.hpp"
@@ -90,7 +92,7 @@ static void OnBrightnessData(DataField *Sender,
 }
 
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[]={
+static constexpr CallBackTableEntry CallBackTable[]={
   DeclareCallBackEntry(OnAutoData),
   DeclareCallBackEntry(OnBrightnessData),
   DeclareCallBackEntry(OnCloseClicked),
@@ -124,7 +126,7 @@ dlgBrightnessShowModal()
 {
   /* XXX this is ugly, non-Altair platforms should not even see the
      according menu item; not translating this superfluous message */
-  MessageBoxX(_T("Only available on Altair"), _T("Brightness"),
+  ShowMessageBox(_T("Only available on Altair"), _T("Brightness"),
               MB_OK|MB_ICONERROR);
 }
 

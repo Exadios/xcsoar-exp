@@ -30,10 +30,11 @@ Copyright_License {
 #include "NMEA/Acceleration.hpp"
 #include "NMEA/Attitude.hpp"
 #include "DateTime.hpp"
-#include "Navigation/GeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
 #include "Atmosphere/Pressure.hpp"
-#include "FLARM/State.hpp"
-#include "Engine/Navigation/SpeedVector.hpp"
+#include "DeviceInfo.hpp"
+#include "FLARM/Data.hpp"
+#include "Geo/SpeedVector.hpp"
 
 /**
  * State of external switch devices (esp Vega)
@@ -65,6 +66,18 @@ struct SwitchInfo
   void Reset();
 };
 
+enum class FixQuality: uint8_t {
+  NO_FIX,
+  GPS,
+  DGPS,
+  PPS,
+  REAL_TIME_KINEMATIC,
+  FLOAT_RTK,
+  ESTIMATION,
+  MANUAL_INPUT,
+  SIMULATION,
+};
+
 /**
  * State of GPS fix
  */
@@ -77,17 +90,9 @@ struct GPSState
   //############
 
   /**
-   * fix_quality
-   * 1 = GPS fix (SPS)
-   * 2 = DGPS fix
-   * 3 = PPS fix
-   * 4 = Real Time Kinematic
-   * 5 = Float RTK
-   * 6 = estimated (dead reckoning) (2.3 feature)
-   * 7 = Manual input mode
-   * 8 = Simulation mode
+   * Fix quality
    */
-  int fix_quality;
+  FixQuality fix_quality;
   Validity fix_quality_available;
 
   /**
@@ -387,7 +392,15 @@ struct NMEAInfo {
   fixed stall_ratio;
   Validity stall_ratio_available;
 
-  FlarmState flarm;
+  DeviceInfo device;
+
+  /**
+   * Information about the "secondary" device, e.g. the GPS connected
+   * "behind" the LXNAV V7.
+   */
+  DeviceInfo secondary_device;
+
+  FlarmData flarm;
 
   void UpdateClock();
 

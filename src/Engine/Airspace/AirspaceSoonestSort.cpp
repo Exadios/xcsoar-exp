@@ -3,9 +3,10 @@
 #include "AbstractAirspace.hpp"
 
 AirspaceInterceptSolution 
-AirspaceSoonestSort::solve_intercept(const AbstractAirspace &a) const
+AirspaceSoonestSort::solve_intercept(const AbstractAirspace &a,
+                                     const TaskProjection &projection) const
 {
-  const GeoPoint loc = a.ClosestPoint(m_state.location);
+  const GeoPoint loc = a.ClosestPoint(m_state.location, projection);
 
   AirspaceInterceptSolution sol =
     AirspaceInterceptSolution::Invalid();
@@ -29,6 +30,6 @@ AirspaceSoonestSort::metric(const AirspaceInterceptSolution& sol) const
 const AbstractAirspace* 
 AirspaceSoonestSort::find_nearest(const Airspaces &airspaces)
 {
-  const fixed range = m_perf.get_max_speed()*m_max_time;
+  const fixed range = m_perf.GetMaxSpeed()*m_max_time;
   return AirspaceNearestSort::find_nearest(airspaces, range);
 }

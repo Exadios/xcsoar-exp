@@ -83,7 +83,7 @@ public:
   void set(PixelRect _rc) {
     SingleWindow::set(_T("RunCanvas"), _T("RunCanvas"), _rc);
 
-    PixelRect rc = get_client_rect();
+    PixelRect rc = GetClientRect();
 
     PixelRect button_rc = rc;
     button_rc.bottom -= 5;
@@ -109,7 +109,7 @@ private:
 
     Brush red_brush(COLOR_RED);
 
-    const PixelRect rc = get_client_rect();
+    const PixelRect rc = GetClientRect();
     const UPixelScalar width = rc.right - rc.left;
     const UPixelScalar height = rc.bottom - rc.top;
     const UPixelScalar hmiddle = (rc.left + rc.right) / 2;
@@ -146,7 +146,7 @@ private:
       break;
 
     case 2:
-      canvas.circle(hmiddle, vmiddle,
+      canvas.DrawCircle(hmiddle, vmiddle,
                     min(width, height) / 3);
       label = _T("circle");
       break;
@@ -165,13 +165,13 @@ private:
 
     case 5:
       canvas.Select(red_brush);
-      canvas.polygon(p1, 3);
+      canvas.DrawPolygon(p1, 3);
       label = _T("big polygon");
       break;
 
     case 6:
       canvas.Select(red_brush);
-      canvas.polygon(p2, 3);
+      canvas.DrawPolygon(p2, 3);
       label = _T("huge polygon");
       break;
     }
@@ -209,7 +209,7 @@ protected:
   virtual bool OnCommand(unsigned id, unsigned code) {
     switch (id) {
     case ID_CLOSE:
-      close();
+      Close();
       return true;
 
 #ifndef ENABLE_OPENGL
@@ -267,7 +267,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   window.set(PixelRect{0, 0, 250, 250});
   window.Show();
 
-  window.event_loop();
+  window.RunEventLoop();
 
   return 0;
 }

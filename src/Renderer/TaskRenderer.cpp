@@ -22,13 +22,11 @@ Copyright_License {
 */
 
 #include "TaskRenderer.hpp"
-#include "Task/Tasks/AbstractTask.hpp"
-#include "Task/Tasks/GotoTask.hpp"
-#include "Task/Tasks/OrderedTask.hpp"
-#include "Task/Tasks/AbortTask.hpp"
-#include "Task/TaskPoints/StartPoint.hpp"
-#include "Task/TaskPoints/FinishPoint.hpp"
-#include "Engine/Task/Tasks/BaseTask/OrderedTaskPoint.hpp"
+#include "Engine/Task/Unordered/GotoTask.hpp"
+#include "Engine/Task/Unordered/AbortTask.hpp"
+#include "Engine/Task/Ordered/OrderedTask.hpp"
+#include "Engine/Task/Ordered/Points/StartPoint.hpp"
+#include "Engine/Task/Ordered/Points/FinishPoint.hpp"
 #include "TaskPointRenderer.hpp"
 
 TaskRenderer::TaskRenderer(TaskPointRenderer &_tpv, GeoBounds _screen_bounds)
@@ -50,7 +48,7 @@ TaskRenderer::Draw(const AbortTask &task)
 void 
 TaskRenderer::Draw(const OrderedTask &task)
 {
-  tpv.SetBoundingBox(task.get_bounding_box(screen_bounds));
+  tpv.SetBoundingBox(task.GetBoundingBox(screen_bounds));
   tpv.SetActiveIndex(task.GetActiveIndex());
   for (unsigned i = 0; i < 4; i++) {
     tpv.ResetIndex();
@@ -59,8 +57,8 @@ TaskRenderer::Draw(const OrderedTask &task)
         i != TaskPointRenderer::LAYER_LEG) {
       tpv.SetModeOptional(true);
 
-      for (unsigned j = 0, end = task.optional_start_points_size(); j < end; ++j)
-        tpv.Draw(*task.get_optional_start(j), (TaskPointRenderer::Layer)i);
+      for (unsigned j = 0, end = task.GetOptionalStartPointCount(); j < end; ++j)
+        tpv.Draw(task.GetOptionalStartPoint(j), (TaskPointRenderer::Layer)i);
     }
 
     tpv.SetModeOptional(false);
@@ -84,7 +82,7 @@ TaskRenderer::Draw(const GotoTask &task)
 void
 TaskRenderer::Draw(const TaskInterface &task)
 {
-  switch (task.type) {
+  switch (task.GetType()) {
   case TaskInterface::ORDERED:
     Draw((const OrderedTask &)task);
     break;

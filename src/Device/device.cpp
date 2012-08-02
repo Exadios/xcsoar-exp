@@ -69,6 +69,8 @@ DeviceConfigOverlaps(const DeviceConfig &a, const DeviceConfig &b)
   case DeviceConfig::PortType::AUTO:
   case DeviceConfig::PortType::INTERNAL:
   case DeviceConfig::PortType::TCP_LISTENER:
+  case DeviceConfig::PortType::UDP_LISTENER:
+  case DeviceConfig::PortType::RFCOMM_SERVER:
     break;
   }
 
@@ -135,11 +137,11 @@ HaveCondorDevice()
 }
 
 void
-VarioWriteNMEA(const TCHAR *text)
+VarioWriteNMEA(const TCHAR *text, OperationEnvironment &env)
 {
   for (int i = 0; i < NUMDEV; i++)
     if (device_list[i]->IsVega())
-      device_list[i]->WriteNMEA(text);
+      device_list[i]->WriteNMEA(text, env);
 }
 
 DeviceDescriptor *

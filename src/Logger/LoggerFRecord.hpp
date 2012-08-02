@@ -25,22 +25,32 @@ Copyright_License {
 #define XCSOAR_LOGGER_FRECORD_HPP
 
 #include "GPSClock.hpp"
+#include "NMEA/Info.hpp"
 
 struct BrokenTime;
-struct GPSState;
 
 class LoggerFRecord
 {
+  /* 4.5 minutes */
+  static constexpr int DEFAULT_UPDATE_TIME = 270;
+  static constexpr int ACCELERATED_UPDATE_TIME = 30;
+
   GPSClock clock;
-  char last_f_record[64];
-  bool detect_f_record_change;
+  bool update_needed;
+
+  bool satellite_ids_available;
+  int satellite_ids[GPSState::MAXSATELLITES];
 
 public:
   LoggerFRecord()
-    :clock(fixed_270 /* 4.5 minutes */) {}
+    :clock(fixed(DEFAULT_UPDATE_TIME)) {}
 
-  const char *Update(const GPSState &gps, const BrokenTime &broken_time,
-                     fixed time, bool nav_warning);
+  /**
+   * Returns true if the IGCWriter is supposed to write a new F record to
+   * the IGC file or false if no update is needed.
+   */
+  bool Update(const GPSState &gps, fixed time, bool nav_warning);
+
   void Reset();
 };
 

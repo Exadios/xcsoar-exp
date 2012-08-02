@@ -28,7 +28,7 @@ Copyright_License {
 #include "Form/Form.hpp"
 #include "Form/Util.hpp"
 #include "Units/Units.hpp"
-#include "DataField/Boolean.hpp"
+#include "Form/DataField/Boolean.hpp"
 #include "Interface.hpp"
 
 class WndButton;
@@ -74,7 +74,7 @@ OnCloseClicked(gcc_unused WndButton &Sender)
   wf->SetModalResult(mrOK);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(NULL)
 };

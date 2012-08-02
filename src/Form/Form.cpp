@@ -51,7 +51,7 @@ const Brush *
 WndForm::ClientAreaWindow::on_color(Window &window, Canvas &canvas)
 {
 #ifdef _WIN32_WCE
-  if ((window.get_window_long(GWL_STYLE) & 0xf) == BS_PUSHBUTTON)
+  if ((window.GetStyle() & 0xf) == BS_PUSHBUTTON)
     /* Windows CE allows custom background colors for push buttons,
        while desktop Windows does not; to make push buttons retain
        their normal background color, we're implementing this
@@ -67,7 +67,7 @@ WndForm::ClientAreaWindow::on_color(Window &window, Canvas &canvas)
 void
 WndForm::ClientAreaWindow::OnPaint(Canvas &canvas)
 {
-  canvas.clear(look.background_color);
+  canvas.Clear(look.background_color);
 
   ContainerWindow::OnPaint(canvas);
 }
@@ -131,7 +131,7 @@ WndForm::~WndForm()
 void
 WndForm::UpdateLayout()
 {
-  PixelRect rc = get_client_rect();
+  PixelRect rc = GetClientRect();
 
   title_rect = rc;
   title_rect.bottom = rc.top +
@@ -141,9 +141,7 @@ WndForm::UpdateLayout()
   client_rect.top = title_rect.bottom;
 
   if (client_area.IsDefined())
-    client_area.move(client_rect.left, client_rect.top,
-                     client_rect.right - client_rect.left,
-                     client_rect.bottom - client_rect.top);
+    client_area.Move(client_rect);
 }
 
 ContainerWindow &
@@ -344,7 +342,7 @@ int WndForm::ShowModeless()
 int
 WndForm::ShowModal()
 {
-  assert_none_locked();
+  AssertNoneLocked();
 
 #define OPENCLOSESUPPRESSTIME 500
 #ifndef USE_GDI
@@ -358,7 +356,7 @@ WndForm::ShowModal()
   if (IsEmbedded() && !IsAltair())
     enter_clock.Update();
 
-  show_on_top();
+  ShowOnTop();
 
   modal_result = 0;
 
@@ -378,7 +376,7 @@ WndForm::ShowModal()
   main_window.AddDialog(this);
 
 #ifndef USE_GDI
-  main_window.refresh();
+  main_window.Refresh();
 #endif
 
 #ifdef ANDROID
@@ -419,7 +417,7 @@ WndForm::ShowModal()
 
     if (key_down_notify_callback != NULL && is_key_down(event) &&
 #ifdef USE_GDI
-        identify_descendant(event.hwnd) &&
+        IdentifyDescendant(event.hwnd) &&
 #endif
         !check_special_key(this, event) &&
         key_down_notify_callback(*this, get_key_code(event)))
@@ -436,7 +434,7 @@ WndForm::ShowModal()
 
     if (is_key_down(event) &&
 #ifdef USE_GDI
-        identify_descendant(event.hwnd) &&
+        IdentifyDescendant(event.hwnd) &&
 #endif
         (get_key_code(event) == VK_UP || get_key_code(event) == VK_DOWN)) {
       /* VK_UP and VK_DOWN move the focus only within the current
@@ -493,7 +491,7 @@ WndForm::OnPaint(Canvas &canvas)
   ContainerWindow::OnPaint(canvas);
 
   // Get window coordinates
-  PixelRect rcClient = get_client_rect();
+  PixelRect rcClient = GetClientRect();
 
   // Draw the borders
   canvas.DrawRaisedEdge(rcClient);
@@ -509,7 +507,7 @@ WndForm::OnPaint(Canvas &canvas)
 
 #ifdef EYE_CANDY
     canvas.SetBackgroundTransparent();
-    canvas.stretch(title_rect.left, title_rect.top,
+    canvas.Stretch(title_rect.left, title_rect.top,
                    title_rect.right - title_rect.left,
                    title_rect.bottom - title_rect.top,
                    look.caption.background_bitmap);
@@ -544,22 +542,22 @@ WndForm::SetCaption(const TCHAR *_caption)
 void
 WndForm::ReinitialiseLayout()
 {
-  if (main_window.get_width() < get_width() ||
-      main_window.get_height() < get_height()) {
+  if (main_window.GetWidth() < GetWidth() ||
+      main_window.GetHeight() < GetHeight()) {
     // close dialog, it's creator may want to create a new layout
     modal_result = mrChangeLayout;
   } else {
     // reposition dialog to fit into TopWindow
-    PixelScalar left = get_left();
-    PixelScalar top = get_top();
+    PixelScalar left = GetLeft();
+    PixelScalar top = GetTop();
 
-    if (get_right() > (PixelScalar) main_window.get_width())
-      left = main_window.get_width() - get_width();
-    if (get_bottom() > (PixelScalar) main_window.get_height())
-      top = main_window.get_height() - get_height();
+    if (GetRight() > (PixelScalar) main_window.GetWidth())
+      left = main_window.GetWidth() - GetWidth();
+    if (GetBottom() > (PixelScalar) main_window.GetHeight())
+      top = main_window.GetHeight() - GetHeight();
 
-    if (left != get_left() || top != get_top())
-      move(left, top);
+    if (left != GetLeft() || top != GetTop())
+      Move(left, top);
   }
 }
 #endif

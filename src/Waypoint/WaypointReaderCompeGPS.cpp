@@ -237,16 +237,16 @@ WaypointReaderCompeGPS::ParseLine(const TCHAR* line, const unsigned linenum,
 }
 
 bool
-WaypointReaderCompeGPS::VerifyFormat(TLineReader &reader) const
+WaypointReaderCompeGPS::VerifyFormat(TLineReader &reader)
 {
   TCHAR* line = reader.read();
   if (line == NULL)
     return false;
 
   // Ignore optional line with encoding information
-  if (line[0] == _T('B') && line[1] == _T(' '))
+  if (StringStartsWith(line, _T("B ")))
     if ((line = reader.read()) == NULL)
       return false;
 
-  return (_tcsstr(line, _T("G  WGS 84")) == line);
+  return StringStartsWith(line, _T("G  WGS 84"));
 }

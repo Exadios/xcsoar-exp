@@ -24,7 +24,7 @@
 #ifndef XCSOAR_OBSERVATION_ZONE_BOUNDARY_HPP
 #define XCSOAR_OBSERVATION_ZONE_BOUNDARY_HPP
 
-#include "Navigation/GeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
 
 #include <forward_list>
 

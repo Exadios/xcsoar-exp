@@ -28,7 +28,6 @@ Copyright_License {
 #include "Task/ProtectedTaskManager.hpp"
 #include "Dialogs/Waypoint.hpp"
 #include "Dialogs/dlgAnalysis.hpp"
-#include "LocalTime.hpp"
 #include "Engine/Util/Gradient.hpp"
 #include "Units/Units.hpp"
 #include "Formatter/Units.hpp"
@@ -203,16 +202,15 @@ InfoBoxContentNextETA::Update(InfoBoxData &data)
 {
   // use proper non-terminal next task stats
 
-  const NMEAInfo &basic = CommonInterface::Basic();
   const TaskStats &task_stats = CommonInterface::Calculated().task_stats;
   if (!task_stats.task_valid || !task_stats.current_leg.IsAchievable()) {
     data.SetInvalid();
     return;
   }
 
-  int dd = (int)(task_stats.current_leg.solution_remaining.time_elapsed) +
-    DetectCurrentTime(basic);
-  const BrokenTime t = BrokenTime::FromSecondOfDayChecked(abs(dd));
+  const BrokenTime &now_local = CommonInterface::Calculated().date_time_local;
+  const BrokenTime t = now_local +
+    unsigned(task_stats.current_leg.solution_remaining.time_elapsed);
 
   // Set Value
   data.UnsafeFormatValue(_T("%02u:%02u"), t.hour, t.minute);
@@ -279,7 +277,8 @@ InfoBoxContentNextAltitudeArrival::Update(InfoBoxData &data)
   const MoreData &basic = CommonInterface::Basic();
   const TaskStats &task_stats = XCSoarInterface::Calculated().task_stats;
   const GlideResult next_solution = task_stats.current_leg.solution_remaining;
-  if (!task_stats.task_valid || !next_solution.IsAchievable()) {
+  if (!basic.NavAltitudeAvailable() ||
+      !task_stats.task_valid || !next_solution.IsAchievable()) {
     data.SetInvalid();
     return;
   }
@@ -289,7 +288,7 @@ InfoBoxContentNextAltitudeArrival::Update(InfoBoxData &data)
 
 
 void
-InfoBoxContentNextLD::Update(InfoBoxData &data)
+InfoBoxContentNextGR::Update(InfoBoxData &data)
 {
   // pilots want this to be assuming terminal flight to this wp, and this
   // is what current_leg gradient does.
@@ -306,7 +305,7 @@ InfoBoxContentNextLD::Update(InfoBoxData &data)
     return;
   }
   if (::GradientValid(gradient)) {
-    data.UnsafeFormatValue(_T("%d"), (int)gradient);
+    data.SetValueFromGlideRatio(gradient);
   } else {
     data.SetInvalid();
   }
@@ -329,7 +328,7 @@ InfoBoxContentFinalDistance::Update(InfoBoxData &data)
   // Set Value
   data.SetValueFromDistance(common_stats.task_finished
                             ? task_stats.current_leg.vector_remaining.distance
-                            : task_stats.total.remaining.get_distance());
+                            : task_stats.total.remaining.GetDistance());
 }
 
 void
@@ -362,9 +361,9 @@ InfoBoxContentFinalETA::Update(InfoBoxData &data)
     return;
   }
 
-  int dd = (int)task_stats.total.solution_remaining.time_elapsed +
-    DetectCurrentTime(XCSoarInterface::Basic());
-  const BrokenTime t = BrokenTime::FromSecondOfDayChecked(abs(dd));
+  const BrokenTime &now_local = CommonInterface::Calculated().date_time_local;
+  const BrokenTime t = now_local +
+    unsigned(task_stats.total.solution_remaining.time_elapsed);
 
   // Set Value
   data.UnsafeFormatValue(_T("%02u:%02u"), t.hour, t.minute);
@@ -405,7 +404,7 @@ InfoBoxContentTaskSpeed::Update(InfoBoxData &data)
 
   // Set Value
   data.SetValue(_T("%2.0f"),
-                    Units::ToUserTaskSpeed(task_stats.total.travelled.get_speed()));
+                    Units::ToUserTaskSpeed(task_stats.total.travelled.GetSpeed()));
 
   // Set Unit
   data.SetValueUnit(Units::current.task_speed_unit);
@@ -423,7 +422,7 @@ InfoBoxContentTaskSpeedAchieved::Update(InfoBoxData &data)
 
   // Set Value
   data.SetValue(_T("%2.0f"),
-                    Units::ToUserTaskSpeed(task_stats.total.remaining_effective.get_speed()));
+                    Units::ToUserTaskSpeed(task_stats.total.remaining_effective.GetSpeed()));
 
   // Set Unit
   data.SetValueUnit(Units::current.task_speed_unit);
@@ -447,7 +446,7 @@ InfoBoxContentTaskSpeedInstant::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentFinalLD::Update(InfoBoxData &data)
+InfoBoxContentFinalGRTE::Update(InfoBoxData &data)
 {
   const TaskStats &task_stats = XCSoarInterface::Calculated().task_stats;
   if (!task_stats.task_valid) {
@@ -462,7 +461,7 @@ InfoBoxContentFinalLD::Update(InfoBoxData &data)
     return;
   }
   if (::GradientValid(gradient)) {
-    data.UnsafeFormatValue(_T("%d"), (int)gradient);
+    data.SetValueFromGlideRatio(gradient);
   } else {
     data.SetInvalid();
   }
@@ -623,7 +622,7 @@ InfoBoxContentTaskAADistance::Update(InfoBoxData &data)
   }
 
   // Set Value
-  data.SetValueFromDistance(task_stats.total.planned.get_distance());
+  data.SetValueFromDistance(task_stats.total.planned.GetDistance());
 }
 
 void
@@ -756,7 +755,7 @@ InfoBoxContentNextETEVMG::Update(InfoBoxData &data)
     return;
   }
 
-  const fixed d = task_stats.current_leg.remaining.get_distance();
+  const fixed d = task_stats.current_leg.remaining.GetDistance();
   const fixed v = basic.ground_speed;
 
   if (!task_stats.task_valid ||
@@ -787,7 +786,7 @@ InfoBoxContentFinalETEVMG::Update(InfoBoxData &data)
     return;
   }
 
-  const fixed d = task_stats.total.remaining.get_distance();
+  const fixed d = task_stats.total.remaining.GetDistance();
   const fixed &v = basic.ground_speed;
 
   if (!task_stats.task_valid ||
@@ -804,4 +803,17 @@ InfoBoxContentFinalETEVMG::Update(InfoBoxData &data)
 
   data.SetValue(value);
   data.SetComment(comment);
+}
+
+void
+InfoBoxContentCruiseEfficiency::Update(InfoBoxData &data)
+{
+  const TaskStats &task_stats = CommonInterface::Calculated().task_stats;
+  if (!task_stats.task_valid || !task_stats.task_started) {
+    data.SetInvalid();
+    return;
+  }
+
+  data.UnsafeFormatValue(_T("%d"), (int) (task_stats.cruise_efficiency * 100));
+  data.SetCommentFromVerticalSpeed(task_stats.effective_mc, false);
 }

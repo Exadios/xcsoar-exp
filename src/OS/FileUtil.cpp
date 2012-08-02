@@ -22,8 +22,8 @@ Copyright_License {
 */
 
 #include "OS/FileUtil.hpp"
-
-#include "OS/PathName.hpp"
+#include "Util/StringUtil.hpp"
+#include "Util/ConvertString.hpp"
 #include "Compatibility/path.h"
 
 #include <windef.h> /* for MAX_PATH */
@@ -54,8 +54,9 @@ bool
 Directory::Exists(const TCHAR* path)
 {
 #ifdef HAVE_POSIX
+  const WideToACPConverter narrow_path(path);
   struct stat st;
-  if (stat(NarrowPathName(path), &st) != 0)
+  if (stat(narrow_path, &st) != 0)
     return false;
 
   return (st.st_mode & S_IFDIR);
@@ -297,11 +298,24 @@ Directory::VisitSpecificFiles(const TCHAR* path, const TCHAR* filter,
 }
 
 bool
+File::ExistsAny(const TCHAR *path)
+{
+#ifdef HAVE_POSIX
+  const WideToACPConverter narrow_path(path);
+  struct stat st;
+  return stat(narrow_path, &st) == 0;
+#else
+  return GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
+#endif
+}
+
+bool
 File::Exists(const TCHAR* path)
 {
 #ifdef HAVE_POSIX
+  const WideToACPConverter narrow_path(path);
   struct stat st;
-  if (stat(NarrowPathName(path), &st) != 0)
+  if (stat(narrow_path, &st) != 0)
     return false;
 
   return (st.st_mode & S_IFREG);
@@ -310,6 +324,26 @@ File::Exists(const TCHAR* path)
   return attributes != INVALID_FILE_ATTRIBUTES &&
     (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
 #endif
+}
+
+uint64_t
+File::GetSize(const TCHAR *path)
+{
+#ifdef HAVE_POSIX
+  struct stat st;
+  if (stat(path, &st) << 0 || !S_ISREG(st.st_mode))
+    return 0;
+
+  return st.st_size;
+#else
+  WIN32_FILE_ATTRIBUTE_DATA data;
+  if (!GetFileAttributesEx(path, GetFileExInfoStandard, &data) ||
+      (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+    return 0;
+
+  return data.nFileSizeLow | (uint64_t(data.nFileSizeHigh) << 32);
+#endif
+
 }
 
 uint64_t

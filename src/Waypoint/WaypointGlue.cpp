@@ -23,15 +23,12 @@ Copyright_License {
 
 #include "WaypointGlue.hpp"
 #include "ComputerSettings.hpp"
-#include "Blackboard/DeviceBlackboard.hpp"
 #include "Profile/Profile.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "LogFile.hpp"
-#include "Terrain/RasterTerrain.hpp"
 #include "Waypoint/Waypoints.hpp"
 #include "WaypointReader.hpp"
 #include "Language/Language.hpp"
-#include "Components.hpp"
 #include "NMEA/Aircraft.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
 #include "IO/TextWriter.hpp"
@@ -53,13 +50,13 @@ WaypointGlue::GetPath(int file_number, TCHAR *value)
 
   switch (file_number) {
   case 1:
-    key = szProfileWaypointFile;
+    key = ProfileKeys::WaypointFile;
     break;
   case 2:
-    key = szProfileAdditionalWaypointFile;
+    key = ProfileKeys::AdditionalWaypointFile;
     break;
   case 3:
-    key = szProfileWatchedWaypointFile;
+    key = ProfileKeys::WatchedWaypointFile;
     break;
   default:
     return false;
@@ -85,176 +82,24 @@ WaypointGlue::IsWritable()
   return IsWritable(1) || IsWritable(2) || IsWritable(3);
 }
 
-const Waypoint *
-WaypointGlue::FindHomeId(Waypoints &waypoints,
-                         PlacesOfInterestSettings &settings)
+static bool
+LoadWaypointFile(Waypoints &waypoints, const TCHAR *path, int file_num,
+                 const RasterTerrain *terrain, OperationEnvironment &operation)
 {
-  if (settings.home_waypoint < 0)
-    return NULL;
-
-  const Waypoint *wp = waypoints.LookupId(settings.home_waypoint);
-  if (wp == NULL) {
-    settings.home_waypoint = -1;
-    return NULL;
-  }
-
-  settings.home_location = wp->location;
-  settings.home_location_available = true;
-  waypoints.SetHome(wp->id);
-  return wp;
-}
-
-const Waypoint *
-WaypointGlue::FindHomeLocation(Waypoints &waypoints,
-                               PlacesOfInterestSettings &settings)
-{
-  if (!settings.home_location_available)
-    return NULL;
-
-  const Waypoint *wp = waypoints.LookupLocation(settings.home_location,
-                                                fixed(100));
-  if (wp == NULL || !wp->IsAirport()) {
-    settings.home_location_available = false;
-    return NULL;
-  }
-
-  settings.home_waypoint = wp->id;
-  waypoints.SetHome(wp->id);
-  return wp;
-}
-
-const Waypoint *
-WaypointGlue::FindFlaggedHome(Waypoints &waypoints,
-                              PlacesOfInterestSettings &settings)
-{
-  const Waypoint *wp = waypoints.FindHome();
-  if (wp == NULL)
-    return NULL;
-
-  settings.SetHome(*wp);
-  return wp;
-}
-
-void
-WaypointGlue::SetHome(Waypoints &way_points, const RasterTerrain *terrain,
-                      ComputerSettings &settings,
-                      const bool reset)
-{
-  LogStartUp(_T("SetHome"));
-
-  if (reset)
-    settings.poi.home_waypoint = -1;
-
-  // check invalid home waypoint or forced reset due to file change
-  const Waypoint *wp = FindHomeId(way_points, settings.poi);
-  if (wp == NULL) {
-    /* fall back to HomeLocation, try to find it in the waypoint
-       database */
-    wp = FindHomeLocation(way_points, settings.poi);
-    if (wp == NULL)
-      // search for home in waypoint list, if we don't have a home
-      wp = FindFlaggedHome(way_points, settings.poi);
-  }
-
-  // check invalid task ref waypoint or forced reset due to file change
-  if (reset || way_points.IsEmpty() ||
-      !way_points.LookupId(settings.team_code.team_code_reference_waypoint))
-    // set team code reference waypoint if we don't have one
-    settings.team_code.team_code_reference_waypoint = settings.poi.home_waypoint;
-
-  if (device_blackboard != NULL) {
-    if (wp != NULL) {
-      // OK, passed all checks now
-      LogStartUp(_T("Start at home waypoint"));
-      device_blackboard->SetStartupLocation(wp->location, wp->elevation);
-    } else if (terrain != NULL) {
-      // no home at all, so set it from center of terrain if available
-      GeoPoint loc = terrain->GetTerrainCenter();
-      LogStartUp(_T("Start at terrain center"));
-      device_blackboard->SetStartupLocation(loc,
-                                            fixed(terrain->GetTerrainHeight(loc)));
-    }
-  }
-}
-
-void
-WaypointGlue::SaveHome(const ComputerSettings &settings)
-{
-  Profile::Set(szProfileHomeWaypoint, settings.poi.home_waypoint);
-  if (settings.poi.home_location_available)
-    Profile::SetGeoPoint(szProfileHomeLocation, settings.poi.home_location);
-
-  Profile::Set(szProfileTeamcodeRefWaypoint,
-               settings.team_code.team_code_reference_waypoint);
-}
-
-bool
-WaypointGlue::LoadWaypointFile(int num, Waypoints &way_points,
-                               const RasterTerrain *terrain,
-                               OperationEnvironment &operation)
-{
-  // Get waypoint filename
-  TCHAR path[MAX_PATH];
-  if (!GetPath(num, path))
-    return false;
-
-  WaypointReader reader(path, num);
-
-  // If waypoint file exists
-  if (!reader.Error()) {
-    // parse the file
-    reader.SetTerrain(terrain);
-
-    if (reader.Parse(way_points, operation))
-      return true;
-
-    LogStartUp(_T("Parse error in waypoint file %d"), num);
-  } else {
-    LogStartUp(_T("No waypoint file %d"), num);
-  }
-
-  return false;
-}
-
-bool
-WaypointGlue::LoadMapFileWaypoints(int num, const TCHAR* key,
-                                   Waypoints &way_points,
-                                   const RasterTerrain *terrain,
-                                   OperationEnvironment &operation)
-{
-  TCHAR path[MAX_PATH];
-
-  // Get the map filename
-  if (!Profile::GetPath(key, path))
-    /* no map file configured */
-    return true;
-
-  TCHAR *tail = path + _tcslen(path);
-
-  _tcscpy(tail, _T("/waypoints.xcw"));
-
-  WaypointReader reader(path, num);
-
-  // Test if waypoints.xcw can be loaded, otherwise try waypoints.cup
+  WaypointReader reader(path, file_num);
   if (reader.Error()) {
-    // Get the map filename
-    _tcscpy(tail, _T("/waypoints.cup"));
-    reader.Open(path, num);
+    LogStartUp(_T("Failed to open waypoint file: %s"), path);
+    return false;
   }
 
-  // If waypoint file inside map file exists
-  if (!reader.Error()) {
-    // parse the file
-    reader.SetTerrain(terrain);
-    if (reader.Parse(way_points, operation))
-      return true;
-
-    LogStartUp(_T("Parse error in map waypoint file"));
-  } else {
-    LogStartUp(_T("No waypoint file in the map file"));
+  // parse the file
+  reader.SetTerrain(terrain);
+  if (!reader.Parse(waypoints, operation)) {
+    LogStartUp(_T("Failed to parse waypoint file: %s"), path);
+    return false;
   }
 
-  return false;
+  return true;
 }
 
 bool
@@ -270,21 +115,32 @@ WaypointGlue::LoadWaypoints(Waypoints &way_points,
   // Delete old waypoints
   way_points.Clear();
 
+  TCHAR path[MAX_PATH];
+
   // ### FIRST FILE ###
-  found |= LoadWaypointFile(1, way_points, terrain, operation);
+  if (Profile::GetPath(ProfileKeys::WaypointFile, path))
+    found |= LoadWaypointFile(way_points, path, 1, terrain, operation);
 
   // ### SECOND FILE ###
-  found |= LoadWaypointFile(2, way_points, terrain, operation);
+  if (Profile::GetPath(ProfileKeys::AdditionalWaypointFile, path))
+    found |= LoadWaypointFile(way_points, path, 2, terrain, operation);
 
   // ### WATCHED WAYPOINT/THIRD FILE ###
-  found |= LoadWaypointFile(3, way_points, terrain, operation);
+  if (Profile::GetPath(ProfileKeys::WatchedWaypointFile, path))
+    found |= LoadWaypointFile(way_points, path, 3, terrain, operation);
 
   // ### MAP/FOURTH FILE ###
 
   // If no waypoint file found yet
-  if (!found)
-    found = LoadMapFileWaypoints(0, szProfileMapFile, way_points, terrain,
-                                 operation);
+  if (!found && Profile::GetPath(ProfileKeys::MapFile, path)) {
+    TCHAR *tail = path + _tcslen(path);
+
+    _tcscpy(tail, _T("/waypoints.xcw"));
+    found |= LoadWaypointFile(way_points, path, 0, terrain, operation);
+
+    _tcscpy(tail, _T("/waypoints.cup"));
+    found |= LoadWaypointFile(way_points, path, 0, terrain, operation);
+  }
 
   // Optimise the waypoint list after attaching new waypoints
   way_points.Optimise();
@@ -305,7 +161,7 @@ WaypointGlue::SaveWaypointFile(const Waypoints &way_points, int num)
   GetPath(num, file);
 
   TextWriter writer(file);
-  if (writer.error()) {
+  if (!writer.IsOpen()) {
     LogStartUp(_T("Waypoint file %d can not be written"), num);
     return false;
   }

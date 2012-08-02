@@ -41,7 +41,7 @@ TrackLineRenderer::Draw(Canvas &canvas, const Angle screen_angle,
   end.y = pos.y - iround(y * fixed_int_constant(400));
 
   canvas.Select(look.track_line_pen);
-  canvas.line(pos, end);
+  canvas.DrawLine(pos, end);
 }
 
 void
@@ -50,11 +50,11 @@ TrackLineRenderer::Draw(Canvas &canvas, const Angle screen_angle,
                         const DerivedInfo &calculated,
                         const MapSettings &settings)
 {
-  if (settings.display_track_bearing == dtbOff ||
+  if (settings.display_ground_track == DisplayGroundTrack::OFF ||
       calculated.circling)
     return;
 
-  if (settings.display_track_bearing == dtbAuto &&
+  if (settings.display_ground_track == DisplayGroundTrack::AUTO &&
       (basic.track - calculated.heading).AsDelta().AbsoluteDegrees() < fixed(5))
     return;
 

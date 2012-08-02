@@ -79,6 +79,12 @@ namespace Profile
   bool GetPathIsEqual(const TCHAR *key, const TCHAR *value);
 
   /**
+   * Gets a path from the profile and return its base name only.
+   */
+  gcc_pure
+  const TCHAR *GetPathBase(const TCHAR *key);
+
+  /**
    * Load a GeoPoint from the profile.
    */
   bool GetGeoPoint(const TCHAR *key, GeoPoint &value);
@@ -88,7 +94,7 @@ namespace Profile
    * longitude and latitude formatted in degrees separated by a space
    * character.
    */
-  bool SetGeoPoint(const TCHAR *key, const GeoPoint &value);
+  void SetGeoPoint(const TCHAR *key, const GeoPoint &value);
 
   /**
    * Load a Color from the profile.

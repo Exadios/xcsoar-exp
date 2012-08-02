@@ -24,7 +24,10 @@ Copyright_License {
 #include "Dialogs/AirspaceWarningDialog.hpp"
 #include "Dialogs/CallBackTable.hpp"
 #include "Dialogs/Airspace.hpp"
-#include "Dialogs/Internal.hpp"
+#include "Dialogs/XML.hpp"
+#include "Form/Form.hpp"
+#include "Form/List.hpp"
+#include "Form/Button.hpp"
 #include "Units/Units.hpp"
 #include "Formatter/UserUnits.hpp"
 #include "Screen/Layout.hpp"
@@ -32,8 +35,11 @@ Copyright_License {
 #include "Airspace/AirspaceWarning.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
 #include "Airspace/AirspaceWarningManager.hpp"
+#include "Formatter/AirspaceFormatter.hpp"
 #include "Engine/Airspace/AbstractAirspace.hpp"
 #include "Util/TrivialArray.hpp"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 
 #include "Compiler.h"
 
@@ -71,10 +77,10 @@ static WndButton *ack_space_button = NULL;
 static WndButton *enable_button = NULL; // Enable
 
 static ListControl *warning_list_frame = NULL;
-static gcc_constexpr_data Color inside_color(254,50,50);
-static gcc_constexpr_data Color near_color(254,254,50);
-static gcc_constexpr_data Color inside_ack_color(254,100,100);
-static gcc_constexpr_data Color near_ack_color(254,254,100);
+static constexpr Color inside_color(254,50,50);
+static constexpr Color near_color(254,254,50);
+static constexpr Color inside_ack_color(254,100,100);
+static constexpr Color near_ack_color(254,254,100);
 static bool auto_close = true;
 
 static WarningList warning_list;
@@ -95,10 +101,10 @@ UpdateButtons()
 {
   const AbstractAirspace *airspace = GetSelectedAirspace();
   if (airspace == NULL) {
-    ack_warn_button->set_visible(false);
-    ack_day_button->set_visible(false);
-    ack_space_button->set_visible(false);
-    enable_button->set_visible(false);
+    ack_warn_button->SetVisible(false);
+    ack_day_button->SetVisible(false);
+    ack_space_button->SetVisible(false);
+    enable_button->SetVisible(false);
     return;
   }
 
@@ -112,10 +118,10 @@ UpdateButtons()
     inside = warning.GetWarningState() == AirspaceWarning::WARNING_INSIDE;
   }
 
-  ack_warn_button->set_visible(ack_expired && !inside);
-  ack_day_button->set_visible(!ack_day);
-  ack_space_button->set_visible(ack_expired && inside);
-  enable_button->set_visible(!ack_expired);
+  ack_warn_button->SetVisible(ack_expired && !inside);
+  ack_day_button->SetVisible(!ack_day);
+  ack_space_button->SetVisible(ack_expired && inside);
+  enable_button->SetVisible(!ack_expired);
 }
 
 static void
@@ -311,10 +317,9 @@ OnAirspaceListItemPaint(Canvas &canvas, const PixelRect paint_rc, unsigned i)
   const AbstractAirspace &airspace = *warning.airspace;
   const AirspaceInterceptSolution &solution = warning.solution;
 
-  tstring name = airspace.GetNameText();
-  tstring top = airspace.GetTopText(true);
-  tstring base = airspace.GetBaseText(true);
-  tstring type = airspace.GetTypeText(true);
+  tstring name = AirspaceFormatter::GetNameAndClass(airspace);
+  tstring top = AirspaceFormatter::GetTopShort(airspace);
+  tstring base = AirspaceFormatter::GetBaseShort(airspace);
 
   const UPixelScalar text_height = 12, text_top = 1;
 
@@ -474,7 +479,7 @@ dlgAirspaceWarningVisible()
   return (dialog != NULL);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnAckClicked),
   DeclareCallBackEntry(OnAck1Clicked),
   DeclareCallBackEntry(OnAck2Clicked),

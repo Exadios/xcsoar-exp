@@ -30,12 +30,12 @@ Copyright_License {
 #include "Form/Form.hpp"
 #include "Form/Draw.hpp"
 #include "Form/Edit.hpp"
-#include "DataField/Enum.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "Gauge/LogoView.hpp"
-#include "DataField/FileReader.hpp"
+#include "Form/DataField/FileReader.hpp"
 #include "LogFile.hpp"
 #include "Asset.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "LocalPath.hpp"
 #include "OS/PathName.hpp"
 #include "OS/FileUtil.hpp"
@@ -52,7 +52,7 @@ static void
 OnLogoPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 {
   canvas.ClearWhite();
-  logo->draw(canvas, Sender->get_client_rect());
+  logo->draw(canvas, Sender->GetClientRect());
 }
 
 static void
@@ -83,7 +83,7 @@ SelectProfile(const TCHAR *path)
   File::Touch(path);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnLogoPaint),
   DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(OnQuitClicked),

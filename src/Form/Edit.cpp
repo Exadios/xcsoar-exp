@@ -54,7 +54,7 @@ WndProperty::Editor::OnMouseDown(PixelScalar x, PixelScalar y)
 
   // If the Control is read-only -> drop this event,
   // so the default handler doesn't obtain the focus
-  if (is_read_only())
+  if (IsReadOnly())
     return true;
 
 #endif
@@ -67,13 +67,13 @@ WndProperty::Editor::OnKeyCheck(unsigned key_code) const
 {
   switch (key_code) {
   case VK_RETURN:
-    return is_read_only() ||
+    return IsReadOnly() ||
       (parent->mDataField != NULL && parent->mDataField->supports_combolist) ||
       !CanEditInPlace() || parent->HasHelp();
 
   case VK_LEFT:
   case VK_RIGHT:
-    return true;
+    return !IsReadOnly();
 
   default:
     return EditWindow::OnKeyCheck(key_code);
@@ -89,9 +89,15 @@ WndProperty::Editor::OnKeyDown(unsigned key_code)
 
   switch (key_code) {
   case VK_RIGHT:
+    if (IsReadOnly())
+      break;
+
     parent->IncValue();
     return true;
   case VK_LEFT:
+    if (IsReadOnly())
+      break;
+
     parent->DecValue();
     return true;
   }
@@ -123,7 +129,7 @@ WndProperty::Editor::OnSetFocus()
   KeyTimer(true, 0);
   EditWindow::OnSetFocus();
   parent->on_editor_setfocus();
-  set_selection();
+  SelectAll();
 }
 
 void
@@ -153,7 +159,7 @@ WndProperty::WndProperty(ContainerWindow &parent, const DialogLook &_look,
   edit.set(*this, edit_rc, edit_style);
   edit.InstallWndProc();
 
-  edit.set_font(*look.text_font);
+  edit.SetFont(*look.text_font);
 
 #if defined(USE_GDI) && !defined(NDEBUG)
   ::SetWindowText(hWnd, Caption);
@@ -181,16 +187,10 @@ WndProperty::SetCaptionWidth(PixelScalar _caption_width)
   UpdateLayout();
 }
 
-void
-WndProperty::SetText(const TCHAR *Value)
-{
-  edit.set_text(Value);
-}
-
 bool
 WndProperty::BeginEditing()
 {
-  if (edit.is_read_only()) {
+  if (edit.IsReadOnly()) {
     /* this would display xml file help on a read-only wndproperty if
        it exists */
     return OnHelp();
@@ -226,7 +226,7 @@ WndProperty::BeginEditing()
 void
 WndProperty::UpdateLayout()
 {
-  edit_rc = get_client_rect();
+  edit_rc = GetClientRect();
 
   const UPixelScalar DEFAULTBORDERPENWIDTH = Layout::FastScale(1);
 
@@ -244,7 +244,7 @@ WndProperty::UpdateLayout()
   }
 
   if (edit.IsDefined())
-    edit.move(edit_rc);
+    edit.Move(edit_rc);
 
   Invalidate();
 }
@@ -253,7 +253,7 @@ void
 WndProperty::on_editor_setfocus()
 {
   if (mDataField != NULL && CanEditInPlace()) {
-    edit.set_text(mDataField->GetAsString());
+    edit.SetText(mDataField->GetAsString());
   }
 
   Invalidate();
@@ -264,9 +264,9 @@ WndProperty::on_editor_killfocus()
 {
   if (mDataField != NULL && CanEditInPlace()) {
     TCHAR sTmp[128];
-    edit.get_text(sTmp, (sizeof(sTmp) / sizeof(TCHAR)) - 1);
+    edit.GetText(sTmp, (sizeof(sTmp) / sizeof(TCHAR)) - 1);
     mDataField->SetAsString(sTmp);
-    edit.set_text(mDataField->GetAsDisplayString());
+    edit.SetText(mDataField->GetAsDisplayString());
   }
 
   Invalidate();
@@ -324,16 +324,16 @@ WndProperty::DecValue()
 void
 WndProperty::OnPaint(Canvas &canvas)
 {
-  const bool focused = edit.has_focus();
+  const bool focused = edit.HasFocus();
 
   /* background and selector */
   if (focused) {
-    canvas.clear(look.focused.background_color);
+    canvas.Clear(look.focused.background_color);
   } else {
     /* don't need to erase the background when it has been done by the
        parent window already */
-    if (have_clipping())
-      canvas.clear(look.background_color);
+    if (HaveClipping())
+      canvas.Clear(look.background_color);
   }
 
   WindowControl::OnPaint(canvas);
@@ -356,13 +356,13 @@ WndProperty::OnPaint(Canvas &canvas)
       org.y = edit_rc.top - tsize.cy;
     } else {
       org.x = caption_width - tsize.cx - Layout::FastScale(3);
-      org.y = (get_size().cy - tsize.cy) / 2;
+      org.y = (GetHeight() - tsize.cy) / 2;
     }
 
     if (org.x < 1)
       org.x = 1;
 
-    if (have_clipping())
+    if (HaveClipping())
       canvas.text(org.x, org.y, caption.c_str());
     else
       canvas.text_clipped(org.x, org.y, caption_width - org.x,
@@ -376,10 +376,10 @@ WndProperty::RefreshDisplay()
   if (!mDataField)
     return;
 
-  if (edit.has_focus() && CanEditInPlace())
-    edit.set_text(mDataField->GetAsString());
+  if (edit.HasFocus() && CanEditInPlace())
+    edit.SetText(mDataField->GetAsString());
   else
-    edit.set_text(mDataField->GetAsDisplayString());
+    edit.SetText(mDataField->GetAsDisplayString());
 }
 
 void

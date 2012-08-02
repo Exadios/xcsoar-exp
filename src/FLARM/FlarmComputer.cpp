@@ -24,14 +24,14 @@ Copyright_License {
 #include "FLARM/FlarmComputer.hpp"
 #include "FLARM/FlarmDetails.hpp"
 #include "NMEA/Info.hpp"
-#include "Engine/Navigation/Geometry/GeoVector.hpp"
+#include "Geo/GeoVector.hpp"
 
 void
-FlarmComputer::Process(FlarmState &flarm, const FlarmState &last_flarm,
+FlarmComputer::Process(FlarmData &flarm, const FlarmData &last_flarm,
                        const NMEAInfo &basic)
 {
   // if (FLARM data is available)
-  if (!flarm.available || flarm.traffic.empty())
+  if (!flarm.IsDetected())
     return;
 
   fixed north_to_latitude(0);
@@ -58,10 +58,7 @@ FlarmComputer::Process(FlarmState &flarm, const FlarmState &last_flarm,
   }
 
   // for each item in traffic
-  for (auto it = flarm.traffic.begin(), end = flarm.traffic.end();
-       it != end; ++it) {
-    FlarmTraffic &traffic = *it;
-
+  for (auto &traffic : flarm.traffic.list) {
     // if we don't know the target's name yet
     if (!traffic.HasName()) {
       // lookup the name of this target's id
@@ -104,7 +101,8 @@ FlarmComputer::Process(FlarmState &flarm, const FlarmState &last_flarm,
       continue;
 
     // Check if the target has been seen before in the last seconds
-    const FlarmTraffic *last_traffic = last_flarm.FindTraffic(traffic.id);
+    const FlarmTraffic *last_traffic =
+      last_flarm.traffic.FindTraffic(traffic.id);
     if (last_traffic == NULL || !last_traffic->valid)
       continue;
 

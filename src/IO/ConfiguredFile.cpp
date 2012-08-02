@@ -25,7 +25,7 @@ Copyright_License {
 #include "FileLineReader.hpp"
 #include "ZipLineReader.hpp"
 #include "Profile/Profile.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 
 #include <assert.h>
 #include <windef.h> /* for MAX_PATH */
@@ -57,7 +57,7 @@ OpenMapTextFile(const TCHAR *in_map_file, ConvertLineReader::charset cs)
   assert(in_map_file != NULL);
 
   TCHAR path[MAX_PATH];
-  if (!Profile::GetPath(szProfileMapFile, path))
+  if (!Profile::GetPath(ProfileKeys::MapFile, path))
     return NULL;
 
   _tcscat(path, _T("/"));

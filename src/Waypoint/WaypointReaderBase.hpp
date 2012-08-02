@@ -36,40 +36,32 @@ class OperationEnvironment;
 class WaypointReaderBase 
 {
 protected:
-  TCHAR file[255];
   const int file_num;
   const RasterTerrain* terrain;
   bool compressed;
 
 protected:
-  WaypointReaderBase(const TCHAR* file_name, const int _file_num,
+  WaypointReaderBase(const int _file_num,
                bool _compressed = false);
 
 public:
   virtual ~WaypointReaderBase() {}
 
-  typedef void (*StatusCallback)(unsigned percent);
-
   /**
-   * Parses the waypoint file provided by SetFile() into the given waypoint list
+   * Parses a waypoint file into the given waypoint list
    * @param way_points The waypoint list to fill
    * @param terrain RasterTerrain (for automatic waypoint height)
    * @return True if the waypoint file parsing was okay, False otherwise
    */
-  bool Parse(Waypoints &way_points, OperationEnvironment &operation);
   void Parse(Waypoints &way_points, TLineReader &reader,
              OperationEnvironment &operation);
-
-  bool VerifyFormat() const;
-  virtual bool VerifyFormat(TLineReader &reader) const {
-    return true;
-  }
 
   void SetTerrain(const RasterTerrain* _terrain) {
     terrain = _terrain;
   }
 
 protected:
+  static bool CheckAltitude(Waypoint &new_waypoint, const RasterTerrain *terrain);
   bool CheckAltitude(Waypoint &new_waypoint) const;
 
   /**

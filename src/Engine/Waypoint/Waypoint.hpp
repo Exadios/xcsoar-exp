@@ -25,15 +25,12 @@
 
 #include "Util/tstring.hpp"
 #include "Util/DebugFlag.hpp"
-#include "Navigation/GeoPoint.hpp"
-#include "Navigation/Flat/FlatGeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
+#include "Geo/Flat/FlatGeoPoint.hpp"
 #include "RadioFrequency.hpp"
 #include "Runway.hpp"
-#include <forward_list>
 
-#ifdef DO_PRINT
-#include <iostream>
-#endif
+#include <forward_list>
 
 class TaskProjection;
 
@@ -82,7 +79,7 @@ struct Waypoint {
      *
      * @param turnpoint Whether the waypoint is a turnpoint
      */
-    void SetDefaultFlags(bool turnpoint);
+    void SetDefaults();
   };
 
   /** Unique id */
@@ -134,10 +131,22 @@ struct Waypoint {
   /**
    * Constructor for real waypoints
    *
-   * @param is_turnpoint Whether newly created waypoint is a turnpoint
    * @return Uninitialised object
    */
-  Waypoint(const GeoPoint &_location, const bool is_turnpoint = false);
+  Waypoint();
+
+  /**
+   * Constructor for real waypoints
+   *
+   * @return Uninitialised object
+   */
+  Waypoint(const GeoPoint &_location);
+
+  /**
+   * Initializes type, file_num, flags, runway and
+   * radio_frequency with default/invalid values
+   */
+  void SetDefaults();
 
   /** 
    * Determine if waypoint is marked as able to be landed at
@@ -238,10 +247,6 @@ struct Waypoint {
    */
   bool
   IsCloseTo(const GeoPoint &_location, const fixed range) const;
-
-#ifdef DO_PRINT
-  friend std::ostream& operator<< (std::ostream& o, const Waypoint& wp);
-#endif
 };
 
 #endif

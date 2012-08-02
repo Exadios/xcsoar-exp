@@ -29,7 +29,6 @@ Copyright_License {
 #include "Screen/Icon.hpp"
 #include "Screen/Features.hpp"
 #include "Engine/Airspace/AirspaceClass.hpp"
-#include "Compiler.h"
 
 #define NUMAIRSPACECOLORS 16
 #define NUMAIRSPACEBRUSHES 8
@@ -54,10 +53,6 @@ struct AirspaceLook {
   Pen pens[AIRSPACECLASSCOUNT];
 
   Pen thick_pen;
-
-#ifndef ENABLE_OPENGL
-  Pen medium_pen;
-#endif
 
   MaskedIcon intercept_icon;
 

@@ -22,20 +22,27 @@ Copyright_License {
 */
 
 #include "Dialogs/Waypoint.hpp"
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/TextEntry.hpp"
 #include "Dialogs/CallBackTable.hpp"
+#include "Dialogs/XML.hpp"
+#include "Dialogs/Message.hpp"
+#include "Form/Form.hpp"
+#include "Form/Util.hpp"
+#include "Form/Button.hpp"
+#include "Form/Edit.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "Units/Units.hpp"
 #include "Screen/Layout.hpp"
 #include "Terrain/RasterTerrain.hpp"
 #include "Math/FastMath.h"
-#include "DataField/Enum.hpp"
 #include "UIGlobals.hpp"
 #include "Components.hpp"
 #include "Waypoint/Waypoint.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Compiler.h"
 #include "Sizes.h"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 
 #include <stdio.h>
 
@@ -347,7 +354,7 @@ OnCloseClicked(gcc_unused WndButton &Sender)
   wf->SetModalResult(mrOK);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(OnNameClicked),
   DeclareCallBackEntry(OnCommentClicked),
@@ -377,7 +384,7 @@ dlgWaypointEditShowModal(Waypoint &way_point)
 
   if (CommonInterface::GetUISettings().coordinate_format ==
       CoordinateFormat::UTM) {
-    MessageBoxX(
+    ShowMessageBox(
         _("Sorry, the waypoint editor is not yet available for the UTM coordinate format."),
         _("Waypoint Editor"), MB_OK);
     return false;

@@ -30,6 +30,7 @@ Copyright_License {
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Checksum.hpp"
 #include "Util/Macros.hpp"
+#include "Operation/ConsoleOperationEnvironment.hpp"
 
 #include <string>
 #include <map>
@@ -47,19 +48,21 @@ public:
 private:
   void PDVSC_S(NMEAInputLine &line) {
     char name[64], value[256];
-    line.read(name, ARRAY_SIZE(name));
-    line.read(value, ARRAY_SIZE(value));
+    line.Read(name, ARRAY_SIZE(name));
+    line.Read(value, ARRAY_SIZE(value));
 
     settings[name] = value;
 
+    ConsoleOperationEnvironment env;
+
     char buffer[512];
     snprintf(buffer, ARRAY_SIZE(buffer), "PDVSC,A,%s,%s", name, value);
-    PortWriteNMEA(*port, buffer);
+    PortWriteNMEA(*port, buffer, env);
   }
 
   void PDVSC_R(NMEAInputLine &line) {
     char name[64];
-    line.read(name, ARRAY_SIZE(name));
+    line.Read(name, ARRAY_SIZE(name));
 
     auto i = settings.find(name);
     if (i == settings.end())
@@ -67,14 +70,16 @@ private:
 
     const char *value = i->second.c_str();
 
+    ConsoleOperationEnvironment env;
+
     char buffer[512];
     snprintf(buffer, ARRAY_SIZE(buffer), "PDVSC,A,%s,%s", name, value);
-    PortWriteNMEA(*port, buffer);
+    PortWriteNMEA(*port, buffer, env);
   }
 
   void PDVSC(NMEAInputLine &line) {
     char command[4];
-    line.read(command, ARRAY_SIZE(command));
+    line.Read(command, ARRAY_SIZE(command));
 
     if (strcmp(command, "S") == 0)
       PDVSC_S(line);
@@ -93,7 +98,7 @@ protected:
       return;
 
     NMEAInputLine line(_line);
-    if (line.read_compare("$PDVSC"))
+    if (line.ReadCompare("$PDVSC"))
       PDVSC(line);
   }
 };

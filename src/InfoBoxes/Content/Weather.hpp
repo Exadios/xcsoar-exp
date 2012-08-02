@@ -71,4 +71,17 @@ public:
   virtual void Update(InfoBoxData &data);
 };
 
+class InfoBoxContentHeadWindSimplified: public InfoBoxContentWind
+{
+public:
+  virtual void Update(InfoBoxData &data);
+};
+
+class InfoBoxContentWindArrow: public InfoBoxContentWind
+{
+public:
+  virtual void Update(InfoBoxData &data);
+  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+};
+
 #endif

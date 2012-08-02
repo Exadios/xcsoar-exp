@@ -23,7 +23,11 @@ Copyright_License {
 
 #include "Dialogs/Planes.hpp"
 #include "Dialogs/CallBackTable.hpp"
-#include "Dialogs/Internal.hpp"
+#include "Dialogs/XML.hpp"
+#include "Dialogs/Message.hpp"
+#include "Form/Form.hpp"
+#include "Form/List.hpp"
+#include "Form/Button.hpp"
 #include "Screen/Layout.hpp"
 #include "Plane/Plane.hpp"
 #include "Plane/PlaneGlue.hpp"
@@ -37,6 +41,8 @@ Copyright_License {
 #include "Task/ProtectedTaskManager.hpp"
 #include "UIGlobals.hpp"
 #include "Look/DialogLook.hpp"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 
 #include <vector>
 #include <assert.h>
@@ -168,7 +174,7 @@ LoadWithDialog(unsigned i)
                 list[i].name.c_str());
   }
 
-  MessageBoxX(text, title, MB_OK);
+  ShowMessageBox(text, title, MB_OK);
 
   return result;
 }
@@ -193,7 +199,7 @@ NewClicked(gcc_unused WndButton &button)
 
   while (dlgPlaneDetailsShowModal(*(SingleWindow*)dialog->GetRootOwner(), plane)) {
     if (plane.registration.empty()) {
-      MessageBoxX(_("Please enter the registration of the plane!"),
+      ShowMessageBox(_("Please enter the registration of the plane!"),
                   _("Error"), MB_OK);
       continue;
     }
@@ -209,7 +215,7 @@ NewClicked(gcc_unused WndButton &button)
       tmp.Format(_("A plane profile \"%s\" already exists. "
                    "Do you want to overwrite it?"),
                    filename.c_str());
-      if (MessageBoxX(tmp, _("Overwrite"), MB_YESNO) != IDYES)
+      if (ShowMessageBox(tmp, _("Overwrite"), MB_YESNO) != IDYES)
         continue;
     }
 
@@ -233,7 +239,7 @@ EditClicked(gcc_unused WndButton &button)
 
   while (dlgPlaneDetailsShowModal(*(SingleWindow*)dialog->GetRootOwner(), plane)) {
     if (plane.registration.empty()) {
-      MessageBoxX(_("Please enter the registration of the plane!"),
+      ShowMessageBox(_("Please enter the registration of the plane!"),
                   _("Error"), MB_OK);
       continue;
     }
@@ -252,7 +258,7 @@ EditClicked(gcc_unused WndButton &button)
         tmp.Format(_("A plane profile \"%s\" already exists. "
                      "Do you want to overwrite it?"),
                      filename.c_str());
-        if (MessageBoxX(tmp, _("Overwrite"), MB_YESNO) != IDYES)
+        if (ShowMessageBox(tmp, _("Overwrite"), MB_YESNO) != IDYES)
           continue;
       }
 
@@ -282,7 +288,7 @@ DeleteClicked(gcc_unused WndButton &button)
   StaticString<256> tmp;
   tmp.Format(_("Do you really want to delete plane profile \"%s\"?"),
              list[plane_list->GetCursorIndex()].name.c_str());
-  if (MessageBoxX(tmp, _("Delete"), MB_YESNO) != IDYES)
+  if (ShowMessageBox(tmp, _("Delete"), MB_YESNO) != IDYES)
     return;
 
   File::Delete(list[plane_list->GetCursorIndex()].path);
@@ -298,12 +304,12 @@ ListItemSelected(unsigned i)
   tmp.Format(_("Do you want to load plane profile \"%s\"?"),
              list[i].name.c_str());
 
-  if (MessageBoxX(tmp, _("Load"), MB_YESNO) == IDYES)
+  if (ShowMessageBox(tmp, _("Load"), MB_YESNO) == IDYES)
     if (LoadWithDialog(i))
       dialog->SetModalResult(mrOK);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
    DeclareCallBackEntry(LoadClicked),
    DeclareCallBackEntry(CloseClicked),
    DeclareCallBackEntry(NewClicked),

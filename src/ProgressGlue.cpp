@@ -43,10 +43,10 @@ ProgressGlue::Create(const TCHAR *text)
   if (global_progress_window == NULL)
     global_progress_window = new ProgressWindow(UIGlobals::GetMainWindow());
 
-  global_progress_window->set_message(text);
-  global_progress_window->set_pos(0);
+  global_progress_window->SetMessage(text);
+  global_progress_window->SetValue(0);
 
-  UIGlobals::GetMainWindow().refresh();
+  UIGlobals::GetMainWindow().Refresh();
   throttle_clock.Reset();
 }
 
@@ -56,7 +56,7 @@ ProgressGlue::Resize(UPixelScalar width, UPixelScalar height)
   if (global_progress_window == NULL)
     return;
 
-  global_progress_window->move(0, 0, width, height);
+  global_progress_window->Move(0, 0, width, height);
   throttle_clock.Reset();
 }
 
@@ -76,9 +76,9 @@ ProgressGlue::Step()
   if (!throttle_clock.CheckUpdate(200))
     return;
 
-  global_progress_window->step();
+  global_progress_window->Step();
   UIGlobals::GetMainWindow().RefreshSize();
-  UIGlobals::GetMainWindow().refresh();
+  UIGlobals::GetMainWindow().Refresh();
 }
 
 void
@@ -90,9 +90,9 @@ ProgressGlue::SetValue(unsigned value)
   if (!throttle_clock.CheckUpdate(200))
     return;
 
-  global_progress_window->set_pos(value);
+  global_progress_window->SetValue(value);
   UIGlobals::GetMainWindow().RefreshSize();
-  UIGlobals::GetMainWindow().refresh();
+  UIGlobals::GetMainWindow().Refresh();
 }
 
 void
@@ -101,7 +101,7 @@ ProgressGlue::SetRange(unsigned value)
   if (global_progress_window == NULL)
     return;
 
-  global_progress_window->set_range(0, value);
+  global_progress_window->SetRange(0, value);
   throttle_clock.Reset();
 }
 
@@ -111,6 +111,6 @@ ProgressGlue::SetStep(int step)
   if (global_progress_window == NULL)
     return;
 
-  global_progress_window->set_step(step);
+  global_progress_window->SetStep(step);
   throttle_clock.Reset();
 }

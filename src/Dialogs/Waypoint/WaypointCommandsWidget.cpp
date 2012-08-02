@@ -28,12 +28,11 @@ Copyright_License {
 #include "Task/ProtectedTaskManager.hpp"
 #include "Task/MapTaskManager.hpp"
 #include "MapWindow/GlueMapWindow.hpp"
-#include "MainWindow.hpp"
 #include "Interface.hpp"
-#include "Input/InputEvents.hpp"
 #include "Protection.hpp"
 #include "Components.hpp"
 #include "Waypoint/WaypointGlue.hpp"
+#include "Pan.hpp"
 
 enum Commands {
   REPLACE_IN_TASK,
@@ -54,17 +53,17 @@ ReplaceInTask(ProtectedTaskManager &task_manager,
     return true;
 
   case MapTaskManager::NOTASK:
-    MessageBoxX(_("No task defined."), _("Error"),
+    ShowMessageBox(_("No task defined."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
 
   case MapTaskManager::UNMODIFIED:
-    MessageBoxX(_("No active task point."), _("Replace in task"),
+    ShowMessageBox(_("No active task point."), _("Replace in task"),
                 MB_OK | MB_ICONINFORMATION);
     break;
 
   case MapTaskManager::INVALID:
-    MessageBoxX(_("Task would not be valid after the change."), _("Error"),
+    ShowMessageBox(_("Task would not be valid after the change."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
 
@@ -86,23 +85,23 @@ InsertInTask(ProtectedTaskManager &task_manager,
     return true;
 
   case MapTaskManager::NOTASK:
-    MessageBoxX(_("No task defined."), _("Error"),
+    ShowMessageBox(_("No task defined."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
 
   case MapTaskManager::UNMODIFIED:
   case MapTaskManager::INVALID:
-    MessageBoxX(_("Task would not be valid after the change."), _("Error"),
+    ShowMessageBox(_("Task would not be valid after the change."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
 
   case MapTaskManager::MUTATED_TO_GOTO:
-    MessageBoxX(_("Created Goto Task."), _("Success"),
+    ShowMessageBox(_("Created Goto Task."), _("Success"),
                 MB_OK | MB_ICONEXCLAMATION);
     return true;
 
   case MapTaskManager::MUTATED_FROM_GOTO:
-    MessageBoxX(_("Created 2-point task from Goto Task."), _("Success"),
+    ShowMessageBox(_("Created 2-point task from Goto Task."), _("Success"),
                 MB_OK | MB_ICONEXCLAMATION);
     return true;
   }
@@ -120,23 +119,23 @@ AppendToTask(ProtectedTaskManager &task_manager,
     return true;
 
   case MapTaskManager::NOTASK:
-    MessageBoxX(_("No task defined."), _("Error"),
+    ShowMessageBox(_("No task defined."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
 
   case MapTaskManager::UNMODIFIED:
   case MapTaskManager::INVALID:
-    MessageBoxX(_("Task would not be valid after the change."), _("Error"),
+    ShowMessageBox(_("Task would not be valid after the change."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
 
   case MapTaskManager::MUTATED_TO_GOTO:
-    MessageBoxX(_("Created Goto Task."), _("Success"),
+    ShowMessageBox(_("Created Goto Task."), _("Success"),
                 MB_OK | MB_ICONEXCLAMATION);
     return true;
 
   case MapTaskManager::MUTATED_FROM_GOTO:
-    MessageBoxX(_("Created 2-point task from Goto Task."), _("Success"),
+    ShowMessageBox(_("Created 2-point task from Goto Task."), _("Success"),
                 MB_OK | MB_ICONEXCLAMATION);
     return true;
   }
@@ -154,17 +153,17 @@ RemoveFromTask(ProtectedTaskManager &task_manager,
     return true;
 
   case MapTaskManager::NOTASK:
-    MessageBoxX(_("No task defined."), _("Error"),
+    ShowMessageBox(_("No task defined."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
 
   case MapTaskManager::UNMODIFIED:
-    MessageBoxX(_("Waypoint not in task."), _("Remove from task"),
+    ShowMessageBox(_("Waypoint not in task."), _("Remove from task"),
                 MB_OK | MB_ICONINFORMATION);
     break;
 
   case MapTaskManager::INVALID:
-    MessageBoxX(_("Task would not be valid after the change."), _("Error"),
+    ShowMessageBox(_("Task would not be valid after the change."), _("Error"),
                 MB_OK | MB_ICONEXCLAMATION);
     break;
 
@@ -186,7 +185,7 @@ SetHome(const Waypoint &waypoint)
     ScopeSuspendAllThreads suspend;
     WaypointGlue::SetHome(way_points, terrain,
                           settings_computer,
-                          false);
+                          device_blackboard, false);
     WaypointGlue::SaveHome(settings_computer);
   }
 }
@@ -194,14 +193,7 @@ SetHome(const Waypoint &waypoint)
 static bool
 ActivatePan(const Waypoint &waypoint)
 {
-  GlueMapWindow *map_window = CommonInterface::main_window.ActivateMap();
-  if (map_window == NULL)
-    return false;
-
-  map_window->PanTo(waypoint.location);
-  XCSoarInterface::main_window.SetFullScreen(true);
-  InputEvents::setMode(InputEvents::MODE_PAN);
-  return true;
+  return PanTo(waypoint.location);
 }
 
 void

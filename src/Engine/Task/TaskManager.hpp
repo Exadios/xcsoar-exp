@@ -25,15 +25,14 @@
 
 #include "Compiler.h"
 #include "Util/NonCopyable.hpp"
-#include "Tasks/AlternateTask.hpp"
-#include "Tasks/GotoTask.hpp"
-#include "Tasks/OrderedTask.hpp"
-#include "TaskStats/TaskStats.hpp"
-#include "TaskStats/CommonStats.hpp"
+#include "Unordered/AlternateTask.hpp"
+#include "Unordered/GotoTask.hpp"
+#include "Ordered/OrderedTask.hpp"
+#include "Stats/TaskStats.hpp"
+#include "Stats/CommonStats.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
 #include "TaskBehaviour.hpp"
-#include "Task/TaskPoints/AATPoint.hpp"
-#include "Task/ObservationZones/CylinderZone.hpp"
+#include "Navigation/Aircraft.hpp"
 
 class AbstractTaskFactory;
 class TaskEvents;
@@ -323,7 +322,7 @@ public:
    * @return Task advance mechanism
    */
   const TaskAdvance &GetTaskAdvance() const {
-    return task_ordered.get_task_advance();
+    return task_ordered.GetTaskAdvance();
   }
 
   /**
@@ -332,7 +331,7 @@ public:
    * @return Task advance mechanism
    */
   TaskAdvance& GetTaskAdvance() {
-    return task_ordered.get_task_advance();
+    return task_ordered.GetTaskAdvance();
   }
 
   /**
@@ -425,24 +424,6 @@ public:
    */
   fixed GetFinishHeight() const;
 
-  /** 
-   * Find location of center of task (for rendering purposes)
-   * 
-   * @param fallback_location Location to use if no task active
-   * 
-   * @return Location of center of task
-   */
-  GeoPoint GetTaskCenter(const GeoPoint& fallback_location) const;
-
-  /** 
-   * Find approximate radius of task from center to edge (for rendering purposes)
-   * 
-   * @param fallback_location Location to use if no task active
-   * 
-   * @return Radius (m) from center to edge of task
-   */
-  fixed GetTaskRadius(const GeoPoint& fallback_location) const;
-
   /**
    * Check whether observer is within OZ of specified tp
    *
@@ -534,7 +515,7 @@ public:
    * @return Read-only OrderedTaskBehaviour
    */
   const OrderedTaskBehaviour &GetOrderedTaskBehaviour() const {
-    return task_ordered.get_ordered_task_behaviour();
+    return task_ordered.GetOrderedTaskBehaviour();
   }
 
   /** 
@@ -543,7 +524,7 @@ public:
    * @return OrderedTaskBehaviour reference
    */
   OrderedTaskBehaviour &GetOrderedTaskBehaviour() {
-    return task_ordered.get_ordered_task_behaviour();
+    return task_ordered.GetOrderedTaskBehaviour();
   }
 
   /** 

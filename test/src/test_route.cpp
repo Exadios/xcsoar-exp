@@ -23,10 +23,11 @@
 #include "Math/FastMath.h"
 #include "Printing.hpp"
 #define DO_PRINT
-#include "harness_flight.hpp"
+#include "test_debug.hpp"
 #include "harness_airspace.hpp"
 #include "Route/AirspaceRoute.hpp"
-#include "Navigation/SpeedVector.hpp"
+#include "Geo/SpeedVector.hpp"
+#include "Geo/GeoVector.hpp"
 #include "GlideSolvers/GlideSettings.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
 #include "Terrain/RasterMap.hpp"
@@ -92,12 +93,12 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
       // dummy
 
       // real one, see if items changed
-      as_route.synchronise_in_range(airspaces, vec.MidPoint(loc_start), range);
+      as_route.SynchroniseInRange(airspaces, vec.MidPoint(loc_start), range);
       int size_1 = as_route.size();
       if (verbose)
         printf("# route airspace size %d\n", size_1);
 
-      as_route.synchronise_in_range(airspaces, vec.MidPoint(loc_start), fixed_one);
+      as_route.SynchroniseInRange(airspaces, vec.MidPoint(loc_start), fixed_one);
       int size_2 = as_route.size();
       if (verbose)
         printf("# route airspace size %d\n", size_2);
@@ -105,7 +106,7 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
       ok(size_2 < size_1, "shrink as", 0);
 
       // go back
-      as_route.synchronise_in_range(airspaces, vec.MidPoint(loc_end), range);
+      as_route.SynchroniseInRange(airspaces, vec.MidPoint(loc_end), range);
       int size_3 = as_route.size();
       if (verbose)
         printf("# route airspace size %d\n", size_3);
@@ -113,7 +114,7 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
       ok(size_3 >= size_2, "grow as", 0);
 
       // and again
-      as_route.synchronise_in_range(airspaces, vec.MidPoint(loc_start), range);
+      as_route.SynchroniseInRange(airspaces, vec.MidPoint(loc_start), range);
       int size_4 = as_route.size();
       if (verbose)
         printf("# route airspace size %d\n", size_4);
@@ -163,13 +164,6 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
 int
 main(int argc, char** argv)
 {
-  // default arguments
-  autopilot_parms.ideal();
-
-  if (!parse_args(argc, argv)) {
-    return 0;
-  }
-
   const char hc_path[] = "tmp/terrain";
 
   TCHAR jp2_path[4096];

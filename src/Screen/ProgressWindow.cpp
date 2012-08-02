@@ -34,7 +34,7 @@ ProgressWindow::ProgressWindow(ContainerWindow &parent)
    background_brush(background_color),
    position(0)
 {
-  PixelRect rc = parent.get_client_rect();
+  PixelRect rc = parent.GetClientRect();
   WindowStyle style;
   style.Hide();
   set(parent, rc, style);
@@ -50,7 +50,7 @@ ProgressWindow::ProgressWindow(ContainerWindow &parent)
   text_height = font.GetHeight();
 #else
   VirtualCanvas canvas(1, 1);
-  text_height = canvas.CalcTextHeight(_T("W"));
+  text_height = canvas.GetFontHeight();
 #endif
 
   // Make progress bar height proportional to window height
@@ -66,7 +66,7 @@ ProgressWindow::ProgressWindow(ContainerWindow &parent)
               width, text_height, message_style);
 
 #ifndef USE_GDI
-  message.set_font(font);
+  message.SetFont(font);
 #endif
 
   // Initialize progress bar
@@ -79,51 +79,51 @@ ProgressWindow::ProgressWindow(ContainerWindow &parent)
   message.InstallWndProc(); // needed for on_color()
 
   // Set progress bar step size and range
-  set_range(0, 1000);
-  set_step(50);
+  SetRange(0, 1000);
+  SetStep(50);
 
   // Show dialog
-  show_on_top();
+  ShowOnTop();
 }
 
 void
-ProgressWindow::set_message(const TCHAR *text)
+ProgressWindow::SetMessage(const TCHAR *text)
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
   message.set_text(text);
 }
 
 void
-ProgressWindow::set_range(unsigned min_value, unsigned max_value)
+ProgressWindow::SetRange(unsigned min_value, unsigned max_value)
 {
-  progress_bar.set_range(min_value, max_value);
+  progress_bar.SetRange(min_value, max_value);
 }
 
 void
-ProgressWindow::set_step(unsigned size)
+ProgressWindow::SetStep(unsigned size)
 {
-  progress_bar.set_step(size);
+  progress_bar.SetStep(size);
 }
 
 void
-ProgressWindow::set_pos(unsigned value)
+ProgressWindow::SetValue(unsigned value)
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
   if (value == position)
     return;
 
   position = value;
-  progress_bar.set_position(value);
+  progress_bar.SetValue(value);
 }
 
 void
-ProgressWindow::step()
+ProgressWindow::Step()
 {
-  progress_bar.step();
+  progress_bar.Step();
 }
 
 void
@@ -137,11 +137,11 @@ ProgressWindow::OnResize(UPixelScalar width, UPixelScalar height)
   progress_border_height = progress_height * 2;
 
   if (message.IsDefined())
-    message.move(0, height - progress_border_height - text_height - (height/48),
+    message.Move(0, height - progress_border_height - text_height - (height/48),
                  width, text_height);
 
   if (progress_bar.IsDefined())
-    progress_bar.move(progress_horizontal_border,
+    progress_bar.Move(progress_horizontal_border,
                       height - progress_border_height + progress_horizontal_border,
                       width - progress_height,
                       progress_height);
@@ -152,7 +152,7 @@ ProgressWindow::OnResize(UPixelScalar width, UPixelScalar height)
 void
 ProgressWindow::OnPaint(Canvas &canvas)
 {
-  canvas.clear(background_color);
+  canvas.Clear(background_color);
 
   // Determine window size
   UPixelScalar window_width = canvas.get_width();
@@ -166,7 +166,7 @@ ProgressWindow::OnPaint(Canvas &canvas)
   logo.draw(canvas, logo_rect);
 
   // Draw progress bar background
-  canvas.stretch(0, (window_height - progress_border_height),
+  canvas.Stretch(0, (window_height - progress_border_height),
                  window_width, progress_border_height,
                  bitmap_progress_border);
 

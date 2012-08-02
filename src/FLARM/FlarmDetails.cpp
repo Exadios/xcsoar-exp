@@ -72,8 +72,7 @@ LoadSecondaryFile(TLineReader &reader)
   TCHAR *line;
   while ((line = reader.read()) != NULL) {
     TCHAR *endptr;
-    FlarmId id;
-    id.Parse(line, &endptr);
+    FlarmId id = FlarmId::Parse(line, &endptr);
     if (!id.IsDefined())
       /* ignore malformed records */
       continue;
@@ -115,9 +114,9 @@ FlarmDetails::SaveSecondary()
   for (unsigned i = 0; i < flarm_names.size(); i++) {
     assert(flarm_names[i].id.IsDefined());
 
-    writer->printfln(_T("%s=%s"),
-                     flarm_names[i].id.Format(id),
-                     flarm_names[i].name.c_str());
+    writer->FormatLine(_T("%s=%s"),
+                       flarm_names[i].id.Format(id),
+                       flarm_names[i].name.c_str());
   }
 
   delete writer;

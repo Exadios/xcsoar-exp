@@ -51,7 +51,7 @@ static void
 OnLogoPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 {
   canvas.ClearWhite();
-  logo->draw(canvas, Sender->get_client_rect());
+  logo->draw(canvas, Sender->GetClientRect());
 }
 
 static void
@@ -72,7 +72,7 @@ OnQuitClicked(gcc_unused WndButton &button)
   wf->SetModalResult(mrCancel);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnLogoPaint),
   DeclareCallBackEntry(OnFlyClicked),
   DeclareCallBackEntry(OnSimulatorClicked),

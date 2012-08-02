@@ -76,8 +76,8 @@ To compile, run:
 
  make TARGET=<target>
 
-To compile for the Mac, you may run the configure script to detect the
-build toolchain (optional):
+To compile on a Unix-like system (Linux, Mac), you may run the
+configure script to detect the build toolchain (optional):
 
  ./configure
  make

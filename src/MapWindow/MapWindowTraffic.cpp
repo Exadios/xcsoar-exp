@@ -23,16 +23,16 @@ Copyright_License {
 
 #include "MapWindow.hpp"
 #include "Math/Screen.hpp"
-#include "Math/Earth.hpp"
 #include "Screen/Icon.hpp"
 #include "Screen/Fonts.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/TextInBox.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
 #include "Formatter/UserUnits.hpp"
 #include "Look/TrafficLook.hpp"
 #include "Renderer/TrafficRenderer.hpp"
+#include "FLARM/FriendsGlue.hpp"
 
 #include <stdio.h>
 
@@ -49,8 +49,8 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
     return;
 
   // Return if FLARM data is not available
-  const FlarmState &flarm = Basic().flarm;
-  if (!flarm.available)
+  const TrafficList &flarm = Basic().flarm.traffic;
+  if (flarm.IsEmpty())
     return;
 
   const WindowProjection &projection = render_projection;
@@ -62,7 +62,7 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
     return;
 
   // Circle through the FLARM targets
-  for (auto it = flarm.traffic.begin(), end = flarm.traffic.end();
+  for (auto it = flarm.list.begin(), end = flarm.list.end();
       it != end; ++it) {
     const FlarmTraffic &traffic = *it;
 
@@ -100,19 +100,22 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
       // If FLARM callsign/name available draw it to the canvas
       if (traffic.HasName() && !StringIsEmpty(traffic.name))
         TextInBox(canvas, traffic.name, sc_name.x, sc_name.y,
-                  mode, get_client_rect());
+                  mode, GetClientRect());
 
       if (traffic.climb_rate_avg30s >= fixed(0.1)) {
         // If average climb data available draw it to the canvas
         TCHAR label_avg[100];
         FormatUserVerticalSpeed(traffic.climb_rate_avg30s,
                                        label_avg, false);
-        TextInBox(canvas, label_avg, sc_av.x, sc_av.y, mode, get_client_rect());
+        TextInBox(canvas, label_avg, sc_av.x, sc_av.y, mode, GetClientRect());
       }
     }
 
+    auto color = FlarmFriends::GetFriendColor(traffic.id,
+                                              GetComputerSettings().team_code);
     TrafficRenderer::Draw(canvas, traffic_look, traffic,
-                          traffic.track - projection.GetScreenAngle(), sc);
+                          traffic.track - projection.GetScreenAngle(),
+                          color, sc);
   }
 }
 

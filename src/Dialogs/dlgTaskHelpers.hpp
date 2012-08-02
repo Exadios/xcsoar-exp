@@ -27,7 +27,7 @@ Copyright_License {
 
 #include "Task/Factory/AbstractTaskFactory.hpp"
 #include "Task/TaskBehaviour.hpp"
-#include "Task/Tasks/BaseTask/TaskPoint.hpp"
+#include "Task/Points/TaskPoint.hpp"
 
 class SingleWindow;
 
@@ -47,8 +47,8 @@ void OrderedTaskPointRadiusLabel(const ObservationZonePoint &ozp, TCHAR* radius)
 bool OrderedTaskSave(SingleWindow &parent,
                      const OrderedTask& task, bool noask=false);
 
-const TCHAR* OrderedTaskPointDescription(AbstractTaskFactory::LegalPointType type);
-const TCHAR* OrderedTaskPointName(AbstractTaskFactory::LegalPointType type);
+const TCHAR* OrderedTaskPointDescription(TaskPointFactoryType type);
+const TCHAR* OrderedTaskPointName(TaskPointFactoryType type);
 const TCHAR* getTaskValidationErrors(
    const AbstractTaskFactory::TaskValidationErrorVector v);
 const TCHAR* TaskValidationError(

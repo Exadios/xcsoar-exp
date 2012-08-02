@@ -24,12 +24,14 @@ Copyright_License {
 #include "Task/TaskFile.hpp"
 #include "Task/TaskFileXCSoar.hpp"
 #include "Task/TaskFileSeeYou.hpp"
+#include "Task/TaskFileIGC.hpp"
 #include "OS/FileUtil.hpp"
 #include "OS/PathName.hpp"
 #include "Util/StringUtil.hpp"
 
 #include <assert.h>
 #include <stdlib.h>
+#include <memory>
 
 TaskFile::~TaskFile()
 {
@@ -43,13 +45,17 @@ TaskFile::Create(const TCHAR* path)
   if (StringIsEmpty(path) || !File::Exists(path))
     return NULL;
 
-  // If XCSoar task file -> return new XCSoarTaskFile
+  // If XCSoar task file -> return new TaskFileXCSoar
   if (MatchesExtension(path, _T(".tsk")))
     return new TaskFileXCSoar(path);
 
-  // If XCSoar task file -> return new XCSoarTaskFile
+  // If SeeYou task file -> return new TaskFileSeeYou
   if (MatchesExtension(path, _T(".cup")))
     return new TaskFileSeeYou(path);
+
+  // If IGC file -> return new TaskFileIGC
+  if (MatchesExtension(path, _T(".igc")))
+    return new TaskFileIGC(path);
 
   // unknown task file type
   return NULL;
@@ -59,11 +65,18 @@ OrderedTask *
 TaskFile::GetTask(const TCHAR *path, const TaskBehaviour &task_behaviour,
                   const Waypoints *waypoints, unsigned index)
 {
-  TaskFile  *file = TaskFile::Create(path);
-  if (file == NULL)
+  std::unique_ptr<TaskFile> file(TaskFile::Create(path));
+  if (!file)
     return NULL;
 
-  OrderedTask *task = file->GetTask(task_behaviour, waypoints, index);
-  delete file;
-  return task;
+  return file->GetTask(task_behaviour, waypoints, index);
+}
+
+const TCHAR *
+TaskFile::GetName(unsigned index) const
+{
+  if (index >= namesuffixes.size())
+    return NULL;
+
+  return namesuffixes[index];
 }

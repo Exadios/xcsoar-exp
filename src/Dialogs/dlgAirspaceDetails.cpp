@@ -23,15 +23,20 @@ Copyright_License {
 
 #include "Dialogs/Airspace.hpp"
 #include "Dialogs/CallBackTable.hpp"
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/Message.hpp"
+#include "Dialogs/XML.hpp"
+#include "Form/Form.hpp"
+#include "Form/Button.hpp"
+#include "Form/Edit.hpp"
 #include "Airspace/AbstractAirspace.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
+#include "Formatter/AirspaceFormatter.hpp"
 #include "Math/FastMath.h"
-#include "Math/Earth.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
+#include "Geo/GeoVector.hpp"
 #include "Units/Units.hpp"
 #include "UIGlobals.hpp"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 
 #include "Compiler.h"
 
@@ -51,15 +56,9 @@ OnAcknowledgeClicked(gcc_unused WndButton &Sender)
     return;
 
   bool acked = airspace_warnings->get_ack_day(*airspace);
+  airspace_warnings->acknowledge_day(*airspace, !acked);
 
-  int answer = MessageBoxX(airspace->GetName(), acked ?
-                           _("Enable airspace again?") : _("Acknowledge for day?"),
-                           MB_YESNO | MB_ICONQUESTION);
-
-  if (answer == IDYES) {
-    airspace_warnings->acknowledge_day(*airspace, !acked);
-    wf->SetModalResult(mrOK);
-  }
+  wf->SetModalResult(mrOK);
 }
 
 static void
@@ -68,7 +67,7 @@ OnCloseClicked(gcc_unused WndButton &Sender)
   wf->SetModalResult(mrOK);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnAcknowledgeClicked),
   DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(NULL)
@@ -107,29 +106,32 @@ SetValues()
 
   wp = (WndProperty*)wf->FindByName(_T("prpType"));
   assert(wp != NULL);
-  wp->SetText(airspace->GetTypeText());
+  wp->SetText(AirspaceFormatter::GetClass(*airspace));
   wp->RefreshDisplay();
 
   wp = (WndProperty*)wf->FindByName(_T("prpTop"));
   assert(wp != NULL);
-  wp->SetText(airspace->GetTopText().c_str());
+  wp->SetText(AirspaceFormatter::GetTop(*airspace).c_str());
   wp->RefreshDisplay();
 
   wp = (WndProperty*)wf->FindByName(_T("prpBase"));
   assert(wp != NULL);
-  wp->SetText(airspace->GetBaseText().c_str());
+  wp->SetText(AirspaceFormatter::GetBase(*airspace).c_str());
   wp->RefreshDisplay();
 
-  wp = (WndProperty*)wf->FindByName(_T("prpRange"));
-  assert(wp != NULL);
-  const GeoPoint &ac_loc = XCSoarInterface::Basic().location;
-  const GeoPoint closest_loc = airspace->ClosestPoint(ac_loc);
-  const GeoVector vec(ac_loc, closest_loc);
-  StaticString<80> buf;
-  buf.Format(_T("%d%s"), (int)Units::ToUserDistance(vec.distance),
-             Units::GetDistanceName());
-  wp->SetText(buf);
-  wp->RefreshDisplay();
+  if (airspace_warnings != NULL) {
+    wp = (WndProperty*)wf->FindByName(_T("prpRange"));
+    assert(wp != NULL);
+    const GeoPoint &ac_loc = XCSoarInterface::Basic().location;
+    const GeoPoint closest_loc =
+      airspace->ClosestPoint(ac_loc, airspace_warnings->GetProjection());
+    const GeoVector vec(ac_loc, closest_loc);
+    StaticString<80> buf;
+    buf.Format(_T("%d%s"), (int)Units::ToUserDistance(vec.distance),
+               Units::GetDistanceName());
+    wp->SetText(buf);
+    wp->RefreshDisplay();
+  }
 }
 
 void

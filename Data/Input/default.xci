@@ -405,30 +405,27 @@ location=5
 mode=Nav2
 type=key
 data=7
-event=GotoLookup
 event=Mode default
-label=GoTo$(CheckWaypointFile)
+event=StatusMessage Dropped marker
+event=Logger note Mark
+event=MarkLocation
+label=Mark\nDrop
 location=6
 
 mode=Nav2
 type=key
-data=8
+data=9
 event=Setup Target
 event=Mode default
 label=Target$(CheckTask)$(CheckTaskResumed)
-location=7
-
-mode=Nav2
-type=key
-data=9
-event=WaypointDetails current
-event=Mode default
-label=Waypoint\nDetails$(CheckTask)
 location=8
 
 mode=Nav2
 type=key
 data=0
+event=WaypointDetails current
+event=Mode default
+label=Waypoint\nDetails$(CheckTask)
 location=9
 
 # -------------
@@ -468,11 +465,8 @@ location=7
 mode=Display1
 type=key
 data=9
-event=Mode default
-event=StatusMessage Dropped marker
-event=Logger note Mark
-event=MarkLocation
-label=Mark\nDrop
+event=ScreenModes cycle
+label=$(NextPageName)
 location=8
 
 mode=Display1
@@ -526,8 +520,8 @@ location=8
 mode=Display2
 type=key
 data=0
-event=ScreenModes cycle
-label=$(NextPageName)
+event=AirSpace toggle
+label=Airspace\n$(AirspaceToggleActionName)
 location=9
 
 # -------------
@@ -593,7 +587,7 @@ mode=Config2
 type=key
 data=6
 event=Mode Vario1
-label=Vario$(CheckVega)
+label=Vega$(CheckVega)
 location=5
 
 mode=Config2
@@ -661,6 +655,14 @@ event=Mode default
 label=Setup Plane
 location=7
 
+mode=Config3
+type=key
+data=9
+event=FileManager
+event=Mode default
+label=File Manager
+location=8
+
 # -------------
 # mode=Vario1
 # -------------
@@ -669,7 +671,7 @@ mode=Vario1
 type=key
 data=APP3
 event=Mode Vario2
-label=Vario\n1/2
+label=Vega\n1/2
 location=3
 
 mode=Vario1
@@ -716,7 +718,7 @@ mode=Vario2
 type=key
 data=APP3
 event=Mode default
-label=Vario\n2/2
+label=Vega\n2/2
 location=3
 
 mode=Vario2

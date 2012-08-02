@@ -30,7 +30,7 @@ Copyright_License {
 #include "Look/DialogLook.hpp"
 #include "Look/WindArrowLook.hpp"
 #include "Renderer/WindArrowRenderer.hpp"
-#include "Navigation/SpeedVector.hpp"
+#include "Geo/SpeedVector.hpp"
 
 #ifdef USE_GDI
 #include "ResourceLoader.hpp"
@@ -68,9 +68,9 @@ protected:
 
     canvas.SelectBlackPen();
     canvas.SelectHollowBrush();
-    canvas.circle(pt.x, pt.y, 2);
+    canvas.DrawCircle(pt.x, pt.y, 2);
 
-    renderer.Draw(canvas, Angle::Zero(), wind, pt, rc, false);
+    renderer.Draw(canvas, Angle::Zero(), wind, pt, rc, WindArrowStyle::ARROW_HEAD);
   }
 };
 
@@ -123,7 +123,7 @@ public:
     SingleWindow::set(_T("RunWindArrowRenderer"), _T("RunWindArrowRenderer"),
                       _rc, style);
 
-    const PixelRect rc = get_client_rect();
+    const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();
@@ -139,7 +139,7 @@ protected:
   virtual bool OnCommand(unsigned id, unsigned code) {
     switch (id) {
     case ID_CLOSE:
-      close();
+      Close();
       return true;
     }
 
@@ -164,7 +164,7 @@ protected:
 
   virtual void OnResize(UPixelScalar width, UPixelScalar height) {
     SingleWindow::OnResize(width, height);
-    wind.resize(width, height);
+    wind.Resize(width, height);
   }
 };
 
@@ -197,7 +197,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   window.Set(PixelRect{0, 0, 160, 160});
 
   window.Show();
-  window.event_loop();
+  window.RunEventLoop();
 
   Fonts::Deinitialize();
 

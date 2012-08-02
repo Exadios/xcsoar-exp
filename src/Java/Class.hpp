@@ -32,6 +32,8 @@
 
 #include "Java/Ref.hpp"
 
+#include <assert.h>
+
 namespace Java {
   /**
    * Wrapper for a local "jclass" reference.
@@ -48,15 +50,32 @@ namespace Java {
   /**
    * Wrapper for a global "jclass" reference.
    */
-  class GlobalClass : public Java::GlobalRef<jclass> {
+  class TrivialClass : public TrivialRef<jclass> {
   public:
-    GlobalClass(JNIEnv *env, jclass cls)
-      :GlobalRef<jclass>(env, cls) {}
+    void Find(JNIEnv *env, const char *name) {
+      assert(env != NULL);
+      assert(name != NULL);
 
-    GlobalClass(JNIEnv *env, const char *name) {
-      jclass tmp = env->FindClass(name);
-      Set(env, tmp);
-      env->DeleteLocalRef(tmp);
+      jclass cls = env->FindClass(name);
+      assert(cls != NULL);
+
+      Set(env, cls);
+      env->DeleteLocalRef(cls);
+    }
+
+    bool FindOptional(JNIEnv *env, const char *name) {
+      assert(env != NULL);
+      assert(name != NULL);
+
+      jclass cls = env->FindClass(name);
+      if (cls == NULL) {
+        env->ExceptionClear();
+        return false;
+      }
+
+      Set(env, cls);
+      env->DeleteLocalRef(cls);
+      return true;
     }
   };
 }

@@ -22,6 +22,8 @@ Copyright_License {
 */
 
 #include "InfoBoxes/Content/Glide.hpp"
+#include "Engine/Util/Gradient.hpp"
+#include "Computer/GlideRatioCalculator.hpp"
 #include "InfoBoxes/Data.hpp"
 #include "Interface.hpp"
 
@@ -29,51 +31,58 @@ Copyright_License {
 #include <stdio.h>
 
 void
-InfoBoxContentLDInstant::Update(InfoBoxData &data)
+InfoBoxContentGRInstant::Update(InfoBoxData &data)
 {
-  if (XCSoarInterface::Calculated().ld == fixed(999)) {
+  const fixed gr = XCSoarInterface::Calculated().gr;
+
+  if (!::GradientValid(gr)) {
     data.SetInvalid();
     return;
   }
 
   // Set Value
-  data.SetValue(_T("%2.0f"), XCSoarInterface::Calculated().ld);
+  data.SetValueFromGlideRatio(gr);
 }
 
 void
-InfoBoxContentLDCruise::Update(InfoBoxData &data)
+InfoBoxContentGRCruise::Update(InfoBoxData &data)
 {
-  if (XCSoarInterface::Calculated().cruise_ld == fixed(999)) {
+  const fixed cruise_gr = XCSoarInterface::Calculated().cruise_gr;
+
+  if (!::GradientValid(cruise_gr)) {
     data.SetInvalid();
     return;
   }
 
   // Set Value
-  data.SetValue(_T("%2.0f"), XCSoarInterface::Calculated().cruise_ld);
+  data.SetValueFromGlideRatio(cruise_gr);
 }
 
 void
-InfoBoxContentLDAvg::Update(InfoBoxData &data)
+InfoBoxContentGRAvg::Update(InfoBoxData &data)
 {
-  if (XCSoarInterface::Calculated().average_ld == 0) {
+  const fixed average_gr = XCSoarInterface::Calculated().average_gr;
+
+  if (average_gr == fixed_zero) {
     data.SetInvalid();
     return;
   }
 
   // Set Value
-  if (XCSoarInterface::Calculated().average_ld < 0)
+  if (average_gr < fixed_zero)
     data.SetValue(_T("^^^"));
-  else if (XCSoarInterface::Calculated().average_ld >= 999)
+  else if (!::GradientValid(average_gr))
     data.SetValue(_T("+++"));
   else
-    data.SetValue(_T("%2.0f"),
-                      fixed(XCSoarInterface::Calculated().average_ld));
+    data.SetValueFromGlideRatio(average_gr);
 }
 
 void
 InfoBoxContentLDVario::Update(InfoBoxData &data)
 {
-  if (XCSoarInterface::Calculated().ld_vario == fixed(999) ||
+  const fixed ld_vario = XCSoarInterface::Calculated().ld_vario;
+
+  if (!::GradientValid(ld_vario) ||
       !XCSoarInterface::Basic().total_energy_vario_available ||
       !XCSoarInterface::Basic().airspeed_available) {
     data.SetInvalid();
@@ -81,5 +90,5 @@ InfoBoxContentLDVario::Update(InfoBoxData &data)
   }
 
   // Set Value
-  data.SetValue(_T("%2.0f"), XCSoarInterface::Calculated().ld_vario);
+  data.SetValueFromGlideRatio(ld_vario);
 }

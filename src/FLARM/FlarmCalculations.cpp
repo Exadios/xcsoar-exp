@@ -22,7 +22,6 @@ Copyright_License {
 */
 
 #include "FLARM/FlarmCalculations.hpp"
-#include "FLARM/State.hpp"
 
 fixed
 FlarmCalculations::Average30s(FlarmId flarmId, fixed curTime, fixed curAltitude)

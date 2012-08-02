@@ -34,6 +34,7 @@ Copyright_License {
 #include "Screen/Blank.hpp"
 #include "Dialogs/AirspaceWarningDialog.hpp"
 #include "Audio/Sound.hpp"
+#include "Audio/VarioGlue.hpp"
 #include "Components.hpp"
 #include "ProcessTimer.hpp"
 #include "LogFile.hpp"
@@ -136,7 +137,7 @@ NoFontsAvailable()
 void
 MainWindow::Initialise()
 {
-  PixelRect rc = get_client_rect();
+  PixelRect rc = GetClientRect();
 
   Layout::Initialize(rc.right - rc.left, rc.bottom - rc.top);
 
@@ -157,7 +158,7 @@ MainWindow::InitialiseConfigured()
 {
   const UISettings &ui_settings = CommonInterface::GetUISettings();
 
-  PixelRect rc = get_client_rect();
+  PixelRect rc = GetClientRect();
 
   LogStartUp(_T("InfoBox geometry"));
   const InfoBoxLayout::Layout ib_layout =
@@ -186,7 +187,7 @@ MainWindow::InitialiseConfigured()
   look->InitialiseConfigured(CommonInterface::GetUISettings());
 
   LogStartUp(_T("Create info boxes"));
-  InfoBoxManager::Create(rc, ib_layout, look->info_box, look->units);
+  InfoBoxManager::Create(*this, ib_layout, look->info_box, look->units);
   map_rect = ib_layout.remaining;
 
   LogStartUp(_T("Create button labels"));
@@ -206,8 +207,9 @@ MainWindow::InitialiseConfigured()
   map = new GlueMapWindow(*look);
   map->SetComputerSettings(CommonInterface::GetComputerSettings());
   map->SetMapSettings(CommonInterface::GetMapSettings());
+  map->SetUIState(CommonInterface::GetUIState());
   map->set(*this, map_rect);
-  map->set_font(Fonts::map);
+  map->SetFont(Fonts::map);
 
   LogStartUp(_T("Initialise message system"));
   popup.set(rc);
@@ -289,13 +291,13 @@ MainWindow::ReinitialiseLayout()
 
   const UISettings &ui_settings = CommonInterface::GetUISettings();
 
-  PixelRect rc = get_client_rect();
+  const PixelRect rc = GetClientRect();
   const InfoBoxLayout::Layout ib_layout =
     InfoBoxLayout::Calculate(rc, ui_settings.info_boxes.geometry);
 
   Fonts::SizeInfoboxFont(ib_layout.control_width);
 
-  InfoBoxManager::Create(rc, ib_layout, look->info_box, look->units);
+  InfoBoxManager::Create(*this, ib_layout, look->info_box, look->units);
   InfoBoxManager::ProcessTimer();
   map_rect = ib_layout.remaining;
 
@@ -315,9 +317,7 @@ MainWindow::ReinitialiseLayout()
       InfoBoxManager::Show();
 
     const PixelRect &current_map = FullScreen ? rc : map_rect;
-    map->move(current_map.left, current_map.top,
-              current_map.right - current_map.left,
-              current_map.bottom - current_map.top);
+    map->Move(current_map);
     map->FullRedraw();
   }
 
@@ -405,8 +405,7 @@ MainWindow::ReinitialiseLayout_flarm(PixelRect rc, const InfoBoxLayout::Layout i
 void
 MainWindow::ReinitialisePosition()
 {
-  PixelRect rc = SystemWindowSize();
-  fast_move(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
+  FastMove(SystemWindowSize());
 }
 
 void
@@ -441,7 +440,7 @@ MainWindow::SetDefaultFocus()
 }
 
 void
-MainWindow::full_redraw()
+MainWindow::FullRedraw()
 {
   if (map != NULL)
     map->FullRedraw();
@@ -465,7 +464,7 @@ MainWindow::OnResize(UPixelScalar width, UPixelScalar height)
     map->BringToBottom();
   }
 
-  ButtonLabel::OnResize(get_client_rect());
+  ButtonLabel::OnResize(GetClientRect());
 
   ProgressGlue::Resize(width, height);
 }
@@ -525,7 +524,8 @@ MainWindow::OnTimer(WindowTimer &_timer)
       thermal_assistant.Hide();
     } else if (!HasDialog()) {
       if (!thermal_assistant.IsDefined())
-        thermal_assistant.Set(new GaugeThermalAssistant(CommonInterface::GetLiveBlackboard()));
+        thermal_assistant.Set(new GaugeThermalAssistant(CommonInterface::GetLiveBlackboard(),
+                                                        look->thermal_assistant_gauge));
 
       if (!thermal_assistant.IsVisible()) {
         thermal_assistant.Show();
@@ -545,8 +545,8 @@ MainWindow::OnUser(unsigned id)
 {
   ProtectedAirspaceWarningManager *airspace_warnings;
 
-  switch ((enum cmd)id) {
-  case CMD_AIRSPACE_WARNING:
+  switch ((Command)id) {
+  case Command::AIRSPACE_WARNING:
     airspace_warnings = GetAirspaceWarnings();
     if (!airspace_warning_pending || airspace_warnings == NULL)
       return true;
@@ -558,33 +558,45 @@ MainWindow::OnUser(unsigned id)
 
     /* un-blank the display, play a sound and show the dialog */
     ResetDisplayTimeOut();
-#ifndef GNAV
     PlayResource(_T("IDR_WAV_BEEPBWEEP"));
-#endif
     dlgAirspaceWarningsShowModal(*this, *airspace_warnings, true);
     return true;
 
-  case CMD_GPS_UPDATE:
+  case Command::GPS_UPDATE:
     XCSoarInterface::ReceiveGPS();
 
     /*
      * Update the infoboxes if no location is available
      *
      * (if the location is available the CalculationThread will send the
-     * CMD_CALCULATED_UPDATE message which will update them)
+     * Command::CALCULATED_UPDATE message which will update them)
      */
     if (!CommonInterface::Basic().location_available) {
       InfoBoxManager::SetDirty();
       InfoBoxManager::ProcessTimer();
     }
 
+    if (CommonInterface::Basic().brutto_vario_available)
+      AudioVarioGlue::SetValue(CommonInterface::Basic().brutto_vario);
+    else
+      AudioVarioGlue::NoValue();
+
     return true;
 
-  case CMD_CALCULATED_UPDATE:
+  case Command::CALCULATED_UPDATE:
     XCSoarInterface::ReceiveCalculated();
 
-    if (map != NULL)
+    CommonInterface::SetUIState().display_mode =
+      GetNewDisplayMode(CommonInterface::GetUISettings().info_boxes,
+                        CommonInterface::GetUIState(),
+                        CommonInterface::Calculated());
+    CommonInterface::SetUIState().panel_name =
+      InfoBoxManager::GetCurrentPanelName();
+
+    if (map != NULL) {
+      map->SetUIState(CommonInterface::GetUIState());
       map->FullRedraw();
+    }
 
     InfoBoxManager::SetDirty();
     InfoBoxManager::ProcessTimer();
@@ -639,11 +651,11 @@ MainWindow::SetFullScreen(bool _full_screen)
     InfoBoxManager::Show();
 
   if (widget != NULL)
-    widget->Move(FullScreen ? get_client_rect() : map_rect);
+    widget->Move(FullScreen ? GetClientRect() : map_rect);
 
   if (map != NULL) {
-    const PixelRect rc = FullScreen ? get_client_rect() : map_rect;
-    map->fast_move(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
+    const PixelRect rc = FullScreen ? GetClientRect() : map_rect;
+    map->FastMove(rc);
   }
 
   // the repaint will be triggered by the DrawThread
@@ -661,14 +673,6 @@ MainWindow::SetTopography(TopographyStore *topography)
 {
   if (map != NULL)
     map->SetTopography(topography);
-}
-
-DisplayMode
-MainWindow::GetDisplayMode() const
-{
-  return map != NULL
-    ? map->GetDisplayMode()
-    : DM_NONE;
 }
 
 void
@@ -735,7 +739,7 @@ MainWindow::SetWidget(Widget *_widget)
 
   widget = _widget;
 
-  const PixelRect rc = FullScreen ? get_client_rect() : map_rect;
+  const PixelRect rc = FullScreen ? GetClientRect() : map_rect;
   widget->Initialise(*this, rc);
   widget->Prepare(*this, rc);
   widget->Show(rc);
@@ -758,19 +762,20 @@ MainWindow::UpdateGaugeVisibility()
 void
 MainWindow::UpdateTrafficGaugeVisibility()
 {
-  const FlarmState &flarm = CommonInterface::Basic().flarm;
+  const FlarmData &flarm = CommonInterface::Basic().flarm;
+
   bool traffic_visible =
     (force_traffic_gauge ||
      (CommonInterface::GetUISettings().traffic.enable_gauge &&
-      flarm.available && !flarm.traffic.empty())) &&
+      !flarm.traffic.IsEmpty())) &&
     !CommonInterface::GetUIState().screen_blanked &&
     /* hide the traffic gauge while the traffic widget is visible, to
        avoid showing the same information twice */
     !InputEvents::IsFlavour(_T("Traffic"));
 
   if (traffic_visible && suppress_traffic_gauge) {
-    if (flarm.available &&
-        flarm.alarm_level != FlarmTraffic::AlarmType::NONE)
+    if (flarm.status.available &&
+        flarm.status.alarm_level != FlarmTraffic::AlarmType::NONE)
       suppress_traffic_gauge = false;
     else
       traffic_visible = false;
@@ -819,14 +824,14 @@ MainWindow::ToggleForceFLARMRadar()
 #ifdef ANDROID
 
 void
-MainWindow::on_pause()
+MainWindow::OnPause()
 {
   if (!IsRunning() && HasDialog())
     /* suspending before initialization has finished doesn't leave
        anything worth resuming, so let's just quit now */
     CancelDialog();
 
-  SingleWindow::on_pause();
+  SingleWindow::OnPause();
 }
 
 #endif /* ANDROID */

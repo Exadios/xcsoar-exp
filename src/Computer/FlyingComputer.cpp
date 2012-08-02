@@ -31,10 +31,44 @@ void
 FlyingComputer::Reset()
 {
   time_on_ground = time_in_flight = 0;
+  moving_since = fixed_minus_one;
+  sinking_since = fixed_minus_one;
 }
 
 void
-FlyingComputer::Check(FlyingState &state, fixed time)
+FlyingComputer::CheckRelease(FlyingState &state, fixed time,
+                             const GeoPoint &location, fixed altitude)
+{
+  if (!state.flying || !negative(state.release_time) || time_on_ground > 0)
+    return;
+
+  if (negative(sinking_since)) {
+    sinking_since = time;
+    sinking_location = location;
+    sinking_altitude = altitude;
+    sinking_count = 0;
+    return;
+  }
+
+  if (time < sinking_since || altitude >= sinking_altitude) {
+    /* cancel release detection when the aircraft has been climbing
+       more than it has lost recently */
+    sinking_since = fixed_minus_one;
+    return;
+  }
+
+  if (time - sinking_since >= fixed(10)) {
+    /* assume release from tow if aircraft has not gained any height
+       for 10 seconds; there will be false negatives if the glider
+       enters a thermal right after releasing */
+    state.release_time = sinking_since;
+    state.release_location = sinking_location;
+
+  }
+}
+
+void
+FlyingComputer::Check(FlyingState &state, fixed time, const GeoPoint &location)
 {
   // Logic to detect takeoff and landing is as follows:
   //   detect takeoff when above threshold speed for 10 seconds
@@ -45,9 +79,15 @@ FlyingComputer::Check(FlyingState &state, fixed time)
     // We are moving for 10sec now
     if (time_in_flight > 10) {
       // We certainly must be flying after 10sec movement
+      assert(!negative(moving_since));
+
       state.flying = true;
-      state.takeoff_time = time;
+      state.takeoff_time = moving_since;
+      state.takeoff_location = moving_at;
       state.flight_time = fixed_zero;
+
+      /* when a new flight starts, forget the old release time */
+      state.release_time = fixed_minus_one;
     }
   } else {
     // update time of flight
@@ -66,31 +106,42 @@ FlyingComputer::Check(FlyingState &state, fixed time)
 }
 
 void
-FlyingComputer::Moving(FlyingState &state, fixed time)
+FlyingComputer::Moving(FlyingState &state, fixed time,
+                       const GeoPoint &location)
 {
   // Increase InFlight countdown for further evaluation
   if (time_in_flight < 60)
     time_in_flight++;
 
+  if (negative(moving_since)) {
+    moving_since = time;
+    moving_at = location;
+  }
+
   // We are moving so we are certainly not on the ground
   time_on_ground = 0;
 
   // Update flying state
-  Check(state, time);
+  Check(state, time, location);
 }
 
 void
-FlyingComputer::Stationary(FlyingState &state, fixed time)
+FlyingComputer::Stationary(FlyingState &state, fixed time,
+                           const GeoPoint &location)
 {
   // Decrease InFlight countdown for further evaluation
-  if (time_in_flight)
+  if (time_in_flight > 0) {
     time_in_flight--;
+
+    if (time_in_flight == 0)
+      moving_since = fixed_minus_one;
+  }
 
   if (time_on_ground < 30)
     time_on_ground++;
 
   // Update flying state
-  Check(state, time);
+  Check(state, time, location);
 }
 
 void
@@ -99,8 +150,10 @@ FlyingComputer::Compute(fixed takeoff_speed,
                         const DerivedInfo &calculated,
                         FlyingState &flying)
 {
-  if (basic.HasTimeRetreatedSince(last_basic))
+  if (basic.HasTimeRetreatedSince(last_basic)) {
+    Reset();
     flying.Reset();
+  }
 
   // GPS not lost
   if (!basic.location_available)
@@ -113,9 +166,18 @@ FlyingComputer::Compute(fixed takeoff_speed,
 
   if (speed > takeoff_speed ||
       (calculated.altitude_agl_valid && calculated.altitude_agl > fixed(300)))
-    Moving(flying, basic.time);
+    Moving(flying, basic.time, basic.location);
   else
-    Stationary(flying, basic.time);
+    Stationary(flying, basic.time, basic.location);
+
+  if (basic.pressure_altitude_available)
+    CheckRelease(flying, basic.time, basic.location, basic.pressure_altitude);
+  else if (basic.baro_altitude_available)
+    CheckRelease(flying, basic.time, basic.location, basic.baro_altitude);
+  else if (basic.gps_altitude_available)
+    CheckRelease(flying, basic.time, basic.location, basic.gps_altitude);
+  else
+    sinking_since = fixed_minus_one;
 }
 
 void
@@ -124,7 +186,7 @@ FlyingComputer::Compute(fixed takeoff_speed,
                         FlyingState &flying)
 {
   if (state.ground_speed > takeoff_speed)
-    Moving(flying, state.time);
+    Moving(flying, state.time, state.location);
   else
-    Stationary(flying, state.time);
+    Stationary(flying, state.time, state.location);
 }

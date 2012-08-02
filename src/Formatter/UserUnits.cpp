@@ -70,6 +70,13 @@ FormatRelativeUserAltitude(fixed value, TCHAR *buffer, bool include_unit)
                          include_unit);
 }
 
+void
+FormatUserDistance(fixed value, TCHAR *buffer, bool include_unit, int precision)
+{
+  FormatDistance(buffer, value, Units::GetUserDistanceUnit(),
+                 include_unit, precision);
+}
+
 Unit
 FormatSmallUserDistance(TCHAR *buffer, fixed value, bool include_unit,
                         int precision)
@@ -79,10 +86,12 @@ FormatSmallUserDistance(TCHAR *buffer, fixed value, bool include_unit,
 }
 
 Unit
-FormatUserDistanceSmart(fixed value, TCHAR *buffer, bool include_unit)
+FormatUserDistanceSmart(fixed value, TCHAR *buffer, bool include_unit,
+                        fixed small_unit_threshold, fixed precision_threshold)
 {
   return FormatDistanceSmart(buffer, value, Units::GetUserDistanceUnit(),
-                             include_unit);
+                             include_unit, small_unit_threshold,
+                             precision_threshold);
 }
 
 Unit

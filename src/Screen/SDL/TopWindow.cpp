@@ -28,10 +28,11 @@ Copyright_License {
 #include "Android/Main.hpp"
 #else
 #include "Screen/SDL/Event.hpp"
+#include "Util/ConvertString.hpp"
 #endif
 
 TopWindow::TopWindow()
-  :Invalidated(true)
+  :invalidated(true)
 #ifdef ANDROID
   , paused(false), resumed(false), resized(false)
 #endif
@@ -56,15 +57,9 @@ TopWindow::set(const TCHAR *cls, const TCHAR *text, PixelRect rc,
   ContainerWindow::set(NULL, 0, 0, width, height, style);
 
 #ifndef ANDROID
-#ifdef _UNICODE
-  char text2[_tcslen(text) * 4];
-  ::WideCharToMultiByte(CP_UTF8, 0, text, -1, text2, sizeof(text2),
-                        NULL, NULL);
-#else
-  const char *text2 = text;
-#endif
-
-  ::SDL_WM_SetCaption(text2, NULL);
+  UTF8ToWideConverter text2(text);
+  if (text2.IsValid())
+    ::SDL_WM_SetCaption(text2, NULL);
 #endif
 }
 
@@ -83,15 +78,15 @@ TopWindow::Fullscreen()
 void
 TopWindow::Invalidate()
 {
-  Invalidated_lock.Lock();
-  if (Invalidated) {
-    /* already Invalidated, don't send the event twice */
-    Invalidated_lock.Unlock();
+  invalidated_lock.Lock();
+  if (invalidated) {
+    /* already invalidated, don't send the event twice */
+    invalidated_lock.Unlock();
     return;
   }
 
-  Invalidated = true;
-  Invalidated_lock.Unlock();
+  invalidated = true;
+  invalidated_lock.Unlock();
 
   /* wake up the event loop */
 #ifdef ANDROID
@@ -114,7 +109,7 @@ TopWindow::Expose() {
 }
 
 void
-TopWindow::refresh()
+TopWindow::Refresh()
 {
 #ifdef ANDROID
   if (!CheckResumeSurface())
@@ -123,14 +118,14 @@ TopWindow::refresh()
     return;
 #endif
 
-  Invalidated_lock.Lock();
-  if (!Invalidated) {
-    Invalidated_lock.Unlock();
+  invalidated_lock.Lock();
+  if (!invalidated) {
+    invalidated_lock.Unlock();
     return;
   }
 
-  Invalidated = false;
-  Invalidated_lock.Unlock();
+  invalidated = false;
+  invalidated_lock.Unlock();
 
   Expose();
 }
@@ -163,9 +158,9 @@ TopWindow::OnEvent(const SDL_Event &event)
     Window *w;
 
   case SDL_VIDEOEXPOSE:
-    Invalidated_lock.Lock();
-    Invalidated = false;
-    Invalidated_lock.Unlock();
+    invalidated_lock.Lock();
+    invalidated = false;
+    invalidated_lock.Unlock();
 
     Expose();
     return true;
@@ -175,7 +170,7 @@ TopWindow::OnEvent(const SDL_Event &event)
     if (w == NULL)
       w = this;
 
-    if (!w->is_enabled())
+    if (!w->IsEnabled())
       return false;
 
     return w->OnKeyDown(event.key.keysym.sym);
@@ -185,7 +180,7 @@ TopWindow::OnEvent(const SDL_Event &event)
     if (w == NULL)
       w = this;
 
-    if (!w->is_enabled())
+    if (!w->IsEnabled())
       return false;
 
     return w->OnKeyUp(event.key.keysym.sym);
@@ -220,7 +215,7 @@ TopWindow::OnEvent(const SDL_Event &event)
     return OnClose();
 
   case SDL_VIDEORESIZE:
-    resize(event.resize.w, event.resize.h);
+    Resize(event.resize.w, event.resize.h);
     return true;
   }
 
@@ -228,9 +223,9 @@ TopWindow::OnEvent(const SDL_Event &event)
 }
 
 int
-TopWindow::event_loop()
+TopWindow::RunEventLoop()
 {
-  refresh();
+  Refresh();
 
   EventLoop loop(*this);
   SDL_Event event;
@@ -241,7 +236,7 @@ TopWindow::event_loop()
 }
 
 void
-TopWindow::post_quit()
+TopWindow::PostQuit()
 {
   SDL_Event event;
   event.type = SDL_QUIT;

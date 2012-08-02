@@ -25,13 +25,14 @@ Copyright_License {
 #include "TaskCalculatorPanel.hpp"
 #include "TaskEditPanel.hpp"
 #include "TaskPropertiesPanel.hpp"
-#include "TaskListPanel.hpp"
+#include "TaskMiscPanel.hpp"
 #include "TaskClosePanel.hpp"
 #include "UIGlobals.hpp"
 #include "Look/IconLook.hpp"
+#include "Dialogs/Message.hpp"
 #include "Dialogs/Task.hpp"
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/dlgTaskHelpers.hpp"
+#include "Dialogs/XML.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Components.hpp"
@@ -43,8 +44,12 @@ Copyright_License {
 #include "Logger/Logger.hpp"
 #include "Protection.hpp"
 #include "Look/Look.hpp"
+#include "Form/Form.hpp"
 #include "Form/TabBar.hpp"
 #include "Form/Panel.hpp"
+#include "Form/Draw.hpp"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Screen/OpenGL/Scissor.hpp"
@@ -89,20 +94,18 @@ dlgTaskManager::OnTaskViewClick(WndOwnerDrawFrame *Sender,
                                 PixelScalar x, PixelScalar y)
 {
   if (TaskViewRect.right == 0)
-    TaskViewRect = Sender->get_position();
+    TaskViewRect = Sender->GetPosition();
 
   if (!fullscreen) {
     const UPixelScalar xoffset = Layout::landscape ? wTabBar->GetTabWidth() : 0;
     const UPixelScalar yoffset = !Layout::landscape ? wTabBar->GetTabHeight() : 0;
-    Sender->move(xoffset, yoffset,
-                 wf->GetClientAreaWindow().get_width() - xoffset,
-                 wf->GetClientAreaWindow().get_height() - yoffset);
+    Sender->Move(xoffset, yoffset,
+                 wf->GetClientAreaWindow().GetWidth() - xoffset,
+                 wf->GetClientAreaWindow().GetHeight() - yoffset);
     fullscreen = true;
-    Sender->show_on_top();
+    Sender->ShowOnTop();
   } else {
-    Sender->move(TaskViewRect.left, TaskViewRect.top,
-                 TaskViewRect.right - TaskViewRect.left,
-                 TaskViewRect.bottom - TaskViewRect.top);
+    Sender->Move(TaskViewRect);
     fullscreen = false;
   }
   Sender->Invalidate();
@@ -113,14 +116,23 @@ void
 dlgTaskManager::TaskViewRestore(WndOwnerDrawFrame *wTaskView)
 {
   if (TaskViewRect.right == 0) {
-    TaskViewRect = wTaskView->get_position();
+    TaskViewRect = wTaskView->GetPosition();
     return;
   }
 
   fullscreen = false;
-  wTaskView->move(TaskViewRect.left, TaskViewRect.top,
-                  TaskViewRect.right - TaskViewRect.left,
-                  TaskViewRect.bottom - TaskViewRect.top);
+  wTaskView->Move(TaskViewRect);
+}
+
+void
+dlgTaskManager::ResetTaskView(WndOwnerDrawFrame *task_view)
+{
+  assert(task_view != NULL);
+
+  task_view->Hide();
+  TaskViewRestore(task_view);
+  task_view->SetOnPaintNotify(OnTaskPaint);
+  task_view->SetOnMouseDownNotify(dlgTaskManager::OnTaskViewClick);
 }
 
 void
@@ -133,7 +145,7 @@ dlgTaskManager::OnTaskPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 
   const MapLook &look = UIGlobals::GetMapLook();
   const NMEAInfo &basic = CommonInterface::Basic();
-  PaintTask(canvas, Sender->get_client_rect(), *active_task,
+  PaintTask(canvas, Sender->GetClientRect(), *active_task,
             basic.location_available, basic.location,
             XCSoarInterface::GetMapSettings(),
             look.task, look.airspace,
@@ -164,11 +176,11 @@ dlgTaskManager::CommitTaskChanges()
     return true;
   }
 
-  MessageBoxX(getTaskValidationErrors(
+  ShowMessageBox(getTaskValidationErrors(
     active_task->GetFactory().GetValidationErrors()),
     _("Validation Errors"), MB_ICONEXCLAMATION);
 
-  return (MessageBoxX(_("Task not valid. Changes will be lost.\nContinue?"),
+  return (ShowMessageBox(_("Task not valid. Changes will be lost.\nContinue?"),
                       _("Task Manager"), MB_YESNO | MB_ICONQUESTION) == IDYES);
 }
 
@@ -221,22 +233,34 @@ dlgTaskManager::dlgTaskManagerShowModal(SingleWindow &parent)
   wTabBar = (TabBarControl*)wf->FindByName(_T("TabBar"));
   assert(wTabBar != NULL);
 
-  wTabBar->SetClientOverlapTabs(true);
   wTabBar->SetPageFlippedCallback(SetTitle);
 
   const MapLook &look = UIGlobals::GetMapLook();
 
-  Widget *wProps = new TaskPropertiesPanel(&active_task, &task_modified);
+  WndOwnerDrawFrame *task_view =
+    (WndOwnerDrawFrame *)wf->FindByName(_T("TaskView"));
+  assert(task_view != NULL);
+  ResetTaskView(task_view);
 
-  Widget *wClose = new TaskClosePanel(&task_modified);
+  TaskPropertiesPanel *wProps =
+    new TaskPropertiesPanel(UIGlobals::GetDialogLook(),
+                            &active_task, &task_modified);
+  wProps->SetTaskView(task_view);
 
-  Widget *wCalculator = new TaskCalculatorPanel(*wf, &task_modified);
+  TaskClosePanel *wClose = new TaskClosePanel(&task_modified);
+  wClose->SetTaskView(task_view);
 
-  Widget *wEdit = new TaskEditPanel(*wf, look.task, look.airspace,
-                                    &active_task, &task_modified);
+  TaskCalculatorPanel *wCalculator =
+    new TaskCalculatorPanel(UIGlobals::GetDialogLook(), &task_modified);
+  wCalculator->SetTargetButton((WndButton *)wf->FindByName(_T("Target")));
 
-  Widget *list_tab = new TaskListPanel(*wf, *wTabBar,
-                                       &active_task, &task_modified);
+  TaskEditPanel *wEdit = new TaskEditPanel(*wf, look.task, look.airspace,
+                                           &active_task, &task_modified);
+  wEdit->SetTaskView(task_view);
+
+  TaskMiscPanel *list_tab = new TaskMiscPanel(*wTabBar,
+                                              &active_task, &task_modified);
+  list_tab->SetTaskView(task_view);
 
   const bool enable_icons =
     CommonInterface::GetUISettings().dialog.tab_style
@@ -248,29 +272,29 @@ dlgTaskManager::dlgTaskManagerShowModal(SingleWindow &parent)
   const Bitmap *BrowseIcon = enable_icons ? &icons.hBmpTabWrench : NULL;
   const Bitmap *PropertiesIcon = enable_icons ? &icons.hBmpTabSettings : NULL;
 
-  wTabBar->AddTab(wCalculator, _("Calculator"), false, CalcIcon);
+  wTabBar->AddTab(wCalculator, _("Calculator"), CalcIcon);
 
   if (Layout::landscape) {
-    wTabBar->AddTab(wEdit, _("Turn Points"), false, TurnPointIcon);
+    wTabBar->AddTab(wEdit, _("Turn Points"), TurnPointIcon);
     TurnpointTab = 1;
 
-    wTabBar->AddTab(list_tab, _("Manage"), false, BrowseIcon);
+    wTabBar->AddTab(list_tab, _("Manage"), BrowseIcon);
 
-    wTabBar->AddTab(wProps, _("Rules"), false, PropertiesIcon);
+    wTabBar->AddTab(wProps, _("Rules"), PropertiesIcon);
     PropertiesTab = 3;
 
-    wTabBar->AddTab(wClose, _("Close"), false);
+    wTabBar->AddTab(wClose, _("Close"));
 
     wTabBar->SetCurrentPage(0);
   } else {
-    wTabBar->AddTab(wClose, _("Close"), false);
+    wTabBar->AddTab(wClose, _("Close"));
 
-    wTabBar->AddTab(wEdit, _("Turn Points"), false, TurnPointIcon);
+    wTabBar->AddTab(wEdit, _("Turn Points"), TurnPointIcon);
     TurnpointTab = 2;
 
-    wTabBar->AddTab(list_tab, _("Manage"), false, BrowseIcon);
+    wTabBar->AddTab(list_tab, _("Manage"), BrowseIcon);
 
-    wTabBar->AddTab(wProps, _("Rules"), false, PropertiesIcon);
+    wTabBar->AddTab(wProps, _("Rules"), PropertiesIcon);
     PropertiesTab = 4;
 
     wTabBar->SetCurrentPage(0);

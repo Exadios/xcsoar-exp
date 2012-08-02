@@ -48,7 +48,7 @@ class AirspaceWarningCopy
 {
 private:
   StaticArray<const AbstractAirspace *,64> ids_inside, ids_warning, ids_acked;
-  StaticArray<GeoPoint,32> locs;
+  StaticArray<GeoPoint,32> locations;
 
 public:
   void Visit(const AirspaceWarning& as) {
@@ -56,7 +56,7 @@ public:
       ids_inside.checked_append(&as.GetAirspace());
     } else if (as.GetWarningState() > AirspaceWarning::WARNING_CLEAR) {
       ids_warning.checked_append(&as.GetAirspace());
-      locs.checked_append(as.GetSolution().location);
+      locations.checked_append(as.GetSolution().location);
     }
 
     if (!as.IsAckExpired())
@@ -73,33 +73,36 @@ public:
     Visit(lease);
   }
 
-  const StaticArray<GeoPoint,32> &get_locations() const {
-    return locs;
-  }
-  bool is_warning(const AbstractAirspace& as) const {
-    return as.IsActive() && find(as, ids_warning);
-  }
-  bool is_acked(const AbstractAirspace& as) const {
-    return (!as.IsActive()) || find(as, ids_acked);
-  }
-  bool is_inside(const AbstractAirspace& as) const {
-    return as.IsActive() && find(as, ids_inside);
+  const StaticArray<GeoPoint,32> &GetLocations() const {
+    return locations;
   }
 
-  void visit_warned(AirspaceVisitor &visitor) const {
+  bool HasWarning(const AbstractAirspace &as) const {
+    return as.IsActive() && Find(as, ids_warning);
+  }
+
+  bool IsAcked(const AbstractAirspace &as) const {
+    return (!as.IsActive()) || Find(as, ids_acked);
+  }
+
+  bool IsInside(const AbstractAirspace &as) const {
+    return as.IsActive() && Find(as, ids_inside);
+  }
+
+  void VisitWarnings(AirspaceVisitor &visitor) const {
     for (auto it = ids_warning.begin(), end = ids_warning.end(); it != end; ++it)
-      if (!is_acked(**it))
+      if (!IsAcked(**it))
         visitor.Visit(**it);
   }
 
-  void visit_inside(AirspaceVisitor &visitor) const {
+  void VisitInside(AirspaceVisitor &visitor) const {
     for (auto it = ids_inside.begin(), end = ids_inside.end(); it != end; ++it)
-      if (!is_acked(**it))
+      if (!IsAcked(**it))
         visitor.Visit(**it);
   }
 
 private:
-  bool find(const AbstractAirspace& as, 
+  bool Find(const AbstractAirspace& as,
             const StaticArray<const AbstractAirspace *,64> &list) const {
     return list.contains(&as);
   }
@@ -109,20 +112,20 @@ private:
 class AirspaceMapVisible: public AirspaceVisiblePredicate
 {
 private:
-  const AirspaceWarningCopy& m_warnings;
+  const AirspaceWarningCopy &warnings;
 
 public:
   AirspaceMapVisible(const AirspaceComputerSettings &_computer_settings,
                      const AirspaceRendererSettings &_renderer_settings,
                      const AircraftState& _state,
-                     const AirspaceWarningCopy& warnings)
+                     const AirspaceWarningCopy& _warnings)
     :AirspaceVisiblePredicate(_computer_settings, _renderer_settings, _state),
-     m_warnings(warnings) {}
+     warnings(_warnings) {}
 
-  bool condition(const AbstractAirspace& airspace) const {
-    return AirspaceVisiblePredicate::condition(airspace)
-      || m_warnings.is_inside(airspace)
-      || m_warnings.is_warning(airspace);
+  bool operator()(const AbstractAirspace& airspace) const {
+    return AirspaceVisiblePredicate::operator()(airspace) ||
+           warnings.IsInside(airspace) ||
+           warnings.HasWarning(airspace);
   }
 };
 
@@ -130,20 +133,18 @@ public:
 
 class AirspaceVisitorRenderer : public AirspaceVisitor, protected MapCanvas
 {
-  const AirspaceLook &airspace_look;
-  const AirspaceWarningCopy& m_warnings;
+  const AirspaceLook &look;
+  const AirspaceWarningCopy &warning_manager;
   const AirspaceRendererSettings &settings;
 
 public:
   AirspaceVisitorRenderer(Canvas &_canvas, const WindowProjection &_projection,
-                          const AirspaceLook &_airspace_look,
-                          const AirspaceWarningCopy& warnings,
+                          const AirspaceLook &_look,
+                          const AirspaceWarningCopy &_warnings,
                           const AirspaceRendererSettings &_settings)
     :MapCanvas(_canvas, _projection,
                _projection.GetScreenBounds().Scale(fixed(1.1))),
-     airspace_look(_airspace_look),
-     m_warnings(warnings),
-     settings(_settings)
+     look(_look), warning_manager(_warnings), settings(_settings)
   {
     glStencilMask(0xff);
     glClear(GL_STENCIL_BUFFER_BIT);
@@ -155,85 +156,101 @@ public:
   }
 
 public:
-  void Visit(const AirspaceCircle& airspace) {
+  void Visit(const AirspaceCircle &airspace) {
     RasterPoint screen_center = projection.GeoToScreen(airspace.GetCenter());
     unsigned screen_radius = projection.GeoToScreenDistance(airspace.GetRadius());
     GLEnable stencil(GL_STENCIL_TEST);
 
-    if (!m_warnings.is_acked(airspace)) {
+    if (!warning_manager.IsAcked(airspace) &&
+        settings.classes[airspace.GetType()].fill_mode !=
+        AirspaceClassRendererSettings::FillMode::NONE) {
       GLEnable blend(GL_BLEND);
-      setup_interior(airspace);
-      if (m_warnings.is_warning(airspace) ||
-          m_warnings.is_inside(airspace) ||
-          airspace_look.thick_pen.GetWidth() >= 2 * screen_radius) {
+      SetupInterior(airspace);
+      if (warning_manager.HasWarning(airspace) ||
+          warning_manager.IsInside(airspace) ||
+          look.thick_pen.GetWidth() >= 2 * screen_radius ||
+          settings.classes[airspace.GetType()].fill_mode ==
+          AirspaceClassRendererSettings::FillMode::ALL) {
         // fill whole circle
-        canvas.circle(screen_center.x, screen_center.y, screen_radius);
+        canvas.DrawCircle(screen_center.x, screen_center.y, screen_radius);
       } else {
         // draw a ring inside the circle
-        Color color = settings.classes[airspace.GetType()].color;
-        Pen pen_donut(airspace_look.thick_pen.GetWidth() / 2, color.WithAlpha(90));
+        Color color = settings.classes[airspace.GetType()].fill_color;
+        Pen pen_donut(look.thick_pen.GetWidth() / 2, color.WithAlpha(90));
         canvas.SelectHollowBrush();
         canvas.Select(pen_donut);
-        canvas.circle(screen_center.x, screen_center.y,
-                      screen_radius - airspace_look.thick_pen.GetWidth() / 4);
+        canvas.DrawCircle(screen_center.x, screen_center.y,
+                      screen_radius - look.thick_pen.GetWidth() / 4);
       }
     }
 
     // draw outline
-    setup_outline(airspace);
-    canvas.circle(screen_center.x, screen_center.y, screen_radius);
+    if (SetupOutline(airspace))
+      canvas.DrawCircle(screen_center.x, screen_center.y, screen_radius);
   }
 
-  void Visit(const AirspacePolygon& airspace) {
-    if (!prepare_polygon(airspace.GetPoints()))
+  void Visit(const AirspacePolygon &airspace) {
+    if (!PreparePolygon(airspace.GetPoints()))
       return;
 
-    bool fill_airspace = m_warnings.is_warning(airspace) ||
-                         m_warnings.is_inside(airspace);
+    bool fill_airspace = warning_manager.HasWarning(airspace) ||
+                         warning_manager.IsInside(airspace) ||
+                         settings.classes[airspace.GetType()].fill_mode ==
+                         AirspaceClassRendererSettings::FillMode::ALL;
     GLEnable stencil(GL_STENCIL_TEST);
 
-    if (!m_warnings.is_acked(airspace)) {
+    if (!warning_manager.IsAcked(airspace) &&
+        settings.classes[airspace.GetType()].fill_mode !=
+        AirspaceClassRendererSettings::FillMode::NONE) {
       if (!fill_airspace) {
         // set stencil for filling (bit 0)
-        set_fillstencil();
-        draw_prepared();
+        SetFillStencil();
+        DrawPrepared();
       }
 
       // fill interior without overpainting any previous outlines
       {
-        setup_interior(airspace, !fill_airspace);
+        SetupInterior(airspace, !fill_airspace);
         GLEnable blend(GL_BLEND);
-        draw_prepared();
+        DrawPrepared();
       }
 
       if (!fill_airspace) {
         // clear fill stencil (bit 0)
-        clear_fillstencil();
-        draw_prepared();
+        ClearFillStencil();
+        DrawPrepared();
       }
     }
 
     // draw outline
-    setup_outline(airspace);
-    draw_prepared();
+    if (SetupOutline(airspace))
+      DrawPrepared();
   }
 
 private:
-  void setup_outline(const AbstractAirspace &airspace) {
+  bool SetupOutline(const AbstractAirspace &airspace) {
+    AirspaceClass type = airspace.GetType();
+
+    if (settings.black_outline)
+      canvas.SelectBlackPen();
+    else if (settings.classes[type].border_width == 0)
+      // Don't draw outlines if border_width == 0
+      return false;
+    else
+      canvas.Select(look.pens[type]);
+
+    canvas.SelectHollowBrush();
+
     // set bit 1 in stencil buffer, where an outline is drawn
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glStencilFunc(GL_ALWAYS, 3, 3);
     glStencilMask(2);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-    if (settings.black_outline)
-      canvas.SelectBlackPen();
-    else
-      canvas.Select(airspace_look.pens[airspace.GetType()]);
-    canvas.SelectHollowBrush();
+    return true;
   }
 
-  void setup_interior(const AbstractAirspace &airspace,
+  void SetupInterior(const AbstractAirspace &airspace,
                       bool check_fillstencil = false) {
     // restrict drawing area and don't paint over previously drawn outlines
     if (check_fillstencil)
@@ -243,97 +260,103 @@ private:
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-    Color color = settings.classes[airspace.GetType()].color;
+    Color color = settings.classes[airspace.GetType()].fill_color;
     canvas.Select(Brush(color.WithAlpha(90)));
     canvas.SelectNullPen();
   }
 
-  void set_fillstencil() {
+  void SetFillStencil() {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glStencilFunc(GL_ALWAYS, 3, 3);
     glStencilMask(1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     canvas.SelectHollowBrush();
-    canvas.Select(airspace_look.thick_pen);
+    canvas.Select(look.thick_pen);
   }
 
-  void clear_fillstencil() {
+  void ClearFillStencil() {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glStencilFunc(GL_ALWAYS, 3, 3);
     glStencilMask(1);
     glStencilOp(GL_KEEP, GL_KEEP, GL_ZERO);
 
     canvas.SelectHollowBrush();
-    canvas.Select(airspace_look.thick_pen);
+    canvas.Select(look.thick_pen);
   }
 };
 
 class AirspaceFillRenderer : public AirspaceVisitor, protected MapCanvas
 {
-  const AirspaceLook &airspace_look;
-  const AirspaceWarningCopy& m_warnings;
+  const AirspaceLook &look;
+  const AirspaceWarningCopy &warning_manager;
   const AirspaceRendererSettings &settings;
 
 public:
   AirspaceFillRenderer(Canvas &_canvas, const WindowProjection &_projection,
-                       const AirspaceLook &_airspace_look,
-                       const AirspaceWarningCopy& warnings,
+                       const AirspaceLook &_look,
+                       const AirspaceWarningCopy &_warnings,
                        const AirspaceRendererSettings &_settings)
     :MapCanvas(_canvas, _projection,
                _projection.GetScreenBounds().Scale(fixed(1.1))),
-     airspace_look(_airspace_look),
-     m_warnings(warnings),
-     settings(_settings)
+     look(_look), warning_manager(_warnings), settings(_settings)
   {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
 
 public:
-  void Visit(const AirspaceCircle& airspace) {
+  void Visit(const AirspaceCircle &airspace) {
     RasterPoint screen_center = projection.GeoToScreen(airspace.GetCenter());
     unsigned screen_radius = projection.GeoToScreenDistance(airspace.GetRadius());
 
     {
       GLEnable blend(GL_BLEND);
-      setup_interior(airspace);
-      canvas.circle(screen_center.x, screen_center.y, screen_radius);
+      SetupInterior(airspace);
+      canvas.DrawCircle(screen_center.x, screen_center.y, screen_radius);
     }
 
     // draw outline
-    setup_outline(airspace);
-    canvas.circle(screen_center.x, screen_center.y, screen_radius);
+    if (SetupOutline(airspace))
+      canvas.DrawCircle(screen_center.x, screen_center.y, screen_radius);
   }
 
-  void Visit(const AirspacePolygon& airspace) {
-    if (!prepare_polygon(airspace.GetPoints()))
+  void Visit(const AirspacePolygon &airspace) {
+    if (!PreparePolygon(airspace.GetPoints()))
       return;
 
-    if (!m_warnings.is_acked(airspace)) {
+    if (!warning_manager.IsAcked(airspace)) {
       // fill interior without overpainting any previous outlines
       {
-        setup_interior(airspace);
+        SetupInterior(airspace);
         GLEnable blend(GL_BLEND);
-        draw_prepared();
+        DrawPrepared();
       }
     }
 
     // draw outline
-    setup_outline(airspace);
-    draw_prepared();
+    if (SetupOutline(airspace))
+      DrawPrepared();
   }
 
 private:
-  void setup_outline(const AbstractAirspace &airspace) {
+  bool SetupOutline(const AbstractAirspace &airspace) {
+    AirspaceClass type = airspace.GetType();
+
     if (settings.black_outline)
       canvas.SelectBlackPen();
+    else if (settings.classes[type].border_width == 0)
+      // Don't draw outlines if border_width == 0
+      return false;
     else
-      canvas.Select(airspace_look.pens[airspace.GetType()]);
+      canvas.Select(look.pens[type]);
+
     canvas.SelectHollowBrush();
+
+    return true;
   }
 
-  void setup_interior(const AbstractAirspace &airspace) {
-    Color color = settings.classes[airspace.GetType()].color;
+  void SetupInterior(const AbstractAirspace &airspace) {
+    Color color = settings.classes[airspace.GetType()].fill_color;
     canvas.Select(Brush(color.WithAlpha(48)));
     canvas.SelectNullPen();
   }
@@ -352,132 +375,151 @@ class AirspaceVisitorMap:
   public AirspaceVisitor,
   public MapDrawHelper
 {
-  const AirspaceLook &airspace_look;
+  const AirspaceLook &look;
+  const AirspaceWarningCopy &warnings;
 
 public:
   AirspaceVisitorMap(MapDrawHelper &_helper,
-                     const AirspaceWarningCopy& warnings,
+                     const AirspaceWarningCopy &_warnings,
                      const AirspaceRendererSettings &_settings,
                      const AirspaceLook &_airspace_look)
     :MapDrawHelper(_helper),
-     airspace_look(_airspace_look),
-     m_warnings(warnings)
+     look(_airspace_look), warnings(_warnings)
   {
     switch (settings.fill_mode) {
     case AirspaceRendererSettings::FillMode::DEFAULT:
     case AirspaceRendererSettings::FillMode::PADDING:
-      m_use_stencil = !IsAncientHardware();
+      use_stencil = !IsAncientHardware();
       break;
 
     case AirspaceRendererSettings::FillMode::ALL:
-      m_use_stencil = false;
+      use_stencil = false;
       break;
     }
   }
 
-  void Visit(const AirspaceCircle& airspace) {
-    if (m_warnings.is_acked(airspace))
+  void Visit(const AirspaceCircle &airspace) {
+    if (warnings.IsAcked(airspace))
       return;
 
-    buffer_render_start();
-    set_buffer_pens(airspace);
-
-    RasterPoint center = m_proj.GeoToScreen(airspace.GetCenter());
-    unsigned radius = m_proj.GeoToScreenDistance(airspace.GetRadius());
-    draw_circle(center, radius);
-  }
-
-  void Visit(const AirspacePolygon& airspace) {
-    if (m_warnings.is_acked(airspace))
+    AirspaceClass airspace_class = airspace.GetType();
+    if (settings.classes[airspace_class].fill_mode ==
+        AirspaceClassRendererSettings::FillMode::NONE)
       return;
 
-    buffer_render_start();
-    set_buffer_pens(airspace);
-    draw_search_point_vector(airspace.GetPoints());
+    BufferRenderStart();
+    SetBufferPens(airspace);
+
+    RasterPoint center = proj.GeoToScreen(airspace.GetCenter());
+    unsigned radius = proj.GeoToScreenDistance(airspace.GetRadius());
+    DrawCircle(center, radius);
   }
 
-  void draw_intercepts() {
-    buffer_render_finish();
+  void Visit(const AirspacePolygon &airspace) {
+    if (warnings.IsAcked(airspace))
+      return;
+
+    AirspaceClass airspace_class = airspace.GetType();
+    if (settings.classes[airspace_class].fill_mode ==
+        AirspaceClassRendererSettings::FillMode::NONE)
+      return;
+
+    BufferRenderStart();
+    SetBufferPens(airspace);
+    DrawSearchPointVector(airspace.GetPoints());
+  }
+
+  void DrawIntercepts() {
+    BufferRenderFinish();
   }
 
 private:
-  void set_buffer_pens(const AbstractAirspace &airspace) {
+  void SetBufferPens(const AbstractAirspace &airspace) {
     AirspaceClass airspace_class = airspace.GetType();
 
 #ifndef HAVE_HATCHED_BRUSH
-    m_buffer.Select(airspace_look.solid_brushes[airspace_class]);
+    buffer.Select(look.solid_brushes[airspace_class]);
 #else /* HAVE_HATCHED_BRUSH */
 
 #ifdef HAVE_ALPHA_BLEND
     if (settings.transparency && AlphaBlendAvailable()) {
-      m_buffer.Select(airspace_look.solid_brushes[airspace_class]);
+      buffer.Select(look.solid_brushes[airspace_class]);
     } else {
 #endif
       // this color is used as the black bit
-      m_buffer.SetTextColor(LightColor(settings.classes[airspace_class].color));
+      buffer.SetTextColor(LightColor(settings.classes[airspace_class].fill_color));
 
       // get brush, can be solid or a 1bpp bitmap
-      m_buffer.Select(airspace_look.brushes[settings.classes[airspace_class].brush]);
+      buffer.Select(look.brushes[settings.classes[airspace_class].brush]);
 
-      m_buffer.SetBackgroundOpaque();
-      m_buffer.SetBackgroundColor(COLOR_WHITE);
+      buffer.SetBackgroundOpaque();
+      buffer.SetBackgroundColor(COLOR_WHITE);
 #ifdef HAVE_ALPHA_BLEND
     }
 #endif
 
-    m_buffer.SelectNullPen();
+    buffer.SelectNullPen();
 
-    if (m_use_stencil) {
-      if (m_warnings.is_warning(airspace) || m_warnings.is_inside(airspace)) {
-        m_stencil.SelectBlackBrush();
-        m_stencil.Select(airspace_look.medium_pen);
+    if (use_stencil) {
+      if (warnings.HasWarning(airspace) || warnings.IsInside(airspace) ||
+          settings.classes[airspace_class].fill_mode ==
+          AirspaceClassRendererSettings::FillMode::ALL) {
+        stencil.SelectBlackBrush();
+        stencil.SelectNullPen();
       } else {
-        m_stencil.Select(airspace_look.thick_pen);
-        m_stencil.SelectHollowBrush();
+        stencil.Select(look.thick_pen);
+        stencil.SelectHollowBrush();
       }
     }
 
 #endif /* HAVE_HATCHED_BRUSH */
   }
-
-  const AirspaceWarningCopy& m_warnings;
 };
 
 class AirspaceOutlineRenderer
   :public AirspaceVisitor,
    protected MapCanvas
 {
-  const AirspaceLook &airspace_look;
-  bool black;
+  const AirspaceLook &look;
+  const AirspaceRendererSettings &settings;
 
 public:
   AirspaceOutlineRenderer(Canvas &_canvas, const WindowProjection &_projection,
-                          const AirspaceLook &_airspace_look,
-                          bool _black)
+                          const AirspaceLook &_look,
+                          const AirspaceRendererSettings &_settings)
     :MapCanvas(_canvas, _projection,
                _projection.GetScreenBounds().Scale(fixed(1.1))),
-     airspace_look(_airspace_look),
-     black(_black) {
-    if (black)
+     look(_look), settings(_settings)
+  {
+    if (settings.black_outline)
       canvas.SelectBlackPen();
     canvas.SelectHollowBrush();
   }
 
 protected:
-  void setup_canvas(const AbstractAirspace &airspace) {
-    if (!black)
-      canvas.Select(airspace_look.pens[airspace.GetType()]);
+  bool SetupCanvas(const AbstractAirspace &airspace) {
+    if (settings.black_outline)
+      return true;
+
+    AirspaceClass type = airspace.GetType();
+    if (settings.classes[type].border_width == 0)
+      // Don't draw outlines if border_width == 0
+      return false;
+
+    canvas.Select(look.pens[type]);
+
+    return true;
   }
 
 public:
-  void Visit(const AirspaceCircle& airspace) {
-    setup_canvas(airspace);
-    circle(airspace.GetCenter(), airspace.GetRadius());
+  void Visit(const AirspaceCircle &airspace) {
+    if (SetupCanvas(airspace))
+      DrawCircle(airspace.GetCenter(), airspace.GetRadius());
   }
 
-  void Visit(const AirspacePolygon& airspace) {
-    setup_canvas(airspace);
-    draw(airspace.GetPoints());
+  void Visit(const AirspacePolygon &airspace) {
+    if (SetupCanvas(airspace))
+      DrawPolygon(airspace.GetPoints());
   }
 };
 
@@ -487,10 +529,10 @@ void
 AirspaceRenderer::DrawIntersections(Canvas &canvas,
                                     const WindowProjection &projection) const
 {
-  for (unsigned i = m_airspace_intersections.size(); i--;) {
+  for (unsigned i = intersections.size(); i--;) {
     RasterPoint sc;
-    if (projection.GeoToScreenIfVisible(m_airspace_intersections[i], sc))
-      airspace_look.intercept_icon.Draw(canvas, sc.x, sc.y);
+    if (projection.GeoToScreenIfVisible(intersections[i], sc))
+      look.intercept_icon.Draw(canvas, sc.x, sc.y);
   }
 }
 
@@ -504,20 +546,20 @@ AirspaceRenderer::Draw(Canvas &canvas,
                        const AirspaceWarningCopy &awc,
                        const AirspacePredicate &visible)
 {
-  if (airspace_database == NULL)
+  if (airspaces == NULL)
     return;
 
 #ifdef ENABLE_OPENGL
   if (settings.fill_mode == AirspaceRendererSettings::FillMode::ALL) {
-    AirspaceFillRenderer renderer(canvas, projection, airspace_look, awc,
+    AirspaceFillRenderer renderer(canvas, projection, look, awc,
                                   settings);
-    airspace_database->visit_within_range(projection.GetGeoScreenCenter(),
+    airspaces->VisitWithinRange(projection.GetGeoScreenCenter(),
                                           projection.GetScreenDistanceMeters(),
                                           renderer, visible);
   } else {
-    AirspaceVisitorRenderer renderer(canvas, projection, airspace_look, awc,
+    AirspaceVisitorRenderer renderer(canvas, projection, look, awc,
                                      settings);
-    airspace_database->visit_within_range(projection.GetGeoScreenCenter(),
+    airspaces->VisitWithinRange(projection.GetGeoScreenCenter(),
                                           projection.GetScreenDistanceMeters(),
                                           renderer, visible);
   }
@@ -525,31 +567,29 @@ AirspaceRenderer::Draw(Canvas &canvas,
   MapDrawHelper helper(canvas, buffer_canvas, stencil_canvas, projection,
                        settings);
   AirspaceVisitorMap v(helper, awc, settings,
-                       airspace_look);
+                       look);
 
   // JMW TODO wasteful to draw twice, can't it be drawn once?
   // we are using two draws so borders go on top of everything
 
-  airspace_database->visit_within_range(projection.GetGeoScreenCenter(),
+  airspaces->VisitWithinRange(projection.GetGeoScreenCenter(),
                                         projection.GetScreenDistanceMeters(),
                                         v, visible);
 
-  awc.visit_warned(v);
-  awc.visit_inside(v);
+  awc.VisitWarnings(v);
+  awc.VisitInside(v);
 
-  v.draw_intercepts();
+  v.DrawIntercepts();
 
-  AirspaceOutlineRenderer outline_renderer(canvas, projection,
-                                           airspace_look,
-                                           settings.black_outline);
-  airspace_database->visit_within_range(projection.GetGeoScreenCenter(),
+  AirspaceOutlineRenderer outline_renderer(canvas, projection, look, settings);
+  airspaces->VisitWithinRange(projection.GetGeoScreenCenter(),
                                         projection.GetScreenDistanceMeters(),
                                         outline_renderer, visible);
-  awc.visit_warned(outline_renderer);
-  awc.visit_inside(outline_renderer);
+  awc.VisitWarnings(outline_renderer);
+  awc.VisitInside(outline_renderer);
 #endif
 
-  m_airspace_intersections = awc.get_locations();
+  intersections = awc.GetLocations();
 }
 
 void
@@ -560,12 +600,12 @@ AirspaceRenderer::Draw(Canvas &canvas,
                        const WindowProjection &projection,
                        const AirspaceRendererSettings &settings)
 {
-  if (airspace_database == NULL)
+  if (airspaces == NULL)
     return;
 
   AirspaceWarningCopy awc;
-  if (airspace_warnings != NULL)
-    awc.Visit(*airspace_warnings);
+  if (warning_manager != NULL)
+    awc.Visit(*warning_manager);
 
   Draw(canvas,
 #ifndef ENABLE_OPENGL
@@ -585,12 +625,12 @@ AirspaceRenderer::Draw(Canvas &canvas,
                        const AirspaceComputerSettings &computer_settings,
                        const AirspaceRendererSettings &settings)
 {
-  if (airspace_database == NULL)
+  if (airspaces == NULL)
     return;
 
   AirspaceWarningCopy awc;
-  if (airspace_warnings != NULL)
-    awc.Visit(*airspace_warnings);
+  if (warning_manager != NULL)
+    awc.Visit(*warning_manager);
 
   const AirspaceMapVisible visible(computer_settings, settings,
                                    ToAircraftState(basic, calculated), awc);

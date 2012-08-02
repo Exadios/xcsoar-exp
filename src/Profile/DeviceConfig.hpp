@@ -50,6 +50,11 @@ struct DeviceConfig {
     RFCOMM,
 
     /**
+     * Listen for incoming Bluetooth RFCOMM connections.
+     */
+    RFCOMM_SERVER,
+
+    /**
      * Android IOIO UArt device
      */
     IOIOUART,
@@ -68,9 +73,14 @@ struct DeviceConfig {
     INTERNAL,
 
     /**
-     * Listen on a TCP port.
+     * Listen on a TCP Network port.
      */
     TCP_LISTENER,
+
+    /**
+     * Listen on a UDP Network port.
+     */
+    UDP_LISTENER,
 
     /**
      * A master pseudo-terminal.  The "path" attribute specifies the
@@ -178,6 +188,10 @@ struct DeviceConfig {
   bool ShouldReopenOnTimeout() const;
 
   static bool MaybeBluetooth(PortType port_type, const TCHAR *path) {
+    /* note: RFCOMM_SERVER is not considered here because this
+       function is used to check for the K6-Bt protocol, but the K6-Bt
+       will never connect to XCSoar  */
+
     if (port_type == PortType::RFCOMM)
       return true;
 
@@ -197,6 +211,10 @@ struct DeviceConfig {
   }
 
   bool MaybeBluetooth() const {
+    /* note: RFCOMM_SERVER is not considered here because this
+       function is used to check for the K6-Bt protocol, but the K6-Bt
+       will never connect to XCSoar  */
+
     if (port_type == PortType::RFCOMM)
       return true;
 
@@ -224,8 +242,10 @@ struct DeviceConfig {
    */
   static bool UsesDriver(PortType port_type) {
     return port_type == PortType::SERIAL || port_type == PortType::RFCOMM ||
+      port_type == PortType::RFCOMM_SERVER ||
       port_type == PortType::AUTO || port_type == PortType::TCP_LISTENER ||
-      port_type == PortType::IOIOUART || port_type == PortType::PTY;
+      port_type == PortType::IOIOUART || port_type == PortType::PTY ||
+      port_type == PortType::UDP_LISTENER;
   }
 
   bool UsesDriver() const {
@@ -236,7 +256,8 @@ struct DeviceConfig {
    * Does this port type use a tcp port?
    */
   static bool UsesTCPPort(PortType port_type) {
-    return port_type == PortType::TCP_LISTENER;
+    return port_type == PortType::TCP_LISTENER ||
+      port_type == PortType::UDP_LISTENER;
   }
 
   bool UsesTCPPort() const {

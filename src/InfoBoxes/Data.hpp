@@ -25,13 +25,13 @@ Copyright_License {
 #define XCSOAR_INFO_BOX_DATA_HPP
 
 #include "Util/StaticString.hpp"
-#include "Units/Settings.hpp"
+#include "Units/Unit.hpp"
 #include "Math/fixed.hpp"
 
 class Angle;
 
 struct InfoBoxData {
-  static gcc_constexpr_data unsigned COLOR_COUNT = 6;
+  static constexpr unsigned COLOR_COUNT = 6;
 
   StaticString<32> title;
   StaticString<32> value;
@@ -100,6 +100,11 @@ struct InfoBoxData {
   void SetValueFromBearingDifference(Angle delta);
 
   /**
+   * Set the InfoBox value to the specified glide ratio.
+   */
+  void SetValueFromGlideRatio(fixed gr);
+
+  /**
    * Set the InfoBox value to the specified distance.
    */
   void SetValueFromDistance(fixed value);
@@ -142,6 +147,11 @@ struct InfoBoxData {
    * altitude unit.
    */
   void SetCommentFromAlternateAltitude(fixed value);
+
+  /**
+   * Set the InfoBox comment value to the specified vertical speed.
+   */
+  void SetCommentFromVerticalSpeed(fixed value, bool include_sign=true);
 
   template<typename... Args>
   void FormatTitle(const TCHAR *fmt, Args&&... args) {

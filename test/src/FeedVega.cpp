@@ -22,15 +22,19 @@ Copyright_License {
 */
 
 #include "DebugPort.hpp"
+#include "Device/Port/Port.hpp"
 #include "Device/Port/ConfiguredPort.hpp"
 #include "Profile/DeviceConfig.hpp"
 #include "OS/Args.hpp"
 #include "OS/Sleep.h"
+#include "Operation/ConsoleOperationEnvironment.hpp"
+#include "IO/Async/GlobalIOThread.hpp"
+#include "IO/DataHandler.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-class MyHandler : public Port::Handler {
+class MyHandler : public DataHandler {
 public:
   virtual void DataReceived(const void *data, size_t length) {
     fwrite(data, 1, length, stdout);
@@ -43,6 +47,8 @@ main(int argc, char **argv)
   Args args(argc, argv, "PORT BAUD");
   const DeviceConfig config = ParsePortArgs(args);
   args.ExpectEnd();
+
+  InitialiseIOThread();
 
   MyHandler handler;
   Port *port = OpenPort(config, handler);
@@ -59,6 +65,8 @@ main(int argc, char **argv)
     fprintf(stderr, "Failed to start the port thread\n");
     return EXIT_FAILURE;
   }
+
+  ConsoleOperationEnvironment env;
 
   unsigned long last_stamp = -1;
   char line[1024];
@@ -83,7 +91,7 @@ main(int argc, char **argv)
 
     last_stamp = current_stamp;
 
-    if (!port->FullWrite(start, end - start, 1000)) {
+    if (!port->FullWrite(start, end - start, env, 1000)) {
       fprintf(stderr, "Failed to write to port\n");
       delete port;
       return EXIT_FAILURE;
@@ -92,5 +100,6 @@ main(int argc, char **argv)
   }
 
   delete port;
+  DeinitialiseIOThread();
   return EXIT_SUCCESS;
 }

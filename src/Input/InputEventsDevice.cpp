@@ -23,12 +23,13 @@ Copyright_License {
 
 #include "InputEvents.hpp"
 #include "Interface.hpp"
-#include "MainWindow.hpp"
+#include "UIGlobals.hpp"
 #include "Look/Look.hpp"
 #include "Dialogs/DeviceListDialog.hpp"
 #include "Device/device.hpp"
 #include "Device/List.hpp"
 #include "Device/Descriptor.hpp"
+#include "Operation/PopupOperationEnvironment.hpp"
 
 #include <assert.h>
 
@@ -41,8 +42,10 @@ Copyright_License {
 void
 InputEvents::eventSendNMEA(const TCHAR *misc)
 {
-  if (misc)
-    VarioWriteNMEA(misc);
+  if (misc != NULL) {
+    PopupOperationEnvironment env;
+    VarioWriteNMEA(misc, env);
+  }
 }
 
 void
@@ -50,8 +53,10 @@ InputEvents::eventSendNMEAPort1(const TCHAR *misc)
 {
   const unsigned i = 0;
 
-  if (misc != NULL && i < NUMDEV)
-    device_list[i]->WriteNMEA(misc);
+  if (misc != NULL && i < NUMDEV) {
+    PopupOperationEnvironment env;
+    device_list[i]->WriteNMEA(misc, env);
+  }
 }
 
 void
@@ -59,8 +64,10 @@ InputEvents::eventSendNMEAPort2(const TCHAR *misc)
 {
   const unsigned i = 1;
 
-  if (misc != NULL && i < NUMDEV)
-    device_list[i]->WriteNMEA(misc);
+  if (misc != NULL && i < NUMDEV) {
+    PopupOperationEnvironment env;
+    device_list[i]->WriteNMEA(misc, env);
+  }
 }
 
 void
@@ -69,7 +76,7 @@ InputEvents::eventDevice(const TCHAR *misc)
   assert(misc != NULL);
 
   if (StringIsEqual(misc, _T("list")))
-    ShowDeviceList(CommonInterface::main_window,
-                   CommonInterface::main_window.GetLook().dialog,
-                   CommonInterface::main_window.GetLook().terminal);
+    ShowDeviceList(UIGlobals::GetMainWindow(),
+                   UIGlobals::GetDialogLook(),
+                   UIGlobals::GetLook().terminal);
 }

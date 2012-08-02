@@ -35,7 +35,7 @@ Copyright_License {
 #include "Profile/Profile.hpp"
 #include "Profile/ProfileKeys.hpp"
 #include "LocalPath.hpp"
-#include "MainWindow.hpp"
+#include "UIGlobals.hpp"
 #include "Dialogs/Task.hpp"
 #include "Dialogs/Waypoint.hpp"
 #include "Task/ProtectedTaskManager.hpp"
@@ -64,17 +64,15 @@ InputEvents::eventArmAdvance(const TCHAR *misc)
     return;
 
   ProtectedTaskManager::ExclusiveLease task_manager(*protected_task_manager);
-  const TaskAdvance::TaskAdvanceState_t mode =
-    task_manager->GetTaskAdvance().get_advance_state();
-  
+
   if (StringIsEqual(misc, _T("on"))) {
-    task_manager->GetTaskAdvance().set_armed(true);
+    task_manager->GetTaskAdvance().SetArmed(true);
   } else if (StringIsEqual(misc, _T("off"))) {
-    task_manager->GetTaskAdvance().set_armed(false);
+    task_manager->GetTaskAdvance().SetArmed(false);
   } else if (StringIsEqual(misc, _T("toggle"))) {
-    task_manager->GetTaskAdvance().toggle_armed();
+    task_manager->GetTaskAdvance().ToggleArmed();
   } else if (StringIsEqual(misc, _T("show"))) {
-    switch (mode) {
+    switch (task_manager->GetTaskAdvance().GetState()) {
     case TaskAdvance::MANUAL:
       Message::AddMessage(_("Advance manually"));
       break;
@@ -100,7 +98,7 @@ InputEvents::eventArmAdvance(const TCHAR *misc)
 void
 InputEvents::eventCalculator(gcc_unused const TCHAR *misc)
 {
-  dlgTaskManagerShowModal(XCSoarInterface::main_window);
+  dlgTaskManagerShowModal(UIGlobals::GetMainWindow());
 
   trigger_redraw();
 }
@@ -113,7 +111,7 @@ InputEvents::eventGotoLookup(gcc_unused const TCHAR *misc)
   if (protected_task_manager == NULL)
     return;
 
-  const Waypoint* wp = dlgWaypointSelect(XCSoarInterface::main_window,
+  const Waypoint* wp = ShowWaypointListDialog(UIGlobals::GetMainWindow(),
                                          basic.location);
   if (wp != NULL) {
     protected_task_manager->DoGoto(*wp);
@@ -146,13 +144,13 @@ InputEvents::eventMacCready(const TCHAR *misc)
     ActionInterface::SetManualMacCready(mc);
   } else if (StringIsEqual(misc, _T("auto toggle"))) {
     task_behaviour.auto_mc = !task_behaviour.auto_mc;
-    Profile::Set(szProfileAutoMc, task_behaviour.auto_mc);
+    Profile::Set(ProfileKeys::AutoMc, task_behaviour.auto_mc);
   } else if (StringIsEqual(misc, _T("auto on"))) {
     task_behaviour.auto_mc = true;
-    Profile::Set(szProfileAutoMc, true);
+    Profile::Set(ProfileKeys::AutoMc, true);
   } else if (StringIsEqual(misc, _T("auto off"))) {
     task_behaviour.auto_mc = false;
-    Profile::Set(szProfileAutoMc, false);
+    Profile::Set(ProfileKeys::AutoMc, false);
   } else if (StringIsEqual(misc, _T("auto show"))) {
     if (task_behaviour.auto_mc) {
       Message::AddMessage(_("Auto. MacCready on"));

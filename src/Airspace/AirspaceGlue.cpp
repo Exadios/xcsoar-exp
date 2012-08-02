@@ -29,7 +29,29 @@ Copyright_License {
 #include "Operation/Operation.hpp"
 #include "Language/Language.hpp"
 #include "LogFile.hpp"
-#include "IO/ConfiguredFile.hpp"
+#include "IO/TextFile.hpp"
+#include "Profile/Profile.hpp"
+
+#include <windef.h> /* for MAX_PATH */
+#include <memory>
+
+static bool
+ParseAirspaceFile(AirspaceParser &parser, const TCHAR *path,
+                  OperationEnvironment &operation)
+{
+  std::unique_ptr<TLineReader> reader(OpenTextFile(path, ConvertLineReader::AUTO));
+  if (!reader) {
+    LogStartUp(_T("Failed to open airspace file: %s"), path);
+    return false;
+  }
+
+  if (!parser.Parse(*reader, operation)) {
+    LogStartUp(_T("Failed to parse airspace file: %s"), path);
+    return false;
+  }
+
+  return true;
+}
 
 void
 ReadAirspace(Airspaces &airspaces,
@@ -45,35 +67,24 @@ ReadAirspace(Airspaces &airspaces,
   AirspaceParser parser(airspaces);
 
   // Read the airspace filenames from the registry
-  TLineReader *reader =
-    OpenConfiguredTextFile(szProfileAirspaceFile, _T("airspace.txt"),
-                           ConvertLineReader::AUTO);
-  if (reader != NULL) {
-    if (!parser.Parse(*reader, operation))
-      LogStartUp(_T("No airspace file 1"));
-    else
-      airspace_ok =  true;
+  TCHAR path[MAX_PATH];
+  if (Profile::GetPath(ProfileKeys::AirspaceFile, path))
+    airspace_ok |= ParseAirspaceFile(parser, path, operation);
 
-    delete reader;
-  }
+  if (Profile::GetPath(ProfileKeys::AdditionalAirspaceFile, path))
+    airspace_ok |= ParseAirspaceFile(parser, path, operation);
 
-  reader = OpenConfiguredTextFile(szProfileAdditionalAirspaceFile,
-                                  ConvertLineReader::AUTO);
-  if (reader != NULL) {
-    if (!parser.Parse(*reader, operation))
-      LogStartUp(_T("No airspace file 2"));
-    else
-      airspace_ok = true;
-
-    delete reader;
+  if (Profile::GetPath(ProfileKeys::MapFile, path)) {
+    _tcscat(path, _T("/airspace.txt"));
+    airspace_ok |= ParseAirspaceFile(parser, path, operation);
   }
 
   if (airspace_ok) {
-    airspaces.optimise();
-    airspaces.set_flight_levels(press);
+    airspaces.Optimise();
+    airspaces.SetFlightLevels(press);
 
     if (terrain != NULL)
-      airspaces.set_ground_levels(*terrain);
+      airspaces.SetGroundLevels(*terrain);
   } else
     // there was a problem
     airspaces.clear();

@@ -34,11 +34,13 @@ Copyright_License {
 #include "Renderer/AircraftRenderer.hpp"
 #include "Renderer/TrailRenderer.hpp"
 #include "Task/ProtectedTaskManager.hpp"
-#include "Engine/Math/Earth.hpp"
 #include "Units/Units.hpp"
 #include "Interface.hpp"
 #include "Computer/GlideComputer.hpp"
 #include "Asset.hpp"
+#include "Engine/Task/Ordered/Points/OrderedTaskPoint.hpp"
+#include "Engine/Task/ObservationZones/ObservationZonePoint.hpp"
+#include "Engine/Task/ObservationZones/CylinderZone.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Screen/OpenGL/Scissor.hpp"
@@ -281,7 +283,7 @@ GetRadius(const ObservationZonePoint &oz)
 static fixed
 GetRadius(const OrderedTaskPoint &tp)
 {
-  return GetRadius(*tp.GetOZPoint());
+  return GetRadius(tp.GetObservationZone());
 }
 
 void

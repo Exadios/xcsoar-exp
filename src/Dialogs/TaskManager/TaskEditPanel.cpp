@@ -43,8 +43,8 @@ Copyright_License {
 #include "Look/DialogLook.hpp"
 #include "Look/TaskLook.hpp"
 #include "Look/AirspaceLook.hpp"
-#include "Task/Tasks/OrderedTask.hpp"
-#include "Engine/Task/Tasks/BaseTask/OrderedTaskPoint.hpp"
+#include "Engine/Task/Ordered/OrderedTask.hpp"
+#include "Engine/Task/Ordered/Points/OrderedTaskPoint.hpp"
 #include "Language/Language.hpp"
 #include "Renderer/OZPreviewRenderer.hpp"
 #include "Util/Macros.hpp"
@@ -83,12 +83,14 @@ TaskEditPanel::RefreshView()
 {
   UpdateButtons();
 
-  if (!ordered_task->is_max_size())
+  if (!ordered_task->IsFull())
     wTaskPoints->SetLength(ordered_task->TaskSize()+1);
   else
     wTaskPoints->SetLength(ordered_task->TaskSize());
 
-  wTaskView->Invalidate();
+  if (wTaskView != NULL)
+    wTaskView->Invalidate();
+
   wTaskPoints->Invalidate();
 
   if (wSummary) {
@@ -102,7 +104,7 @@ void
 TaskEditPanel::OnClearAllClicked()
 {
   if ((ordered_task->TaskSize() < 2) ||
-      (MessageBoxX(_("Clear all points?"), _("Task edit"),
+      (ShowMessageBox(_("Clear all points?"), _("Task edit"),
                    MB_YESNO|MB_ICONQUESTION) == IDYES)) {
 
     while (ordered_task->OptionalStartsSize())
@@ -146,7 +148,7 @@ TaskEditPanel::OnPaintItem(Canvas &canvas, const PixelRect rc,
   }
 
   const OrderedTaskPoint &tp = ordered_task->GetTaskPoint(DrawListIndex);
-  GeoVector leg = tp.leg_vector_nominal();
+  GeoVector leg = tp.GetNominalLegVector();
   bool show_leg_info = leg.distance > fixed(0.01);
 
   // Draw icon
@@ -159,7 +161,8 @@ TaskEditPanel::OnPaintItem(Canvas &canvas, const PixelRect rc,
                                             - Layout::FastScale(4)),
                                 Layout::FastScale(10));
 
-  OZPreviewRenderer::Draw(canvas, *tp.GetOZPoint(), pt, radius, task_look,
+  OZPreviewRenderer::Draw(canvas, tp.GetObservationZone(),
+                          pt, radius, task_look,
                           CommonInterface::GetMapSettings().airspace,
                           airspace_look);
 
@@ -192,7 +195,7 @@ TaskEditPanel::OnPaintItem(Canvas &canvas, const PixelRect rc,
 
   // Draw details line
   PixelScalar left = rc.left + line_height + Layout::FastScale(2);
-  OrderedTaskPointRadiusLabel(*tp.GetOZPoint(), buffer);
+  OrderedTaskPointRadiusLabel(tp.GetObservationZone(), buffer);
   if (!StringIsEmpty(buffer))
     canvas.text_clipped(left, top2, rc.right - leg_info_width - left, buffer);
 
@@ -230,16 +233,15 @@ TaskEditPanel::EditTaskPoint(unsigned ItemIndex)
       *task_modified = true;
       RefreshView();
     }
-  } else if (!ordered_task->is_max_size()) {
+  } else if (!ordered_task->IsFull()) {
 
     OrderedTaskPoint* point = NULL;
     AbstractTaskFactory &factory = ordered_task->GetFactory();
     const Waypoint* way_point =
-      dlgWaypointSelect(wf.GetMainWindow(),
-                        ordered_task->TaskSize() > 0 ?
-                          ordered_task->get_tp(ordered_task->
-                              TaskSize() - 1)->GetLocation() :
-                          XCSoarInterface::Basic().location,
+      ShowWaypointListDialog(wf.GetMainWindow(),
+                             ordered_task->TaskSize() > 0
+                             ? ordered_task->GetPoint(ordered_task->TaskSize() - 1).GetLocation()
+                             : XCSoarInterface::Basic().location,
                         ordered_task, ItemIndex);
     if (!way_point)
       return;
@@ -341,7 +343,7 @@ TaskEditPanel::OnKeyDown(unsigned key_code)
 {
   switch (key_code){
   case VK_ESCAPE:
-    if (IsAltair() && wTaskPoints->has_focus()){
+    if (IsAltair() && wTaskPoints->HasFocus()){
        wf.FocusFirstControl();
       return true;
     }
@@ -372,9 +374,7 @@ OnKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
   return instance->OnKeyDown(key_code);
 }
 
-static gcc_constexpr_data CallBackTableEntry task_edit_callbacks[] = {
-  DeclareCallBackEntry(dlgTaskManager::OnTaskPaint),
-
+static constexpr CallBackTableEntry task_edit_callbacks[] = {
   DeclareCallBackEntry(OnMakeFinish),
   DeclareCallBackEntry(OnMoveUpClicked),
   DeclareCallBackEntry(OnMoveDownClicked),
@@ -389,18 +389,12 @@ TaskEditPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 {
   ordered_task = *ordered_task_pointer;;
 
-  LoadWindow(task_edit_callbacks, parent,
-             Layout::landscape
-             ? _T("IDR_XML_TASKEDIT_L") : _T("IDR_XML_TASKEDIT"));
+  LoadWindow(task_edit_callbacks, parent, rc, _T("IDR_XML_TASKEDIT"));
 
   instance = this;
 
   wTaskPoints = (ListControl*)form.FindByName(_T("frmTaskPoints"));
   assert(wTaskPoints != NULL);
-
-  wTaskView = (WndOwnerDrawFrame*)form.FindByName(_T("frmTaskView"));
-  assert(wTaskView != NULL);
-  wTaskView->SetOnMouseDownNotify(dlgTaskManager::OnTaskViewClick);
 
   wSummary = (WndFrame *)form.FindByName(_T("frmSummary"));
   assert(wSummary);
@@ -414,17 +408,21 @@ TaskEditPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 void
 TaskEditPanel::ReClick()
 {
-  dlgTaskManager::OnTaskViewClick(wTaskView, 0, 0);
+  if (wTaskView != NULL)
+    dlgTaskManager::OnTaskViewClick(wTaskView, 0, 0);
 }
 
 void
 TaskEditPanel::Show(const PixelRect &rc)
 {
+  if (wTaskView != NULL)
+    wTaskView->Show();
+
   if (ordered_task != *ordered_task_pointer) {
     ordered_task = *ordered_task_pointer;
     wTaskPoints->SetCursorIndex(0);
   }
-  dlgTaskManager::TaskViewRestore(wTaskView);
+
   RefreshView();
 
   wf.SetKeyDownNotify(::OnKeyDown);
@@ -435,6 +433,9 @@ TaskEditPanel::Show(const PixelRect &rc)
 void
 TaskEditPanel::Hide()
 {
+  if (wTaskView != NULL)
+    dlgTaskManager::ResetTaskView(wTaskView);
+
   wf.SetKeyDownNotify(NULL);
 
   XMLWidget::Hide();

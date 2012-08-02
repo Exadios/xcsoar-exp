@@ -53,7 +53,7 @@ SetVSpeed(InfoBoxData &data, fixed value)
  * Subpart callback function pointers
  */
 
-static gcc_constexpr_data InfoBoxContentMacCready::PanelContent panels[] = {
+static constexpr InfoBoxContentMacCready::PanelContent panels[] = {
   InfoBoxContentMacCready::PanelContent (
     N_("Edit"),
     LoadMacCreadyEditPanel),
@@ -117,17 +117,17 @@ InfoBoxContentMacCready::HandleKey(const InfoBoxKeyCodes keycode)
 
   case ibkLeft:
     task_behaviour.auto_mc = false;
-    Profile::Set(szProfileAutoMc, false);
+    Profile::Set(ProfileKeys::AutoMc, false);
     return true;
 
   case ibkRight:
     task_behaviour.auto_mc = true;
-    Profile::Set(szProfileAutoMc, true);
+    Profile::Set(ProfileKeys::AutoMc, true);
     return true;
 
   case ibkEnter:
     task_behaviour.auto_mc = !task_behaviour.auto_mc;
-    Profile::Set(szProfileAutoMc, task_behaviour.auto_mc);
+    Profile::Set(ProfileKeys::AutoMc, task_behaviour.auto_mc);
     return true;
   }
   return false;

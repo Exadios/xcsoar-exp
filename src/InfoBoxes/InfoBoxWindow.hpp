@@ -31,19 +31,6 @@ Copyright_License {
 #include "PeriodClock.hpp"
 #include "Data.hpp"
 
-enum BorderKind_t {
-  bkNone,
-  bkTop,
-  bkRight,
-  bkBottom,
-  bkLeft
-};
-
-#define BORDERTOP    (1<<bkTop)
-#define BORDERRIGHT  (1<<bkRight)
-#define BORDERBOTTOM (1<<bkBottom)
-#define BORDERLEFT   (1<<bkLeft)
-
 struct InfoBoxSettings;
 struct InfoBoxLook;
 struct UnitsLook;
@@ -51,21 +38,20 @@ struct UnitsLook;
 class InfoBoxWindow : public PaintWindow
 {
   /** timeout of infobox focus [ms] */
-  static gcc_constexpr_data unsigned FOCUS_TIMEOUT_MAX = 20 * 1000;
+  static constexpr unsigned FOCUS_TIMEOUT_MAX = 20 * 1000;
 
 private:
   InfoBoxContent *content;
-  ContainerWindow &parent;
 
   const InfoBoxSettings &settings;
   const InfoBoxLook &look;
   const UnitsLook &units_look;
 
-  int border_kind;
+  const unsigned border_kind;
+
+  const unsigned id;
 
   InfoBoxData data;
-
-  int id;
 
   /**
    * draw the selector event if the InfoBox window is not the system focus
@@ -107,12 +93,6 @@ public:
                  UPixelScalar width, UPixelScalar height);
 
   /**
-   * Sets the InfoBox ID to the given Value
-   * @param id New value of the InfoBox ID
-   */
-  void SetID(const int id);
-  int GetID() { return id; };
-  /**
    * Sets the InfoBox title to the given Value
    * @param Value New value of the InfoBox title
    */
@@ -131,9 +111,10 @@ public:
    * @param Height Height of the InfoBox
    */
   InfoBoxWindow(ContainerWindow &parent, PixelScalar x, PixelScalar y,
-                UPixelScalar width, UPixelScalar height, int border_flags,
+                UPixelScalar width, UPixelScalar height, unsigned border_flags,
                 const InfoBoxSettings &settings, const InfoBoxLook &_look,
                 const UnitsLook &units_look,
+                unsigned id,
                 WindowStyle style=WindowStyle());
 
   ~InfoBoxWindow();
@@ -146,6 +127,8 @@ public:
   void UpdateContent();
 
 protected:
+  void ShowDialog();
+
   bool HandleKey(InfoBoxContent::InfoBoxKeyCodes keycode);
 
 public:

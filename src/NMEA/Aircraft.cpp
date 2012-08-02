@@ -24,6 +24,7 @@ Copyright_License {
 #include "NMEA/Aircraft.hpp"
 #include "NMEA/MoreData.hpp"
 #include "NMEA/Derived.hpp"
+#include "Navigation/Aircraft.hpp"
 
 const AircraftState
 ToAircraftState(const MoreData &info, const DerivedInfo &calculated)
@@ -33,7 +34,6 @@ ToAircraftState(const MoreData &info, const DerivedInfo &calculated)
   /* SPEED_STATE */
   aircraft.ground_speed = info.ground_speed;
   aircraft.true_airspeed = info.true_airspeed;
-  aircraft.indicated_airspeed = info.indicated_airspeed;
 
   /* ALTITUDE_STATE */
   aircraft.altitude = info.nav_altitude;
@@ -43,9 +43,6 @@ ToAircraftState(const MoreData &info, const DerivedInfo &calculated)
   /* VARIO_INFO */
   aircraft.vario = info.brutto_vario;
   aircraft.netto_vario = info.netto_vario;
-
-  /* FLYING_STATE */
-  (FlyingState &)aircraft = calculated.flight;
 
   /* AIRCRAFT_STATE */
   aircraft.time = info.time;
@@ -57,6 +54,7 @@ ToAircraftState(const MoreData &info, const DerivedInfo &calculated)
     ? info.acceleration.g_load
     : fixed_one;
   aircraft.wind = calculated.GetWindOrZero();
+  aircraft.flying = calculated.flight.flying;
 
   return aircraft;
 }

@@ -22,8 +22,8 @@ Copyright_License {
 */
 
 #include "TimeConfigPanel.hpp"
-#include "DataField/Float.hpp"
-#include "DataField/Listener.hpp"
+#include "Form/DataField/Float.hpp"
+#include "Form/DataField/Listener.hpp"
 #include "Form/Form.hpp"
 #include "Form/Frame.hpp"
 #include "Formatter/TimeFormatter.hpp"
@@ -46,9 +46,6 @@ class TimeConfigPanel
 public:
   TimeConfigPanel()
     :RowFormWidget(UIGlobals::GetDialogLook()) {}
-
-private:
-  bool loading;
 
 public:
   void SetLocalTime(int utc_offset);
@@ -119,11 +116,11 @@ TimeConfigPanel::Save(bool &_changed, bool &_require_restart)
   if (settings_computer.utc_offset != ival) {
     settings_computer.utc_offset = ival;
 
-    Profile::Set(szProfileUTCOffsetSigned, ival);
+    Profile::Set(ProfileKeys::UTCOffsetSigned, ival);
     changed = true;
   }
 
-  changed |= SaveValue(SystemTimeFromGPS, szProfileSetSystemTimeFromGPS,
+  changed |= SaveValue(SystemTimeFromGPS, ProfileKeys::SetSystemTimeFromGPS,
                        settings_computer.set_system_time_from_gps);
 
   _changed |= changed;

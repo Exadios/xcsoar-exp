@@ -29,9 +29,9 @@ Copyright_License {
 #include "InfoBoxes/InfoBoxLayout.hpp"
 #include "PopupMessage.hpp"
 #include "BatteryTimer.hpp"
-#include "DisplayMode.hpp"
 #include "Form/ManagedWidget.hpp"
 
+#include <stdint.h>
 #include <assert.h>
 
 struct ComputerSettings;
@@ -48,23 +48,23 @@ class MapWindowProjection;
  * The XCSoar main window.
  */
 class MainWindow : public SingleWindow {
-  enum cmd {
+  enum class Command: uint8_t {
     /**
      * Check the airspace_warning_pending flag and show the airspace
      * warning dialog.
      */
-    CMD_AIRSPACE_WARNING,
+    AIRSPACE_WARNING,
 
     /**
      * Called by the #MergeThread when new GPS data is available.
      */
-    CMD_GPS_UPDATE,
+    GPS_UPDATE,
 
     /**
      * Called by the calculation thread when new calculation results
      * are available.  This updates the map and the info boxes.
      */
-    CMD_CALCULATED_UPDATE,
+    CALCULATED_UPDATE,
   };
 
   Look *look;
@@ -184,7 +184,7 @@ public:
   /**
    * Trigger a full redraw of the screen.
    */
-  void full_redraw();
+  void FullRedraw();
 
   bool GetFullScreen() const {
     return FullScreen;
@@ -194,27 +194,24 @@ public:
 
   /**
    * A new airspace warning was found.  This method sends the
-   * CMD_AIRSPACE_WARNING command to this window, which displays the
+   * Command::AIRSPACE_WARNING command to this window, which displays the
    * airspace warning dialog.
    */
   void SendAirspaceWarning() {
     airspace_warning_pending = true;
-    SendUser(CMD_AIRSPACE_WARNING);
+    SendUser((unsigned)Command::AIRSPACE_WARNING);
   }
 
   void SendGPSUpdate() {
-    SendUser(CMD_GPS_UPDATE);
+    SendUser((unsigned)Command::GPS_UPDATE);
   }
 
   void SendCalculatedUpdate() {
-    SendUser(CMD_CALCULATED_UPDATE);
+    SendUser((unsigned)Command::CALCULATED_UPDATE);
   }
 
   void SetTerrain(RasterTerrain *terrain);
   void SetTopography(TopographyStore *topography);
-
-  gcc_pure
-  DisplayMode GetDisplayMode() const;
 
   const Look &GetLook() const {
     assert(look != NULL);
@@ -290,7 +287,7 @@ protected:
   bool OnClose();
 
 #ifdef ANDROID
-  virtual void on_pause();
+  virtual void OnPause();
 #endif
 };
 

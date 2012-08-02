@@ -22,7 +22,7 @@
 */
 
 #include "Boundary.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
+#include "Geo/GeoVector.hpp"
 
 void
 OZBoundary::GenerateArcExcluding(const GeoPoint &center, fixed radius,

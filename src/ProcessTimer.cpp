@@ -64,7 +64,7 @@ MessageProcessTimer()
 {
   // don't display messages if airspace warning dialog is active
   if (!dlgAirspaceWarningVisible())
-    if (CommonInterface::main_window.popup.Render())
+    if (CommonInterface::main_window->popup.Render())
       // turn screen on if blanked and receive a new message
       ResetDisplayTimeOut();
 }
@@ -140,7 +140,7 @@ SystemProcessTimer()
 static void
 BlackboardProcessTimer()
 {
-  device_blackboard->expire_wall_clock();
+  device_blackboard->ExpireWallClock();
   XCSoarInterface::ExchangeBlackboard();
 }
 

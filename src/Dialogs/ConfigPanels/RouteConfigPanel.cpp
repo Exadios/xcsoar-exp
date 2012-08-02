@@ -23,12 +23,12 @@ Copyright_License {
 
 #include "RouteConfigPanel.hpp"
 #include "Profile/ProfileKeys.hpp"
-#include "DataField/Enum.hpp"
-#include "DataField/Listener.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/Listener.hpp"
 #include "Interface.hpp"
 #include "Language/Language.hpp"
 #include "Form/Form.hpp"
-#include "DataField/Base.hpp"
+#include "Form/DataField/Base.hpp"
 #include "Form/RowFormWidget.hpp"
 #include "UIGlobals.hpp"
 
@@ -97,7 +97,7 @@ RouteConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 
   RowFormWidget::Prepare(parent, rc);
 
-  static gcc_constexpr_data StaticEnumChoice route_mode_list[] = {
+  static constexpr StaticEnumChoice route_mode_list[] = {
     { (unsigned)RoutePlannerConfig::Mode::NONE, N_("None"),
       N_("Neither airspace nor terrain is used for route planning.") },
     { (unsigned)RoutePlannerConfig::Mode::TERRAIN, N_("Terrain"),
@@ -125,7 +125,7 @@ RouteConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
              route_planner.use_ceiling);
   SetExpertRow(RoutePlannerUseCeiling);
 
-  static gcc_constexpr_data StaticEnumChoice turning_reach_list[] = {
+  static constexpr StaticEnumChoice turning_reach_list[] = {
     { (unsigned)RoutePlannerConfig::ReachMode::OFF, N_("Off"),
       N_("Reach calculations disabled.") },
     { (unsigned)RoutePlannerConfig::ReachMode::STRAIGHT, N_("Straight"),
@@ -142,7 +142,7 @@ RouteConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
           turning_reach_list, (unsigned)route_planner.reach_calc_mode,
           this);
 
-  static gcc_constexpr_data StaticEnumChoice final_glide_terrain_list[] = {
+  static constexpr StaticEnumChoice final_glide_terrain_list[] = {
     { FeaturesSettings::FGT_OFF, N_("Off"), N_("Disables the reach display.") },
     { FeaturesSettings::FGT_LINE, N_("Line"), N_("Draws a dashed line at the glide reach.") },
     { FeaturesSettings::FGT_SHADE, N_("Shade"), N_("Shades terrain outside glide reach.") },
@@ -152,7 +152,7 @@ RouteConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
   AddEnum(_("Reach display"), NULL, final_glide_terrain_list,
           settings_computer.features.final_glide_terrain);
 
-  static gcc_constexpr_data StaticEnumChoice reach_polar_list[] = {
+  static constexpr StaticEnumChoice reach_polar_list[] = {
     { (unsigned)RoutePlannerConfig::Polar::TASK, N_("Task"),
       N_("Uses task glide polar.") },
     { (unsigned)RoutePlannerConfig::Polar::SAFETY, N_("Safety MC"),
@@ -176,22 +176,22 @@ RouteConfigPanel::Save(bool &_changed, bool &_require_restart)
   ComputerSettings &settings_computer = XCSoarInterface::SetComputerSettings();
   RoutePlannerConfig &route_planner = settings_computer.task.route_planner;
 
-  changed |= SaveValueEnum(RoutePlannerMode, szProfileRoutePlannerMode,
+  changed |= SaveValueEnum(RoutePlannerMode, ProfileKeys::RoutePlannerMode,
                            route_planner.mode);
 
-  changed |= SaveValueEnum(ReachPolarMode, szProfileReachPolarMode,
+  changed |= SaveValueEnum(ReachPolarMode, ProfileKeys::ReachPolarMode,
                            route_planner.reach_polar_mode);
 
-  changed |= SaveValueEnum(FinalGlideTerrain, szProfileFinalGlideTerrain,
+  changed |= SaveValueEnum(FinalGlideTerrain, ProfileKeys::FinalGlideTerrain,
                            settings_computer.features.final_glide_terrain);
 
-  changed |= SaveValue(RoutePlannerAllowClimb, szProfileRoutePlannerAllowClimb,
+  changed |= SaveValue(RoutePlannerAllowClimb, ProfileKeys::RoutePlannerAllowClimb,
                        route_planner.allow_climb);
 
-  changed |= SaveValue(RoutePlannerUseCeiling, szProfileRoutePlannerUseCeiling,
+  changed |= SaveValue(RoutePlannerUseCeiling, ProfileKeys::RoutePlannerUseCeiling,
                        route_planner.use_ceiling);
 
-  changed |= SaveValueEnum(TurningReach, szProfileTurningReach,
+  changed |= SaveValueEnum(TurningReach, ProfileKeys::TurningReach,
                            route_planner.reach_calc_mode);
   _changed |= changed;
   _require_restart |= require_restart;

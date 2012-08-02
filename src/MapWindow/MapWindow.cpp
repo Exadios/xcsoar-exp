@@ -52,6 +52,9 @@ MapWindow::MapWindow(const MapLook &_look,
    trail_renderer(look.trail),
    task(NULL), route_planner(NULL), glide_computer(NULL),
    marks(NULL),
+#ifdef HAVE_NOAA
+   noaa_store(NULL),
+#endif
    compass_visible(true)
 #ifndef ENABLE_OPENGL
    , ui_generation(1), buffer_generation(0),
@@ -164,7 +167,7 @@ MapWindow::UpdateWeather()
     return false;
 
   QuietOperationEnvironment operation;
-  weather->Reload((int)Basic().time, operation);
+  weather->Reload(Calculated().date_time_local.GetSecondOfDay(), operation);
   weather->SetViewCenter(visible_projection.GetGeoScreenCenter(),
                          visible_projection.GetScreenWidthMeters() / 2);
   return weather->IsDirty();
@@ -184,7 +187,7 @@ MapWindow::OnPaintBuffer(Canvas &canvas)
 #endif
 
   // Render the moving map
-  Render(canvas, get_client_rect());
+  Render(canvas, GetClientRect());
   draw_sw.Finish();
 
 #ifndef ENABLE_OPENGL

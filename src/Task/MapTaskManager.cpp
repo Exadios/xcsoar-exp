@@ -23,8 +23,10 @@
 #include "Task/MapTaskManager.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Components.hpp"
-#include "Dialogs/Internal.hpp"
 #include "Protection.hpp"
+#include "Engine/Task/Ordered/Points/OrderedTaskPoint.hpp"
+#include "Engine/Task/Factory/AbstractTaskFactory.hpp"
+#include "Interface.hpp"
 
 static const TaskBehaviour&
 GetTaskBehaviour()
@@ -41,11 +43,8 @@ AppendToTask(OrderedTask *task, const Waypoint &waypoint)
   int i = task->TaskSize() - 1;
   // skip all finish points
   while (i >= 0) {
-    const OrderedTaskPoint *tp = task->get_tp(i);
-    if (tp == NULL)
-      break;
-
-    if (tp->successor_allowed()) {
+    const OrderedTaskPoint &tp = task->GetPoint(i);
+    if (tp.IsSuccessorAllowed()) {
       ++i;
       break;
     }
@@ -152,8 +151,8 @@ InsertInTask(OrderedTask *task, const Waypoint &waypoint)
     if (i >= (int)task->TaskSize())
       return MapTaskManager::UNMODIFIED;
 
-    const OrderedTaskPoint *task_point = task->get_tp(i);
-    if (task_point == NULL || task_point->predecessor_allowed())
+    const OrderedTaskPoint &task_point = task->GetPoint(i);
+    if (task_point.IsPredecessorAllowed())
       break;
 
     ++i;

@@ -85,7 +85,7 @@ TopWindow::RefreshSize()
     height = new_height;
   }
 
-  resize(width, height);
+  Resize(width, height);
 }
 
 void
@@ -100,7 +100,7 @@ TopWindow::OnResize(UPixelScalar width, UPixelScalar height)
 }
 
 void
-TopWindow::on_pause()
+TopWindow::OnPause()
 {
   if (paused)
     return;
@@ -120,7 +120,7 @@ TopWindow::on_pause()
 }
 
 void
-TopWindow::on_resume()
+TopWindow::OnResume()
 {
   if (!paused)
     return;
@@ -139,7 +139,7 @@ match_pause_and_resume(const Event &event, void *ctx)
 }
 
 void
-TopWindow::pause()
+TopWindow::Pause()
 {
   event_queue->Purge(match_pause_and_resume, NULL);
   event_queue->Push(Event::PAUSE);
@@ -151,7 +151,7 @@ TopWindow::pause()
 }
 
 void
-TopWindow::resume()
+TopWindow::Resume()
 {
   event_queue->Purge(match_pause_and_resume, NULL);
   event_queue->Push(Event::RESUME);
@@ -212,7 +212,7 @@ TopWindow::OnEvent(const Event &event)
          resumed */
       return true;
 
-    if ((unsigned)event.x == get_width() && (unsigned)event.y == get_height())
+    if ((unsigned)event.x == GetWidth() && (unsigned)event.y == GetHeight())
       /* no-op */
       return true;
 
@@ -222,15 +222,15 @@ TopWindow::OnEvent(const Event &event)
        something */
     screen.Flip();
 
-    resize(event.x, event.y);
+    Resize(event.x, event.y);
     return true;
 
   case Event::PAUSE:
-    on_pause();
+    OnPause();
     return true;
 
   case Event::RESUME:
-    on_resume();
+    OnResume();
     return true;
   }
 
@@ -238,9 +238,9 @@ TopWindow::OnEvent(const Event &event)
 }
 
 int
-TopWindow::event_loop()
+TopWindow::RunEventLoop()
 {
-  refresh();
+  Refresh();
 
   EventLoop loop(*event_queue, *this);
   Event event;
@@ -251,7 +251,7 @@ TopWindow::event_loop()
 }
 
 void
-TopWindow::post_quit()
+TopWindow::PostQuit()
 {
   event_queue->Push(Event::QUIT);
 }

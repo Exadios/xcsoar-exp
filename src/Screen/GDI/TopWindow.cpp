@@ -96,7 +96,7 @@ TopWindow::Fullscreen()
 {
   ::SetForegroundWindow(hWnd);
 #ifndef _WIN32_WCE
-  show_on_top();
+  ShowOnTop();
 #else
 
   bool success = false;
@@ -124,7 +124,7 @@ TopWindow::Fullscreen()
 }
 
 void
-TopWindow::refresh()
+TopWindow::Refresh()
 {
   EventQueue::HandlePaintMessages();
 }
@@ -148,7 +148,7 @@ TopWindow::OnDeactivate()
 {
   /* remember the currently focused control */
   hSavedFocus = ::GetFocus();
-  if (hSavedFocus != NULL && !identify_descendant(hSavedFocus))
+  if (hSavedFocus != NULL && !IdentifyDescendant(hSavedFocus))
     hSavedFocus = NULL;
 
   return false;
@@ -178,7 +178,7 @@ TopWindow::OnMessage(HWND _hWnd, UINT message,
 }
 
 int
-TopWindow::event_loop()
+TopWindow::RunEventLoop()
 {
   EventLoop loop;
   MSG msg;
@@ -189,7 +189,7 @@ TopWindow::event_loop()
 }
 
 void
-TopWindow::post_quit()
+TopWindow::PostQuit()
 {
   ::PostQuitMessage(0);
 }

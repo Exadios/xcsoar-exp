@@ -23,7 +23,6 @@ Copyright_License {
 #include "DemoReplay.hpp"
 
 DemoReplay::DemoReplay():
-  AbstractReplay(),
   parms(),
   autopilot(parms),
   aircraft()
@@ -33,42 +32,17 @@ DemoReplay::DemoReplay():
 void
 DemoReplay::Start(const TaskAccessor& task, const GeoPoint& default_location)
 {
-  enabled = true;
-  autopilot.set_default_location(default_location);
+  autopilot.SetDefaultLocation(default_location);
   autopilot.Start(task);
   aircraft.Start(autopilot.location_start, autopilot.location_previous,
                  parms.start_alt);
 }
 
 bool
-DemoReplay::Update(TaskAccessor& task)
+DemoReplay::Update(fixed time_scale, TaskAccessor& task)
 {
-  autopilot.update_state(task, aircraft.GetState(), time_scale);
+  autopilot.UpdateState(task, aircraft.GetState(), time_scale);
   aircraft.Update(autopilot.heading, time_scale);
-  if (!autopilot.update_autopilot(task, aircraft.GetState(), aircraft.GetLastState())) {
-    enabled = false;
-    return false;
-  }
-  return true;
-}
-
-void
-DemoReplay::Stop()
-{
-  autopilot.Stop();
-  enabled = false;
-  OnStop();
-}
-
-bool
-DemoReplay::UpdateTime()
-{
-  // nothing yet
-  return true;
-}
-
-void
-DemoReplay::ResetTime()
-{
-  // nothing yet
+  return autopilot.UpdateAutopilot(task, aircraft.GetState(),
+                                   aircraft.GetLastState());
 }

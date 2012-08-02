@@ -2,6 +2,47 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
+Version 6.4.0.0-Exp - 2012/08/02
+* G-Meter Vario still not implemented.
+* Attempt to address bariometric Vario reposiveness (acceleration) for
+  paraglider pilots.
+
+Version 6.4 - 2012/07/31
+* calculations
+  - Contest: add FFVV NetCoupe (#1648)
+  - Contest: optionally include next task point in OLC classic/plus
+    score calculation (#1561)
+* devices
+  - support up to 6 devices
+  - buffered serial port I/O
+  - FLARM: new FLARM setup dialog
+  - added drivers for GliderTools GT Altimeter and Compass C-Probe
+  - LXNAV V7 and Nano configuration dialog
+* data files
+  - removed support for separate terrain/topography files, now XCM only
+* map
+  - configurable airspace rendering (#1847)
+  - "dots for sink" trail styles
+  - weather stations on the map (#1487)
+* user interface
+  - added "Airspace On/Off" menu button
+  - save Flarm team mates in the profile (#1997)
+  - added para- and hang glider and aircraft symbols (#1626)
+  - audio vario (#1576)
+  - improved airspace list rendering
+  - configurable map item list (#1936)
+  - "GoTo" button in map item list (#2069)
+  - show corresponding waypoint file in waypoint details dialog (#1624)
+  - show gesture path while dragging
+  - file manager, can download data files
+  - new option to disable the "final glide" display mode
+* infoboxes
+  - added automatic altitude infobox (baro. altitude with GPS fallback)
+  - added wind arrow infobox (#1598)
+* Android
+  - support x86 and MIPS CPUs
+  - Bluetooth server for NMEA out
+
 Version 6.3.11-Exp - 2012/07/29
 * G-Meter Vario still not implemented.
 * Attempt to address bariometric Vario reposiveness (acceleration) for

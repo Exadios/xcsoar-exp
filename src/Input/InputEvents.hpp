@@ -93,6 +93,7 @@ namespace InputEvents
 
   bool processKey(unsigned key);
   bool processGesture(const TCHAR *data);
+  bool IsGesture(const TCHAR *data);
 
   bool processNmea_real(unsigned key);
   bool processGlideComputer_real(unsigned gce_id);
@@ -100,14 +101,6 @@ namespace InputEvents
   // helpers (temporary)
 
   void sub_TerrainTopography(int vswitch);
-  void SetPan(bool enable);
-  void TogglePan();
-
-  /**
-   * Leave pan mode, but only if the map is visible and currently
-   * panning.
-   */
-  void LeavePan();
 
   void sub_PanCursor(int dx, int dy);
   void sub_AutoZoom(int vswitch);
@@ -183,6 +176,8 @@ namespace InputEvents
   void eventCredits(const TCHAR *misc);
   void eventWeather(const TCHAR *misc);
   void eventQuickMenu(const TCHAR *misc);
+  void eventFileManager(const TCHAR *misc);
+
   // -------
 };
 

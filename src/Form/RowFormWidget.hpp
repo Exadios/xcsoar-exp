@@ -28,7 +28,7 @@ Copyright_License {
 #include "Edit.hpp"
 #include "DataField/Base.hpp"
 #include "Util/StaticArray.hpp"
-#include "Units/Settings.hpp"
+#include "Units/Group.hpp"
 
 #include <assert.h>
 #include <stdint.h>
@@ -216,6 +216,22 @@ public:
   void AddReadOnly(const TCHAR *label, const TCHAR *help=NULL,
                    const TCHAR *text=NULL);
 
+  /**
+   * Add a read-only control displaying a floating-point value.  Use
+   * LoadValue() to update the displayed value.
+   */
+  void AddReadOnly(const TCHAR *label, const TCHAR *help,
+                   const TCHAR *display_format,
+                   fixed value);
+
+  /**
+   * Add a read-only control displaying a floating-point value.  Use
+   * LoadValue() to update the displayed value.
+   */
+  void AddReadOnly(const TCHAR *label, const TCHAR *help,
+                   const TCHAR *display_format,
+                   UnitGroup unit_group, fixed value);
+
   WndProperty *Add(const TCHAR *label, const TCHAR *help,
                    DataField *df);
 
@@ -253,6 +269,19 @@ public:
                         fixed min_value, fixed max_value,
                         fixed step, bool fine,
                         fixed value,
+                        DataFieldListener *listener) {
+    WndProperty *control = AddFloat(label, help, display_format, edit_format,
+                                    min_value, max_value, step, fine, value);
+    control->GetDataField()->SetListener(listener);
+    return control;
+  }
+
+  WndProperty *AddFloat(const TCHAR *label, const TCHAR *help,
+                        const TCHAR *display_format,
+                        const TCHAR *edit_format,
+                        fixed min_value, fixed max_value,
+                        fixed step, bool fine,
+                        fixed value,
                         DataField::DataAccessCallback callback=NULL);
 
   WndProperty *AddFloat(const TCHAR *label, const TCHAR *help,
@@ -262,6 +291,20 @@ public:
                         fixed step, bool fine,
                         UnitGroup unit_group, fixed value,
                         DataField::DataAccessCallback callback=NULL);
+
+  WndProperty *AddFloat(const TCHAR *label, const TCHAR *help,
+                        const TCHAR *display_format,
+                        const TCHAR *edit_format,
+                        fixed min_value, fixed max_value,
+                        fixed step, bool fine,
+                        UnitGroup unit_group, fixed value,
+                        DataFieldListener *listener) {
+    WndProperty *control = AddFloat(label, help, display_format, edit_format,
+                                    min_value, max_value, step, fine,
+                                    unit_group, value);
+    control->GetDataField()->SetListener(listener);
+    return control;
+  }
 
   WndProperty *AddEnum(const TCHAR *label, const TCHAR *help,
                        const StaticEnumChoice *list, unsigned value=0,
@@ -310,7 +353,7 @@ public:
     return control;
   }
 
-  WndProperty *AddSpacer();
+  void AddSpacer();
 
   WndProperty *AddFileReader(const TCHAR *label, const TCHAR *help,
                              const TCHAR *registry_key, const TCHAR *filters,
@@ -333,6 +376,14 @@ public:
   gcc_pure
   const Window &GetRow(unsigned i) const {
     return rows[i].GetWindow();
+  }
+
+  void SetReadOnly(unsigned i, bool read_only=true) {
+    GetControl(i).SetReadOnly(read_only);
+  }
+
+  void SetRowEnabled(unsigned i, bool enabled) {
+    GetControl(i).SetEnabled(enabled);
   }
 
   /**
@@ -430,6 +481,20 @@ public:
   void LoadValue(unsigned i, fixed value);
   void LoadValue(unsigned i, fixed value, UnitGroup unit_group);
 
+  /**
+   * Load a value into a control created by AddTime().
+   */
+  void LoadValueTime(unsigned i, int value);
+
+  /**
+   * Clear the value of the specified row.  This bypasses the
+   * DataField which may be attached to the control.  Use this method
+   * to indicate that there's no valid value currently.
+   */
+  void ClearValue(unsigned i) {
+    GetControl(i).SetText(_T(""));
+  }
+
   gcc_pure
   bool GetValueBoolean(unsigned i) const;
 
@@ -475,8 +540,12 @@ public:
 
   template<typename T>
   bool SaveValueEnum(unsigned i, T &value) const {
+#if GCC_VERSION >= 40700
+    /* this micro-optimisation triggers a cast-align warning on older
+       gcc versions */
     if (sizeof(T) == sizeof(int))
       return SaveValue(i, (int &)value);
+#endif
 
     int value2 = (int)value;
     if (!SaveValue(i, value2))
@@ -514,7 +583,7 @@ protected:
   PixelRect InitialControlRect(UPixelScalar height) {
     assert(IsDefined());
 
-    PixelRect rc = GetWindow()->get_client_rect();
+    PixelRect rc = GetWindow()->GetClientRect();
     rc.bottom = rc.top + height;
     return rc;
   }

@@ -25,11 +25,18 @@ Copyright_License {
 #include "InfoBoxes/Panel/WindEdit.hpp"
 #include "InfoBoxes/Panel/WindSetup.hpp"
 #include "InfoBoxes/Data.hpp"
+#include "InfoBoxes/InfoBoxWindow.hpp"
 #include "Interface.hpp"
 #include "Dialogs/dlgInfoBoxAccess.hpp"
 #include "Util/Macros.hpp"
 #include "Units/Units.hpp"
 #include "Language/Language.hpp"
+#include "Formatter/UserUnits.hpp"
+#include "Formatter/AngleFormatter.hpp"
+#include "Screen/Layout.hpp"
+#include "Renderer/WindArrowRenderer.hpp"
+#include "UIGlobals.hpp"
+#include "Look/MapLook.hpp"
 
 #include <tchar.h>
 #include <stdio.h>
@@ -96,7 +103,7 @@ InfoBoxContentTemperatureForecast::HandleKey(const InfoBoxKeyCodes keycode)
  * Subpart callback function pointers
  */
 
-static gcc_constexpr_data InfoBoxContentWind::PanelContent Panels[] = {
+static constexpr InfoBoxContentWind::PanelContent Panels[] = {
 InfoBoxContentWind::PanelContent (
   N_("Edit"),
   LoadWindEditPanel),
@@ -146,6 +153,10 @@ InfoBoxContentWindBearing::Update(InfoBoxData &data)
   }
 
   data.SetValue(info.wind.bearing);
+
+  TCHAR buffer[16];
+  FormatUserWindSpeed(info.wind.norm, buffer, true, false);
+  data.SetComment(buffer);
 }
 
 void
@@ -163,4 +174,70 @@ InfoBoxContentHeadWind::Update(InfoBoxData &data)
 
   // Set Unit
   data.SetValueUnit(Units::current.wind_speed_unit);
+}
+
+void
+InfoBoxContentHeadWindSimplified::Update(InfoBoxData &data)
+{
+  const NMEAInfo &basic = XCSoarInterface::Basic();
+  if (!basic.ground_speed_available || !basic.airspeed_available) {
+    data.SetInvalid();
+    return;
+  }
+
+  fixed value = basic.true_airspeed - basic.ground_speed;
+
+  // Set Value
+  data.SetValue(_T("%2.0f"), Units::ToUserWindSpeed(value));
+
+  // Set Unit
+  data.SetValueUnit(Units::current.wind_speed_unit);
+}
+
+void
+InfoBoxContentWindArrow::Update(InfoBoxData &data)
+{
+  const DerivedInfo &info = CommonInterface::Calculated();
+  if (!info.wind_available || info.wind.IsZero()) {
+    data.SetInvalid();
+    return;
+  }
+
+  data.SetCustom();
+
+  TCHAR speed_buffer[16], bearing_buffer[16];
+  FormatUserWindSpeed(info.wind.norm, speed_buffer, true, false);
+  FormatBearing(bearing_buffer, ARRAY_SIZE(bearing_buffer), info.wind.bearing);
+
+  StaticString<32> buffer;
+  buffer.Format(_T("%s / %s"), bearing_buffer, speed_buffer);
+  data.SetComment(buffer);
+}
+
+void
+InfoBoxContentWindArrow::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+{
+  const auto &info = CommonInterface::Calculated();
+
+  auto rc = infobox.GetValueRect();
+  RasterPoint pt = {
+    PixelScalar((rc.left + rc.right) / 2),
+    PixelScalar((rc.top + rc.bottom) / 2),
+  };
+
+  UPixelScalar padding = Layout::FastScale(5);
+  UPixelScalar size = std::min(rc.right - rc.left, rc.bottom - rc.top);
+
+  if (size > padding)
+    size -= padding;
+
+  auto angle = info.wind.bearing - info.heading;
+  auto length = std::min(size, (UPixelScalar)std::max(10, iround(info.wind.norm * 4)));
+
+  auto offset = -length / 2;
+
+  auto style = CommonInterface::GetMapSettings().wind_arrow_style;
+
+  WindArrowRenderer renderer(UIGlobals::GetMapLook().wind);
+  renderer.DrawArrow(canvas, pt, angle, length, style, offset);
 }

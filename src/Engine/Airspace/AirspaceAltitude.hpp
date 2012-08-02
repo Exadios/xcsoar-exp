@@ -26,13 +26,15 @@
 #include "Math/fixed.hpp"
 #include "Util/tstring.hpp"
 
+#include <stdint.h>
+
 class AtmosphericPressure;
 struct AltitudeState;
 
 /** Structure to hold airspace altitude boundary data */
 struct AirspaceAltitude
 {
-  enum Type {
+  enum class Type: uint8_t {
     UNDEFINED,
     MSL,
     AGL,
@@ -56,7 +58,7 @@ struct AirspaceAltitude
   AirspaceAltitude():altitude(fixed_zero),
                  flight_level(fixed_zero),
                  altitude_above_terrain(fixed_zero),
-                 type(UNDEFINED) {};
+                 type(Type::UNDEFINED) {};
 
   /**
    * Get Altitude AMSL (m) resolved from type.
@@ -77,7 +79,7 @@ struct AirspaceAltitude
    * @return True if this altitude limit is the terrain
    */
   bool IsTerrain() const {
-    return !positive(altitude_above_terrain) && type == AGL;
+    return !positive(altitude_above_terrain) && type == Type::AGL;
   }
 
   /**
@@ -88,6 +90,13 @@ struct AirspaceAltitude
    * @param alt Height of terrain at airspace center
    */
   void SetGroundLevel(const fixed alt);
+
+  /**
+   * Is it necessary to call SetGroundLevel() for this AirspaceAltitude?
+   */
+  bool NeedGroundLevel() const {
+    return type == Type::AGL;
+  }
 
   /**
    * Set atmospheric pressure (QNH) for flight-level based
@@ -106,15 +115,6 @@ struct AirspaceAltitude
    * @return String version of altitude reference
    */
   const tstring GetAsText(const bool concise = false) const;
-
-  /**
-   * Generate text form of airspace altitude boundary with user units
-   *
-   * @param concise Whether to produce short-form
-   *
-   * @return String version of altitude reference
-   */
-  const tstring GetAsTextUnits(const bool concise = false) const;
 
   static bool SortHighest(const AirspaceAltitude &a, const AirspaceAltitude &b) {
     return a.altitude > b.altitude;

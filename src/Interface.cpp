@@ -54,15 +54,7 @@ bool ActionInterface::force_shutdown = false;
 
 InterfaceBlackboard CommonInterface::blackboard;
 StatusMessageList CommonInterface::status_messages;
-MainWindow CommonInterface::main_window(status_messages);
-
-bool
-CommonInterface::IsPanning()
-{
-  const GlueMapWindow *map = main_window.GetMapIfActive();
-  return map != NULL && map->IsPanning();
-
-}
+MainWindow *CommonInterface::main_window;
 
 void
 XCSoarInterface::ReceiveGPS()
@@ -79,7 +71,7 @@ XCSoarInterface::ReceiveGPS()
 
   BroadcastGPSUpdate();
 
-  if (!Basic().flarm.traffic.empty())
+  if (!Basic().flarm.traffic.IsEmpty())
     /* auto-load FlarmNet when traffic is seen */
     LoadFlarmDatabases();
 }
@@ -118,10 +110,10 @@ ActionInterface::SendGetComputerSettings()
 {
   assert(calculation_thread != NULL);
 
-  main_window.SetComputerSettings(GetComputerSettings());
+  main_window->SetComputerSettings(GetComputerSettings());
 
   calculation_thread->SetComputerSettings(GetComputerSettings());
-  calculation_thread->SetScreenDistanceMeters(main_window.GetProjection().GetScreenDistanceMeters());
+  calculation_thread->SetScreenDistanceMeters(main_window->GetProjection().GetScreenDistanceMeters());
 }
 
 void
@@ -218,7 +210,7 @@ void ActionInterface::SetManualMacCready(fixed mc, bool to_devices)
   TaskBehaviour &task_behaviour = CommonInterface::SetComputerSettings().task;
   if (task_behaviour.auto_mc) {
     task_behaviour.auto_mc = false;
-    Profile::Set(szProfileAutoMc, false);
+    Profile::Set(ProfileKeys::AutoMc, false);
   }
 
   SetMacCready(mc, to_devices);
@@ -231,14 +223,18 @@ ActionInterface::SendMapSettings(const bool trigger_draw)
   // (via ProcessTimer()) rather than waiting for the idle timer every 500ms
 
   if (trigger_draw) {
-    main_window.UpdateGaugeVisibility();
+    main_window->UpdateGaugeVisibility();
     InfoBoxManager::ProcessTimer();
   }
 
-  main_window.SetMapSettings(GetMapSettings());
+  /* Don't show indicator when the gauge is indicating the traffic anyway */
+  SetMapSettings().show_flarm_alarm_level =
+    !GetUISettings().traffic.enable_gauge;
+
+  main_window->SetMapSettings(GetMapSettings());
 
   if (trigger_draw) {
-    main_window.full_redraw();
+    main_window->FullRedraw();
     BroadcastUISettingsUpdate();
   }
 
@@ -249,7 +245,7 @@ void
 ActionInterface::SignalShutdown(bool force)
 {
   force_shutdown = force;
-  main_window.close(); // signals close
+  main_window->Close(); // signals close
 }
 
 bool
@@ -258,6 +254,6 @@ XCSoarInterface::CheckShutdown()
   if (force_shutdown)
     return true;
 
-  return MessageBoxX(_("Quit program?"), _T("XCSoar"),
+  return ShowMessageBox(_("Quit program?"), _T("XCSoar"),
                      MB_YESNO | MB_ICONQUESTION) == IDYES;
 }

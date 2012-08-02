@@ -34,6 +34,7 @@ struct ComputerSettings;
 struct PlacesOfInterestSettings;
 
 class WaypointReaderBase;
+class DeviceBlackboard;
 
 /**
  * This class is used to parse different waypoint files
@@ -84,7 +85,9 @@ namespace WaypointGlue {
    * it resets all special waypoints indices
    */
   void SetHome(Waypoints &way_points, const RasterTerrain *terrain,
-               ComputerSettings &settings, const bool reset);
+               ComputerSettings &settings,
+               DeviceBlackboard *device_blackboard,
+               const bool reset);
 
   /**
    * Save the home waypoint and the teamcode reference location to the
@@ -101,12 +104,7 @@ namespace WaypointGlue {
   bool LoadWaypoints(Waypoints &way_points,
                      const RasterTerrain *terrain,
                      OperationEnvironment &operation);
-  bool LoadWaypointFile(int num, Waypoints &way_points,
-                        const RasterTerrain *terrain,
-                        OperationEnvironment &operation);
-  bool LoadMapFileWaypoints(int num, const TCHAR* key,
-                            Waypoints &way_points, const RasterTerrain *terrain,
-                            OperationEnvironment &operation);
+
   bool SaveWaypoints(const Waypoints &way_points);
   bool SaveWaypointFile(const Waypoints &way_points, int num);
 

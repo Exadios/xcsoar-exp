@@ -20,12 +20,11 @@
 }
 */
 
-#include "Replay/IGCParser.hpp"
+#include "IGC/IGCParser.hpp"
+#include "IGC/IGCFix.hpp"
 #include "IO/FileLineReader.hpp"
 #include "Engine/Trace/Trace.hpp"
 #include "Engine/Trace/Vector.hpp"
-#include "Engine/Task/TaskStats/CommonStats.hpp"
-#include "Engine/Navigation/Aircraft.hpp"
 #include "Printing.hpp"
 #include "TestUtil.hpp"
 
@@ -34,25 +33,15 @@
 #include <cstdio>
 
 static void
-OnAdvance(Trace &trace,
-           const GeoPoint &loc, const fixed speed,
-           const Angle bearing, const fixed alt,
-           const fixed baroalt, const fixed t)
+OnAdvance(Trace &trace, const GeoPoint &loc, const fixed alt, const fixed t)
 {
-  AircraftState new_state;
-  new_state.location = loc;
-  new_state.ground_speed = speed;
-  new_state.altitude = alt;
-  new_state.track = bearing;
-  new_state.time = t;
-  new_state.altitude_agl = alt;
-
   if (t>fixed_one) {
-    trace.append(new_state);
+    const TracePoint point(loc, unsigned(t), alt, fixed_zero, 0);
+    trace.push_back(point);
   }
 // get the trace, just so it's included in timing
   TracePointVector v;
-  trace.get_trace_points(v);
+  trace.GetPoints(v);
   if (trace.size()>1) {
 //    assert(abs(v.size()-trace.size())<2);
   }
@@ -79,12 +68,12 @@ TestTrace(const char *filename, unsigned ntrace, bool output=false)
     }
 
     IGCFix fix;
-    if (!IGCParseFix(line, fix))
+    if (!IGCParseFix(line, fix) || !fix.gps_valid)
       continue;
 
     OnAdvance(trace,
-               fix.location, fixed(30), Angle::Zero(),
-               fix.gps_altitude, fix.pressure_altitude,
+               fix.location,
+               fixed(fix.gps_altitude),
                fixed(fix.time.GetSecondOfDay()));
   }
   putchar('\n');

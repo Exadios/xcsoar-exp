@@ -59,22 +59,22 @@ WriteXMLString(TextWriter &writer, const TCHAR *source)
   while (*source) {
     switch (*source) {
     case '<':
-      writer.write("&lt;");
+      writer.Write("&lt;");
       break;
     case '>':
-      writer.write("&gt;");
+      writer.Write("&gt;");
       break;
     case '&':
-      writer.write("&amp;");
+      writer.Write("&amp;");
       break;
     case '\'':
-      writer.write("&apos;");
+      writer.Write("&apos;");
       break;
     case '"':
-      writer.write("&quot;");
+      writer.Write("&quot;");
       break;
     default:
-      writer.write(*source);
+      writer.Write(*source);
       break;
     }
     source++;
@@ -85,7 +85,7 @@ static void
 WriteIndent(TextWriter &writer, unsigned n)
 {
   while (n-- > 0)
-    writer.write(INDENTCHAR);
+    writer.Write(INDENTCHAR);
 }
 
 void
@@ -94,42 +94,41 @@ XMLNode::Serialise(const Data &data, TextWriter &writer, int format)
   bool has_children = false;
 
   // If the element has no name then assume this is the head node.
-  if (!StringIsEmpty(data.name)) {
+  if (!data.name.empty()) {
     // "<elementname "
     const unsigned cb = format == -1 ? 0 : format;
 
     WriteIndent(writer, cb);
-    writer.write('<');
+    writer.Write('<');
     if (data.is_declaration)
-      writer.write('?');
-    writer.write(data.name);
+      writer.Write('?');
+    writer.Write(data.name.c_str());
 
     // Enumerate attributes and add them to the string
     for (auto i = data.attributes.begin(), end = data.attributes.end();
          i != end; ++i) {
       const Data::Attribute *pAttr = &*i;
-      writer.write(' ');
-      writer.write(pAttr->name);
-      writer.write('=');
-      writer.write('"');
-      if (pAttr->value != NULL)
-        WriteXMLString(writer, pAttr->value);
-      writer.write('"');
+      writer.Write(' ');
+      writer.Write(pAttr->name.c_str());
+      writer.Write('=');
+      writer.Write('"');
+      WriteXMLString(writer, pAttr->value.c_str());
+      writer.Write('"');
       pAttr++;
     }
 
     has_children = data.HasChildren();
     if (data.is_declaration) {
-      writer.write('?');
-      writer.write('>');
+      writer.Write('?');
+      writer.Write('>');
       if (format != -1)
-        writer.newline();
+        writer.NewLine();
     } else
     // If there are child nodes we need to terminate the start tag
     if (has_children) {
-      writer.write('>');
+      writer.Write('>');
       if (format != -1)
-        writer.newline();
+        writer.NewLine();
     }
   }
 
@@ -137,7 +136,7 @@ XMLNode::Serialise(const Data &data, TextWriter &writer, int format)
   // determine the number of spaces used for prefixes.
   int child_format = -1;
   if (format != -1) {
-    if (!StringIsEmpty(data.name))
+    if (!data.name.empty())
       child_format = format + 1;
     else
       child_format = format;
@@ -152,13 +151,13 @@ XMLNode::Serialise(const Data &data, TextWriter &writer, int format)
     if (format != -1) {
       WriteIndent(writer, format + 1);
       WriteXMLString(writer, data.text.c_str());
-      writer.newline();
+      writer.NewLine();
     } else {
       WriteXMLString(writer, data.text.c_str());
     }
   }
 
-  if (!StringIsEmpty(data.name) && !data.is_declaration) {
+  if (!data.name.empty() && !data.is_declaration) {
     // If we have child entries we need to use long XML notation for
     // closing the element - "<elementname>blah blah blah</elementname>"
     if (has_children) {
@@ -166,25 +165,24 @@ XMLNode::Serialise(const Data &data, TextWriter &writer, int format)
       if (format != -1)
         WriteIndent(writer, format);
 
-      writer.write("</");
-      writer.write(data.name);
+      writer.Write("</");
+      writer.Write(data.name.c_str());
 
-      writer.write('>');
+      writer.Write('>');
     } else {
       // If there are no children we can use shorthand XML notation -
       // "<elementname/>"
       // "/>\0"
-      writer.write("/>");
+      writer.Write("/>");
     }
 
     if (format != -1)
-      writer.newline();
+      writer.NewLine();
   }
 }
 
 void
-XMLNode::Serialise(TextWriter &writer, int format) const
+XMLNode::Serialise(TextWriter &writer, bool format) const
 {
-  format = format ? 0 : -1;
-  Serialise(*d, writer, format);
+  Serialise(*d, writer, format ? 0 : -1);
 }

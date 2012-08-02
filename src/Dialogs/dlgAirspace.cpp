@@ -23,8 +23,10 @@ Copyright_License {
 
 #include "Dialogs/Airspace.hpp"
 #include "Dialogs/CallBackTable.hpp"
-#include "Dialogs/Internal.hpp"
-#include "Dialogs/Dialogs.h"
+#include "Dialogs/XML.hpp"
+#include "Form/Form.hpp"
+#include "Form/List.hpp"
+#include "Form/Button.hpp"
 #include "Profile/Profile.hpp"
 #include "Profile/AirspaceConfig.hpp"
 #include "Profile/ProfileKeys.hpp"
@@ -35,9 +37,13 @@ Copyright_License {
 #include "Look/Look.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
 #include "Airspace/AirspaceClass.hpp"
+#include "Renderer/AirspacePreviewRenderer.hpp"
+#include "Formatter/AirspaceFormatter.hpp"
 #include "Engine/Airspace/AirspaceWarningManager.hpp"
 #include "Components.hpp"
 #include "Computer/GlideComputer.hpp"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 
 #include <assert.h>
 
@@ -56,7 +62,7 @@ OnAirspacePaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
     CommonInterface::GetComputerSettings().airspace;
   const AirspaceRendererSettings &renderer =
     CommonInterface::GetMapSettings().airspace;
-  const AirspaceLook &look = CommonInterface::main_window.GetLook().map.airspace;
+  const AirspaceLook &look = CommonInterface::main_window->GetLook().map.airspace;
 
   PixelScalar w0 = rc.right - rc.left - Layout::FastScale(4);
 
@@ -65,24 +71,19 @@ OnAirspacePaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
   PixelScalar x0 = w0 - w1 - w2;
 
   if (color_mode) {
-    canvas.SelectWhitePen();
-#ifndef HAVE_HATCHED_BRUSH
-    canvas.Select(look.solid_brushes[i]);
-#else
-#ifdef HAVE_ALPHA_BLEND
-    if (renderer.transparency && AlphaBlendAvailable()) {
-      canvas.Select(look.solid_brushes[i]);
-    } else {
-#endif
-      canvas.SetTextColor(renderer.classes[i].color);
-      canvas.SetBackgroundColor(Color(0xFF, 0xFF, 0xFF));
-      canvas.Select(look.brushes[renderer.classes[i].brush]);
-#ifdef HAVE_ALPHA_BLEND
+    if (AirspacePreviewRenderer::PrepareFill(
+        canvas, (AirspaceClass)i, look, renderer)) {
+      canvas.Rectangle(rc.left + x0, rc.top + Layout::FastScale(2),
+                       rc.right - Layout::FastScale(2),
+                       rc.bottom - Layout::FastScale(2));
+      AirspacePreviewRenderer::UnprepareFill(canvas);
     }
-#endif
-#endif
-    canvas.Rectangle(rc.left + x0, rc.top + Layout::FastScale(2),
-        rc.right - Layout::FastScale(2), rc.bottom - Layout::FastScale(2));
+    if (AirspacePreviewRenderer::PrepareOutline(
+        canvas, (AirspaceClass)i, look, renderer)) {
+      canvas.Rectangle(rc.left + x0, rc.top + Layout::FastScale(2),
+                       rc.right - Layout::FastScale(2),
+                       rc.bottom - Layout::FastScale(2));
+    }
   } else {
     if (computer.warnings.class_warnings[i])
       canvas.text(rc.left + w0 - w1 - w2, rc.top + Layout::FastScale(2),
@@ -94,8 +95,8 @@ OnAirspacePaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
   }
 
   canvas.text_clipped(rc.left + Layout::FastScale(2),
-      rc.top + Layout::FastScale(2), x0 - Layout::FastScale(10),
-                      AirspaceClassAsText((AirspaceClass)i, false));
+                      rc.top + Layout::FastScale(2), x0 - Layout::FastScale(10),
+                      AirspaceFormatter::GetClass((AirspaceClass)i));
 }
 
 static void
@@ -110,33 +111,14 @@ OnAirspaceListEnter(unsigned index)
 
   if (color_mode) {
     AirspaceLook &look =
-      CommonInterface::main_window.SetLook().map.airspace;
+      CommonInterface::main_window->SetLook().map.airspace;
 
-    int color_index = dlgAirspaceColoursShowModal();
-    if (color_index >= 0) {
-      renderer.classes[index].color = AirspaceLook::preset_colors[color_index];
-      ActionInterface::SendMapSettings();
-      Profile::SetAirspaceColor(index, renderer.classes[index].color);
-      changed = true;
+    if (!ShowAirspaceClassRendererSettingsDialog((AirspaceClass)index))
+      return;
 
-      look.Initialise(renderer);
-    }
-
-#ifdef HAVE_HATCHED_BRUSH
-#ifdef HAVE_ALPHA_BLEND
-    if (!renderer.transparency || !AlphaBlendAvailable()) {
-#endif
-      int pattern_index = dlgAirspacePatternsShowModal(look);
-      if (pattern_index >= 0) {
-        renderer.classes[index].brush = pattern_index;
-        ActionInterface::SendMapSettings();
-        Profile::SetAirspaceBrush(index, renderer.classes[index].brush);
-        changed = true;
-      }
-#ifdef HAVE_ALPHA_BLEND
-    }
-#endif
-#endif
+    ActionInterface::SendMapSettings();
+    look.Initialise(renderer);
+    airspace_list->Invalidate();
   } else {
     renderer.classes[index].display = !renderer.classes[index].display;
     if (!renderer.classes[index].display)
@@ -146,11 +128,9 @@ OnAirspaceListEnter(unsigned index)
     Profile::SetAirspaceMode(index, renderer.classes[index].display,
                              computer.warnings.class_warnings[index]);
     changed = true;
+    ActionInterface::SendMapSettings();
+    airspace_list->Invalidate();
   }
-
-  airspace_list->Invalidate();
-
-  ActionInterface::SendMapSettings();
 }
 
 static void
@@ -162,10 +142,10 @@ OnCloseClicked(gcc_unused WndButton &Sender)
 static void
 OnLookupClicked(gcc_unused WndButton &Sender)
 {
-  dlgAirspaceSelect(airspace_database, GetAirspaceWarnings());
+  ShowAirspaceListDialog(airspace_database, GetAirspaceWarnings());
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(OnLookupClicked),
   DeclareCallBackEntry(NULL)

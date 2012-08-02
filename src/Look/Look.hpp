@@ -25,6 +25,7 @@ Copyright_License {
 #define XCSOAR_LOOK_HPP
 
 #include "DialogLook.hpp"
+#include "GestureLook.hpp"
 #include "TerminalLook.hpp"
 #include "UnitsLook.hpp"
 #include "VarioLook.hpp"
@@ -35,15 +36,17 @@ Copyright_License {
 #include "CrossSectionLook.hpp"
 #include "HorizonLook.hpp"
 #include "TrafficLook.hpp"
-#include "Gauge/FlarmTrafficLook.hpp"
+#include "FlarmTrafficLook.hpp"
 #include "InfoBoxLook.hpp"
 #include "FinalGlideBarLook.hpp"
 #include "IconLook.hpp"
+#include "ThermalAssistantLook.hpp"
 
 struct UISettings;
 
 struct Look {
   DialogLook dialog;
+  GestureLook gesture;
   TerminalLook terminal;
   UnitsLook units;
   VarioLook vario;
@@ -59,6 +62,8 @@ struct Look {
   InfoBoxLook info_box;
   FinalGlideBarLook final_glide_bar;
   IconLook icon;
+  ThermalAssistantLook thermal_assistant_gauge;
+  ThermalAssistantLook thermal_assistant_dialog;
 
   void Initialise();
   void InitialiseConfigured(const UISettings &settings);

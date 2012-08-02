@@ -24,41 +24,62 @@ Copyright_License {
 #include "OS/Args.hpp"
 #include "DebugReplay.hpp"
 #include "Engine/Trace/Trace.hpp"
-#include "NMEA/Aircraft.hpp"
 
 int main(int argc, char **argv)
 {
-  Args args(argc, argv, "DRIVER FILE");
+  unsigned max_points = 1000;
+
+  Args args(argc, argv, "[--max-points=1000] DRIVER FILE");
+
+  const char *arg;
+  while ((arg = args.PeekNext()) != NULL && *arg == '-') {
+    args.Skip();
+
+    const char *value;
+    if ((value = StringAfterPrefix(arg, "--max-points=")) != NULL) {
+      unsigned _max_points = strtol(value, NULL, 10);
+      if (_max_points > 0)
+        max_points = _max_points;
+    } else {
+      args.UsageError();
+    }
+  }
+
   DebugReplay *replay = CreateDebugReplay(args);
   if (replay == NULL)
     return EXIT_FAILURE;
 
   args.ExpectEnd();
 
-  const unsigned max_points = 1000;
   Trace trace(0, Trace::null_time, max_points);
+
+  bool takeoff = false;
 
   while (replay->Next()) {
     const MoreData &basic = replay->Basic();
     const DerivedInfo &calculated = replay->Calculated();
 
     if (!basic.time_available || !basic.location_available ||
-        !basic.NavAltitudeAvailable() ||
-        !calculated.flight.flying)
+        !basic.NavAltitudeAvailable())
       continue;
 
-    const AircraftState state = ToAircraftState(basic, calculated);
-    trace.append(state);
+    trace.push_back(TracePoint(basic));
+
+    if (calculated.flight.flying && !takeoff) {
+      takeoff = true;
+      trace.EraseEarlierThan(calculated.flight.takeoff_time);
+    }
   }
 
   delete replay;
 
   for (auto i = trace.begin(), end = trace.end(); i != end; ++i) {
     const TracePoint &point = *i;
-    printf("%u %f %f %d\n",
+    printf("%u %f %f %d %u\n",
            point.GetTime(),
-           (double)point.get_location().latitude.Degrees(),
-           (double)point.get_location().longitude.Degrees(),
-           point.GetIntegerAltitude());
+           (double)point.GetLocation().latitude.Degrees(),
+           (double)point.GetLocation().longitude.Degrees(),
+           point.GetIntegerAltitude(),
+           point.GetEngineNoiseLevel());
   }
 }

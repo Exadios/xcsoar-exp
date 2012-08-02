@@ -22,7 +22,7 @@
 
 #include "SectorZone.hpp"
 #include "Boundary.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
+#include "Geo/GeoVector.hpp"
 
 GeoPoint
 SectorZone::GetBoundaryParametric(fixed t) const
@@ -76,9 +76,9 @@ SectorZone::UpdateSector()
 }
 
 bool 
-SectorZone::IsInSector(const AircraftState &ref) const
+SectorZone::IsInSector(const GeoPoint &location) const
 {
-  GeoVector f(GetReference(), ref.location);
+  GeoVector f(GetReference(), location);
 
   return f.distance <= GetRadius() && IsAngleInSector(f.bearing);
 }

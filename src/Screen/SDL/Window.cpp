@@ -80,7 +80,7 @@ Window::GetParentClientRect() const
 {
   assert(parent != NULL);
 
-  return parent->get_client_rect();
+  return parent->GetClientRect();
 }
 
 void
@@ -128,9 +128,18 @@ Window::ClearFocus()
 }
 
 void
+Window::FocusParent()
+{
+  AssertThread();
+  assert(parent != NULL);
+
+  parent->SetFocus();
+}
+
+void
 Window::SetCapture()
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
   if (parent != NULL)
@@ -142,7 +151,7 @@ Window::SetCapture()
 void
 Window::ReleaseCapture()
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
   capture = false;
@@ -172,16 +181,6 @@ Window::Invalidate()
 }
 
 void
-Window::Expose()
-{
-  if (!visible)
-    return;
-
-  if (parent != NULL)
-    parent->Expose();
-}
-
-void
 Window::Show()
 {
   AssertThread();
@@ -208,7 +207,7 @@ Window::Hide()
 void
 Window::BringToTop()
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
   parent->BringChildToTop(*this);
@@ -217,7 +216,7 @@ Window::BringToTop()
 void
 Window::BringToBottom()
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
   parent->BringChildToBottom(*this);

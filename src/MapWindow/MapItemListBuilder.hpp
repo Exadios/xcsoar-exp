@@ -24,7 +24,8 @@ Copyright_License {
 #ifndef XCSOAR_MAP_ITEM_LIST_BUILDER_HPP
 #define XCSOAR_MAP_ITEM_LIST_BUILDER_HPP
 
-#include "Engine/Navigation/GeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
+#include "Weather/Features.hpp"
 
 class MapItemList;
 class Angle;
@@ -37,11 +38,13 @@ struct MoreData;
 struct DerivedInfo;
 class ProtectedTaskManager;
 class ProtectedMarkers;
-struct FlarmState;
+struct TrafficList;
 struct ThermalLocatorInfo;
 struct NMEAInfo;
 class RasterTerrain;
 class ProtectedRoutePlanner;
+struct TeamCodeSettings;
+class NOAAStore;
 
 class MapItemListBuilder
 {
@@ -65,9 +68,13 @@ public:
                           const MoreData &basic, const DerivedInfo &calculated);
   void AddTaskOZs(const ProtectedTaskManager &task);
   void AddMarkers(const ProtectedMarkers &marks);
-  void AddTraffic(const FlarmState &flarm);
+  void AddTraffic(const TrafficList &flarm, const TeamCodeSettings &teamcode);
   void AddThermals(const ThermalLocatorInfo &thermals,
                    const MoreData &basic, const DerivedInfo &calculated);
+
+#ifdef HAVE_NOAA
+  void AddWeatherStations(NOAAStore &store);
+#endif
 };
 
 #endif

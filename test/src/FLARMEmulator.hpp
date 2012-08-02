@@ -52,19 +52,23 @@ public:
 private:
   void PFLAC_S(NMEAInputLine &line) {
     char name[64];
-    line.read(name, ARRAY_SIZE(name));
-    const char *value = line.rest();
+    line.Read(name, ARRAY_SIZE(name));
 
-    settings[name] = value;
+    const auto value = line.Rest();
+    NarrowString<256> value_buffer;
+    value_buffer.SetASCII(value.begin(), value.end());
+
+    settings[name] = value_buffer;
 
     char buffer[512];
-    snprintf(buffer, ARRAY_SIZE(buffer), "PFLAC,A,%s,%s", name, value);
-    PortWriteNMEA(*port, buffer);
+    snprintf(buffer, ARRAY_SIZE(buffer), "PFLAC,A,%s,%s", name,
+             value_buffer.c_str());
+    PortWriteNMEA(*port, buffer, *env);
   }
 
   void PFLAC_R(NMEAInputLine &line) {
     char name[64];
-    line.read(name, ARRAY_SIZE(name));
+    line.Read(name, ARRAY_SIZE(name));
 
     auto i = settings.find(name);
     if (i == settings.end())
@@ -74,12 +78,12 @@ private:
 
     char buffer[512];
     snprintf(buffer, ARRAY_SIZE(buffer), "PFLAC,A,%s,%s", name, value);
-    PortWriteNMEA(*port, buffer);
+    PortWriteNMEA(*port, buffer, *env);
   }
 
   void PFLAC(NMEAInputLine &line) {
     char command[4];
-    line.read(command, ARRAY_SIZE(command));
+    line.Read(command, ARRAY_SIZE(command));
 
     if (strcmp(command, "S") == 0)
       PFLAC_S(line);
@@ -219,7 +223,7 @@ protected:
 
     NMEAInputLine line(_line);
     char cmd[32];
-    line.read(cmd, ARRAY_SIZE(cmd));
+    line.Read(cmd, ARRAY_SIZE(cmd));
 
     if (strcmp(cmd, "$PFLAC") == 0)
       PFLAC(line);

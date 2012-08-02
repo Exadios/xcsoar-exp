@@ -1,12 +1,12 @@
 #ifndef AIRSPACE_NEAREST_SORT_HPP
 #define AIRSPACE_NEAREST_SORT_HPP
 
-#include "Navigation/GeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
 #include "Predicate/AirspacePredicate.hpp"
-#include <queue>
-#include "Navigation/Aircraft.hpp"
 #include "Airspace.hpp"
 #include "AirspaceInterceptSolution.hpp"
+
+#include <queue>
 
 class AirspaceVisitor;
 class Airspaces;
@@ -85,7 +85,8 @@ public:
  * 
  * @return Solution
  */
-  virtual AirspaceInterceptSolution solve_intercept(const AbstractAirspace &a) const;
+  virtual AirspaceInterceptSolution solve_intercept(const AbstractAirspace &a,
+                                                    const TaskProjection &projection) const;
 
 /** 
  * Metric defining sort criteria

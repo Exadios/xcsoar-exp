@@ -60,7 +60,7 @@ protected:
   int text_style;
 
 public:
-  gcc_constexpr_ctor
+  constexpr
   WindowStyle()
     :visible(true), enabled(true),
      tab_stop(false), control_parent(false),
@@ -79,7 +79,7 @@ protected:
 #endif
 
 public:
-  gcc_constexpr_ctor
+  constexpr
   WindowStyle()
     :style(WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS),
      ex_style(0), double_clicks(false), custom_painting(false)
@@ -254,7 +254,7 @@ public:
    * Is it this window?
    */
   gcc_pure
-  bool identify(HWND h) const {
+  bool Identify(HWND h) const {
     return h == hWnd;
   }
 
@@ -262,7 +262,7 @@ public:
    * Is it this window or one of its descendants?
    */
   gcc_pure
-  bool identify_descendant(HWND h) const {
+  bool IdentifyDescendant(HWND h) const {
     return h == hWnd || ::IsChild(hWnd, h);
   }
 #endif
@@ -302,40 +302,40 @@ public:
   }
 
 #ifndef USE_GDI
-  PixelScalar get_top() const {
+  PixelScalar GetTop() const {
     return top;
   }
 
-  PixelScalar get_left() const {
+  PixelScalar GetLeft() const {
     return left;
   }
 
-  UPixelScalar get_width() const {
+  UPixelScalar GetWidth() const {
     return width;
   }
 
-  UPixelScalar get_height() const {
+  UPixelScalar GetHeight() const {
     return height;
   }
 
-  PixelScalar get_right() const {
-    return get_left() + get_width();
+  PixelScalar GetRight() const {
+    return GetLeft() + GetWidth();
   }
 
-  PixelScalar get_bottom() const {
-    return get_top() + get_height();
+  PixelScalar GetBottom() const {
+    return GetTop() + GetHeight();
   }
 
-  int get_text_style() const {
+  int GetTextStyle() const {
     return text_style;
   }
 #else /* USE_GDI */
-  UPixelScalar get_width() const {
-    return get_size().cx;
+  UPixelScalar GetWidth() const {
+    return GetSize().cx;
   }
 
-  UPixelScalar get_height() const {
-    return get_size().cy;
+  UPixelScalar GetHeight() const {
+    return GetSize().cy;
   }
 #endif
 
@@ -370,7 +370,7 @@ public:
 #endif
 
 #ifdef USE_GDI
-  void created(HWND _hWnd);
+  void Created(HWND _hWnd);
 #endif
 
   void reset();
@@ -382,8 +382,8 @@ public:
   gcc_pure
   ContainerWindow *GetRootOwner();
 
-  void move(PixelScalar left, PixelScalar top) {
-    assert_none_locked();
+  void Move(PixelScalar left, PixelScalar top) {
+    AssertNoneLocked();
     AssertThread();
 
 #ifndef USE_GDI
@@ -397,14 +397,14 @@ public:
 #endif
   }
 
-  void move(PixelScalar left, PixelScalar top,
+  void Move(PixelScalar left, PixelScalar top,
             UPixelScalar width, UPixelScalar height) {
-    assert_none_locked();
+    AssertNoneLocked();
     AssertThread();
 
 #ifndef USE_GDI
-    move(left, top);
-    resize(width, height);
+    Move(left, top);
+    Resize(width, height);
 #else /* USE_GDI */
     ::SetWindowPos(hWnd, NULL, left, top, width, height,
                    SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
@@ -412,21 +412,21 @@ public:
 #endif
   }
 
-  void move(const PixelRect rc) {
-    move(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
+  void Move(const PixelRect rc) {
+    Move(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
   }
 
   /**
    * Like move(), but does not trigger a synchronous redraw.  The
    * caller is responsible for redrawing.
    */
-  void fast_move(PixelScalar left, PixelScalar top,
-                 UPixelScalar width, UPixelScalar height) {
-    assert_none_locked();
+  void FastMove(PixelScalar left, PixelScalar top,
+                UPixelScalar width, UPixelScalar height) {
+    AssertNoneLocked();
     AssertThread();
 
 #ifndef USE_GDI
-    move(left, top, width, height);
+    Move(left, top, width, height);
 #else /* USE_GDI */
     ::SetWindowPos(hWnd, NULL, left, top, width, height,
                    SWP_NOCOPYBITS | SWP_NOREDRAW | SWP_DEFERERASE |
@@ -434,12 +434,16 @@ public:
 #endif
   }
 
+  void FastMove(const PixelRect rc) {
+    FastMove(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
+  }
+
   /**
    * Move the Window to the specified position within the parent
    * ContainerWindow and make it visible.
    */
   void MoveAndShow(const PixelRect rc) {
-    assert_none_locked();
+    AssertNoneLocked();
     AssertThread();
 
 #ifdef USE_GDI
@@ -448,13 +452,13 @@ public:
                    SWP_SHOWWINDOW | SWP_NOACTIVATE |
                    SWP_NOZORDER | SWP_NOOWNERZORDER);
 #else
-    move(rc);
+    Move(rc);
     Show();
 #endif
   }
 
-  void resize(UPixelScalar width, UPixelScalar height) {
-    assert_none_locked();
+  void Resize(UPixelScalar width, UPixelScalar height) {
+    AssertNoneLocked();
     AssertThread();
 
 #ifndef USE_GDI
@@ -479,7 +483,7 @@ public:
   void BringToBottom();
 #else
   void BringToTop() {
-    assert_none_locked();
+    AssertNoneLocked();
     AssertThread();
 
     /* not using BringWindowToTop() because it activates the
@@ -490,7 +494,7 @@ public:
   }
 
   void BringToBottom() {
-    assert_none_locked();
+    AssertNoneLocked();
     AssertThread();
 
     ::SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0,
@@ -499,8 +503,8 @@ public:
   }
 #endif
 
-  void show_on_top() {
-    assert_none_locked();
+  void ShowOnTop() {
+    AssertNoneLocked();
     AssertThread();
 
 #ifndef USE_GDI
@@ -513,8 +517,18 @@ public:
 #endif
   }
 
-  void set_font(const Font &_font) {
-    assert_none_locked();
+#ifndef USE_GDI
+  const Font &GetFont() const {
+    AssertThread();
+    assert(IsDefined());
+    assert(font != NULL);
+
+    return *font;
+  }
+#endif
+
+  void SetFont(const Font &_font) {
+    AssertNoneLocked();
     AssertThread();
 
 #ifndef USE_GDI
@@ -532,11 +546,11 @@ public:
    * flag is set for this Window.
    */
   gcc_pure
-  bool is_visible() const {
+  bool IsVisible() const {
 #ifndef USE_GDI
     return visible;
 #else
-    return (get_window_style() & WS_VISIBLE) != 0;
+    return (GetStyle() & WS_VISIBLE) != 0;
 #endif
   }
 
@@ -575,7 +589,7 @@ public:
 #endif
   }
 
-  void set_visible(bool visible) {
+  void SetVisible(bool visible) {
     if (visible)
       Show();
     else
@@ -583,11 +597,11 @@ public:
   }
 
 #ifndef USE_GDI
-  bool is_tab_stop() const {
+  bool IsTabStop() const {
     return tab_stop;
   }
 
-  bool is_control_parent() const {
+  bool IsControlParent() const {
     return control_parent;
   }
 #endif
@@ -596,7 +610,7 @@ public:
    * Can this window get user input?
    */
   gcc_pure
-  bool is_enabled() const {
+  bool IsEnabled() const {
 #ifndef USE_GDI
     return enabled;
 #else
@@ -621,19 +635,33 @@ public:
    */
   virtual void ClearFocus();
 
+  /**
+   * Send keyboard focus to this window's parent.  This should usually
+   * only be called when this window owns the keyboard focus, and
+   * doesn't want it anymore.
+   */
+  void FocusParent();
+
 #else /* USE_GDI */
 
   void SetFocus() {
-    assert_none_locked();
+    AssertNoneLocked();
     AssertThread();
 
     ::SetFocus(hWnd);
   }
 
+  void FocusParent() {
+    AssertNoneLocked();
+    AssertThread();
+
+    ::SetFocus(::GetParent(hWnd));
+  }
+
 #endif /* USE_GDI */
 
   gcc_pure
-  bool has_focus() const {
+  bool HasFocus() const {
 #ifndef USE_GDI
     return focused;
 #else
@@ -648,27 +676,32 @@ public:
 #else /* USE_GDI */
 
   void SetCapture() {
-    assert_none_locked();
+    AssertNoneLocked();
     AssertThread();
 
     ::SetCapture(hWnd);
   }
 
   void ReleaseCapture() {
-    assert_none_locked();
+    AssertNoneLocked();
     AssertThread();
 
     ::ReleaseCapture();
   }
 
-  WNDPROC set_wndproc(WNDPROC wndproc)
+  WNDPROC SetWndProc(WNDPROC wndproc)
   {
     AssertThread();
 
     return (WNDPROC)::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)wndproc);
   }
 
-  void set_userdata(void *value)
+  gcc_const
+  static void *GetUserData(HWND hWnd) {
+    return (void *)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
+  }
+
+  void SetUserData(void *value)
   {
     AssertThread();
 
@@ -684,11 +717,11 @@ public:
    * Returns the position on the screen.
    */
   gcc_pure
-  const PixelRect get_screen_position() const
+  const PixelRect GetScreenPosition() const
   {
     PixelRect rc;
 #ifndef USE_GDI
-    rc = get_position();
+    rc = GetPosition();
     ToScreen(rc);
 #else
     ::GetWindowRect(hWnd, &rc);
@@ -700,16 +733,12 @@ public:
    * Returns the position within the parent window.
    */
   gcc_pure
-  const PixelRect get_position() const
+  const PixelRect GetPosition() const
   {
-    PixelRect rc;
 #ifndef USE_GDI
-    rc.left = get_left();
-    rc.top = get_top();
-    rc.right = get_right();
-    rc.bottom = get_bottom();
+    return { GetLeft(), GetTop(), GetRight(), GetBottom() };
 #else
-    rc = get_screen_position();
+    PixelRect rc = GetScreenPosition();
 
     HWND parent = ::GetParent(hWnd);
     if (parent != NULL) {
@@ -727,19 +756,19 @@ public:
       rc.right = pt.x;
       rc.bottom = pt.y;
     }
-#endif
     return rc;
+#endif
   }
 
   gcc_pure
-  const PixelRect get_client_rect() const
+  const PixelRect GetClientRect() const
   {
     PixelRect rc;
 #ifndef USE_GDI
     rc.left = 0;
     rc.top = 0;
-    rc.right = get_width();
-    rc.bottom = get_height();
+    rc.right = GetWidth();
+    rc.bottom = GetHeight();
 #else
     ::GetClientRect(hWnd, &rc);
 #endif
@@ -747,13 +776,17 @@ public:
   }
 
   gcc_pure
-  const PixelSize get_size() const
+  const PixelSize GetSize() const
   {
-    PixelRect rc = get_client_rect();
+#ifdef USE_GDI
+    PixelRect rc = GetClientRect();
     PixelSize s;
     s.cx = rc.right;
     s.cy = rc.bottom;
     return s;
+#else
+    return { PixelScalar(GetWidth()), PixelScalar(GetHeight()) };
+#endif
   }
 
   /**
@@ -778,11 +811,6 @@ public:
   void Setup(Canvas &canvas);
 
   virtual void Invalidate();
-
-  /**
-   * Ensures that the window is updated on the physical screen.
-   */
-  virtual void Expose();
 #else /* USE_GDI */
   HDC BeginPaint(PAINTSTRUCT *ps) {
     AssertThread();
@@ -796,13 +824,8 @@ public:
     ::EndPaint(hWnd, ps);
   }
 
-  void scroll(PixelScalar dx, PixelScalar dy, const PixelRect &rc) {
+  void Scroll(PixelScalar dx, PixelScalar dy, const PixelRect &rc) {
     ::ScrollWindowEx(hWnd, dx, dy, &rc, NULL, NULL, NULL, SW_INVALIDATE);
-  }
-
-  gcc_const
-  static void *get_userdata(HWND hWnd) {
-    return (void *)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
   }
 
   /**
@@ -810,8 +833,8 @@ public:
    * is legal.
    */
   gcc_const
-  static Window *get_unchecked(HWND hWnd) {
-    return (Window *)get_userdata(hWnd);
+  static Window *GetUnchecked(HWND hWnd) {
+    return (Window *)GetUserData(hWnd);
   }
 
   /**
@@ -820,7 +843,7 @@ public:
    * have called InstallWndProc().
    */
   gcc_const
-  static Window *get(HWND hWnd) {
+  static Window *GetChecked(HWND hWnd) {
     WNDPROC wndproc = (WNDPROC)::GetWindowLongPtr(hWnd, GWLP_WNDPROC);
     return wndproc == WndProc
 #ifdef _WIN32_WCE
@@ -830,12 +853,12 @@ public:
          really means */
       || ((DWORD)wndproc & 0xffffff) == (DWORD)WndProc
 #endif
-      ? get_unchecked(hWnd)
+      ? GetUnchecked(hWnd)
       : NULL;
   }
 
   gcc_pure
-  LONG get_window_long(int nIndex) const {
+  LONG GetWindowLong(int nIndex) const {
     return ::GetWindowLong(hWnd, nIndex);
   }
 
@@ -843,19 +866,19 @@ public:
     ::SetWindowLong(hWnd, nIndex, value);
   }
 
-  LONG get_window_style() const {
-    return get_window_long(GWL_STYLE);
+  LONG GetStyle() const {
+    return GetWindowLong(GWL_STYLE);
   }
 
-  void SetWindowStyle(LONG value) {
+  void SetStyle(LONG value) {
     SetWindowLong(GWL_STYLE, value);
   }
 
-  LONG get_window_ex_style() const {
-    return get_window_long(GWL_EXSTYLE);
+  LONG GetExStyle() const {
+    return GetWindowLong(GWL_EXSTYLE);
   }
 
-  void SetWindowExStyle(LONG value) {
+  void SetExStyle(LONG value) {
     SetWindowLong(GWL_EXSTYLE, value);
   }
 #endif

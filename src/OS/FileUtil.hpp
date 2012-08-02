@@ -24,6 +24,8 @@ Copyright_License {
 #ifndef XCSOAR_OS_FILEUTIL_HPP
 #define XCSOAR_OS_FILEUTIL_HPP
 
+#include "Compiler.h"
+
 #include <stdint.h>
 #include <tchar.h>
 
@@ -58,7 +60,9 @@ namespace Directory
    * @param path File system path to check
    * @return True if the folder exists
    */
+  gcc_pure
   bool Exists(const TCHAR* path);
+
   /**
    * Creates a new folder at the given path
    * @param path Path to the folder that should be created
@@ -88,10 +92,18 @@ namespace Directory
 namespace File
 {
   /**
+   * Returns whether a file or directory or any other directory entry
+   * with the specified name exists.
+   */
+  gcc_pure
+  bool ExistsAny(const TCHAR *path);
+
+  /**
    * Returns whether the given file exists and is a file (not a folder)
    * @param path File system path to check
    * @return True if the file exists
    */
+  gcc_pure
   bool Exists(const TCHAR* path);
 
   /**
@@ -122,11 +134,39 @@ namespace File
   }
 
   /**
+   * Atomically rename a file, optionally replacing an existing file.
+   *
+   * Due to API limitations, this operation is not atomic on Windows
+   * CE.
+   */
+  static inline bool
+  Replace(const TCHAR *oldpath, const TCHAR *newpath)
+  {
+#ifdef HAVE_POSIX
+    return rename(oldpath, newpath) == 0;
+#elif defined(_WIN32_WCE)
+    /* MoveFileEx() is not available on Windows CE, we need to fall
+       back to non-atomic delete and rename */
+    Delete(newpath);
+    return MoveFile(oldpath, newpath) != 0;
+#else
+    return MoveFileEx(oldpath, newpath, MOVEFILE_REPLACE_EXISTING) != 0;
+#endif
+  }
+
+  /**
+   * Returns the size of a regular file in bytes.
+   */
+  gcc_pure
+  uint64_t GetSize(const TCHAR *path);
+
+  /**
    * Get a timestamp of last modification that can be used to compare
    * two files with each other
    * @param path Path to the file
    * @return 0 in case of failure or a timestamp for comparison
    */
+  gcc_pure
   uint64_t GetLastModification(const TCHAR *path);
 
   /**

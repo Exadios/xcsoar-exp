@@ -1,153 +1,201 @@
 #include "AirspaceSorter.hpp"
 #include "Airspace/Airspaces.hpp"
 #include "AbstractAirspace.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
+#include "Geo/GeoVector.hpp"
 
 #include <algorithm>
 
+AirspaceSelectInfo::AirspaceSelectInfo(const AbstractAirspace &_airspace)
+  :airspace(&_airspace), vec(GeoVector::Invalid())
+{
+  const TCHAR *name = airspace->GetName();
+  four_chars = ((name[0] & 0xff) << 24) +
+               ((name[1] & 0xff) << 16) +
+               ((name[2] & 0xff) << 8) +
+               ((name[3] & 0xff));
+}
 
-static AirspaceClass MatchClass;
-static unsigned char MatchChar = 0;
-static const TCHAR *name_prefix;
-static Angle Direction;
-static fixed MaxDistance;
+void
+AirspaceSelectInfo::ResetVector()
+{
+  vec.SetInvalid();
+}
+
+const GeoVector &
+AirspaceSelectInfo::GetVector(const GeoPoint &location,
+                              const TaskProjection &projection) const
+{
+  if (!vec.IsValid()) {
+    const GeoPoint closest_loc = airspace->ClosestPoint(location, projection);
+    vec = GeoVector(location, closest_loc);
+  }
+
+  return vec;
+}
 
 AirspaceSorter::AirspaceSorter(const Airspaces &airspaces,
-                               const GeoPoint &Location,
-                               const fixed distance_factor)
+                               const GeoPoint &_location)
+  :projection(airspaces.GetProjection()), location(_location)
 {
   m_airspaces_all.reserve(airspaces.size());
 
   for (auto it = airspaces.begin(); it != airspaces.end(); ++it) {
-    AirspaceSelectInfo info;
-
-    const AbstractAirspace &airspace = *it->get_airspace();
-
-    info.airspace = &airspace;
-
-    const GeoPoint closest_loc = airspace.ClosestPoint(Location);
-    const GeoVector vec(Location, closest_loc);
-
-    info.Distance = vec.distance * distance_factor;
-    info.Direction = vec.bearing;
-
-    const TCHAR *name = airspace.GetName();
-
-    info.FourChars = ((name[0] & 0xff) << 24) +
-                     ((name[1] & 0xff) << 16) +
-                     ((name[2] & 0xff) << 8) +
-                     ((name[3] & 0xff));
-
+    const AbstractAirspace &airspace = *it->GetAirspace();
+    AirspaceSelectInfo info(airspace);
     m_airspaces_all.push_back(info);
   }
 
-  sort_name(m_airspaces_all);
+  SortByName(m_airspaces_all);
 }
 
 const AirspaceSelectInfoVector&
-AirspaceSorter::get_list() const
+AirspaceSorter::GetList() const
 {
   return m_airspaces_all;
 }
 
-static bool
-AirspaceClassFilter(const AirspaceSelectInfo& elem1)
+class AirspaceClassFilter
 {
-  return elem1.airspace->GetType() != MatchClass;
-}
+  AirspaceClass match_class;
+
+public:
+  AirspaceClassFilter(AirspaceClass _match_class): match_class(_match_class) {}
+
+  bool operator()(const AirspaceSelectInfo &info) {
+    return info.airspace->GetType() != match_class;
+  }
+};
 
 void
-AirspaceSorter::filter_class(AirspaceSelectInfoVector& vec,
-                             const AirspaceClass t) const
+AirspaceSorter::FilterByClass(AirspaceSelectInfoVector& vec,
+                             const AirspaceClass match_class) const
 {
-  MatchClass = t;
-  vec.erase(std::remove_if(vec.begin(), vec.end(), AirspaceClassFilter),
-            vec.end());
+  vec.erase(std::remove_if(vec.begin(), vec.end(),
+                           AirspaceClassFilter(match_class)), vec.end());
 }
 
-static bool
-AirspaceNameFilter(const AirspaceSelectInfo& elem1)
+class AirspaceNameFilter
 {
-  return (((elem1.FourChars & 0xff000000) >> 24) != MatchChar);
-}
+  unsigned char match_char;
 
-void
-AirspaceSorter::filter_name(AirspaceSelectInfoVector& vec,
-                            const unsigned char c) const
-{
-  MatchChar = c;
-  vec.erase(std::remove_if(vec.begin(), vec.end(), AirspaceNameFilter),
-            vec.end());
-}
+public:
+  AirspaceNameFilter(unsigned char _match_char): match_char(_match_char) {}
 
-static bool
-AirspaceNamePrefixFilter(const AirspaceSelectInfo& elem1)
-{
-  return !elem1.airspace->MatchNamePrefix(name_prefix);
-}
+  bool operator()(const AirspaceSelectInfo &info) {
+    return (((info.four_chars & 0xff000000) >> 24) != match_char);
+  }
+};
 
 void
-AirspaceSorter::FilterNamePrefix(AirspaceSelectInfoVector &v,
-                                 const TCHAR *prefix) const
+AirspaceSorter::FilterByName(AirspaceSelectInfoVector& vec,
+                             const unsigned char match_char) const
 {
-  name_prefix = prefix;
-  v.erase(std::remove_if(v.begin(), v.end(), AirspaceNamePrefixFilter),
-          v.end());
+  vec.erase(std::remove_if(vec.begin(), vec.end(),
+                           AirspaceNameFilter(match_char)), vec.end());
 }
 
-static bool
-AirspaceDirectionFilter(const AirspaceSelectInfo& elem1)
+class AirspaceNamePrefixFilter
 {
-  fixed DirectionErr = (elem1.Direction - Direction).AsDelta().AbsoluteDegrees();
-  return DirectionErr > fixed_int_constant(18);
-}
+  const TCHAR *prefix;
+
+public:
+  AirspaceNamePrefixFilter(const TCHAR *_prefix): prefix(_prefix) {}
+
+  bool operator()(const AirspaceSelectInfo &info) {
+    return !info.airspace->MatchNamePrefix(prefix);
+  }
+};
 
 void
-AirspaceSorter::filter_direction(AirspaceSelectInfoVector& vec,
+AirspaceSorter::FilterByNamePrefix(AirspaceSelectInfoVector &v,
+                                   const TCHAR *prefix) const
+{
+  v.erase(std::remove_if(v.begin(), v.end(),
+                         AirspaceNamePrefixFilter(prefix)), v.end());
+}
+
+class AirspaceDirectionFilter
+{
+  Angle direction;
+  const TaskProjection &projection;
+  const GeoPoint &location;
+
+public:
+  AirspaceDirectionFilter(Angle _direction,
+      const TaskProjection &_projection, const GeoPoint &_location)
+    :direction(_direction), projection(_projection), location(_location) {}
+
+  bool operator()(const AirspaceSelectInfo &info) {
+    Angle bearing = info.GetVector(location, projection).bearing;
+    fixed direction_error = (bearing - direction).AsDelta().AbsoluteDegrees();
+    return direction_error > fixed_int_constant(18);
+  }
+};
+
+void
+AirspaceSorter::FilterByDirection(AirspaceSelectInfoVector& vec,
                                  const Angle direction) const
 {
-  Direction = direction;
-  vec.erase(std::remove_if(vec.begin(), vec.end(), AirspaceDirectionFilter),
-            vec.end());
+  vec.erase(std::remove_if(vec.begin(), vec.end(),
+      AirspaceDirectionFilter(direction, projection, location)), vec.end());
 }
 
-static bool
-AirspaceDistanceFilter(const AirspaceSelectInfo& elem1)
+class AirspaceDistanceFilter
 {
-  return (elem1.Distance > MaxDistance);
-}
+  fixed min_distance;
+  const TaskProjection &projection;
+  const GeoPoint &location;
+
+public:
+  AirspaceDistanceFilter(fixed _min_distance,
+      const TaskProjection &_projection, const GeoPoint &_location)
+    :min_distance(_min_distance), projection(_projection), location(_location) {}
+
+  bool operator()(const AirspaceSelectInfo &info) {
+    return info.GetVector(location, projection).distance > min_distance;
+  }
+};
 
 void
-AirspaceSorter::filter_distance(AirspaceSelectInfoVector& vec,
+AirspaceSorter::FilterByDistance(AirspaceSelectInfoVector& vec,
                                 const fixed distance) const
 {
-  MaxDistance = distance;
-  vec.erase(std::remove_if(vec.begin(), vec.end(), AirspaceDistanceFilter),
-            vec.end());
+  vec.erase(std::remove_if(vec.begin(), vec.end(),
+      AirspaceDistanceFilter(distance, projection, location)), vec.end());
 }
 
-static bool
-AirspaceDistanceCompare(const AirspaceSelectInfo& elem1,
-                        const AirspaceSelectInfo& elem2)
+class AirspaceDistanceCompare
 {
-  return (elem1.Distance < elem2.Distance);
-}
+  const TaskProjection &projection;
+  const GeoPoint &location;
+
+public:
+  AirspaceDistanceCompare(
+      const TaskProjection &_projection, const GeoPoint &_location)
+    :projection(_projection), location(_location) {}
+
+  bool operator()(const AirspaceSelectInfo &elem1,
+                  const AirspaceSelectInfo &elem2) {
+    return elem1.GetVector(location, projection).distance <
+           elem2.GetVector(location, projection).distance;
+  }
+};
 
 void
-AirspaceSorter::sort_distance(AirspaceSelectInfoVector& vec) const
+AirspaceSorter::SortByDistance(AirspaceSelectInfoVector& vec) const
 {
-  std::sort(vec.begin(), vec.end(), AirspaceDistanceCompare);
+  std::sort(vec.begin(), vec.end(), AirspaceDistanceCompare(projection, location));
 }
 
 static bool
 AirspaceNameCompare(const AirspaceSelectInfo& elem1,
                     const AirspaceSelectInfo& elem2)
 {
-  return (elem1.FourChars < elem2.FourChars);
+  return (elem1.four_chars < elem2.four_chars);
 }
 
 void
-AirspaceSorter::sort_name(AirspaceSelectInfoVector& vec) const
+AirspaceSorter::SortByName(AirspaceSelectInfoVector& vec) const
 {
   std::sort(vec.begin(), vec.end(), AirspaceNameCompare);
 }

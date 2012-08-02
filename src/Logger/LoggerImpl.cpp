@@ -24,29 +24,22 @@
 #include "Logger/LoggerImpl.hpp"
 #include "Logger/Settings.hpp"
 #include "LogFile.hpp"
-#include "UtilsSystem.hpp"
 #include "LocalPath.hpp"
 #include "Device/Declaration.hpp"
-#include "Compatibility/dirent.h"
 #include "NMEA/Info.hpp"
 #include "Simulator.hpp"
 #include "OS/FileUtil.hpp"
-#include "OS/PathName.hpp"
 #include "Formatter/IGCFilenameFormatter.hpp"
 #include "Interface.hpp"
+#include "Util/CharUtil.hpp"
+#include "IGCFileCleanup.hpp"
 
 #ifdef HAVE_POSIX
 #include <unistd.h>
 #endif
-#include <time.h>
 #include <sys/types.h>
 #include <tchar.h>
-#include <stdio.h>
 #include <algorithm>
-
-// JMW note: we want to clear up enough space to save the persistent
-// data (85 kb approx) and a new log file
-#define LOGGER_MINFREESTORAGE 750
 
 const struct LoggerImpl::PreTakeoffBuffer &
 LoggerImpl::PreTakeoffBuffer::operator=(const NMEAInfo &src)
@@ -88,18 +81,6 @@ LoggerImpl::~LoggerImpl()
   delete writer;
 }
 
-static int
-IGCCharToNum(TCHAR c)
-{
-  if ((c >= _T('1')) && (c <= _T('9')))
-    return c - _T('1') + 1;
-
-  if ((c >= _T('A')) && (c <= _T('Z')))
-    return c - _T('A') + 10;
-
-  return 0; // Error!
-}
-
 void
 LoggerImpl::StopLogger(const NMEAInfo &gps_info)
 {
@@ -107,8 +88,13 @@ LoggerImpl::StopLogger(const NMEAInfo &gps_info)
   if (writer == NULL)
     return;
 
-  writer->Finish(gps_info);
-  writer->Sign();
+  if (gps_info.alive && !gps_info.gps.real)
+    simulator = true;
+
+  writer->Finish();
+
+  if (!simulator)
+    writer->Sign();
 
   LogStartUp(_T("Logger stopped: %s"), filename);
 
@@ -117,7 +103,7 @@ LoggerImpl::StopLogger(const NMEAInfo &gps_info)
   writer = NULL;
 
   // Make space for logger file, if unsuccessful -> cancel
-  if (!LoggerClearFreeSpace(gps_info))
+  if (!IGCFileCleanup(gps_info.date_time_utc.year))
     return;
 
   pre_takeoff_buffer.clear();
@@ -137,6 +123,9 @@ LoggerImpl::LogPointToBuffer(const NMEAInfo &gps_info)
 void
 LoggerImpl::LogEvent(const NMEAInfo &gps_info, const char *event)
 {
+  if (gps_info.alive && !gps_info.gps.real)
+    simulator = true;
+
   if (writer != NULL)
     writer->LogEvent(gps_info, event);
 }
@@ -190,21 +179,27 @@ LoggerImpl::LogPoint(const NMEAInfo &gps_info)
         tmp_info.gps.satellite_ids[i] = src.satellite_ids[i];
     }
 
-    writer->LogPoint(tmp_info);
+    WritePoint(tmp_info);
+  }
+
+  WritePoint(gps_info);
+}
+
+void
+LoggerImpl::WritePoint(const NMEAInfo &gps_info)
+{
+  if (gps_info.alive && !gps_info.gps.real)
+    simulator = true;
+
+  if (!simulator && frecord.Update(gps_info.gps, gps_info.time,
+                                   !gps_info.location_available)) {
+    if (gps_info.gps.satellite_ids_available)
+      writer->LogFRecord(gps_info.date_time_utc, gps_info.gps.satellite_ids);
+    else
+      writer->LogEmptyFRecord(gps_info.date_time_utc);
   }
 
   writer->LogPoint(gps_info);
-}
-
-static bool
-IsAlphaNum (TCHAR c)
-{
-  if ((c >= _T('A') && c <= _T('Z')) ||
-      (c >= _T('a') && c <= _T('z')) ||
-      (c >= _T('0') && c <= _T('9')))
-    return true;
-
-  return false;
 }
 
 void
@@ -233,7 +228,10 @@ LoggerImpl::StartLogger(const NMEAInfo &gps_info,
   }
 
   delete writer;
-  writer = new IGCWriter(filename, gps_info);
+
+  frecord.Reset();
+  simulator = gps_info.alive && !gps_info.gps.real;
+  writer = new IGCWriter(filename, simulator);
 
   LogStartUp(_T("Logger Started: %s"), filename);
 }
@@ -245,140 +243,20 @@ LoggerImpl::LoggerNote(const TCHAR *text)
     writer->LoggerNote(text);
 }
 
-static time_t
-LogFileDate(const NMEAInfo &gps_info, const TCHAR *filename)
+static const TCHAR *
+GetGPSDeviceName()
 {
-  TCHAR asset[MAX_PATH];
+  if (is_simulator())
+    return _T("Simulator");
 
-  // scan for long filename
-  unsigned short year, month, day, num;
-  int matches = _stscanf(filename, _T("%hu-%hu-%hu-%7s-%hu.igc"),
-                         &year, &month, &day, asset, &num);
+  const DeviceConfig &device = CommonInterface::GetSystemSettings().devices[0];
+  if (device.UsesDriver())
+    return device.driver_name;
 
-  if (matches == 5) {
-    struct tm tm;
-    tm.tm_sec = 0;
-    tm.tm_min = 0;
-    tm.tm_hour = num;
-    tm.tm_mday = day;
-    tm.tm_mon = month - 1;
-    tm.tm_year = year - 1900;
-    tm.tm_isdst = -1;
-    return mktime(&tm);
-  }
+  if (device.IsAndroidInternalGPS())
+    return _T("Internal GPS (Android)");
 
-  TCHAR cyear, cmonth, cday, cflight;
-  // scan for short filename
-  matches = _stscanf(filename, _T("%c%c%c%4s%c.igc"),
-		                 &cyear, &cmonth, &cday, asset, &cflight);
-
-  if (matches == 5) {
-    int iyear = (int)gps_info.date_time_utc.year;
-    int syear = iyear % 10;
-    int yearzero = iyear - syear;
-    int yearthis = IGCCharToNum(cyear) + yearzero;
-    if (yearthis > iyear)
-      yearthis -= 10;
-
-    struct tm tm;
-    tm.tm_sec = 0;
-    tm.tm_min = 0;
-    tm.tm_hour = IGCCharToNum(cflight);
-    tm.tm_mday = IGCCharToNum(cday);
-    tm.tm_mon = IGCCharToNum(cmonth) - 1;
-    tm.tm_year = yearthis - 1900;
-    tm.tm_isdst = -1;
-    return mktime(&tm);
-    /*
-      YMDCXXXF.igc
-      Y: Year, 0 to 9 cycling every 10 years
-      M: Month, 1 to 9 then A for 10, B=11, C=12
-      D: Day, 1 to 9 then A for 10, B=....
-      C: Manuf. code = X
-      XXX: Logger ID Alphanum
-      F: Flight of day, 1 to 9 then A through Z
-    */
-  }
-
-  return 0;
-}
-
-static bool
-LogFileIsOlder(const NMEAInfo &gps_info,
-               const TCHAR *oldestname, const TCHAR *thisname)
-{
-  return LogFileDate(gps_info, oldestname) > LogFileDate(gps_info, thisname);
-}
-
-/**
- * Delete eldest IGC file in the given path
- * @param gps_info Current NMEA_INFO
- * @param pathname Path where to search for the IGC files
- * @return True if a file was found and deleted, False otherwise
- */
-static bool
-DeleteOldestIGCFile(const NMEAInfo &gps_info, const TCHAR *pathname)
-{
-  StaticString<MAX_PATH> oldest_name, full_name;
-
-  _TDIR *dir = _topendir(pathname);
-  if (dir == NULL)
-    return false;
-
-  _tdirent *ent;
-  while ((ent = _treaddir(dir)) != NULL) {
-    if (!MatchesExtension(ent->d_name, _T(".igc")))
-      continue;
-
-    full_name = pathname;
-    full_name += ent->d_name;
-
-    if (File::Exists(full_name) &&
-        LogFileIsOlder(gps_info, oldest_name, ent->d_name))
-      // we have a new oldest name
-      oldest_name = ent->d_name;
-  }
-
-  _tclosedir(dir);
-
-  // now, delete the file...
-  full_name.Format(_T("%s%s"), pathname, oldest_name.c_str());
-  File::Delete(full_name);
-
-  // did delete one
-  return true;
-}
-
-bool
-LoggerImpl::LoggerClearFreeSpace(const NMEAInfo &gps_info)
-{
-  bool found = true;
-  unsigned long kbfree = 0;
-  const TCHAR *pathname = GetPrimaryDataPath();
-  TCHAR subpathname[MAX_PATH];
-  int numtries = 0;
-
-  LocalPath(subpathname, _T("logs"));
-
-  while (found && ((kbfree = FindFreeSpace(pathname)) < LOGGER_MINFREESTORAGE)
-	       && (numtries++ < 100)) {
-    /* JMW asking for deleting old files is disabled now --- system
-       automatically deletes old files as required
-    */
-
-    // search for IGC files, and delete the oldest one
-    found = DeleteOldestIGCFile(gps_info, pathname);
-    if (!found)
-      found = DeleteOldestIGCFile(gps_info, subpathname);
-  }
-
-  if (kbfree >= LOGGER_MINFREESTORAGE) {
-    LogStartUp(_T("LoggerFreeSpace returned: true"));
-    return true;
-  } else {
-    LogStartUp(_T("LoggerFreeSpace returned: false"));
-    return false;
-  }
+  return _T("Unknown");
 }
 
 // TODO: fix scope so only gui things can start it
@@ -394,30 +272,16 @@ LoggerImpl::StartLogger(const NMEAInfo &gps_info,
   char logger_id[4];
   unsigned asset_length = _tcslen(asset_number);
   for (unsigned i = 0; i < 3; i++)
-    logger_id[i] = i < asset_length && IsAlphaNum(asset_number[i]) ?
+    logger_id[i] = i < asset_length && IsAlphaNumericASCII(asset_number[i]) ?
                    asset_number[i] : _T('A');
   logger_id[3] = _T('\0');
 
   StartLogger(gps_info, settings, logger_id);
 
-  // this is only the XCSoar Simulator, not Condor etc, so don't use Simulator flag
-  const TCHAR *driver_name;
-  if (is_simulator())
-    driver_name = _T("Simulator");
-  else {
-    const DeviceConfig &device = CommonInterface::GetSystemSettings().devices[0];
-    if (device.UsesDriver())
-      driver_name = device.driver_name;
-    else if (device.IsAndroidInternalGPS())
-      driver_name = _T("Internal GPS (Android)");
-    else
-      driver_name = _T("Unknown");
-  }
-
   writer->WriteHeader(gps_info.date_time_utc, decl.pilot_name,
                       decl.aircraft_type, decl.aircraft_registration,
                       decl.competition_id,
-                      logger_id, driver_name);
+                      logger_id, GetGPSDeviceName(), simulator);
 
   if (decl.Size()) {
     BrokenDateTime FirstDateTime = !pre_takeoff_buffer.empty()

@@ -24,8 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_COMPUTER_SETTINGS_HPP
 #define XCSOAR_COMPUTER_SETTINGS_HPP
 
-#include "FLARM/FlarmId.hpp"
-#include "Engine/Navigation/GeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
 #include "Engine/GlideSolvers/GlidePolar.hpp"
 #include "Atmosphere/Pressure.hpp"
 #include "Engine/Route/Config.hpp"
@@ -33,11 +32,11 @@ Copyright_License {
 #include "Util/TypeTraits.hpp"
 #include "Task/TaskBehaviour.hpp"
 #include "Tracking/TrackingSettings.hpp"
-#include "Engine/Navigation/SpeedVector.hpp"
+#include "Geo/SpeedVector.hpp"
 #include "NMEA/Validity.hpp"
 #include "Logger/Settings.hpp"
 #include "Airspace/AirspaceComputerSettings.hpp"
-#include "TeamCodeCalculation.hpp"
+#include "TeamCodeSettings.hpp"
 #include "Plane/Plane.hpp"
 
 #include <stdint.h>
@@ -156,42 +155,6 @@ struct PolarSettings {
   }
 };
 
-struct SoundSettings {
-  // sound stuff not used?
-  bool sound_vario_enabled;
-  bool sound_task_enabled;
-  bool sound_modes_enabled;
-  uint8_t sound_volume;
-  uint8_t sound_deadband;
-
-  void SetDefaults();
-};
-
-/** 
- * Settings for teamcode calculations
- */
-struct TeamCodeSettings {
-  /** Reference waypoint id for code origin */
-  int team_code_reference_waypoint;
-  /** Whether to enable tracking by FLARM */
-  bool team_flarm_tracking;
-  /** Whether the teammate code is valid */
-  bool team_code_valid;
-
-  /** CN of the glider to track */
-  StaticString<4> team_flarm_callsign;
-  /** auto-detected, see also in Info.h */
-  TeamCode team_code;
-
-  /** FlarmId of the glider to track */
-  FlarmId team_flarm_id;
-
-  void SetDefaults();
-};
-
-static_assert(is_trivial<TeamCodeSettings>::value,
-              "type is not trivial");
-
 struct VoiceSettings {
   // vegavoice stuff
   bool voice_climb_rate_enabled;
@@ -259,8 +222,6 @@ struct ComputerSettings {
   WindSettings wind;
 
   PolarSettings polar;
-
-  SoundSettings sound;
 
   TeamCodeSettings team_code;
 

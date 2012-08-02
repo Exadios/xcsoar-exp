@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "Dialogs/dlgConfigInfoboxes.hpp"
 #include "Dialogs/Message.hpp"
-#include "Dialogs/Dialogs.h"
+#include "Dialogs/HelpDialog.hpp"
 #include "Dialogs/TextEntry.hpp"
 #include "Form/Form.hpp"
 #include "Form/Frame.hpp"
@@ -31,8 +31,8 @@ Copyright_License {
 #include "Form/Edit.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/SingleWindow.hpp"
-#include "DataField/Enum.hpp"
-#include "DataField/String.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/String.hpp"
 #include "Compiler.h"
 #include "InfoBoxes/InfoBoxSettings.hpp"
 #include "InfoBoxes/InfoBoxLayout.hpp"
@@ -112,12 +112,12 @@ OnPaste(gcc_unused WndButton &button)
   if (clipboard_size == 0)
     return;
 
-  if(MessageBoxX(_("Overwrite?"), _("InfoBox paste"),
+  if(ShowMessageBox(_("Overwrite?"), _("InfoBox paste"),
                  MB_YESNO | MB_ICONQUESTION) != IDYES)
     return;
 
   for (unsigned item = 0; item < clipboard_size; item++) {
-    InfoBoxFactory::t_InfoBox content = clipboard.contents[item];
+    InfoBoxFactory::Type content = clipboard.contents[item];
     if (content >= InfoBoxFactory::NUM_TYPES)
       continue;
 
@@ -160,7 +160,7 @@ OnContentAccess(DataField *Sender, DataField::DataAccessMode Mode)
 {
   const DataFieldEnum &dfe = (const DataFieldEnum &)*Sender;
 
-  data.contents[current_preview] = (InfoBoxFactory::t_InfoBox)dfe.GetAsInteger();
+  data.contents[current_preview] = (InfoBoxFactory::Type)dfe.GetAsInteger();
   previews[current_preview].Invalidate();
   RefreshEditContentDescription();
 }
@@ -186,7 +186,7 @@ InfoBoxPreview::OnPaint(Canvas &canvas)
   const bool is_current = i == current_preview;
 
   if (is_current)
-    canvas.clear(COLOR_BLACK);
+    canvas.Clear(COLOR_BLACK);
   else
     canvas.ClearWhite();
 
@@ -194,7 +194,7 @@ InfoBoxPreview::OnPaint(Canvas &canvas)
   canvas.SelectBlackPen();
   canvas.Rectangle(0, 0, canvas.get_width() - 1, canvas.get_height() - 1);
 
-  InfoBoxFactory::t_InfoBox type = data.contents[i];
+  InfoBoxFactory::Type type = data.contents[i];
   const TCHAR *caption = type < InfoBoxFactory::NUM_TYPES
     ? InfoBoxFactory::GetCaption(type)
     : NULL;
@@ -213,7 +213,7 @@ static void
 OnContentHelp(WindowControl *Sender)
 {
   WndProperty *wp = (WndProperty*)Sender;
-  InfoBoxFactory::t_InfoBox type = (InfoBoxFactory::t_InfoBox)wp->GetDataField()->GetAsInteger();
+  InfoBoxFactory::Type type = (InfoBoxFactory::Type)wp->GetDataField()->GetAsInteger();
   if (type >= InfoBoxFactory::NUM_TYPES)
     return;
 
@@ -301,7 +301,7 @@ dlgConfigInfoboxesShowModal(SingleWindow &parent,
   look = &_look;
   data = data_r;
 
-  PixelRect rc = parent.get_client_rect();
+  PixelRect rc = parent.GetClientRect();
   wf = new WndForm(parent, dialog_look, rc);
 
 #ifdef _WIN32_WCE
@@ -310,7 +310,7 @@ dlgConfigInfoboxesShowModal(SingleWindow &parent,
 #endif
 
   ContainerWindow &client_area = wf->GetClientAreaWindow();
-  rc = client_area.get_client_rect();
+  rc = client_area.GetClientRect();
 
   InflateRect(&rc, Layout::FastScale(-2), Layout::FastScale(-2));
   info_box_layout = InfoBoxLayout::Calculate(rc, geometry);
@@ -330,7 +330,7 @@ dlgConfigInfoboxesShowModal(SingleWindow &parent,
   style.ControlParent();
 
   EditWindowStyle edit_style;
-  edit_style.vertical_center();
+  edit_style.SetVerticalCenter();
   edit_style.TabStop();
 
   if (IsEmbedded() || Layout::scale_1024 < 2048)
@@ -388,8 +388,8 @@ dlgConfigInfoboxesShowModal(SingleWindow &parent,
 
   dfe = new DataFieldEnum(OnContentAccess);
   for (unsigned i = InfoBoxFactory::MIN_TYPE_VAL; i < InfoBoxFactory::NUM_TYPES; i++) {
-    const TCHAR *name = InfoBoxFactory::GetName((InfoBoxFactory::t_InfoBox) i);
-    const TCHAR *desc = InfoBoxFactory::GetDescription((InfoBoxFactory::t_InfoBox) i);
+    const TCHAR *name = InfoBoxFactory::GetName((InfoBoxFactory::Type) i);
+    const TCHAR *desc = InfoBoxFactory::GetDescription((InfoBoxFactory::Type) i);
     if (name != NULL)
       dfe->addEnumText(gettext(name), i, desc != NULL ? gettext(desc) : NULL);
   }

@@ -25,6 +25,7 @@ Copyright_License {
 #define XCSOAR_SCREEN_OPENGL_VERTEX_ARRAY_HPP
 
 #include "Screen/OpenGL/Point.hpp"
+#include "Compiler.h"
 
 template<unsigned n>
 struct GLVertexArray {

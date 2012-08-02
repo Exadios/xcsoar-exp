@@ -60,6 +60,9 @@ Copyright_License {
 #define gcc_unused __attribute__((unused))
 #define gcc_warn_unused_result __attribute__((warn_unused_result))
 
+#define gcc_nonnull(...) __attribute__((nonnull(__VA_ARGS__)))
+#define gcc_nonnull_all __attribute__((nonnull))
+
 #define gcc_likely(x) __builtin_expect (!!(x), 1)
 #define gcc_unlikely(x) __builtin_expect (!!(x), 0)
 
@@ -83,6 +86,9 @@ Copyright_License {
 #define gcc_sentinel
 #define gcc_unused
 #define gcc_warn_unused_result
+
+#define gcc_nonnull(...)
+#define gcc_nonnull_all
 
 #define gcc_likely(x) (x)
 #define gcc_unlikely(x) (x)
@@ -118,26 +124,15 @@ Copyright_License {
 #endif
 
 /* C++11 features */
-#if defined(__cplusplus) && (GCC_VERSION >= 40500 || defined(__clang__))
-/* explicit conversion operators are supported since gcc 4.5 */
-#define gcc_explicit explicit
-#else
-#define gcc_explicit
-#endif
 
 #if defined(__cplusplus)
-#if GCC_VERSION >= 40602 && !defined(__clang__)
-/* constexpr is supported since gcc 4.6 */
-#define gcc_constexpr_function constexpr gcc_const
-#define gcc_constexpr_method constexpr gcc_pure
-#define gcc_constexpr_data constexpr
-#define gcc_constexpr_ctor constexpr
+
+#if GCC_VERSION >= 40700 || defined(__clang__)
+#define gcc_override override
 #else
-#define gcc_constexpr_function gcc_const
-#define gcc_constexpr_method gcc_pure
-#define gcc_constexpr_data const
-#define gcc_constexpr_ctor
+#define gcc_override
 #endif
+
 #endif
 
 #endif

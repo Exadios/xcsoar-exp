@@ -106,8 +106,8 @@ class TopWindow : public ContainerWindow {
 #ifndef USE_GDI
   TopCanvas screen;
 
-  Mutex Invalidated_lock;
-  bool Invalidated;
+  Mutex invalidated_lock;
+  bool invalidated;
 
 #ifdef ANDROID
   Mutex paused_mutex;
@@ -182,7 +182,7 @@ public:
 
 #if defined(USE_GDI) && !defined(_WIN32_WCE)
   gcc_pure
-  const PixelRect get_client_rect() const {
+  const PixelRect GetClientRect() const {
     if (::IsIconic(hWnd)) {
       /* for a minimized window, GetClientRect() returns the
          dimensions of the icon, which is not what we want */
@@ -198,14 +198,14 @@ public:
       }
     }
 
-    return ContainerWindow::get_client_rect();
+    return ContainerWindow::GetClientRect();
   }
 
   gcc_pure
-  const PixelSize get_size() const {
+  const PixelSize GetSize() const {
     /* this is implemented again because Window::get_size() would call
-       Window::get_client_rect() (method is not virtual) */
-    PixelRect rc = get_client_rect();
+       Window::GetClientRect() (method is not virtual) */
+    PixelRect rc = GetClientRect();
     PixelSize s;
     s.cx = rc.right;
     s.cy = rc.bottom;
@@ -218,17 +218,20 @@ public:
 #ifndef USE_GDI
   virtual void Invalidate();
 
-  virtual void Expose();
+protected:
+  void Expose();
+
+public:
 #endif /* !USE_GDI */
 
   /**
    * Synchronously refresh the screen by handling all pending repaint
    * requests.
    */
-  void refresh();
+  void Refresh();
 
-  void close() {
-    assert_none_locked();
+  void Close() {
+    AssertNoneLocked();
 
 #ifndef USE_GDI
     OnClose();
@@ -289,25 +292,25 @@ protected:
   /**
    * @see Event::PAUSE
    */
-  virtual void on_pause();
+  virtual void OnPause();
 
   /**
    * @see Event::RESUME
    */
-  virtual void on_resume();
+  virtual void OnResume();
 
 public:
-  void pause();
-  void resume();
+  void Pause();
+  void Resume();
 #endif
 
 public:
-  void post_quit();
+  void PostQuit();
 
   /**
    * Runs the event loop until the application quits.
    */
-  int event_loop();
+  int RunEventLoop();
 };
 
 #endif

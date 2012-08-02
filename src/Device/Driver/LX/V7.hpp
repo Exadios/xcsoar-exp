@@ -37,18 +37,18 @@ namespace V7 {
    * Enable direct link with GPS port.
    */
   static bool
-  ModeDirect(Port &port)
+  ModeDirect(Port &port, OperationEnvironment &env)
   {
-    return PortWriteNMEA(port, "PLXV0,CONNECTION,W,DIRECT");
+    return PortWriteNMEA(port, "PLXV0,CONNECTION,W,DIRECT", env);
   }
 
   /**
    * Enable communication with V7.
    */
   static bool
-  ModeVSeven(Port &port)
+  ModeVSeven(Port &port, OperationEnvironment &env)
   {
-    return PortWriteNMEA(port, "PLXV0,CONNECTION,W,VSEVEN");
+    return PortWriteNMEA(port, "PLXV0,CONNECTION,W,VSEVEN", env);
   }
 
   /**
@@ -57,15 +57,15 @@ namespace V7 {
    * - PLXVF at 2 Hz
    * - PLXVS every 5 seconds
    * - LXWP0 every second
-   * - LXWP1 disabled (we don't parse it yet)
+   * - LXWP1 every 60 seconds
    * - LXWP2 every 30 seconds
    * - LXWP3 disabled (we don't parse it)
    * - LXWP5 disabled (we don't parse it)
    */
   static bool
-  SetupNMEA(Port &port)
+  SetupNMEA(Port &port, OperationEnvironment &env)
   {
-    return PortWriteNMEA(port, "PLXV0,NMEARATE,W,2,5,1,0,30,0,0");
+    return PortWriteNMEA(port, "PLXV0,NMEARATE,W,2,5,1,60,30,0,0", env);
   }
 }
 

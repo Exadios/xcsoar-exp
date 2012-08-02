@@ -42,8 +42,6 @@ public:
 
   ~RTTaskFactory() {};
 
-  void UpdateOrderedTaskBehaviour(OrderedTaskBehaviour& to); 
-
 /** 
  * Check whether task is complete and valid according to factory rules
  * 
@@ -58,7 +56,7 @@ public:
    * similar to type of tp
    */
   virtual gcc_pure
-  LegalPointType GetMutatedPointType(const OrderedTaskPoint &tp) const;
+  TaskPointFactoryType GetMutatedPointType(const OrderedTaskPoint &tp) const;
 };
 
 #endif

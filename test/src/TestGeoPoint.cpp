@@ -20,8 +20,8 @@
 }
 */
 
-#include "Engine/Navigation/GeoPoint.hpp"
-#include "Engine/Navigation/Geometry/GeoVector.hpp"
+#include "Geo/GeoPoint.hpp"
+#include "Geo/GeoVector.hpp"
 #include "Math/Angle.hpp"
 #include "Math/fixed.hpp"
 
@@ -32,7 +32,7 @@
 
 int main(int argc, char **argv)
 {
-  plan_tests(64);
+  plan_tests(65);
 
   // test constructor
   GeoPoint p1(Angle::Degrees(fixed(345.32)), Angle::Degrees(fixed(-6.332)));
@@ -153,6 +153,8 @@ int main(int argc, char **argv)
   ok1(l3.IsValid());
   GeoPoint l4(Angle::Degrees(fixed(10)), Angle::Degrees(fixed_zero));
   ok1(l4.IsValid());
+  l4.SetInvalid();
+  ok1(!l4.IsValid());
 
   v = l1.DistanceBearing(l2);
   printf("Dist %g bearing %d\n",

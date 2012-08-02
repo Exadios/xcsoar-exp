@@ -125,11 +125,11 @@ WaypointReaderOzi::ParseLine(const TCHAR* line, const unsigned linenum,
 }
 
 bool
-WaypointReaderOzi::VerifyFormat(TLineReader &reader) const
+WaypointReaderOzi::VerifyFormat(TLineReader &reader)
 {
   TCHAR* line = reader.read();
   if (line == NULL)
     return false;
 
-  return (_tcsstr(line, _T("OziExplorer Waypoint File")) == line);
+  return StringStartsWith(line, _T("OziExplorer Waypoint File"));
 }

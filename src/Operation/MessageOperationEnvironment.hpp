@@ -28,11 +28,12 @@ Copyright_License {
 
 /**
  * A #OperationEnvironment implementation that displays error messages
- * with MessageBoxX().
+ * with ShowMessageBox().
  */
 class MessageOperationEnvironment : public QuietOperationEnvironment {
 public:
-  virtual void SetErrorMessage(const TCHAR *text);
+  /* virtual methods from class OperationEnvironment */
+  virtual void SetErrorMessage(const TCHAR *text) gcc_override;
 };
 
 #endif

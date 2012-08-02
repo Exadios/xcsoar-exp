@@ -180,8 +180,8 @@ OZWindow::OnPaint(Canvas &canvas)
   const OZBoundary boundary = oz->GetBoundary();
   for (auto i = boundary.begin(), end = boundary.end(); i != end; ++i) {
     RasterPoint p = projection.GeoToScreen(*i);
-    canvas.line(p.x - 3, p.y - 3, p.x + 3, p.y + 3);
-    canvas.line(p.x + 3, p.y - 3, p.x - 3, p.y + 3);
+    canvas.DrawLine(p.x - 3, p.y - 3, p.x + 3, p.y + 3);
+    canvas.DrawLine(p.x + 3, p.y - 3, p.x - 3, p.y + 3);
   }
 }
 
@@ -242,7 +242,7 @@ public:
   void set(const DialogLook &look, PixelRect _rc) {
     SingleWindow::set(_T("RunRenderOZ"), _T("RunRenderOZ"), _rc);
 
-    const PixelRect rc = get_client_rect();
+    const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();
@@ -275,7 +275,7 @@ protected:
   virtual bool OnCommand(unsigned id, unsigned code) {
     switch (id) {
     case ID_CLOSE:
-      close();
+      Close();
       return true;
     }
 
@@ -319,7 +319,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   window.set(*look, PixelRect{0, 0, 480, 480});
 
   window.Show();
-  window.event_loop();
+  window.RunEventLoop();
 
   delete airspace_look;
   delete task_look;

@@ -31,7 +31,7 @@ Copyright_License {
 #endif
 
 void
-ProgressBarStyle::vertical()
+ProgressBarStyle::Vertical()
 {
 #ifdef USE_GDI
   style |= PBS_VERTICAL;
@@ -39,7 +39,7 @@ ProgressBarStyle::vertical()
 }
 
 void
-ProgressBarStyle::smooth()
+ProgressBarStyle::Smooth()
 {
 #ifdef USE_GDI
   style |= PBS_SMOOTH;
@@ -61,9 +61,9 @@ ProgressBar::set(ContainerWindow &parent,
 }
 
 void
-ProgressBar::set_range(unsigned min_value, unsigned max_value)
+ProgressBar::SetRange(unsigned min_value, unsigned max_value)
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
 #ifndef USE_GDI
@@ -71,7 +71,7 @@ ProgressBar::set_range(unsigned min_value, unsigned max_value)
   this->max_value = max_value;
   value = 0;
   step_size = 1;
-  Expose();
+  Invalidate();
 #else
   ::SendMessage(hWnd, PBM_SETRANGE, (WPARAM)0,
                 (LPARAM)MAKELPARAM(min_value, max_value));
@@ -79,42 +79,42 @@ ProgressBar::set_range(unsigned min_value, unsigned max_value)
 }
 
 void
-ProgressBar::set_position(unsigned value)
+ProgressBar::SetValue(unsigned value)
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
 #ifndef USE_GDI
   this->value = value;
-  Expose();
+  Invalidate();
 #else
   ::SendMessage(hWnd, PBM_SETPOS, value, 0);
 #endif
 }
 
 void
-ProgressBar::set_step(unsigned size)
+ProgressBar::SetStep(unsigned size)
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
 #ifndef USE_GDI
   step_size = size;
-  Expose();
+  Invalidate();
 #else
   ::SendMessage(hWnd, PBM_SETSTEP, (WPARAM)size, (LPARAM)0);
 #endif
 }
 
 void
-ProgressBar::step()
+ProgressBar::Step()
 {
-  assert_none_locked();
+  AssertNoneLocked();
   AssertThread();
 
 #ifndef USE_GDI
   value += step_size;
-  Expose();
+  Invalidate();
 #else
   ::SendMessage(hWnd, PBM_STEPIT, (WPARAM)0, (LPARAM)0);
 #endif
@@ -132,28 +132,28 @@ ProgressBar::OnPaint(Canvas &canvas)
     else if (value > max_value)
       value = max_value;
 #ifdef EYE_CANDY
-    position = (value - min_value) * (get_width() - get_height()) /
+    position = (value - min_value) * (GetWidth() - GetHeight()) /
                (max_value - min_value);
 #else
-    position = (value - min_value) * get_width() / (max_value - min_value);
+    position = (value - min_value) * GetWidth() / (max_value - min_value);
 #endif
   }
 
 #ifdef EYE_CANDY
-  unsigned margin = get_height() / 9;
+  unsigned margin = GetHeight() / 9;
 
   canvas.SelectNullPen();
   canvas.SelectWhiteBrush();
-  canvas.DrawRoundRectangle(0, 0, get_width(), get_height(),
-                            get_height(), get_height());
+  canvas.DrawRoundRectangle(0, 0, GetWidth(), GetHeight(),
+                            GetHeight(), GetHeight());
 
   Brush progress_brush(COLOR_XCSOAR_LIGHT);
   canvas.Select(progress_brush);
   canvas.DrawRoundRectangle(margin, margin, margin + position,
-                            get_height() - margin, get_height(), get_height());
+                            GetHeight() - margin, GetHeight(), GetHeight());
 #else
-  canvas.DrawFilledRectangle(0, 0, position, get_height(), COLOR_GREEN);
-  canvas.DrawFilledRectangle(position, 0, get_width(), get_height(), COLOR_WHITE);
+  canvas.DrawFilledRectangle(0, 0, position, GetHeight(), COLOR_GREEN);
+  canvas.DrawFilledRectangle(position, 0, GetWidth(), GetHeight(), COLOR_WHITE);
 #endif
 }
 #endif

@@ -24,7 +24,7 @@ Copyright_License {
 #include "DataFile.hpp"
 #include "FileLineReader.hpp"
 #include "TextWriter.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "LocalPath.hpp"
 
 #include <assert.h>
@@ -110,7 +110,7 @@ CreateDataTextFile(const TCHAR *name, bool append)
   if (writer == NULL)
     return NULL;
 
-  if (writer->error()) {
+  if (!writer->IsOpen()) {
     delete writer;
     return NULL;
   }

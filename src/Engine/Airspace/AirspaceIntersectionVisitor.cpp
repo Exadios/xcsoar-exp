@@ -1,25 +1,39 @@
+/* Copyright_License {
+
+  XCSoar Glide Computer - http://www.xcsoar.org/
+  Copyright (C) 2000-2012 The XCSoar Project
+  A detailed list of copyright holders can be found in the file "AUTHORS".
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+}
+*/
+
 #include "AirspaceIntersectionVisitor.hpp"
 #include "AirspaceInterceptSolution.hpp"
 
 AirspaceInterceptSolution 
-AirspaceIntersectionVisitor::intercept(const AbstractAirspace& as,
-                                       const AircraftState& state,
-                                       const AirspaceAircraftPerformance &perf,
-                                       bool all) const
+AirspaceIntersectionVisitor::Intercept(const AbstractAirspace &as,
+                                       const AircraftState &state,
+                                       const AirspaceAircraftPerformance &perf) const
 {
-  AirspaceInterceptSolution solution =
-    AirspaceInterceptSolution::Invalid();
-  if (m_intersections.empty()) {
-    return solution;
-  }
+  if (intersections.empty())
+    return AirspaceInterceptSolution::Invalid();
 
-  for (auto it = m_intersections.begin(); it != m_intersections.end(); ++it) {
+  AirspaceInterceptSolution solution;
+  for (const auto &i : intersections)
+    as.Intercept(state, perf, solution, i.first, i.second);
 
-    as.Intercept(state, perf, solution, it->first, it->second);
-
-    if (!all) {
-      return solution;
-    }
-  }
   return solution;
 }

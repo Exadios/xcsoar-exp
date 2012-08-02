@@ -25,6 +25,7 @@ Copyright_License {
 #define XCSOAR_FLYING_COMPUTER_HPP
 
 #include "Math/fixed.hpp"
+#include "Geo/GeoPoint.hpp"
 
 struct NMEAInfo;
 struct DerivedInfo;
@@ -37,6 +38,29 @@ struct FlyingState;
 class FlyingComputer {
   unsigned short time_on_ground;
   unsigned short time_in_flight;
+
+  unsigned short sinking_count;
+
+  /**
+   * If the aircraft is currenly assumed to be moving, then this
+   * denotes the initial moving time stamp.  This gets reset to a
+   * negative value when the aircraft is stationary for a certain
+   * amount of time.
+   */
+  fixed moving_since;
+
+  /**
+   * If the aircraft is currently assumed to be moving, then this
+   * denotes the location when moving started initially.  This
+   * attribute is only valid if #moving_since is non-negative.
+   */
+  GeoPoint moving_at;
+
+  fixed sinking_since;
+
+  GeoPoint sinking_location;
+
+  fixed sinking_altitude;
 
 public:
   void Reset();
@@ -51,14 +75,17 @@ public:
                FlyingState &flying);
 
 protected:
-  void Check(FlyingState &state, fixed time);
+  void CheckRelease(FlyingState &state, fixed time, const GeoPoint &location,
+                    fixed altitude);
+
+  void Check(FlyingState &state, fixed time, const GeoPoint &location);
 
   /**
    * Update flying state when moving 
    *
    * @param time Time the aircraft is moving
    */
-  void Moving(FlyingState &state, fixed time);
+  void Moving(FlyingState &state, fixed time, const GeoPoint &location);
 
   /**
    * Update flying state when stationary 
@@ -66,7 +93,7 @@ protected:
    * @param time Time the aircraft is stationary
    * @param on_ground Whether the aircraft is known to be on the ground
    */
-  void Stationary(FlyingState &state, fixed time);
+  void Stationary(FlyingState &state, fixed time, const GeoPoint &location);
 };
 
 #endif

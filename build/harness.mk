@@ -1,15 +1,19 @@
 HARNESS_SOURCES = \
+	$(SRC)/NMEA/MoreData.cpp \
+	$(SRC)/NMEA/Info.cpp \
+	$(SRC)/NMEA/ExternalSettings.cpp \
+	$(SRC)/NMEA/Attitude.cpp \
+	$(SRC)/NMEA/Acceleration.cpp \
 	$(SRC)/Computer/FlyingComputer.cpp \
-	$(SRC)/Replay/IGCParser.cpp \
+	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/Replay/IgcReplay.cpp \
 	$(SRC)/Replay/TaskAutoPilot.cpp \
 	$(SRC)/Replay/AircraftSim.cpp \
 	$(SRC)/ComputerSettings.cpp \
+	$(SRC)/TeamCodeSettings.cpp \
 	$(SRC)/Logger/Settings.cpp \
 	$(SRC)/Tracking/TrackingSettings.cpp \
 	$(SRC)/Computer/TraceComputer.cpp \
-	$(SRC)/OS/Clock.cpp \
-	$(SRC)/Thread/Mutex.cpp \
 	$(SRC)/Airspace/AirspaceComputerSettings.cpp \
 	$(TEST_SRC_DIR)/Printing.cpp \
 	$(TEST_SRC_DIR)/AirspacePrinting.cpp \

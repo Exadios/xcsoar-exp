@@ -31,10 +31,9 @@ struct GeoVector;
 struct DialogLook;
 struct MapLook;
 struct TrafficLook;
+struct FinalGlideBarLook;
 struct MapSettings;
 class ProtectedAirspaceWarningManager;
-
-void ShowMapItemDialog(const MapItem &item, SingleWindow &parent);
 
 void
 ShowMapItemListDialog(SingleWindow &parent,
@@ -42,7 +41,10 @@ ShowMapItemListDialog(SingleWindow &parent,
                       const DialogLook &_dialog_look,
                       const MapLook &_look,
                       const TrafficLook &_traffic_look,
+                      const FinalGlideBarLook &_final_glide_look,
                       const MapSettings &_settings,
                       ProtectedAirspaceWarningManager *airspace_warnings);
+
+void ShowMapItemListSettingsDialog();
 
 #endif

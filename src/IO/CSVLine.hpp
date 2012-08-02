@@ -24,6 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_CSV_LINE_HPP
 #define XCSOAR_CSV_LINE_HPP
 
+#include "Util/Range.hpp"
 #include "Math/fixed.hpp"
 
 /**
@@ -36,8 +37,8 @@ protected:
 public:
   CSVLine(const char *line);
 
-  const char *rest() const {
-    return data;
+  Range<const char *> Rest() const {
+    return Range<const char *>(data, end);
   }
 
   /**
@@ -45,15 +46,17 @@ public:
    *
    * @return the length of the column
    */
-  size_t skip();
+  size_t Skip();
 
   /**
    * Skip a number of columns.
    */
-  void skip(unsigned n) {
+  void Skip(unsigned n) {
     while (n-- > 0)
-      skip();
+      Skip();
   }
+
+  char ReadFirstChar();
 
   /**
    * Read a column, expect it to be exactly one character.  Returns 0
@@ -61,39 +64,45 @@ public:
    */
   char ReadOneChar();
 
-  char read_first_char();
+  void Read(char *dest, size_t size);
+  bool ReadCompare(const char *value);
 
-  void read(char *dest, size_t size);
-  bool read_compare(const char *value);
+  long Read(long default_value);
+  long ReadHex(long default_value);
 
-  long read(long default_value);
-  long read_hex(long default_value);
-
-  int read(int default_value) {
-    return (int)read((long)default_value);
+  int Read(int default_value) {
+    return (int)Read((long)default_value);
   }
 
-  int read(bool default_value) {
-    return read((long)default_value) != 0;
+  int Read(bool default_value) {
+    return Read((long)default_value) != 0;
   }
 
-  double read(double default_value);
-  bool read_checked(double &value_r);
+  double Read(double default_value);
+  bool ReadChecked(double &value_r);
 
 #ifdef FIXED_MATH
-  fixed read(fixed default_value);
-  bool read_checked(fixed &value_r);
+  fixed Read(fixed default_value);
+  bool ReadChecked(fixed &value_r);
 #endif
 
-  bool read_checked(int &value_r);
-  bool read_checked(long &value_r);
-  bool read_checked(unsigned long &value_r);
-  bool read_checked(unsigned &value_r);
+  bool ReadChecked(int &value_r);
+  bool ReadChecked(long &value_r);
+  bool ReadChecked(unsigned long &value_r);
+  bool ReadChecked(unsigned &value_r);
+
+  /**
+   * Tries to read a hexadecimal number from the next field
+   * @param value_r A reference to the variable that the
+   * number should be written into
+   * @return True if number was read successfully, False otherwise
+   */
+  bool ReadHexChecked(long &value_r);
 
   /**
    * Read a #fixed only if the unit string which follows matches.
    */
-  bool read_checked_compare(fixed &value_r, const char *string);
+  bool ReadCheckedCompare(fixed &value_r, const char *string);
 };
 
 #endif

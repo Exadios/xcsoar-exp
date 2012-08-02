@@ -55,8 +55,7 @@ GaugeVario::GaugeVario(const FullBlackboard &_blackboard,
    nwidth(Layout::Scale(4)),
    nline(Layout::Scale(8)),
    dirty(true), layout_initialised(false), needle_initialised(false),
-   ballast_initialised(false), bugs_initialised(false),
-   unit(Unit::UNDEFINED)
+   ballast_initialised(false), bugs_initialised(false)
 {
   value_top.initialised = false;
   value_middle.initialised = false;
@@ -73,7 +72,7 @@ GaugeVario::GaugeVario(const FullBlackboard &_blackboard,
 void
 GaugeVario::OnPaintBuffer(Canvas &canvas)
 {
-  const PixelRect rc = get_client_rect();
+  const PixelRect rc = GetClientRect();
   const UPixelScalar width = rc.right - rc.left;
   const UPixelScalar height = rc.bottom - rc.top;
 
@@ -88,14 +87,14 @@ GaugeVario::OnPaintBuffer(Canvas &canvas)
     bottom_position.y = middle_position.y + value_height;
     bottom_position.x = rc.right;
 
-    canvas.stretch(rc.left, rc.top, width, height,
+    canvas.Stretch(rc.left, rc.top, width, height,
                    look.background_bitmap,
                    look.background_x, 0, 58, 120);
 
     layout_initialised = true;
   }
 
-  if (Settings().ShowAvgText) {
+  if (Settings().show_average) {
     // JMW averager now displays netto average if not circling
     if (!Calculated().circling) {
       RenderValue(canvas, top_position.x, top_position.y, &value_top, &label_top,
@@ -108,7 +107,7 @@ GaugeVario::OnPaintBuffer(Canvas &canvas)
     }
   }
 
-  if (Settings().ShowMc) {
+  if (Settings().show_mc) {
     fixed mc = Units::ToUserVSpeed(GetGlidePolar().GetMC());
     RenderValue(canvas, bottom_position.x, bottom_position.y,
                 &value_bottom, &label_bottom,
@@ -116,15 +115,15 @@ GaugeVario::OnPaintBuffer(Canvas &canvas)
                 GetComputerSettings().task.auto_mc ? _T("Auto MC") : _T("MC"));
   }
 
-  if (Settings().ShowSpeedToFly)
+  if (Settings().show_speed_to_fly)
     RenderSpeedToFly(canvas, rc.right - 11, (rc.top + rc.bottom) / 2);
   else
     RenderClimb(canvas);
 
-  if (Settings().ShowBallast)
+  if (Settings().show_ballast)
     RenderBallast(canvas);
 
-  if (Settings().ShowBugs)
+  if (Settings().show_bugs)
     RenderBugs(canvas);
 
   dirty = false;
@@ -136,7 +135,7 @@ GaugeVario::OnPaintBuffer(Canvas &canvas)
   fixed vval = Basic().brutto_vario;
   ival = ValueToNeedlePos(fixed(vval));
   sval = ValueToNeedlePos(Calculated().sink_rate);
-  if (Settings().ShowAveNeedle) {
+  if (Settings().show_average_needle) {
     if (!Calculated().circling)
       ival_av = ValueToNeedlePos(Calculated().netto_average);
     else
@@ -145,7 +144,7 @@ GaugeVario::OnPaintBuffer(Canvas &canvas)
 
   // clear items first
 
-  if (Settings().ShowAveNeedle) {
+  if (Settings().show_average_needle) {
     if (!is_persistent() || ival_av != ival_last)
       RenderNeedle(canvas, ival_last, true, true);
 
@@ -164,12 +163,12 @@ GaugeVario::OnPaintBuffer(Canvas &canvas)
 
   // now draw items
   RenderVarioLine(canvas, ival, sval, false);
-  if (Settings().ShowAveNeedle)
+  if (Settings().show_average_needle)
     RenderNeedle(canvas, ival_av, true, false);
 
   RenderNeedle(canvas, ival, false, false);
 
-  if (Settings().ShowGross) {
+  if (Settings().show_gross) {
     fixed vvaldisplay = min(fixed(99.9), max(fixed(-99.9), Units::ToUserVSpeed(vval)));
 
     RenderValue(canvas, middle_position.x, middle_position.y,
@@ -225,7 +224,7 @@ GaugeVario::MakeAllPolygons()
 void
 GaugeVario::RenderClimb(Canvas &canvas)
 {
-  const PixelRect rc = get_client_rect();
+  const PixelRect rc = GetClientRect();
   PixelScalar x = rc.right - Layout::Scale(14);
   PixelScalar y = rc.bottom - Layout::Scale(24);
 
@@ -233,7 +232,7 @@ GaugeVario::RenderClimb(Canvas &canvas)
     return;
 
   if (Basic().switch_state.flight_mode == SwitchInfo::FlightMode::CIRCLING)
-    canvas.scale_copy(x, y, look.climb_bitmap, 12, 0, 12, 12);
+    canvas.ScaleCopy(x, y, look.climb_bitmap, 12, 0, 12, 12);
   else if (is_persistent())
     canvas.DrawFilledRectangle(x, y, x + Layout::Scale(12), y + Layout::Scale(12),
                           look.background_color);
@@ -247,8 +246,8 @@ GaugeVario::RenderZero(Canvas &canvas)
   else
     canvas.SelectBlackPen();
 
-  canvas.line(0, yoffset, Layout::Scale(17), yoffset);
-  canvas.line(0, yoffset + 1, Layout::Scale(17), yoffset + 1);
+  canvas.DrawLine(0, yoffset, Layout::Scale(17), yoffset);
+  canvas.DrawLine(0, yoffset + 1, Layout::Scale(17), yoffset + 1);
 }
 
 int
@@ -414,7 +413,7 @@ GaugeVario::RenderValue(Canvas &canvas, PixelScalar x, PixelScalar y,
       value_info->last_unit != Units::current.vertical_speed_unit) {
     value_info->last_unit = Units::current.vertical_speed_unit;
     const UnitSymbol *unit_symbol = units_look.GetSymbol(value_info->last_unit);
-    unit_symbol->draw(canvas, x - Layout::Scale(5), value_info->rc.top,
+    unit_symbol->Draw(canvas, x - Layout::Scale(5), value_info->rc.top,
                       look.inverse
                       ? UnitSymbol::INVERSE_GRAY
                       : UnitSymbol::GRAY);
@@ -434,7 +433,7 @@ GaugeVario::RenderSpeedToFly(Canvas &canvas, PixelScalar x, PixelScalar y)
   const UPixelScalar arrow_y_size = Layout::Scale(3);
   const UPixelScalar arrow_x_size = Layout::Scale(7);
 
-  const PixelRect rc = get_client_rect();
+  const PixelRect rc = GetClientRect();
 
   PixelScalar nary = NARROWS * arrow_y_size;
   PixelScalar ytop = rc.top + YOFFSET + nary; // JMW
@@ -549,7 +548,7 @@ GaugeVario::RenderBallast(Canvas &canvas)
   static RasterPoint orgValue = {-1,-1};
 
   if (!ballast_initialised) { // ontime init, origin and background rect
-    const PixelRect rc = get_client_rect();
+    const PixelRect rc = GetClientRect();
 
     PixelSize tSize;
 
@@ -650,7 +649,7 @@ GaugeVario::RenderBugs(Canvas &canvas)
   static RasterPoint orgValue = {-1,-1};
 
   if (!bugs_initialised) {
-    const PixelRect rc = get_client_rect();
+    const PixelRect rc = GetClientRect();
     PixelSize tSize;
 
     orgLabel.x = 1;

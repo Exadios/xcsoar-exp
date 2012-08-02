@@ -40,6 +40,10 @@ abstract class AbstractAndroidPort implements AndroidPort {
     name = _name;
   }
 
+  @Override public String toString() {
+    return name;
+  }
+
   private synchronized InputThread stealInput() {
     InputThread i = input;
     input = null;
@@ -56,6 +60,10 @@ abstract class AbstractAndroidPort implements AndroidPort {
     input = new InputThread(name, listener, _input);
     output = new OutputThread(name, _output);
     output.setTimeout(5000);
+  }
+
+  protected void setWriteTimeout(int timeout_ms) {
+    output.setTimeout(timeout_ms);
   }
 
   @Override public void setListener(InputListener _listener) {

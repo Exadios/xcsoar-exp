@@ -26,6 +26,7 @@ Copyright_License {
 #include "DrawThread.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Look/Look.hpp"
+#include "Interface.hpp"
 
 GlueMapWindow::GlueMapWindow(const Look &look)
   :MapWindow(look.map, look.traffic),
@@ -34,9 +35,10 @@ GlueMapWindow::GlueMapWindow(const Look &look)
    drag_mode(DRAG_NONE),
    ignore_single_click(false),
    arm_mapitem_list(false),
-   DisplayMode(DM_CRUISE),
+   last_display_mode(DisplayMode::NONE),
    thermal_band_renderer(look.thermal_band, look.chart),
    final_glide_bar_renderer(look.final_glide_bar, look.map.task),
+   gesture_look(look.gesture),
    map_item_timer(*this)
 {
 }
@@ -46,8 +48,7 @@ GlueMapWindow::set(ContainerWindow &parent, const PixelRect &rc)
 {
   MapWindow::set(parent, rc);
 
-  LoadDisplayModeScales();
-  visible_projection.SetScale(zoomclimb.CruiseScale);
+  visible_projection.SetScale(CommonInterface::GetMapSettings().cruise_scale);
 }
 
 void
@@ -77,6 +78,19 @@ GlueMapWindow::SetComputerSettings(const ComputerSettings &new_value)
 }
 
 void
+GlueMapWindow::SetUIState(const UIState &new_value)
+{
+  AssertThreadOrUndefined();
+
+#ifdef ENABLE_OPENGL
+  ReadUIState(new_value);
+#else
+  ScopeLock protect(next_mutex);
+  next_ui_state = new_value;
+#endif
+}
+
+void
 GlueMapWindow::ExchangeBlackboard()
 {
   /* copy device_blackboard to MapWindow */
@@ -89,6 +103,7 @@ GlueMapWindow::ExchangeBlackboard()
   next_mutex.Lock();
   ReadMapSettings(next_settings_map);
   ReadComputerSettings(next_settings_computer);
+  ReadUIState(next_ui_state);
   next_mutex.Unlock();
 #endif
 }

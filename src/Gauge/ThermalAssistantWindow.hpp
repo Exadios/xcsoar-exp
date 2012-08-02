@@ -25,26 +25,25 @@
 #define THERMAL_ASSISTENT_WINDOW_HPP
 
 #include "Screen/BufferWindow.hpp"
-#include "NMEA/Derived.hpp"
+#include "NMEA/CirclingInfo.hpp"
+#include "NMEA/VarioInfo.hpp"
 
-class ThermalAssistantWindow : public BufferWindow {
+#include <array>
+
+struct ThermalAssistantLook;
+struct DerivedInfo;
+
+class ThermalAssistantWindow : public BufferWindow
+{
+  class LiftPoints: public std::array<RasterPoint,
+                                      std::tuple_size<VarioInfo::LiftDatabase>::value>
+  {
+  public:
+    RasterPoint GetAverage() const;
+  };
+
 protected:
-  static const Color hcBackground;
-  static const Color hcCircles;
-  static const Color hcStandard;
-  static const Color hcPolygonBrush;
-  static const Color hcPolygonPen;
-
-  Brush hbBackground, hbPolygon;
-  Pen hpPlane, hpRadar, hpPolygon;
-  Pen hpInnerCircle;
-  Pen hpOuterCircle;
-  Font hfLabels, hfNoTraffic;
-
-  /**
-   * The distance of the biggest circle in meters.
-   */
-  fixed max_lift;
+  const ThermalAssistantLook &look;
 
   RasterPoint mid;
 
@@ -62,32 +61,36 @@ protected:
   bool small;
 
   Angle direction;
-  DerivedInfo derived;
-  RasterPoint lift_points[37];
-  RasterPoint lift_point_avg;
+  CirclingInfo circling;
+  VarioInfo vario;
 
 public:
-  ThermalAssistantWindow(unsigned _padding, bool _small = false);
+  ThermalAssistantWindow(const ThermalAssistantLook &look,
+                         unsigned _padding, bool _small = false);
 
 public:
   bool LeftTurn() const;
 
-  void Update(const Angle &_direction, const DerivedInfo &_derived);
+  void Update(const DerivedInfo &_derived);
 
 protected:
-  fixed RangeScale(fixed d) const;
+  /**
+   * Normalize the lift to the range of 0.0 to 1.0
+   * 0.0: lift = -max_lift
+   * 0.5: lift = zero lift
+   * 1.0: lift = max_lift
+   */
+  static fixed NormalizeLift(fixed lift, fixed max_lift);
 
-  void UpdateLiftPoints();
-  void UpdateLiftMax();
+  void CalculateLiftPoints(LiftPoints &lift_points, fixed max_lift) const;
+  fixed CalculateMaxLift() const;
   void PaintRadarPlane(Canvas &canvas) const;
-  void PaintRadarBackground(Canvas &canvas) const;
-  void PaintPoints(Canvas &canvas) const;
-  void PaintAdvisor(Canvas &canvas) const;
+  void PaintRadarBackground(Canvas &canvas, fixed max_lift) const;
+  void PaintPoints(Canvas &canvas, const LiftPoints &lift_points) const;
+  void PaintAdvisor(Canvas &canvas, const LiftPoints &lift_points) const;
   void PaintNotCircling(Canvas &canvas) const;
 
 protected:
-  virtual void OnCreate();
-  virtual void OnDestroy();
   virtual void OnResize(UPixelScalar width, UPixelScalar height);
   virtual void OnPaintBuffer(Canvas &canvas);
 };

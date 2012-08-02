@@ -27,14 +27,13 @@ Copyright_License {
 #include "Device/device.hpp"
 #include "Util/CharUtil.hpp"
 #include "Geo/Geoid.hpp"
-#include "Math/Earth.hpp"
 #include "NMEA/Info.hpp"
 #include "NMEA/Checksum.hpp"
 #include "NMEA/InputLine.hpp"
-#include "StringUtil.hpp"
-#include "Compatibility/string.h" /* for _ttoi() */
+#include "Util/StringUtil.hpp"
 #include "Units/System.hpp"
 #include "OS/Clock.hpp"
+#include "Driver/FLARM/StaticParser.hpp"
 
 #include <math.h>
 #include <ctype.h>
@@ -76,7 +75,7 @@ NMEAParser::ParseLine(const char *string, NMEAInfo &info)
   NMEAInputLine line(string);
 
   char type[16];
-  line.read(type, 16);
+  line.Read(type, 16);
 
   if (IsAlphaASCII(type[1]) && IsAlphaASCII(type[2])) {
     if (StringIsEqual(type + 3, "GSA"))
@@ -99,11 +98,25 @@ NMEAParser::ParseLine(const char *string, NMEAInfo &info)
       return PTAS1(line, info);
 
     // FLARM sentences
-    if (StringIsEqual(type + 1, "PFLAA"))
-      return PFLAA(line, info);
+    if (StringIsEqual(type + 1, "PFLAE")) {
+      ParsePFLAE(line, info.flarm.error, info.clock);
+      return true;
+    }
 
-    if (StringIsEqual(type + 1, "PFLAU"))
-      return PFLAU(line, info.flarm, info.clock);
+    if (StringIsEqual(type + 1, "PFLAV")) {
+      ParsePFLAV(line, info.flarm.version, info.clock);
+      return true;
+    }
+
+    if (StringIsEqual(type + 1, "PFLAA")) {
+      ParsePFLAA(line, info.flarm.traffic, info.clock);
+      return true;
+    }
+
+    if (StringIsEqual(type + 1, "PFLAU")) {
+      ParsePFLAU(line, info.flarm.status, info.clock);
+      return true;
+    }
 
     // Garmin altitude sentence
     if (StringIsEqual(type + 1, "PGRMZ"))
@@ -133,7 +146,7 @@ static bool
 ReadBearing(NMEAInputLine &line, Angle &value_r)
 {
   fixed value;
-  if (!line.read_checked(value))
+  if (!line.ReadChecked(value))
     return false;
 
   if (negative(value) || value > fixed(360))
@@ -151,7 +164,7 @@ static bool
 ReadGeoAngle(NMEAInputLine &line, Angle &a)
 {
   char buffer[32], *endptr;
-  line.read(buffer, sizeof(buffer));
+  line.Read(buffer, sizeof(buffer));
 
   char *dot = strchr(buffer, '.');
   if (dot < buffer + 3)
@@ -173,8 +186,8 @@ ReadGeoAngle(NMEAInputLine &line, Angle &a)
 static bool
 ReadFixedAndChar(NMEAInputLine &line, fixed &d, char &ch)
 {
-  bool success = line.read_checked(d);
-  ch = line.read_first_char();
+  bool success = line.ReadChecked(d);
+  ch = line.ReadFirstChar();
   return success;
 }
 
@@ -333,14 +346,14 @@ NMEAParser::GSA(NMEAInputLine &line, NMEAInfo &info)
    *  18) checksum
    */
 
-  line.skip();
+  line.Skip();
 
-  if (line.read(0) == 1)
+  if (line.Read(0) == 1)
     info.location_available.Clear();
 
   // satellites are in items 4-15 of GSA string (4-15 is 1-indexed)
   for (unsigned i = 0; i < GPSState::MAXSATELLITES; i++)
-    info.gps.satellite_ids[i] = line.read(0);
+    info.gps.satellite_ids[i] = line.Read(0);
 
   info.gps.satellite_ids_available.Update(info.clock);
 
@@ -367,11 +380,11 @@ NMEAParser::GLL(NMEAInputLine &line, NMEAInfo &info)
   GeoPoint location;
   bool valid_location = ReadGeoPoint(line, location);
 
-  fixed this_time = TimeModify(line.read(fixed_zero), info.date_time_utc,
+  fixed this_time = TimeModify(line.Read(fixed_zero), info.date_time_utc,
                                info.date_available);
   this_time = TimeAdvanceTolerance(this_time);
 
-  bool gps_valid = !NAVWarn(line.read_first_char());
+  bool gps_valid = !NAVWarn(line.ReadFirstChar());
 
   if (!TimeHasAdvanced(this_time, info))
     return true;
@@ -396,7 +409,7 @@ static bool
 ReadDate(NMEAInputLine &line, BrokenDate &date)
 {
   char buffer[9];
-  line.read(buffer, 9);
+  line.Read(buffer, 9);
 
   if (strlen(buffer) != 6)
     return false;
@@ -438,16 +451,16 @@ NMEAParser::RMC(NMEAInputLine &line, NMEAInfo &info)
    */
 
   fixed this_time;
-  if (!line.read_checked(this_time))
+  if (!line.ReadChecked(this_time))
     return false;
 
-  bool gps_valid = !NAVWarn(line.read_first_char());
+  bool gps_valid = !NAVWarn(line.ReadFirstChar());
 
   GeoPoint location;
   bool valid_location = ReadGeoPoint(line, location);
 
   fixed speed;
-  bool ground_speed_available = line.read_checked(speed);
+  bool ground_speed_available = line.ReadChecked(speed);
 
   Angle track;
   bool track_available = ReadBearing(line, track);
@@ -529,7 +542,7 @@ NMEAParser::GGA(NMEAInputLine &line, NMEAInfo &info)
   GPSState &gps = info.gps;
 
   fixed this_time;
-  if (!line.read_checked(this_time))
+  if (!line.ReadChecked(this_time))
     return false;
 
   this_time = TimeModify(this_time, info.date_time_utc,
@@ -539,11 +552,17 @@ NMEAParser::GGA(NMEAInputLine &line, NMEAInfo &info)
   GeoPoint location;
   bool valid_location = ReadGeoPoint(line, location);
 
-  if (line.read_checked(gps.fix_quality))
+  unsigned fix_quality;
+  if (line.ReadChecked(fix_quality)) {
+    gps.fix_quality = (FixQuality)fix_quality;
     gps.fix_quality_available.Update(info.clock);
+  }
 
-  gps.satellites_used_available.Update(info.clock);
-  gps.satellites_used = min(16, line.read(-1));
+  unsigned satellites_used;
+  if (line.ReadChecked(satellites_used)) {
+    info.gps.satellites_used = satellites_used;
+    info.gps.satellites_used_available.Update(info.clock);
+  }
 
   if (!TimeHasAdvanced(this_time, info))
     return true;
@@ -564,7 +583,7 @@ NMEAParser::GGA(NMEAInputLine &line, NMEAInfo &info)
   info.gps.android_internal_gps = false;
 #endif
 
-  gps.hdop = line.read(fixed_zero);
+  gps.hdop = line.Read(fixed_zero);
 
   bool altitude_available = ReadAltitude(line, info.gps_altitude);
   if (altitude_available)
@@ -659,18 +678,18 @@ NMEAParser::PTAS1(NMEAInputLine &line, NMEAInfo &info)
 
   // Parse current vario data
   fixed vario;
-  if (line.read_checked(vario)) {
+  if (line.ReadChecked(vario)) {
     // Properly convert to m/s
     vario = Units::ToSysUnit((vario - fixed(200)) / 10, Unit::KNOTS);
     info.ProvideTotalEnergyVario(vario);
   }
 
   // Skip average vario data
-  line.skip();
+  line.Skip();
 
   // Parse barometric altitude
   fixed baro_altitude;
-  if (line.read_checked(baro_altitude)) {
+  if (line.ReadChecked(baro_altitude)) {
     // Properly convert to meter
     baro_altitude = Units::ToSysUnit(baro_altitude - fixed(2000), Unit::FEET);
     info.ProvidePressureAltitude(baro_altitude);
@@ -678,124 +697,8 @@ NMEAParser::PTAS1(NMEAInputLine &line, NMEAInfo &info)
 
   // Parse true airspeed
   fixed vtas;
-  if (line.read_checked(vtas))
+  if (line.ReadChecked(vtas))
     info.ProvideTrueAirspeed(Units::ToSysUnit(vtas, Unit::KNOTS));
-
-  return true;
-}
-
-bool
-NMEAParser::PFLAU(NMEAInputLine &line, FlarmState &flarm, fixed time)
-{
-  flarm.available.Update(time);
-
-  // PFLAU,<RX>,<TX>,<GPS>,<Power>,<AlarmLevel>,<RelativeBearing>,<AlarmType>,
-  //   <RelativeVertical>,<RelativeDistance>(,<ID>)
-  flarm.rx = line.read(0);
-  flarm.tx = line.read(false);
-  flarm.gps = (FlarmState::GPSStatus)
-    line.read((int)FlarmState::GPSStatus::NONE);
-
-  line.skip();
-  flarm.alarm_level = (FlarmTraffic::AlarmType)
-    line.read((int)FlarmTraffic::AlarmType::NONE);
-
-  return true;
-}
-
-bool
-NMEAParser::PFLAA(NMEAInputLine &line, NMEAInfo &info)
-{
-  FlarmState &flarm = info.flarm;
-
-  // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,
-  //   <IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<AcftType>
-  FlarmTraffic traffic;
-  traffic.alarm_level = (FlarmTraffic::AlarmType)
-    line.read((int)FlarmTraffic::AlarmType::NONE);
-
-  fixed value;
-  bool stealth = false;
-
-  if (!line.read_checked(value))
-    // Relative North is required !
-    return true;
-  traffic.relative_north = value;
-
-  if (!line.read_checked(value))
-    // Relative East is required !
-    return true;
-  traffic.relative_east = value;
-
-  if (!line.read_checked(value))
-    // Relative Altitude is required !
-    return true;
-  traffic.relative_altitude = value;
-
-  line.skip(); /* id type */
-
-  // 5 id, 6 digit hex
-  char id_string[16];
-  line.read(id_string, 16);
-  traffic.id.Parse(id_string, NULL);
-
-  Angle track;
-  traffic.track_received = ReadBearing(line, track);
-  if (!traffic.track_received) {
-    // Field is empty in stealth mode
-    stealth = true;
-    traffic.track = Angle::Zero();
-  } else
-    traffic.track = track;
-
-  traffic.turn_rate_received = line.read_checked(value);
-  if (!traffic.turn_rate_received) {
-    // Field is empty in stealth mode
-    traffic.turn_rate = fixed_zero;
-  } else
-    traffic.turn_rate = value;
-
-  traffic.speed_received = line.read_checked(value);
-  if (!traffic.speed_received) {
-    // Field is empty in stealth mode
-    stealth = true;
-    traffic.speed = fixed_zero;
-  } else
-    traffic.speed = value;
-
-  traffic.climb_rate_received = line.read_checked(value);
-  if (!traffic.climb_rate_received) {
-    // Field is empty in stealth mode
-    stealth = true;
-    traffic.climb_rate = fixed_zero;
-  } else
-    traffic.climb_rate = value;
-
-  traffic.stealth = stealth;
-
-  unsigned type = line.read(0);
-  if (type > 15 || type == 14)
-    traffic.type = FlarmTraffic::AircraftType::UNKNOWN;
-  else
-    traffic.type = (FlarmTraffic::AircraftType)type;
-
-  FlarmTraffic *flarm_slot = flarm.FindTraffic(traffic.id);
-  if (flarm_slot == NULL) {
-    flarm_slot = flarm.AllocateTraffic();
-    if (flarm_slot == NULL)
-      // no more slots available
-      return true;
-
-    flarm_slot->Clear();
-    flarm_slot->id = traffic.id;
-
-    flarm.new_traffic = true;
-  }
-
-  // set time of fix to current time
-  flarm_slot->valid.Update(info.clock);
-
-  flarm_slot->Update(traffic);
 
   return true;
 }

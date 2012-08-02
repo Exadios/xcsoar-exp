@@ -61,7 +61,7 @@ GRecord::AppendStringToBuffer(const unsigned char *in)
 {
   for (int i = 0; i < 4; i++)
     // skip whitespace flag=1
-    md5[i].AppendString(in, 1);
+    md5[i].AppendString(in, true);
 }
 
 void
@@ -85,9 +85,6 @@ GRecord::Initialize(int key_id)
 {
   for (unsigned i = 0; i < BUFF_LEN; i++)
     filename[i] = 0;
-
-  for (unsigned i = 0; i < 3; i++)
-    md5[i].InitDigest();
 
   // 4 different 512 bit keys
   switch (key_id)
@@ -172,7 +169,7 @@ bool
 GRecord::AppendGRecordToFile(bool valid)
 {
   TextWriter writer(filename, true);
-  if (writer.error())
+  if (!writer.IsOpen())
     return false;
 
   char digest[BUFF_LEN];
@@ -190,10 +187,10 @@ GRecord::AppendGRecordToFile(bool valid)
 
       digest16[chars_per_line + 1] = 0; // +1 is the initial "G"
 
-      writer.writeln(digest16);
+      writer.WriteLine(digest16);
     }
   } else {
-    writer.writeln("G Record Invalid");
+    writer.WriteLine("G Record Invalid");
   }
 
   return true;

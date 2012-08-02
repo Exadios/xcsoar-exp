@@ -37,13 +37,35 @@ Copyright_License {
 #include "Formatter/UserGeoPointFormatter.hpp"
 #include "InfoBoxes/InfoBoxManager.hpp"
 #include "UIState.hpp"
-#include "Interface.hpp"
 #include "Renderer/FinalGlideBarRenderer.hpp"
 #include "Units/Units.hpp"
 #include "Terrain/RasterTerrain.hpp"
 #include "Util/Macros.hpp"
+#include "Look/GestureLook.hpp"
+#include "Input/InputEvents.hpp"
 
 #include <stdio.h>
+
+void
+GlueMapWindow::DrawGesture(Canvas &canvas) const
+{
+  if (!gestures.HasPoints())
+    return;
+
+  const TCHAR *gesture = gestures.GetGesture();
+  if (gesture != NULL && !InputEvents::IsGesture(gesture))
+    canvas.Select(gesture_look.invalid_pen);
+  else
+    canvas.Select(gesture_look.pen);
+
+  canvas.SelectHollowBrush();
+
+  const auto &points = gestures.GetPoints();
+  auto it = points.begin();
+  auto it_last = it++;
+  for (auto it_end = points.end(); it != it_end; it_last = it++)
+    canvas.DrawLinePiece(*it_last, *it);
+}
 
 void
 GlueMapWindow::DrawCrossHairs(Canvas &canvas) const
@@ -53,9 +75,9 @@ GlueMapWindow::DrawCrossHairs(Canvas &canvas) const
 
   const RasterPoint center = render_projection.GetScreenOrigin();
 
-  canvas.line(center.x + 20, center.y,
+  canvas.DrawLine(center.x + 20, center.y,
               center.x - 20, center.y);
-  canvas.line(center.x, center.y + 20,
+  canvas.DrawLine(center.x, center.y + 20,
               center.x, center.y - 20);
 }
 
@@ -161,11 +183,11 @@ GlueMapWindow::DrawFlightMode(Canvas &canvas, const PixelRect &rc) const
   // draw flight mode
   const MaskedIcon *bmp;
 
-  if (task != NULL && (task->GetMode() == TaskManager::MODE_ABORT))
+  if (Calculated().common_stats.mode_abort)
     bmp = &look.abort_mode_icon;
-  else if (GetDisplayMode() == DM_CIRCLING)
+  else if (GetDisplayMode() == DisplayMode::CIRCLING)
     bmp = &look.climb_mode_icon;
-  else if (GetDisplayMode() == DM_FINAL_GLIDE)
+  else if (GetDisplayMode() == DisplayMode::FINAL_GLIDE)
     bmp = &look.final_glide_mode_icon;
   else
     bmp = &look.cruise_mode_icon;
@@ -176,12 +198,12 @@ GlueMapWindow::DrawFlightMode(Canvas &canvas, const PixelRect &rc) const
             rc.bottom - bmp->GetSize().cy - Layout::Scale(4));
 
   // draw flarm status
-  if (CommonInterface::GetUISettings().traffic.enable_gauge)
+  if (!GetMapSettings().show_flarm_alarm_level)
     // Don't show indicator when the gauge is indicating the traffic anyway
     return;
 
-  const FlarmState &flarm = Basic().flarm;
-  if (!flarm.available || flarm.GetActiveTrafficCount() == 0)
+  const FlarmStatus &flarm = Basic().flarm.status;
+  if (!flarm.available)
     return;
 
   switch (flarm.alarm_level) {
@@ -209,7 +231,7 @@ GlueMapWindow::DrawFinalGlide(Canvas &canvas, const PixelRect &rc) const
 {
   final_glide_bar_renderer.Draw(canvas, rc, Calculated(),
                                 GetComputerSettings().task.glide,
-    CommonInterface::GetUISettings().final_glide_bar_mc0_enabled);
+                                GetMapSettings().final_glide_bar_mc0_enabled);
 }
 
 void
@@ -218,13 +240,13 @@ GlueMapWindow::DrawMapScale(Canvas &canvas, const PixelRect &rc,
 {
   StaticString<80> buffer;
 
-  fixed MapWidth = projection.GetScreenWidthMeters();
+  fixed map_width = projection.GetScreenWidthMeters();
 
   canvas.Select(Fonts::map_bold);
-  FormatUserMapScale(MapWidth, buffer.buffer(), true);
-  PixelSize textSize = canvas.CalcTextSize(buffer);
+  FormatUserMapScale(map_width, buffer.buffer(), true);
+  PixelSize text_size = canvas.CalcTextSize(buffer);
 
-  const PixelScalar textXPadding = Layout::Scale(2);
+  const PixelScalar text_padding_x = Layout::Scale(2);
   const PixelScalar height = Fonts::map_bold.GetCapitalHeight() + Layout::Scale(2);
 
   PixelScalar x = 0;
@@ -232,16 +254,16 @@ GlueMapWindow::DrawMapScale(Canvas &canvas, const PixelRect &rc,
 
   x += look.map_scale_left_icon.GetSize().cx;
   canvas.DrawFilledRectangle(x, rc.bottom - height,
-                             x + 2 * textXPadding + textSize.cx,
+                             x + 2 * text_padding_x + text_size.cx,
                              rc.bottom, COLOR_WHITE);
 
   canvas.SetBackgroundTransparent();
   canvas.SetTextColor(COLOR_BLACK);
-  x += textXPadding;
+  x += text_padding_x;
   canvas.text(x, rc.bottom - Fonts::map_bold.GetAscentHeight() - Layout::Scale(1),
               buffer);
 
-  x += textXPadding + textSize.cx;
+  x += text_padding_x + text_size.cx;
   look.map_scale_right_icon.Draw(canvas, x, rc.bottom - height);
 
   buffer.clear();
@@ -257,9 +279,9 @@ GlueMapWindow::DrawMapScale(Canvas &canvas, const PixelRect &rc,
     break;
   }
 
-  const UIState &ui_state = CommonInterface::GetUIState();
+  const UIState &ui_state = GetUIState();
   if (ui_state.auxiliary_enabled) {
-    buffer += InfoBoxManager::GetCurrentPanelName();
+    buffer += ui_state.panel_name;
     buffer += _T(" ");
   }
 
@@ -295,7 +317,7 @@ GlueMapWindow::DrawMapScale(Canvas &canvas, const PixelRect &rc,
 void
 GlueMapWindow::DrawThermalEstimate(Canvas &canvas) const
 {
-  if (GetDisplayMode() == DM_CIRCLING) {
+  if (InCirclingMode()) {
     // in circling mode, draw thermal at actual estimated location
     const MapWindowProjection &projection = render_projection;
     const ThermalLocatorInfo &thermal_locator = Calculated().thermal_locator;
@@ -314,22 +336,22 @@ void
 GlueMapWindow::RenderTrail(Canvas &canvas, const RasterPoint aircraft_pos)
 {
   unsigned min_time;
-  switch(GetMapSettings().trail_length) {
-  case TRAIL_OFF:
+  switch(GetMapSettings().trail.length) {
+  case TrailSettings::Length::OFF:
     return;
-  case TRAIL_LONG:
+  case TrailSettings::Length::LONG:
     min_time = max(0, (int)Basic().time - 3600);
     break;
-  case TRAIL_SHORT:
+  case TrailSettings::Length::SHORT:
     min_time = max(0, (int)Basic().time - 600);
     break;
-  case TRAIL_FULL:
+  case TrailSettings::Length::FULL:
     min_time = 0; // full
     break;
   }
 
   DrawTrail(canvas, aircraft_pos, min_time,
-            GetMapSettings().trail_drift_enabled && GetDisplayMode() == DM_CIRCLING);
+            GetMapSettings().trail.wind_drift_enabled && InCirclingMode());
 }
 
 void
@@ -337,7 +359,7 @@ GlueMapWindow::DrawThermalBand(Canvas &canvas, const PixelRect &rc) const
 {
   if (Calculated().task_stats.total.solution_remaining.IsOk() &&
       Calculated().task_stats.total.solution_remaining.altitude_difference > fixed(50)
-      && GetDisplayMode() == DM_FINAL_GLIDE)
+      && GetDisplayMode() == DisplayMode::FINAL_GLIDE)
     return;
 
   PixelRect tb_rect;
@@ -377,6 +399,6 @@ GlueMapWindow::DrawStallRatio(Canvas &canvas, const PixelRect &rc) const
     PixelScalar m((rc.bottom - rc.top) * s * s);
 
     canvas.SelectBlackPen();
-    canvas.line(rc.right - 1, rc.bottom - m, rc.right - 11, rc.bottom - m);
+    canvas.DrawLine(rc.right - 1, rc.bottom - m, rc.right - 11, rc.bottom - m);
   }
 }

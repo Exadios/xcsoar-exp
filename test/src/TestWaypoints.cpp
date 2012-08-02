@@ -24,7 +24,7 @@
 
 #include "Waypoint/WaypointVisitor.hpp"
 #include "Waypoint/Waypoints.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
+#include "Geo/GeoVector.hpp"
 
 #include <stdio.h>
 #include <tchar.h>
@@ -72,9 +72,8 @@ AddSpiralWaypoints(Waypoints &waypoints,
 
     vector.bearing = angle_start + angle_step * i;
 
-    GeoPoint location = vector.EndPoint(center);
-
-    Waypoint waypoint(location);
+    Waypoint waypoint;
+    waypoint.location = vector.EndPoint(center);
     waypoint.original_id = i;
     waypoint.elevation = fixed(i * 10 - 500);
 
@@ -234,6 +233,11 @@ TestGetNearest(const Waypoints &waypoints, const GeoPoint &center)
 
   ok1((waypoint = waypoints.GetNearestLandable(further, fixed(10000))) != NULL);
   ok1(waypoint->original_id == 3);
+
+  ok1((waypoint = waypoints.GetNearestIf(center, fixed(1), OriginalIDAbove(5))) == NULL);
+
+  ok1((waypoint = waypoints.GetNearestIf(center, fixed(10000), OriginalIDAbove(5))) != NULL);
+  ok1(waypoint->original_id == 6);
 }
 
 static void
@@ -300,10 +304,10 @@ TestReplace(Waypoints& waypoints, unsigned id)
 int
 main(int argc, char** argv)
 {
-  if (!parse_args(argc, argv))
+  if (!ParseArgs(argc, argv))
     return 0;
 
-  plan_tests(49);
+  plan_tests(52);
 
   Waypoints waypoints;
   GeoPoint center(Angle::Degrees(fixed(51.4)), Angle::Degrees(fixed(7.85)));

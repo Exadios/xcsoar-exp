@@ -25,12 +25,14 @@
 #include "Device/Driver/BorgeltB50.hpp"
 #include "Device/Driver/CAI302.hpp"
 #include "Device/Driver/Condor.hpp"
+#include "Device/Driver/CProbe.hpp"
 #include "Device/Driver/EW.hpp"
 #include "Device/Driver/EWMicroRecorder.hpp"
 #include "Device/Driver/FLARM.hpp"
 #include "Device/Driver/FlymasterF1.hpp"
 #include "Device/Driver/FlyNet.hpp"
 #include "Device/Driver/Flytec.hpp"
+#include "Device/Driver/GTAltimeter.hpp"
 #include "Device/Driver/Leonardo.hpp"
 #include "Device/Driver/LX.hpp"
 #include "Device/Driver/ILEC.hpp"
@@ -139,22 +141,21 @@ TestFLARM()
 
   ok1(parser.ParseLine("$PFLAU,3,1,1,1,0*50",
                                       nmea_info));
-  ok1(nmea_info.flarm.rx == 3);
-  ok1(nmea_info.flarm.tx);
-  ok1(nmea_info.flarm.gps == FlarmState::GPSStatus::GPS_2D);
-  ok1(nmea_info.flarm.alarm_level == FlarmTraffic::AlarmType::NONE);
-  ok1(nmea_info.flarm.GetActiveTrafficCount() == 0);
-  ok1(!nmea_info.flarm.new_traffic);
+  ok1(nmea_info.flarm.status.rx == 3);
+  ok1(nmea_info.flarm.status.tx);
+  ok1(nmea_info.flarm.status.gps == FlarmStatus::GPSStatus::GPS_2D);
+  ok1(nmea_info.flarm.status.alarm_level == FlarmTraffic::AlarmType::NONE);
+  ok1(nmea_info.flarm.traffic.GetActiveTrafficCount() == 0);
+  ok1(!nmea_info.flarm.traffic.new_traffic);
 
   ok1(parser.ParseLine("$PFLAA,0,100,-150,10,2,DDA85C,123,13,24,1.4,2*7f",
                                       nmea_info));
-  ok1(nmea_info.flarm.new_traffic);
-  ok1(nmea_info.flarm.GetActiveTrafficCount() == 1);
+  ok1(nmea_info.flarm.traffic.new_traffic);
+  ok1(nmea_info.flarm.traffic.GetActiveTrafficCount() == 1);
 
-  FlarmId id;
-  id.Parse("DDA85C", NULL);
+  FlarmId id = FlarmId::Parse("DDA85C", NULL);
 
-  FlarmTraffic *traffic = nmea_info.flarm.FindTraffic(id);
+  FlarmTraffic *traffic = nmea_info.flarm.traffic.FindTraffic(id);
   if (ok1(traffic != NULL)) {
     ok1(traffic->valid);
     ok1(traffic->alarm_level == FlarmTraffic::AlarmType::NONE);
@@ -177,10 +178,10 @@ TestFLARM()
 
   ok1(parser.ParseLine("$PFLAA,2,20,10,24,2,DEADFF,,,,,1*46",
                                       nmea_info));
-  ok1(nmea_info.flarm.GetActiveTrafficCount() == 2);
+  ok1(nmea_info.flarm.traffic.GetActiveTrafficCount() == 2);
 
-  id.Parse("DEADFF", NULL);
-  traffic = nmea_info.flarm.FindTraffic(id);
+  id = FlarmId::Parse("DEADFF", NULL);
+  traffic = nmea_info.flarm.traffic.FindTraffic(id);
   if (ok1(traffic != NULL)) {
     ok1(traffic->valid);
     ok1(traffic->alarm_level == FlarmTraffic::AlarmType::IMPORTANT);
@@ -199,10 +200,10 @@ TestFLARM()
 
   ok1(parser.ParseLine("$PFLAA,0,1206,574,21,2,DDAED5,196,,32,1.0,1*10",
                        nmea_info));
-  ok1(nmea_info.flarm.GetActiveTrafficCount() == 3);
+  ok1(nmea_info.flarm.traffic.GetActiveTrafficCount() == 3);
 
-  id.Parse("DDAED5", NULL);
-  traffic = nmea_info.flarm.FindTraffic(id);
+  id = FlarmId::Parse("DDAED5", NULL);
+  traffic = nmea_info.flarm.traffic.FindTraffic(id);
   if (ok1(traffic != NULL)) {
     ok1(traffic->valid);
     ok1(traffic->alarm_level == FlarmTraffic::AlarmType::NONE);
@@ -221,6 +222,74 @@ TestFLARM()
   } else {
     skip(15, 0, "traffic == NULL");
   }
+}
+
+static void
+TestAltairRU()
+{
+  NullPort null;
+  Device *device = atrDevice.CreateOnPort(dummy_config, null);
+  ok1(device != NULL);
+
+  NMEAInfo nmea_info;
+  nmea_info.Reset();
+  nmea_info.clock = fixed_one;
+
+  ok1(device->ParseNMEA("$PTFRS,1,0,0,0,0,0,0,0,5,1,10,0,3,1338313437,0,0,0,,,2*4E",
+                        nmea_info));
+
+  ok1(nmea_info.engine_noise_level_available);
+  ok1(nmea_info.engine_noise_level == 5);
+  ok1(!nmea_info.voltage_available);
+
+  nmea_info.Reset();
+  nmea_info.clock = fixed_one;
+
+  ok1(device->ParseNMEA("$PTFRS,1,0,0,0,0,0,0,0,342,1,10,0,3,1338313438,0,0,12743,,,2*42",
+                        nmea_info));
+
+  ok1(nmea_info.engine_noise_level_available);
+  ok1(nmea_info.engine_noise_level == 342);
+  ok1(nmea_info.voltage_available);
+  ok1(equals(nmea_info.voltage, 12.743));
+}
+
+static void
+TestGTAltimeter()
+{
+  NullPort null;
+  Device *device = gt_altimeter_device_driver.CreateOnPort(dummy_config, null);
+  ok1(device != NULL);
+
+  NMEAInfo nmea_info;
+  nmea_info.Reset();
+  nmea_info.clock = fixed_one;
+
+  ok1(device->ParseNMEA("$LK8EX1,99545,149,1,26,5.10*18", nmea_info));
+  ok1(nmea_info.static_pressure_available);
+  ok1(equals(nmea_info.static_pressure.GetHectoPascal(), 995.45));
+  ok1(!nmea_info.pressure_altitude_available);
+  ok1(nmea_info.netto_vario_available);
+  ok1(equals(nmea_info.netto_vario, 0.01));
+  ok1(nmea_info.temperature_available);
+  ok1(equals(nmea_info.temperature, 26));
+  ok1(!nmea_info.battery_level_available);
+  ok1(nmea_info.voltage_available);
+  ok1(equals(nmea_info.voltage, 5.1));
+
+  nmea_info.Reset();
+  nmea_info.clock = fixed_one;
+
+  ok1(device->ParseNMEA("$LK8EX1,999999,149,-123,,1076,*32", nmea_info));
+  ok1(!nmea_info.static_pressure_available);
+  ok1(nmea_info.pressure_altitude_available);
+  ok1(equals(nmea_info.pressure_altitude, 149));
+  ok1(nmea_info.netto_vario_available);
+  ok1(equals(nmea_info.netto_vario, -1.23));
+  ok1(!nmea_info.temperature_available);
+  ok1(nmea_info.battery_level_available);
+  ok1(equals(nmea_info.battery_level, 76));
+  ok1(!nmea_info.voltage_available);
 }
 
 static void
@@ -307,6 +376,38 @@ TestCAI302()
   ok1(equals(nmea_info.settings.ballast_fraction, 0.5));
   ok1(nmea_info.settings.bugs_available);
   ok1(equals(nmea_info.settings.bugs, 0.9));
+
+  delete device;
+}
+
+static void
+TestCProbe()
+{
+  NullPort null;
+  Device *device = c_probe_driver.CreateOnPort(dummy_config, null);
+  ok1(device != NULL);
+
+  NMEAInfo nmea_info;
+  nmea_info.Reset();
+  nmea_info.clock = fixed_one;
+
+  ok1(device->ParseNMEA("$PCPROBE,T,FD92,FF93,00D9,FD18,017E,FEDB,0370,0075,00D6,0064,001C,000000,,",
+                        nmea_info));
+  ok1(nmea_info.attitude.pitch_angle_available);
+  ok1(equals(nmea_info.attitude.pitch_angle, 25.6034467702));
+  ok1(nmea_info.attitude.bank_angle_available);
+  ok1(equals(nmea_info.attitude.bank_angle, -11.9963939863));
+  ok1(nmea_info.attitude.heading_available);
+  ok1(equals(nmea_info.attitude.heading, 257.0554705429));
+  ok1(nmea_info.acceleration.available);
+  ok1(nmea_info.acceleration.real);
+  ok1(equals(nmea_info.acceleration.g_load, 1.0030817514));
+  ok1(nmea_info.temperature_available);
+  ok1(equals(nmea_info.temperature, 11.7));
+  ok1(nmea_info.humidity_available);
+  ok1(equals(nmea_info.humidity, 21.4));
+  ok1(nmea_info.battery_level_available);
+  ok1(equals(nmea_info.battery_level, 100.0));
 
   delete device;
 }
@@ -888,7 +989,7 @@ TestZander()
 static void
 TestDeclare(const struct DeviceRegister &driver)
 {
-  FaultInjectionPort port(*(Port::Handler *)NULL);
+  FaultInjectionPort port(*(DataHandler *)NULL);
   Device *device = driver.CreateOnPort(dummy_config, port);
   ok1(device != NULL);
 
@@ -930,7 +1031,7 @@ TestDeclare(const struct DeviceRegister &driver)
 static void
 TestFlightList(const struct DeviceRegister &driver)
 {
-  FaultInjectionPort port(*(Port::Handler *)NULL);
+  FaultInjectionPort port(*(DataHandler *)NULL);
   Device *device = driver.CreateOnPort(dummy_config, port);
   ok1(device != NULL);
 
@@ -954,13 +1055,16 @@ TestFlightList(const struct DeviceRegister &driver)
 
 int main(int argc, char **argv)
 {
-  plan_tests(483);
+  plan_tests(532);
 
   TestGeneric();
   TestTasman();
   TestFLARM();
+  TestAltairRU();
+  TestGTAltimeter();
   TestBorgeltB50();
   TestCAI302();
+  TestCProbe();
   TestFlymasterF1();
   TestFlytec();
   TestLeonardo();

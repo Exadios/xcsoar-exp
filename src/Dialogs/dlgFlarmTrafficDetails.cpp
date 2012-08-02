@@ -30,15 +30,19 @@
  */
 
 #include "Dialogs/Traffic.hpp"
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/TextEntry.hpp"
 #include "Dialogs/CallBackTable.hpp"
+#include "Dialogs/XML.hpp"
+#include "Dialogs/Message.hpp"
+#include "Form/Form.hpp"
+#include "Form/Util.hpp"
+#include "Form/Button.hpp"
 #include "FLARM/FlarmNet.hpp"
 #include "FLARM/Traffic.hpp"
 #include "FLARM/FlarmDetails.hpp"
 #include "FLARM/Friends.hpp"
 #include "Screen/Layout.hpp"
-#include "Engine/Math/Earth.hpp"
+#include "Geo/Math.hpp"
 #include "LocalPath.hpp"
 #include "UIGlobals.hpp"
 #include "Components.hpp"
@@ -47,6 +51,7 @@
 #include "Util/StringUtil.hpp"
 #include "Util/Macros.hpp"
 #include "Language/Language.hpp"
+#include "Interface.hpp"
 #include "Compiler.h"
 
 #include <math.h>
@@ -64,13 +69,13 @@ UpdateChanging()
 {
   TCHAR tmp[20];
   const FlarmTraffic* target =
-      XCSoarInterface::Basic().flarm.FindTraffic(target_id);
+    XCSoarInterface::Basic().flarm.traffic.FindTraffic(target_id);
 
   bool target_ok = target && target->IsDefined();
 
   // Fill distance field
   if (target_ok)
-    FormatUserDistanceSmart(target->distance, tmp, 20);
+    FormatUserDistanceSmart(target->distance, tmp, 20, fixed(1000));
   else
     _tcscpy(tmp, _T("--"));
   SetFormValue(*wf, _T("prpDistance"), tmp);
@@ -154,7 +159,7 @@ Update()
 
     // Fill the plane type field
     const FlarmTraffic* target =
-        XCSoarInterface::Basic().flarm.FindTraffic(target_id);
+        XCSoarInterface::Basic().flarm.traffic.FindTraffic(target_id);
 
     const TCHAR* actype;
     if (target == NULL ||
@@ -209,7 +214,7 @@ static void
 OnTeamClicked(gcc_unused WndButton &Sender)
 {
   // Ask for confirmation
-  if (MessageBoxX(_("Do you want to set this FLARM contact as your new teammate?"),
+  if (ShowMessageBox(_("Do you want to set this FLARM contact as your new teammate?"),
                   _("New Teammate"), MB_YESNO) != IDYES)
     return;
 
@@ -253,34 +258,39 @@ OnCallsignClicked(gcc_unused WndButton &Sender)
 static void
 OnFriendBlueClicked(gcc_unused WndButton &Sender)
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::BLUE);
+  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::BLUE);
+  wf->SetModalResult(mrOK);
 }
 
 static void
 OnFriendGreenClicked(gcc_unused WndButton &Sender)
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::GREEN);
+  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::GREEN);
+  wf->SetModalResult(mrOK);
 }
 
 static void
 OnFriendYellowClicked(gcc_unused WndButton &Sender)
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::YELLOW);
+  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::YELLOW);
+  wf->SetModalResult(mrOK);
 }
 
 static void
 OnFriendMagentaClicked(gcc_unused WndButton &Sender)
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::MAGENTA);
+  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::MAGENTA);
+  wf->SetModalResult(mrOK);
 }
 
 static void
 OnFriendClearClicked(gcc_unused WndButton &Sender)
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::NONE);
+  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::NONE);
+  wf->SetModalResult(mrOK);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(OnTeamClicked),
   DeclareCallBackEntry(OnCallsignClicked),

@@ -26,19 +26,69 @@ Copyright_License {
 
 #ifdef NDEBUG
 
+#ifdef ANDROID
 static inline void
-assert_none_locked()
+InitThreadDebug()
+{
+}
+#endif
+
+static inline void
+AssertNoneLocked()
 {
 }
 
+#ifdef ENABLE_OPENGL
+
+static inline void
+EnterDrawThread()
+{
+}
+
+static inline void
+LeaveDrawThread()
+{
+}
+
+#endif
+
 #else /* !NDEBUG */
+
+#ifdef ANDROID
+void
+InitThreadDebug();
+#endif
 
 /**
  * Abort the program if the current thread holds at least one mutex.
  * Add a call to this function before invoking blocking system calls.
  */
 void
-assert_none_locked();
+AssertNoneLocked();
+
+bool
+InMainThread();
+
+bool
+InDrawThread();
+
+#ifdef ENABLE_OPENGL
+
+/**
+ * Marks the current thread as DrawThread.  This is used on OpenGL
+ * (which has no DrawThread) to allow using InDrawThread() in
+ * assertions.
+ */
+void
+EnterDrawThread();
+
+/**
+ * Undo the effect of EnterDrawThread().
+ */
+void
+LeaveDrawThread();
+
+#endif
 
 #endif /* !NDEBUG */
 

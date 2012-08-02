@@ -22,8 +22,10 @@ Copyright_License {
 */
 
 #include "Dialogs/Dialogs.h"
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/CallBackTable.hpp"
+#include "Dialogs/XML.hpp"
+#include "Form/Form.hpp"
+#include "Form/TabBar.hpp"
 #include "UIGlobals.hpp"
 #include "Look/IconLook.hpp"
 #include "StatusPanels/FlightStatusPanel.hpp"
@@ -31,9 +33,9 @@ Copyright_License {
 #include "StatusPanels/RulesStatusPanel.hpp"
 #include "StatusPanels/SystemStatusPanel.hpp"
 #include "StatusPanels/TimesStatusPanel.hpp"
+#include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Protection.hpp"
-#include "Math/Earth.hpp"
 #include "Hardware/Battery.hpp"
 #include "Formatter/Units.hpp"
 #include "Logger/Logger.hpp"
@@ -41,16 +43,16 @@ Copyright_License {
 #include "LocalTime.hpp"
 #include "Components.hpp"
 #include "Task/ProtectedTaskManager.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 #include "Compiler.h"
-
-#include "Form/TabBar.hpp"
-#include "Screen/Layout.hpp"
 
 #include <assert.h>
 #include <stdio.h>
 
 #include <algorithm>
+
+class WndButton;
 
 static WndForm *wf = NULL;
 static TabBarControl *wTabBar;
@@ -71,7 +73,7 @@ OnCloseClicked(gcc_unused WndButton &button)
   wf->SetModalResult(mrOK);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(NULL)
 };
@@ -99,6 +101,7 @@ dlgStatusShowModal(int start_page)
     CommonInterface::GetUISettings().dialog.tab_style
     == DialogSettings::TabStyle::Icon;
 
+  const DialogLook &look = UIGlobals::GetDialogLook();
   const IconLook &icons = UIGlobals::GetIconLook();
   const Bitmap *FlightIcon = enable_icons ? &icons.hBmpTabFlight : NULL;
   const Bitmap *SystemIcon = enable_icons ? &icons.hBmpTabSystem : NULL;
@@ -106,20 +109,20 @@ dlgStatusShowModal(int start_page)
   const Bitmap *RulesIcon = enable_icons ? &icons.hBmpTabRules : NULL;
   const Bitmap *TimesIcon = enable_icons ? &icons.hBmpTabTimes : NULL;
 
-  Widget *flight_panel = new FlightStatusPanel(nearest_waypoint);
-  wTabBar->AddTab(flight_panel, _T("Flight"), false, FlightIcon);
+  Widget *flight_panel = new FlightStatusPanel(look, nearest_waypoint);
+  wTabBar->AddTab(flight_panel, _T("Flight"), FlightIcon);
 
-  Widget *system_panel = new SystemStatusPanel();
-  wTabBar->AddTab(system_panel, _T("System"), false, SystemIcon);
+  Widget *system_panel = new SystemStatusPanel(look);
+  wTabBar->AddTab(system_panel, _T("System"), SystemIcon);
 
-  Widget *task_panel = new TaskStatusPanel();
-  wTabBar->AddTab(task_panel, _T("Task"), false, TaskIcon);
+  Widget *task_panel = new TaskStatusPanel(look);
+  wTabBar->AddTab(task_panel, _T("Task"), TaskIcon);
 
-  Widget *rules_panel = new RulesStatusPanel();
-  wTabBar->AddTab(rules_panel, _T("Rules"), false, RulesIcon);
+  Widget *rules_panel = new RulesStatusPanel(look);
+  wTabBar->AddTab(rules_panel, _T("Rules"), RulesIcon);
 
-  Widget *times_panel = new TimesStatusPanel();
-  wTabBar->AddTab(times_panel, _T("Times"), false, TimesIcon);
+  Widget *times_panel = new TimesStatusPanel(look);
+  wTabBar->AddTab(times_panel, _T("Times"), TimesIcon);
 
   /* restore previous page */
 

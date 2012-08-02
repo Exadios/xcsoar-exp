@@ -5,7 +5,7 @@ VOLKSLOGGER_SOURCES = \
 	$(DRIVER_SRC_DIR)/Volkslogger/Parser.cpp \
 	$(DRIVER_SRC_DIR)/Volkslogger/Protocol.cpp \
 	$(DRIVER_SRC_DIR)/Volkslogger/Declare.cpp \
-	$(DRIVER_SRC_DIR)/Volkslogger/CRC16.cpp \
+	$(DRIVER_SRC_DIR)/Volkslogger/Database.cpp \
 	$(DRIVER_SRC_DIR)/Volkslogger/Util.cpp \
 	$(DRIVER_SRC_DIR)/Volkslogger/dbbconv.cpp \
 	$(DRIVER_SRC_DIR)/Volkslogger/grecord.cpp \
@@ -55,6 +55,9 @@ FLARM_SOURCES = \
 	$(DRIVER_SRC_DIR)/FLARM/Device.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/Register.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/Mode.cpp \
+	$(DRIVER_SRC_DIR)/FLARM/Parser.cpp \
+	$(DRIVER_SRC_DIR)/FLARM/StaticParser.cpp \
+	$(DRIVER_SRC_DIR)/FLARM/Settings.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/Declare.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/Logger.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/CRC16.cpp \
@@ -77,6 +80,7 @@ DRIVER_SOURCES = \
 	$(DRIVER_SRC_DIR)/BorgeltB50.cpp \
 	$(DRIVER_SRC_DIR)/CaiGpsNav.cpp \
 	$(DRIVER_SRC_DIR)/Condor.cpp \
+	$(DRIVER_SRC_DIR)/CProbe.cpp \
 	$(DRIVER_SRC_DIR)/EW.cpp \
 	$(DRIVER_SRC_DIR)/EWMicroRecorder.cpp \
 	$(DRIVER_SRC_DIR)/FlymasterF1.cpp \
@@ -84,6 +88,7 @@ DRIVER_SOURCES = \
 	$(DRIVER_SRC_DIR)/Flytec.cpp \
 	$(DRIVER_SRC_DIR)/Generic.cpp \
 	$(DRIVER_SRC_DIR)/Leonardo.cpp \
+	$(DRIVER_SRC_DIR)/GTAltimeter.cpp \
 	$(DRIVER_SRC_DIR)/NmeaOut.cpp \
 	$(DRIVER_SRC_DIR)/PosiGraph.cpp \
 	$(DRIVER_SRC_DIR)/XCOM760.cpp \

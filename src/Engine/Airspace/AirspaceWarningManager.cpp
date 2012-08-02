@@ -20,12 +20,12 @@
 }
  */
 #include "AirspaceWarningManager.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
+#include "Geo/GeoVector.hpp"
 #include "Airspaces.hpp"
 #include "AirspaceCircle.hpp"
 #include "AirspacePolygon.hpp"
 #include "AirspaceIntersectionVisitor.hpp"
-#include "Task/TaskStats/TaskStats.hpp"
+#include "Task/Stats/TaskStats.hpp"
 #include "Predicate/AirspacePredicateAircraftInside.hpp"
 
 #define CRUISE_FILTER_FACT fixed_half
@@ -41,6 +41,12 @@ AirspaceWarningManager::AirspaceWarningManager(const Airspaces &_airspaces,
    perf_cruise(cruise_filter),
    perf_circling(circling_filter)
 {
+}
+
+const TaskProjection &
+AirspaceWarningManager::GetProjection() const
+{
+  return airspaces.GetProjection();
 }
 
 void
@@ -90,9 +96,9 @@ AirspaceWarningManager::GetWarning(const AbstractAirspace &airspace)
 AirspaceWarning* 
 AirspaceWarningManager::GetWarningPtr(const AbstractAirspace &airspace)
 {
-  for (auto it = warnings.begin(), end = warnings.end(); it != end; ++it)
-    if (&(it->GetAirspace()) == &airspace)
-      return &(*it);
+  for (auto &w : warnings)
+    if (&(w.GetAirspace()) == &airspace)
+      return &w;
 
   return NULL;
 }
@@ -114,8 +120,8 @@ AirspaceWarningManager::Update(const AircraftState& state,
   }
 
   // save old state
-  for (auto it = warnings.begin(), end = warnings.end(); it != end; ++it)
-    it->SaveState();
+  for (auto &w : warnings)
+    w.SaveState();
 
   // check from strongest to weakest alerts
   UpdateInside(state, glide_polar);
@@ -207,7 +213,7 @@ public:
       if (mode_inside) {
         airspace.Intercept(state, perf, solution, state.location, state.location);
       } else {
-        solution = intercept(airspace, state, perf);
+        solution = Intercept(airspace, state, perf);
       }
       if (!solution.IsValid())
         return;
@@ -285,7 +291,7 @@ AirspaceWarningManager::UpdatePredicted(const AircraftState& state,
   airspaces.VisitIntersecting(state.location, location_predicted, visitor);
 
   visitor.SetMode(true);
-  airspaces.visit_inside(state.location, visitor);
+  airspaces.VisitInside(state.location, visitor);
 
   return visitor.Found();
 }
@@ -367,9 +373,9 @@ AirspaceWarningManager::UpdateInside(const AircraftState& state,
 
   AirspacePredicateAircraftInside condition(state);
 
-  Airspaces::AirspaceVector results = airspaces.find_inside(state, condition);
-  for (auto it = results.begin(); it != results.end(); ++it) {
-    const AbstractAirspace& airspace = *it->get_airspace();
+  Airspaces::AirspaceVector results = airspaces.FindInside(state, condition);
+  for (const auto &i : results) {
+    const AbstractAirspace& airspace = *i.GetAirspace();
 
     if (!airspace.IsActive())
       continue; // ignore inactive airspaces
@@ -380,10 +386,10 @@ AirspaceWarningManager::UpdateInside(const AircraftState& state,
     AirspaceWarning& warning = GetWarning(airspace);
 
     if (warning.IsStateAccepted(AirspaceWarning::WARNING_INSIDE)) {
-      GeoPoint c = airspace.ClosestPoint(state.location);
+      GeoPoint c = airspace.ClosestPoint(state.location, GetProjection());
       const AirspaceAircraftPerformanceGlide perf_glide(glide_polar);
       AirspaceInterceptSolution solution;
-      airspace.Intercept(state, c, perf_glide, solution);
+      airspace.Intercept(state, c, GetProjection(), perf_glide, solution);
 
       warning.UpdateSolution(AirspaceWarning::WARNING_INSIDE, solution);
       found = true;
@@ -425,8 +431,8 @@ AirspaceWarningManager::GetAckDay(const AbstractAirspace &airspace) const
 void 
 AirspaceWarningManager::AcknowledgeAll()
 {
-  for (auto it = warnings.begin(), end = warnings.end(); it != end; ++it) {
-    it->AcknowledgeWarning(true);
-    it->AcknowledgeInside(true);
+  for (auto &w : warnings) {
+    w.AcknowledgeWarning(true);
+    w.AcknowledgeInside(true);
   }
 }

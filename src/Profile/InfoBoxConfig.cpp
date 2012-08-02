@@ -38,10 +38,10 @@ GetV60InfoBoxManagerConfig(InfoBoxSettings &settings) {
     _stprintf(profileKey + 4, _T("%u"), i);
     unsigned int temp = 0;
     if (Profile::Get(profileKey, temp)) {
-      settings.panels[0].contents[i] = (t_InfoBox)( temp       & 0xFF);
-      settings.panels[1].contents[i] = (t_InfoBox)((temp >> 8) & 0xFF);
-      settings.panels[2].contents[i] = (t_InfoBox)((temp >> 16) & 0xFF);
-      settings.panels[3].contents[i] = (t_InfoBox)((temp >> 24) & 0xFF);
+      settings.panels[0].contents[i] = (Type)( temp       & 0xFF);
+      settings.panels[1].contents[i] = (Type)((temp >> 8) & 0xFF);
+      settings.panels[2].contents[i] = (Type)((temp >> 16) & 0xFF);
+      settings.panels[3].contents[i] = (Type)((temp >> 24) & 0xFF);
     }
   }
 }
@@ -49,11 +49,17 @@ GetV60InfoBoxManagerConfig(InfoBoxSettings &settings) {
 void
 Profile::Load(InfoBoxSettings &settings)
 {
-  GetEnum(szProfileInfoBoxGeometry, settings.geometry);
-  Get(szProfileAppInverseInfoBox, settings.inverse);
-  Get(szProfileAppInfoBoxColors, settings.use_colors);
+  if (!Get(ProfileKeys::UseFinalGlideDisplayMode, settings.use_final_glide))
+    /* default value is "false" for new users, and "true" for existing
+       users (to preserve old behaviour and avoid surprises); this is
+       a hack to check if this is a new user */
+    settings.use_final_glide = Exists(ProfileKeys::InfoBoxGeometry);
 
-  GetEnum(szProfileAppInfoBoxBorder, settings.border_style);
+  GetEnum(ProfileKeys::InfoBoxGeometry, settings.geometry);
+  Get(ProfileKeys::AppInverseInfoBox, settings.inverse);
+  Get(ProfileKeys::AppInfoBoxColors, settings.use_colors);
+
+  GetEnum(ProfileKeys::AppInfoBoxBorder, settings.border_style);
 
   GetV60InfoBoxManagerConfig(settings);
   TCHAR profileKey[32];

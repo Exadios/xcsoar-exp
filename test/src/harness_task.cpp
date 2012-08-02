@@ -25,10 +25,11 @@
 
 #include "Dialogs/dlgTaskHelpers.hpp"
 #include "Task/Factory/AbstractTaskFactory.hpp"
-#include "Task/TaskPoints/StartPoint.hpp"
-#include "Task/TaskPoints/FinishPoint.hpp"
-#include "Task/TaskPoints/AATPoint.hpp"
-#include "Task/TaskPoints/ASTPoint.hpp"
+#include "Task/Factory/TaskFactoryConstraints.hpp"
+#include "Engine/Task/Ordered/Points/StartPoint.hpp"
+#include "Engine/Task/Ordered/Points/FinishPoint.hpp"
+#include "Engine/Task/Ordered/Points/ASTPoint.hpp"
+#include "Engine/Task/Ordered/Points/AATPoint.hpp"
 #include "Task/ObservationZones/CylinderZone.hpp"
 #include "Task/Visitors/TaskPointVisitor.hpp"
 
@@ -124,23 +125,23 @@ public:
   }
   virtual void Visit(const OrderedTaskPoint& tp) {
     printf("# got an otp\n");
-    ozv.Visit(*tp.GetOZPoint());
+    ozv.Visit(tp.GetObservationZone());
   }
   virtual void Visit(const FinishPoint& tp) {
     printf("# got an ftp\n");
-    ozv.Visit(*tp.GetOZPoint());
+    ozv.Visit(tp.GetObservationZone());
   }
   virtual void Visit(const StartPoint& tp) {
     printf("# got an stp\n");
-    ozv.Visit(*tp.GetOZPoint());
+    ozv.Visit(tp.GetObservationZone());
   }
   virtual void Visit(const AATPoint& tp) {
     printf("# got an aat\n");
-    ozv.Visit(*tp.GetOZPoint());
+    ozv.Visit(tp.GetObservationZone());
   }
   virtual void Visit(const ASTPoint& tp) {
     printf("# got an ast\n");
-    ozv.Visit(*tp.GetOZPoint());
+    ozv.Visit(tp.GetObservationZone());
   }
 private:
   ObservationZoneVisitorPrint ozv;
@@ -161,7 +162,7 @@ void task_report(TaskManager& task_manager, const char* text)
 
     const AbstractTask *task = task_manager.GetActiveTask();
     if (task != NULL) {
-      switch (task->type) {
+      switch (task->GetType()) {
       case TaskInterface::ORDERED:
         printf("# task is ordered\n");
         break;
@@ -180,7 +181,7 @@ void task_report(TaskManager& task_manager, const char* text)
       printf("# - dist nominal %g\n",
              (double)task->GetStats().distance_nominal);
 
-      if (task->type == TaskInterface::ORDERED &&
+      if (task->GetType() == TaskInterface::ORDERED &&
           task->GetStats().distance_max > task->GetStats().distance_min) {
         printf("# - dist max %g\n", (double)task->GetStats().distance_max);
         printf("# - dist min %g\n", (double)task->GetStats().distance_min);
@@ -190,7 +191,7 @@ void task_report(TaskManager& task_manager, const char* text)
     PrintHelper::taskmanager_print(task_manager, ac);
   }
   if (interactive>1) {
-    wait_prompt();
+    WaitPrompt();
   }
 }
 
@@ -229,7 +230,7 @@ bool test_task_manip(TaskManager& task_manager,
   task_report(task_manager, "# inserting at 3\n");
   wp = waypoints.LookupId(3);
   if (wp) {
-    tp = fact.CreateIntermediate(AbstractTaskFactory::AST_CYLINDER,*wp);
+    tp = fact.CreateIntermediate(TaskPointFactoryType::AST_CYLINDER,*wp);
     if (!fact.Insert(*tp,3)) return false;
     delete tp;
   }
@@ -237,7 +238,7 @@ bool test_task_manip(TaskManager& task_manager,
   task_report(task_manager, "# auto-replacing at 2 (no morph)\n");
   wp = waypoints.LookupId(9);
   if (wp) {
-    tp = fact.CreateIntermediate(AbstractTaskFactory::AST_CYLINDER,*wp);
+    tp = fact.CreateIntermediate(TaskPointFactoryType::AST_CYLINDER,*wp);
     if (!fact.Replace(*tp,2)) return false;
     delete tp;
   }
@@ -253,7 +254,7 @@ bool test_task_manip(TaskManager& task_manager,
   task_report(task_manager, "# auto-replacing at 0 (morph this)\n");
   wp = waypoints.LookupId(12);
   if (wp) {
-    tp = fact.CreateIntermediate(AbstractTaskFactory::AST_CYLINDER,*wp);
+    tp = fact.CreateIntermediate(TaskPointFactoryType::AST_CYLINDER,*wp);
     if (!fact.Replace(*tp,0)) return false;
     delete tp;
   }
@@ -261,7 +262,7 @@ bool test_task_manip(TaskManager& task_manager,
   task_report(task_manager, "# auto-replacing at end (morph this)\n");
   wp = waypoints.LookupId(14);
   if (wp) {
-    tp = fact.CreateIntermediate(AbstractTaskFactory::AST_CYLINDER,*wp);
+    tp = fact.CreateIntermediate(TaskPointFactoryType::AST_CYLINDER,*wp);
     if (!fact.Replace(*tp,task_manager.TaskSize()-1)) return false;
     delete tp;
   }
@@ -373,7 +374,7 @@ bool test_task_type_manip(TaskManager& task_manager,
     return false;
   }
 
-  if (task_manager.GetOrderedTask().get_factory_type() ==
+  if (task_manager.GetOrderedTask().GetFactoryType() ==
                                       TaskFactoryType::FAI_GENERAL) {
     test_note("# checking OZs for FAI task..\n");
     if (!fact.ValidateFAIOZs())
@@ -398,10 +399,10 @@ bool test_task_mixed(TaskManager& task_manager,
   task_report(task_manager, "# adding start\n");
   wp = waypoints.LookupId(1);
   if (wp) {
-    tp = fact.CreateStart(AbstractTaskFactory::START_LINE,*wp);
-    if (tp->GetOZPoint()->shape == ObservationZonePoint::CYLINDER) {
-      CylinderZone *cz = (CylinderZone *)tp->GetOZPoint();
-      cz->SetRadius(fixed(5000.0));
+    tp = fact.CreateStart(TaskPointFactoryType::START_LINE,*wp);
+    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+      CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
+      cz.SetRadius(fixed(5000.0));
       tp->UpdateOZ(projection);
     }
     if (!fact.Append(*tp,false)) return false;
@@ -416,7 +417,7 @@ bool test_task_mixed(TaskManager& task_manager,
   task_report(task_manager, "# adding intermdiate\n");
   wp = waypoints.LookupId(2);
   if (wp) {
-    tp = fact.CreateIntermediate(AbstractTaskFactory::AST_CYLINDER,*wp);
+    tp = fact.CreateIntermediate(TaskPointFactoryType::AST_CYLINDER,*wp);
     if (!fact.Append(*tp,false)) return false;
     delete tp;
   } else {
@@ -426,10 +427,10 @@ bool test_task_mixed(TaskManager& task_manager,
   task_report(task_manager, "# adding intermdiate\n");
   wp = waypoints.LookupId(3);
   if (wp) {
-    tp = fact.CreateIntermediate(AbstractTaskFactory::AAT_CYLINDER,*wp);
-    if (tp->GetOZPoint()->shape == ObservationZonePoint::CYLINDER) {
-      CylinderZone *cz = (CylinderZone *)tp->GetOZPoint();
-      cz->SetRadius(fixed(30000.0));
+    tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
+    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+      CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
+      cz.SetRadius(fixed(30000.0));
       tp->UpdateOZ(projection);
     }
     if (!fact.Append(*tp,false)) return false;
@@ -441,7 +442,7 @@ bool test_task_mixed(TaskManager& task_manager,
   task_report(task_manager, "# adding intermediate\n");
   wp = waypoints.LookupId(4);
   if (wp) {
-    tp = fact.CreateIntermediate(AbstractTaskFactory::AAT_CYLINDER,*wp);
+    tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
     if (!fact.Append(*tp,false)) return false;
     delete tp;
   } else {
@@ -451,10 +452,10 @@ bool test_task_mixed(TaskManager& task_manager,
   task_report(task_manager, "# adding intermediate\n");
   wp = waypoints.LookupId(5);
   if (wp) {
-    tp = fact.CreateIntermediate(AbstractTaskFactory::AAT_CYLINDER,*wp);
-    if (tp->GetOZPoint()->shape == ObservationZonePoint::CYLINDER) {
-      CylinderZone *cz = (CylinderZone *)tp->GetOZPoint();
-      cz->SetRadius(fixed(30000.0));
+    tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
+    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+      CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
+      cz.SetRadius(fixed(30000.0));
       tp->UpdateOZ(projection);
     }
     if (!fact.Append(*tp,false)) return false;
@@ -466,7 +467,7 @@ bool test_task_mixed(TaskManager& task_manager,
   task_report(task_manager, "# adding finish\n");
   wp = waypoints.LookupId(1);
   if (wp) {
-    tp = fact.CreateFinish(AbstractTaskFactory::FINISH_LINE,*wp);
+    tp = fact.CreateFinish(TaskPointFactoryType::FINISH_LINE,*wp);
     if (!fact.Append(*tp,false)) return false;
     delete tp;
   } else {
@@ -573,10 +574,10 @@ bool test_task_aat(TaskManager& task_manager,
   task_report(task_manager, "# adding intermediate\n");
   wp = waypoints.LookupId(2);
   if (wp) {
-    OrderedTaskPoint* tp = fact.CreateIntermediate(AbstractTaskFactory::AAT_CYLINDER,*wp);
-    if (tp->GetOZPoint()->shape == ObservationZonePoint::CYLINDER) {
-      CylinderZone *cz = (CylinderZone *)tp->GetOZPoint();
-      cz->SetRadius(fixed(30000.0));
+    OrderedTaskPoint* tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
+    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+      CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
+      cz.SetRadius(fixed(30000.0));
       tp->UpdateOZ(projection);
     }
     if (!fact.Append(*tp,false)) {
@@ -588,10 +589,10 @@ bool test_task_aat(TaskManager& task_manager,
   task_report(task_manager, "# adding intermediate\n");
   wp = waypoints.LookupId(3);
   if (wp) {
-    OrderedTaskPoint* tp = fact.CreateIntermediate(AbstractTaskFactory::AAT_CYLINDER,*wp);
-    if (tp->GetOZPoint()->shape == ObservationZonePoint::CYLINDER) {
-      CylinderZone *cz = (CylinderZone *)tp->GetOZPoint();
-      cz->SetRadius(fixed(40000.0));
+    OrderedTaskPoint* tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
+    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+      CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
+      cz.SetRadius(fixed(40000.0));
       tp->UpdateOZ(projection);
     }
     if (!fact.Append(*tp,false)) {
@@ -787,7 +788,7 @@ bool test_task_random(TaskManager& task_manager,
   task_report(task_manager, "# adding start\n");
   wp = random_waypoint(waypoints);
   if (wp) {
-    AbstractTaskFactory::LegalPointType s =
+    TaskPointFactoryType s =
       fact.GetStartTypes()[(rand() % fact.GetStartTypes().size())];
 
     tp = fact.CreateStart(s,*wp);
@@ -804,7 +805,7 @@ bool test_task_random(TaskManager& task_manager,
     task_report(task_manager, "# adding intermediate\n");
     wp = random_waypoint(waypoints);
     if (wp) {
-      AbstractTaskFactory::LegalPointType s =
+      TaskPointFactoryType s =
         fact.GetIntermediateTypes()[(rand() % fact.GetIntermediateTypes().size())];
 
       tp = fact.CreateIntermediate(s,*wp);
@@ -818,7 +819,7 @@ bool test_task_random(TaskManager& task_manager,
   task_report(task_manager, "# adding finish\n");
   wp = random_waypoint(waypoints);
   if (wp) {
-    AbstractTaskFactory::LegalPointType s =
+    TaskPointFactoryType s =
       fact.GetFinishTypes()[(rand() % fact.GetFinishTypes().size())];
 
     tp = fact.CreateFinish(s,*wp);
@@ -871,15 +872,17 @@ bool test_task_random_RT_AAT_FAI(TaskManager& task_manager,
   }
 
   //max points includes start & finish
-  const unsigned num_points_total = (
-    max(task_manager.GetOrderedTaskBehaviour().min_points,
-        (_num_points % task_manager.GetOrderedTaskBehaviour().max_points) + 1));
+  const TaskFactoryConstraints &constraints =
+    task_manager.GetOrderedTask().GetFactoryConstraints();
+  const unsigned num_points_total =
+    max(constraints.min_points,
+        _num_points % constraints.max_points) + 1;
   const unsigned num_int_points = num_points_total - 2;
 
   test_note("# adding start\n");
   wp = random_waypoint(waypoints);
   if (wp) {
-    AbstractTaskFactory::LegalPointType s =
+    TaskPointFactoryType s =
       fact.GetStartTypes()[(rand() % fact.GetStartTypes().size())];
 
     tp = fact.CreateStart(s,*wp);
@@ -893,7 +896,7 @@ bool test_task_random_RT_AAT_FAI(TaskManager& task_manager,
     test_note("# adding intermediate\n");
     wp = random_waypoint(waypoints);
     if (wp) {
-      AbstractTaskFactory::LegalPointType s =
+      TaskPointFactoryType s =
         fact.GetIntermediateTypes()[(rand() % fact.GetIntermediateTypes().size())];
 
       tp = fact.CreateIntermediate(s,*wp);
@@ -907,7 +910,7 @@ bool test_task_random_RT_AAT_FAI(TaskManager& task_manager,
   test_note("# adding finish\n");
   wp = random_waypoint(waypoints);
   if (wp) {
-    AbstractTaskFactory::LegalPointType s =
+    TaskPointFactoryType s =
       fact.GetFinishTypes()[(rand() % fact.GetFinishTypes().size())];
 
     tp = fact.CreateFinish(s,*wp);
@@ -921,7 +924,7 @@ bool test_task_random_RT_AAT_FAI(TaskManager& task_manager,
   if (!fact.Validate()) {
     return false;
   }
-  if (task_manager.GetOrderedTask().get_factory_type()
+  if (task_manager.GetOrderedTask().GetFactoryType()
       == TaskFactoryType::FAI_GENERAL)
   {
     test_note("# checking OZs for FAI General..\n");

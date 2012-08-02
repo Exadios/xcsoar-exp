@@ -24,6 +24,8 @@ Copyright_License {
 #ifndef XCSOAR_PROFILE_AIRSPACE_CONFIG_HPP
 #define XCSOAR_PROFILE_AIRSPACE_CONFIG_HPP
 
+#include <cstdint>
+
 struct AirspaceRendererSettings;
 struct AirspaceClassRendererSettings;
 struct AirspaceComputerSettings;
@@ -40,8 +42,10 @@ namespace Profile
    * @param i Airspace class index
    */
   void SetAirspaceMode(unsigned i, bool display, bool warning);
-  bool GetAirspaceColor(unsigned i, Color &color);
-  void SetAirspaceColor(unsigned i, const Color &color);
+  void SetAirspaceBorderWidth(unsigned i, unsigned border_width);
+  void SetAirspaceBorderColor(unsigned i, const Color &color);
+  void SetAirspaceFillColor(unsigned i, const Color &color);
+  void SetAirspaceFillMode(unsigned i, uint8_t mode);
   void SetAirspaceBrush(unsigned i, int c);
 };
 

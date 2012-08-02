@@ -23,8 +23,10 @@ Copyright_License {
 
 #include "Dialogs/Waypoint.hpp"
 #include "Dialogs/CallBackTable.hpp"
-#include "Dialogs/Internal.hpp"
-#include "Dialogs/Dialogs.h"
+#include "Dialogs/XML.hpp"
+#include "Dialogs/Message.hpp"
+#include "Form/Form.hpp"
+#include "Form/Button.hpp"
 #include "UIGlobals.hpp"
 #include "Protection.hpp"
 #include "Screen/Layout.hpp"
@@ -33,6 +35,8 @@ Copyright_License {
 #include "Components.hpp"
 #include "Waypoint/Waypoints.hpp"
 #include "Waypoint/WaypointGlue.hpp"
+#include "Interface.hpp"
+#include "Language/Language.hpp"
 #include "Compiler.h"
 
 #include <assert.h>
@@ -50,7 +54,7 @@ static void
 OnWaypointNewClicked(gcc_unused WndButton &Sender)
 {
   if (!WaypointGlue::IsWritable()) {
-    MessageBoxX(_("Waypoints not editable"), _("Error"), MB_OK);
+    ShowMessageBox(_("Waypoints not editable"), _("Error"), MB_OK);
     return;
   }
 
@@ -73,11 +77,11 @@ static void
 OnWaypointEditClicked(gcc_unused WndButton &Sender)
 {
   if (!WaypointGlue::IsWritable()) {
-    MessageBoxX(_("Waypoints not editable"), _("Error"), MB_OK);
+    ShowMessageBox(_("Waypoints not editable"), _("Error"), MB_OK);
     return;
   }
 
-  const Waypoint *way_point = dlgWaypointSelect(UIGlobals::GetMainWindow(),
+  const Waypoint *way_point = ShowWaypointListDialog(UIGlobals::GetMainWindow(),
                                                 XCSoarInterface::Basic().location);
   if (way_point) {
     Waypoint wp_copy = *way_point;
@@ -95,7 +99,7 @@ static void
 SaveWaypoints()
 {
   if (!WaypointGlue::SaveWaypoints(way_points))
-    MessageBoxX(_("Waypoints not editable"), _("Error"), MB_OK);
+    ShowMessageBox(_("Waypoints not editable"), _("Error"), MB_OK);
   else
     WaypointFileChanged = true;
 
@@ -112,15 +116,15 @@ static void
 OnWaypointDeleteClicked(gcc_unused WndButton &Sender)
 {
   if (!WaypointGlue::IsWritable()) {
-    MessageBoxX(_("Waypoints not editable"), _("Error"), MB_OK);
+    ShowMessageBox(_("Waypoints not editable"), _("Error"), MB_OK);
     return;
   }
 
 #ifdef OLD_TASK
   int res;
-  res = dlgWaypointSelect(XCSoarInterface::Basic().location);
+  res = ShowWaypointListDialog(XCSoarInterface::Basic().location);
   if (res != -1){
-    if(MessageBoxX(way_points.get(res).name,
+    if(ShowMessageBox(way_points.get(res).name,
                    _("Delete Waypoint?"),
                    MB_YESNO|MB_ICONQUESTION) == IDYES) {
       Waypoint &waypoint = way_points.set(res);
@@ -133,7 +137,7 @@ OnWaypointDeleteClicked(gcc_unused WndButton &Sender)
 #endif
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnWaypointNewClicked),
   DeclareCallBackEntry(OnWaypointDeleteClicked),
   DeclareCallBackEntry(OnWaypointEditClicked),
@@ -155,7 +159,7 @@ dlgConfigWaypointsShowModal()
   wf->ShowModal();
 
   if (WaypointsNeedSave &&
-      MessageBoxX(_("Save changes to waypoint file?"), _("Waypoints edited"),
+      ShowMessageBox(_("Save changes to waypoint file?"), _("Waypoints edited"),
                   MB_YESNO | MB_ICONQUESTION) == IDYES)
       SaveWaypoints();
 

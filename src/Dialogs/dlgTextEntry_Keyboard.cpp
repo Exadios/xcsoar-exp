@@ -31,7 +31,7 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Compatibility/string.h"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 
 #include <algorithm>
 #include <assert.h>
@@ -156,7 +156,7 @@ OnCharacter(TCHAR character)
   DoCharacter(character);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCharacter),
   DeclareCallBackEntry(OnBackspace),
   DeclareCallBackEntry(OnClear),

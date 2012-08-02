@@ -24,9 +24,9 @@
 #define AIRSPACE_PREDICATE_INSIDE_HPP
 
 #include "AirspacePredicate.hpp"
+#include "Geo/GeoPoint.hpp"
 
 class AbstractAirspace;
-struct GeoPoint;
 
 class AirspacePredicateInside: public AirspacePredicate
 {
@@ -35,7 +35,7 @@ class AirspacePredicateInside: public AirspacePredicate
 public:
   AirspacePredicateInside(const GeoPoint &_location);
 
-  bool condition(const AbstractAirspace &airspace) const;
+  bool operator()(const AbstractAirspace &airspace) const;
 };
 
 #endif

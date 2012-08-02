@@ -40,7 +40,7 @@ DrawMirroredPolygon(const RasterPoint *src, RasterPoint *dst, unsigned points,
     dst[2 * points - i - 1].y = dst[i].y;
   }
   PolygonRotateShift(dst, 2 * points, pos.x, pos.y, angle, 50);
-  canvas.polygon(dst, 2 * points);
+  canvas.DrawPolygon(dst, 2 * points);
 }
 
 
@@ -51,7 +51,7 @@ DrawDetailedAircraft(Canvas &canvas, bool inverse,
                      const RasterPoint aircraft_pos)
 {
   {
-    static gcc_constexpr_data RasterPoint Aircraft[] = {
+    static constexpr RasterPoint Aircraft[] = {
       {0, -10},
       {-2, -7},
       {-2, -2},
@@ -65,7 +65,7 @@ DrawDetailedAircraft(Canvas &canvas, bool inverse,
       {-5, 18},
       {0, 18},
     };
-    static gcc_constexpr_data unsigned AIRCRAFT_POINTS = ARRAY_SIZE(Aircraft);
+    static constexpr unsigned AIRCRAFT_POINTS = ARRAY_SIZE(Aircraft);
     RasterPoint buffer[2 * AIRCRAFT_POINTS];
 
     if (!inverse) {
@@ -81,7 +81,7 @@ DrawDetailedAircraft(Canvas &canvas, bool inverse,
   }
 
   {
-    static gcc_constexpr_data RasterPoint Canopy[] = {
+    static constexpr RasterPoint Canopy[] = {
       {0, -7},
       {-1, -7},
       {-1, -2},
@@ -103,7 +103,7 @@ DrawSimpleAircraft(Canvas &canvas, const AircraftLook &look,
                    const Angle angle,
                    const RasterPoint aircraft_pos, bool large)
 {
-  static gcc_constexpr_data RasterPoint AircraftLarge[] = {
+  static constexpr RasterPoint AircraftLarge[] = {
     {1, -7},
     {1, -1},
     {17, -1},
@@ -122,7 +122,7 @@ DrawSimpleAircraft(Canvas &canvas, const AircraftLook &look,
     {-1, -7},
   };
 
-  static gcc_constexpr_data RasterPoint AircraftSmall[] = {
+  static constexpr RasterPoint AircraftSmall[] = {
     {1, -5},
     {1, 0},
     {14, 0},
@@ -141,8 +141,8 @@ DrawSimpleAircraft(Canvas &canvas, const AircraftLook &look,
     {0, -5},
    };
 
-  static gcc_constexpr_data unsigned AIRCRAFT_POINTS_LARGE = ARRAY_SIZE(AircraftLarge);
-  static gcc_constexpr_data unsigned AIRCRAFT_POINTS_SMALL = ARRAY_SIZE(AircraftSmall);
+  static constexpr unsigned AIRCRAFT_POINTS_LARGE = ARRAY_SIZE(AircraftLarge);
+  static constexpr unsigned AIRCRAFT_POINTS_SMALL = ARRAY_SIZE(AircraftSmall);
   static const unsigned AIRCRAFT_POINTS_MAX =
     std::max(AIRCRAFT_POINTS_LARGE, AIRCRAFT_POINTS_SMALL);
 
@@ -156,10 +156,95 @@ DrawSimpleAircraft(Canvas &canvas, const AircraftLook &look,
                      aircraft_pos.x, aircraft_pos.y, angle);
   canvas.SelectHollowBrush();
   canvas.Select(look.aircraft_simple2_pen);
-  canvas.polygon(aircraft, AircraftPoints);
+  canvas.DrawPolygon(aircraft, AircraftPoints);
   canvas.SelectBlackBrush();
   canvas.Select(look.aircraft_simple1_pen);
-  canvas.polygon(aircraft, AircraftPoints);
+  canvas.DrawPolygon(aircraft, AircraftPoints);
+}
+
+static void
+DrawHangGlider(Canvas &canvas, const AircraftLook &look,
+               const Angle angle, const RasterPoint aircraft_pos, bool inverse)
+{
+  RasterPoint aircraft[] = {
+    {1, -3},
+    {7, 0},
+    {13, 4},
+    {13, 6},
+    {6, 3},
+    {1, 2},
+    {-1, 2},
+    {-6, 3},
+    {-13, 6},
+    {-13, 4},
+    {-7, 0},
+    {-1, -3},
+   };
+
+  PolygonRotateShift(aircraft, ARRAY_SIZE(aircraft),
+                     aircraft_pos.x, aircraft_pos.y, angle);
+
+  if (inverse) {
+    canvas.SelectBlackBrush();
+    canvas.SelectWhitePen();
+  } else {
+    canvas.SelectWhiteBrush();
+    canvas.SelectBlackPen();
+  }
+
+  canvas.DrawPolygon(aircraft, ARRAY_SIZE(aircraft));
+}
+
+static void
+DrawParaGlider(Canvas &canvas, const AircraftLook &look,
+               const Angle angle, const RasterPoint aircraft_pos, bool inverse)
+{
+  RasterPoint aircraft[] = {
+    // Wing
+    {-16, 5},
+    {-22, 4},
+    {-28, 2},
+    {-27, -1},
+    {-26, -2},
+    {-24, -3},
+    {-21, -4},
+    {-16, -5},
+    {0, -6},
+    {16, -5},
+    {21, -4},
+    {24, -3},
+    {26, -2},
+    {27, -1},
+    {28, 2},
+    {22, 4},
+    {16, 5},
+
+    // Arrow on wing
+    {4, 6},
+    {-4, 6},
+    {0, -4},
+   };
+
+  PolygonRotateShift(aircraft, ARRAY_SIZE(aircraft),
+                     aircraft_pos.x, aircraft_pos.y, angle, 50);
+
+  if (inverse) {
+    canvas.SelectBlackBrush();
+    canvas.SelectWhitePen();
+  } else {
+    canvas.SelectWhiteBrush();
+    canvas.SelectBlackPen();
+  }
+
+  canvas.DrawPolygon(aircraft, ARRAY_SIZE(aircraft) - 1);
+
+  canvas.SelectNullPen();
+  if (inverse)
+    canvas.SelectWhiteBrush();
+  else
+    canvas.SelectBlackBrush();
+
+  canvas.DrawPolygon(aircraft + ARRAY_SIZE(aircraft) - 3, 3);
 }
 
 void
@@ -177,6 +262,14 @@ AircraftRenderer::Draw(Canvas &canvas, const MapSettings &settings_map,
     break;
   case acSimple:
     DrawSimpleAircraft(canvas, look, angle, aircraft_pos, false);
+    break;
+  case acHangGlider:
+    DrawHangGlider(canvas, look, angle, aircraft_pos,
+                   !settings_map.terrain.enable);
+    break;
+  case acParaGlider:
+    DrawParaGlider(canvas, look, angle, aircraft_pos,
+                   !settings_map.terrain.enable);
     break;
   }
 }

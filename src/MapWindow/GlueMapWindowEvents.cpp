@@ -37,6 +37,7 @@ Copyright_License {
 #include "Compiler.h"
 #include "Interface.hpp"
 #include "Screen/Fonts.hpp"
+#include "Pan.hpp"
 
 #include <algorithm>
 
@@ -83,6 +84,7 @@ GlueMapWindow::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
 
   case DRAG_GESTURE:
     gestures.Update(x, y);
+    Invalidate();
     return true;
 
   case DRAG_SIMULATOR:
@@ -102,14 +104,13 @@ GlueMapWindow::OnMouseDown(PixelScalar x, PixelScalar y)
     return true;
 
   mouse_down_clock.Update();
-  arm_mapitem_list = has_focus();
+  arm_mapitem_list = HasFocus();
 
   SetFocus();
 
   drag_start.x = x;
   drag_start.y = y;
   drag_start_geopoint = visible_projection.ScreenToGeo(x, y);
-  drag_last = drag_start;
 
   switch (follow_mode) {
   case FOLLOW_SELF:
@@ -121,7 +122,7 @@ GlueMapWindow::OnMouseDown(PixelScalar x, PixelScalar y)
     break;
   }
 
-  if (Basic().gps.simulator && drag_mode == DRAG_NONE)
+  if (CommonInterface::Basic().gps.simulator && drag_mode == DRAG_NONE)
     if (compare_squared(visible_projection.GetScreenOrigin().x - x,
                         visible_projection.GetScreenOrigin().y - y,
                         Layout::Scale(30)) != 1)
@@ -163,7 +164,7 @@ GlueMapWindow::OnMouseUp(PixelScalar x, PixelScalar y)
 #ifdef HAVE_MULTI_TOUCH
   case DRAG_MULTI_TOUCH_PAN:
     follow_mode = FOLLOW_SELF;
-    InputEvents::SetPan(true);
+    EnterPan();
     return true;
 #endif
 
@@ -179,22 +180,21 @@ GlueMapWindow::OnMouseUp(PixelScalar x, PixelScalar y)
     if (click_time > 50 &&
         compare_squared(drag_start.x - x, drag_start.y - y,
                         Layout::Scale(36)) == 1) {
-      GeoPoint G = visible_projection.ScreenToGeo(x, y);
+      GeoPoint location = visible_projection.ScreenToGeo(x, y);
 
       double distance = hypot(drag_start.x - x, drag_start.y - y);
 
       // This drag moves the aircraft (changes speed and direction)
-      const Angle oldbearing = Basic().track;
-      const fixed minspeed = fixed(1.1) *
+      const Angle old_bearing = CommonInterface::Basic().track;
+      const fixed min_speed = fixed(1.1) *
         CommonInterface::GetComputerSettings().polar.glide_polar_task.GetVMin();
-      const Angle newbearing = drag_start_geopoint.Bearing(G);
-      if (((newbearing - oldbearing).AsDelta().AbsoluteDegrees() < fixed(30)) ||
-          (Basic().ground_speed < minspeed))
-        device_blackboard->SetSpeed(min(fixed(100.0),
-                                        max(minspeed,
-                                            fixed(distance / (Layout::FastScale(3))))));
+      const Angle new_bearing = drag_start_geopoint.Bearing(location);
+      if (((new_bearing - old_bearing).AsDelta().AbsoluteDegrees() < fixed(30)) ||
+          (CommonInterface::Basic().ground_speed < min_speed))
+        device_blackboard->SetSpeed(
+            min(fixed(100.0), max(min_speed, fixed(distance / (Layout::FastScale(3))))));
 
-      device_blackboard->SetTrack(newbearing);
+      device_blackboard->SetTrack(new_bearing);
       // change bearing without changing speed if direction change > 30
       // 20080815 JMW prevent dragging to stop glider
 
@@ -205,7 +205,7 @@ GlueMapWindow::OnMouseUp(PixelScalar x, PixelScalar y)
 
   case DRAG_GESTURE:
     const TCHAR* gesture = gestures.Finish();
-    if (gesture && on_mouse_gesture(gesture))
+    if (gesture && OnMouseGesture(gesture))
       return true;
 
     break;
@@ -242,7 +242,9 @@ GlueMapWindow::OnMouseWheel(PixelScalar x, PixelScalar y, int delta)
 bool
 GlueMapWindow::OnMultiTouchDown()
 {
-  if (drag_mode != DRAG_GESTURE || follow_mode != FOLLOW_SELF)
+  if (drag_mode == DRAG_GESTURE)
+    gestures.Finish();
+  else if (follow_mode != FOLLOW_SELF)
     return false;
 
   /* start panning on MultiTouch event */
@@ -256,7 +258,7 @@ GlueMapWindow::OnMultiTouchDown()
 #endif /* HAVE_MULTI_TOUCH */
 
 bool
-GlueMapWindow::on_mouse_gesture(const TCHAR* gesture)
+GlueMapWindow::OnMouseGesture(const TCHAR* gesture)
 {
   return InputEvents::processGesture(gesture);
 }
@@ -284,6 +286,9 @@ GlueMapWindow::OnCancelMode()
       follow_mode = FOLLOW_SELF;
 #endif
 
+    if (drag_mode == DRAG_GESTURE)
+      gestures.Finish();
+
     ReleaseCapture();
     drag_mode = DRAG_NONE;
   }
@@ -300,7 +305,9 @@ GlueMapWindow::OnPaint(Canvas &canvas)
   ExchangeBlackboard();
 
   /* update terrain, topography, ... */
+  EnterDrawThread();
   Idle();
+  LeaveDrawThread();
 #endif
 
   MapWindow::OnPaint(canvas);
@@ -308,16 +315,26 @@ GlueMapWindow::OnPaint(Canvas &canvas)
   // Draw center screen cross hair in pan mode
   if (IsPanning())
     DrawCrossHairs(canvas);
+
+  DrawGesture(canvas);
 }
 
 void
 GlueMapWindow::OnPaintBuffer(Canvas &canvas)
 {
+#ifdef ENABLE_OPENGL
+  EnterDrawThread();
+#endif
+
   MapWindow::OnPaintBuffer(canvas);
 
-  DrawMapScale(canvas, get_client_rect(), render_projection);
+  DrawMapScale(canvas, GetClientRect(), render_projection);
   if (IsPanning())
     DrawPanInfo(canvas);
+
+#ifdef ENABLE_OPENGL
+  LeaveDrawThread();
+#endif
 }
 
 bool

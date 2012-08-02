@@ -19,8 +19,9 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
 */
+
 #include "Printing.hpp"
-#include "Math/Earth.hpp"
+#include "Geo/Math.hpp"
 #include "Airspace/AirspaceCircle.hpp"
 
 #include <fstream>
@@ -52,13 +53,13 @@ std::ostream& operator<< (std::ostream& f,
   f << "# polygon\n";
   for (auto v = as.m_border.begin();
        v != as.m_border.end(); ++v) {
-    GeoPoint l = v->get_location();
+    GeoPoint l = v->GetLocation();
     f << l.longitude << " " << l.latitude << " " << as.GetBase().altitude << "\n";
   }
   f << "\n";
   for (auto v = as.m_border.begin();
        v != as.m_border.end(); ++v) {
-    GeoPoint l = v->get_location();
+    GeoPoint l = v->GetLocation();
     f << l.longitude << " " << l.latitude << " " << as.GetTop().altitude << "\n";
   }
   f << "\n";
@@ -116,15 +117,4 @@ std::ostream& operator<< (std::ostream& f,
     << solution.elapsed_time << "\n";
 
   return f;
-}
-
-void write_border (const AbstractAirspace& as)
-{
-  const SearchPointVector& spv = as.GetPoints();
-  for (auto v = spv.begin(); v != spv.end(); ++v)
-    write_point(*v, v->get_flatLocation(), "polygon");
-
-  printf("polygon\n");
-  write_spv(as.GetClearance());
-  fflush(stdout);
 }

@@ -51,11 +51,9 @@ Copyright_License {
 
 using std::max;
 
-FlightStatisticsRenderer::FlightStatisticsRenderer(const FlightStatistics &_flight_statistics,
-                                                   const ChartLook &_chart_look,
+FlightStatisticsRenderer::FlightStatisticsRenderer(const ChartLook &_chart_look,
                                                    const MapLook &_map_look)
-  :fs(_flight_statistics),
-   chart_look(_chart_look),
+  :chart_look(_chart_look),
    map_look(_map_look),
    trail_renderer(map_look.trail) {}
 
@@ -74,7 +72,19 @@ FlightStatisticsRenderer::RenderOLC(Canvas &canvas, const PixelRect rc,
     return;
   }
 
-  ChartProjection proj(rc, trail_renderer.GetBounds(nmea_info.location));
+  TaskProjection task_projection(trail_renderer.GetBounds(nmea_info.location));
+
+  /* scan all solutions to make sure they are all visible */
+  for (unsigned i = 0; i < 3; ++i) {
+    if (contest.GetResult(i).IsDefined()) {
+      const ContestTraceVector &solution = contest.GetSolution(i);
+      for (auto j = solution.begin(), end = solution.end(); j != end; ++j)
+        task_projection.Scan(j->location);
+    }
+  }
+
+
+  const ChartProjection proj(rc, task_projection);
 
   RasterPoint aircraft_pos = proj.GeoToScreen(nmea_info.location);
   AircraftRenderer::Draw(canvas, settings_map, map_look.aircraft,
@@ -112,7 +122,7 @@ FlightStatisticsRenderer::CaptionOLC(TCHAR *sTmp,
     TCHAR distance_fai[100];
     FormatUserDistanceSmart(result_fai.distance, distance_fai, 100);
     TCHAR speed[100];
-    FormatUserTaskSpeed(result.speed, speed, ARRAY_SIZE(speed));
+    FormatUserTaskSpeed(result.GetSpeed(), speed, ARRAY_SIZE(speed));
     _stprintf(sTmp,
               (Layout::landscape
                ? _T("%s:\r\n%s\r\n%s (FAI)\r\n%s:\r\n%.1f %s\r\n%s: %s\r\n%s: %s\r\n")
@@ -136,7 +146,7 @@ FlightStatisticsRenderer::CaptionOLC(TCHAR *sTmp,
     TCHAR distance_fai[100];
     FormatUserDistanceSmart(result_triangle.distance, distance_fai, 100);
     TCHAR speed[100];
-    FormatUserTaskSpeed(result_free.speed, speed, ARRAY_SIZE(speed));
+    FormatUserTaskSpeed(result_free.GetSpeed(), speed, ARRAY_SIZE(speed));
     _stprintf(sTmp,
               (Layout::landscape
                ? _T("%s:\r\n%s (Free)\r\n%s (Triangle)\r\n%s:\r\n%.1f %s\r\n%s: %s\r\n%s: %s\r\n")
@@ -164,7 +174,7 @@ FlightStatisticsRenderer::CaptionOLC(TCHAR *sTmp,
     TCHAR distance[100];
     FormatUserDistanceSmart(result_olc.distance, distance, 100);
     TCHAR speed[100];
-    FormatUserTaskSpeed(result_olc.speed, speed, ARRAY_SIZE(speed));
+    FormatUserTaskSpeed(result_olc.GetSpeed(), speed, ARRAY_SIZE(speed));
     _stprintf(sTmp,
               (Layout::landscape
                ? _T("%s:\r\n%s\r\n%s:\r\n%.1f %s\r\n%s: %s\r\n%s: %s\r\n")
@@ -228,7 +238,7 @@ FlightStatisticsRenderer::CaptionTask(TCHAR *sTmp, const DerivedInfo &derived)
       !derived.task_stats.total.remaining.IsDefined()) {
     _tcscpy(sTmp, _("No task"));
   } else {
-    const fixed d_remaining = derived.task_stats.total.remaining.get_distance();
+    const fixed d_remaining = derived.task_stats.total.remaining.GetDistance();
     TCHAR timetext1[100];
     TCHAR timetext2[100];
     if (common.ordered_has_targets) {

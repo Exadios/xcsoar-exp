@@ -22,10 +22,13 @@ Copyright_License {
 */
 
 #include "DebugPort.hpp"
+#include "Device/Port/Port.hpp"
 #include "Device/Port/ConfiguredPort.hpp"
 #include "Device/Driver/Vega/Internal.hpp"
 #include "OS/Args.hpp"
 #include "Profile/DeviceConfig.hpp"
+#include "Operation/ConsoleOperationEnvironment.hpp"
+#include "IO/Async/GlobalIOThread.hpp"
 
 #include <stdio.h>
 #include <string.h>
@@ -35,7 +38,9 @@ int main(int argc, char **argv)
   Args args(argc, argv, "PORT BAUD [NAME=VALUE] [NAME] ...");
   const DeviceConfig config = ParsePortArgs(args);
 
-  Port *port = OpenPort(config, *(Port::Handler *)NULL);
+  InitialiseIOThread();
+
+  Port *port = OpenPort(config, *(DataHandler *)NULL);
   if (port == NULL) {
     fprintf(stderr, "Failed to open COM port\n");
     return EXIT_FAILURE;
@@ -43,16 +48,18 @@ int main(int argc, char **argv)
 
   VegaDevice device(*port);
 
+  ConsoleOperationEnvironment env;
+
   while (!args.IsEmpty()) {
     const char *p = args.GetNext();
     char *q = strdup(p);
     char *v = strchr(q, '=');
     if (v == NULL) {
-      if (!device.RequestSetting(q))
+      if (!device.RequestSetting(q, env))
         printf("Error\n");
     } else {
       *v++ = 0;
-      if (!device.SendSetting(q, atoi(v)))
+      if (!device.SendSetting(q, atoi(v), env))
         printf("Error\n");
     }
 
@@ -60,5 +67,6 @@ int main(int argc, char **argv)
   }
 
   delete port;
+  DeinitialiseIOThread();
   return EXIT_SUCCESS;
 }

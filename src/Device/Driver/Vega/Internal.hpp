@@ -25,11 +25,9 @@ Copyright_License {
 #define XCSOAR_VEGA_INTERNAL_HPP
 
 #include "Device/Driver.hpp"
+#include "Device/SettingsMap.hpp"
 #include "Atmosphere/Pressure.hpp"
 #include "Thread/Mutex.hpp"
-
-#include <map>
-#include <string>
 
 class NMEAInputLine;
 
@@ -51,15 +49,7 @@ private:
 
   bool detected;
 
-  /**
-   * This #Mutex protects the #settings map.
-   */
-  mutable Mutex settings_mutex;
-
-  /**
-   * Settings that were received in PDVSC sentences.
-   */
-  std::map<std::string, int> settings;
+  DeviceSettingsMap<int> settings;
 
 public:
   VegaDevice(Port &_port)
@@ -73,7 +63,7 @@ public:
    * @return true if sending the command has succeeded (it does not
    * indicate whether the Vega has understood and processed it)
    */
-  bool SendSetting(const char *name, int value);
+  bool SendSetting(const char *name, int value, OperationEnvironment &env);
 
   /**
    * Request an integer setting from the Vega.  The Vega will send the
@@ -82,7 +72,7 @@ public:
    * @return true if sending the command has succeeded (it does not
    * indicate whether the Vega has understood and processed it)
    */
-  bool RequestSetting(const char *name);
+  bool RequestSetting(const char *name, OperationEnvironment &env);
 
   /**
    * Look up the given setting in the table of received values.  The
@@ -93,7 +83,8 @@ public:
   std::pair<bool, int> GetSetting(const char *name) const;
 
 protected:
-  void VarioWriteSettings(const DerivedInfo &calculated) const;
+  void VarioWriteSettings(const DerivedInfo &calculated,
+                          OperationEnvironment &env) const;
 
   bool PDVSC(NMEAInputLine &line, NMEAInfo &info);
 

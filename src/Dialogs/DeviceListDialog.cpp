@@ -25,6 +25,8 @@ Copyright_License {
 #include "Dialogs/Vega/VegaDialogs.hpp"
 #include "Dialogs/ManageCAI302Dialog.hpp"
 #include "Dialogs/ManageFlarmDialog.hpp"
+#include "Dialogs/LX/ManageV7Dialog.hpp"
+#include "Dialogs/LX/ManageNanoDialog.hpp"
 #include "Dialogs/PortMonitor.hpp"
 #include "Dialogs/WidgetDialog.hpp"
 #include "Dialogs/Message.hpp"
@@ -36,6 +38,7 @@ Copyright_License {
 #include "Device/List.hpp"
 #include "Device/Descriptor.hpp"
 #include "Device/Register.hpp"
+#include "Device/Driver/LX/Internal.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Blackboard/BlackboardListener.hpp"
 #include "Components.hpp"
@@ -330,7 +333,7 @@ DeviceListWidget::ReconnectCurrent()
 
   DeviceDescriptor &device = *device_list[current];
   if (device.IsBorrowed()) {
-    MessageBoxX(_("Device is occupied"), _("Reconnect"), MB_OK | MB_ICONERROR);
+    ShowMessageBox(_("Device is occupied"), _("Reconnect"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -352,7 +355,7 @@ DeviceListWidget::DownloadFlightFromCurrent()
     return;
 
   if (!device.Borrow()) {
-    MessageBoxX(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
+    ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -407,7 +410,7 @@ DeviceListWidget::ManageCurrent()
     return;
 
   if (!descriptor.Borrow()) {
-    MessageBoxX(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
+    ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
     return;
   }
 
@@ -419,9 +422,26 @@ DeviceListWidget::ManageCurrent()
 
   if (descriptor.IsDriver(_T("CAI 302")))
     ManageCAI302Dialog(UIGlobals::GetMainWindow(), look, *device);
-  else if (descriptor.IsDriver(_T("FLARM")))
-    ManageFlarmDialog(*device);
-  else if (descriptor.IsDriver(_T("Vega")))
+  else if (descriptor.IsDriver(_T("FLARM"))) {
+    device_blackboard->mutex.Lock();
+    const NMEAInfo &basic = device_blackboard->RealState(current);
+    const FlarmVersion version = basic.flarm.version;
+    device_blackboard->mutex.Unlock();
+
+    ManageFlarmDialog(*device, version);
+  } else if (descriptor.IsDriver(_T("LX"))) {
+    device_blackboard->mutex.Lock();
+    const NMEAInfo &basic = device_blackboard->RealState(current);
+    const DeviceInfo info = basic.device;
+    const DeviceInfo secondary_info = basic.secondary_device;
+    device_blackboard->mutex.Unlock();
+
+    LXDevice &lx_device = *(LXDevice *)device;
+    if (lx_device.IsV7())
+      ManageV7Dialog(lx_device, info, secondary_info);
+    else if (lx_device.IsNano())
+      ManageNanoDialog(lx_device, info);
+  } else if (descriptor.IsDriver(_T("Vega")))
     dlgConfigurationVarioShowModal(*device);
 
   MessageOperationEnvironment env;

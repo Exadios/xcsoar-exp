@@ -30,6 +30,10 @@ Copyright_License {
 #include "Compiler.h"
 #include "tchar.h"
 #include "Device/Driver.hpp"
+#include "Device/SettingsMap.hpp"
+#include "Thread/Mutex.hpp"
+
+#include <string>
 
 #include <stdint.h>
 
@@ -38,6 +42,7 @@ struct Declaration;
 class OperationEnvironment;
 class RecordedFlightList;
 struct RecordedFlightInfo;
+class NMEAInputLine;
 
 class FlarmDevice: public AbstractDevice
 {
@@ -54,17 +59,51 @@ class FlarmDevice: public AbstractDevice
 
   uint16_t sequence_number;
 
+  /**
+   * Settings that were received in PDVSC sentences.
+   */
+  DeviceSettingsMap<std::string> settings;
+
 public:
   FlarmDevice(Port &_port)
     :port(_port), mode(Mode::UNKNOWN), sequence_number(0) {}
+
+  /**
+   * Write a setting to the FLARM.
+   *
+   * @return true if sending the command has succeeded (it does not
+   * indicate whether the FLARM has understood and processed it)
+   */
+  bool SendSetting(const char *name, const char *value,
+                   OperationEnvironment &env);
+
+  /**
+   * Request a setting from the FLARM.  The FLARM will send the value,
+   * but this method will not wait for that.
+   *
+   * @return true if sending the command has succeeded (it does not
+   * indicate whether the FLARM has understood and processed it)
+   */
+  bool RequestSetting(const char *name, OperationEnvironment &env);
+
+  /**
+   * Look up the given setting in the table of received values.  The
+   * first element is a "found" flag, and if that is true, the second
+   * element is the value.
+   */
+  gcc_pure
+  std::pair<bool, std::string> GetSetting(const char *name) const;
 
 protected:
   bool TextMode(OperationEnvironment &env);
   bool BinaryMode(OperationEnvironment &env);
 
+  bool ParsePFLAC(NMEAInputLine &line);
+
 public:
   void LinkTimeout();
   bool EnableNMEA(OperationEnvironment &env);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
 
   bool Declare(const Declaration &declaration, const Waypoint *home,
                OperationEnvironment &env);
@@ -92,21 +131,30 @@ public:
   bool SetStealthMode(bool enabled, OperationEnvironment &env);
   bool GetRange(unsigned &range, OperationEnvironment &env);
   bool SetRange(unsigned range, OperationEnvironment &env);
+  bool GetBaudRate(unsigned &baud_id, OperationEnvironment &env);
+  bool SetBaudRate(unsigned baud_id, OperationEnvironment &env);
 
-  void Restart();
+  void Restart(OperationEnvironment &env);
 
 private:
   /**
    * Sends the supplied sentence with a $ prepended and a line break appended
    */
-  void Send(const char *sentence);
+  bool Send(const char *sentence, OperationEnvironment &env);
   bool Receive(const char *prefix, char *buffer, size_t length,
                OperationEnvironment &env, unsigned timeout_ms);
 
+  bool GetConfig(const char *setting, char *buffer, size_t length,
+                 OperationEnvironment &env);
+  bool SetConfig(const char *setting, const char *value,
+                 OperationEnvironment &env);
+
+#ifdef _UNICODE
   bool GetConfig(const char *setting, TCHAR *buffer, size_t length,
                  OperationEnvironment &env);
   bool SetConfig(const char *setting, const TCHAR *value,
                  OperationEnvironment &env);
+#endif
 
   bool DeclareInternal(const Declaration &declaration,
                        OperationEnvironment &env);

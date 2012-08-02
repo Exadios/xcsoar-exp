@@ -25,7 +25,7 @@ Copyright_License {
 #define XCSOAR_FORM_UTIL_HPP
 
 #include "Util/StaticString.hpp"
-#include "Units/Settings.hpp"
+#include "Units/Group.hpp"
 #include "Math/fixed.hpp"
 #include "Compiler.h"
 
@@ -70,6 +70,9 @@ void
 LoadFormProperty(SubForm &form, const TCHAR *control_name, int value);
 void
 LoadFormProperty(SubForm &form, const TCHAR *control_name, unsigned int value);
+
+void
+LoadFormPropertyEnum(SubForm &form, const TCHAR *control_name, int value);
 
 void
 LoadFormProperty(SubForm &form, const TCHAR *control_name,
@@ -124,6 +127,10 @@ GetFormValueFixed(const SubForm &form, const TCHAR *control_name);
 gcc_pure
 const TCHAR *
 GetFormValueString(const SubForm &form, const TCHAR *control_name);
+
+gcc_pure
+const TCHAR *
+GetFormValueFile(const SubForm &form, const TCHAR *control_name);
 
 template<typename T>
 static inline void

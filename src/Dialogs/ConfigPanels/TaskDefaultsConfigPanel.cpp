@@ -23,12 +23,12 @@ Copyright_License {
 
 #include "Profile/Profile.hpp"
 #include "Language/Language.hpp"
-#include "DataField/Enum.hpp"
-#include "DataField/Listener.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/Listener.hpp"
 #include "Interface.hpp"
 #include "Dialogs/dlgTaskHelpers.hpp"
 #include "Task/Factory/AbstractTaskFactory.hpp"
-#include "Engine/Task/Tasks/OrderedTask.hpp"
+#include "Engine/Task/Ordered/OrderedTask.hpp"
 #include "Form/RowFormWidget.hpp"
 #include "TaskDefaultsConfigPanel.hpp"
 #include "UIGlobals.hpp"
@@ -84,7 +84,7 @@ TaskDefaultsConfigPanel::SetStartLabel()
 {
   WndProperty &wp = GetControl(StartRadius);
 
-  if (GetValueInteger(StartType) == AbstractTaskFactory::START_LINE)
+  if (GetValueInteger(StartType) == (int)TaskPointFactoryType::START_LINE)
     wp.SetCaption(gettext(Caption_GateWidth));
   else
     wp.SetCaption(gettext(Caption_Radius));
@@ -95,7 +95,7 @@ TaskDefaultsConfigPanel::SetFinishLabel()
 {
   WndProperty &wp = GetControl(FinishRadius);
 
-  if (GetValueInteger(FinishType) == AbstractTaskFactory::FINISH_LINE)
+  if (GetValueInteger(FinishType) == (int)TaskPointFactoryType::FINISH_LINE)
     wp.SetCaption(gettext(Caption_GateWidth));
   else
     wp.SetCaption(gettext(Caption_Radius));
@@ -123,7 +123,7 @@ TaskDefaultsConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 
     for (auto i = point_types.begin(), end = point_types.end();
          i != end; ++i) {
-      const AbstractTaskFactory::LegalPointType type = *i;
+      const TaskPointFactoryType type = *i;
       dfe->addEnumText(OrderedTaskPointName(type), (unsigned)type,
                        OrderedTaskPointDescription(type));
       if (type == task_behaviour.sector_defaults.start_type)
@@ -148,7 +148,7 @@ TaskDefaultsConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 
     for (auto i = point_types.begin(), end = point_types.end();
          i != end; ++i) {
-      const AbstractTaskFactory::LegalPointType type = *i;
+      const TaskPointFactoryType type = *i;
       dfe->addEnumText(OrderedTaskPointName(type), (unsigned)type,
                        OrderedTaskPointDescription(type));
       if (type == task_behaviour.sector_defaults.finish_type)
@@ -171,7 +171,7 @@ TaskDefaultsConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 
     for (auto i = point_types.begin(), end = point_types.end();
          i != end; ++i) {
-      const AbstractTaskFactory::LegalPointType type = *i;
+      const TaskPointFactoryType type = *i;
       dfe->addEnumText(OrderedTaskPointName(type), (unsigned)type,
                        OrderedTaskPointDescription(type));
       if (type == task_behaviour.sector_defaults.turnpoint_type) {
@@ -225,36 +225,36 @@ TaskDefaultsConfigPanel::Save(bool &_changed, bool &_require_restart)
   ComputerSettings &settings_computer = XCSoarInterface::SetComputerSettings();
   TaskBehaviour &task_behaviour = settings_computer.task;
 
-  changed |= SaveValueEnum(StartType, szProfileStartType, task_behaviour.sector_defaults.start_type);
+  changed |= SaveValueEnum(StartType, ProfileKeys::StartType, task_behaviour.sector_defaults.start_type);
 
-  changed |= SaveValue(StartRadius, UnitGroup::DISTANCE, szProfileStartRadius,
+  changed |= SaveValue(StartRadius, UnitGroup::DISTANCE, ProfileKeys::StartRadius,
                        task_behaviour.sector_defaults.start_radius);
 
-  changed |= SaveValueEnum(TurnpointType, szProfileTurnpointType,
+  changed |= SaveValueEnum(TurnpointType, ProfileKeys::TurnpointType,
                            task_behaviour.sector_defaults.turnpoint_type);
 
-  changed |= SaveValue(TurnpointRadius, UnitGroup::DISTANCE, szProfileTurnpointRadius,
+  changed |= SaveValue(TurnpointRadius, UnitGroup::DISTANCE, ProfileKeys::TurnpointRadius,
                        task_behaviour.sector_defaults.turnpoint_radius);
 
-  changed |= SaveValueEnum(FinishType, szProfileFinishType,
+  changed |= SaveValueEnum(FinishType, ProfileKeys::FinishType,
                            task_behaviour.sector_defaults.finish_type);
 
-  changed |= SaveValue(FinishRadius, UnitGroup::DISTANCE, szProfileFinishRadius,
+  changed |= SaveValue(FinishRadius, UnitGroup::DISTANCE, ProfileKeys::FinishRadius,
                        task_behaviour.sector_defaults.finish_radius);
 
-  changed |= SaveValueEnum(TaskType, szProfileTaskType, task_behaviour.task_type_default);
+  changed |= SaveValueEnum(TaskType, ProfileKeys::TaskType, task_behaviour.task_type_default);
 
   unsigned aatminutes = (unsigned)task_behaviour.ordered_defaults.aat_min_time;
   if (SaveValue(AATMinTime, aatminutes)) {
     task_behaviour.ordered_defaults.aat_min_time = fixed(aatminutes);
-    Profile::Set(szProfileAATMinTime, aatminutes);
+    Profile::Set(ProfileKeys::AATMinTime, aatminutes);
     changed = true;
   }
 
   unsigned aatmargin = task_behaviour.optimise_targets_margin;
   if (SaveValue(AATTimeMargin, aatmargin)) {
     task_behaviour.optimise_targets_margin = aatmargin;
-    Profile::Set(szProfileAATTimeMargin, aatmargin);
+    Profile::Set(ProfileKeys::AATTimeMargin, aatmargin);
     changed = true;
   }
 

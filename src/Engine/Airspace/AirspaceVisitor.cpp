@@ -26,7 +26,7 @@
 void
 AirspaceVisitor::Visit(const AbstractAirspace &aa)
 {
-  switch (aa.shape) {
+  switch (aa.GetShape()) {
   case AbstractAirspace::Shape::CIRCLE:
     Visit((const AirspaceCircle &)aa);
     break;
@@ -40,5 +40,5 @@ AirspaceVisitor::Visit(const AbstractAirspace &aa)
 void
 AirspaceVisitor::Visit(const Airspace &as)
 {
-  Visit(*as.get_airspace());
+  Visit(*as.GetAirspace());
 }

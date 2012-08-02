@@ -40,8 +40,11 @@
  */
 template<class T>
 class AllocatedArray {
+public:
+  typedef size_t size_type;
+
 protected:
-  unsigned the_size;
+  size_type the_size;
   T *gcc_restrict data;
 
 public:
@@ -49,17 +52,17 @@ public:
   typedef const T *const_iterator;
 
 public:
-  gcc_constexpr_ctor AllocatedArray():the_size(0), data(NULL) {}
+  constexpr AllocatedArray():the_size(0), data(nullptr) {}
 
-  explicit AllocatedArray(unsigned _size)
+  explicit AllocatedArray(size_type _size)
     :the_size(_size), data(new T[the_size]) {
-    assert(size() == 0 || data != NULL);
+    assert(size() == 0 || data != nullptr);
   }
 
   explicit AllocatedArray(const AllocatedArray &other)
     :the_size(other.size()), data(new T[the_size]) {
-    assert(size() == 0 || data != NULL);
-    assert(other.size() == 0 || other.data != NULL);
+    assert(size() == 0 || data != nullptr);
+    assert(other.size() == 0 || other.data != nullptr);
 
     std::copy(other.data, other.data + the_size, data);
   }
@@ -67,7 +70,7 @@ public:
   explicit AllocatedArray(AllocatedArray &&other)
     :the_size(other.the_size), data(other.data) {
     other.the_size = 0;
-    other.data = NULL;
+    other.data = nullptr;
   }
 
   ~AllocatedArray() {
@@ -75,8 +78,8 @@ public:
   }
 
   AllocatedArray &operator=(const AllocatedArray &other) {
-    assert(size() == 0 || data != NULL);
-    assert(other.size() == 0 || other.data != NULL);
+    assert(size() == 0 || data != nullptr);
+    assert(other.size() == 0 || other.data != nullptr);
 
     if (&other == this)
       return *this;
@@ -102,14 +105,14 @@ public:
   /**
    * Returns the number of allocated elements.
    */
-  unsigned size() const {
+  size_type size() const {
     return the_size;
   }
 
   /**
    * Returns one element.  No bounds checking.
    */
-  T &operator[](unsigned i) {
+  T &operator[](size_type i) {
     assert(i < size());
 
     return data[i];
@@ -118,7 +121,7 @@ public:
   /**
    * Returns one constant element.  No bounds checking.
    */
-  const T &operator[](unsigned i) const {
+  const T &operator[](size_type i) const {
     assert(i < size());
 
     return data[i];
@@ -143,7 +146,7 @@ public:
   /**
    * Resizes the array, discarding old data.
    */
-  void ResizeDiscard(unsigned _size) {
+  void ResizeDiscard(size_type _size) {
     if (_size == the_size)
       return;
 
@@ -151,7 +154,7 @@ public:
     the_size = _size;
     data = new T[the_size];
 
-    assert(size() == 0 || data != NULL);
+    assert(size() == 0 || data != nullptr);
   }
 
   /**
@@ -159,7 +162,7 @@ public:
    * Similar to ResizeDiscard(), but will never shrink the array to
    * avoid expensive heap operations.
    */
-  void GrowDiscard(unsigned _size) {
+  void GrowDiscard(size_type _size) {
     if (_size > the_size)
       ResizeDiscard(_size);
   }
@@ -168,12 +171,12 @@ public:
    * Grows the array to the specified size, preserving the value of a
    * range of elements, starting from the beginning.
    */
-  void GrowPreserve(unsigned _size, unsigned preserve) {
+  void GrowPreserve(size_type _size, size_type preserve) {
     if (_size <= the_size)
       return;
 
     T *new_data = new T[_size];
-    assert(_size == 0 || new_data != NULL);
+    assert(_size == 0 || new_data != nullptr);
 
     std::move(data, data + preserve, new_data);
 

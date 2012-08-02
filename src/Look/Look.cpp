@@ -33,6 +33,9 @@ Look::Initialise()
   traffic.Initialise();
   flarm_dialog.Initialise(traffic, false);
   flarm_gauge.Initialise(traffic, true);
+  gesture.Initialise();
+  thermal_assistant_dialog.Initialise(false);
+  thermal_assistant_gauge.Initialise(true);
 }
 
 void

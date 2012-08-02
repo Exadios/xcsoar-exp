@@ -46,26 +46,6 @@ PolarSettings::SetDefaults()
 }
 
 void
-SoundSettings::SetDefaults()
-{
-  sound_vario_enabled = true;
-  sound_task_enabled = true;
-  sound_modes_enabled = true;
-  sound_volume = 80;
-  sound_deadband = 5;
-}
-
-void
-TeamCodeSettings::SetDefaults()
-{
-  team_code_reference_waypoint = -1;
-  team_flarm_tracking = false;
-  team_code_valid = false;
-  team_flarm_callsign.clear();
-  team_flarm_id.Clear();
-}
-
-void
 VoiceSettings::SetDefaults()
 {
   voice_climb_rate_enabled = false;
@@ -106,7 +86,6 @@ ComputerSettings::SetDefaults()
 {
   wind.SetDefaults();
   polar.SetDefaults();
-  sound.SetDefaults();
   team_code.SetDefaults();
   voice.SetDefaults();
   poi.SetDefaults();

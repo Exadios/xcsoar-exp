@@ -32,7 +32,7 @@ Copyright_License {
 #include "Logger/Logger.hpp"
 #include "Terrain/RasterWeather.hpp"
 #include "Terrain/RasterTerrain.hpp"
-#include "WaypointGlue.hpp"
+#include "Waypoint/WaypointGlue.hpp"
 #include "Dialogs/XML.hpp"
 #include "Dialogs/dlgAnalysis.hpp"
 #include "Dialogs/Task.hpp"
@@ -96,7 +96,7 @@ UIGlobals::GetDialogLook()
 }
 
 void dlgBasicSettingsShowModal() {}
-void dlgWindSettingsShowModal() {}
+void ShowWindSettingsDialog() {}
 
 void
 dlgAirspaceWarningsShowModal(SingleWindow &parent,
@@ -106,7 +106,12 @@ dlgAirspaceWarningsShowModal(SingleWindow &parent,
 }
 
 void dlgTaskManagerShowModal(SingleWindow &parent) {}
-void ConditionMonitorsUpdate(const GlideComputer &cmp) {}
+
+void
+ConditionMonitorsUpdate(const NMEAInfo &basic, const DerivedInfo &calculated,
+                        const ComputerSettings &settings)
+{
+}
 
 bool InputEvents::processGlideComputer(unsigned) { return false; }
 
@@ -119,8 +124,6 @@ InputEvents::processNmea(unsigned key)
 {
   return true;
 }
-
-int GetUTCOffset() { return 0; }
 
 /* done with fake symbols. */
 

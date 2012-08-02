@@ -31,23 +31,28 @@
  */
 
 #include "Dialogs/Traffic.hpp"
-#include "Dialogs/Internal.hpp"
-#include "Dialogs/Dialogs.h"
 #include "Dialogs/CallBackTable.hpp"
+#include "Dialogs/XML.hpp"
+#include "Form/Form.hpp"
+#include "Form/Util.hpp"
+#include "Form/Button.hpp"
+#include "Form/CheckBox.hpp"
 #include "Math/Screen.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
-#include "Form/CheckBox.hpp"
 #include "UIGlobals.hpp"
 #include "Look/Look.hpp"
 #include "Profile/Profile.hpp"
 #include "Compiler.h"
 #include "FLARM/Friends.hpp"
-#include "Gauge/FlarmTrafficLook.hpp"
+#include "Look/FlarmTrafficLook.hpp"
 #include "Gauge/FlarmTrafficWindow.hpp"
 #include "Language/Language.hpp"
 #include "GestureManager.hpp"
 #include "Formatter/UserUnits.hpp"
+#include "Units/Units.hpp"
+#include "Renderer/UnitSymbolRenderer.hpp"
+#include "Interface.hpp"
 
 /**
  * A Window which renders FLARM traffic, with user interaction.
@@ -70,7 +75,7 @@ protected:
   void CalcAutoZoom();
 
 public:
-  void Update(Angle new_direction, const FlarmState &new_data,
+  void Update(Angle new_direction, const TrafficList &new_data,
               const TeamCodeSettings &new_settings);
   void UpdateTaskDirection(bool show_task_direction, Angle bearing);
 
@@ -98,6 +103,11 @@ public:
 
 protected:
   void PaintTrafficInfo(Canvas &canvas) const;
+  void PaintClimbRate(Canvas &canvas, PixelRect rc, fixed climb_rate) const;
+  void PaintDistance(Canvas &canvas, PixelRect rc, fixed distance) const;
+  void PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
+                             fixed relative_altitude) const;
+  void PaintID(Canvas &canvas, PixelRect rc, const FlarmTraffic &traffic) const;
   void PaintTaskDirection(Canvas &canvas) const;
 
 protected:
@@ -106,7 +116,7 @@ protected:
   virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
   virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
   virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  bool on_mouse_gesture(const TCHAR* gesture);
+  bool OnMouseGesture(const TCHAR* gesture);
 };
 
 static WndForm *wf = NULL;
@@ -120,7 +130,7 @@ FlarmTrafficControl::OnCreate()
 
   const TrafficSettings &settings = CommonInterface::GetUISettings().traffic;
 
-  Profile::Get(szProfileFlarmSideData, side_display_type);
+  Profile::GetEnum(ProfileKeys::FlarmSideData, side_display_type);
   enable_auto_zoom = settings.auto_zoom;
   enable_north_up = settings.north_up;
 }
@@ -148,7 +158,7 @@ FlarmTrafficControl::SetNorthUp(bool enabled)
 {
   TrafficSettings &settings = CommonInterface::SetUISettings().traffic;
   settings.north_up = enable_north_up = enabled;
-  Profile::Set(szProfileFlarmNorthUp, enabled);
+  Profile::Set(ProfileKeys::FlarmNorthUp, enabled);
   north_up->SetState(enabled);
 }
 
@@ -157,7 +167,7 @@ FlarmTrafficControl::SetAutoZoom(bool enabled)
 {
   TrafficSettings &settings = CommonInterface::SetUISettings().traffic;
   settings.auto_zoom = enable_auto_zoom = enabled;
-  Profile::Set(szProfileFlarmAutoZoom, enabled);
+  Profile::Set(ProfileKeys::FlarmAutoZoom, enabled);
   auto_zoom->SetState(enabled);
 }
 
@@ -167,7 +177,7 @@ FlarmTrafficControl::CalcAutoZoom()
   bool warning_mode = WarningMode();
   RoughDistance zoom_dist = fixed_zero;
 
-  for (auto it = data.traffic.begin(), end = data.traffic.end();
+  for (auto it = data.list.begin(), end = data.list.end();
       it != end; ++it) {
     if (warning_mode && !it->HasAlarm())
       continue;
@@ -185,7 +195,7 @@ FlarmTrafficControl::CalcAutoZoom()
 }
 
 void
-FlarmTrafficControl::Update(Angle new_direction, const FlarmState &new_data,
+FlarmTrafficControl::Update(Angle new_direction, const TrafficList &new_data,
                             const TeamCodeSettings &new_settings)
 {
   FlarmTrafficWindow::Update(new_direction, new_data, new_settings);
@@ -261,7 +271,185 @@ FlarmTrafficControl::PaintTaskDirection(Canvas &canvas) const
                                        Angle::Zero() : heading));
 
   // Draw the arrow
-  canvas.polygon(triangle, 4);
+  canvas.DrawPolygon(triangle, 4);
+}
+
+void
+FlarmTrafficControl::PaintClimbRate(Canvas &canvas, PixelRect rc,
+                                    fixed climb_rate) const
+{
+  // Paint label
+  canvas.Select(look.info_labels_font);
+  PixelScalar label_width = canvas.CalcTextSize(_("Vario")).cx;
+  canvas.text(rc.right - label_width, rc.top, _("Vario"));
+
+  // Format climb rate
+  TCHAR buffer[20];
+  Unit unit = Units::GetUserVerticalSpeedUnit();
+  FormatUserVerticalSpeed(climb_rate, buffer, false);
+
+  // Calculate unit size
+  canvas.Select(look.info_units_font);
+  UPixelScalar unit_width = UnitSymbolRenderer::GetSize(canvas, unit).cx;
+  UPixelScalar unit_height =
+      UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
+
+  UPixelScalar space_width = unit_width / 3;
+
+  // Calculate value size
+  canvas.Select(look.info_values_font);
+  UPixelScalar value_height = look.info_values_font.GetAscentHeight();
+  UPixelScalar value_width = canvas.CalcTextSize(buffer).cx;
+
+  // Calculate positions
+  PixelScalar max_height = max(unit_height, value_height);
+  PixelScalar y = rc.top + look.info_units_font.GetHeight() + max_height;
+
+  // Paint value
+  canvas.text(rc.right - unit_width - space_width - value_width, y - value_height, buffer);
+
+  // Paint unit
+  canvas.Select(look.info_units_font);
+  UnitSymbolRenderer::Draw(
+      canvas, { PixelScalar(rc.right - unit_width), PixelScalar(y - unit_height) }, unit, look.unit_fraction_pen);
+}
+
+void
+FlarmTrafficControl::PaintDistance(Canvas &canvas, PixelRect rc,
+                                    fixed distance) const
+{
+  // Format distance
+  TCHAR buffer[20];
+  Unit unit = FormatUserDistanceSmart(distance, buffer, false, fixed(1000));
+
+  // Calculate unit size
+  canvas.Select(look.info_units_font);
+  UPixelScalar unit_width = UnitSymbolRenderer::GetSize(canvas, unit).cx;
+  UPixelScalar unit_height =
+      UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
+
+  UPixelScalar space_width = unit_width / 3;
+
+  // Calculate value size
+  canvas.Select(look.info_values_font);
+  UPixelScalar value_height = look.info_values_font.GetAscentHeight();
+  UPixelScalar value_width = canvas.CalcTextSize(buffer).cx;
+
+  // Calculate positions
+  PixelScalar max_height = max(unit_height, value_height);
+
+  // Paint value
+  canvas.text(rc.left, rc.bottom - value_height, buffer);
+
+  // Paint unit
+  canvas.Select(look.info_units_font);
+  UnitSymbolRenderer::Draw(
+      canvas, { PixelScalar(rc.left + value_width + space_width), PixelScalar(rc.bottom - unit_height) }, unit, look.unit_fraction_pen);
+
+
+  // Paint label
+  canvas.Select(look.info_labels_font);
+  canvas.text(rc.left, rc.bottom - max_height - look.info_labels_font.GetHeight(), _("Distance"));
+}
+
+void
+FlarmTrafficControl::PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
+                                           fixed relative_altitude) const
+{
+  // Format relative altitude
+  TCHAR buffer[20];
+  Unit unit = Units::GetUserAltitudeUnit();
+  FormatRelativeUserAltitude(relative_altitude, buffer, false);
+
+  // Calculate unit size
+  canvas.Select(look.info_units_font);
+  UPixelScalar unit_width = UnitSymbolRenderer::GetSize(canvas, unit).cx;
+  UPixelScalar unit_height =
+      UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
+
+  UPixelScalar space_width = unit_width / 3;
+
+  // Calculate value size
+  canvas.Select(look.info_values_font);
+  UPixelScalar value_height = look.info_values_font.GetAscentHeight();
+  UPixelScalar value_width = canvas.CalcTextSize(buffer).cx;
+
+  // Calculate positions
+  PixelScalar max_height = max(unit_height, value_height);
+
+  // Paint value
+  canvas.text(rc.right - unit_width - space_width - value_width, rc.bottom - value_height, buffer);
+
+  // Paint unit
+  canvas.Select(look.info_units_font);
+  UnitSymbolRenderer::Draw(
+      canvas, { PixelScalar(rc.right - unit_width), PixelScalar(rc.bottom - unit_height) }, unit, look.unit_fraction_pen);
+
+
+  // Paint label
+  canvas.Select(look.info_labels_font);
+  PixelScalar label_width = canvas.CalcTextSize(_("Rel. Alt.")).cx;
+  canvas.text(rc.right - label_width, rc.bottom - max_height - look.info_labels_font.GetHeight(), _("Rel. Alt."));
+}
+
+void
+FlarmTrafficControl::PaintID(Canvas &canvas, PixelRect rc,
+                             const FlarmTraffic &traffic) const
+{
+  TCHAR buffer[20];
+
+  unsigned font_size;
+  if (traffic.HasName()) {
+    canvas.Select(look.call_sign_font);
+    font_size = look.call_sign_font.GetHeight();
+
+    _tcscpy(buffer, traffic.name);
+  } else {
+    canvas.Select(look.info_labels_font);
+    font_size = look.info_labels_font.GetHeight();
+
+    traffic.id.Format(buffer);
+  }
+
+  if (!WarningMode()) {
+    // Team color dot
+    FlarmFriends::Color team_color = FlarmFriends::GetFriendColor(traffic.id);
+
+    // If no color found but target is teammate
+    if (team_color == FlarmFriends::Color::NONE &&
+        settings.team_flarm_tracking &&
+        traffic.id == settings.team_flarm_id)
+      // .. use green color
+      team_color = FlarmFriends::Color::GREEN;
+
+    // If team color found -> draw a colored circle in front of the name
+    if (team_color != FlarmFriends::Color::NONE) {
+      switch (team_color) {
+      case FlarmFriends::Color::GREEN:
+        canvas.Select(look.team_brush_green);
+        break;
+      case FlarmFriends::Color::BLUE:
+        canvas.Select(look.team_brush_blue);
+        break;
+      case FlarmFriends::Color::YELLOW:
+        canvas.Select(look.team_brush_yellow);
+        break;
+      case FlarmFriends::Color::MAGENTA:
+        canvas.Select(look.team_brush_magenta);
+        break;
+      default:
+        break;
+      }
+
+      canvas.SelectNullPen();
+      canvas.DrawCircle(rc.left + Layout::FastScale(7), rc.top + (font_size / 2),
+                    Layout::FastScale(7));
+
+      rc.left += Layout::FastScale(16);
+    }
+  }
+
+  canvas.text(rc.left, rc.top, buffer);
 }
 
 /**
@@ -276,13 +464,8 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas &canvas) const
     return;
 
   // Shortcut to the selected traffic
-  FlarmTraffic traffic = data.traffic[WarningMode() ? warning : selection];
+  FlarmTraffic traffic = data.list[WarningMode() ? warning : selection];
   assert(traffic.IsDefined());
-
-  // Temporary string
-  TCHAR tmp[20];
-  // Temporary string size
-  PixelSize sz;
 
   PixelRect rc;
   rc.left = padding;
@@ -307,94 +490,20 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas &canvas) const
   canvas.SetBackgroundTransparent();
 
   // Climb Rate
-  if (!WarningMode() && traffic.climb_rate_avg30s_available) {
-    FormatUserVerticalSpeed(traffic.climb_rate_avg30s, tmp, 20);
-    canvas.Select(look.info_values_font);
-    sz = canvas.CalcTextSize(tmp);
-    canvas.text(rc.right - sz.cx, rc.top + look.info_labels_font.GetHeight(), tmp);
-
-    canvas.Select(look.info_labels_font);
-    sz = canvas.CalcTextSize(_("Vario"));
-    canvas.text(rc.right - sz.cx, rc.top, _("Vario"));
-  }
+  if (!WarningMode() && traffic.climb_rate_avg30s_available)
+    PaintClimbRate(canvas, rc, traffic.climb_rate_avg30s);
 
   // Distance
-  FormatUserDistanceSmart(traffic.distance, tmp, 20);
-  canvas.Select(look.info_values_font);
-  sz = canvas.CalcTextSize(tmp);
-  canvas.text(rc.left, rc.bottom - sz.cy, tmp);
-
-  canvas.Select(look.info_labels_font);
-  canvas.text(rc.left,
-              rc.bottom - look.info_values_font.GetHeight() - look.info_labels_font.GetHeight(),
-              _("Distance"));
+  PaintDistance(canvas, rc, traffic.distance);
 
   // Relative Height
-  FormatRelativeUserAltitude(traffic.relative_altitude, tmp, 20);
-  canvas.Select(look.info_values_font);
-  sz = canvas.CalcTextSize(tmp);
-  canvas.text(rc.right - sz.cx, rc.bottom - sz.cy, tmp);
-
-  canvas.Select(look.info_labels_font);
-  sz = canvas.CalcTextSize(_("Rel. Alt."));
-  canvas.text(rc.right - sz.cx,
-              rc.bottom - look.info_values_font.GetHeight() - look.info_labels_font.GetHeight(),
-              _("Rel. Alt."));
+  PaintRelativeAltitude(canvas, rc, traffic.relative_altitude);
 
   // ID / Name
-  unsigned font_size;
-  if (traffic.HasName()) {
-    canvas.Select(look.call_sign_font);
-    font_size = look.call_sign_font.GetHeight();
+  if (!traffic.HasAlarm())
+    canvas.SetTextColor(look.selection_color);
 
-    if (!traffic.HasAlarm())
-      canvas.SetTextColor(look.selection_color);
-
-    _tcscpy(tmp, traffic.name);
-  } else {
-    font_size = look.info_labels_font.GetHeight();
-    traffic.id.Format(tmp);
-  }
-
-  if (!WarningMode()) {
-    // Team color dot
-    FlarmFriends::Color team_color = FlarmFriends::GetFriendColor(traffic.id);
-
-    // If no color found but target is teammate
-    if (team_color == FlarmFriends::NONE &&
-        settings.team_flarm_tracking &&
-        traffic.id == settings.team_flarm_id)
-      // .. use yellow color
-      team_color = FlarmFriends::GREEN;
-
-    // If team color found -> draw a colored circle around the target
-    if (team_color != FlarmFriends::NONE) {
-      switch (team_color) {
-      case FlarmFriends::GREEN:
-        canvas.Select(look.team_brush_green);
-        break;
-      case FlarmFriends::BLUE:
-        canvas.Select(look.team_brush_blue);
-        break;
-      case FlarmFriends::YELLOW:
-        canvas.Select(look.team_brush_yellow);
-        break;
-      case FlarmFriends::MAGENTA:
-        canvas.Select(look.team_brush_magenta);
-        break;
-      default:
-        break;
-      }
-
-      canvas.SelectNullPen();
-      canvas.circle(rc.left + Layout::FastScale(7), rc.top + (font_size / 2),
-                    Layout::FastScale(7));
-
-      rc.left += Layout::FastScale(16);
-    }
-  }
-
-  canvas.text(rc.left, rc.top, tmp);
+  PaintID(canvas, rc, traffic);
 }
 
 void
@@ -480,11 +589,12 @@ OnCloseClicked(gcc_unused WndButton &button)
 static void
 SwitchData()
 {
-  wdf->side_display_type++;
-  if (wdf->side_display_type > 2)
-    wdf->side_display_type = 1;
+  if (wdf->side_display_type == FlarmTrafficWindow::SIDE_INFO_VARIO)
+    wdf->side_display_type = FlarmTrafficWindow::SIDE_INFO_RELATIVE_ALTITUDE;
+  else
+    wdf->side_display_type = FlarmTrafficWindow::SIDE_INFO_VARIO;
 
-  Profile::Set(szProfileFlarmSideData, wdf->side_display_type);
+  Profile::SetEnum(ProfileKeys::FlarmSideData, wdf->side_display_type);
 }
 
 /**
@@ -561,12 +671,11 @@ static void
 Update()
 {
   if (XCSoarInterface::GetUISettings().traffic.auto_close_dialog &&
-      (!XCSoarInterface::Basic().flarm.available ||
-       XCSoarInterface::Basic().flarm.GetActiveTrafficCount() == 0))
+      XCSoarInterface::Basic().flarm.traffic.IsEmpty())
     wf->SetModalResult(mrOK);
 
   wdf->Update(XCSoarInterface::Basic().track,
-              XCSoarInterface::Basic().flarm,
+              XCSoarInterface::Basic().flarm.traffic,
               CommonInterface::GetComputerSettings().team_code);
 
   wdf->UpdateTaskDirection(XCSoarInterface::Calculated().task_stats.task_valid &&
@@ -608,7 +717,7 @@ bool
 FlarmTrafficControl::OnMouseUp(PixelScalar x, PixelScalar y)
 {
   const TCHAR *gesture = gestures.Finish();
-  if (gesture && on_mouse_gesture(gesture))
+  if (gesture && OnMouseGesture(gesture))
     return true;
 
   if (!WarningMode())
@@ -618,7 +727,7 @@ FlarmTrafficControl::OnMouseUp(PixelScalar x, PixelScalar y)
 }
 
 bool
-FlarmTrafficControl::on_mouse_gesture(const TCHAR* gesture)
+FlarmTrafficControl::OnMouseGesture(const TCHAR* gesture)
 {
   if (StringIsEqual(gesture, _T("U"))) {
     ZoomIn();
@@ -665,7 +774,7 @@ OnCreateFlarmTrafficControl(ContainerWindow &parent,
   return wdf;
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCreateFlarmTrafficControl),
   DeclareCallBackEntry(OnDetailsClicked),
   DeclareCallBackEntry(OnZoomInClicked),

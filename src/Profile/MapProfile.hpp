@@ -25,9 +25,13 @@ Copyright_License {
 #define XCSOAR_MAP_PROFILE_HPP
 
 struct MapSettings;
+struct TrailSettings;
+struct MapItemListSettings;
 
 namespace Profile {
   void Load(MapSettings &settings);
+  void Load(TrailSettings &settings);
+  void Load(MapItemListSettings &settings);
 };
 
 #endif

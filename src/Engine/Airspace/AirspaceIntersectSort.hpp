@@ -1,10 +1,33 @@
+/* Copyright_License {
+
+  XCSoar Glide Computer - http://www.xcsoar.org/
+  Copyright (C) 2000-2012 The XCSoar Project
+  A detailed list of copyright holders can be found in the file "AUTHORS".
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+}
+ */
+
 #ifndef AIRSPACE_INTERSECT_SORT_HPP
 #define AIRSPACE_INTERSECT_SORT_HPP
 
-#include <queue>
 #include "Math/fixed.hpp"
-#include "Navigation/GeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
 #include "AbstractAirspace.hpp"
+
+#include <queue>
 
 /**
  * Utility class to sort airspaces in ascending order of vector parameter (0,1)
@@ -24,7 +47,6 @@ class AirspaceIntersectSort {
   std::priority_queue<Intersection, std::vector<Intersection>, Rank> m_q;
 
   const GeoPoint& m_start;
-  const GeoPoint& m_end;
   const AbstractAirspace *m_airspace;
 
 public:
@@ -32,12 +54,11 @@ public:
    * Constructor
    *
    * @param start Location of start point
-   * @param end Location of end point
    * @param the_airspace Airspace to test for intersections
    */
-  AirspaceIntersectSort(const GeoPoint &start, const GeoPoint &end,
-                        const AbstractAirspace &the_airspace):
-    m_start(start), m_end(end), m_airspace(&the_airspace) {}
+  AirspaceIntersectSort(const GeoPoint &start,
+                        const AbstractAirspace &the_airspace)
+    :m_start(start), m_airspace(&the_airspace) {}
 
   /**
    * Add point to queue

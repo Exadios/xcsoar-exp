@@ -22,6 +22,7 @@ Copyright_License {
 */
 
 #include "Android/Main.hpp"
+#include "Android/Environment.hpp"
 #include "Android/Context.hpp"
 #include "Android/NativeView.hpp"
 #include "Android/Timer.hpp"
@@ -31,6 +32,7 @@ Copyright_License {
 #include "Android/PortBridge.hpp"
 #include "Android/BluetoothHelper.hpp"
 #include "Android/NativeInputListener.hpp"
+#include "Android/TextUtil.hpp"
 #include "Android/LogCat.hpp"
 #include "Language/Language.hpp"
 #include "LocalPath.hpp"
@@ -46,8 +48,13 @@ Copyright_License {
 #include "MainWindow.hpp"
 #include "Interface.hpp"
 #include "Java/Global.hpp"
+#include "Java/File.hpp"
+#include "Java/InputStream.hpp"
+#include "Java/URL.hpp"
 #include "Compiler.h"
 #include "org_xcsoar_NativeView.h"
+#include "IO/Async/GlobalIOThread.hpp"
+#include "Thread/Debug.hpp"
 
 #ifdef IOIOLIB
 #include "Android/IOIOHelper.hpp"
@@ -66,8 +73,6 @@ NativeView *native_view;
 
 EventQueue *event_queue;
 
-SoundUtil *sound_util;
-
 Vibrator *vibrator;
 bool os_haptic_feedback_enabled;
 
@@ -75,14 +80,12 @@ bool os_haptic_feedback_enabled;
 IOIOHelper *ioio_helper;
 #endif
 
-#if defined(__i386__) || defined(__mips__)
 extern "C" {
   /* workaround for
      http://code.google.com/p/android/issues/detail?id=23203 copied
      from https://bugzilla.mozilla.org/show_bug.cgi?id=734832 */
   __attribute__((weak)) void *__dso_handle;
 }
-#endif
 
 gcc_visibility_default
 JNIEXPORT jboolean JNICALL
@@ -92,8 +95,17 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
                                             jint xdpi, jint ydpi,
                                             jint sdk_version, jstring product)
 {
-  Java::Init(env);
+  InitThreadDebug();
 
+  InitialiseIOThread();
+
+  Java::Init(env);
+  Java::File::Initialise(env);
+  Java::InputStream::Initialise(env);
+  Java::URL::Initialise(env);
+  Java::URLConnection::Initialise(env);
+
+  Environment::Initialise(env);
   AndroidTimer::Initialise(env);
   InternalSensors::Initialise(env);
   NativeInputListener::Initialise(env);
@@ -110,6 +122,7 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
   LogStartUp(_T("Starting XCSoar %s"), XCSoar_ProductToken);
 
   OpenGL::Initialise();
+  TextUtil::Initialise(env);
 
   assert(native_view == NULL);
   native_view = new NativeView(env, obj, width, height, xdpi, ydpi,
@@ -117,7 +130,8 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
 
   event_queue = new EventQueue();
 
-  sound_util = new SoundUtil(env);
+  SoundUtil::Initialise(env);
+  Vibrator::Initialise(env);
   vibrator = Vibrator::Create(env, *context);
 
 #ifdef IOIOLIB
@@ -133,25 +147,30 @@ gcc_visibility_default
 JNIEXPORT void JNICALL
 Java_org_xcsoar_NativeView_runNative(JNIEnv *env, jobject obj)
 {
+  InitThreadDebug();
+
   OpenGL::Initialise();
 
   if (CheckLogCat())
-    MessageBoxX(_T("How embarassing, we're terribly sorry!\n"
-                   "Please submit a bug report and "
-                   "include the file from the 'crash' directory.\n"
-                   "http://www.xcsoar.org/trac/newticket\n"
-                   "After your report, we'll fix it ASAP."),
-                _T("XCSoar has crashed recently"),
-                MB_OK|MB_ICONERROR);
+    ShowMessageBox(_T("How embarassing, we're terribly sorry!\n"
+                      "Please submit a bug report and "
+                      "include the file from the 'crash' directory.\n"
+                      "http://www.xcsoar.org/trac/newticket\n"
+                      "After your report, we'll fix it ASAP."),
+                   _T("XCSoar has crashed recently"),
+                   MB_OK|MB_ICONERROR);
 
-  CommonInterface::main_window.event_loop();
+  CommonInterface::main_window->RunEventLoop();
 }
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
 Java_org_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
 {
-  CommonInterface::main_window.reset();
+  InitThreadDebug();
+
+  delete CommonInterface::main_window;
+
   DisallowLanguage();
   Fonts::Deinitialize();
 
@@ -160,11 +179,15 @@ Java_org_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
   ioio_helper = NULL;
 #endif
 
-  delete sound_util;
+  delete vibrator;
+  vibrator = NULL;
+
+  SoundUtil::Deinitialise(env);
   delete event_queue;
   event_queue = NULL;
   delete native_view;
 
+  TextUtil::Deinitialise(env);
   OpenGL::Deinitialise();
   ScreenDeinitialized();
   DeinitialiseDataPath();
@@ -178,6 +201,10 @@ Java_org_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
   NativeInputListener::Deinitialise(env);
   InternalSensors::Deinitialise(env);
   AndroidTimer::Deinitialise(env);
+  Environment::Deinitialise(env);
+  Java::URL::Deinitialise(env);
+
+  DeinitialiseIOThread();
 }
 
 gcc_visibility_default
@@ -188,7 +215,7 @@ Java_org_xcsoar_NativeView_resizedNative(JNIEnv *env, jobject obj,
   if (event_queue == NULL)
     return;
 
-  CommonInterface::main_window.AnnounceResize(width, height);
+  CommonInterface::main_window->AnnounceResize(width, height);
 
   event_queue->Purge(Event::RESIZE);
 
@@ -205,7 +232,7 @@ Java_org_xcsoar_NativeView_pauseNative(JNIEnv *env, jobject obj)
        work - let's bail out, nothing is lost anyway */
     exit(0);
 
-  CommonInterface::main_window.pause();
+  CommonInterface::main_window->Pause();
 
   assert(num_textures == 0);
   assert(num_buffers == 0);
@@ -219,7 +246,7 @@ Java_org_xcsoar_NativeView_resumeNative(JNIEnv *env, jobject obj)
     /* there is nothing here yet which can be resumed */
     exit(0);
 
-  CommonInterface::main_window.resume();
+  CommonInterface::main_window->Resume();
 }
 
 gcc_visibility_default

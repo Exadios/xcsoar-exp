@@ -25,6 +25,7 @@ Copyright_License {
 #define XCSOAR_GLIDE_COMPUTER_EVENTS_HPP
 
 #include "Blackboard/BlackboardListener.hpp"
+#include "NMEA/Validity.hpp"
 
 /**
  * This class listens for #LiveBlackboard changes and emits glide
@@ -36,10 +37,10 @@ class GlideComputerEvents : public NullBlackboardListener {
   bool enable_team, last_teammate_in_sector;
 
   bool last_flying;
-
-  bool possible_climb, possible_cruise;
+  bool last_circling;
 
   unsigned last_traffic;
+  Validity last_new_traffic;
 
 public:
   GlideComputerEvents():enable_team(false) {}

@@ -30,6 +30,7 @@ Copyright_License {
 #include "Device/Driver/Generic.hpp"
 #include "Device/Driver/Vega.hpp"
 #include "Device/Driver/NmeaOut.hpp"
+#include "Device/Driver/GTAltimeter.hpp"
 #include "Device/Driver/PosiGraph.hpp"
 #include "Device/Driver/BorgeltB50.hpp"
 #include "Device/Driver/Volkslogger.hpp"
@@ -47,6 +48,7 @@ Copyright_License {
 #include "Device/Driver/WesterboerVW921.hpp"
 #include "Device/Driver/FLARM.hpp"
 #include "Device/Driver/FlyNet.hpp"
+#include "Device/Driver/CProbe.hpp"
 #include "Util/Macros.hpp"
 
 /** NULL terminated array of available device drivers. */
@@ -76,6 +78,8 @@ static const struct DeviceRegister *const driver_list[] = {
   &flarm_device,
   &westerboer_vw921_device_driver,
   &flynet_driver,
+  &gt_altimeter_device_driver,
+  &c_probe_driver,
   NULL
 };
 

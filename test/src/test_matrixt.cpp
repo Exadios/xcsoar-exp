@@ -111,7 +111,7 @@ test_multiplication()
       {
       size_t acc = 0;
       for (k = 0; k < 3; k++)
-	acc += (3 * i + k) * (3 * k + j);
+       acc += (3 * i + k) * (3 * k + j);
       if (C[i][j] != acc)
         return false;
       }
@@ -161,3 +161,4 @@ main(int argc, const char *argv[])
 
   return 0;
   }
+

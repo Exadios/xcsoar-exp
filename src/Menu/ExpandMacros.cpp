@@ -216,7 +216,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
     } else if (_tcsstr(OutBuffer, _T("$(WaypointNextArm)"))) {
       // Waypoint\nNext
 
-      switch (task_manager->GetTaskAdvance().get_advance_state()) {
+      switch (task_manager->GetTaskAdvance().GetState()) {
       case TaskAdvance::MANUAL:
       case TaskAdvance::AUTO:
       case TaskAdvance::START_ARMED:
@@ -239,7 +239,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
 
     } else if (_tcsstr(OutBuffer, _T("$(WaypointPreviousArm)"))) {
 
-      switch (task_manager->GetTaskAdvance().get_advance_state()) {
+      switch (task_manager->GetTaskAdvance().GetState()) {
       case TaskAdvance::MANUAL:
       case TaskAdvance::AUTO:
       case TaskAdvance::START_DISARMED:
@@ -271,7 +271,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
   }
 
   if (_tcsstr(OutBuffer, _T("$(AdvanceArmed)"))) {
-    switch (task_manager->GetTaskAdvance().get_advance_state()) {
+    switch (task_manager->GetTaskAdvance().GetState()) {
     case TaskAdvance::MANUAL:
       ReplaceInString(OutBuffer, _T("$(AdvanceArmed)"), 
                       _("Advance\n(manual)"), Size);
@@ -379,7 +379,7 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
 
 
   if (_tcsstr(OutBuffer, _T("$(CheckFLARM)"))) {
-    if (!Basic().flarm.available)
+    if (!Basic().flarm.status.available)
       invalid = true;
     ReplaceInString(OutBuffer, _T("$(CheckFLARM)"), _T(""), Size);
   }
@@ -413,14 +413,8 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
     ReplaceInString(OutBuffer, _T("$(CheckLogger)"), _T(""), Size);
   }
 
-  if (_tcsstr(OutBuffer, _T("$(CheckFLARM)"))) {
-    if (!Basic().flarm.available)
-      invalid = true;
-
-    ReplaceInString(OutBuffer, _T("$(CheckFLARM)"), _T(""), Size);
-  }
   if (_tcsstr(OutBuffer, _T("$(CheckNet)"))) {
-#ifndef HAVE_NET
+#ifndef HAVE_HTTP
     invalid = true;
 #endif
 
@@ -438,20 +432,20 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
                       _("Start"), Size);
 
   if (_tcsstr(OutBuffer, _T("$(SnailTrailToggleName)"))) {
-    switch (GetMapSettings().trail_length) {
-    case TRAIL_OFF:
+    switch (GetMapSettings().trail.length) {
+    case TrailSettings::Length::OFF:
       ReplaceInString(OutBuffer, _T("$(SnailTrailToggleName)"),
                       _("Long"), Size);
       break;
-    case TRAIL_LONG:
+    case TrailSettings::Length::LONG:
       ReplaceInString(OutBuffer, _T("$(SnailTrailToggleName)"),
                       _("Short"), Size);
       break;
-    case TRAIL_SHORT:
+    case TrailSettings::Length::SHORT:
       ReplaceInString(OutBuffer, _T("$(SnailTrailToggleName)"),
                       _("Full"), Size);
       break;
-    case TRAIL_FULL:
+    case TrailSettings::Length::FULL:
       ReplaceInString(OutBuffer, _T("$(SnailTrailToggleName)"),
                       _("Off"), Size);
       break;
@@ -515,7 +509,7 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
     }
   }
 
-  CondReplaceInString(CommonInterface::main_window.GetFullScreen(), OutBuffer,
+  CondReplaceInString(CommonInterface::main_window->GetFullScreen(), OutBuffer,
                       _T("$(FullScreenToggleActionName)"),
                       _("Off"), _("On"), Size);
   CondReplaceInString(GetMapSettings().auto_zoom_enabled, OutBuffer,
@@ -530,13 +524,16 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
   CondReplaceInString(GetMapSettings().terrain.enable, OutBuffer,
                       _T("$(TerrainToggleActionName)"),
                       _("Off"), _("On"), Size);
+  CondReplaceInString(GetMapSettings().airspace.enable, OutBuffer,
+                      _T("$(AirspaceToggleActionName)"),
+                      _("Off"), _("On"), Size);
 
   if (_tcsstr(OutBuffer, _T("$(MapLabelsToggleActionName)"))) {
     static const TCHAR *const labels[] = { N_("All"),
                                            N_("Task & Landables"),
                                            N_("Task"),
                                            N_("None") };
-    static gcc_constexpr_data unsigned int n = ARRAY_SIZE(labels);
+    static constexpr unsigned int n = ARRAY_SIZE(labels);
     unsigned int i = (unsigned)GetMapSettings().waypoint.label_selection;
     ReplaceInString(OutBuffer, _T("$(MapLabelsToggleActionName)"),
                     gettext(labels[(i + 1) % n]), Size);
@@ -549,16 +546,16 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
                       OutBuffer, _T("$(AuxInfoToggleActionName)"),
                       _("Off"), _("On"), Size);
 
-  CondReplaceInString(GetUIState().force_display_mode == DM_CIRCLING,
+  CondReplaceInString(GetUIState().force_display_mode == DisplayMode::CIRCLING,
                       OutBuffer, _T("$(DispModeClimbShortIndicator)"),
                       _T("(*)"), _T(""), Size);
-  CondReplaceInString(GetUIState().force_display_mode == DM_CRUISE,
+  CondReplaceInString(GetUIState().force_display_mode == DisplayMode::CRUISE,
                       OutBuffer, _T("$(DispModeCruiseShortIndicator)"),
                       _T("(*)"), _T(""), Size);
-  CondReplaceInString(GetUIState().force_display_mode == DM_NONE,
+  CondReplaceInString(GetUIState().force_display_mode == DisplayMode::NONE,
                       OutBuffer, _T("$(DispModeAutoShortIndicator)"),
                       _T("(*)"), _T(""), Size);
-  CondReplaceInString(GetUIState().force_display_mode == DM_FINAL_GLIDE,
+  CondReplaceInString(GetUIState().force_display_mode == DisplayMode::FINAL_GLIDE,
                       OutBuffer, _T("$(DispModeFinalShortIndicator)"),
                       _T("(*)"), _T(""), Size);
 
@@ -578,16 +575,16 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
                       OutBuffer, _T("$(AirspaceModeAllOffIndicator)"),
                       _T("(*)"), _T(""), Size);
 
-  CondReplaceInString(GetMapSettings().trail_length == TRAIL_OFF,
+  CondReplaceInString(GetMapSettings().trail.length == TrailSettings::Length::OFF,
                       OutBuffer, _T("$(SnailTrailOffShortIndicator)"),
                       _T("(*)"), _T(""), Size);
-  CondReplaceInString(GetMapSettings().trail_length == TRAIL_SHORT,
+  CondReplaceInString(GetMapSettings().trail.length == TrailSettings::Length::SHORT,
                       OutBuffer, _T("$(SnailTrailShortShortIndicator)"),
                       _T("(*)"), _T(""), Size);
-  CondReplaceInString(GetMapSettings().trail_length == TRAIL_LONG,
+  CondReplaceInString(GetMapSettings().trail.length == TrailSettings::Length::LONG,
                       OutBuffer, _T("$(SnailTrailLongShortIndicator)"),
                       _T("(*)"), _T(""), Size);
-  CondReplaceInString(GetMapSettings().trail_length == TRAIL_FULL,
+  CondReplaceInString(GetMapSettings().trail.length == TrailSettings::Length::FULL,
                       OutBuffer, _T("$(SnailTrailFullShortIndicator)"),
                       _T("(*)"), _T(""), Size);
 

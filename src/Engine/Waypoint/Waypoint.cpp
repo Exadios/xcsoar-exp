@@ -21,24 +21,36 @@
  */
 
 #include "Waypoint.hpp"
-#include "Navigation/TaskProjection.hpp"
+#include "Geo/Flat/TaskProjection.hpp"
 
 void
-Waypoint::Flags::SetDefaultFlags(bool turnpoint)
+Waypoint::Flags::SetDefaults()
 {
-  turn_point = turnpoint;
+  turn_point = false;
   home = false;
   start_point = false;
   finish_point = false;
   watched = false;
 }
 
-Waypoint::Waypoint(const GeoPoint &_location, const bool is_turnpoint):
-  location(_location),
-  type(Type::NORMAL),
-  file_num(-1)
+Waypoint::Waypoint()
 {
-  flags.SetDefaultFlags(is_turnpoint);
+  SetDefaults();
+}
+
+Waypoint::Waypoint(const GeoPoint &_location):
+  location(_location)
+{
+  SetDefaults();
+}
+
+void
+Waypoint::SetDefaults()
+{
+  type = Type::NORMAL;
+  file_num = -1;
+
+  flags.SetDefaults();
   runway.Clear();
   radio_frequency.Clear();
 }
@@ -52,7 +64,7 @@ Waypoint::IsCloseTo(const GeoPoint &_location, const fixed range) const
 void
 Waypoint::Project(const TaskProjection &task_projection)
 {
-  flat_location = task_projection.project(location);
+  flat_location = task_projection.ProjectInteger(location);
 
 #ifndef NDEBUG
   flat_location_initialised = true;

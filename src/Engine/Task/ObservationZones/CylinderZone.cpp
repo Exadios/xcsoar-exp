@@ -22,10 +22,7 @@
 
 #include "CylinderZone.hpp"
 #include "Boundary.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
-
-#include <stdlib.h>
-#include <algorithm>
+#include "Geo/GeoVector.hpp"
 
 fixed
 CylinderZone::ScoreAdjustment() const
@@ -66,15 +63,15 @@ CylinderZone::Equals(const ObservationZonePoint &other) const
 GeoPoint
 CylinderZone::GetRandomPointInSector(const fixed mag) const
 {
-  AircraftState ac;
+  GeoPoint location;
 
   do {
     Angle dir = Angle::Degrees(fixed(rand() % 360));
     fixed dmag = max(min(radius, fixed(100.0)), radius * mag);
     fixed dis = fixed((0.1 + (rand() % 90) / 100.0)) * dmag;
     GeoVector vec(dis, dir);
-    ac.location = vec.EndPoint(GetReference());
-  } while (!IsInSector(ac));
+    location = vec.EndPoint(GetReference());
+  } while (!IsInSector(location));
 
-  return ac.location;
+  return location;
 }

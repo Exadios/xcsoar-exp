@@ -24,7 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_MAP_WINDOW_HPP
 #define XCSOAR_MAP_WINDOW_HPP
 
-#include "Util/StaticArray.hpp"
 #include "Projection/MapWindowProjection.hpp"
 #include "MapWindowTimer.hpp"
 #include "Renderer/AirspaceRenderer.hpp"
@@ -35,12 +34,11 @@ Copyright_License {
 #include "Screen/LabelBlock.hpp"
 #include "Screen/StopWatch.hpp"
 #include "MapWindowBlackboard.hpp"
-#include "NMEA/Derived.hpp"
 #include "Renderer/BackgroundRenderer.hpp"
 #include "Renderer/WaypointRenderer.hpp"
 #include "Renderer/TrailRenderer.hpp"
 #include "Compiler.h"
-#include <vector>
+#include "Weather/Features.hpp"
 
 struct MapLook;
 struct TrafficLook;
@@ -57,6 +55,7 @@ class GlideComputer;
 class GlidePolar;
 class ContainerWindow;
 class WaypointLabelList;
+class NOAAStore;
 
 class MapWindow :
   public DoubleBufferWindow,
@@ -139,6 +138,10 @@ protected:
 
   ProtectedMarkers *marks;
 
+#ifdef HAVE_NOAA
+  NOAAStore *noaa_store;
+#endif
+
   bool compass_visible;
 
 #ifndef ENABLE_OPENGL
@@ -209,6 +212,12 @@ public:
   void SetMarks(ProtectedMarkers *_marks) {
     marks = _marks;
   }
+
+#ifdef HAVE_NOAA
+  void SetNOAAStore(NOAAStore *_noaa_store) {
+    noaa_store = _noaa_store;
+  }
+#endif
 
   void ReadBlackboard(const MoreData &nmea_info,
                       const DerivedInfo &derived_info);
@@ -320,6 +329,11 @@ private:
    * @param canvas The drawing canvas
    */
   void RenderMarkers(Canvas &canvas);
+  /**
+   * Renders the NOAA stations
+   * @param canvas The drawing canvas
+   */
+  void RenderNOAAStations(Canvas &canvas);
   /**
    * Render final glide through terrain marker
    * @param canvas The drawing canvas

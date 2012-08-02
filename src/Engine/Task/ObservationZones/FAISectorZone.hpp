@@ -56,8 +56,10 @@ public:
     UpdateSector();
   }
 
+  /* virtual methods from class ObservationZone */
   virtual OZBoundary GetBoundary() const;
 
+  /* virtual methods from class ObservationZonePoint */
   virtual ObservationZonePoint *Clone(const GeoPoint &_reference) const {
     return new FAISectorZone(*this, _reference);
   }

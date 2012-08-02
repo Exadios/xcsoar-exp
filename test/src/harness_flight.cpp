@@ -22,10 +22,13 @@
 
 #include "harness_flight.hpp"
 #include "harness_airspace.hpp"
+#include "harness_wind.hpp"
 #include "TaskEventsPrint.hpp"
 #include "Util/AircraftStateFilter.hpp"
 #include "Replay/TaskAutoPilot.hpp"
 #include "Replay/AircraftSim.hpp"
+#include "Replay/TaskAccessor.hpp"
+
 #include <fstream>
 
 fixed
@@ -40,93 +43,10 @@ aat_min_time(int test_num)
   }
 }
 
-static fixed
-wind_to_mag(int n_wind)
-{
-  if (n_wind)
-    return (fixed(n_wind - 1) / 4 + fixed_one) * 5;
-
-  return fixed_zero;
-}
-
-static Angle
-wind_to_dir(int n_wind)
-{
-  if (n_wind)
-    return Angle::Degrees(fixed(90 * ((n_wind - 1) % 4))).AsBearing();
-
-  return Angle::Zero();
-}
-
-const char*
-wind_name(int n_wind)
-{
-  static char buffer[80];
-  sprintf(buffer,"%d m/s @ %d", (int)wind_to_mag(n_wind),
-          (int)wind_to_dir(n_wind).Degrees());
-  return buffer;
-}
-
 #include "Task/TaskManager.hpp"
 #include "Task/Factory/AbstractTaskFactory.hpp"
 
 #define fixed_300 fixed(300)
-
-class DirectTaskAccessor: public TaskAccessor {
-public:
-  DirectTaskAccessor(TaskManager& _task_manager):
-    task_manager(_task_manager) {};
-
-  bool is_ordered() const {
-    return task_manager.TaskSize()>1;
-  }
-  bool is_empty() const {
-    return task_manager.TaskSize()==0;
-  }
-  bool is_finished() const {
-    return task_manager.GetCommonStats().task_finished;
-  }
-  bool is_started() const {
-    return task_manager.GetCommonStats().task_started;
-  }
-  GeoPoint random_oz_point(unsigned index, const fixed noise) const {
-    return task_manager.RandomPointInTask(index, noise);
-  }
-  unsigned size() const {
-    return task_manager.TaskSize();
-  }
-  GeoPoint getActiveTaskPointLocation() const {
-    return task_manager.GetActiveTaskPoint()->GetLocation();
-  }
-  bool has_entered(unsigned index) const {
-    AbstractTaskFactory &fact = task_manager.GetFactory();
-    return fact.HasEntered(index);
-  }
-  const ElementStat leg_stats() const {
-    return task_manager.GetStats().current_leg;
-  }
-  fixed target_height() const {
-    if (task_manager.GetActiveTaskPoint()) {
-      return max(fixed_300, task_manager.GetActiveTaskPoint()->GetElevation());
-    } else {
-      return fixed_300;
-    }
-  }
-  fixed remaining_alt_difference() const {
-    return task_manager.GetStats().total.solution_remaining.altitude_difference;
-  }
-  GlidePolar get_glide_polar() const {
-    return task_manager.GetGlidePolar();
-  }
-  void setActiveTaskPoint(unsigned index) {
-    task_manager.SetActiveTaskPoint(index);
-  }
-  unsigned getActiveTaskPointIndex() const {
-    return task_manager.GetActiveTaskPointIndex();
-  }
-private:
-  TaskManager& task_manager;
-};
 
 class PrintTaskAutoPilot: public TaskAutoPilot
 {
@@ -135,12 +55,12 @@ public:
     TaskAutoPilot(_parms) {};
 
 protected:
-  virtual void on_manual_advance() {
+  virtual void OnManualAdvance() {
     if (verbose>1) {
       printf("# manual advance to %d\n",awp);
     }
   }
-  virtual void on_mode_change() {
+  virtual void OnModeChange() {
     if (verbose>1) {
       switch (acstate) {
       case Cruise:
@@ -156,7 +76,7 @@ protected:
     }
   }
   virtual void OnClose() {
-    wait_prompt();
+    WaitPrompt();
   }
 };
 
@@ -178,17 +98,17 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
 
   TestFlightResult result;
 
-  DirectTaskAccessor ta(task_manager);
+  TaskAccessor ta(task_manager, fixed_300);
   PrintTaskAutoPilot autopilot(parms);
   AircraftSim aircraft;
 
-  autopilot.set_default_location(GeoPoint(Angle::Degrees(fixed(1.0)), Angle::Degrees(fixed(0.0))));
+  autopilot.SetDefaultLocation(GeoPoint(Angle::Degrees(fixed(1.0)), Angle::Degrees(fixed(0.0))));
 
   unsigned print_counter=0;
   if (n_wind)
     aircraft.SetWind(wind_to_mag(n_wind), wind_to_dir(n_wind));
 
-  autopilot.set_speed_factor(fixed(speed_factor));
+  autopilot.SetSpeedFactor(fixed(speed_factor));
 
   std::ofstream f4("results/res-sample.txt");
   std::ofstream f5("results/res-sample-filtered.txt");
@@ -251,7 +171,7 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
     if (airspaces) {
       scan_airspaces(aircraft.GetState(), *airspaces, perf,
                      do_print, 
-                     autopilot.target(ta));
+                     autopilot.GetTarget(ta));
     }
     if (airspace_warnings) {
       if (verbose > 1) {
@@ -263,7 +183,7 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
           printf("# airspace warnings updated, size %d\n",
                  (int)airspace_warnings->size());
           print_warnings(*airspace_warnings);
-          wait_prompt();
+          WaitPrompt();
         }
       }
     }
@@ -275,7 +195,7 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
     if (aircraft_filter)
       aircraft_filter->Update(aircraft.GetState());
 
-    autopilot.update_state(ta, aircraft.GetState());
+    autopilot.UpdateState(ta, aircraft.GetState());
     aircraft.Update(autopilot.heading);
 
     {
@@ -286,9 +206,7 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
       task_manager.UpdateAutoMC(state, fixed_zero);
     }
 
-  } while (autopilot.update_autopilot(ta, aircraft.GetState(), aircraft.GetLastState()));
-
-  autopilot.Stop();
+  } while (autopilot.UpdateAutopilot(ta, aircraft.GetState(), aircraft.GetLastState()));
 
   if (verbose) {
     PrintHelper::taskmanager_print(task_manager, aircraft.GetState());
@@ -302,7 +220,7 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
     f4.flush();
     task_report(task_manager, "end of task\n");
   }
-  wait_prompt();
+  WaitPrompt();
 
   result.time_elapsed = (double)task_manager.GetStats().total.time_elapsed;
   result.time_planned = (double)task_manager.GetStats().total.time_planned;
@@ -310,7 +228,7 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
   result.calc_effective_mc = (double)task_manager.GetStats().effective_mc;
 
   if (verbose)
-    distance_counts();
+    PrintDistanceCounts();
 
   if (airspace_warnings)
     delete airspace_warnings;
@@ -338,7 +256,7 @@ test_flight(TestFlightComponents components, int test_num, int n_wind,
   SetupWaypoints(waypoints);
 
   if (verbose)
-    distance_counts();
+    PrintDistanceCounts();
 
   TaskBehaviour task_behaviour;
   task_behaviour.SetDefaults();

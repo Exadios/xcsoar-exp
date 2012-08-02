@@ -25,6 +25,7 @@ Copyright_License {
 #include "Form/Edit.hpp"
 #include "Form/Panel.hpp"
 #include "Form/Button.hpp"
+#include "HLine.hpp"
 #include "Look/DialogLook.hpp"
 #include "Dialogs/DialogSettings.hpp"
 #include "UIGlobals.hpp"
@@ -68,7 +69,7 @@ RowFormWidget::Row::GetMinimumHeight() const
     return Layout::GetMinimumControlHeight();
   }
 
-  return window->get_height();
+  return window->GetHeight();
 }
 
 UPixelScalar
@@ -97,7 +98,7 @@ RowFormWidget::Row::GetMaximumHeight() const
     return 4096;
   }
 
-  return window->get_height();
+  return window->GetHeight();
 }
 
 RowFormWidget::RowFormWidget(const DialogLook &_look)
@@ -113,8 +114,8 @@ RowFormWidget::~RowFormWidget()
   }
 
   /* destroy all rows */
-  for (auto i = rows.begin(), end = rows.end(); i != end; ++i)
-    i->Delete();
+  for (auto &i : rows)
+    i.Delete();
 }
 
 void
@@ -164,7 +165,7 @@ RowFormWidget::Add(Row::Type type, Window *window)
 #ifndef USE_GDI
   assert(window->GetParent() == GetWindow());
 #endif
-  assert(window->is_visible());
+  assert(window->IsVisible());
   /* cannot append rows after a REMAINING row */
   assert(rows.empty() || rows.back().type != Row::Type::REMAINING);
 
@@ -185,10 +186,10 @@ RowFormWidget::CreateEdit(const TCHAR *label, const TCHAR *help,
     style.ControlParent();
 
   EditWindowStyle edit_style;
-  edit_style.vertical_center();
+  edit_style.SetVerticalCenter();
 
   if (read_only)
-    edit_style.read_only();
+    edit_style.SetReadOnly();
   else
     edit_style.TabStop();
 
@@ -225,6 +226,53 @@ RowFormWidget::AddReadOnly(const TCHAR *label, const TCHAR *help,
   WndProperty *control = Add(label, help, true);
   if (text != NULL)
     control->SetText(text);
+}
+
+void
+RowFormWidget::AddReadOnly(const TCHAR *label, const TCHAR *help,
+                           const TCHAR *display_format,
+                           fixed value)
+{
+  WndProperty *edit = Add(label, help, true);
+  DataFieldFloat *df = new DataFieldFloat(display_format, display_format,
+                                          fixed_zero, fixed_zero,
+                                          value, fixed_one, false, NULL);
+  edit->SetDataField(df);
+}
+
+void
+RowFormWidget::AddReadOnly(const TCHAR *label, const TCHAR *help,
+                           const TCHAR *display_format,
+                           UnitGroup unit_group, fixed value)
+{
+  WndProperty *edit = Add(label, help, true);
+  const Unit unit = Units::GetUserUnitByGroup(unit_group);
+  value = Units::ToUserUnit(value, unit);
+  DataFieldFloat *df = new DataFieldFloat(display_format, display_format,
+                                          fixed_zero, fixed_zero,
+                                          value, fixed_one, false, NULL);
+  df->SetUnits(Units::GetUnitName(unit));
+  edit->SetDataField(df);
+}
+
+WndProperty *
+RowFormWidget::AddFloat(const TCHAR *label, const TCHAR *help,
+                        const TCHAR *display_format,
+                        const TCHAR *edit_format,
+                        fixed min_value, fixed max_value,
+                        fixed step, bool fine,
+                        UnitGroup unit_group, fixed value,
+                        DataField::DataAccessCallback callback)
+{
+  WndProperty *edit = Add(label, help);
+  const Unit unit = Units::GetUserUnitByGroup(unit_group);
+  value = Units::ToUserUnit(value, unit);
+  DataFieldFloat *df = new DataFieldFloat(edit_format, display_format,
+                                          min_value, max_value,
+                                          value, step, fine, callback);
+  df->SetUnits(Units::GetUnitName(unit));
+  edit->SetDataField(df);
+  return edit;
 }
 
 WndProperty *
@@ -276,26 +324,6 @@ RowFormWidget::AddFloat(const TCHAR *label, const TCHAR *help,
   DataFieldFloat *df = new DataFieldFloat(edit_format, display_format,
                                           min_value, max_value,
                                           value, step, fine, callback);
-  edit->SetDataField(df);
-  return edit;
-}
-
-WndProperty *
-RowFormWidget::AddFloat(const TCHAR *label, const TCHAR *help,
-                        const TCHAR *display_format,
-                        const TCHAR *edit_format,
-                        fixed min_value, fixed max_value,
-                        fixed step, bool fine,
-                        UnitGroup unit_group, fixed value,
-                        DataField::DataAccessCallback callback)
-{
-  WndProperty *edit = Add(label, help);
-  const Unit unit = Units::GetUserUnitByGroup(unit_group);
-  value = Units::ToUserUnit(value, unit);
-  DataFieldFloat *df = new DataFieldFloat(edit_format, display_format,
-                                          min_value, max_value,
-                                          value, step, fine, callback);
-  df->SetUnits(Units::GetUnitName(unit));
   edit->SetDataField(df);
   return edit;
 }
@@ -367,22 +395,16 @@ RowFormWidget::AddTime(const TCHAR *label, const TCHAR *help,
   return edit;
 }
 
-WndProperty *
+void
 RowFormWidget::AddSpacer()
 {
   assert(IsDefined());
 
-  const PixelRect edit_rc = InitialControlRect(Layout::Scale(6));
-
-  WindowStyle style;
-  EditWindowStyle edit_style;
-  edit_style.vertical_center();
-  edit_style.read_only();
-
-  PanelControl &panel = *(PanelControl *)GetWindow();
-  WndProperty *edit = new WndProperty(panel, look, _T(""), edit_rc, 0, style, edit_style, NULL);
-  Add(edit);
-  return edit;
+  HLine *window = new HLine(GetLook());
+  ContainerWindow &panel = *(ContainerWindow *)GetWindow();
+  const PixelRect rc = InitialControlRect(Layout::Scale(3));
+  window->set(panel, rc);
+  Add(window);
 }
 
 WndProperty *
@@ -424,9 +446,9 @@ RowFormWidget::AddMultiLine(const TCHAR *label, const TCHAR *help,
   WindowStyle style;
 
   EditWindowStyle edit_style;
-  edit_style.multiline();
+  edit_style.SetMultiLine();
   edit_style.VerticalScroll();
-  edit_style.read_only();
+  edit_style.SetReadOnly();
 
   if (IsEmbedded() || Layout::scale_1024 < 2048)
     /* sunken edge doesn't fit well on the tiny screen of an embedded
@@ -517,6 +539,16 @@ RowFormWidget::LoadValue(unsigned i, fixed value, UnitGroup unit_group)
   assert(df.GetType() == DataField::Type::REAL);
   df.Set(Units::ToUserUnit(value, unit));
   df.SetUnits(Units::GetUnitName(unit));
+  control.RefreshDisplay();
+}
+
+void
+RowFormWidget::LoadValueTime(unsigned i, int value)
+{
+  WndProperty &control = GetControl(i);
+  DataFieldTime &df = *(DataFieldTime *)control.GetDataField();
+  assert(df.GetType() == DataField::Type::TIME);
+  df.Set(value);
   control.RefreshDisplay();
 }
 
@@ -740,12 +772,12 @@ RowFormWidget::GetRecommendedCaptionWidth() const
   const bool expert = UIGlobals::GetDialogSettings().expert;
 
   UPixelScalar w = 0;
-  for (auto i = rows.begin(), end = rows.end(); i != end; ++i) {
-    if (!i->available || (i->expert && !expert))
+  for (const auto &i : rows) {
+    if (!i.available || (i.expert && !expert))
       continue;
 
-    if (i->type == Row::Type::EDIT) {
-      unsigned x = i->GetControl().GetRecommendedCaptionWidth();
+    if (i.type == Row::Type::EDIT) {
+      unsigned x = i.GetControl().GetRecommendedCaptionWidth();
       if (x > w)
         w = x;
     }
@@ -757,7 +789,7 @@ RowFormWidget::GetRecommendedCaptionWidth() const
 void
 RowFormWidget::UpdateLayout()
 {
-  PixelRect current_rect = GetWindow()->get_client_rect();
+  PixelRect current_rect = GetWindow()->GetClientRect();
   const unsigned total_width = current_rect.right - current_rect.left;
   const unsigned total_height = current_rect.bottom - current_rect.top;
   current_rect.bottom = current_rect.top;
@@ -769,16 +801,17 @@ RowFormWidget::UpdateLayout()
   unsigned min_height = 0;
   unsigned n_elastic = 0;
   unsigned caption_width = 0;
-  for (auto i = rows.begin(), end = rows.end(); i != end; ++i) {
-    if (!i->available || (i->expert && !expert))
+
+  for (const auto &i : rows) {
+    if (!i.available || (i.expert && !expert))
       continue;
 
-    min_height += i->GetMinimumHeight();
-    if (i->IsElastic())
+    min_height += i.GetMinimumHeight();
+    if (i.IsElastic())
       ++n_elastic;
 
-    if (i->type == Row::Type::EDIT) {
-      unsigned cw = i->GetControl().GetRecommendedCaptionWidth();
+    if (i.type == Row::Type::EDIT) {
+      unsigned cw = i.GetControl().GetRecommendedCaptionWidth();
       if (cw > caption_width)
         caption_width = cw;
     }
@@ -793,41 +826,41 @@ RowFormWidget::UpdateLayout()
     : 0;
 
   /* second row traversal: now move and resize the rows */
-  for (auto i = rows.begin(), end = rows.end(); i != end; ++i) {
-    if (i->type == Row::Type::DUMMY)
+  for (auto &i : rows) {
+    if (i.type == Row::Type::DUMMY)
       continue;
 
-    Window &window = i->GetWindow();
+    Window &window = i.GetWindow();
 
-    if (!i->available) {
+    if (!i.available) {
       window.Hide();
       continue;
     }
 
-    if (i->expert) {
+    if (i.expert) {
       if (!expert) {
         window.Hide();
         continue;
       }
 
-      if (i->visible)
+      if (i.visible)
         window.Show();
     }
 
-    if (caption_width > 0 && i->type == Row::Type::EDIT &&
-        i->GetControl().HasCaption())
-      i->GetControl().SetCaptionWidth(caption_width);
+    if (caption_width > 0 && i.type == Row::Type::EDIT &&
+        i.GetControl().HasCaption())
+      i.GetControl().SetCaptionWidth(caption_width);
 
     /* determine this row's height */
-    UPixelScalar height = i->GetMinimumHeight();
-    if (excess_height > 0 && i->IsElastic()) {
+    UPixelScalar height = i.GetMinimumHeight();
+    if (excess_height > 0 && i.IsElastic()) {
       assert(n_elastic > 0);
 
       /* distribute excess height among all elastic rows */
       unsigned grow_height = excess_height / n_elastic;
       if (grow_height > 0) {
         height += grow_height;
-        const UPixelScalar max_height = i->GetMaximumHeight();
+        const UPixelScalar max_height = i.GetMaximumHeight();
         if (height > max_height) {
           /* never grow beyond declared maximum height */
           height = max_height;
@@ -842,7 +875,7 @@ RowFormWidget::UpdateLayout()
 
     /* finally move and resize */
     NextControlRect(current_rect, height);
-    window.move(current_rect);
+    window.Move(current_rect);
   }
 
   assert(excess_height == 0 || n_elastic == 0);
@@ -857,9 +890,9 @@ RowFormWidget::GetMinimumSize() const
   const bool expert = UIGlobals::GetDialogSettings().expert;
 
   PixelSize size{ PixelScalar(GetRecommendedCaptionWidth() + value_width), 0 };
-  for (auto i = rows.begin(), end = rows.end(); i != end; ++i)
-    if (i->available && (!i->expert || expert))
-      size.cy += i->GetMinimumHeight();
+  for (const auto &i : rows)
+    if (i.available && (!i.expert || expert))
+      size.cy += i.GetMinimumHeight();
 
   return size;
 }
@@ -871,8 +904,8 @@ RowFormWidget::GetMaximumSize() const
     look.text_font->TextSize(_T("Foo Bar Foo Bar")).cx * 2;
 
   PixelSize size{ PixelScalar(GetRecommendedCaptionWidth() + value_width), 0 };
-  for (auto i = rows.begin(), end = rows.end(); i != end; ++i)
-    size.cy += i->GetMaximumHeight();
+  for (const auto &i : rows)
+    size.cy += i.GetMaximumHeight();
 
   return size;
 }
@@ -894,7 +927,7 @@ void
 RowFormWidget::Show(const PixelRect &rc)
 {
   PanelControl &panel = *(PanelControl *)GetWindow();
-  panel.move(rc);
+  panel.Move(rc);
 
   UpdateLayout();
 
@@ -905,7 +938,7 @@ void
 RowFormWidget::Move(const PixelRect &rc)
 {
   PanelControl &panel = *(PanelControl *)GetWindow();
-  panel.move(rc);
+  panel.Move(rc);
 
   UpdateLayout();
 }

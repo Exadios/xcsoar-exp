@@ -24,15 +24,14 @@ Copyright_License {
 #include "Task/TaskStore.hpp"
 #include "Task/TaskFile.hpp"
 #include "Task/ProtectedTaskManager.hpp"
-#include "Task/Tasks/OrderedTask.hpp"
 #include "Components.hpp"
-#include "OS/PathName.hpp"
 #include "OS/FileUtil.hpp"
 #include "LocalPath.hpp"
 #include "Language/Language.hpp"
 
 #include <cstdio>
 #include <algorithm>
+#include <memory>
 
 class TaskFileVisitor: public File::Visitor
 {
@@ -43,44 +42,33 @@ public:
   TaskFileVisitor(TaskStore::ItemVector &_store):
     store(_store) {}
 
-  void Visit(const TCHAR *path, const TCHAR *filename) {
+  void Visit(const TCHAR *path, const TCHAR *base_name) {
     // Create a TaskFile instance to determine how many
     // tasks are inside of this task file
-    TaskFile* task_file = TaskFile::Create(path);
-    if (task_file == NULL)
+    std::unique_ptr<TaskFile> task_file(TaskFile::Create(path));
+    if (!task_file)
       return;
-
-    // Get base name of the task file
-    const TCHAR* base_name = BaseName(path);
 
     // Count the tasks in the task file
     unsigned count = task_file->Count();
     // For each task in the task file
     for (unsigned i = 0; i < count; i++) {
       // Copy base name of the file into task name
-      StaticString<256> name;
-      name = (base_name != NULL) ? base_name : path;
+      StaticString<256> name(base_name);
 
       // If the task file holds more than one task
-      if (count > 1) {
-        if (i < task_file->namesuffixes.size() &&
-            task_file->namesuffixes[i]) {
-
-          name += _T(": ");
-          name += task_file->namesuffixes[i];
-
-        } else {
-          // .. append " - Task #[n]" suffix to the task name
-          name.AppendFormat(_T(": %s #%2d"), _("Task"), i + 1);
-        }
+      const TCHAR *saved_name = task_file->GetName(i);
+      if (saved_name != NULL) {
+        name += _T(": ");
+        name += saved_name;
+      } else if (count > 1) {
+        // .. append " - Task #[n]" suffix to the task name
+        name.AppendFormat(_T(": %s #%d"), _("Task"), i + 1);
       }
 
       // Add the task to the TaskStore
       store.push_back(TaskStore::Item(path, name.empty() ? path : name, i));
     }
-
-    // Remove temporary TaskFile instance
-    delete task_file;
   }
 };
 
@@ -92,32 +80,20 @@ TaskStore::Clear()
 }
 
 void
-TaskStore::Scan()
+TaskStore::Scan(bool extra)
 {
   Clear();
 
   // scan files
   TaskFileVisitor tfv(store);
   VisitDataFiles(_T("*.tsk"), tfv);
-  VisitDataFiles(_T("*.cup"), tfv);
+
+  if (extra) {
+    VisitDataFiles(_T("*.cup"), tfv);
+    VisitDataFiles(_T("*.igc"), tfv);
+  }
 
   std::sort(store.begin(), store.end());
-}
-
-size_t
-TaskStore::Size() const
-{
-  return store.size();
-}
-
-TaskStore::Item::Item(const tstring &_filename, const tstring _task_name,
-                      unsigned _task_index):
-  task_name(_task_name),
-  filename(_filename),
-  task_index(_task_index),
-  task(NULL),
-  valid(true)
-{        
 }
 
 TaskStore::Item::~Item()
@@ -140,24 +116,6 @@ TaskStore::Item::GetTask(const TaskBehaviour &task_behaviour)
     valid = false;
 
   return task;
-}
-
-const TCHAR *
-TaskStore::Item::GetName() const
-{
-  return task_name.c_str();
-}
-
-const TCHAR *
-TaskStore::Item::GetPath() const
-{
-  return filename.c_str();
-}
-
-bool
-TaskStore::Item::operator<(const Item &other) const
-{
-  return _tcscmp(GetName(), other.GetName()) < 0;
 }
 
 const TCHAR *

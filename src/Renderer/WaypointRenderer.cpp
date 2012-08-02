@@ -35,15 +35,13 @@ Copyright_License {
 #include "Engine/GlideSolvers/GlideState.hpp"
 #include "Engine/GlideSolvers/GlideResult.hpp"
 #include "Engine/GlideSolvers/MacCready.hpp"
-#include "Engine/Task/Tasks/OrderedTask.hpp"
-#include "Engine/Task/Tasks/AbortTask.hpp"
-#include "Engine/Task/Tasks/GotoTask.hpp"
-#include "Engine/Task/Tasks/BaseTask/UnorderedTaskPoint.hpp"
-#include "Engine/Task/Tasks/TaskSolvers/TaskSolution.hpp"
-#include "Engine/Task/TaskPoints/AATPoint.hpp"
-#include "Engine/Task/TaskPoints/ASTPoint.hpp"
-#include "Engine/Task/TaskPoints/StartPoint.hpp"
-#include "Engine/Task/TaskPoints/FinishPoint.hpp"
+#include "Engine/Task/Unordered/UnorderedTaskPoint.hpp"
+#include "Engine/Task/Unordered/GotoTask.hpp"
+#include "Engine/Task/Unordered/AbortTask.hpp"
+#include "Engine/Task/Ordered/Points/StartPoint.hpp"
+#include "Engine/Task/Ordered/Points/FinishPoint.hpp"
+#include "Engine/Task/Ordered/Points/ASTPoint.hpp"
+#include "Engine/Task/Ordered/Points/AATPoint.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Task/ProtectedRoutePlanner.hpp"
 #include "Screen/Icon.hpp"
@@ -244,7 +242,7 @@ protected:
       size_t length = _tcslen(buffer);
       if (length > 0)
         buffer[length++] = _T(':');
-      _stprintf(buffer + length, _T("%u"), uround(gr));
+      _stprintf(buffer + length, _T("%.1f"), (double) gr);
       return;
     }
 

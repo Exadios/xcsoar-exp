@@ -32,7 +32,7 @@ Copyright_License {
 #include "Look/FinalGlideBarLook.hpp"
 #include "Renderer/FinalGlideBarRenderer.hpp"
 #include "NMEA/Derived.hpp"
-#include "Engine/Navigation/SpeedVector.hpp"
+#include "Geo/SpeedVector.hpp"
 #include "Engine/GlideSolvers/GlideState.hpp"
 #include "Engine/GlideSolvers/MacCready.hpp"
 #include "Engine/GlideSolvers/GlideSettings.hpp"
@@ -98,7 +98,7 @@ protected:
     PixelRect rc = {
       0, 0, (PixelScalar)canvas.get_width(), (PixelScalar)canvas.get_height()
     };
-    
+
     renderer.Draw(canvas, rc, calculated, glide_settings, true);
   }
 };
@@ -152,7 +152,7 @@ public:
     SingleWindow::set(_T("RunFinalGlideBarRenderer"), _T("RunFinalGlideBarRenderer"),
                       _rc);
 
-    const PixelRect rc = get_client_rect();
+    const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();
@@ -168,7 +168,7 @@ protected:
   virtual bool OnCommand(unsigned id, unsigned code) {
     switch (id) {
     case ID_CLOSE:
-      close();
+      Close();
       return true;
     }
 
@@ -241,7 +241,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   window.Set(PixelRect{0, 0, 60, 320});
 
   window.Show();
-  window.event_loop();
+  window.RunEventLoop();
 
   Fonts::Deinitialize();
 

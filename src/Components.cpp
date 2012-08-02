@@ -45,6 +45,7 @@ Copyright_License {
 #include "UtilsSystem.hpp"
 #include "FLARM/FlarmDetails.hpp"
 #include "FLARM/FlarmNet.hpp"
+#include "FLARM/Friends.hpp"
 #include "MapSettings.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/NMEALogger.hpp"
@@ -58,7 +59,7 @@ Copyright_License {
 #include "Device/device.hpp"
 #include "Topography/TopographyStore.hpp"
 #include "Topography/TopographyGlue.hpp"
-#include "Audio/VarioSound.h"
+#include "Audio/VarioGlue.hpp"
 #include "Screen/Busy.hpp"
 #include "Polar/PolarGlue.hpp"
 #include "Polar/Polar.hpp"
@@ -75,6 +76,7 @@ Copyright_License {
 #include "Replay/Replay.hpp"
 #include "LocalPath.hpp"
 #include "IO/FileCache.hpp"
+#include "Net/DownloadManager.hpp"
 #include "Hardware/AltairControl.hpp"
 #include "Hardware/Display.hpp"
 #include "Hardware/DisplayGlue.hpp"
@@ -93,13 +95,14 @@ Copyright_License {
 #include "GlideSolvers/GlidePolar.hpp"
 #include "Operation/VerboseOperationEnvironment.hpp"
 #include "Pages.hpp"
+#include "Weather/Features.hpp"
 #include "Weather/NOAAGlue.hpp"
 #include "Weather/NOAAStore.hpp"
 #include "Plane/PlaneGlue.hpp"
 #include "UIState.hpp"
-#include "Net/Features.hpp"
 #include "Tracking/TrackingGlue.hpp"
 #include "Units/Units.hpp"
+#include "Thread/Debug.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Screen/OpenGL/Globals.hpp"
@@ -197,7 +200,7 @@ XCSoarInterface::AfterStartup()
 
   task_manager->Resume();
 
-  main_window.Fullscreen();
+  main_window->Fullscreen();
   InfoBoxManager::SetDirty();
 
   ForceCalculation();
@@ -223,6 +226,10 @@ XCSoarInterface::Startup()
   if (MainWindow::find(szTitle))
     return false;
 
+#ifdef HAVE_DOWNLOAD_MANAGER
+  Net::DownloadManager::Initialise();
+#endif
+
   LogStartUp(_T("Display dpi=%u,%u"), Display::GetXDPI(), Display::GetYDPI());
 
   // Creates the main window
@@ -234,8 +241,9 @@ XCSoarInterface::Startup()
   if (CommandLine::resizable)
     style.Resizable();
 
-  main_window.Set(szTitle, SystemWindowSize(), style);
-  if (!main_window.IsDefined())
+  main_window = new MainWindow(status_messages);
+  main_window->Set(szTitle, SystemWindowSize(), style);
+  if (!main_window->IsDefined())
     return false;
 
 #ifdef ENABLE_OPENGL
@@ -252,7 +260,7 @@ XCSoarInterface::Startup()
              OpenGL::frame_buffer_object);
 #endif
 
-  main_window.Initialise();
+  main_window->Initialise();
 
 #ifdef SIMULATOR_AVAILABLE
   // prompt for simulator if not set by command line argument "-simulator" or "-fly"
@@ -279,7 +287,7 @@ XCSoarInterface::Startup()
   }
 #endif
 
-  SetXMLDialogLook(main_window.GetLook().dialog);
+  SetXMLDialogLook(main_window->GetLook().dialog);
 
   SetSystemSettings().SetDefaults();
   SetComputerSettings().SetDefaults();
@@ -296,7 +304,7 @@ XCSoarInterface::Startup()
 
   Display::LoadOrientation(operation);
 
-  main_window.InitialiseConfigured();
+  main_window->InitialiseConfigured();
 
   TCHAR path[MAX_PATH];
   LocalPath(path, _T("cache"));
@@ -317,18 +325,18 @@ XCSoarInterface::Startup()
   protected_marks = new ProtectedMarkers(*marks);
 
 #ifdef HAVE_AYGSHELL_DLL
-  const AYGShellDLL &ayg = main_window.ayg_shell_dll;
-  ayg.SHSetAppKeyWndAssoc(VK_APP1, main_window);
-  ayg.SHSetAppKeyWndAssoc(VK_APP2, main_window);
-  ayg.SHSetAppKeyWndAssoc(VK_APP3, main_window);
-  ayg.SHSetAppKeyWndAssoc(VK_APP4, main_window);
+  const AYGShellDLL &ayg = main_window->ayg_shell_dll;
+  ayg.SHSetAppKeyWndAssoc(VK_APP1, *main_window);
+  ayg.SHSetAppKeyWndAssoc(VK_APP2, *main_window);
+  ayg.SHSetAppKeyWndAssoc(VK_APP3, *main_window);
+  ayg.SHSetAppKeyWndAssoc(VK_APP4, *main_window);
   // Typical Record Button
   //	Why you can't always get this to work
   //	http://forums.devbuzz.com/m_1185/mpage_1/key_/tm.htm
   //	To do with the fact it is a global hotkey, but you can with code above
   //	Also APPA is record key on some systems
-  ayg.SHSetAppKeyWndAssoc(VK_APP5, main_window);
-  ayg.SHSetAppKeyWndAssoc(VK_APP6, main_window);
+  ayg.SHSetAppKeyWndAssoc(VK_APP5, *main_window);
+  ayg.SHSetAppKeyWndAssoc(VK_APP6, *main_window);
 #endif
 
   // Initialize main blackboard data
@@ -378,7 +386,7 @@ XCSoarInterface::Startup()
 
   // Set the home waypoint
   WaypointGlue::SetHome(way_points, terrain, SetComputerSettings(),
-                        false);
+                        device_blackboard, false);
 
   // ReSynchronise the blackboards here since SetHome touches them
   device_blackboard->Merge();
@@ -401,20 +409,13 @@ XCSoarInterface::Startup()
     lease->SetConfig(CommonInterface::GetComputerSettings().airspace.warnings);
   }
 
-#ifdef HAVE_NET
+#ifdef HAVE_NOAA
   noaa_store = new NOAAStore();
   noaa_store->LoadFromProfile();
 #endif
 
-#ifndef DISABLEAUDIOVARIO
-  /*
-  VarioSound_Init();
-  VarioSound_EnableSound(EnableSoundVario);
-  VarioSound_SetVdead(SoundDeadband);
-  VarioSound_SetV(0);
-  VarioSound_SetSoundVolume(SoundVolume);
-  */
-#endif
+  AudioVarioGlue::Initialise();
+  AudioVarioGlue::Configure(GetUISettings().sound.vario);
 
   // Start the device thread(s)
   operation.SetText(_("Starting devices"));
@@ -430,7 +431,7 @@ XCSoarInterface::Startup()
 
   operation.SetText(_("Initialising display"));
 
-  GlueMapWindow *map_window = main_window.GetMap();
+  GlueMapWindow *map_window = main_window->GetMap();
   if (map_window != NULL) {
     map_window->SetWaypoints(&way_points);
     map_window->SetTask(protected_task_manager);
@@ -443,6 +444,10 @@ XCSoarInterface::Startup()
     map_window->SetWeather(&RASP);
     map_window->SetMarks(protected_marks);
     map_window->SetLogger(&logger);
+
+#ifdef HAVE_NOAA
+    map_window->SetNOAAStore(noaa_store);
+#endif
 
     /* show map at home waypoint until GPS fix becomes available */
     if (GetComputerSettings().poi.home_location_available)
@@ -478,10 +483,13 @@ XCSoarInterface::Startup()
     flight_logger->SetPath(path);
   }
 
+  if (CommonInterface::GetComputerSettings().logger.enable_nmea_logger)
+    NMEALogger::enabled = true;
+
   LogStartUp(_T("ProgramStarted"));
 
   // Give focus to the map
-  main_window.SetDefaultFocus();
+  main_window->SetDefaultFocus();
 
   Pages::Initialise(GetUISettings().pages);
 
@@ -500,7 +508,7 @@ XCSoarInterface::Startup()
 
   operation.Hide();
 
-  main_window.ResumeThreads();
+  main_window->ResumeThreads();
 
   return true;
 }
@@ -535,21 +543,23 @@ XCSoarInterface::Shutdown()
 
   GetLiveBlackboard().RemoveListener(glide_computer_events);
 
+  FlarmFriends::Save();
+
   // Save settings to profile
   operation.SetText(_("Shutdown, saving profile..."));
   Profile::Save();
 
   // Stop sound
 
-#ifndef DISABLEAUDIOVARIO
-  //  VarioSound_EnableSound(false);
-  //  VarioSound_Close();
-#endif
+  AudioVarioGlue::Deinitialise();
 
   operation.SetText(_("Shutdown, please wait..."));
 
   // Stop threads
   LogStartUp(_T("Stop threads"));
+#ifdef HAVE_DOWNLOAD_MANAGER
+  Net::DownloadManager::BeginDeinitialise();
+#endif
 #ifndef ENABLE_OPENGL
   draw_thread->BeginStop();
 #endif
@@ -576,7 +586,7 @@ XCSoarInterface::Shutdown()
 #endif
 
   LogStartUp(_T("delete MapWindow"));
-  main_window.Deinitialise();
+  main_window->Deinitialise();
 
   // Save the task for the next time
   operation.SetText(_("Shutdown, saving task..."));
@@ -622,7 +632,7 @@ XCSoarInterface::Shutdown()
   delete protected_task_manager;
   delete task_manager;
 
-#ifdef HAVE_NET
+#ifdef HAVE_NOAA
   delete noaa_store;
 #endif
 
@@ -631,6 +641,10 @@ XCSoarInterface::Shutdown()
     tracking->WaitStopped();
     delete tracking;
   }
+#endif
+
+#ifdef HAVE_DOWNLOAD_MANAGER
+  Net::DownloadManager::Deinitialise();
 #endif
 
   // Close the progress dialog
@@ -652,7 +666,7 @@ XCSoarInterface::Shutdown()
   delete file_cache;
 
   LogStartUp(_T("Close Windows - main"));
-  main_window.reset();
+  main_window->reset();
 
   CloseLanguageFile();
 
@@ -671,3 +685,49 @@ GetAirspaceWarnings()
     : NULL;
 }
 
+#ifndef NDEBUG
+
+#ifdef ENABLE_OPENGL
+
+static const ThreadHandle zero_thread_handle = ThreadHandle();
+static ThreadHandle draw_thread_handle;
+
+bool
+InDrawThread()
+{
+#ifdef ENABLE_OPENGL
+  return InMainThread() && draw_thread_handle.IsInside();
+#else
+  return draw_thread != NULL && draw_thread->IsInside();
+#endif
+}
+
+void
+EnterDrawThread()
+{
+  assert(InMainThread());
+  assert(draw_thread_handle == zero_thread_handle);
+
+  draw_thread_handle = ThreadHandle::GetCurrent();
+}
+
+void
+LeaveDrawThread()
+{
+  assert(InMainThread());
+  assert(draw_thread_handle.IsInside());
+
+  draw_thread_handle = zero_thread_handle;
+}
+
+#else
+
+bool
+InDrawThread()
+{
+  return draw_thread != NULL && draw_thread->IsInside();
+}
+
+#endif
+
+#endif

@@ -25,10 +25,10 @@ Copyright_License {
 #define XCSOAR_NMEA_DERIVED_H
 
 #include "Math/fixed.hpp"
-#include "Navigation/GeoPoint.hpp"
-#include "Navigation/SpeedVector.hpp"
-#include "Task/TaskStats/TaskStats.hpp"
-#include "Task/TaskStats/CommonStats.hpp"
+#include "Geo/GeoPoint.hpp"
+#include "Geo/SpeedVector.hpp"
+#include "Task/Stats/TaskStats.hpp"
+#include "Task/Stats/CommonStats.hpp"
 #include "Contest/ContestStatistics.hpp"
 #include "FlyingState.hpp"
 #include "NMEA/VarioInfo.hpp"
@@ -38,7 +38,7 @@ Copyright_License {
 #include "NMEA/ThermalLocator.hpp"
 #include "NMEA/Validity.hpp"
 #include "NMEA/ClimbHistory.hpp"
-#include "TeamCodeCalculation.hpp"
+#include "TeamCode.hpp"
 #include "Engine/Navigation/TraceHistory.hpp"
 #include "DateTime.hpp"
 #include "Engine/GlideSolvers/GlidePolar.hpp"
@@ -206,11 +206,16 @@ struct DerivedInfo:
   StaticRoute planned_route;
 
   /**
+   * Thermal value of next leg that is equivalent (gives the same average
+   * speed) to the current MacCready setting. A negative value should be
+   * treated as invalid.
+   */
+  fixed next_leg_eq_thermal;
+
+  /**
    * @todo Reset to cleared state
    */
   void Reset();
-
-  void ResetFlight(bool full);
 
   void Expire(fixed Time);
 

@@ -31,43 +31,46 @@
 #define XCSOAR_FIFO_BUFFER_HPP
 
 #include "Util/NonCopyable.hpp"
-#include "Compiler.h"
 
 #include <utility>
 #include <algorithm>
 
 #include <assert.h>
+#include <stddef.h>
 
 /**
  * A first-in-first-out buffer: you can append data at the end, and
  * read data from the beginning.  This class automatically shifts the
  * buffer as needed.  It is not thread safe.
  */
-template<class T, unsigned size>
+template<class T, size_t size>
 class FifoBuffer : private NonCopyable {
+public:
+  typedef size_t size_type;
+
 public:
   struct Range {
     T *data;
 
-    unsigned length;
+    size_type length;
 
     Range() = default;
 
-    gcc_constexpr_ctor
-    Range(T *_data, unsigned _length):data(_data), length(_length) {}
+    constexpr
+    Range(T *_data, size_type _length):data(_data), length(_length) {}
 
-    gcc_constexpr_method
+    constexpr
     bool IsEmpty() const {
       return length == 0;
     }
   };
 
 protected:
-  unsigned head, tail;
+  size_type head, tail;
   T data[size];
 
 public:
-  gcc_constexpr_ctor
+  constexpr
   FifoBuffer():head(0), tail(0) {}
 
 protected:
@@ -111,7 +114,7 @@ public:
    * Expands the tail of the buffer, after data has been written to
    * the buffer returned by write().
    */
-  void Append(unsigned n) {
+  void Append(size_type n) {
     assert(tail <= size);
     assert(n <= size);
     assert(tail + n <= size);
@@ -130,7 +133,7 @@ public:
   /**
    * Marks a chunk as consumed.
    */
-  void Consume(unsigned n) {
+  void Consume(size_type n) {
     assert(tail <= size);
     assert(head <= tail);
     assert(n <= tail);

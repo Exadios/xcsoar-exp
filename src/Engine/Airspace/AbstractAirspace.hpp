@@ -26,9 +26,8 @@
 #include "AirspaceAltitude.hpp"
 #include "AirspaceClass.hpp"
 #include "AirspaceActivity.hpp"
-#include "Navigation/GeoPoint.hpp"
-#include "Navigation/SearchPointVector.hpp"
-#include "Util/TinyEnum.hpp"
+#include "Geo/GeoPoint.hpp"
+#include "Geo/SearchPointVector.hpp"
 #include "Compiler.h"
 
 #ifdef DO_PRINT
@@ -43,9 +42,7 @@ class AirspaceAircraftPerformance;
 struct AirspaceInterceptSolution;
 class FlatBoundingBox;
 class TaskProjection;
-
-#include <vector>
-typedef std::vector< std::pair<GeoPoint,GeoPoint> > AirspaceIntersectionVector;
+class AirspaceIntersectionVector;
 
 /** Abstract base class for airspace regions */
 class AbstractAirspace {
@@ -55,11 +52,12 @@ public:
     POLYGON,
   };
 
+private:
   const Shape shape;
 
 protected:
   /** Airspace class */
-  TinyEnum<AirspaceClass> type;
+  AirspaceClass type;
 
   bool m_is_convex;
   mutable bool active;
@@ -76,9 +74,6 @@ protected:
   /** Radio frequency (optional) */
   tstring radio;
 
-  /** Task projection (owned by container) that can be used for query speedups */
-  const TaskProjection* m_task_projection;
-
   /** Actual border */
   SearchPointVector m_border;
 
@@ -91,6 +86,10 @@ public:
   AbstractAirspace(Shape _shape):shape(_shape), active(true) {}
   virtual ~AbstractAirspace();
 
+  Shape GetShape() const {
+    return shape;
+  }
+
   /** 
    * Compute bounding box enclosing the airspace.  Rounds up/down
    * so discretisation ensures bounding box is indeed enclosing.
@@ -102,15 +101,6 @@ public:
   const FlatBoundingBox GetBoundingBox(const TaskProjection& task_projection);
 
   GeoBounds GetGeoBounds() const;
-
-  /**
-   * Set task projection for internal use
-   *
-   * @param task_projection Global task projection (owned by Airspaces)
-   */
-  void SetTaskProjection(const TaskProjection &task_projection) {
-    m_task_projection = &task_projection;
-  }
 
   /**
    * Get arbitrary center or reference point for use in determining
@@ -154,7 +144,8 @@ public:
    */
   gcc_pure
   virtual AirspaceIntersectionVector Intersects(const GeoPoint &g1,
-                                                const GeoPoint &end) const = 0;
+                                                const GeoPoint &end,
+                                                const TaskProjection &projection) const = 0;
 
   /**
    * Find location of closest point on boundary to a reference
@@ -164,7 +155,8 @@ public:
    * @return Location of closest point of boundary to reference
    */
   gcc_pure
-  virtual GeoPoint ClosestPoint(const GeoPoint &loc) const = 0;
+  virtual GeoPoint ClosestPoint(const GeoPoint &loc,
+                                const TaskProjection &projection) const = 0;
 
   /** 
    * Set terrain altitude for AGL-referenced airspace altitudes 
@@ -172,6 +164,13 @@ public:
    * @param alt Height above MSL of terrain (m) at center
    */
   void SetGroundLevel(const fixed alt);
+
+  /**
+   * Is it necessary to call SetGroundLevel() for this AbstractAirspace?
+   */
+  bool NeedGroundLevel() const {
+    return altitude_base.NeedGroundLevel() || altitude_top.NeedGroundLevel();
+  }
 
   /** 
    * Set QNH pressure for FL-referenced airspace altitudes 
@@ -297,6 +296,7 @@ public:
    */
   bool Intercept(const AircraftState &state,
                  const GeoPoint &end,
+                 const TaskProjection &projection,
                  const AirspaceAircraftPerformance &perf,
                  AirspaceInterceptSolution &solution) const;
 
@@ -305,28 +305,10 @@ public:
                                    const AbstractAirspace &as);
 #endif
 
-  /**
-   * Produce text version of airspace class.
-   *
-   * @param concise Whether to use short form or long form
-   *
-   * @return Text version of class
-   */
-  gcc_pure
-  const TCHAR *GetTypeText(const bool concise = false) const;
-
   gcc_pure
   const TCHAR *GetName() const {
     return name.c_str();
   }
-
-  /**
-   * Produce text version of name and airspace class.
-   *
-   * @return Text version of name/type
-   */
-  gcc_pure
-  const tstring GetNameText() const;
 
   /**
    * Returns true if the name begins with the specified string.
@@ -341,36 +323,6 @@ public:
    */
   gcc_pure
   const tstring GetRadioText() const;
-
-  /**
-   * Produce text version of base+top altitude (no units).
-   *
-   * @param concise Whether to use short form or long form
-   *
-   * @return Text version of base altitude
-   */
-  gcc_pure
-  const tstring GetVerticalText() const;
-
-  /**
-   * Produce text version of base altitude with units.
-   *
-   * @param concise Whether to use short form or long form
-   *
-   * @return Text version of base altitude
-   */
-  gcc_pure
-  const tstring GetBaseText(const bool concise = false) const;
-
-  /**
-   * Produce text version of top altitude with units.
-   *
-   * @param concise Whether to use short form or long form
-   *
-   * @return Text version of top altitude
-   */
-  gcc_pure
-  const tstring GetTopText(const bool concise = false) const;
 
   /**
    * Accessor for airspace shape
@@ -391,7 +343,7 @@ public:
    * from within a visit method.
    */
   gcc_pure
-  const SearchPointVector &GetClearance() const;
+  const SearchPointVector &GetClearance(const TaskProjection &projection) const;
   void ClearClearance() const;
 
   gcc_pure

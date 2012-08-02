@@ -39,9 +39,9 @@ namespace LX1600 {
    * equally well, we don't bother to switch.
    */
   static bool
-  ModeColibri(Port &port)
+  ModeColibri(Port &port, OperationEnvironment &env)
   {
-    return PortWriteNMEA(port, "PFLX0,COLIBRI");
+    return PortWriteNMEA(port, "PFLX0,COLIBRI", env);
   }
 
   /**
@@ -51,7 +51,7 @@ namespace LX1600 {
    * back to the "real" baud rate.
    */
   static bool
-  ModeLX1600(Port &port)
+  ModeLX1600(Port &port, OperationEnvironment &env)
   {
     unsigned old_baud_rate = port.GetBaudrate();
     if (old_baud_rate == 4800)
@@ -59,7 +59,7 @@ namespace LX1600 {
     else if (!port.SetBaudrate(4800))
       return false;
 
-    const bool success = PortWriteNMEA(port, "PFLX0,LX1600");
+    const bool success = PortWriteNMEA(port, "PFLX0,LX1600", env);
 
     if (old_baud_rate != 0)
       port.SetBaudrate(old_baud_rate);
@@ -68,14 +68,14 @@ namespace LX1600 {
   }
 
   static bool
-  SetupNMEA(Port &port)
+  SetupNMEA(Port &port, OperationEnvironment &env)
   {
     /* This line initiates the Color Vario to send out LXWP2 and LXWP3
        LXWP0 once started, is repeated every second.  This is a copy
        of the initiation done in LK8000, realized by LX Navigation
        developers We have no documentation and so we do not know what
        this exactly means. */
-    return PortWriteNMEA(port, "PFLX0,LXWP0,1,LXWP2,3,LXWP3,4");
+    return PortWriteNMEA(port, "PFLX0,LXWP0,1,LXWP2,3,LXWP3,4", env);
   }
 }
 

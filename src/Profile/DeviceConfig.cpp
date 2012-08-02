@@ -33,10 +33,12 @@ static const TCHAR *const port_type_strings[] = {
   _T("disabled"),
   _T("serial"),
   _T("rfcomm"),
+  _T("rfcomm_server"),
   _T("ioio_uart"),
   _T("auto"),
   _T("internal"),
   _T("tcp_listener"),
+  _T("udp_listener"),
   _T("pty"),
   NULL
 };
@@ -52,6 +54,7 @@ DeviceConfig::IsAvailable() const
     return true;
 
   case PortType::RFCOMM:
+  case PortType::RFCOMM_SERVER:
     return IsAndroid();
 
   case PortType::IOIOUART:
@@ -64,6 +67,7 @@ DeviceConfig::IsAvailable() const
     return IsAndroid();
 
   case PortType::TCP_LISTENER:
+  case PortType::UDP_LISTENER:
     return true;
 
   case PortType::PTY:
@@ -93,6 +97,7 @@ DeviceConfig::ShouldReopenOnTimeout() const
     return IsWindowsCE() && !IsAltair();
 
   case PortType::RFCOMM:
+  case PortType::RFCOMM_SERVER:
   case PortType::IOIOUART:
     /* errors on these are detected automatically by the driver */
     return false;
@@ -102,6 +107,7 @@ DeviceConfig::ShouldReopenOnTimeout() const
     return false;
 
   case PortType::TCP_LISTENER:
+  case PortType::UDP_LISTENER:
     /* this is a server, and if no data gets received, this can just
        mean that nobody connected to it, but reopening it periodically
        doesn't help */
@@ -131,6 +137,9 @@ DeviceConfig::GetPortName(TCHAR *buffer, size_t max_size) const
                bluetooth_mac.c_str());
     return buffer;
 
+  case PortType::RFCOMM_SERVER:
+    return _("Bluetooth server");
+
   case PortType::IOIOUART:
     _sntprintf(buffer, max_size, _T("IOIO UART %d"),
                ioio_uart_id);
@@ -140,10 +149,14 @@ DeviceConfig::GetPortName(TCHAR *buffer, size_t max_size) const
     return _("GPS Intermediate Driver");
 
   case PortType::INTERNAL:
-    return _("Built-in GPS");
+    return _("Built-in GPS & sensors");
 
   case PortType::TCP_LISTENER:
     _sntprintf(buffer, max_size, _T("TCP port %d"), tcp_port);
+    return buffer;
+
+  case PortType::UDP_LISTENER:
+    _sntprintf(buffer, max_size, _T("UDP port %d"), tcp_port);
     return buffer;
 
   case PortType::PTY:
@@ -251,7 +264,7 @@ Profile::GetDeviceConfig(unsigned n, DeviceConfig &config)
     /* XCSoar before 6.2 used to store a "speed index", not the real
        baud rate - try to import the old settings */
 
-    static gcc_constexpr_data unsigned speed_index_table[] = {
+    static constexpr unsigned speed_index_table[] = {
       1200,
       2400,
       4800,
@@ -293,7 +306,7 @@ Profile::GetDeviceConfig(unsigned n, DeviceConfig &config)
 
   MakeDeviceSettingName(buffer, _T("Port"), n, _T("IgnoreChecksum"));
   if (!Get(buffer, config.ignore_checksum))
-    Get(szProfileIgnoreNMEAChecksum, config.ignore_checksum);
+    Get(ProfileKeys::IgnoreNMEAChecksum, config.ignore_checksum);
 }
 
 static const TCHAR *
@@ -305,17 +318,17 @@ PortTypeToString(DeviceConfig::PortType type)
     : NULL;
 }
 
-static bool
+static void
 WritePortType(unsigned n, DeviceConfig::PortType type)
 {
   const TCHAR *value = PortTypeToString(type);
   if (value == NULL)
-    return false;
+    return;
 
   TCHAR name[64];
 
   MakeDeviceSettingName(name, _T("Port"), n, _T("Type"));
-  return Profile::Set(name, value);
+  Profile::Set(name, value);
 }
 
 void

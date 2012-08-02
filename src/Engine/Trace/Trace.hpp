@@ -30,14 +30,13 @@ Copyright_License {
 #include "Util/ListHead.hpp"
 #include "Util/CastIterator.hpp"
 #include "Util/Serial.hpp"
-#include "Navigation/TaskProjection.hpp"
+#include "Geo/Flat/TaskProjection.hpp"
 #include "Compiler.h"
 
 #include <set>
 #include <assert.h>
 #include <stdio.h>
 
-struct AircraftState;
 class TracePointVector;
 class TracePointerVector;
 
@@ -60,7 +59,7 @@ class Trace : private NonCopyable
      * time delta.
      * This is like a modified Douglas-Peuker algorithm
      */
-    static bool DeltaRank (const TraceDelta& x, const TraceDelta& y) {
+    static bool DeltaRank(const TraceDelta &x, const TraceDelta &y) {
       // distance is king
       if (x.elim_distance < y.elim_distance)
         return true;
@@ -113,9 +112,9 @@ class Trace : private NonCopyable
     TraceDelta(const TracePoint &p_last, const TracePoint &p,
                const TracePoint &p_next)
       :point(p),
-       elim_time(time_metric(p_last, p, p_next)),
-       elim_distance(distance_metric(p_last, p, p_next)),
-       delta_distance(p.flat_distance(p_last))
+       elim_time(TimeMetric(p_last, p, p_next)),
+       elim_distance(DistanceMetric(p_last, p, p_next)),
+       delta_distance(p.FlatDistanceTo(p_last))
     {
       assert(elim_distance != null_delta);
     }
@@ -143,10 +142,10 @@ class Trace : private NonCopyable
       return *(const TraceDelta *)ListHead::GetNext();
     }
 
-    void update(const TracePoint &p_last, const TracePoint &p_next) {
-      elim_time = time_metric(p_last, point, p_next);
-      elim_distance = distance_metric(p_last, point, p_next);
-      delta_distance = point.flat_distance(p_last);
+    void Update(const TracePoint &p_last, const TracePoint &p_next) {
+      elim_time = TimeMetric(p_last, point, p_next);
+      elim_distance = DistanceMetric(p_last, point, p_next);
+      delta_distance = point.FlatDistanceTo(p_last);
     }
 
     /**
@@ -160,11 +159,11 @@ class Trace : private NonCopyable
      *
      * @return Distance error if this node is thinned
      */
-    static unsigned distance_metric(const TracePoint& last,
-                                    const TracePoint& node,
-                                    const TracePoint& next) {
-      const int d_this = last.flat_distance(node) + node.flat_distance(next);
-      const int d_rem = last.flat_distance(next);
+    static unsigned DistanceMetric(const TracePoint &last,
+                                   const TracePoint &node,
+                                   const TracePoint &next) {
+      const int d_this = last.FlatDistanceTo(node) + node.FlatDistanceTo(next);
+      const int d_rem = last.FlatDistanceTo(next);
       return abs(d_this - d_rem);
     }
 
@@ -179,8 +178,8 @@ class Trace : private NonCopyable
      *
      * @return Time delta if this node is thinned
      */
-    static unsigned time_metric(const TracePoint& last, const TracePoint& node,
-                                const TracePoint& next) {
+    static unsigned TimeMetric(const TracePoint &last, const TracePoint &node,
+                               const TracePoint &next) {
       return next.DeltaTime(last)
         - std::min(next.DeltaTime(node), node.DeltaTime(last));
     }
@@ -194,13 +193,13 @@ class Trace : private NonCopyable
 
   TaskProjection task_projection;
 
-  const unsigned m_max_time;
+  const unsigned max_time;
   const unsigned no_thin_time;
-  const unsigned m_max_points;
-  const unsigned m_opt_points;
+  const unsigned max_size;
+  const unsigned opt_size;
 
-  unsigned m_average_delta_time;
-  unsigned m_average_delta_distance;
+  unsigned average_delta_time;
+  unsigned average_delta_distance;
 
   Serial append_serial, modify_serial;
 
@@ -211,11 +210,11 @@ public:
    * @param no_thin_time Time window in seconds in which points most recent
    * wont be trimmed
    * @param max_time Time window size (seconds), null_time for unlimited
-   * @param max_points Maximum number of points that can be stored
+   * @param max_size Maximum number of points that can be stored
    */
   Trace(const unsigned no_thin_time = 0,
         const unsigned max_time = null_time,
-        const unsigned max_points = 1000);
+        const unsigned max_size = 1000);
 
 protected:
   /**
@@ -227,7 +226,7 @@ protected:
    * @return Recent time
    */
   gcc_pure
-  unsigned get_recent_time(const unsigned t) const;
+  unsigned GetRecentTime(const unsigned t) const;
 
   /**
    * Update delta values for specified item in the delta list and the
@@ -238,7 +237,7 @@ protected:
    *
    * @return Iterator to updated item
    */
-  void update_delta(TraceDelta &td);
+  void UpdateDelta(TraceDelta &td);
 
   /**
    * Erase a non-edge item from delta list and tree, updating
@@ -248,7 +247,7 @@ protected:
    * @param tree Tree to remove from
    *
    */
-  void erase_inside(TraceDelta::iterator it);
+  void EraseInside(TraceDelta::iterator it);
 
   /**
    * Erase elements based on delta metric until the size is
@@ -264,8 +263,8 @@ protected:
    *
    * @return True if items were erased
    */
-  bool erase_delta(const unsigned target_size,
-                   const unsigned recent = 0);
+  bool EraseDelta(const unsigned target_size,
+                  const unsigned recent = 0);
 
   /**
    * Erase elements older than specified time from delta and tree,
@@ -276,7 +275,7 @@ protected:
    *
    * @return True if items were erased
    */
-  bool erase_earlier_than(const unsigned p_time);
+  bool EraseEarlierThan(const unsigned p_time);
 
   /**
    * Erase elements more recent than specified time.  This is used to
@@ -284,29 +283,37 @@ protected:
    */
   void EraseLaterThan(const unsigned min_time);
 
-  TraceDelta &insert(const TraceDelta &td);
+  TraceDelta &Insert(const TraceDelta &td);
 
   /**
    * Update start node (and neighbour) after min time pruning
    */
-  void erase_start(TraceDelta &td_start);
+  void EraseStart(TraceDelta &td_start);
 
 public:
   /**
    * Add trace to internal store.  Call optimise() periodically
    * to balance tree for faster queries
    *
-   * @param state Aircraft state to log point for
+   * @param a new point; its "flat" (projected) location is ignored
    */
-  void append(const AircraftState& state);
+  void push_back(const TracePoint &point);
 
   /**
    * Clear the trace store
    */
   void clear();
 
+  void EraseEarlierThan(fixed time) {
+    EraseEarlierThan((unsigned)time);
+  }
+
+  void EraseLaterThan(fixed time) {
+    EraseLaterThan((unsigned)time);
+  }
+
   unsigned GetMaxSize() const {
-    return m_max_points;
+    return max_size;
   }
 
   /**
@@ -331,6 +338,10 @@ public:
   /**
    * Returns a #Serial that gets incremented when data gets appended
    * to the #Trace.
+   *
+   * It also gets incremented on any other change, which makes this
+   * method useful for checking whether the object is unmodified since
+   * the last call.
    */
   const Serial &GetAppendSerial() const {
     return append_serial;
@@ -350,12 +361,12 @@ public:
    * @param iov Vector of trace points (output)
    *
    */
-  void get_trace_points(TracePointVector& iov) const;
+  void GetPoints(TracePointVector& iov) const;
 
   /**
    * Retrieve a vector of trace points sorted by time
    */
-  void GetTracePoints(TracePointerVector &v) const;
+  void GetPoints(TracePointerVector &v) const;
 
   /**
    * Update the given #TracePointVector after points were appended to
@@ -364,14 +375,14 @@ public:
    *
    * @return true if new points were added
    */
-  bool SyncTracePoints(TracePointerVector &v) const;
+  bool SyncPoints(TracePointerVector &v) const;
 
   /**
    * Fill the vector with trace points, not before #min_time, minimum
    * resolution #min_distance.
    */
-  void GetTracePoints(TracePointVector &v, unsigned min_time,
-                      const GeoPoint &location, fixed resolution) const;
+  void GetPoints(TracePointVector &v, unsigned min_time,
+                 const GeoPoint &location, fixed resolution) const;
 
   const TracePoint &front() const {
     assert(!empty());
@@ -422,22 +433,22 @@ private:
   }
 
   gcc_pure
-  unsigned calc_average_delta_distance(const unsigned no_thin) const;
+  unsigned CalcAverageDeltaDistance(const unsigned no_thin) const;
 
   gcc_pure
-  unsigned calc_average_delta_time(const unsigned no_thin) const;
+  unsigned CalcAverageDeltaTime(const unsigned no_thin) const;
 
   static const unsigned null_delta = 0 - 1;
 
 public:
   static const unsigned null_time = 0 - 1;
 
-  unsigned average_delta_distance() const {
-    return m_average_delta_distance;
+  unsigned GetAverageDeltaDistance() const {
+    return average_delta_distance;
   }
 
-  unsigned average_delta_time() const {
-    return m_average_delta_time;
+  unsigned GetAverageDeltaTime() const {
+    return average_delta_time;
   }
 
 public:
@@ -500,7 +511,7 @@ public:
           return *this;
 
         const TraceDelta &td = (const TraceDelta &)*iterator;
-        if (td.point.FlatSquareDistance(previous) >= sq_resolution)
+        if (td.point.FlatSquareDistanceTo(previous) >= sq_resolution)
           return *this;
       }
     }
@@ -588,9 +599,13 @@ public:
     return chronological_list.rend();
   }
 
+  const TaskProjection &GetProjection() const {
+    return task_projection;
+  }
+
   gcc_pure
   unsigned ProjectRange(const GeoPoint &location, fixed distance) const {
-    return task_projection.project_range(location, distance);
+    return task_projection.ProjectRangeInteger(location, distance);
   }
 };
 

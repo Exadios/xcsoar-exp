@@ -24,6 +24,7 @@ Copyright_License {
 #include "Internal.hpp"
 #include "V7.hpp"
 #include "LX1600.hpp"
+#include "Nano.hpp"
 #include "Device/Port/Port.hpp"
 #include "Operation/Operation.hpp"
 
@@ -32,13 +33,23 @@ LXDevice::LinkTimeout()
 {
   ScopeLock protect(mutex);
 
+  is_v7 = is_nano = is_forwarded_nano = false;
+
+  v7_settings.Lock();
+  v7_settings.clear();
+  v7_settings.Unlock();
+
+  nano_settings.Lock();
+  nano_settings.clear();
+  nano_settings.Unlock();
+
   mode = Mode::UNKNOWN;
   old_baud_rate = 0;
   busy = false;
 }
 
 bool
-LXDevice::EnableNMEA(gcc_unused OperationEnvironment &env)
+LXDevice::EnableNMEA(OperationEnvironment &env)
 {
   unsigned old_baud_rate;
 
@@ -54,16 +65,22 @@ LXDevice::EnableNMEA(gcc_unused OperationEnvironment &env)
   }
 
   /* just in case the LX1600 is still in pass-through mode: */
-  V7::ModeVSeven(port);
-  LX1600::ModeLX1600(port);
+  V7::ModeVSeven(port, env);
+  if (!is_v7)
+    LX1600::ModeLX1600(port, env);
 
-  V7::SetupNMEA(port);
-  LX1600::SetupNMEA(port);
+  V7::SetupNMEA(port, env);
+  if (!is_v7)
+    LX1600::SetupNMEA(port, env);
 
   if (old_baud_rate != 0)
     port.SetBaudrate(old_baud_rate);
 
   port.Flush();
+
+  Nano::RequestForwardedInfo(port, env);
+  if (!is_v7)
+    Nano::RequestInfo(port, env);
 
   return true;
 }
@@ -83,7 +100,23 @@ LXDevice::OnSysTicker(const DerivedInfo &calculated)
 bool
 LXDevice::EnablePassThrough(OperationEnvironment &env)
 {
-  return V7::ModeDirect(port) && LX1600::ModeColibri(port);
+  if (mode == Mode::PASS_THROUGH)
+    return true;
+
+  bool success = is_v7
+    ? V7::ModeDirect(port, env)
+    : LX1600::ModeColibri(port, env);
+  if (success)
+    mode = Mode::PASS_THROUGH;
+  return success;
+}
+
+bool
+LXDevice::EnableNanoNMEA(OperationEnvironment &env)
+{
+  return IsV7()
+    ? EnablePassThrough(env)
+    : EnableNanoNMEA(env);
 }
 
 bool
@@ -97,7 +130,7 @@ LXDevice::EnableCommandMode(OperationEnvironment &env)
 
   port.StopRxThread();
 
-  if (!V7::ModeDirect(port) || !LX1600::ModeColibri(port)) {
+  if (!EnablePassThrough(env)) {
     mode = Mode::UNKNOWN;
     return false;
   }

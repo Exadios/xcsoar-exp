@@ -57,7 +57,7 @@ public:
   }
 
   /**
-   * Suspend execution until resume() is called.
+   * Suspend execution until Resume() is called.
    */
   void BeginSuspend() {
     SuspensibleThread::BeginSuspend();
@@ -70,7 +70,7 @@ public:
   }
 
   /**
-   * Triggers thread shutdown.  Call join() after this to wait
+   * Triggers thread shutdown.  Call Thread::Join() after this to wait
    * synchronously for the thread to exit.
    */
   void BeginStop() {

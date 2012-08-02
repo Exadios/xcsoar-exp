@@ -22,7 +22,7 @@ Copyright_License {
 */
 
 #include "Dialogs/Weather.hpp"
-#include "Dialogs/Dialogs.h"
+#include "Dialogs/HelpDialog.hpp"
 #include "Dialogs/XML.hpp"
 #include "Dialogs/CallBackTable.hpp"
 #include "Units/Units.hpp"
@@ -31,7 +31,7 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Form/Form.hpp"
 #include "Form/Edit.hpp"
-#include "DataField/Enum.hpp"
+#include "Form/DataField/Enum.hpp"
 #include "Components.hpp"
 #include "UIGlobals.hpp"
 #include "Language/Language.hpp"
@@ -69,7 +69,7 @@ OnWeatherHelp(WindowControl * Sender)
   dlgHelpShowModal(UIGlobals::GetMainWindow(), caption, help);
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(OnWeatherHelp),
   DeclareCallBackEntry(NULL)

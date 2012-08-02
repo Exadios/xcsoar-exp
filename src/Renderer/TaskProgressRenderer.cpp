@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "TaskProgressRenderer.hpp"
 #include "Look/TaskLook.hpp"
-#include "Engine/Task/TaskStats/TaskSummary.hpp"
+#include "Engine/Task/Stats/TaskSummary.hpp"
 #include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Icon.hpp"
@@ -52,7 +52,7 @@ TaskProgressRenderer::Draw(const TaskSummary& summary, Canvas &canvas,
 
   canvas.Select(pen_f);
   canvas.SelectHollowBrush();
-  canvas.circle(center.x, center.y, radius);
+  canvas.DrawCircle(center.x, center.y, radius);
 
   unsigned i = 0;
   canvas.Select(pen_f);

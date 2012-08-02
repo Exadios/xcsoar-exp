@@ -28,8 +28,7 @@ Copyright_License {
 #include "Look/DialogLook.hpp"
 #include "Look/MapLook.hpp"
 #include "Renderer/AircraftRenderer.hpp"
-#include "Renderer/AirspacePreviewRenderer.hpp"
-#include "Airspace/AbstractAirspace.hpp"
+#include "Renderer/AirspaceListRenderer.hpp"
 #include "Renderer/WaypointListRenderer.hpp"
 #include "Engine/Waypoint/Waypoint.hpp"
 #include "Formatter/UserUnits.hpp"
@@ -47,7 +46,15 @@ Copyright_License {
 #include "LocalTime.hpp"
 #include "Math/Screen.hpp"
 #include "Look/TrafficLook.hpp"
+#include "Look/FinalGlideBarLook.hpp"
 #include "Renderer/TrafficRenderer.hpp"
+#include "FLARM/FlarmDetails.hpp"
+#include "FLARM/Record.hpp"
+#include "Weather/Features.hpp"
+
+#ifdef HAVE_NOAA
+#include "Renderer/NOAAListRenderer.hpp"
+#endif
 
 #include <cstdio>
 
@@ -57,7 +64,8 @@ namespace MapItemListRenderer
             const DialogLook &dialog_look);
 
   void Draw(Canvas &canvas, const PixelRect rc,
-            const ArrivalAltitudeMapItem &item, const DialogLook &dialog_look);
+            const ArrivalAltitudeMapItem &item,
+            const DialogLook &dialog_look, const FinalGlideBarLook &look);
 
   void Draw(Canvas &canvas, const PixelRect rc, const SelfMapItem &item,
             const DialogLook &dialog_look,
@@ -73,6 +81,11 @@ namespace MapItemListRenderer
 
   void Draw(Canvas &canvas, const PixelRect rc, const MarkerMapItem &item,
             const DialogLook &dialog_look, const MarkerLook &look);
+
+#ifdef HAVE_NOAA
+  void Draw(Canvas &canvas, const PixelRect rc, const WeatherStationMapItem &item,
+            const DialogLook &dialog_look, const NOAALook &look);
+#endif
 
   void Draw(Canvas &canvas, const PixelRect rc, const TaskOZMapItem &item,
             const DialogLook &dialog_look,
@@ -131,20 +144,54 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
 void
 MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                           const ArrivalAltitudeMapItem &item,
-                          const DialogLook &dialog_look)
+                          const DialogLook &dialog_look,
+                          const FinalGlideBarLook &look)
 {
   const UPixelScalar line_height = rc.bottom - rc.top;
+
+  bool elevation_available =
+      !RasterBuffer::IsSpecial((short)item.elevation);
+
+  bool reach_relevant = item.reach.IsReachRelevant();
+
+  RoughAltitude arrival_altitude =
+    item.reach.terrain_valid == ReachResult::Validity::VALID
+    ? item.reach.terrain
+    : item.reach.direct;
+  if (elevation_available)
+    arrival_altitude -= item.elevation;
+
+  bool reachable =
+    item.reach.terrain_valid != ReachResult::Validity::UNREACHABLE &&
+    arrival_altitude.IsPositive();
+
+  // Draw final glide arrow icon
+
+  RasterPoint pt = { (PixelScalar)(rc.left + line_height / 2),
+                     (PixelScalar)(rc.top + line_height / 2) };
+
+  RasterPoint arrow[] = {
+      { -7, -3 }, { 0, 4 }, { 7, -3 }
+  };
+
+  Angle arrow_angle = reachable ? Angle::Degrees(fixed_180) : Angle::Zero();
+  PolygonRotateShift(arrow, ARRAY_SIZE(arrow), pt.x, pt.y, arrow_angle, 100);
+
+  if (reachable) {
+    canvas.Select(look.brush_above);
+    canvas.Select(look.pen_above);
+  } else {
+    canvas.Select(look.brush_below);
+    canvas.Select(look.pen_below);
+  }
+  canvas.DrawPolygon(arrow, ARRAY_SIZE(arrow));
+
 
   const Font &name_font = *dialog_look.list.font;
   const Font &small_font = *dialog_look.small_font;
 
   PixelScalar left = rc.left + line_height + Layout::FastScale(2);
 
-
-  bool elevation_available =
-      !RasterBuffer::IsSpecial((short)item.elevation);
-
-  bool reach_relevant = item.reach.IsReachRelevant();
 
   // Format title row
 
@@ -246,42 +293,8 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                           const AirspaceLook &look,
                           const AirspaceRendererSettings &renderer_settings)
 {
-  const PixelScalar line_height = rc.bottom - rc.top;
-
-  const AbstractAirspace &airspace = *item.airspace;
-
-  const Font &name_font = *dialog_look.list.font;
-  const Font &small_font = *dialog_look.small_font;
-
-  PixelScalar left = rc.left + line_height + Layout::FastScale(2);
-  canvas.Select(name_font);
-  canvas.text_clipped(left, rc.top + Layout::FastScale(2), rc,
-                      airspace.GetName());
-
-  canvas.Select(small_font);
-  canvas.text_clipped(left,
-                      rc.top + name_font.GetHeight() + Layout::FastScale(4),
-                      rc, airspace.GetTypeText(false));
-
-  PixelScalar altitude_width =
-    canvas.CalcTextWidth(airspace.GetTopText(true).c_str());
-  canvas.text_clipped(rc.right - altitude_width - Layout::FastScale(4),
-                      rc.top + name_font.GetHeight() -
-                      small_font.GetHeight() + Layout::FastScale(2), rc,
-                      airspace.GetTopText(true).c_str());
-
-  altitude_width = canvas.CalcTextWidth(airspace.GetBaseText(true).c_str());
-  canvas.text_clipped(rc.right - altitude_width - Layout::FastScale(4),
-                      rc.top + name_font.GetHeight() + Layout::FastScale(4),
-                      rc, airspace.GetBaseText(true).c_str());
-
-  RasterPoint pt = { PixelScalar(rc.left + line_height / 2),
-                     PixelScalar(rc.top + line_height / 2) };
-  PixelScalar radius = std::min(PixelScalar(line_height / 2
-                                            - Layout::FastScale(4)),
-                                Layout::FastScale(10));
-  AirspacePreviewRenderer::Draw(canvas, airspace, pt, radius,
-                                renderer_settings, look);
+  AirspaceListRenderer::Draw(canvas, rc, *item.airspace, dialog_look, look,
+                             renderer_settings);
 }
 
 void
@@ -330,6 +343,18 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                       rc.top + name_font.GetHeight() + Layout::FastScale(4),
                       rc, buffer);
 }
+
+#ifdef HAVE_NOAA
+void
+MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
+                          const WeatherStationMapItem &item,
+                          const DialogLook &dialog_look,
+                          const NOAALook &look)
+{
+  const NOAAStore::Item &station = *item.station;
+  NOAAListRenderer::Draw(canvas, rc, station, look, dialog_look);
+}
+#endif
 
 void
 MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
@@ -435,16 +460,29 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
   const Font &small_font = *dialog_look.small_font;
   PixelScalar left = rc.left + line_height + Layout::FastScale(2);
 
-  StaticString<26> title_string(_("FLARM Traffic"));
+  const FlarmRecord *record = FlarmDetails::LookupRecord(item.traffic.id);
+
+  StaticString<256> title_string;
+  if (record && !StringIsEmpty(record->pilot))
+    title_string = record->pilot.c_str();
+  else
+    title_string = _("FLARM Traffic");
+
   // Append name to the title, if it exists
   if (traffic.HasName()) {
     title_string.append(_T(", "));
     title_string.append(traffic.name);
   }
+
   canvas.Select(name_font);
   canvas.text_clipped(left, rc.top + Layout::FastScale(2), rc, title_string);
 
-  StaticString<256> info_string(FlarmTraffic::GetTypeString(item.traffic.type));
+  StaticString<256> info_string;
+  if (record && !StringIsEmpty(record->plane_type))
+    info_string = record->plane_type;
+  else
+    info_string = FlarmTraffic::GetTypeString(item.traffic.type);
+
   // Generate the line of info about the target, if it's available
   if (traffic.altitude_available) {
     TCHAR tmp[15];
@@ -465,7 +503,8 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                      (PixelScalar)(rc.top + line_height / 2) };
 
   // Render the representation of the traffic icon
-  TrafficRenderer::Draw(canvas, traffic_look, traffic, traffic.track, pt);
+  TrafficRenderer::Draw(canvas, traffic_look, traffic, traffic.track,
+                        item.color, pt);
 }
 
 void
@@ -473,6 +512,7 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                           const MapItem &item,
                           const DialogLook &dialog_look, const MapLook &look,
                           const TrafficLook &traffic_look,
+                          const FinalGlideBarLook &final_glide_look,
                           const MapSettings &settings)
 {
   switch (item.type) {
@@ -480,7 +520,8 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
     Draw(canvas, rc, (const LocationMapItem &)item, dialog_look);
     break;
   case MapItem::ARRIVAL_ALTITUDE:
-    Draw(canvas, rc, (const ArrivalAltitudeMapItem &)item, dialog_look);
+    Draw(canvas, rc, (const ArrivalAltitudeMapItem &)item,
+         dialog_look, final_glide_look);
     break;
   case MapItem::SELF:
     Draw(canvas, rc, (const SelfMapItem &)item,
@@ -504,6 +545,13 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
   case MapItem::MARKER:
     Draw(canvas, rc, (const MarkerMapItem &)item, dialog_look, look.marker);
     break;
+
+#ifdef HAVE_NOAA
+  case MapItem::WEATHER:
+    Draw(canvas, rc, (const WeatherStationMapItem &)item, dialog_look, look.noaa);
+    break;
+#endif
+
   case MapItem::TRAFFIC:
     Draw(canvas, rc, (const TrafficMapItem &)item, dialog_look, traffic_look);
     break;

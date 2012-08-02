@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "LocalPath.hpp"
 #include "Compatibility/path.h"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Asset.hpp"
 
 #include "OS/FileUtil.hpp"
@@ -126,6 +126,17 @@ LocalPath(TCHAR *gcc_restrict buffer, const TCHAR *gcc_restrict subdir,
   return buffer;
 }
 
+const TCHAR *
+RelativePath(const TCHAR *path)
+{
+  assert(data_path != NULL);
+
+  const TCHAR *p = StringAfterPrefix(path, data_path);
+  return p != NULL && IsDirSeparator(*p)
+    ? p + 1
+    : NULL;
+}
+
 /**
  * Convert backslashes to slashes on platforms where it matters.
  * @param p Pointer to the string to normalize
@@ -170,12 +181,12 @@ ContractLocalPath(TCHAR* filein)
   TCHAR output[MAX_PATH];
 
   // Get the relative file name and location (ptr)
-  const TCHAR *ptr = StringAfterPrefix(filein, data_path);
-  if (ptr == NULL || !is_dir_separator(*ptr))
+  const TCHAR *relative = RelativePath(filein);
+  if (relative == NULL)
     return;
 
   // Replace the full local path by the code "%LOCAL_PATH%\\" (output)
-  _stprintf(output, _T("%s%s"), local_path_code, ptr + 1);
+  _stprintf(output, _T("%s%s"), local_path_code, relative);
   // ... and copy it to the buffer (filein)
   _tcscpy(filein, output);
 }
@@ -206,9 +217,9 @@ InFlashNamed(const TCHAR *path, const TCHAR *name)
 {
   size_t name_length = _tcslen(name);
 
-  return is_dir_separator(path[0]) &&
+  return IsDirSeparator(path[0]) &&
     memcmp(path + 1, name, name_length * sizeof(name[0])) == 0 &&
-    is_dir_separator(path[1 + name_length]);
+    IsDirSeparator(path[1 + name_length]);
 }
 
 /**

@@ -95,11 +95,11 @@ ParseDistance(const TCHAR* src, fixed& dest)
 
   // Convert to system unit if necessary, assume m as default
   TCHAR* unit = endptr;
-  if (_tcsicmp(unit, _T("ml")) == 0)
+  if (StringIsEqualIgnoreCase(unit, _T("ml")))
     dest = Units::ToSysUnit(dest, Unit::STATUTE_MILES);
-  else if (_tcsicmp(unit, _T("nm")) == 0)
+  else if (StringIsEqualIgnoreCase(unit, _T("nm")))
     dest = Units::ToSysUnit(dest, Unit::NAUTICAL_MILES);
-  else if (_tcsicmp(unit, _T("ft")) == 0)
+  else if (StringIsEqualIgnoreCase(unit, _T("ft")))
     dest = Units::ToSysUnit(dest, Unit::FEET);
 
   // Save distance
@@ -107,7 +107,7 @@ ParseDistance(const TCHAR* src, fixed& dest)
 }
 
 static bool
-ParseStyle(const TCHAR* src, Waypoint &dest)
+ParseStyle(const TCHAR* src, Waypoint::Type &type)
 {
   // 1 - Normal
   // 2 - AirfieldGrass
@@ -124,38 +124,36 @@ ParseStyle(const TCHAR* src, Waypoint &dest)
   // Update flags
   switch (style) {
   case 3:
-    dest.type = Waypoint::Type::OUTLANDING;
+    type = Waypoint::Type::OUTLANDING;
     break;
   case 2:
   case 4:
   case 5:
-    dest.type = Waypoint::Type::AIRFIELD;
+    type = Waypoint::Type::AIRFIELD;
     break;
   case 6:
-    dest.type = Waypoint::Type::MOUNTAIN_PASS;
+    type = Waypoint::Type::MOUNTAIN_PASS;
     break;
   case 7:
-    dest.type = Waypoint::Type::MOUNTAIN_TOP;
+    type = Waypoint::Type::MOUNTAIN_TOP;
     break;
   case 8:
-    dest.type = Waypoint::Type::OBSTACLE;
+    type = Waypoint::Type::OBSTACLE;
     break;
   case 11:
   case 16:
-    dest.type = Waypoint::Type::TOWER;
+    type = Waypoint::Type::TOWER;
     break;
   case 13:
-    dest.type = Waypoint::Type::TUNNEL;
+    type = Waypoint::Type::TUNNEL;
     break;
   case 14:
-    dest.type = Waypoint::Type::BRIDGE;
+    type = Waypoint::Type::BRIDGE;
     break;
   case 15:
-    dest.type = Waypoint::Type::POWERPLANT;
+    type = Waypoint::Type::POWERPLANT;
     break;
   }
-
-  dest.flags.turn_point = true;
 
   return true;
 }
@@ -164,27 +162,29 @@ bool
 WaypointReaderSeeYou::ParseLine(const TCHAR* line, const unsigned linenum,
                               Waypoints &waypoints)
 {
-  TCHAR ctemp[4096];
-  const TCHAR *params[20];
-  static const unsigned int max_params = ARRAY_SIZE(params);
-  size_t n_params;
+  enum {
+    iName = 0,
+    iLatitude = 3,
+    iLongitude = 4,
+    iElevation = 5,
+    iStyle = 6,
+    iRWDir = 7,
+    iRWLen = 8,
+    iFrequency = 9,
+    iDescription = 10,
+  };
 
-  const unsigned iName = 0;
-  const unsigned iLatitude = 3, iLongitude = 4, iElevation = 5;
-  const unsigned iStyle = 6, iRWDir = 7, iRWLen = 8;
-  const unsigned iFrequency = 9, iDescription = 10;
-
-  static bool ignore_following;
   if (linenum == 0)
     ignore_following = false;
 
   // If (end-of-file or comment)
-  if (line[0] == '\0' || line[0] == 0x1a ||
-      _tcsstr(line, _T("**")) == line ||
-      _tcsstr(line, _T("*")) == line)
+  if (StringIsEmpty(line) ||
+      StringStartsWith(line, _T("**")) ||
+      StringStartsWith(line, _T("*")))
     // -> return without error condition
     return true;
 
+  TCHAR ctemp[4096];
   if (_tcslen(line) >= ARRAY_SIZE(ctemp))
     /* line too long for buffer */
     return false;
@@ -201,29 +201,28 @@ WaypointReaderSeeYou::ParseLine(const TCHAR* line, const unsigned linenum,
     return true;
 
   // Get fields
-  n_params = ExtractParameters(line, ctemp, params, max_params, true, _T('"'));
+  const TCHAR *params[20];
+  size_t n_params = ExtractParameters(line, ctemp, params,
+                                      ARRAY_SIZE(params), true, _T('"'));
 
   // Check if the basic fields are provided
-  if (iName >= n_params)
-    return false;
-  if (iLatitude >= n_params)
-    return false;
-  if (iLongitude >= n_params)
+  if (iName >= n_params ||
+      iLatitude >= n_params ||
+      iLongitude >= n_params)
     return false;
 
-  GeoPoint location;
+  Waypoint new_waypoint;
 
   // Latitude (e.g. 5115.900N)
-  if (!ParseAngle(params[iLatitude], location.latitude, true))
+  if (!ParseAngle(params[iLatitude], new_waypoint.location.latitude, true))
     return false;
 
   // Longitude (e.g. 00715.900W)
-  if (!ParseAngle(params[iLongitude], location.longitude, false))
+  if (!ParseAngle(params[iLongitude], new_waypoint.location.longitude, false))
     return false;
 
-  location.Normalize(); // ensure longitude is within -180:180
+  new_waypoint.location.Normalize(); // ensure longitude is within -180:180
 
-  Waypoint new_waypoint(location);
   new_waypoint.file_num = file_num;
   new_waypoint.original_id = 0;
 
@@ -240,9 +239,10 @@ WaypointReaderSeeYou::ParseLine(const TCHAR* line, const unsigned linenum,
     return false;
 
   // Style (e.g. 5)
-  /// @todo include peaks with peak symbols etc.
   if (iStyle < n_params)
-    ParseStyle(params[iStyle], new_waypoint);
+    ParseStyle(params[iStyle], new_waypoint.type);
+
+  new_waypoint.flags.turn_point = true;
 
   // Frequency & runway direction/length (for airports and landables)
   // and description (e.g. "Some Description")

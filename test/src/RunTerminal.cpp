@@ -61,7 +61,7 @@ public:
   void set(PixelRect _rc) {
     SingleWindow::set(_T("RunTerminal"), _T("RunTerminal"), _rc);
 
-    PixelRect rc = get_client_rect();
+    PixelRect rc = GetClientRect();
 
     terminal.set(*this, rc.left, rc.top,
                  rc.right - rc.left, rc.bottom - rc.top);
@@ -120,7 +120,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   window.set(PixelRect{0, 0, 400, 400});
   window.Show();
 
-  window.event_loop();
+  window.RunEventLoop();
 
   Fonts::Deinitialize();
 

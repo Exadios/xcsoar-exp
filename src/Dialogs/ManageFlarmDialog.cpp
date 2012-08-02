@@ -22,82 +22,92 @@ Copyright_License {
 */
 
 #include "Dialogs/ManageFlarmDialog.hpp"
-#include "Dialogs/Message.hpp"
-#include "Form/Form.hpp"
-#include "Form/ButtonPanel.hpp"
-#include "Screen/Layout.hpp"
-#include "Screen/SingleWindow.hpp"
+#include "Dialogs/WidgetDialog.hpp"
+#include "Dialogs/FLARM/ConfigWidget.hpp"
+#include "Form/RowFormWidget.hpp"
 #include "UIGlobals.hpp"
 #include "Language/Language.hpp"
 #include "Operation/MessageOperationEnvironment.hpp"
 #include "Device/Driver/FLARM/Device.hpp"
+#include "FLARM/Version.hpp"
 
-static WndForm *dialog;
-static FlarmDevice *device;
+class ManageFLARMWidget : public RowFormWidget, private ActionListener {
+  enum Controls {
+    Setup,
+    Reboot,
+  };
 
-static void
-OnCloseClicked(gcc_unused WndButton &button)
+  FlarmDevice &device;
+  const FlarmVersion version;
+
+public:
+  ManageFLARMWidget(const DialogLook &look, FlarmDevice &_device,
+                    const FlarmVersion &version)
+    :RowFormWidget(look), device(_device), version(version) {}
+
+  /* virtual methods from Widget */
+  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
+
+private:
+  /* virtual methods from ActionListener */
+  virtual void OnAction(int id);
+};
+
+void
+ManageFLARMWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
 {
-  dialog->SetModalResult(mrOK);
-}
+  if (version.available) {
+    StaticString<64> buffer;
 
-static void
-OnRebootClicked(gcc_unused WndButton &button)
-{
-  device->Restart();
+    if (!version.hardware_version.empty()) {
+      buffer.clear();
+      buffer.UnsafeAppendASCII(version.hardware_version.c_str());
+      AddReadOnly(_("Hardware version"), NULL, buffer.c_str());
+    }
+
+    if (!version.software_version.empty()) {
+      buffer.clear();
+      buffer.UnsafeAppendASCII(version.software_version.c_str());
+      AddReadOnly(_("Firmware version"), NULL, buffer.c_str());
+    }
+
+    if (!version.obstacle_version.empty()) {
+      buffer.clear();
+      buffer.UnsafeAppendASCII(version.obstacle_version.c_str());
+      AddReadOnly(_("Obstacle database"), NULL, buffer.c_str());
+    }
+  }
+
+  AddButton(_("Setup"), this, Setup);
+  AddButton(_("Reboot"), this, Reboot);
 }
 
 void
-ManageFlarmDialog(Device &_device)
+ManageFLARMWidget::OnAction(int id)
 {
-  device = (FlarmDevice *)&_device;
+  switch (id) {
+  case Setup:
+    {
+      FLARMConfigWidget widget(GetLook(), device);
+      DefaultWidgetDialog(_T("FLARM"), widget);
+    }
+    break;
 
-  /* create the dialog */
+  case Reboot:
+    {
+      MessageOperationEnvironment env;
+      device.Restart(env);
+    }
+    break;
+  }
+}
 
-  WindowStyle dialog_style;
-  dialog_style.Hide();
-  dialog_style.ControlParent();
-
-  SingleWindow &parent = UIGlobals::GetMainWindow();
-  const DialogLook &look = UIGlobals::GetDialogLook();
-
-  dialog = new WndForm(parent, look, parent.get_client_rect(),
-                       _T("FLARM"), dialog_style);
-
-  ContainerWindow &client_area = dialog->GetClientAreaWindow();
-
-  /* create buttons */
-
-  ButtonPanel buttons(client_area, look);
-  buttons.Add(_("Close"), OnCloseClicked);
-
-  const PixelRect rc = buttons.UpdateLayout();
-
-  /* create the command buttons */
-
-  const UPixelScalar margin = 0;
-  const UPixelScalar height = Layout::Scale(30);
-
-  ButtonWindowStyle button_style;
-  button_style.TabStop();
-
-  WndButton *button;
-
-  PixelRect brc = rc;
-  brc.left += margin;
-  brc.top += margin;
-  brc.right -= margin;
-  brc.bottom = brc.top + height;
-
-  button = new WndButton(client_area, look, _("Reboot"),
-                         brc,
-                         button_style,
-                         OnRebootClicked);
-  dialog->AddDestruct(button);
-
-  /* run it */
-
-  dialog->ShowModal();
-
-  delete dialog;
+void
+ManageFlarmDialog(Device &device, const FlarmVersion &version)
+{
+  WidgetDialog dialog(_T("FLARM"),
+                      new ManageFLARMWidget(UIGlobals::GetDialogLook(),
+                                            (FlarmDevice &)device, version));
+  dialog.AddButton(_("Close"), mrCancel);
+  dialog.ShowModal();
 }

@@ -44,6 +44,7 @@ Copyright_License {
 #include "Components.hpp"
 #include "Operation/Operation.hpp"
 
+#include <memory>
 #include <tchar.h>
 #include <stdio.h>
 
@@ -77,13 +78,12 @@ LoadFiles(Airspaces &airspace_database)
 {
   NullOperationEnvironment operation;
 
-  TLineReader *reader = OpenConfiguredTextFile(szProfileAirspaceFile);
-  if (reader != NULL) {
+  std::unique_ptr<TLineReader> reader(OpenConfiguredTextFile(ProfileKeys::AirspaceFile,
+                                                             ConvertLineReader::AUTO));
+  if (reader) {
     AirspaceParser parser(airspace_database);
     parser.Parse(*reader, operation);
-    delete reader;
-
-    airspace_database.optimise();
+    airspace_database.Optimise();
   }
 }
 
@@ -119,7 +119,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   AirspaceInterceptSolution ais;
   for (unsigned i = 0; i < 5 && it != airspace_database.end(); ++i, ++it)
-    airspace_warning.GetWarning(*it->get_airspace())
+    airspace_warning.GetWarning(*it->GetAirspace())
       .UpdateSolution((AirspaceWarning::State)i, ais);
 
   SingleWindow main_window;

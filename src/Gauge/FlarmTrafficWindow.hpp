@@ -25,10 +25,12 @@
 #define FLARM_TRAFFIC_WINDOW_H
 
 #include "Screen/PaintWindow.hpp"
-#include "FLARM/State.hpp"
-#include "ComputerSettings.hpp"
+#include "FLARM/List.hpp"
+#include "FLARM/Friends.hpp"
+#include "TeamCodeSettings.hpp"
 #include "Math/FastRotation.hpp"
-#include "FlarmTrafficLook.hpp"
+
+struct FlarmTrafficLook;
 
 /**
  * A Window which renders FLARM traffic.
@@ -59,17 +61,20 @@ protected:
 
   bool small;
 
-  RasterPoint sc[FlarmState::FLARM_MAX_TRAFFIC];
+  RasterPoint sc[TrafficList::MAX_COUNT];
 
   bool enable_north_up;
   Angle heading;
   FastRotation fr;
   FastIntegerRotation fir;
-  FlarmState data;
+  TrafficList data;
   TeamCodeSettings settings;
 
 public:
-  int side_display_type;
+  enum SideInfoType {
+    SIDE_INFO_RELATIVE_ALTITUDE,
+    SIDE_INFO_VARIO,
+  } side_display_type;
 
 public:
   FlarmTrafficWindow(const FlarmTrafficLook &_look,
@@ -80,7 +85,7 @@ public:
 
   const FlarmTraffic *GetTarget() const {
     return selection >= 0
-      ? &data.traffic[selection]
+      ? &data.list[selection]
       : NULL;
   }
 
@@ -110,15 +115,22 @@ protected:
 
   void UpdateSelector(const FlarmId id, const RasterPoint pt);
   void UpdateWarnings();
-  void Update(Angle new_direction, const FlarmState &new_data,
+  void Update(Angle new_direction, const TrafficList &new_data,
               const TeamCodeSettings &new_settings);
   void PaintRadarNoTraffic(Canvas &canvas) const;
   void PaintRadarTarget(Canvas &canvas, const FlarmTraffic &traffic,
                         unsigned i);
   void PaintRadarTraffic(Canvas &canvas);
+
+  void PaintTargetInfoSmall(
+      Canvas &canvas, const FlarmTraffic &traffic, unsigned i,
+      const Color &text_color, const Brush &arrow_brush);
+
   void PaintRadarPlane(Canvas &canvas) const;
   void PaintRadarBackground(Canvas &canvas) const;
   void PaintNorth(Canvas &canvas) const;
+
+  FlarmFriends::Color GetTeamColor(const FlarmId &id) const;
 
 protected:
   virtual void OnResize(UPixelScalar width, UPixelScalar height);

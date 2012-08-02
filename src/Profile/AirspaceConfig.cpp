@@ -29,81 +29,34 @@ Copyright_License {
 #include "Airspace/AirspaceComputerSettings.hpp"
 #include "Util/Macros.hpp"
 
-void
-Profile::Load(AirspaceRendererSettings &settings)
+static const TCHAR *
+MakeAirspaceSettingName(TCHAR *buffer, const TCHAR *prefix, unsigned n)
 {
-  Get(szProfileAirspaceBlackOutline, settings.black_outline);
-  GetEnum(szProfileAltMode, settings.altitude_mode);
-  Get(szProfileClipAlt, settings.clip_altitude);
+  _tcscpy(buffer, prefix);
+  _stprintf(buffer + _tcslen(buffer), _T("%u"), n);
 
-#ifndef ENABLE_OPENGL
-  Get(szProfileAirspaceTransparency, settings.transparency);
-#endif
-
-  GetEnum(szProfileAirspaceFillMode, settings.fill_mode);
-
-  for (unsigned i = 0; i < AIRSPACECLASSCOUNT; i++)
-    Load(i, settings.classes[i]);
+  return buffer;
 }
 
-void
-Profile::Load(unsigned i, AirspaceClassRendererSettings &settings)
+/**
+ * This function and the "ColourXX" profile keys are deprecated and
+ * are only used as a fallback for old profiles.
+ *
+ * @see Load(unsigned, AirspaceClassRendererSettings &)
+ */
+static bool
+GetAirspaceColor(unsigned i, Color &color)
 {
-  unsigned value;
-  if (Get(szProfileAirspaceMode[i], value))
-    settings.display = (value & 0x1) != 0;
+  TCHAR name[64];
+  MakeAirspaceSettingName(name, _T("Colour"), i);
 
-#ifdef HAVE_HATCHED_BRUSH
-  Get(szProfileBrush[i], settings.brush);
-  if (settings.brush >= ARRAY_SIZE(AirspaceLook::brushes))
-    settings.brush = 0;
-#endif
-
-  GetAirspaceColor(i, settings.color);
-}
-
-void
-Profile::Load(AirspaceComputerSettings &settings)
-{
-  Get(szProfileAirspaceWarning, settings.enable_warnings);
-  Get(szProfileAltMargin, settings.warnings.altitude_warning_margin);
-  Get(szProfileWarningTime, settings.warnings.warning_time);
-  Get(szProfileAcknowledgementTime, settings.warnings.acknowledgement_time);
-
-  unsigned value;
-  for (unsigned i = 0; i < AIRSPACECLASSCOUNT; i++)
-    if (Get(szProfileAirspaceMode[i], value))
-      settings.warnings.class_warnings[i] = (value & 0x2) != 0;
-}
-
-void
-Profile::SetAirspaceMode(unsigned i, bool display, bool warning)
-{
-  int value = 0;
-  if (display)
-    value |= 0x1;
-  if (warning)
-    value |= 0x2;
-
-  Set(szProfileAirspaceMode[i], value);
-}
-
-void
-Profile::SetAirspaceColor(unsigned i, const Color &color)
-{
-  SetColor(szProfileColour[i], color);
-}
-
-bool
-Profile::GetAirspaceColor(unsigned i, Color &color)
-{
   // Try to load the hex color directly
-  if (GetColor(szProfileColour[i], color))
+  if (Profile::GetColor(name, color))
     return true;
 
   // Try to load an indexed preset color (legacy, < 6.3)
   unsigned index;
-  if (!Get(szProfileColour[i], index))
+  if (!Profile::Get(name, index))
     return false;
 
   // Adjust index if the user has configured a preset color out of range
@@ -116,7 +69,128 @@ Profile::GetAirspaceColor(unsigned i, Color &color)
 }
 
 void
+Profile::Load(AirspaceRendererSettings &settings)
+{
+  Get(ProfileKeys::AirspaceBlackOutline, settings.black_outline);
+  GetEnum(ProfileKeys::AltMode, settings.altitude_mode);
+  Get(ProfileKeys::ClipAlt, settings.clip_altitude);
+
+#ifndef ENABLE_OPENGL
+  Get(ProfileKeys::AirspaceTransparency, settings.transparency);
+#endif
+
+  GetEnum(ProfileKeys::AirspaceFillMode, settings.fill_mode);
+
+  for (unsigned i = 0; i < AIRSPACECLASSCOUNT; i++)
+    Load(i, settings.classes[i]);
+}
+
+void
+Profile::Load(unsigned i, AirspaceClassRendererSettings &settings)
+{
+  TCHAR name[64];
+
+  MakeAirspaceSettingName(name, _T("AirspaceDisplay"), i);
+  if (!Get(name, settings.display)) {
+    // Load setting from legacy key-value pair
+    MakeAirspaceSettingName(name, _T("AirspaceMode"), i);
+
+    unsigned value;
+    if (Get(name, value))
+      settings.display = (value & 0x1) != 0;
+  }
+
+#ifdef HAVE_HATCHED_BRUSH
+  MakeAirspaceSettingName(name, _T("Brush"), i);
+  Get(name, settings.brush);
+  if (settings.brush >= ARRAY_SIZE(AirspaceLook::brushes))
+    settings.brush = 0;
+#endif
+
+  MakeAirspaceSettingName(name, _T("AirspaceBorderColor"), i);
+  if (!GetColor(name, settings.border_color))
+    GetAirspaceColor(i, settings.border_color);
+
+  MakeAirspaceSettingName(name, _T("AirspaceFillColor"), i);
+  if (!GetColor(name, settings.fill_color))
+    GetAirspaceColor(i, settings.fill_color);
+
+  MakeAirspaceSettingName(name, _T("AirspaceBorderWidth"), i);
+  Get(name, settings.border_width);
+
+  MakeAirspaceSettingName(name, _T("AirspaceFillMode"), i);
+  GetEnum(name, settings.fill_mode);
+}
+
+void
+Profile::Load(AirspaceComputerSettings &settings)
+{
+  Get(ProfileKeys::AirspaceWarning, settings.enable_warnings);
+  Get(ProfileKeys::AltMargin, settings.warnings.altitude_warning_margin);
+  Get(ProfileKeys::WarningTime, settings.warnings.warning_time);
+  Get(ProfileKeys::AcknowledgementTime, settings.warnings.acknowledgement_time);
+
+  TCHAR name[64];
+  unsigned value;
+  for (unsigned i = 0; i < AIRSPACECLASSCOUNT; i++) {
+    MakeAirspaceSettingName(name, _T("AirspaceWarning"), i);
+    if (!Get(name, settings.warnings.class_warnings[i])) {
+      // Load setting from legacy key-value pair
+      MakeAirspaceSettingName(name, _T("AirspaceMode"), i);
+      if (Get(name, value))
+        settings.warnings.class_warnings[i] = (value & 0x2) != 0;
+    }
+  }
+}
+
+void
+Profile::SetAirspaceMode(unsigned i, bool display, bool warning)
+{
+  TCHAR name[64];
+
+  MakeAirspaceSettingName(name, _T("AirspaceDisplay"), i);
+  Set(name, display);
+
+  MakeAirspaceSettingName(name, _T("AirspaceWarning"), i);
+  Set(name, warning);
+}
+
+void
+Profile::SetAirspaceBorderWidth(unsigned i, unsigned border_width)
+{
+  TCHAR name[64];
+  MakeAirspaceSettingName(name, _T("AirspaceBorderWidth"), i);
+  Set(name, border_width);
+}
+
+void
+Profile::SetAirspaceBorderColor(unsigned i, const Color &color)
+{
+  TCHAR name[64];
+  MakeAirspaceSettingName(name, _T("AirspaceBorderColor"), i);
+  SetColor(name, color);
+}
+
+void
+Profile::SetAirspaceFillColor(unsigned i, const Color &color)
+{
+  TCHAR name[64];
+  MakeAirspaceSettingName(name, _T("AirspaceFillColor"), i);
+  SetColor(name, color);
+}
+
+void
+Profile::SetAirspaceFillMode(unsigned i, uint8_t mode)
+{
+  TCHAR name[64];
+  MakeAirspaceSettingName(name, _T("AirspaceFillMode"), i);
+  SetEnum(name, (AirspaceClassRendererSettings::FillMode)mode);
+}
+
+void
 Profile::SetAirspaceBrush(unsigned i, int brush_index)
 {
-  Set(szProfileBrush[i], brush_index);
+  TCHAR name[64];
+  MakeAirspaceSettingName(name, _T("Brush"), i);
+  Set(name, brush_index);
 }

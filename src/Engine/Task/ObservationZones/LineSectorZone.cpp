@@ -22,7 +22,6 @@
 
 #include "LineSectorZone.hpp"
 #include "Boundary.hpp"
-#include "Navigation/Geometry/GeoVector.hpp"
 
 GeoPoint LineSectorZone::GetBoundaryParametric(fixed t) const
 { 

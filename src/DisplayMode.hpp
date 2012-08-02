@@ -26,19 +26,22 @@ Copyright_License {
 
 #include "Compiler.h"
 
+#include <stdint.h>
+
+struct InfoBoxSettings;
 struct UIState;
 struct DerivedInfo;
 
-enum DisplayMode {
-  DM_NONE,
-  DM_CIRCLING,
-  DM_CRUISE,
-  DM_FINAL_GLIDE,
+enum class DisplayMode: uint8_t {
+  NONE,
+  CIRCLING,
+  CRUISE,
+  FINAL_GLIDE,
 };
 
 gcc_pure
 DisplayMode
-GetNewDisplayMode(const UIState &ui_state,
+GetNewDisplayMode(const InfoBoxSettings &settings, const UIState &ui_state,
                   const DerivedInfo &derived_info);
 
 #endif

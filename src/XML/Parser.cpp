@@ -49,8 +49,8 @@
 #include "Node.hpp"
 #include "Util/CharUtil.hpp"
 #include "Util/StringUtil.hpp"
+#include "Util/NumberParser.hpp"
 #include "IO/FileLineReader.hpp"
-#include "Compatibility/string.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -137,19 +137,19 @@ FromXMLString(const TCHAR *ss, size_t lo)
   while (ss < end && *ss) {
     if (*ss == _T('&')) {
       ss++;
-      if (_tcsnicmp(ss, _T("lt;" ), 3) == 0) {
+      if (StringIsEqualIgnoreCase(ss, _T("lt;" ), 3)) {
         *(d++) = _T('<' );
         ss += 3;
-      } else if (_tcsnicmp(ss, _T("gt;" ), 3) == 0) {
+      } else if (StringIsEqualIgnoreCase(ss, _T("gt;" ), 3)) {
         *(d++) = _T('>' );
         ss += 3;
-      } else if (_tcsnicmp(ss, _T("amp;" ), 4) == 0) {
+      } else if (StringIsEqualIgnoreCase(ss, _T("amp;" ), 4)) {
         *(d++) = _T('&' );
         ss += 4;
-      } else if (_tcsnicmp(ss, _T("apos;"), 5) == 0) {
+      } else if (StringIsEqualIgnoreCase(ss, _T("apos;"), 5)) {
         *(d++) = _T('\'');
         ss += 5;
-      } else if (_tcsnicmp(ss, _T("quot;"), 5) == 0) {
+      } else if (StringIsEqualIgnoreCase(ss, _T("quot;"), 5)) {
         *(d++) = _T('"' );
         ss += 5;
       } else if (*ss == '#') {
@@ -158,7 +158,7 @@ FromXMLString(const TCHAR *ss, size_t lo)
         ++ss;
 
         TCHAR *endptr;
-        unsigned long i = _tcstoul(ss, &endptr, 10);
+        unsigned i = ParseUnsigned(ss, &endptr, 10);
         if (endptr == ss || endptr >= end || *endptr != ';') {
           free(result);
           XML::global_error = true;
@@ -199,7 +199,7 @@ CompareTagName(const TCHAR *cclose, const TCHAR *copen)
   if (!cclose)
     return false;
   size_t l = _tcslen(cclose);
-  if (_tcsnicmp(cclose, copen, l) != 0)
+  if (!StringIsEqualIgnoreCase(cclose, copen, l))
     return false;
 
   const TCHAR c = copen[l];
@@ -586,7 +586,7 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
         // If the name of the new element differs from the name of
         // the current element we need to add the new element to
         // the current one and recurse
-        pNew = &node.AddChild(DuplicateString(token.pStr, token_length),
+        pNew = &node.AddChild(token.pStr, token_length,
                               is_declaration);
 
         while (true) {
@@ -633,8 +633,7 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
                 return true;
 
               // Add the new element and recurse
-              pNew = &node.AddChild(DuplicateString(pXML->lpNewElement,
-                                                    pXML->cbNewElement),
+              pNew = &node.AddChild(pXML->lpNewElement, pXML->cbNewElement,
                                     false);
               pXML->cbNewElement = 0;
             } else {
@@ -752,7 +751,7 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
           // Eg.  'Attribute AnotherAttribute'
         case eTokenText:
           // Add the unvalued attribute to the list
-          node.AddAttribute(DuplicateString(temp, temp_length), NULL);
+          node.AddAttribute(temp, temp_length, _T(""), 0);
           // Cache the token then indicate.  We are next to
           // look for the equals attribute
           temp = token.pStr;
@@ -770,7 +769,7 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
 
           if (temp_length)
             // Add the unvalued attribute to the list
-            node.AddAttribute(DuplicateString(temp, temp_length), NULL);
+            node.AddAttribute(temp, temp_length, _T(""), 0);
 
           // If this is the end of the tag then return to the caller
           if (type == eTokenShortHandClose)
@@ -821,8 +820,11 @@ XML::ParseXMLElement(XMLNode &node, Parser *pXML)
               token.pStr++;
               token_length -= 2;
             }
-            node.AddAttribute(DuplicateString(temp, temp_length),
-                              FromXMLString(token.pStr, token_length));
+
+            TCHAR *value = FromXMLString(token.pStr, token_length);
+            node.AddAttribute(temp, temp_length,
+                              value, _tcslen(value));
+            free(value);
           }
 
           // Indicate we are searching for a new attribute

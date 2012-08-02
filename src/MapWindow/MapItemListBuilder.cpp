@@ -31,6 +31,7 @@ Copyright_License {
 #include "Engine/Airspace/Predicate/AirspacePredicateInside.hpp"
 #include "Engine/Airspace/Airspaces.hpp"
 #include "Engine/Airspace/AirspaceWarningManager.hpp"
+#include "Engine/Task/Ordered/Points/OrderedTaskPoint.hpp"
 #include "Airspace/AirspaceVisibility.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
 #include "Engine/Waypoint/WaypointVisitor.hpp"
@@ -38,7 +39,6 @@ Copyright_License {
 #include "NMEA/Aircraft.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Task/ProtectedRoutePlanner.hpp"
-#include "FLARM/State.hpp"
 #include "Markers/ProtectedMarkers.hpp"
 #include "Markers/Markers.hpp"
 #include "NMEA/ThermalLocator.hpp"
@@ -47,6 +47,12 @@ Copyright_License {
 #include "NMEA/MoreData.hpp"
 #include "NMEA/Derived.hpp"
 #include "Terrain/RasterTerrain.hpp"
+#include "FLARM/FriendsGlue.hpp"
+#include "TeamCodeSettings.hpp"
+
+#ifdef HAVE_NOAA
+#include "Weather/NOAAStore.hpp"
+#endif
 
 class AirspaceWarningList
 {
@@ -87,7 +93,7 @@ public:
   AirspaceWarningPredicate(const AirspaceWarningList &_warnings)
     :warnings(_warnings) {}
 
-  bool condition(const AbstractAirspace& airspace) const {
+  bool operator()(const AbstractAirspace& airspace) const {
     return warnings.ContainsInside(airspace) ||
            warnings.ContainsWarning(airspace);
   }
@@ -109,7 +115,7 @@ public:
      warning_predicate(_warnings),
      inside_predicate(_location) {}
 
-  bool condition(const AbstractAirspace& airspace) const {
+  bool operator()(const AbstractAirspace& airspace) const {
     // Airspace should be visible or have a warning/inside status
     // and airspace needs to be at specified location
 
@@ -242,7 +248,7 @@ MapItemListBuilder::AddVisibleAirspace(
                                      warnings, location);
 
   AirspaceListBuilderVisitor builder(list);
-  airspaces.visit_within_range(location, fixed(100.0), builder, predicate);
+  airspaces.VisitWithinRange(location, fixed(100.0), builder, predicate);
 }
 
 void
@@ -265,10 +271,9 @@ MapItemListBuilder::AddTaskOZs(const ProtectedTaskManager &task)
     if (!task_point.IsInSector(a))
       continue;
 
-    const ObservationZonePoint *oz = task_point.GetOZPoint();
-    if (oz)
-      list.append(new TaskOZMapItem(i, *oz, task_point.GetType(),
-                                    task_point.GetWaypoint()));
+    const ObservationZonePoint &oz = task_point.GetObservationZone();
+    list.append(new TaskOZMapItem(i, oz, task_point.GetType(),
+                                  task_point.GetWaypoint()));
   }
 }
 
@@ -288,15 +293,34 @@ MapItemListBuilder::AddMarkers(const ProtectedMarkers &marks)
   }
 }
 
+#ifdef HAVE_NOAA
 void
-MapItemListBuilder::AddTraffic(const FlarmState &flarm)
+MapItemListBuilder::AddWeatherStations(NOAAStore &store)
 {
-  for (auto it=flarm.traffic.begin(), end = flarm.traffic.end(); it != end; ++it) {
+  for (auto it = store.begin(), end = store.end(); it != end; ++it) {
     if (list.full())
       break;
 
-    if (location.Distance(it->location) < range)
-      list.append(new TrafficMapItem(*it));
+    if (it->parsed_metar_available &&
+        it->parsed_metar.location_available &&
+        location.Distance(it->parsed_metar.location) < range)
+      list.checked_append(new WeatherStationMapItem(it));
+  }
+}
+#endif
+
+void
+MapItemListBuilder::AddTraffic(const TrafficList &flarm,
+                               const TeamCodeSettings &teamcode)
+{
+  for (auto it = flarm.list.begin(), end = flarm.list.end(); it != end; ++it) {
+    if (list.full())
+      break;
+
+    if (location.Distance(it->location) < range) {
+      auto color = FlarmFriends::GetFriendColor(it->id, teamcode);
+      list.append(new TrafficMapItem(*it, color));
+    }
   }
 }
 

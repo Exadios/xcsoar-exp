@@ -24,14 +24,18 @@
 #include "Terrain/RasterTerrain.hpp"
 
 void 
-Airspaces::set_ground_levels(const RasterTerrain &terrain)
+Airspaces::SetGroundLevels(const RasterTerrain &terrain)
 {
-  for (auto v = airspace_tree.begin(); v != airspace_tree.end(); ++v) {
-    FlatGeoPoint c_flat = v->GetCenter();
-    GeoPoint g = task_projection.unproject(c_flat);
+  for (auto &v : airspace_tree) {
+    // If we don't need the ground level we don't have to calculate it
+    if (!v.NeedGroundLevel())
+      continue;
+
+    FlatGeoPoint c_flat = v.GetCenter();
+    GeoPoint g = task_projection.Unproject(c_flat);
     short h = terrain.GetTerrainHeight(g);
     if (!RasterBuffer::IsSpecial(h))
-      v->set_ground_level((fixed)h);
+      v.SetGroundLevel((fixed)h);
   }
 }
 

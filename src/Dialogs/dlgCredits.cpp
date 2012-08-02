@@ -22,9 +22,13 @@ Copyright_License {
 */
 
 #include "Dialogs/Dialogs.h"
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/CallBackTable.hpp"
+#include "Dialogs/XML.hpp"
+#include "Form/Form.hpp"
+#include "Form/Button.hpp"
 #include "Form/Tabbed.hpp"
+#include "Form/Draw.hpp"
+#include "Screen/EditWindow.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Bitmap.hpp"
 #include "Screen/Font.hpp"
@@ -33,6 +37,7 @@ Copyright_License {
 #include "ResourceLoader.hpp"
 #include "Version.hpp"
 #include "Inflate.hpp"
+#include "Util/ConvertString.hpp"
 #include "resource.h"
 
 #include <assert.h>
@@ -52,10 +57,49 @@ OnPrev(gcc_unused WndButton &button)
   tab->PreviousPage();
 }
 
+gcc_pure
+static EditWindow *
+FindEditWindow()
+{
+  const TCHAR *name;
+  switch (tab->GetCurrentPage()) {
+  case 1:
+    name = _T("prpAuthors");
+    break;
+
+  case 2:
+    name = _T("prpLicense");
+    break;
+
+  default:
+    return NULL;
+  }
+
+  return (EditWindow *)wf->FindByName(name);
+}
+
 static bool
 FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
 {
   switch (key_code) {
+    EditWindow *edit;
+
+  case VK_UP:
+    edit = FindEditWindow();
+    if (edit != NULL) {
+      edit->ScrollVertically(-3);
+      return true;
+    } else
+      return false;
+
+  case VK_DOWN:
+    edit = FindEditWindow();
+    if (edit != NULL) {
+      edit->ScrollVertically(3);
+      return true;
+    } else
+      return false;
+
   case VK_LEFT:
 #ifdef GNAV
   case '6':
@@ -133,27 +177,14 @@ LoadTextFromResource(const TCHAR* name, const TCHAR* control)
 
   char *buffer = InflateToString(data.first, data.second);
 
-#ifdef _UNICODE
-  int length = strlen(buffer);
-  TCHAR *buffer2 = new TCHAR[length + 1];
-  length = MultiByteToWideChar(CP_UTF8, 0, buffer, length,
-                               buffer2, length);
-  buffer2[length] = _T('\0');
-  delete[] buffer;
-#else
-  const char *buffer2 = buffer;
-#endif
+  UTF8ToWideConverter text(buffer);
+  if (text.IsValid())
+    ((EditWindow *)wf->FindByName(control))->SetText(text);
 
-  ((EditWindow *)wf->FindByName(control))->set_text(buffer2);
-
-#ifdef _UNICODE
-  delete[] buffer2;
-#else
   delete[] buffer;
-#endif
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnClose),
   DeclareCallBackEntry(OnNext),
   DeclareCallBackEntry(OnPrev),

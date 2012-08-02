@@ -24,34 +24,26 @@ Copyright_License {
 #include "Net/Request.hpp"
 #include "Version.hpp"
 #include "Java/Global.hpp"
-#include "Java/Class.hpp"
 #include "Java/String.hpp"
+#include "Java/InputStream.hpp"
+#include "Java/URL.hpp"
 #include "Java/Exception.hpp"
 
 #include <assert.h>
 
 Net::Request::Request(Session &_session, const TCHAR *url,
-                      unsigned long timeout)
+                      unsigned timeout_ms)
   :env(Java::GetEnv())
 {
-  Java::Class url_class(env, "java/net/URL");
-  jmethodID url_ctor = env->GetMethodID(url_class.Get(), "<init>",
-                                        "(Ljava/lang/String;)V");
-  assert(url_ctor != NULL);
-
   Java::String j_url(env, url);
-  jobject url_object = env->NewObject(url_class.Get(), url_ctor, j_url.Get());
+  jobject url_object = Java::URL::Create(env, j_url);
   if (Java::DiscardException(env)) {
     connection = NULL;
     input_stream = NULL;
     return;
   }
 
-  jmethodID url_open = env->GetMethodID(url_class.Get(), "openConnection",
-                                        "()Ljava/net/URLConnection;");
-  assert(url_open != NULL);
-
-  connection = env->CallObjectMethod(url_object, url_open);
+  connection = Java::URL::openConnection(env, url_object);
   env->DeleteLocalRef(url_object);
   if (Java::DiscardException(env)) {
     connection = NULL;
@@ -59,35 +51,15 @@ Net::Request::Request(Session &_session, const TCHAR *url,
     return;
   }
 
-  Java::Class connection_class(env, env->GetObjectClass(connection));
+  Java::URLConnection::setConnectTimeout(env, connection, (jint)timeout_ms);
 
-  set_timeout_method = env->GetMethodID(connection_class.Get(),
-                                        "setConnectTimeout", "(I)V");
-  assert(set_timeout_method != NULL);
-  env->CallVoidMethod(connection, set_timeout_method, (jint)timeout);
-
-  set_timeout_method = env->GetMethodID(connection_class.Get(),
-                                        "setReadTimeout", "(I)V");
-  assert(set_timeout_method != NULL);
-
-  jmethodID get_input_stream = env->GetMethodID(connection_class.Get(),
-                                                "getInputStream",
-                                                "()Ljava/io/InputStream;");
-  assert(get_input_stream != NULL);
-
-  input_stream = env->CallObjectMethod(connection, get_input_stream);
+  input_stream = Java::URLConnection::getInputStream(env, connection);
   if (Java::DiscardException(env)) {
     env->DeleteLocalRef(connection);
     connection = NULL;
     input_stream = NULL;
     return;
   }
-
-  Java::Class stream_class(env, env->GetObjectClass(input_stream));
-  read_method = env->GetMethodID(stream_class.Get(), "read", "([B)I");
-  assert(read_method != NULL);
-  close_method = env->GetMethodID(stream_class.Get(), "close", "()V");
-  assert(close_method != NULL);
 }
 
 Net::Request::~Request()
@@ -96,7 +68,7 @@ Net::Request::~Request()
     env->DeleteLocalRef(connection);
 
   if (input_stream != NULL) {
-    env->CallVoidMethod(input_stream, close_method);
+    Java::InputStream::close(env, input_stream);
     env->ExceptionClear();
 
     env->DeleteLocalRef(input_stream);
@@ -104,23 +76,35 @@ Net::Request::~Request()
 }
 
 bool
-Net::Request::Created() const
+Net::Request::Send(unsigned _timeout_ms)
 {
   return input_stream != NULL;
 }
 
-size_t
-Net::Request::Read(void *buffer, size_t buffer_size, unsigned long timeout)
+int64_t
+Net::Request::GetLength() const
 {
   assert(connection != NULL);
   assert(input_stream != NULL);
 
-  env->CallVoidMethod(connection, set_timeout_method, (jint)timeout);
+  return Java::URLConnection::getContentLength(env, connection);
+}
+
+ssize_t
+Net::Request::Read(void *buffer, size_t buffer_size, unsigned timeout_ms)
+{
+  assert(connection != NULL);
+  assert(input_stream != NULL);
+
+  Java::URLConnection::setReadTimeout(env, connection, (jint)timeout_ms);
 
   Java::LocalRef<jbyteArray> array(env,
                                    (jbyteArray)env->NewByteArray(buffer_size));
-  jint nbytes = env->CallIntMethod(input_stream, read_method, array.Get());
-  if (Java::DiscardException(env) || nbytes <= 0)
+  jint nbytes = Java::InputStream::read(env, input_stream, array.Get());
+  if (Java::DiscardException(env))
+    return -1;
+
+  if (nbytes <= 0)
     return 0;
 
   env->GetByteArrayRegion(array.Get(), 0, nbytes, (jbyte *)buffer);

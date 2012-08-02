@@ -33,6 +33,7 @@ static const TCHAR *contest_to_string[] = {
   _T("XContest"),
   _T("DHV-XC"),
   _T("SIS-AT"),
+  _T("FFVV NetCoupe"),
 };
 
 const TCHAR*

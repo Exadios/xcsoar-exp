@@ -22,35 +22,51 @@ Copyright_License {
 */
 
 #include "Dialogs/Task.hpp"
-#include "Dialogs/Internal.hpp"
 #include "Dialogs/CallBackTable.hpp"
+#include "Dialogs/XML.hpp"
+#include "Form/Form.hpp"
+#include "Form/Util.hpp"
+#include "Form/SymbolButton.hpp"
+#include "Form/CheckBox.hpp"
+#include "Form/Edit.hpp"
+#include "Form/DataField/Enum.hpp"
+#include "Form/DataField/Float.hpp"
 #include "UIGlobals.hpp"
 #include "Look/MapLook.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
-#include "DataField/Enum.hpp"
-#include "DataField/Float.hpp"
 #include "MapWindow/TargetMapWindow.hpp"
 #include "Components.hpp"
-#include "Task/TaskPoints/AATPoint.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Engine/Task/TaskManager.hpp"
-#include "Task/Tasks/AbstractTask.hpp"
+#include "Engine/Task/Ordered/Points/OrderedTaskPoint.hpp"
 #include "Units/Units.hpp"
-#include "Form/SymbolButton.hpp"
-#include "Form/CheckBox.hpp"
 #include "Asset.hpp"
 #include "Blackboard/RateLimitedBlackboardListener.hpp"
+#include "Interface.hpp"
 
 #include <stdio.h>
 
 using std::min;
 using std::max;
 
+class TargetDialogMapWindow : public TargetMapWindow {
+public:
+  TargetDialogMapWindow(const WaypointLook &waypoint_look,
+                        const AirspaceLook &airspace_look,
+                        const TrailLook &trail_look,
+                        const TaskLook &task_look,
+                        const AircraftLook &aircraft_look)
+    :TargetMapWindow(waypoint_look, airspace_look, trail_look,
+                     task_look, aircraft_look) {}
+
+protected:
+  virtual void OnTaskModified();
+};
+
 static WndForm *wf = NULL;
 static TargetMapWindow *map;
 static CheckBoxControl *chkbOptimized = NULL;
-static WndSymbolButton *btnNext = NULL, *btnPrev = NULL;
 static unsigned ActiveTaskPointOnEntry = 0;
 static unsigned TaskSize = 0;
 
@@ -65,8 +81,8 @@ OnCreateMap(ContainerWindow &parent, PixelScalar left, PixelScalar top,
             const WindowStyle style)
 {
   const MapLook &look = UIGlobals::GetMapLook();
-  map = new TargetMapWindow(look.waypoint, look.airspace,
-                            look.trail, look.task, look.aircraft);
+  map = new TargetDialogMapWindow(look.waypoint, look.airspace,
+                                  look.trail, look.task, look.aircraft);
   map->SetTerrain(terrain);
   map->SetTopograpgy(topography);
   map->SetAirspaces(&airspace_database);
@@ -206,15 +222,8 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
 static void
 LockCalculatorUI()
 {
-  WndProperty* wp;
-
-  wp = (WndProperty*)wf->FindByName(_T("prpRange"));
-  if (wp)
-    wp->SetEnabled(IsLocked);
-
-  wp = (WndProperty*)wf->FindByName(_T("prpRadial"));
-  if (wp)
-    wp->SetEnabled(IsLocked);
+  SetFormControlEnabled(*wf, _T("prpRange"), IsLocked);
+  SetFormControlEnabled(*wf, _T("prpRadial"), IsLocked);
 }
 
 /**
@@ -223,7 +232,6 @@ LockCalculatorUI()
 static void
 RefreshCalculator()
 {
-  WndProperty* wp = NULL;
   bool nodisplay = false;
   bool bAAT;
   fixed aatTime;
@@ -244,32 +252,24 @@ RefreshCalculator()
   }
 
   if (chkbOptimized) {
-    chkbOptimized->set_visible(bAAT);
+    chkbOptimized->SetVisible(bAAT);
     chkbOptimized->SetState(!IsLocked);
   }
 
   LockCalculatorUI();
 
-  wp = (WndProperty*)wf->FindByName(_T("prpRange"));
-  if (wp) {
-    DataFieldFloat *df = (DataFieldFloat *)wp->GetDataField();
-    df->Set(Range * fixed(100));
-    wp->RefreshDisplay();
-    wp->set_visible(!nodisplay);
-  }
+  ShowOptionalFormControl(*wf, _T("prpRange"), !nodisplay);
+  ShowOptionalFormControl(*wf, _T("prpRadial"), !nodisplay);
 
-  wp = (WndProperty*)wf->FindByName(_T("prpRadial"));
-  if (wp) {
+  if (!nodisplay) {
+    LoadFormProperty(*wf, _T("prpRange"), Range * 100);
+
     fixed rTemp = Radial;
     if (rTemp < fixed(-90))
       rTemp += fixed(180);
     else if (rTemp > fixed(90))
       rTemp -= fixed(180);
-
-    DataFieldFloat *df = (DataFieldFloat *)wp->GetDataField();
-    df->Set(rTemp);
-    wp->RefreshDisplay();
-    wp->set_visible(!nodisplay);
+    LoadFormProperty(*wf, _T("prpRadial"), rTemp);
   }
 
   // update outputs
@@ -286,11 +286,18 @@ RefreshCalculator()
   const ElementStat &total = CommonInterface::Calculated().task_stats.total;
   if (total.remaining_effective.IsDefined())
     LoadFormProperty(*wf, _T("prpSpeedRemaining"), UnitGroup::TASK_SPEED,
-                     total.remaining_effective.get_speed());
+                     total.remaining_effective.GetSpeed());
 
   if (total.travelled.IsDefined())
     LoadOptionalFormProperty(*wf, _T("prpSpeedAchieved"), UnitGroup::TASK_SPEED,
-                             total.travelled.get_speed());
+                             total.travelled.GetSpeed());
+}
+
+void
+TargetDialogMapWindow::OnTaskModified()
+{
+  TargetMapWindow::OnTaskModified();
+  RefreshCalculator();
 }
 
 static void
@@ -308,11 +315,10 @@ OnNextClicked(gcc_unused WndButton &Sender)
     target_point++;
   else
     target_point = ActiveTaskPointOnEntry;
-  WndProperty *wp = (WndProperty*)wf->FindByName(_T("prpTaskPoint"));
-  DataFieldEnum* dfe = (DataFieldEnum*)wp->GetDataField();
-  dfe->Set(target_point - ActiveTaskPointOnEntry);
+
+  LoadFormPropertyEnum(*wf, _T("prpTaskPoint"),
+                       target_point - ActiveTaskPointOnEntry);
   RefreshTargetPoint();
-  wp->RefreshDisplay();
 }
 
 static void
@@ -323,11 +329,9 @@ OnPrevClicked(gcc_unused WndButton &Sender)
   else
     target_point = TaskSize - 1;
 
-  WndProperty *wp = (WndProperty*)wf->FindByName(_T("prpTaskPoint"));
-  DataFieldEnum* dfe = (DataFieldEnum*)wp->GetDataField();
-  dfe->Set(target_point - ActiveTaskPointOnEntry);
+  LoadFormPropertyEnum(*wf, _T("prpTaskPoint"),
+                       target_point - ActiveTaskPointOnEntry);
   RefreshTargetPoint();
-  wp->RefreshDisplay();
 }
 
 static void
@@ -434,7 +438,7 @@ OnTaskPointData(DataField *Sender, DataField::DataAccessMode Mode)
   }
 }
 
-static gcc_constexpr_data CallBackTableEntry CallBackTable[] = {
+static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnCreateMap),
   DeclareCallBackEntry(OnTaskPointData),
   DeclareCallBackEntry(OnRangeData),
@@ -502,19 +506,11 @@ InitTargetPoints()
 static void
 drawBtnNext()
 {
-  btnNext = (WndSymbolButton*)wf->FindByName(_T("btnNext"));
-  assert(btnNext != NULL);
-
-  if (IsAltair())
+  if (IsAltair()) {
     // altair already has < and > buttons on WndProperty
-    btnNext->set_visible(false);
-
-  btnPrev = (WndSymbolButton*)wf->FindByName(_T("btnPrev"));
-  assert(btnPrev != NULL);
-
-  if (IsAltair())
-    // altair already has < and > buttons on WndProperty
-    btnPrev->set_visible(false);
+    ShowFormControl(*wf, _T("btnNext"), false);
+    ShowFormControl(*wf, _T("btnPrev"), false);
+  }
 }
 
 void

@@ -38,12 +38,12 @@ InputEvents::eventTraffic(const TCHAR *misc)
   LoadFlarmDatabases();
 
   if (StringIsEqual(misc, _T("show"))) {
-    if (!CommonInterface::Basic().flarm.available ||
+    if (CommonInterface::Basic().flarm.traffic.IsEmpty() ||
         IsFlavour(_T("Traffic")))
       return;
 
     traffic_widget = new TrafficWidget();
-    CommonInterface::main_window.SetWidget(traffic_widget);
+    CommonInterface::main_window->SetWidget(traffic_widget);
     SetFlavour(_T("Traffic"));
     return;
   }

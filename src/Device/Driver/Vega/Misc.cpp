@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "Device/Driver/Vega.hpp"
 #include "Internal.hpp"
+#include "Operation/Operation.hpp"
 
 void
 VegaDevice::LinkTimeout()
@@ -30,16 +31,18 @@ VegaDevice::LinkTimeout()
   AbstractDevice::LinkTimeout();
   detected = false;
 
-  settings_mutex.Lock();
+  settings.Lock();
   settings.clear();
-  settings_mutex.Unlock();
+  settings.Unlock();
 }
 
 void
 VegaDevice::OnSysTicker(const DerivedInfo &calculated)
 {
-  if (detected)
-    VarioWriteSettings(calculated);
+  if (detected) {
+    NullOperationEnvironment env;
+    VarioWriteSettings(calculated, env);
+  }
 
 #ifdef UAV_APPLICATION
   const ThermalLocatorInfo &t = calculated.thermal_locator;

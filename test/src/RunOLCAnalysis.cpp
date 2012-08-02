@@ -20,14 +20,11 @@
 }
 */
 
-#include "Engine/Math/Earth.hpp"
 #include "Engine/Trace/Trace.hpp"
 #include "Contest/ContestManager.hpp"
-#include "Engine/Navigation/Aircraft.hpp"
 #include "Printing.hpp"
 #include "OS/Args.hpp"
 #include "DebugReplay.hpp"
-#include "NMEA/Aircraft.hpp"
 
 #include <assert.h>
 #include <stdio.h>
@@ -50,20 +47,34 @@ static ContestManager olc_league(OLC_League, full_trace, sprint_trace);
 static ContestManager olc_plus(OLC_Plus, full_trace, sprint_trace);
 static ContestManager xcontest(OLC_XContest, full_trace, sprint_trace);
 static ContestManager sis_at(OLC_SISAT, full_trace, sprint_trace);
+static ContestManager olc_netcoupe(OLC_NetCoupe, full_trace, sprint_trace);
 
 static int
 TestOLC(DebugReplay &replay)
 {
+  bool released = false;
+
   for (int i = 1; replay.Next(); i++) {
     if (i % 500 == 0) {
       putchar('.');
       fflush(stdout);
     }
 
-    const AircraftState state =
-      ToAircraftState(replay.Basic(), replay.Calculated());
-    full_trace.append(state);
-    sprint_trace.append(state);
+    const MoreData &basic = replay.Basic();
+    if (!basic.time_available || !basic.location_available ||
+        !basic.NavAltitudeAvailable())
+      continue;
+
+    if (!released && !negative(replay.Calculated().flight.release_time)) {
+      released = true;
+
+      full_trace.EraseEarlierThan(replay.Calculated().flight.release_time);
+      sprint_trace.EraseEarlierThan(replay.Calculated().flight.release_time);
+    }
+
+    const TracePoint point(basic);
+    full_trace.push_back(point);
+    sprint_trace.push_back(point);
 
     olc_sprint.UpdateIdle();
     olc_league.UpdateIdle();
@@ -75,6 +86,7 @@ TestOLC(DebugReplay &replay)
   olc_plus.SolveExhaustive();
   xcontest.SolveExhaustive();
   sis_at.SolveExhaustive();
+  olc_netcoupe.SolveExhaustive();
 
   putchar('\n');
 
@@ -106,11 +118,15 @@ TestOLC(DebugReplay &replay)
   std::cout << "sis_at\n";
   PrintHelper::print(sis_at.GetStats().GetResult(0));
 
+  std::cout << "netcoupe\n";
+  PrintHelper::print(olc_netcoupe.GetStats().GetResult());
+
   olc_classic.Reset();
   olc_fai.Reset();
   olc_sprint.Reset();
   olc_league.Reset();
   olc_plus.Reset();
+  olc_netcoupe.Reset();
   full_trace.clear();
   sprint_trace.clear();
 

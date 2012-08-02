@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "ConfiguredPort.hpp"
 #include "NullPort.hpp"
+#include "SocketPort.hpp"
 #include "TCPPort.hpp"
 #include "K6BtPort.hpp"
 #include "Profile/DeviceConfig.hpp"
@@ -78,7 +79,7 @@ detect_gps(TCHAR *path, size_t path_max_size)
 }
 
 static Port *
-WrapPort(const DeviceConfig &config, Port::Handler &handler, Port *port)
+WrapPort(const DeviceConfig &config, DataHandler &handler, Port *port)
 {
   if (config.k6bt && config.MaybeBluetooth())
     port = new K6BtPort(port, config.baud_rate, handler);
@@ -92,7 +93,7 @@ WrapPort(const DeviceConfig &config, Port::Handler &handler, Port *port)
 }
 
 static Port *
-OpenPortInternal(const DeviceConfig &config, Port::Handler &handler)
+OpenPortInternal(const DeviceConfig &config, DataHandler &handler)
 {
   const TCHAR *path = NULL;
   TCHAR buffer[MAX_PATH];
@@ -116,6 +117,14 @@ OpenPortInternal(const DeviceConfig &config, Port::Handler &handler)
     }
 
     return OpenAndroidBluetoothPort(config.bluetooth_mac, handler);
+#else
+    LogStartUp(_T("Bluetooth not available on this platform"));
+    return NULL;
+#endif
+
+  case DeviceConfig::PortType::RFCOMM_SERVER:
+#ifdef ANDROID
+    return OpenAndroidBluetoothServerPort(handler);
 #else
     LogStartUp(_T("Bluetooth not available on this platform"));
     return NULL;
@@ -152,6 +161,16 @@ OpenPortInternal(const DeviceConfig &config, Port::Handler &handler)
   case DeviceConfig::PortType::TCP_LISTENER: {
     TCPPort *port = new TCPPort(handler);
     if (!port->Open(config.tcp_port)) {
+      delete port;
+      return NULL;
+    }
+
+    return port;
+  }
+
+  case DeviceConfig::PortType::UDP_LISTENER: {
+    SocketPort *port = new SocketPort(handler);
+    if (!port->OpenUDPListener(config.tcp_port)) {
       delete port;
       return NULL;
     }
@@ -203,7 +222,7 @@ OpenPortInternal(const DeviceConfig &config, Port::Handler &handler)
 }
 
 Port *
-OpenPort(const DeviceConfig &config, Port::Handler &handler)
+OpenPort(const DeviceConfig &config, DataHandler &handler)
 {
   Port *port = OpenPortInternal(config, handler);
   if (port != NULL)

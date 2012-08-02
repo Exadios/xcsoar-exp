@@ -21,7 +21,7 @@
  */
 
 #include "AirspacePredicateInside.hpp"
-#include "Navigation/GeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
 #include "../AbstractAirspace.hpp"
 
 AirspacePredicateInside::AirspacePredicateInside(
@@ -29,7 +29,7 @@ AirspacePredicateInside::AirspacePredicateInside(
   :location(_location) {}
 
 bool 
-AirspacePredicateInside::condition(const AbstractAirspace &airspace) const
+AirspacePredicateInside::operator()(const AbstractAirspace &airspace) const
 {
   return airspace.Inside(location);
 }

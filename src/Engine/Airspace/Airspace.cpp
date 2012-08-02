@@ -19,29 +19,30 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
+
 #include "Airspace.hpp"
 #include "AbstractAirspace.hpp"
+#include "AirspaceIntersectionVector.hpp"
 
 void 
-Airspace::destroy()
+Airspace::Destroy()
 {
-  delete pimpl_airspace;
+  delete airspace;
 }
 
 Airspace::Airspace(AbstractAirspace& airspace,
                    const TaskProjection& tp):
   FlatBoundingBox(airspace.GetBoundingBox(tp)),
-  pimpl_airspace(&airspace)
+  airspace(&airspace)
 {
-  pimpl_airspace->SetTaskProjection(tp);
 }
 
 
 bool 
-Airspace::inside(const AircraftState &loc) const
+Airspace::IsInside(const AircraftState &loc) const
 {
-  if (pimpl_airspace) {
-    return pimpl_airspace->Inside(loc);
+  if (airspace) {
+    return airspace->Inside(loc);
   } else {
     return false;
   }
@@ -49,10 +50,10 @@ Airspace::inside(const AircraftState &loc) const
 
 
 bool 
-Airspace::inside(const GeoPoint &loc) const
+Airspace::IsInside(const GeoPoint &loc) const
 {
-  if (pimpl_airspace) {
-    return pimpl_airspace->Inside(loc);
+  if (airspace) {
+    return airspace->Inside(loc);
   } else {
     return false;
   }
@@ -60,17 +61,18 @@ Airspace::inside(const GeoPoint &loc) const
 
 
 bool 
-Airspace::intersects(const FlatRay& ray) const
+Airspace::Intersects(const FlatRay& ray) const
 {
   return FlatBoundingBox::Intersects(ray);
 }
 
 
 AirspaceIntersectionVector
-Airspace::Intersects(const GeoPoint& g1, const GeoPoint &end) const
+Airspace::Intersects(const GeoPoint& g1, const GeoPoint &end,
+                     const TaskProjection &projection) const
 {
-  if (pimpl_airspace) {
-    return pimpl_airspace->Intersects(g1, end);
+  if (airspace) {
+    return airspace->Intersects(g1, end, projection);
   } else {
     AirspaceIntersectionVector null;
     return null;
@@ -78,37 +80,46 @@ Airspace::Intersects(const GeoPoint& g1, const GeoPoint &end) const
 }
 
 void 
-Airspace::set_ground_level(const fixed alt) const
+Airspace::SetGroundLevel(const fixed alt) const
 {
-  if (pimpl_airspace) 
-    pimpl_airspace->SetGroundLevel(alt);
+  if (airspace) 
+    airspace->SetGroundLevel(alt);
   else
     assert(1);
+}
+
+bool
+Airspace::NeedGroundLevel() const
+{
+  if (airspace)
+    return airspace->NeedGroundLevel();
+  else
+    return false;
 }
 
 void 
-Airspace::set_flight_level(const AtmosphericPressure &press) const
+Airspace::SetFlightLevel(const AtmosphericPressure &press) const
 {
-  if (pimpl_airspace) 
-    pimpl_airspace->SetFlightLevel(press);
+  if (airspace) 
+    airspace->SetFlightLevel(press);
   else
     assert(1);
 }
 
 void
-Airspace::set_activity(const AirspaceActivity mask) const
+Airspace::SetActivity(const AirspaceActivity mask) const
 {
-  if (pimpl_airspace)
-    pimpl_airspace->SetActivity(mask);
+  if (airspace)
+    airspace->SetActivity(mask);
   else
     assert(1);
 }
 
 void
-Airspace::clear_clearance() const
+Airspace::ClearClearance() const
 {
-  if (pimpl_airspace)
-    pimpl_airspace->ClearClearance();
+  if (airspace)
+    airspace->ClearClearance();
   else
     assert(1);
 }

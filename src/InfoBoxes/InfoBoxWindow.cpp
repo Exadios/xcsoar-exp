@@ -21,8 +21,9 @@ Copyright_License {
 }
 */
 
-#include "InfoBoxes/InfoBoxWindow.hpp"
-#include "InfoBoxes/InfoBoxManager.hpp"
+#include "InfoBoxWindow.hpp"
+#include "InfoBoxSettings.hpp"
+#include "Border.hpp"
 #include "Look/InfoBoxLook.hpp"
 #include "Look/UnitsLook.hpp"
 #include "Input/InputEvents.hpp"
@@ -31,34 +32,32 @@ Copyright_License {
 #include "Screen/UnitSymbol.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/BufferCanvas.hpp"
-#include "Screen/ContainerWindow.hpp"
 #include "Screen/Key.h"
-#include "Interface.hpp"
-#include "Asset.hpp"
+#include "Dialogs/dlgInfoBoxAccess.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Screen/SubCanvas.hpp"
 #endif
 
 #include <algorithm>
-#include <stdio.h>
-#include <assert.h>
 
 using std::max;
 
 #define SELECTORWIDTH Layout::Scale(5)
 
-InfoBoxWindow::InfoBoxWindow(ContainerWindow &_parent,
+InfoBoxWindow::InfoBoxWindow(ContainerWindow &parent,
                              PixelScalar x, PixelScalar y,
                              UPixelScalar width, UPixelScalar height,
-                             int border_flags, const InfoBoxSettings &_settings,
+                             unsigned border_flags,
+                             const InfoBoxSettings &_settings,
                              const InfoBoxLook &_look,
                              const UnitsLook &_units_look,
+                             unsigned _id,
                              WindowStyle style)
   :content(NULL),
-   parent(_parent),
    settings(_settings), look(_look), units_look(_units_look),
    border_kind(border_flags),
+   id(_id),
    force_draw_selector(false),
    focus_timer(*this)
 {
@@ -66,19 +65,11 @@ InfoBoxWindow::InfoBoxWindow(ContainerWindow &_parent,
 
   style.EnableDoubleClicks();
   set(parent, x, y, width, height, style);
-
-  id = -1;
 }
 
 InfoBoxWindow::~InfoBoxWindow() {
   delete content;
   reset();
-}
-
-void
-InfoBoxWindow::SetID(const int _id)
-{
-  id = _id;
 }
 
 void
@@ -104,8 +95,7 @@ InfoBoxWindow::PaintTitle(Canvas &canvas)
   PixelScalar halftextwidth = (title_rect.left + title_rect.right - tsize.cx) / 2;
   PixelScalar x = max(PixelScalar(1),
                       PixelScalar(title_rect.left + halftextwidth));
-  PixelScalar y = title_rect.top + 1 + font.GetCapitalHeight() -
-    font.GetAscentHeight();
+  PixelScalar y = title_rect.top;
 
   canvas.TextAutoClipped(x, y, data.title);
 
@@ -195,7 +185,7 @@ InfoBoxWindow::PaintValue(Canvas &canvas)
   PixelSize unit_size;
   const UnitSymbol *unit_symbol = units_look.GetSymbol(data.value_unit);
   if (unit_symbol != NULL) {
-    unit_size = unit_symbol->get_size();
+    unit_size = unit_symbol->GetSize();
   } else {
     unit_size.cx = 0;
     unit_size.cy = 0;
@@ -217,7 +207,7 @@ InfoBoxWindow::PaintValue(Canvas &canvas)
       return;
 #endif
 
-    unit_symbol->draw(canvas, x + value_size.cx,
+    unit_symbol->Draw(canvas, x + value_size.cx,
                       y + ascent_height - unit_symbol->GetScreenSize().cy,
                       look.inverse ? UnitSymbol::INVERSE : UnitSymbol::NORMAL);
   }
@@ -239,8 +229,7 @@ InfoBoxWindow::PaintComment(Canvas &canvas)
   PixelScalar x = max(PixelScalar(1),
                       PixelScalar((comment_rect.left + comment_rect.right
                                    - tsize.cx) / 2));
-  PixelScalar y = comment_rect.top + 1 + font.GetCapitalHeight()
-    - font.GetAscentHeight();
+  PixelScalar y = comment_rect.top;
 
   canvas.TextAutoClipped(x, y, data.comment);
 }
@@ -248,10 +237,10 @@ InfoBoxWindow::PaintComment(Canvas &canvas)
 void
 InfoBoxWindow::Paint(Canvas &canvas)
 {
-  if (has_focus() || force_draw_selector)
-    canvas.clear(look.focused_background_color);
+  if (HasFocus() || force_draw_selector)
+    canvas.Clear(look.focused_background_color);
   else
-    canvas.clear(look.background_color);
+    canvas.Clear(look.background_color);
 
   if (data.GetCustom() && content != NULL)
     content->OnCustomPaint(*this, canvas);
@@ -269,19 +258,19 @@ InfoBoxWindow::Paint(Canvas &canvas)
       height = canvas.get_height();
 
     if (border_kind & BORDERTOP) {
-      canvas.line(0, 0, width - 1, 0);
+      canvas.DrawLine(0, 0, width - 1, 0);
     }
 
     if (border_kind & BORDERRIGHT) {
-      canvas.line(width - 1, 0, width - 1, height);
+      canvas.DrawLine(width - 1, 0, width - 1, height);
     }
 
     if (border_kind & BORDERBOTTOM) {
-      canvas.line(0, height - 1, width - 1, height - 1);
+      canvas.DrawLine(0, height - 1, width - 1, height - 1);
     }
 
     if (border_kind & BORDERLEFT) {
-      canvas.line(0, 0, 0, height - 1);
+      canvas.DrawLine(0, 0, 0, height - 1);
     }
   }
 }
@@ -294,11 +283,11 @@ InfoBoxWindow::PaintInto(Canvas &dest, PixelScalar xoff, PixelScalar yoff,
   SubCanvas canvas(dest, xoff, yoff, width, height);
   Paint(canvas);
 #else
-  PixelSize size = get_size();
+  const PixelSize size = GetSize();
   BufferCanvas buffer(dest, size.cx, size.cy);
 
   Paint(buffer);
-  dest.stretch(xoff, yoff, width, height, buffer, 0, 0, size.cx, size.cy);
+  dest.Stretch(xoff, yoff, width, height, buffer, 0, 0, size.cx, size.cy);
 #endif
 }
 
@@ -339,6 +328,16 @@ InfoBoxWindow::UpdateContent()
       Invalidate(comment_rect);
 #endif
   }
+}
+
+void
+InfoBoxWindow::ShowDialog()
+{
+  force_draw_selector = true;
+
+  dlgInfoBoxAccessShowModeless(id, GetDialogContent());
+
+  force_draw_selector = false;
 }
 
 bool
@@ -382,7 +381,7 @@ InfoBoxWindow::OnResize(UPixelScalar width, UPixelScalar height)
 {
   PaintWindow::OnResize(width, height);
 
-  PixelRect rc = get_client_rect();
+  PixelRect rc = GetClientRect();
 
   if (border_kind & BORDERLEFT)
     rc.left += look.BORDER_WIDTH;
@@ -397,12 +396,10 @@ InfoBoxWindow::OnResize(UPixelScalar width, UPixelScalar height)
     rc.bottom -= look.BORDER_WIDTH;
 
   title_rect = rc;
-  title_rect.bottom = rc.top + look.title.font->GetCapitalHeight() + 2;
+  title_rect.bottom = rc.top + look.title.font->GetHeight();
 
   comment_rect = rc;
-  comment_rect.top = comment_rect.bottom
-    - (look.comment.font->GetCapitalHeight() + 2);
-
+  comment_rect.top = comment_rect.bottom - (look.comment.font->GetHeight() + 2);
   value_rect = rc;
   value_rect.top = title_rect.bottom;
   value_rect.bottom = comment_rect.top;
@@ -436,12 +433,12 @@ InfoBoxWindow::OnKeyDown(unsigned key_code)
   case VK_RETURN:
     focus_timer.Schedule(FOCUS_TIMEOUT_MAX);
     if (!HandleKey(InfoBoxContent::ibkEnter))
-      InfoBoxManager::ShowDlgInfoBox(id);
+      ShowDialog();
     return true;
 
   case VK_ESCAPE:
     focus_timer.Cancel();
-    parent.SetFocus();
+    FocusParent();
     return true;
   }
 
@@ -469,18 +466,15 @@ InfoBoxWindow::OnMouseDown(PixelScalar x, PixelScalar y)
 bool
 InfoBoxWindow::OnMouseUp(PixelScalar x, PixelScalar y)
 {
-  if (!has_focus())
+  if (!HasFocus())
     return PaintWindow::OnMouseUp(x, y);
 
   if (click_clock.IsDefined()) {
     ReleaseCapture();
 
-    if ((unsigned)x < get_width() && (unsigned)y < get_height() &&
-        click_clock.Check(1000)) {
-      force_draw_selector = true;
-      InfoBoxManager::ShowDlgInfoBox(id);
-      force_draw_selector = false;
-    }
+    if ((unsigned)x < GetWidth() && (unsigned)y < GetHeight() &&
+        click_clock.Check(1000))
+      ShowDialog();
 
     click_clock.Reset();
     return true;
@@ -544,7 +538,7 @@ InfoBoxWindow::OnTimer(WindowTimer &timer)
 {
   if (timer == focus_timer) {
     focus_timer.Cancel();
-    parent.SetFocus();
+    FocusParent();
     return true;
   } else
     return PaintWindow::OnTimer(timer);

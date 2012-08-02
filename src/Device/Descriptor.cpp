@@ -25,6 +25,7 @@ Copyright_License {
 #include "Device/Driver.hpp"
 #include "Device/Parser.hpp"
 #include "Driver/FLARM/Device.hpp"
+#include "Driver/LX/Internal.hpp"
 #include "Device/Internal.hpp"
 #include "Device/Register.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
@@ -32,7 +33,7 @@ Copyright_License {
 #include "Port/ConfiguredPort.hpp"
 #include "NMEA/Info.hpp"
 #include "Thread/Mutex.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "Logger/NMEALogger.hpp"
 #include "Language/Language.hpp"
 #include "Operation/Operation.hpp"
@@ -372,7 +373,17 @@ DeviceDescriptor::IsNMEAOut() const
 bool
 DeviceDescriptor::IsManageable() const
 {
-  return driver != NULL && driver->IsManageable();
+  if (driver != NULL) {
+    if (driver->IsManageable())
+      return true;
+
+    if (_tcscmp(driver->name, _T("LX")) == 0 && device != NULL) {
+      const LXDevice &lx = *(const LXDevice *)device;
+      return lx.IsV7() || lx.IsNano();
+    }
+  }
+
+  return false;
 }
 
 bool
@@ -457,16 +468,16 @@ DeviceDescriptor::ForwardLine(const char *line)
 }
 
 bool
-DeviceDescriptor::WriteNMEA(const char *line)
+DeviceDescriptor::WriteNMEA(const char *line, OperationEnvironment &env)
 {
   assert(line != NULL);
 
-  return port != NULL && PortWriteNMEA(*port, line);
+  return port != NULL && PortWriteNMEA(*port, line, env);
 }
 
 #ifdef _UNICODE
 bool
-DeviceDescriptor::WriteNMEA(const TCHAR *line)
+DeviceDescriptor::WriteNMEA(const TCHAR *line, OperationEnvironment &env)
 {
   assert(line != NULL);
 
@@ -478,7 +489,7 @@ DeviceDescriptor::WriteNMEA(const TCHAR *line)
                             NULL, NULL) <= 0)
     return false;
 
-  return WriteNMEA(buffer);
+  return WriteNMEA(buffer, env);
 }
 #endif
 

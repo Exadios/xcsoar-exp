@@ -26,17 +26,23 @@ Copyright_License {
 #include "LogFile.hpp"
 #include "Asset.hpp"
 #include "LocalPath.hpp"
-#include "StringUtil.hpp"
+#include "Util/StringUtil.hpp"
 #include "IO/KeyValueFileReader.hpp"
 #include "IO/FileLineReader.hpp"
 #include "IO/TextWriter.hpp"
+#include "IO/FileTransaction.hpp"
 #include "OS/FileUtil.hpp"
 #include "OS/PathName.hpp"
+#include "Compatibility/path.h"
 
 #include <string.h>
 #include <windef.h> /* for MAX_PATH */
 
 #define XCSPROFILE "xcsoar-registry.prf"
+
+namespace Profile {
+  static bool SaveFile(const FileTransaction &transaction);
+}
 
 static TCHAR startProfileFile[MAX_PATH];
 
@@ -84,24 +90,33 @@ Profile::Save()
   SaveFile(startProfileFile);
 }
 
+bool
+Profile::SaveFile(const FileTransaction &transaction)
+{
+  TextWriter writer(transaction.GetTemporaryPath());
+  // ... on error -> return
+  if (!writer.IsOpen())
+    return false;
+
+  KeyValueFileWriter kvwriter(writer);
+  Export(kvwriter);
+
+  return writer.Flush();
+}
+
 void
 Profile::SaveFile(const TCHAR *szFile)
 {
   if (StringIsEmpty(szFile))
     return;
 
-  // Try to open the file for writing
-  TextWriter writer(szFile);
-  // ... on error -> return
-  if (writer.error())
-    return;
-
-  KeyValueFileWriter kvwriter(writer);
-
   LogStartUp(_T("Saving profile to %s"), szFile);
-  Export(kvwriter);
-}
 
+  // Try to open the file for writing
+  FileTransaction transaction(szFile);
+  if (SaveFile(transaction))
+    transaction.Commit();
+}
 
 void
 Profile::SetFiles(const TCHAR* override)
@@ -151,6 +166,22 @@ Profile::GetPathIsEqual(const TCHAR *key, const TCHAR *value)
     return false;
 
   return StringIsEqual(saved, value);
+}
+
+const TCHAR *
+Profile::GetPathBase(const TCHAR *key)
+{
+  const TCHAR *p = Get(key);
+  if (p == NULL)
+    return NULL;
+
+  if (DIR_SEPARATOR != '\\') {
+    const TCHAR *backslash = _tcsrchr(p, _T('\\'));
+    if (backslash != NULL)
+      p = backslash + 1;
+  }
+
+  return BaseName(p);
 }
 
 void

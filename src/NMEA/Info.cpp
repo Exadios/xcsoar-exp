@@ -44,7 +44,7 @@ SwitchInfo::Reset()
 void
 GPSState::Reset()
 {
-  fix_quality = 0;
+  fix_quality = FixQuality::NO_FIX;
   fix_quality_available.Clear();
   real = false;
   simulator = false;
@@ -60,10 +60,10 @@ void
 GPSState::Expire(fixed now)
 {
   if (fix_quality_available.Expire(now, fixed(5)))
-    fix_quality = 0;
+    fix_quality = FixQuality::NO_FIX;
 
   satellites_used_available.Expire(now, fixed(5));
-  satellite_ids_available.Expire(now, fixed(5));
+  satellite_ids_available.Expire(now, fixed(60));
 }
 
 void
@@ -150,6 +150,8 @@ NMEAInfo::Reset()
 
   // XXX StallRatio
 
+  device.Clear();
+  secondary_device.Clear();
   flarm.Clear();
 }
 
@@ -199,8 +201,9 @@ NMEAInfo::Expire()
   engine_noise_level_available.Expire(clock, fixed(30));
   voltage_available.Expire(clock, fixed(300));
   battery_level_available.Expire(clock, fixed(300));
-  flarm.Refresh(clock);
+  flarm.Expire(clock);
   gps.Expire(clock);
+  attitude.Expire(clock);
 }
 
 void
