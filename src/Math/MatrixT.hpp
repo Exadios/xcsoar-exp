@@ -121,6 +121,20 @@ template<typename T, size_t Trow, size_t Tcol> class MatrixT
 #endif
 
     /**
+     * In place upper triangular matrix Cholesky (\$UDU\$) factorization.
+     *
+     * This matrix will be factorized into \$UDU^T\$.
+     * @return The upper factorization of this matrix.
+     */
+    const MatrixT& Factor();
+
+    /**
+     * In place upper triangular matrix inverstion.
+     * @return The inverse of the upper triangle in the lower tiangle.
+     */
+    const MatrixT& UpperInvert();
+
+    /**
      * Give the row.
      * @param i The row index.
      * @return The row.

@@ -119,6 +119,50 @@ MatrixT<T, Trow, Tcol>::operator*(const MatrixT<T, Trow, Tcol>& rhs)
 #endif
 
 //------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol> inline const MatrixT<T, Trow, Tcol>&
+MatrixT<T, Trow, Tcol>::Factor()
+  {
+  assert(Trow == Tcol);
+  T alpha, beta;
+  size_t i, j, k;
+
+  for (j = Tcol - 1; j > 0; j--)
+    {
+    alpha = T(1.0 / (*this)[j][j]);
+    
+    for (k = 0; k < j; k++)
+      {
+      beta = (*this)[k][j];
+      (*this)[k][j] = alpha * beta;
+      for (i = 0; i <= k; k++)
+        (*this)[i][k] = beta * (*this)[i][j];
+      }
+    }
+  return *this;
+  }
+
+//------------------------------------------------------------------------------
+template<typename T, size_t Trow, size_t Tcol> inline const MatrixT<T, Trow, Tcol>&
+MatrixT<T, Trow, Tcol>::UpperInvert()
+  {
+  assert(Trow == Tcol);
+  T val;
+  size_t i, j, k;
+
+  for (i = Trow - 2; i >= 0; i--)
+    { // intended overflow if BEG==0
+    for (k = i + 1; k < Trow; k++)
+      {
+      val = (*this)[i][k];
+      for (j = i + 1; j <= k - 1; j++)
+        val += (*this)[i][j] * (*this)[k][j];
+      (*this)[k][i] = -val;
+      }
+    }
+  return *this;
+  }
+
+//------------------------------------------------------------------------------
 template<typename T, size_t Trow, size_t Tcol> inline slice_iter<T>
 MatrixT<T, Trow, Tcol>::row(size_t i)
   {
