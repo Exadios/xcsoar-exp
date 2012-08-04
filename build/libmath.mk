@@ -15,6 +15,7 @@ MATH_SOURCES = \
 	$(MATH_SRC_DIR)/SelfTimingKalmanFilter1d.cpp \
 	$(MATH_SRC_DIR)/LowPassFilter.cpp \
 	$(MATH_SRC_DIR)/MatrixT.cpp \
-	$(MATH_SRC_DIR)/VectorT.cpp
+	$(MATH_SRC_DIR)/VectorT.cpp \
+	$(MATH_SRC_DIR)/kalman/kstatics.cpp
 
 $(eval $(call link-library,math,MATH))
