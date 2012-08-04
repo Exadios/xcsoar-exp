@@ -348,7 +348,7 @@ operator*(const MatrixT<T, Trow, Tcol>& lhs, const MatrixT<T, Trow, Tcol>& rhs)
   for (size_t i = 0; i < Trow; i++)
     for (size_t j = 0; j < Tcol; j++)
       {
-      R[i][j](0);
+      R[i][j] = T(0);
       for (size_t k = 0; k < Tcol; k++)
         R[i][j] = R[i][j] + lhs[i][k] * rhs[k][j];
       }
@@ -363,7 +363,7 @@ operator*(const MatrixT<T, Trow, Tcol>& lhs, const VectorT<T, Trow>& rhs)
   VectorT<T, Trow> R;
   for (size_t i = 0; i < Trow; i++)
     {
-    R[i](0);
+    R[i] = T(0);
     for (size_t j = 0; j < Tcol; j++)
       R[i] = R[i] + lhs[i][j] * rhs[j];
     }
