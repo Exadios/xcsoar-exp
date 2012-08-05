@@ -87,6 +87,9 @@ namespace Kalman {
   class KFilter : public EKFilter<T, BEG, OQ, OVR, DBG> {
   public:
 
+    typedef KVector<T, BEG, DBG> Vector;  //!< Vector type.
+    typedef KMatrix<T, BEG, DBG> Matrix;  //!< Matrix type.
+
     //! Virtual destructor.
     virtual ~KFilter() = 0;
     

@@ -50,21 +50,21 @@ namespace Kalman {
     makeB();
 
     K_UINT_32 i, j;
-    x__.resize(n);
+    x__.resize(EKFilter<T, BEG, OQ, OVR, DBG>::n);
 
-    for (i = BEG; i < n + BEG; ++i) {
+    for (i = BEG; i < EKFilter<T, BEG, OQ, OVR, DBG>::n + BEG; ++i) {
 
       x__(i) = T(0.0);
 
-      for (j = BEG; j < n + BEG; ++j)
-        x__(i) += A(i,j) * x(j);
+      for (j = BEG; j < EKFilter<T, BEG, OQ, OVR, DBG>::n + BEG; ++j)
+        x__(i) += EKFilter<T, BEG, OQ, OVR, DBG>::A(i,j) * EKFilter<T, BEG, OQ, OVR, DBG>::x(j);
 
-      for (j = BEG; j < nu + BEG; ++j)
-        x__(i) += B(i,j) * u(j);
+      for (j = BEG; j < EKFilter<T, BEG, OQ, OVR, DBG>::nu + BEG; ++j)
+        x__(i) += B(i,j) * EKFilter<T, BEG, OQ, OVR, DBG>::u(j);
 
     }
 
-    x.swap(x__);
+    EKFilter<T, BEG, OQ, OVR, DBG>::x.swap(x__);
 
   }
 
@@ -74,13 +74,13 @@ namespace Kalman {
     // z = Hx + Vv
     K_UINT_32 i, j;
 
-    z.resize(m);
-    for (i = BEG; i < m + BEG; ++i) {
+    EKFilter<T, BEG, OQ, OVR, DBG>::z.resize(EKFilter<T, BEG, OQ, OVR, DBG>::m);
+    for (i = BEG; i < EKFilter<T, BEG, OQ, OVR, DBG>::m + BEG; ++i) {
 
-      z(i) = T(0.0);
+      EKFilter<T, BEG, OQ, OVR, DBG>::z(i) = T(0.0);
 
-      for (j = BEG; j < n + BEG; ++j)
-        z(i) += H(i,j) * x(j);
+      for (j = BEG; j < EKFilter<T, BEG, OQ, OVR, DBG>::n + BEG; ++j)
+        EKFilter<T, BEG, OQ, OVR, DBG>::z(i) += EKFilter<T, BEG, OQ, OVR, DBG>::H(i,j) * EKFilter<T, BEG, OQ, OVR, DBG>::x(j);
 
     }
 
@@ -89,8 +89,8 @@ namespace Kalman {
   template<typename T, K_UINT_32 BEG, bool OQ, bool OVR, bool DBG>
   void KFilter<T, BEG, OQ, OVR, DBG>::sizeUpdate() {
 
-    if (flags & ( KALMAN_N_MODIFIED | KALMAN_NU_MODIFIED ) ) {
-      B.resize(n, nu);
+    if (EKFilter<T, BEG, OQ, OVR, DBG>::flags & ( KALMAN_N_MODIFIED | KALMAN_NU_MODIFIED ) ) {
+      B.resize(EKFilter<T, BEG, OQ, OVR, DBG>::n, EKFilter<T, BEG, OQ, OVR, DBG>::nu);
       makeBaseB();
     }   
     
