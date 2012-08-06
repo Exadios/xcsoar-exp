@@ -115,7 +115,6 @@ namespace Kalman {
    * \par Template parameters
    * - \c T : Type of elements contained in matrices and vectors. Usually 
    *          \c float or \c double.
-   * - \c BEG : Starting index of matrices and vectors. Can be either 0 or 1.
    * - \c OQ : Optimize calculations on \a Q. This can be turned on if \a Q 
    *           is diagonal.
    * - \c OVR : Optimize calculations on \a V and \a R. This can be turned on
@@ -152,18 +151,14 @@ namespace Kalman {
    * Finally, note that \c operator>>() and \c operator<<() must be
    * compatible. Also, \c operator&() must not have been overloaded.
   */
-  template<typename T, K_UINT_32 BEG, bool OQ = false, 
-           bool OVR = false, bool DBG = true>
+  template<typename T, bool OQ = false, bool OVR = false, bool DBG = true>
   class EKFilter {
   public:
 
     typedef T type;     //!< Type of objects contained in matrices and vectors.
 
-    enum { beg = BEG    //!< Starting index of matrices and vectors.
-    };
-
-    typedef KVector<T, BEG, DBG> Vector;  //!< Vector type.
-    typedef KMatrix<T, BEG, DBG> Matrix;  //!< Matrix type.
+    typedef KVector<T, DBG> Vector;  //!< Vector type.
+    typedef KMatrix<T, DBG> Matrix;  //!< Matrix type.
 
     //! \name Constructor and Destructor.
     //@{

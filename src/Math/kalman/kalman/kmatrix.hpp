@@ -51,7 +51,6 @@ namespace Kalman {
    * \par Template parameters
    * - \c T : Type of elements contained in the matrix. Usually \c float or
    *          \c double.
-   * - \c BEG : Starting index of matrix. Can be either 0 or 1.
    * - \c DGB : Debug flag. If \c true, then bound-checking will be performed,
    *            and \c OutOfBoundError exceptions can be thrown.
    *
@@ -72,14 +71,11 @@ namespace Kalman {
    * Finally, note that \c operator>>() and \c operator<<() must be
    * compatible. Also, \c operator&() must not have been overloaded.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
+  template<typename T, bool DBG>
   class KMatrix {
   public:
 
     typedef T type;          //!< Type of objects contained in the matrix.
-
-    enum { beg = BEG         //!< Starting index of matrix, either 0 or 1.
-    };
 
     //! \name Constructors and destructor.
     //@{
@@ -172,14 +168,14 @@ namespace Kalman {
   };
 
   //! Reads a matrix from a stream.
-  template<typename T, K_UINT_32 BEG, bool DBG>
+  template<typename T, bool DBG>
   inline std::istream& operator>>(std::istream& is, 
-                                  KMatrix<T, BEG, DBG>& M);
+                                  KMatrix<T, DBG>& M);
 
   //! Writes a matrix to a stream.
-  template<typename T, K_UINT_32 BEG, bool DBG>
+  template<typename T, bool DBG>
   inline std::ostream& operator<<(std::ostream& os, 
-                                  const KMatrix<T, BEG, DBG>& M);
+                                  const KMatrix<T, DBG>& M);
 
   //! Handle type to a matrix printing context.
   typedef unsigned short KMatrixContext;

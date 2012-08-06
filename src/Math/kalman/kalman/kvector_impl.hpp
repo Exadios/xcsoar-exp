@@ -93,43 +93,43 @@ namespace Kalman {
    */
   extern KVectorContextImpl* currentVectorContext;
 
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KVector<T, BEG, DBG>::KVector()
+  template<typename T, bool DBG>
+  inline KVector<T, DBG>::KVector()
     : v_(0), n_(0) {}
 
   //! \param n Number of elements in vector. Can be 0.
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KVector<T, BEG, DBG>::KVector(K_UINT_32 n)
-    : vimpl_(n), v_( (n != 0) ? &vimpl_[0] - BEG : 0 ), n_(n) {}
+  template<typename T, bool DBG>
+  inline KVector<T, DBG>::KVector(K_UINT_32 n)
+    : vimpl_(n), v_( (n != 0) ? &vimpl_[0] : 0 ), n_(n) {}
 
   /**
    * \param n Number of elements in vector. Can be 0.
    * \param a Value to copy multiple times in the vector.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KVector<T, BEG, DBG>::KVector(K_UINT_32 n, const T& a)
-    : vimpl_(n, a), v_( (n != 0) ? &vimpl_[0] - BEG : 0 ), n_(n) {}
+  template<typename T, bool DBG>
+  inline KVector<T, DBG>::KVector(K_UINT_32 n, const T& a)
+    : vimpl_(n, a), v_( (n != 0) ? &vimpl_[0] : 0 ), n_(n) {}
 
   /**
    * This function allows to transform a C-style array of \c T objects in
-   * a <tt>KVector<T, BEG, DBG></tt> equivalent array. Note that objects from 
+   * a <tt>KVector<T, DBG></tt> equivalent array. Note that objects from 
    * the C-style array are copied into the vector, which may slow down
    * application if used extensively.
    * \param n Size of the \c v array. Can be 0.
    * \param v Pointer to an \c n-size array of \c T objects.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KVector<T, BEG, DBG>::KVector(K_UINT_32 n, const T* v)
-    : vimpl_(v, v + n), v_( (n != 0) ? &vimpl_[0] - BEG : 0 ), n_(n) {}
+  template<typename T, bool DBG>
+  inline KVector<T, DBG>::KVector(K_UINT_32 n, const T* v)
+    : vimpl_(v, v + n), v_( (n != 0) ? &vimpl_[0] : 0 ), n_(n) {}
 
   //! \param v Vector to copy. Can be an empty vector.
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KVector<T, BEG, DBG>::KVector(const KVector& v) 
-    : vimpl_(v.vimpl_), v_( (v.size() != 0) ? &vimpl_[0] - BEG : 0 ), 
+  template<typename T, bool DBG>
+  inline KVector<T, DBG>::KVector(const KVector& v) 
+    : vimpl_(v.vimpl_), v_( (v.size() != 0) ? &vimpl_[0] : 0 ), 
       n_(v.n_) {}
 
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KVector<T, BEG, DBG>::~KVector() {}
+  template<typename T, bool DBG>
+  inline KVector<T, DBG>::~KVector() {}
 
   /**
    * \param i Index of element to retrieve from vector.
@@ -137,14 +137,13 @@ namespace Kalman {
    * \exception OutOfBoundError Thrown if \c i is out of vector bounds and 
    *   <tt>DBG == true</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline T& KVector<T, BEG, DBG>::operator()(K_UINT_32 i) {
+  template<typename T, bool DBG>
+  inline T& KVector<T, DBG>::operator()(K_UINT_32 i) {
     if (DBG) {
-      if (i < BEG || i >= n_ + BEG) {
+      if (i >= n_) {
         KOSTRINGSTREAM oss;
         oss << "Trying to access element " << i << " not included in ["
-            << BEG << ", " << n_ + BEG - 1 << "]." KEND_OF_STREAM;
-        throw OutOfBoundError(oss.str());
+            << 0 << ", " << n_ - 1 << "]." KEND_OF_STREAM;
       }
     }
     return v_[i];
@@ -156,22 +155,21 @@ namespace Kalman {
    * \exception OutOfBoundError Thrown if i is out of vector bounds and 
    *   <tt>DBG == true</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline const T& KVector<T, BEG, DBG>::operator()(K_UINT_32 i) const {
+  template<typename T, bool DBG>
+  inline const T& KVector<T, DBG>::operator()(K_UINT_32 i) const {
     if (DBG) {
-      if (i < BEG || i >= n_ + BEG) {
+      if (i >= n_) {
         KOSTRINGSTREAM oss;
         oss << "Trying to access element " << i << " not included in ["
-            << BEG << ", " << n_ + BEG - 1 << "]." KEND_OF_STREAM;
-        throw OutOfBoundError(oss.str());
+            << 0 << ", " << n_ - 1 << "]." KEND_OF_STREAM;
       }
     }
     return v_[i];
   }
 
   //! \return The number of elements in the vector.
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline K_UINT_32 KVector<T, BEG, DBG>::size() const {
+  template<typename T, bool DBG>
+  inline K_UINT_32 KVector<T, DBG>::size() const {
     return n_;
   }
 
@@ -180,17 +178,17 @@ namespace Kalman {
    * \warning This function may invalidates pointers inside the vector.
    * \note Resizing to a smaller size does not free any memory. To do so,
    * one can swap the vector to shrink with a temporary copy of itself :
-   * <tt>KVector<T, BEG, DBG>(v).swap(v)</tt>.
+   * <tt>KVector<T, DBG>(v).swap(v)</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KVector<T, BEG, DBG>::resize(K_UINT_32 n) {
+  template<typename T, bool DBG>
+  inline void KVector<T, DBG>::resize(K_UINT_32 n) {
     
     if (n == n_) {
       return;
     }
     
     vimpl_.resize(n);
-    v_ = (n != 0) ? &vimpl_[0] - BEG : 0;
+    v_ = (n != 0) ? &vimpl_[0] : 0;
     n_ = n;
   }
 
@@ -198,8 +196,8 @@ namespace Kalman {
    * \param a Instance to copy to each element of vector.
    * \return A reference to the vector.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KVector<T, BEG, DBG>& KVector<T, BEG, DBG>::operator=(const T& a) {
+  template<typename T, bool DBG>
+  inline KVector<T, DBG>& KVector<T, DBG>::operator=(const T& a) {
     if (n_ == 0) {
       return *this;
     }
@@ -218,9 +216,9 @@ namespace Kalman {
    * \return A reference to the assigned vector.
    * \warning This function invalidates pointers inside the vector.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KVector<T, BEG, DBG>& 
-  KVector<T, BEG, DBG>::operator=(const KVector& v) {
+  template<typename T, bool DBG>
+  inline KVector<T, DBG>& 
+  KVector<T, DBG>::operator=(const KVector& v) {
     KVector temp(v);
     swap(temp);
     return *this;
@@ -231,8 +229,8 @@ namespace Kalman {
    * \param v Pointer to first element to copy from C-style array.
    * \warning This function invalidates pointers inside the vector.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KVector<T, BEG, DBG>::assign(K_UINT_32 n, const T* v) {
+  template<typename T, bool DBG>
+  inline void KVector<T, DBG>::assign(K_UINT_32 n, const T* v) {
     KVector temp(n, v);
     swap(temp);
   }
@@ -244,8 +242,8 @@ namespace Kalman {
    * \note No pointer is invalidated by this function. They still point to
    *   the same element, but in the other vector.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KVector<T, BEG, DBG>::swap(KVector& v) {
+  template<typename T, bool DBG>
+  inline void KVector<T, DBG>::swap(KVector& v) {
     vimpl_.swap(v.vimpl_);
     Util::swap(v_, v.v_);
     Util::swap(n_, v.n_);
@@ -259,8 +257,8 @@ namespace Kalman {
    * \see <tt>createKVectorContext()</tt>
    * \see <tt>selectKVectorContext()</tt>
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KVector<T, BEG, DBG>::get(std::istream& is) {
+  template<typename T, bool DBG>
+  inline void KVector<T, DBG>::get(std::istream& is) {
     if (n_ == 0) {
       return;
     }
@@ -297,8 +295,8 @@ namespace Kalman {
    * \see <tt>createKVectorContext()</tt>
    * \see <tt>selectKVectorContext()</tt>
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KVector<T, BEG, DBG>::put(std::ostream& os) const {
+  template<typename T, bool DBG>
+  inline void KVector<T, DBG>::put(std::ostream& os) const {
     if (n_ == 0) {
       return;
     }
@@ -329,9 +327,9 @@ namespace Kalman {
    * \return A reference to the input stream.
    * \note This function is equivalent to <tt>v.get(is)</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
+  template<typename T, bool DBG>
   inline std::istream& operator>>(std::istream& is, 
-                                  KVector<T, BEG, DBG>& v) {
+                                  KVector<T, DBG>& v) {
     v.get(is);
     return is;
   }
@@ -342,9 +340,9 @@ namespace Kalman {
    * \return A reference to the output stream.
    * \note This function is equivalent to <tt>v.put(os)</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
+  template<typename T, bool DBG>
   inline std::ostream& operator<<(std::ostream& os, 
-                                  const KVector<T, BEG, DBG>& v) {
+                                  const KVector<T, DBG>& v) {
     v.put(os);
     return os;
   }

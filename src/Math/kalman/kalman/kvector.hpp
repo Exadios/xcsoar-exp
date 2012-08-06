@@ -51,7 +51,6 @@ namespace Kalman {
    * \par Template parameters
    * - \c T : Type of elements contained in the vector. Usually \c float or
    *          \c double.
-   * - \c BEG : Starting index of vector. Can be either 0 or 1.
    * - \c DGB : Debug flag. If \c true, then bound-checking will be performed,
    *            and \c OutOfBoundError exceptions can be thrown.
    *
@@ -72,14 +71,11 @@ namespace Kalman {
    * Finally, note that \c operator>>() and \c operator<<() must be
    * compatible. Also, \c operator&() must not have been overloaded.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
+  template<typename T, bool DBG>
   class KVector {
   public:
 
     typedef T type;             //!< Type of objects contained in the vector.
-
-    enum { beg = BEG            //!< Starting index of vector, either 0 or 1.
-    };
 
     //! \name Constructors and destructor.
     //@{
@@ -159,14 +155,14 @@ namespace Kalman {
   };
 
   //! Reads a vector from a stream.
-  template<typename T, K_UINT_32 BEG, bool DBG>
+  template<typename T, bool DBG>
   inline std::istream& operator>>(std::istream& is, 
-                                  KVector<T, BEG, DBG>& v);
+                                  KVector<T, DBG>& v);
 
   //! Writes a vector to a stream.
-  template<typename T, K_UINT_32 BEG, bool DBG>
+  template<typename T, bool DBG>
   inline std::ostream& operator<<(std::ostream& os, 
-                                  const KVector<T, BEG, DBG>& v);
+                                  const KVector<T, DBG>& v);
 
   //! Handle type to a vector printing context.
   typedef unsigned short KVectorContext;

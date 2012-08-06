@@ -108,14 +108,14 @@ namespace Kalman {
    * \param m Number of rows. Can be 0.
    * \param n Number of cols. Can be 0.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KMatrix<T, BEG, DBG>::init(K_UINT_32 m, K_UINT_32 n) {
+  template<typename T, bool DBG>
+  inline void KMatrix<T, DBG>::init(K_UINT_32 m, K_UINT_32 n) {
 
     if (m != 0 && n != 0) {
 
       // non-empty matrix
       vimpl_.resize(m);
-      T* ptr = &Mimpl_[0] - BEG;
+      T* ptr = &Mimpl_[0];
       T** M = &vimpl_[0];
       T** end = M + m;
       
@@ -124,7 +124,7 @@ namespace Kalman {
         ptr += n;
       }
 
-      M_ = &vimpl_[0] - BEG;
+      M_ = &vimpl_[0];
       m_ = m;
       n_ = n;
 
@@ -139,8 +139,8 @@ namespace Kalman {
 
   }
 
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KMatrix<T, BEG, DBG>::KMatrix() {
+  template<typename T, bool DBG>
+  inline KMatrix<T, DBG>::KMatrix() {
     init(0, 0);
   }
 
@@ -150,8 +150,8 @@ namespace Kalman {
    * \note If either \c m or \c n is 0, then both the number of rows and the
    *   number of columns will be set to 0.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KMatrix<T, BEG, DBG>::KMatrix(K_UINT_32 m, K_UINT_32 n)
+  template<typename T, bool DBG>
+  inline KMatrix<T, DBG>::KMatrix(K_UINT_32 m, K_UINT_32 n)
     : Mimpl_(m*n) { 
     init(m, n);
   }
@@ -163,15 +163,15 @@ namespace Kalman {
    * \note If either \c m or \c n is 0, then both the number of rows and the
    *   number of columns will be set to 0.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KMatrix<T, BEG, DBG>::KMatrix(K_UINT_32 m, K_UINT_32 n, const T& a)
+  template<typename T, bool DBG>
+  inline KMatrix<T, DBG>::KMatrix(K_UINT_32 m, K_UINT_32 n, const T& a)
     : Mimpl_(m*n, a) {
     init(m, n);
   }
 
   /**
    * This function allows to transform a C-style array of \c T objects in
-   * a <tt>KMatrix<T, BEG, DBG></tt> equivalent array. Note that objects from 
+   * a <tt>KMatrix<T, DBG></tt> equivalent array. Note that objects from 
    * the C-style array are copied into the matrix, which may slow down
    * application if used extensively. The elements are copied row-wise,
    * that is to say, the elements of the C-style array first fill the first
@@ -182,22 +182,22 @@ namespace Kalman {
    * \note If either \c m or \c n is 0, then both the number of rows and the
    *   number of columns will be set to 0.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KMatrix<T, BEG, DBG>::KMatrix(K_UINT_32 m, K_UINT_32 n, const T* v)
+  template<typename T, bool DBG>
+  inline KMatrix<T, DBG>::KMatrix(K_UINT_32 m, K_UINT_32 n, const T* v)
     : Mimpl_(v, v + m*n) {
     init(m, n);
   }
 
   //! \param M Matrix to copy. Can be an empty matrix.
   //!
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KMatrix<T, BEG, DBG>::KMatrix(const KMatrix& M) 
+  template<typename T, bool DBG>
+  inline KMatrix<T, DBG>::KMatrix(const KMatrix& M) 
     : Mimpl_(M.Mimpl_) {
     init(M.m_, M.n_);
   }
 
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KMatrix<T, BEG, DBG>::~KMatrix() {}
+  template<typename T, bool DBG>
+  inline KMatrix<T, DBG>::~KMatrix() {}
 
   /**
    * \param i Row index of matrix element.
@@ -206,16 +206,15 @@ namespace Kalman {
    * \exception OutOfBoundError Thrown if \c i or \c j is out of matrix 
    *   bounds and <tt>DBG == true</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline T& KMatrix<T, BEG, DBG>::operator()(K_UINT_32 i, 
+  template<typename T, bool DBG>
+  inline T& KMatrix<T, DBG>::operator()(K_UINT_32 i, 
                                              K_UINT_32 j) {
     if (DBG) {
-      if (i < BEG || i >= m_ + BEG || j < BEG || j >= n_ + BEG) {
+      if (i >= m_ || j >= n_) {
         KOSTRINGSTREAM oss;
         oss << "Trying to access element (" << i << ", " << j 
-            << ") not included in [" << BEG << ", " << m_ + BEG - 1 << "][" 
-            << BEG << ", " << n_ + BEG - 1 << "]." KEND_OF_STREAM;
-        throw OutOfBoundError(oss.str());
+            << ") not included in [" << 0 << ", " << m_ - 1 << "][" 
+            << 0 << ", " << n_ - 1 << "]." KEND_OF_STREAM;
       }
     }
     return M_[i][j];
@@ -228,16 +227,14 @@ namespace Kalman {
    * \exception OutOfBoundError Thrown if \c i or \c j is out of matrix 
    *   bounds and <tt>DBG == true</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline const T& KMatrix<T, BEG, DBG>::operator()(K_UINT_32 i, 
-                                                   K_UINT_32 j) const {
+  template<typename T, bool DBG>
+  inline const T& KMatrix<T, DBG>::operator()(K_UINT_32 i, K_UINT_32 j) const {
     if (DBG) {
-      if (i < BEG || i >= m_ + BEG || j < BEG || j >= n_ + BEG) {
+      if (i >= m_ || j >= n_) {
         KOSTRINGSTREAM oss;
         oss << "Trying to access element (" << i << ", " << j 
-            << ") not included in [" << BEG << ", " << m_ + BEG - 1 << "][" 
-            << BEG << ", " << n_ + BEG - 1 << "]." KEND_OF_STREAM;
-        throw OutOfBoundError(oss.str());
+            << ") not included in [" << 0 << ", " << m_ - 1 << "][" 
+            << 0 << ", " << n_ - 1 << "]." KEND_OF_STREAM;
       }
     }
     return M_[i][j];
@@ -245,15 +242,15 @@ namespace Kalman {
 
   //! \return The number of rows in the matrix.
   //!
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline K_UINT_32 KMatrix<T, BEG, DBG>::nrow() const {
+  template<typename T, bool DBG>
+  inline K_UINT_32 KMatrix<T, DBG>::nrow() const {
     return m_;
   }
 
   //! \return The number of columns in the matrix.
   //!
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline K_UINT_32 KMatrix<T, BEG, DBG>::ncol() const {
+  template<typename T, bool DBG>
+  inline K_UINT_32 KMatrix<T, DBG>::ncol() const {
     return n_;
   }
 
@@ -263,12 +260,12 @@ namespace Kalman {
    * \warning This function may invalidates pointers inside the matrix.
    * \note Resizing to a smaller size does not free any memory. To do so,
    * one can swap the matrix to shrink with a temporary copy of itself :
-   * <tt>KMatrix<T, BEG, DBG>(M).swap(M)</tt>.
+   * <tt>KMatrix<T, DBG>(M).swap(M)</tt>.
    * \note If either \c m or \c n is 0, then both the number of rows and the
    *   number of columns will be set to 0.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KMatrix<T, BEG, DBG>::resize(K_UINT_32 m, K_UINT_32 n) {
+  template<typename T, bool DBG>
+  inline void KMatrix<T, DBG>::resize(K_UINT_32 m, K_UINT_32 n) {
 
     if (m == m_ && n == n_) {
       return;
@@ -282,8 +279,8 @@ namespace Kalman {
    * \param a Instance to copy to each element of matrix.
    * \return A reference to the matrix.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KMatrix<T, BEG, DBG>& KMatrix<T, BEG, DBG>::operator=(const T& a) {
+  template<typename T, bool DBG>
+  inline KMatrix<T, DBG>& KMatrix<T, DBG>::operator=(const T& a) {
     
     T* ptr = &Mimpl_[0];
     const T* end = ptr + Mimpl_.size();
@@ -299,9 +296,9 @@ namespace Kalman {
    * \return A reference to the assigned matrix.
    * \warning This function invalidates pointers inside the matrix.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline KMatrix<T, BEG, DBG>& 
-  KMatrix<T, BEG, DBG>::operator=(const KMatrix& M) {
+  template<typename T, bool DBG>
+  inline KMatrix<T, DBG>& 
+  KMatrix<T, DBG>::operator=(const KMatrix& M) {
     KMatrix temp(M);
     swap(temp);    
     return *this;
@@ -316,8 +313,8 @@ namespace Kalman {
    * \param v Pointer to first element to copy from C-style array.
    * \warning This function invalidates pointers inside the vector.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KMatrix<T, BEG, DBG>::assign(K_UINT_32 m, K_UINT_32 n, 
+  template<typename T, bool DBG>
+  inline void KMatrix<T, DBG>::assign(K_UINT_32 m, K_UINT_32 n, 
                                            const T* v) {
     KMatrix temp(m, n, v);
     swap(temp);
@@ -330,8 +327,8 @@ namespace Kalman {
    * \note No pointer is invalidated by this function. They still point to
    *   the same element, but in the other matrix.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KMatrix<T, BEG, DBG>::swap(KMatrix& M) {
+  template<typename T, bool DBG>
+  inline void KMatrix<T, DBG>::swap(KMatrix& M) {
     vimpl_.swap(M.vimpl_);
     Mimpl_.swap(M.Mimpl_);
     Util::swap(M_, M.M_);
@@ -347,8 +344,8 @@ namespace Kalman {
    * \see <tt>createKMatrixContext()</tt>
    * \see <tt>selectKMatrixContext()</tt>
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KMatrix<T, BEG, DBG>::get(std::istream& is) {
+  template<typename T, bool DBG>
+  inline void KMatrix<T, DBG>::get(std::istream& is) {
 
     T* ptr = &Mimpl_[0];
     std::string tmp;
@@ -425,8 +422,8 @@ namespace Kalman {
    * \see <tt>createKMatrixContext()</tt>
    * \see <tt>selectKMatrixContext()</tt>
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline void KMatrix<T, BEG, DBG>::put(std::ostream& os) const {
+  template<typename T, bool DBG>
+  inline void KMatrix<T, DBG>::put(std::ostream& os) const {
     if (m_ == 0 || n_ == 0) {
       return;
     }
@@ -467,9 +464,8 @@ namespace Kalman {
    * \return A reference to the input stream.
    * \note This function is equivalent to <tt>M.get(is)</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline std::istream& operator>>(std::istream& is, 
-                                  KMatrix<T, BEG, DBG>& M) {
+  template<typename T, bool DBG>
+  inline std::istream& operator>>(std::istream& is, KMatrix<T, DBG>& M) {
     M.get(is);
     return is;
   }
@@ -480,9 +476,8 @@ namespace Kalman {
    * \return A reference to the output stream.
    * \note This function is equivalent to <tt>M.put(os)</tt>.
    */
-  template<typename T, K_UINT_32 BEG, bool DBG>
-  inline std::ostream& operator<<(std::ostream& os, 
-                                  const KMatrix<T, BEG, DBG>& M) {
+  template<typename T, bool DBG>
+  inline std::ostream& operator<<(std::ostream& os, const KMatrix<T, DBG>& M) {
     M.put(os);
     return os;
   }

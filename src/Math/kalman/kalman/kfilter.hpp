@@ -82,13 +82,12 @@ namespace Kalman {
    * functions that can be overridden : \c makeBaseB() and \c makeB().
    * \see \c EKFilter
    */
-  template<typename T, K_UINT_32 BEG, bool OQ = false, 
-           bool OVR = false, bool DBG = true>
-  class KFilter : public EKFilter<T, BEG, OQ, OVR, DBG> {
+  template<typename T, bool OQ = false, bool OVR = false, bool DBG = true>
+  class KFilter : public EKFilter<T, OQ, OVR, DBG> {
   public:
 
-    typedef KVector<T, BEG, DBG> Vector;  //!< Vector type.
-    typedef KMatrix<T, BEG, DBG> Matrix;  //!< Matrix type.
+    typedef KVector<T, DBG> Vector;  //!< Vector type.
+    typedef KMatrix<T, DBG> Matrix;  //!< Matrix type.
 
     //! Virtual destructor.
     virtual ~KFilter() = 0;

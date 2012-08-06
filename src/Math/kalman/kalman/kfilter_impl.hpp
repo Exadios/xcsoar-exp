@@ -34,67 +34,67 @@
 
 namespace Kalman {
 
-  template<typename T, K_UINT_32 BEG, bool OQ, bool OVR, bool DBG>
-  KFilter<T, BEG, OQ, OVR, DBG>::~KFilter() {}
+  template<typename T, bool OQ, bool OVR, bool DBG>
+  KFilter<T, OQ, OVR, DBG>::~KFilter() {}
 
-  template<typename T, K_UINT_32 BEG, bool OQ, bool OVR, bool DBG>
-  void KFilter<T, BEG, OQ, OVR, DBG>::makeBaseB() {}
+  template<typename T, bool OQ, bool OVR, bool DBG>
+  void KFilter<T, OQ, OVR, DBG>::makeBaseB() {}
 
-  template<typename T, K_UINT_32 BEG, bool OQ, bool OVR, bool DBG>
-  void KFilter<T, BEG, OQ, OVR, DBG>::makeB() {}
+  template<typename T, bool OQ, bool OVR, bool DBG>
+  void KFilter<T, OQ, OVR, DBG>::makeB() {}
 
-  template<typename T, K_UINT_32 BEG, bool OQ, bool OVR, bool DBG>
-  void KFilter<T, BEG, OQ, OVR, DBG>::makeProcess() {
+  template<typename T, bool OQ, bool OVR, bool DBG>
+  void KFilter<T, OQ, OVR, DBG>::makeProcess() {
 
     // x = Ax + Bu + Ww    n.1 = n.n * n.1 + n.nu * nu.1
     makeB();
 
     K_UINT_32 i, j;
-    x__.resize(EKFilter<T, BEG, OQ, OVR, DBG>::n);
+    x__.resize(EKFilter<T, OQ, OVR, DBG>::n);
 
-    for (i = BEG; i < EKFilter<T, BEG, OQ, OVR, DBG>::n + BEG; ++i) {
+    for (i = 0; i < EKFilter<T, OQ, OVR, DBG>::n; ++i) {
 
       x__(i) = T(0.0);
 
-      for (j = BEG; j < EKFilter<T, BEG, OQ, OVR, DBG>::n + BEG; ++j)
-        x__(i) += EKFilter<T, BEG, OQ, OVR, DBG>::A(i,j) * EKFilter<T, BEG, OQ, OVR, DBG>::x(j);
+      for (j = 0; j < EKFilter<T, OQ, OVR, DBG>::n; ++j)
+        x__(i) += EKFilter<T, OQ, OVR, DBG>::A(i,j) * EKFilter<T, OQ, OVR, DBG>::x(j);
 
-      for (j = BEG; j < EKFilter<T, BEG, OQ, OVR, DBG>::nu + BEG; ++j)
-        x__(i) += B(i,j) * EKFilter<T, BEG, OQ, OVR, DBG>::u(j);
+      for (j = 0; j < EKFilter<T, OQ, OVR, DBG>::nu; ++j)
+        x__(i) += B(i,j) * EKFilter<T, OQ, OVR, DBG>::u(j);
 
     }
 
-    EKFilter<T, BEG, OQ, OVR, DBG>::x.swap(x__);
+    EKFilter<T, OQ, OVR, DBG>::x.swap(x__);
 
   }
 
-  template<typename T, K_UINT_32 BEG, bool OQ, bool OVR, bool DBG>
-  void KFilter<T, BEG, OQ, OVR, DBG>::makeMeasure() {
+  template<typename T, bool OQ, bool OVR, bool DBG>
+  void KFilter<T, OQ, OVR, DBG>::makeMeasure() {
     
     // z = Hx + Vv
     K_UINT_32 i, j;
 
-    EKFilter<T, BEG, OQ, OVR, DBG>::z.resize(EKFilter<T, BEG, OQ, OVR, DBG>::m);
-    for (i = BEG; i < EKFilter<T, BEG, OQ, OVR, DBG>::m + BEG; ++i) {
+    EKFilter<T, OQ, OVR, DBG>::z.resize(EKFilter<T, OQ, OVR, DBG>::m);
+    for (i = 0; i < EKFilter<T, OQ, OVR, DBG>::m; ++i) {
 
-      EKFilter<T, BEG, OQ, OVR, DBG>::z(i) = T(0.0);
+      EKFilter<T, OQ, OVR, DBG>::z(i) = T(0.0);
 
-      for (j = BEG; j < EKFilter<T, BEG, OQ, OVR, DBG>::n + BEG; ++j)
-        EKFilter<T, BEG, OQ, OVR, DBG>::z(i) += EKFilter<T, BEG, OQ, OVR, DBG>::H(i,j) * EKFilter<T, BEG, OQ, OVR, DBG>::x(j);
+      for (j = 0; j < EKFilter<T, OQ, OVR, DBG>::n; ++j)
+        EKFilter<T, OQ, OVR, DBG>::z(i) += EKFilter<T, OQ, OVR, DBG>::H(i,j) * EKFilter<T, OQ, OVR, DBG>::x(j);
 
     }
 
   }
 
-  template<typename T, K_UINT_32 BEG, bool OQ, bool OVR, bool DBG>
-  void KFilter<T, BEG, OQ, OVR, DBG>::sizeUpdate() {
+  template<typename T, bool OQ, bool OVR, bool DBG>
+  void KFilter<T, OQ, OVR, DBG>::sizeUpdate() {
 
-    if (EKFilter<T, BEG, OQ, OVR, DBG>::flags & ( KALMAN_N_MODIFIED | KALMAN_NU_MODIFIED ) ) {
-      B.resize(EKFilter<T, BEG, OQ, OVR, DBG>::n, EKFilter<T, BEG, OQ, OVR, DBG>::nu);
+    if (EKFilter<T, OQ, OVR, DBG>::flags & ( KALMAN_N_MODIFIED | KALMAN_NU_MODIFIED ) ) {
+      B.resize(EKFilter<T, OQ, OVR, DBG>::n, EKFilter<T, OQ, OVR, DBG>::nu);
       makeBaseB();
     }   
     
-    EKFilter<T, BEG, OQ, OVR, DBG>::sizeUpdate();
+    EKFilter<T, OQ, OVR, DBG>::sizeUpdate();
   }
 
 }
