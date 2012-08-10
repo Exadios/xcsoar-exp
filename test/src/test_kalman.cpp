@@ -25,7 +25,7 @@
 #include "Math/kalman/kalman/kfilter.hpp"
 #include "Math/kalman/kalman/ekfilter.hpp"
 #include "Math/VectorT.hpp"
-#include <iostream>
+#include "test_debug.hpp"
 
 class BasicCtor : public Kalman::EKFilter<fixed, false, false, true>
   {
@@ -47,9 +47,7 @@ BasicCtor::makeProcess()
   {
   }
 
-bool test_basic_ctor();
-
-bool
+static bool
 test_basic_ctor()
   {
   // See if the compiler can handle it.
@@ -61,8 +59,9 @@ test_basic_ctor()
 int
 main(int argc, const char *argv[])
   {
-  if (test_basic_ctor() == false)
-    return 1;
+  plan_tests(1);
 
-  return 0;
+  ok(test_basic_ctor(), "basic ctor", 0);
+
+  return exit_status();
   }
