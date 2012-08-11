@@ -3,7 +3,7 @@
           package="com.exadios.xcsoar.testing"
           android:installLocation="auto"
           android:versionCode="45"
-          android:versionName="6.4.0.0-Exp">
+          android:versionName="6.4.0.pre-1.Exp">
   <application android:icon="@drawable/icon" android:label="@string/app_name_exp"
                android:debuggable="true">
     <activity android:name=".XCSoar"
