@@ -11,7 +11,8 @@ LDLIBS = -lstdc++
 HEADERS = eqn-expansion.hpp
 SOURCES = APAt.cpp OtPO eqn-expansion.cpp 3x3.cpp 3x3x3t.cpp
 
-TOOL_PROGRAMS = APAt # 3x3 3x3x3t
+TOOL_PROGRAMS = APAt OtPO # 3x3 3x3x3t
+
 
 TOOLS_LDADD = $(MATH_LIBS)
 
