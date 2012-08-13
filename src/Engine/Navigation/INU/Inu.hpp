@@ -24,11 +24,15 @@
 
 #include <valarray>
 #include <Math/fixed.hpp>
-#include <Math/VectorT.hpp>
-#include <Math/MatrixT.hpp>
+#include <Math/kalman/kalman/kvector.hpp>
+#include <Math/kalman/kalman/kmatrix.hpp>
+//#include <Math/VectorT.hpp>
+//#include <Math/MatrixT.hpp>
 
-typedef VectorT<fixed, 3> IMUvector;
-typedef MatrixT<fixed, 3, 3> IMUmatrix;
+//typedef VectorT<fixed, 3> IMUvector;
+//typedef MatrixT<fixed, 3, 3> IMUmatrix;
+typedef Kalman::KVector<fixed, false> IMUvector;
+typedef Kalman::KMatrix<fixed, false> IMUmatrix;
 
 /**
  * @file
@@ -79,7 +83,7 @@ class Inu
 
        for (i = 0; i < 3; i++)
          for (j = 0; j < 3; j++)
-	   R[i][j] = A[i][0] * B[0][j] + A[i][1] * B[1][j] + A[i][2] * B[2][j];
+           R(i, j) = A(i, 0) * B(0, j) + A(i, 1) * B(1, j) + A(i, 2) * B(2, j);
        return R;
        }
 
