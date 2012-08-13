@@ -270,6 +270,13 @@ DIALOG_SOURCES += \
 	$(SRC)/Dialogs/ConfigPanels/TrackingConfigPanel.cpp
 endif
 
+INU_SOURCES =
+ifneq ($(TARGET_FLAVOR),ANDROID)
+INU_SOURCES =  \
+	$(SRC)/Engine/Navigation/INU/Inu.cpp \
+	$(SRC)/Engine/Navigation/INU/INUKalman.cpp
+endif
+
 XCSOAR_SOURCES := \
 	$(IO_SRC_DIR)/ConfiguredFile.cpp \
 	$(IO_SRC_DIR)/DataFile.cpp \
@@ -759,7 +766,8 @@ XCSOAR_SOURCES := \
 	$(SRC)/Device/Simulator.cpp \
 	$(SRC)/Device/Port/LineSplitter.cpp \
 	$(SRC)/Device/Internal.cpp \
-	$(DIALOG_SOURCES)
+	$(DIALOG_SOURCES) \
+	$(INU_SOURCES)
 
 ifneq ($(NO_HORIZON),y)
 XCSOAR_SOURCES += \
