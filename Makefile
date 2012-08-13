@@ -270,6 +270,8 @@ DIALOG_SOURCES += \
 	$(SRC)/Dialogs/ConfigPanels/TrackingConfigPanel.cpp
 endif
 
+# If the effective target is an old Arm ABI then don't bother because we are
+# not going to attempt the impossible.
 INU_SOURCES =
 ifneq ($(TARGET_FLAVOR),ANDROID)
 INU_SOURCES =  \
