@@ -26,11 +26,7 @@
 #include <Math/fixed.hpp>
 #include <Math/kalman/kalman/kvector.hpp>
 #include <Math/kalman/kalman/kmatrix.hpp>
-//#include <Math/VectorT.hpp>
-//#include <Math/MatrixT.hpp>
 
-//typedef VectorT<fixed, 3> IMUvector;
-//typedef MatrixT<fixed, 3, 3> IMUmatrix;
 typedef Kalman::KVector<fixed, false> IMUvector;
 typedef Kalman::KMatrix<fixed, false> IMUmatrix;
 
@@ -120,46 +116,5 @@ class Inu
       */
      bool init;
 };
-
-#if 0
-class std::IMUslice
-{
-  public:
-    /**
-     * Ctor.
-     */
-    IMUslice();
-
-    /**
-     * Ctor.
-     * @param start The start index.
-     * @param stride The distance between elements.
-     */
-    IMUslice(size_t start, size_t stride);
-
-    /**
-     * Dtor.
-     */
-    virtual ~IMUslice();
-
-  private:
-    /**
-     * Start index.
-     */
-    size_t start;
-};
-
-class std::IMUslice_iter
-{
-  public:
-    /**
-     * Ctor.
-     */
-    IMUslice_iter(valarray<fixed *v, IMUslice s);
-
-    /**
-     */
-};
-#endif
 
 #endif // INU_HPP
