@@ -37,6 +37,16 @@
 #include "kvector.hpp"
 #include "kmatrix.hpp"
 
+/*
+ * The following is necessary for the Android NDK R8b. It is not necessary for
+ * the UNIX target (gcc-4.7.1). Apparently, _P is define as '16' somewhere in
+ * the NDK (where?) for some reason I do not understand. Undefining it here
+ * does not seem to cause side effects.
+ */
+#ifdef _P
+#undef _P
+#endif
+
 namespace Kalman {
 
   /**
@@ -736,6 +746,7 @@ namespace Kalman {
     K_UINT_32 nw;       //!< Size of the process noise vector.
     K_UINT_32  m;       //!< Size of the measurement vector.
     K_UINT_32 nv;       //!< Size of the measurement noise vector.
+    K_UINT_16 flags;    //!< Bitfield keeping track of modified matrices.
 
     //@}
 
@@ -902,7 +913,6 @@ namespace Kalman {
     mutable Matrix _P;  //!< Temporary matrix.
     mutable Vector _x;  //!  Temporary vector.
 
-    K_UINT_16 flags;    //!< Bitfield keeping track of modified matrices.
     bool modified_;     //!< Boolean flag used by \c NoModification().
 
   };
