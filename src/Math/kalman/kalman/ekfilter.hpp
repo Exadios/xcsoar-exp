@@ -39,9 +39,9 @@
 
 /*
  * The following is necessary for the Android NDK R8b. It is not necessary for
- * the UNIX target (gcc-4.7.1). Apparently, _P is define as '16' somewhere in
- * the NDK (where?) for some reason I do not understand. Undefining it here
- * does not seem to cause side effects.
+ * the UNIX target (gcc-4.7.1). _P is define in linux/ctypes.h for some of the
+ * isa*() C funtions. Those functions (such as ispunct()) will no longer work
+ * here.
  */
 #ifdef _P
 #undef _P
