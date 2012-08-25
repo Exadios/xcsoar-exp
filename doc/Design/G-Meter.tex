@@ -437,8 +437,8 @@ where the Kalman gain of the three gyro drift and three accelerometer biases is
 \begin{equation}
 K_I \left( t_k \right)_{6 \times 8} =
 \begin{bmatrix}
-0_{3 \times 3} & g_g I_{3 \times 3} & 0_{3 \times 3}\\
-0_{3 \times 3} & g_a I_{3 \times 3} & 0_{3 \times 3}\\
+0_{3 \times 3} & g_g I_{3 \times 3} & 0_{3 \times 2}\\
+0_{3 \times 3} & g_a I_{3 \times 3} & 0_{3 \times 2}\\
 \end{bmatrix}
 \end{equation}
 and $g_g$ and $g_a$ are design constants and are typically less than one.
@@ -448,6 +448,9 @@ and $g_g$ and $g_a$ are design constants and are typically less than one.
 
 \clearpage\setcounter{page}{1}
 \chapter[Energy]{Energy}
+
+\clearpage\setcounter{page}{1}
+\chapter[XCSoar Integration]{XCSoar Integration}
 
 \appendix
 
