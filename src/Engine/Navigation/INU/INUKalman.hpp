@@ -24,20 +24,27 @@
 
 #include <Thread/Mutex.hpp>
 #include <Math/fixed.hpp>
-#include <Math/VectorT.hpp>
-#include <Math/MatrixT.hpp>
+//#include <Math/VectorT.hpp>
+//#include <Math/MatrixT.hpp>
+#include<Math/kalman/kalman/kvector.hpp>
+#include<Math/kalman/kalman/kmatrix.hpp>
+#include<Math/kalman/kalman/kfilter.hpp>
 
 /**
  * A class designed to take INU and GPS data and merge those two data in an
  * optimal manner.
  */
 
-typedef VectorT<fixed, 14> INUKalmanState;
-typedef VectorT<fixed, 3> INUUpdate;
-typedef VectorT<fixed, 8> INUObservation;
-typedef MatrixT<fixed, 14, 14>INUSystemMatrix;
+//typedef VectorT<fixed, 14> INUKalmanState;
+//typedef VectorT<fixed, 3> INUUpdate;
+//typedef VectorT<fixed, 8> INUObservation;
+//typedef MatrixT<fixed, 14, 14>INUSystemMatrix;
+typedef Kalman::KVector<fixed, false> INUKalmanState;
+typedef Kalman::KVector<fixed, false> INUUpdate;
+typedef Kalman::KVector<fixed, false> INUObservation;
+typedef Kalman::KMatrix<fixed, false> INUSystemMatrix;
 
-class INUKalman 
+class INUKalman : public Kalman::KFilter<fixed, false, false, false>
   {
   public:
     /**
@@ -52,41 +59,19 @@ class INUKalman
      */
     virtual ~INUKalman();
 
-    /**
-     * Initialization. Set the system state to \f$t_0\f$.
-     * @param x The system state vector at time zero.
-     * @param P The error covariance at time zero.
-     */
-    void Initialize(const INUKalmanState& x, const INUSystemMatrix& P);
+  protected:
+    void makeBaseA();
+    void makeBaseH();
+    void makeBaseV();
+    void makeBaseR();
+    void makeBaseW();
+    void makeBaseQ();
 
-    /**
-     * Innovate. Compute \f$\hat{x} \left(t_k | t_{k - 1} \right)\f$ and 
-     * \f$P \left( (t_k | t_{k - 1} \right)\f$.
-     * @param u The control input to the plant model.
-     * @return The predicted state vector.
-     */
-    INUKalmanState& Innovate(const INUUpdate& u);
-
-    /**
-     * Update. Compute \f$K \left( t_k \right) \f$,
-     * \f$P \left( t_k | t_k \right ) \f$ and
-     * \f$\hat{x} \left( t_k | t_k \right) \f$.
-     * @param z The obsevation vector.
-     */
-    void Update(const INUObservation& z);
-
-    /**
-     * Compute a step (sample) by calling Inovate() and Update().
-     * @param u The control input to the plant model.
-     * @param z The obsevation vector.
-     */
-    void Step(const INUUpdate& u, const INUObservation& z);
-
-    /**
-     * Give the system state vector.
-     * @return The system state vector, \f$\hat{x} \left( t_k \right) \f$.
-     */
-    const INUKalmanState& State() const;
+    void makeA();
+    void makeH();
+		void makeR();
+    void makeProcess();
+    void makeMeasure();
 
   private:
     /**
