@@ -49,9 +49,10 @@ struct BrokenDate {
   uint8_t day;
 
   /**
-   * Day of the week (0-6, 0: sunday)
+   * Day of the week (0-6, 0: sunday).  -1 means the value has not
+   * been determined.
    */
-  unsigned char day_of_week;
+  int8_t day_of_week;
 
   /**
    * Non-initializing default constructor.
@@ -82,6 +83,14 @@ struct BrokenDate {
   }
 
   /**
+   * Returns an instance that fails the Plausible() check.
+   */
+  constexpr
+  static BrokenDate Invalid() {
+    return BrokenDate(0, 0, 0);
+  }
+
+  /**
    * Does this object contain plausible values?
    */
   constexpr
@@ -90,6 +99,8 @@ struct BrokenDate {
       month >= 1 && month <= 12 &&
       day >= 1 && day <= 31;
   }
+
+  void IncrementDay();
 };
 
 /**
@@ -131,6 +142,14 @@ struct BrokenTime {
     return hour > other.hour ||
       (hour == other.hour && (minute > other.minute ||
                               (minute == other.minute && second > other.second)));
+  }
+
+  /**
+   * Returns an instance that fails the Plausible() check.
+   */
+  constexpr
+  static BrokenTime Invalid() {
+    return BrokenTime(24, 60, 60);
   }
 
   /**
@@ -211,9 +230,21 @@ struct BrokenDateTime : public BrokenDate, public BrokenTime {
     :BrokenDate(_year, _month, _day), BrokenTime(0, 0) {}
 
   constexpr
+  BrokenDateTime(const BrokenDate &date, const BrokenTime &time)
+    :BrokenDate(date), BrokenTime(time) {}
+
+  constexpr
   bool operator==(const BrokenDateTime other) const {
     return (const BrokenDate &)*this == (const BrokenDate &)other &&
       (const BrokenTime &)*this == (const BrokenTime &)other;
+  }
+
+  /**
+   * Returns an instance that fails the Plausible() check.
+   */
+  constexpr
+  static BrokenDateTime Invalid() {
+    return BrokenDateTime(BrokenDate::Invalid(), BrokenTime::Invalid());
   }
 
   /**

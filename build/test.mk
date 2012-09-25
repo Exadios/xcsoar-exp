@@ -275,6 +275,7 @@ TEST_ROUTE_DEPENDS = JASPER IO ZZIP OS ROUTE AIRSPACE GLIDE GEO MATH UTIL
 $(eval $(call link-program,test_route,TEST_ROUTE))
 
 TEST_REPLAY_TASK_SOURCES = \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/NMEA/Info.cpp \
 	$(SRC)/NMEA/ExternalSettings.cpp \
 	$(SRC)/NMEA/Attitude.cpp \
@@ -535,9 +536,10 @@ TEST_RADIX_TREE_DEPENDS = UTIL
 $(eval $(call link-program,TestRadixTree,TEST_RADIX_TREE))
 
 TEST_LOGGER_SOURCES = \
+	$(SRC)/IGC/IGCFix.cpp \
 	$(SRC)/IGC/IGCWriter.cpp \
 	$(SRC)/Logger/LoggerFRecord.cpp \
-	$(SRC)/Logger/LoggerGRecord.cpp \
+	$(SRC)/Logger/GRecord.cpp \
 	$(SRC)/Logger/LoggerEPE.cpp \
 	$(SRC)/Logger/MD5.cpp \
 	$(SRC)/Version.cpp \
@@ -548,6 +550,7 @@ TEST_LOGGER_DEPENDS = IO OS GEO MATH UTIL
 $(eval $(call link-program,TestLogger,TEST_LOGGER))
 
 TEST_DRIVER_SOURCES = \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/Device/Port/NullPort.cpp \
 	$(SRC)/Device/Parser.cpp \
 	$(SRC)/Device/Internal.cpp \
@@ -678,7 +681,8 @@ DEBUG_PROGRAM_NAMES = \
 	DumpFlarmNet \
 	RunRepositoryParser \
 	IGC2NMEA \
-	NearestWaypoints
+	NearestWaypoints \
+	ArcApprox
 
 ifeq ($(TARGET),UNIX)
 DEBUG_PROGRAM_NAMES += \
@@ -782,6 +786,12 @@ DUMP_TEXT_FILE_SOURCES = \
 DUMP_TEXT_FILE_DEPENDS = IO OS ZZIP UTIL
 $(eval $(call link-program,DumpTextFile,DUMP_TEXT_FILE))
 
+ARC_APPROX_SOURCES = \
+	$(SRC)/Formatter/GeoPointFormatter.cpp \
+	$(TEST_SRC_DIR)/ArcApprox.cpp
+ARC_APPROX_DEPENDS = UTIL GEO MATH
+$(eval $(call link-program,ArcApprox,ARC_APPROX))
+
 DUMP_TEXT_ZIP_SOURCES = \
 	$(TEST_SRC_DIR)/DumpTextZip.cpp
 DUMP_TEXT_ZIP_DEPENDS = IO ZZIP UTIL
@@ -849,6 +859,7 @@ RUN_NOAA_DOWNLOADER_DEPENDS = GEO IO MATH LIBNET UTIL
 $(eval $(call link-program,RunNOAADownloader,RUN_NOAA_DOWNLOADER))
 
 RUN_SL_TRACKING_SOURCES = \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/NMEA/Info.cpp \
 	$(SRC)/NMEA/ExternalSettings.cpp \
 	$(SRC)/NMEA/Attitude.cpp \
@@ -931,21 +942,21 @@ RUN_MD5_SOURCES = \
 $(eval $(call link-program,RunMD5,RUN_MD5))
 
 READ_GRECORD_SOURCES = \
-	$(SRC)/Logger/LoggerGRecord.cpp \
+	$(SRC)/Logger/GRecord.cpp \
 	$(SRC)/Logger/MD5.cpp \
 	$(TEST_SRC_DIR)/ReadGRecord.cpp
 READ_GRECORD_DEPENDS = IO OS UTIL
 $(eval $(call link-program,ReadGRecord,READ_GRECORD))
 
 VERIFY_GRECORD_SOURCES = \
-	$(SRC)/Logger/LoggerGRecord.cpp \
+	$(SRC)/Logger/GRecord.cpp \
 	$(SRC)/Logger/MD5.cpp \
 	$(TEST_SRC_DIR)/VerifyGRecord.cpp
 VERIFY_GRECORD_DEPENDS = IO OS UTIL
 $(eval $(call link-program,VerifyGRecord,VERIFY_GRECORD))
 
 APPEND_GRECORD_SOURCES = \
-	$(SRC)/Logger/LoggerGRecord.cpp \
+	$(SRC)/Logger/GRecord.cpp \
 	$(SRC)/Logger/MD5.cpp \
 	$(TEST_SRC_DIR)/AppendGRecord.cpp
 APPEND_GRECORD_DEPENDS = IO OS UTIL
@@ -1108,6 +1119,7 @@ LOG_PORT_DEPENDS = PORT ASYNC OS THREAD UTIL
 $(eval $(call link-program,LogPort,LOG_PORT))
 
 RUN_DEVICE_DRIVER_SOURCES = \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/FLARM/FlarmId.cpp \
 	$(SRC)/Units/Descriptor.cpp \
 	$(SRC)/Units/System.cpp \
@@ -1324,11 +1336,13 @@ $(eval $(call link-program,lxn2igc,LXN2IGC))
 RUN_IGC_WRITER_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
 	$(SRC)/Version.cpp \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/FLARM/FlarmCalculations.cpp \
 	$(SRC)/ClimbAverageCalculator.cpp \
+	$(SRC)/IGC/IGCFix.cpp \
 	$(SRC)/IGC/IGCWriter.cpp \
 	$(SRC)/Logger/LoggerFRecord.cpp \
-	$(SRC)/Logger/LoggerGRecord.cpp \
+	$(SRC)/Logger/GRecord.cpp \
 	$(SRC)/Logger/LoggerEPE.cpp \
 	$(SRC)/Logger/MD5.cpp \
 	$(SRC)/Operation/Operation.cpp \
@@ -1339,6 +1353,7 @@ $(eval $(call link-program,RunIGCWriter,RUN_IGC_WRITER))
 
 RUN_FLIGHT_LOGGER_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/Computer/CirclingComputer.cpp \
 	$(SRC)/Logger/FlightLogger.cpp \
 	$(TEST_SRC_DIR)/RunFlightLogger.cpp
@@ -1359,6 +1374,7 @@ $(eval $(call link-program,RunCirclingWind,RUN_CIRCLING_WIND))
 
 RUN_WIND_ZIG_ZAG_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/Wind/WindZigZag.cpp \
 	$(TEST_SRC_DIR)/RunWindZigZag.cpp
 RUN_WIND_ZIG_ZAG_LDADD = $(DEBUG_REPLAY_LDADD)
@@ -1367,6 +1383,7 @@ $(eval $(call link-program,RunWindZigZag,RUN_WIND_ZIG_ZAG))
 
 RUN_WIND_EKF_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/Wind/WindEKF.cpp \
 	$(SRC)/Wind/WindEKFGlue.cpp \
 	$(TEST_SRC_DIR)/RunWindEKF.cpp
@@ -1402,6 +1419,7 @@ $(eval $(call link-program,RunTask,RUN_TASK))
 
 RUN_TRACE_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/NMEA/Aircraft.cpp \
 	$(ENGINE_SRC_DIR)/GlideSolvers/GlideSettings.cpp \
@@ -1415,6 +1433,7 @@ $(eval $(call link-program,RunTrace,RUN_TRACE))
 
 RUN_OLC_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/NMEA/Aircraft.cpp \
 	$(ENGINE_SRC_DIR)/Trace/Point.cpp \
@@ -1474,6 +1493,7 @@ $(eval $(call link-program,AnalyseFlight,ANALYSE_FLIGHT))
 
 FLIGHT_PATH_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/NMEA/Aircraft.cpp \
 	$(ENGINE_SRC_DIR)/GlideSolvers/GlideSettings.cpp \
@@ -2130,6 +2150,7 @@ $(eval $(call link-program,PlayTone,PLAY_TONE))
 
 PLAY_VARIO_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(TEST_SRC_DIR)/PlayVario.cpp
 PLAY_VARIO_LDADD = $(filter-out $(OS_LIBS),$(DEBUG_REPLAY_LDADD))
 PLAY_VARIO_DEPENDS = AUDIO GEO MATH SCREEN UTIL OS
@@ -2137,6 +2158,7 @@ $(eval $(call link-program,PlayVario,PLAY_VARIO))
 
 DUMP_VARIO_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(TEST_SRC_DIR)/DumpVario.cpp
 DUMP_VARIO_LDADD = $(DEBUG_REPLAY_LDADD)
 DUMP_VARIO_DEPENDS = AUDIO GEO MATH SCREEN UTIL OS
@@ -2305,6 +2327,7 @@ $(eval $(call link-program,DumpFlarmNet,DUMP_FLARM_NET))
 
 IGC2NMEA_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \
+	$(SRC)/DateTime.cpp \
 	$(TEST_SRC_DIR)/IGC2NMEA.cpp
 IGC2NMEA_DEPENDS = GEO MATH UTIL
 IGC2NMEA_LDADD = $(DEBUG_REPLAY_LDADD)
