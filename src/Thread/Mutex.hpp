@@ -36,7 +36,6 @@ Copyright_License {
 #ifndef XCSOAR_THREAD_MUTEX_HXX
 #define XCSOAR_THREAD_MUTEX_HXX
 
-#include "Util/NonCopyable.hpp"
 #include "Thread/FastMutex.hpp"
 
 #include <assert.h>
@@ -187,7 +186,9 @@ public:
  * and unlock the Mutex again.
  * @author JMW
  */
-class ScopeLock : private NonCopyable {
+class ScopeLock {
+  Mutex &scope_mutex;
+
 public:
   ScopeLock(Mutex& the_mutex):scope_mutex(the_mutex) {
     scope_mutex.Lock();
@@ -195,8 +196,9 @@ public:
   ~ScopeLock() {
     scope_mutex.Unlock();
   }
-private:
-  Mutex &scope_mutex;
+
+  ScopeLock(const ScopeLock &other) = delete;
+  ScopeLock &operator=(const ScopeLock &other) = delete;
 };
 
 /**
@@ -205,7 +207,7 @@ private:
  * class shall wrap function calls that will temporarily unlock the
  * mutex, such as pthread_cond_wait().
  */
-class TemporaryUnlock : private NonCopyable {
+class TemporaryUnlock {
 #ifndef NDEBUG
   Mutex &mutex;
 
@@ -229,6 +231,9 @@ public:
 public:
   constexpr TemporaryUnlock(Mutex &_mutex) {}
 #endif
+
+  TemporaryUnlock(const TemporaryUnlock &other) = delete;
+  TemporaryUnlock &operator=(const TemporaryUnlock &other) = delete;
 };
 
 #endif
