@@ -63,7 +63,7 @@ Copyright_License {
  * See http://msdn.microsoft.com/en-us/library/bb202042.aspx
  */
 static bool
-detect_gps(TCHAR *path, size_t path_max_size)
+DetectGPS(TCHAR *path, size_t path_max_size)
 {
 #ifdef _WIN32_WCE
   static const TCHAR *const gps_idm_key =
@@ -72,7 +72,7 @@ detect_gps(TCHAR *path, size_t path_max_size)
 
   RegistryKey key(HKEY_LOCAL_MACHINE, gps_idm_key, true);
   return !key.error() &&
-    key.get_value(gps_idm_value, path, path_max_size);
+    key.GetValue(gps_idm_value, path, path_max_size);
 #else
   return false;
 #endif
@@ -145,7 +145,7 @@ OpenPortInternal(const DeviceConfig &config, DataHandler &handler)
 #endif
 
   case DeviceConfig::PortType::AUTO:
-    if (!detect_gps(buffer, sizeof(buffer))) {
+    if (!DetectGPS(buffer, sizeof(buffer))) {
       LogFormat("no GPS detected");
       return NULL;
     }

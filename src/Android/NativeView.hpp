@@ -27,6 +27,7 @@ Copyright_License {
 #include "Java/Object.hpp"
 #include "Java/Class.hpp"
 #include "Java/String.hpp"
+#include "Screen/Point.hpp"
 
 #include <assert.h>
 
@@ -48,22 +49,22 @@ public:
   /**
    * @see http://developer.android.com/reference/android/R.attr.html#screenOrientation
    */
-  enum screen_orientation {
+  enum class ScreenOrientation {
     // API level 1
-    SCREEN_ORIENTATION_UNSPECIFIED = -1,
-    SCREEN_ORIENTATION_LANDSCAPE = 0,
-    SCREEN_ORIENTATION_PORTRAIT = 1,
-    SCREEN_ORIENTATION_USER = 2,
-    SCREEN_ORIENTATION_BEHIND = 3,
-    SCREEN_ORIENTATION_SENSOR = 4,
-    SCREEN_ORIENTATION_NOSENSOR = 5,
+    UNSPECIFIED = -1,
+    LANDSCAPE = 0,
+    PORTRAIT = 1,
+    USER = 2,
+    BEHIND = 3,
+    SENSOR = 4,
+    NOSENSOR = 5,
     // API level 9
     // see http://developer.android.com/reference/android/content/pm/ActivityInfo.html#SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-    SCREEN_ORIENTATION_REVERSE_LANDSCAPE = 8,
-    SCREEN_ORIENTATION_REVERSE_PORTRAIT = 9,
+    REVERSE_LANDSCAPE = 8,
+    REVERSE_PORTRAIT = 9,
     // HACK for Galaxy Tab (FROYO = 2.2 = API level 8)
-    SCREEN_ORIENTATION_REVERSE_LANDSCAPE_GT = 7,
-    SCREEN_ORIENTATION_REVERSE_PORTRAIT_GT = 8,
+    REVERSE_LANDSCAPE_GT = 7,
+    REVERSE_PORTRAIT_GT = 8,
   };
 
   NativeView(JNIEnv *_env, jobject _obj, unsigned _width, unsigned _height,
@@ -88,8 +89,12 @@ public:
                                         "(Ljava/lang/String;)V");
   }
 
-  unsigned get_width() const { return width; }
-  unsigned get_height() const { return height; }
+  unsigned GetWidth() const { return width; }
+  unsigned GetHeight() const { return height; }
+
+  PixelSize GetSize() const {
+    return { width, height };
+  }
 
   unsigned GetXDPI() const {
     return xdpi;
@@ -120,7 +125,7 @@ public:
     env->CallVoidMethod(obj, deinit_surface_method);
   }
 
-  bool setRequestedOrientation(screen_orientation so) {
+  bool setRequestedOrientation(ScreenOrientation so) {
     return env->CallBooleanMethod(obj, setRequestedOrientationID, (jint)so);
   }
 
