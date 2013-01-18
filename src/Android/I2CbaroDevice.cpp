@@ -108,11 +108,13 @@ I2CbaroDevice::onI2CbaroValues(unsigned sensor, AtmosphericPressure pressure)
   if (pressure.IsPlausible()) {
     fixed param;
 
-    // You don't want this.
-    if (sensor == 85 && press_use == DeviceConfig::PressureUse::STATIC_WITH_VARIO)
-       param = fixed(0.0075);
-    else
+    // Set filter properties depending on sensor type
+    if (sensor == 85 && press_use == DeviceConfig::PressureUse::STATIC_WITH_VARIO) {
+       if (static_p == fixed(0)) kalman_filter.SetAccelerationVariance(fixed(0.0075));
+       param = fixed(0.05);
+    } else {
        param = fixed(0.5);
+    }
 
     kalman_filter.Update(pressure.GetHectoPascal(), param);
 
@@ -126,8 +128,8 @@ I2CbaroDevice::onI2CbaroValues(unsigned sensor, AtmosphericPressure pressure)
         break;
 
       case DeviceConfig::PressureUse::STATIC_WITH_VARIO:
-        static_p = kalman_filter.GetXAbs();
-        basic.ProvideNoncompVario(ComputeNoncompVario(static_p, kalman_filter.GetXVel()));
+        static_p = pressure.GetHectoPascal();
+        basic.ProvideNoncompVario(ComputeNoncompVario(kalman_filter.GetXAbs(), kalman_filter.GetXVel()));
         basic.ProvideStaticPressure(AtmosphericPressure::HectoPascal(static_p));
         break;
 

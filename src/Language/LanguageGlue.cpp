@@ -98,35 +98,35 @@ enum {
 };
 #endif
 
-const struct builtin_language language_table[] = {
-  { LANG_CZECH, _T("cs.mo") },
-  { LANG_DANISH, _T("da.mo") },
-  { LANG_GERMAN, _T("de.mo") },
-  { LANG_GREEK, _T("el.mo") },
-  { LANG_SPANISH, _T("es.mo") },
-  { LANG_FINNISH, _T("fi.mo") },
-  { LANG_FRENCH, _T("fr.mo") },
-  { LANG_CROATIAN, _T("hr.mo") },
-  { LANG_HUNGARIAN, _T("hu.mo") },
-  { LANG_ITALIAN, _T("it.mo") },
-  { LANG_JAPANESE, _T("ja.mo") },
-  { LANG_KOREAN, _T("ko.mo") },
-  { LANG_NORWEGIAN, _T("nb.mo") },
-  { LANG_DUTCH, _T("nl.mo") },
-  { LANG_POLISH, _T("pl.mo") },
-  { LANG_PORTUGUESE, _T("pt_BR.mo") },
+const BuiltinLanguage language_table[] = {
+  { LANG_CZECH, _T("cs.mo"), _T("Czech") },
+  { LANG_DANISH, _T("da.mo"), _T("Danish") },
+  { LANG_GERMAN, _T("de.mo"), _T("German") },
+  { LANG_GREEK, _T("el.mo"), _T("Greek") },
+  { LANG_SPANISH, _T("es.mo"), _T("Spanish") },
+  { LANG_FINNISH, _T("fi.mo"), _T("Finnish") },
+  { LANG_FRENCH, _T("fr.mo"), _T("French") },
+  { LANG_CROATIAN, _T("hr.mo"), _T("Croatian") },
+  { LANG_HUNGARIAN, _T("hu.mo"), _T("Hungarian") },
+  { LANG_ITALIAN, _T("it.mo"), _T("Italian") },
+  { LANG_JAPANESE, _T("ja.mo"), _T("Japanese") },
+  { LANG_KOREAN, _T("ko.mo"), _T("Korean") },
+  { LANG_NORWEGIAN, _T("nb.mo"), _T("Norwegian") },
+  { LANG_DUTCH, _T("nl.mo"), _T("Dutch") },
+  { LANG_POLISH, _T("pl.mo"), _T("Polish") },
+  { LANG_PORTUGUESE, _T("pt_BR.mo"), _T("Brazilian Portuguese") },
 
   /* our Portuguese translation is less advanced than Brazilian
      Portuguese */
-  { LANG_PORTUGUESE, _T("pt.mo") },
+  { LANG_PORTUGUESE, _T("pt.mo"), _T("Portuguese") },
 
-  { LANG_ROMANIAN, _T("ro.mo") },
-  { LANG_RUSSIAN, _T("ru.mo") },
-  { LANG_SLOVAK, _T("sk.mo") },
-  { LANG_SERBIAN, _T("sr.mo") },
-  { LANG_SWEDISH, _T("sv.mo") },
-  { LANG_TURKISH, _T("tr.mo") },
-  { LANG_UKRAINIAN, _T("uk.mo") },
+  { LANG_ROMANIAN, _T("ro.mo"), _T("Romanian") },
+  { LANG_RUSSIAN, _T("ru.mo"), _T("Russian") },
+  { LANG_SLOVAK, _T("sk.mo"), _T("Slovak") },
+  { LANG_SERBIAN, _T("sr.mo"), _T("Serbian") },
+  { LANG_SWEDISH, _T("sv.mo"), _T("Swedish") },
+  { LANG_TURKISH, _T("tr.mo"), _T("Turkish") },
+  { LANG_UKRAINIAN, _T("uk.mo"), _T("Ukranian") },
   { 0, NULL }
 };
 
@@ -134,7 +134,7 @@ const struct builtin_language language_table[] = {
 
 gcc_pure
 static const TCHAR *
-find_language(WORD language)
+FindLanguage(WORD language)
 {
   // Search for supported languages matching the language code
   for (unsigned i = 0; language_table[i].resource != NULL; ++i)
@@ -149,13 +149,13 @@ find_language(WORD language)
 
 gcc_pure
 static unsigned
-find_language(const TCHAR *resource)
+FindLanguage(const TCHAR *resource)
 {
   assert(resource != NULL);
 
   // Search for supported languages matching the MO file name
   for (unsigned i = 0; language_table[i].resource != NULL; ++i)
-    if (_tcscmp(language_table[i].resource, resource) == 0)
+    if (StringIsEqual(language_table[i].resource, resource))
       // .. and return the language code
       return language_table[i].language;
 
@@ -163,7 +163,7 @@ find_language(const TCHAR *resource)
 }
 
 static const TCHAR *
-detect_language()
+DetectLanguage()
 {
 #ifdef ANDROID
 
@@ -248,7 +248,7 @@ detect_language()
 
   // Try to convert the primary language part of the language identifier
   // to a MO file name in the language table
-  return find_language(PRIMARYLANGID(lang_id));
+  return FindLanguage(PRIMARYLANGID(lang_id));
 
 #endif /* !ANDROID */
 }
@@ -256,7 +256,7 @@ detect_language()
 static bool
 ReadResourceLanguageFile(const TCHAR *resource)
 {
-  if (!find_language(resource))
+  if (!FindLanguage(resource))
     /* refuse to load resources which are not in the language table */
     return false;
 
@@ -288,7 +288,7 @@ ReadResourceLanguageFile(const TCHAR *resource)
 #else /* !HAVE_BUILTIN_LANGUAGES */
 
 static inline const TCHAR *
-detect_language()
+DetectLanguage()
 {
   return NULL;
 }
@@ -316,7 +316,7 @@ AutoDetectLanguage()
 #else /* !HAVE_NATIVE_GETTEXT */
 
   // Try to detect the language by calling the OS's corresponding functions
-  const TCHAR *resource = detect_language();
+  const TCHAR *resource = DetectLanguage();
   if (resource != NULL)
     // If a language was detected -> try to load the MO file
     ReadResourceLanguageFile(resource);
@@ -367,10 +367,10 @@ ReadLanguageFile()
   const TCHAR *value = Profile::GetPath(ProfileKeys::LanguageFile, buffer)
     ? buffer : _T("");
 
-  if (_tcscmp(value, _T("none")) == 0)
+  if (StringIsEqual(value, _T("none")))
     return;
 
-  if (StringIsEmpty(value) || _tcscmp(value, _T("auto")) == 0) {
+  if (StringIsEmpty(value) || StringIsEqual(value, _T("auto"))) {
     AutoDetectLanguage();
     return;
   }

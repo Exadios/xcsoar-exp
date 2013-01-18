@@ -140,12 +140,15 @@ InterfaceConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
   if (wp != NULL) {
     DataFieldEnum &df = *(DataFieldEnum *)wp->GetDataField();
     df.addEnumText(_("Automatic"));
-    df.addEnumText(_("English"));
+    df.addEnumText(_T("English"));
 
 #ifdef HAVE_BUILTIN_LANGUAGES
-    for (const struct builtin_language *l = language_table;
-         l->resource != NULL; ++l)
-      df.addEnumText(l->resource);
+    for (const BuiltinLanguage *l = language_table;
+         l->resource != NULL; ++l) {
+      StaticString<100> display_string;
+      display_string.Format(_T("%s (%s)"), l->name, l->resource);
+      df.addEnumText(l->resource, display_string);
+    }
 #endif
 
     LanguageFileVisitor lfv(df);
@@ -157,9 +160,9 @@ InterfaceConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
     if (!Profile::GetPath(ProfileKeys::LanguageFile, value))
       value[0] = _T('\0');
 
-    if (_tcscmp(value, _T("none")) == 0)
+    if (StringIsEqual(value, _T("none")))
       df.Set(1);
-    else if (!StringIsEmpty(value) && _tcscmp(value, _T("auto")) != 0) {
+    else if (!StringIsEmpty(value) && !StringIsEqual(value, _T("auto"))) {
       const TCHAR *base = BaseName(value);
       if (base != NULL)
         df.Set(base);

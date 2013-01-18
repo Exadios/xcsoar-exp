@@ -83,11 +83,11 @@ SetHP31XBacklight()
 
   RegistryKey key(HKEY_CURRENT_USER, _T("ControlPanel\\Backlight"), false);
   return !key.error() &&
-    key.set_value(_T("BackLightCurrentACLevel"), max_level) &&
-    key.set_value(_T("BackLightCurrentBatteryLevel"), max_level) &&
-    key.set_value(_T("TotalLevels"), max_level) &&
-    key.set_value(_T("UseExt"), use_ext) &&
-    key.delete_value(_T("ACTimeout")) &&
+    key.SetValue(_T("BackLightCurrentACLevel"), max_level) &&
+    key.SetValue(_T("BackLightCurrentBatteryLevel"), max_level) &&
+    key.SetValue(_T("TotalLevels"), max_level) &&
+    key.SetValue(_T("UseExt"), use_ext) &&
+    key.DeleteValue(_T("ACTimeout")) &&
     TriggerGlobalEvent(_T("BacklightChangeEvent"));
 }
 
@@ -233,30 +233,30 @@ Display::Rotate(DisplaySettings::Orientation orientation)
   if (native_view == NULL)
     return false;
 
-  NativeView::screen_orientation android_orientation;
+  NativeView::ScreenOrientation android_orientation;
   switch (orientation) {
   case DisplaySettings::Orientation::PORTRAIT:
-    android_orientation = NativeView::SCREEN_ORIENTATION_PORTRAIT;
+    android_orientation = NativeView::ScreenOrientation::PORTRAIT;
     break;
 
   case DisplaySettings::Orientation::LANDSCAPE:
-    android_orientation = NativeView::SCREEN_ORIENTATION_LANDSCAPE;
+    android_orientation = NativeView::ScreenOrientation::LANDSCAPE;
     break;
 
   case DisplaySettings::Orientation::REVERSE_PORTRAIT:
     android_orientation = IsGalaxyTab22() ?
-                          NativeView::SCREEN_ORIENTATION_REVERSE_PORTRAIT_GT :
-                          NativeView::SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+                          NativeView::ScreenOrientation::REVERSE_PORTRAIT_GT :
+                          NativeView::ScreenOrientation::REVERSE_PORTRAIT;
     break;
 
   case DisplaySettings::Orientation::REVERSE_LANDSCAPE:
     android_orientation = IsGalaxyTab22() ?
-                          NativeView::SCREEN_ORIENTATION_REVERSE_LANDSCAPE_GT :
-                          NativeView::SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
+                          NativeView::ScreenOrientation::REVERSE_LANDSCAPE_GT :
+                          NativeView::ScreenOrientation::REVERSE_LANDSCAPE;
     break;
 
   default:
-    android_orientation = NativeView::SCREEN_ORIENTATION_SENSOR;
+    android_orientation = NativeView::ScreenOrientation::SENSOR;
   };
 
   return native_view->setRequestedOrientation(android_orientation);
@@ -278,7 +278,7 @@ Display::RotateRestore()
   return ChangeDisplaySettingsEx(NULL, &dm, NULL,
                                  CDS_RESET, NULL) == DISP_CHANGE_SUCCESSFUL;
 #elif defined(ANDROID)
-  return native_view->setRequestedOrientation(NativeView::SCREEN_ORIENTATION_SENSOR);
+  return native_view->setRequestedOrientation(NativeView::ScreenOrientation::SENSOR);
 #else
   return false;
 #endif

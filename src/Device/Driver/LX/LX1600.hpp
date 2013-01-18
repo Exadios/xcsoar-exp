@@ -85,18 +85,34 @@ namespace LX1600 {
     return success;
   }
 
+  /**
+   * Store the current settings into the EEPROM of the device.
+   */
+  static inline bool
+  SaveToEEPROM(Port &port, OperationEnvironment &env)
+  {
+    return PortWriteNMEA(port, "PFLX0,EEPROM", env);
+  }
+
+  /**
+   * Initialize all settings to default, writes to EEPROM and resets unit.
+   */
+  static inline bool
+  FactoryReset(Port &port, OperationEnvironment &env)
+  {
+    return PortWriteNMEA(port, "PFLX0,INITEEPROM", env);
+  }
+
   static inline bool
   SetupNMEA(Port &port, OperationEnvironment &env)
   {
     /*
      * This line sets the requested NMEA sentences on the device.
      * LXWP0: every second
-     * LXWP1-3: once and then after each change
-     *
-     * We have no official documentation.
-     * This behavior was tested on an LX1606.
+     * LXWP1+3+5: once every 60 seconds
+     * LXWP2: once every 10 seconds
      */
-    return PortWriteNMEA(port, "PFLX0,LXWP0,1,LXWP1,2,LXWP2,2,LXWP3,2", env);
+    return PortWriteNMEA(port, "PFLX0,LXWP0,1,LXWP1,60,LXWP2,10,LXWP3,60,LXWP5,60", env);
   }
 
   /**
@@ -243,7 +259,7 @@ namespace LX1600 {
   }
 
   /**
-   * Set the filter settings of the LX16xx vario
+   * Set the speed command settings of the LX16xx vario
    *
    * @param mode methods for automatic SC switch index (default=ON_CIRCLING)
    * @param deadband area of silence in SC mode (float)
@@ -271,6 +287,54 @@ namespace LX1600 {
     else
       sprintf(buffer, "PFLX3,,%u,,,,,,%.1f,%u",
               (unsigned)mode, (double)deadband, (unsigned)control_mode);
+
+    return PortWriteNMEA(port, buffer, env);
+  }
+
+  /**
+   * Set the vario settings of the LX16xx vario
+   *
+   * @param avg_time averaging time in seconds for integrator
+   * (between 5s and 30s, default=25)
+   * @param range range of the vario display (2.5, 5.0 or 10.0, default=5.0)
+   */
+  static inline bool
+  SetVarioSettings(Port &port, OperationEnvironment &env,
+                   unsigned avg_time, fixed range)
+  {
+    assert(avg_time >= 5 && avg_time <= 30);
+    assert(range >= fixed(2.5) && range <= fixed(10));
+
+    char buffer[100];
+    sprintf(buffer, "PFLX3,,,,,,%u,%.1f", avg_time, (double)range);
+
+    return PortWriteNMEA(port, buffer, env);
+  }
+
+  /**
+   * Set the Smart VARIO filtering
+   * @param filter filter setting in m/s^2
+   */
+  static inline bool
+  SetSmartDiffFilter(Port &port, OperationEnvironment &env, fixed filter)
+  {
+    char buffer[100];
+    sprintf(buffer, "PFLX3,,,,,,,,,,,%.1f", (double)filter);
+
+    return PortWriteNMEA(port, buffer, env);
+  }
+
+  /**
+   * Set the time offset of the LX16xx vario
+   * @param offset time offset in hours
+   */
+  static inline bool
+  SetTimeOffset(Port &port, OperationEnvironment &env, int offset)
+  {
+    assert(offset >= -14 && offset <= 14);
+
+    char buffer[100];
+    sprintf(buffer, "PFLX3,,,,,,,,,,,,,%d", offset);
 
     return PortWriteNMEA(port, buffer, env);
   }
