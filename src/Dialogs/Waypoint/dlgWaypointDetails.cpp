@@ -67,26 +67,48 @@ Copyright_License {
 class WndOwnerDrawFrame;
 
 static int page = 0;
-static WndForm *wf = NULL;
-static Window *wDetails = NULL;
-static DockWindow *wInfo = NULL;
-static DockWindow *wCommand = NULL;
-static PaintWindow *wImage = NULL;
-static WndButton *wMagnify = NULL;
-static WndButton *wShrink = NULL;
+static int last_page = 0;
+
+static WndForm *form = NULL;
+static Window *details_panel = NULL;
+static DockWindow *info_widget = NULL;
+static DockWindow *commands_widget = NULL;
+static PaintWindow *image_window = NULL;
+static WndButton *magnify_button = NULL;
+static WndButton *shrink_button = NULL;
 static const Waypoint *waypoint = NULL;
 
 static StaticArray<Bitmap, 5> images;
 static int zoom = 0;
 
 static void
-NextPage(int Step)
+UpdatePage()
+{
+  info_widget->SetVisible(page == 0);
+  details_panel->SetVisible(page == 1);
+  commands_widget->SetVisible(page == 2);
+
+  bool image_page = page >= 3;
+  image_window->SetVisible(image_page);
+  magnify_button->SetVisible(image_page);
+  shrink_button->SetVisible(image_page);
+}
+
+static void
+UpdateZoomControls()
+{
+  magnify_button->SetEnabled(zoom < 5);
+  shrink_button->SetEnabled(zoom > 0);
+}
+
+static void
+NextPage(int step)
 {
   assert(waypoint);
+  assert(last_page > 0);
 
-  int last_page = 2 + images.size();
   do {
-    page += Step;
+    page += step;
     if (page < 0)
       page = last_page;
     else if (page > last_page)
@@ -98,15 +120,12 @@ NextPage(int Step)
 #endif
            waypoint->details.empty());
 
-  wInfo->SetVisible(page == 0);
-  wDetails->SetVisible(page == 1);
-  wCommand->SetVisible(page == 2);
-  wImage->SetVisible(page >= 3);
-  zoom = 0;
-  wMagnify->SetVisible(page >= 3);
-  wMagnify->SetEnabled(true);
-  wShrink->SetVisible(page >= 3);
-  wShrink->SetEnabled(false);
+  UpdatePage();
+
+  if (page >= 3) {
+    zoom = 0;
+    UpdateZoomControls();
+  }
 }
 
 static void
@@ -116,9 +135,8 @@ OnMagnifyClicked()
     return;
   zoom++;
 
-  wMagnify->SetEnabled(zoom < 5);
-  wShrink->SetEnabled(zoom > 0);
-  wImage->Invalidate();
+  UpdateZoomControls();
+  image_window->Invalidate();
 }
 
 static void
@@ -128,9 +146,8 @@ OnShrinkClicked()
     return;
   zoom--;
 
-  wMagnify->SetEnabled(zoom < 5);
-  wShrink->SetEnabled(zoom > 0);
-  wImage->Invalidate();
+  UpdateZoomControls();
+  image_window->Invalidate();
 }
 
 static void
@@ -153,7 +170,7 @@ FormKeyDown(unsigned key_code)
 #ifdef GNAV
   case '6':
 #endif
-    ((WndButton *)wf->FindByName(_T("cmdPrev")))->SetFocus();
+    ((WndButton *)form->FindByName(_T("cmdPrev")))->SetFocus();
     NextPage(-1);
     return true;
 
@@ -161,7 +178,7 @@ FormKeyDown(unsigned key_code)
 #ifdef GNAV
   case '7':
 #endif
-    ((WndButton *)wf->FindByName(_T("cmdNext")))->SetFocus();
+    ((WndButton *)form->FindByName(_T("cmdNext")))->SetFocus();
     NextPage(+1);
     return true;
 
@@ -179,7 +196,7 @@ OnGotoClicked()
   assert(waypoint != NULL);
 
   protected_task_manager->DoGoto(*waypoint);
-  wf->SetModalResult(mrOK);
+  form->SetModalResult(mrOK);
 
   CommonInterface::main_window->FullRedraw();
 }
@@ -225,7 +242,7 @@ OnGotoAndClearTaskClicked()
   switch (goto_and_clear_task(*waypoint)) {
   case SUCCESS:
     protected_task_manager->TaskSaveDefault();
-    wf->SetModalResult(mrOK);
+    form->SetModalResult(mrOK);
     break;
   case NOTASK:
   case UNMODIFIED:
@@ -238,7 +255,7 @@ OnGotoAndClearTaskClicked()
 #endif
 
 static void
-OnImagePaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
+OnImagePaint(gcc_unused WndOwnerDrawFrame *sender, Canvas &canvas)
 {
   canvas.ClearWhite();
   if (page >= 3 && page < 3 + (int)images.size()) {
@@ -288,13 +305,13 @@ OnImagePaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
 class WaypointExternalFileListHandler : public ListControl::Handler {
 public:
   virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
-                           unsigned idx) gcc_override;
+                           unsigned idx) override;
 
   virtual bool CanActivateItem(unsigned index) const {
     return true;
   }
 
-  virtual void OnActivateItem(unsigned index) gcc_override;
+  virtual void OnActivateItem(unsigned index) override;
 };
 
 void
@@ -333,33 +350,31 @@ static constexpr CallBackTableEntry CallBackTable[] = {
 };
 
 static void
-UpdateCaption(const TCHAR *waypoint_name, int8_t file_num)
+UpdateCaption()
 {
   StaticString<256> buffer;
-  buffer.Format(_T("%s: %s"), _("Waypoint"), waypoint_name);
+  buffer.Format(_T("%s: %s"), _("Waypoint"), waypoint->name.c_str());
 
-  if (file_num > 0) {
-    const TCHAR *key = NULL;
-    switch (file_num) {
-    case 1:
-      key = ProfileKeys::WaypointFile;
-      break;
-    case 2:
-      key = ProfileKeys::AdditionalWaypointFile;
-      break;
-    case 3:
-      key = ProfileKeys::WatchedWaypointFile;
-      break;
-    }
-
-    if (key != NULL) {
-      const TCHAR *filename = Profile::GetPathBase(key);
-      if (filename != NULL)
-        buffer.AppendFormat(_T(" (%s)"), filename);
-    }
+  const TCHAR *key = NULL;
+  switch (waypoint->file_num) {
+  case 1:
+    key = ProfileKeys::WaypointFile;
+    break;
+  case 2:
+    key = ProfileKeys::AdditionalWaypointFile;
+    break;
+  case 3:
+    key = ProfileKeys::WatchedWaypointFile;
+    break;
   }
 
-  wf->SetCaption(buffer);
+  if (key != NULL) {
+    const TCHAR *filename = Profile::GetPathBase(key);
+    if (filename != NULL)
+      buffer.AppendFormat(_T(" (%s)"), filename);
+  }
+
+  form->SetCaption(buffer);
 }
 
 void 
@@ -368,37 +383,37 @@ dlgWaypointDetailsShowModal(SingleWindow &parent, const Waypoint &_waypoint,
 {
   waypoint = &_waypoint;
 
-  wf = LoadDialog(CallBackTable, parent,
+  form = LoadDialog(CallBackTable, parent,
                   Layout::landscape ? _T("IDR_XML_WAYPOINTDETAILS_L") :
                                       _T("IDR_XML_WAYPOINTDETAILS"));
-  assert(wf != NULL);
+  assert(form != NULL);
 
   LastUsedWaypoints::Add(_waypoint);
 
-  UpdateCaption(waypoint->name.c_str(), waypoint->file_num);
+  UpdateCaption();
 
-  wf->SetKeyDownFunction(FormKeyDown);
+  form->SetKeyDownFunction(FormKeyDown);
 
-  wInfo = (DockWindow *)wf->FindByName(_T("info"));
-  assert(wInfo != NULL);
-  wInfo->SetWidget(new WaypointInfoWidget(UIGlobals::GetDialogLook(),
+  info_widget = (DockWindow *)form->FindByName(_T("info"));
+  assert(info_widget != NULL);
+  info_widget->SetWidget(new WaypointInfoWidget(UIGlobals::GetDialogLook(),
                                           _waypoint));
 
-  wCommand = (DockWindow *)wf->FindByName(_T("commands"));
-  assert(wCommand != NULL);
-  wCommand->SetWidget(new WaypointCommandsWidget(UIGlobals::GetDialogLook(),
-                                                 wf, _waypoint,
+  commands_widget = (DockWindow *)form->FindByName(_T("commands"));
+  assert(commands_widget != NULL);
+  commands_widget->SetWidget(new WaypointCommandsWidget(UIGlobals::GetDialogLook(),
+                                                 form, _waypoint,
                                                  protected_task_manager));
-  wCommand->Hide();
+  commands_widget->Hide();
 
-  wDetails = wf->FindByName(_T("frmDetails"));
-  assert(wDetails != NULL);
+  details_panel = form->FindByName(_T("frmDetails"));
+  assert(details_panel != NULL);
 
-  ListControl *wFilesList = (ListControl *)wf->FindByName(_T("Files"));
+  ListControl *wFilesList = (ListControl *)form->FindByName(_T("Files"));
   assert(wFilesList != NULL);
 
   LargeTextWindow *wDetailsText = (LargeTextWindow *)
-    wf->FindByName(_T("Details"));
+    form->FindByName(_T("Details"));
   assert(wDetailsText != NULL);
   wDetailsText->SetText(waypoint->details.c_str());
 
@@ -420,25 +435,20 @@ dlgWaypointDetailsShowModal(SingleWindow &parent, const Waypoint &_waypoint,
 #endif
     wFilesList->Hide();
 
-  wImage = (PaintWindow *)wf->FindByName(_T("frmImage"));
-  assert(wImage != NULL);
-  wMagnify = (WndButton *)wf->FindByName(_T("cmdMagnify"));
-  assert(wMagnify != NULL);
-  wShrink = (WndButton *)wf->FindByName(_T("cmdShrink"));
-  assert(wShrink != NULL);
+  image_window = (PaintWindow *)form->FindByName(_T("frmImage"));
+  assert(image_window != NULL);
+  magnify_button = (WndButton *)form->FindByName(_T("cmdMagnify"));
+  assert(magnify_button != NULL);
+  shrink_button = (WndButton *)form->FindByName(_T("cmdShrink"));
+  assert(shrink_button != NULL);
 
   if (!allow_navigation) {
-    WndButton* butnav = (WndButton *)wf->FindByName(_T("cmdPrev"));
-    assert(butnav != NULL);
-    butnav->Hide();
-
-    butnav = (WndButton *)wf->FindByName(_T("cmdNext"));
-    assert(butnav != NULL);
-    butnav->Hide();
-
-    butnav = (WndButton *)wf->FindByName(_T("cmdGoto"));
-    assert(butnav != NULL);
-    butnav->Hide();
+    for (const TCHAR *button_name :
+         { _T("cmdPrev"), _T("cmdNext"), _T("cmdGoto") }) {
+      Window *button = form->FindByName(button_name);
+      assert(button != NULL);
+      button->Hide();
+    }
   }
 
   for (auto it = waypoint->files_embed.begin(),
@@ -450,13 +460,14 @@ dlgWaypointDetailsShowModal(SingleWindow &parent, const Waypoint &_waypoint,
       images.shrink(images.size() - 1);
   }
 
+  last_page = 2 + images.size();
+
   page = 0;
+  UpdatePage();
 
-  NextPage(0); // JMW just to turn proper pages on/off
+  form->ShowModal();
 
-  wf->ShowModal();
-
-  delete wf;
+  delete form;
 
   for (auto image = images.begin(); image < images.end(); image++)
     image->Reset();

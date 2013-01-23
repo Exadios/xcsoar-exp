@@ -34,7 +34,7 @@ Copyright_License {
 class FAITriangleWindow : public PaintWindow
 {
 protected:
-  void OnPaint(Canvas &canvas) {
+  virtual void OnPaint(Canvas &canvas) override {
     canvas.ClearWhite();
 
     const GeoPoint a(Angle::Degrees(7.70722),
@@ -45,7 +45,7 @@ protected:
     WindowProjection projection;
     projection.SetScreenOrigin(canvas.GetWidth() / 2, canvas.GetHeight() / 2);
     projection.SetGeoLocation(a.Middle(b));
-    projection.SetScreenSize(canvas.GetWidth(), canvas.GetHeight());
+    projection.SetScreenSize(canvas.GetSize());
     projection.SetScaleFromRadius(fixed(400000));
     projection.UpdateScreenBounds();
 
@@ -94,7 +94,7 @@ public:
   }
 
 protected:
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -104,9 +104,9 @@ protected:
     return SingleWindow::OnCommand(id, code);
   }
 
-  virtual void OnResize(UPixelScalar width, UPixelScalar height) {
-    SingleWindow::OnResize(width, height);
-    triangle_window.Resize(width, height);
+  virtual void OnResize(PixelSize new_size) override {
+    SingleWindow::OnResize(new_size);
+    triangle_window.Resize(new_size);
   }
 };
 

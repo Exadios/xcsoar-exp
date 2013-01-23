@@ -27,27 +27,32 @@
 /**
  * Specialisation of TaskMacCready for task travelled
  */
-class TaskMacCreadyTravelled gcc_final : public TaskMacCready
+class TaskMacCreadyTravelled final : public TaskMacCready
 {
 public:
   /**
    * Constructor for ordered task points
    *
-   * @param _tps Vector of ordered task points comprising the task
    * @param _activeTaskPoint Current active task point in sequence
    * @param _gp Glide polar to copy for calculations
    */
-  TaskMacCreadyTravelled(const std::vector<OrderedTaskPoint*> &_tps,
+  template<class I>
+  TaskMacCreadyTravelled(const I tps_begin,
                          const unsigned _activeTaskPoint,
-                         const GlideSettings &settings, const GlidePolar &_gp);
+                         const GlideSettings &settings, const GlidePolar &_gp)
+    :TaskMacCready(tps_begin, std::next(tps_begin, _activeTaskPoint + 1),
+                   _activeTaskPoint, settings, _gp) {
+  }
 
 private:
-  virtual GlideResult tp_solution(const unsigned i,
-                                  const AircraftState &aircraft,
-                                  fixed minH) const;
-  virtual fixed get_min_height(const AircraftState &aircraft) const;
+  /* virtual methods from class TaskMacCready */
+  virtual fixed get_min_height(const AircraftState &aircraft) const override;
 
-  virtual const AircraftState &get_aircraft_start(const AircraftState &aircraft) const;
+  virtual GlideResult SolvePoint(const TaskPoint &tp,
+                                 const AircraftState &aircraft,
+                                 fixed minH) const override;
+
+  virtual const AircraftState &get_aircraft_start(const AircraftState &aircraft) const override;
 };
 
 #endif

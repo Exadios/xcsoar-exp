@@ -19,28 +19,24 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
+
 #include "AirspaceWarningManager.hpp"
 #include "Geo/GeoVector.hpp"
 #include "Airspaces.hpp"
 #include "AirspaceCircle.hpp"
 #include "AirspacePolygon.hpp"
 #include "AirspaceIntersectionVisitor.hpp"
+#include "AirspaceAircraftPerformance.hpp"
 #include "Task/Stats/TaskStats.hpp"
 #include "Predicate/AirspacePredicateAircraftInside.hpp"
 
 #define CRUISE_FILTER_FACT fixed(0.5)
 
-AirspaceWarningManager::AirspaceWarningManager(const Airspaces &_airspaces,
-                                               fixed prediction_time_glide,
-                                               fixed prediction_time_filter)
-  :airspaces(_airspaces),
-   prediction_time_glide(prediction_time_glide),
-   prediction_time_filter(prediction_time_filter),
-   cruise_filter(prediction_time_filter * CRUISE_FILTER_FACT),
-   circling_filter(prediction_time_filter),
-   perf_cruise(cruise_filter),
-   perf_circling(circling_filter)
+AirspaceWarningManager::AirspaceWarningManager(const Airspaces &_airspaces)
+  :airspaces(_airspaces)
 {
+  /* force filter initialisation in the first SetConfig() call */
+  config.warning_time = -1;
 }
 
 const TaskProjection &
@@ -52,10 +48,15 @@ AirspaceWarningManager::GetProjection() const
 void
 AirspaceWarningManager::SetConfig(const AirspaceWarningConfig &_config)
 {
+  const bool modified_warning_time =
+    _config.warning_time != config.warning_time;
+
   config = _config;
 
-  SetPredictionTimeGlide(fixed(config.warning_time));
-  SetPredictionTimeFilter(fixed(config.warning_time));
+  if (modified_warning_time) {
+    SetPredictionTimeGlide(fixed(config.warning_time));
+    SetPredictionTimeFilter(fixed(config.warning_time));
+  }
 }
 
 void
@@ -151,7 +152,7 @@ AirspaceWarningManager::Update(const AircraftState& state,
 /**
  * Class used temporarily to check intersections with warning system
  */
-class AirspaceIntersectionWarningVisitor gcc_final
+class AirspaceIntersectionWarningVisitor final
   : public AirspaceIntersectionVisitor
 {
   const AircraftState state;
@@ -226,7 +227,7 @@ public:
     }
   }
 
-  virtual void Visit(const AbstractAirspace &as) gcc_override {
+  virtual void Visit(const AbstractAirspace &as) override {
     Intersection(as);
   }
 
@@ -300,6 +301,9 @@ AirspaceWarningManager::UpdateTask(const AircraftState &state,
                                    const GlidePolar &glide_polar,
                                    const TaskStats &task_stats)
 {
+  if (!glide_polar.IsValid())
+    return false;
+
   const ElementStat &current_leg = task_stats.current_leg;
 
   if (!task_stats.task_valid || !current_leg.location_remaining.IsValid())
@@ -310,8 +314,8 @@ AirspaceWarningManager::UpdateTask(const AircraftState &state,
     /* glide solver failed, cannot continue */
     return false;
 
-  AirspaceAircraftPerformanceTask perf_task(glide_polar,
-                                            current_leg.solution_remaining);
+  const AirspaceAircraftPerformance perf_task(glide_polar,
+                                              current_leg.solution_remaining);
   GeoPoint location_tp = current_leg.location_remaining;
   const fixed time_remaining = solution.time_elapsed;
 
@@ -340,11 +344,11 @@ AirspaceWarningManager::UpdateFilter(const AircraftState& state, const bool circ
 
   if (circling) 
     return UpdatePredicted(state, location_predicted,
-                            perf_circling,
+                           AirspaceAircraftPerformance(circling_filter),
                             AirspaceWarning::WARNING_FILTER, prediction_time_filter);
   else
     return UpdatePredicted(state, location_predicted,
-                            perf_cruise,
+                           AirspaceAircraftPerformance(cruise_filter),
                             AirspaceWarning::WARNING_FILTER, prediction_time_filter);
 }
 
@@ -353,10 +357,13 @@ bool
 AirspaceWarningManager::UpdateGlide(const AircraftState &state,
                                     const GlidePolar &glide_polar)
 {
+  if (!glide_polar.IsValid())
+    return false;
+
   const GeoPoint location_predicted = 
     state.GetPredictedState(prediction_time_glide).location;
 
-  const AirspaceAircraftPerformanceGlide perf_glide(glide_polar);
+  const AirspaceAircraftPerformance perf_glide(glide_polar);
   return UpdatePredicted(state, location_predicted,
                           perf_glide,
                           AirspaceWarning::WARNING_GLIDE, prediction_time_glide);
@@ -367,6 +374,9 @@ bool
 AirspaceWarningManager::UpdateInside(const AircraftState& state,
                                      const GlidePolar &glide_polar)
 {
+  if (!glide_polar.IsValid())
+    return false;
+
   bool found = false;
 
   AirspacePredicateAircraftInside condition(state);
@@ -385,7 +395,7 @@ AirspaceWarningManager::UpdateInside(const AircraftState& state,
 
     if (warning.IsStateAccepted(AirspaceWarning::WARNING_INSIDE)) {
       GeoPoint c = airspace.ClosestPoint(state.location, GetProjection());
-      const AirspaceAircraftPerformanceGlide perf_glide(glide_polar);
+      const AirspaceAircraftPerformance perf_glide(glide_polar);
       AirspaceInterceptSolution solution;
       airspace.Intercept(state, c, GetProjection(), perf_glide, solution);
 

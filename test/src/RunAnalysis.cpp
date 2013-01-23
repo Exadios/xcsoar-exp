@@ -47,7 +47,6 @@ Copyright_License {
 #include "Airspace/AirspaceGlue.hpp"
 #include "Engine/Waypoint/Waypoints.hpp"
 #include "Engine/Airspace/Airspaces.hpp"
-#include "Engine/Airspace/AirspaceWarningManager.hpp"
 #include "Engine/Task/TaskManager.hpp"
 #include "Engine/Task/TaskEvents.hpp"
 #include "Computer/BasicComputer.hpp"
@@ -75,13 +74,6 @@ Copyright_License {
 #include "Input/InputQueue.hpp"
 #include "Logger/Logger.hpp"
 #include "LocalTime.hpp"
-
-OrderedTask *
-TaskFile::GetTask(const TCHAR *path, const TaskBehaviour &task_behaviour,
-                  const Waypoints *waypoints, unsigned index)
-{
-  return NULL;
-}
 
 void dlgBasicSettingsShowModal() {}
 void ShowWindSettingsDialog() {}
@@ -162,22 +154,33 @@ Main()
 
   InterfaceBlackboard blackboard;
   blackboard.SetComputerSettings().SetDefaults();
+  blackboard.SetComputerSettings().polar.glide_polar_task = GlidePolar(fixed(1));
   blackboard.SetUISettings().SetDefaults();
 
   TaskBehaviour task_behaviour;
   task_behaviour.SetDefaults();
 
   TaskManager task_manager(task_behaviour, way_points);
+  task_manager.SetGlidePolar(blackboard.GetComputerSettings().polar.glide_polar_task);
+
   GlideComputerTaskEvents task_events;
   task_manager.SetTaskEvents(task_events);
 
   Airspaces airspace_database;
-  AirspaceWarningManager airspace_warning(airspace_database);
 
   ProtectedTaskManager protected_task_manager(task_manager,
                                               blackboard.GetComputerSettings().task);
 
   LoadFiles(airspace_database);
+
+  const TaskFactoryType task_type_default =
+    blackboard.GetComputerSettings().task.task_type_default;
+  OrderedTask *task =
+    protected_task_manager.TaskCreateDefault(&way_points, task_type_default);
+  if (task != nullptr) {
+    protected_task_manager.TaskCommit(*task);
+    delete task;
+  }
 
   GlideComputer glide_computer(way_points, airspace_database,
                                protected_task_manager,

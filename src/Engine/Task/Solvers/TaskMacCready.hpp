@@ -27,7 +27,6 @@
 #include "GlideSolvers/GlidePolar.hpp"
 #include "GlideSolvers/GlideResult.hpp"
 
-#include <vector>
 #include <array>
 
 struct AircraftState;
@@ -56,9 +55,9 @@ class OrderedTaskPoint;
  */
 class TaskMacCready : private NonCopyable
 {
+protected:
   static constexpr unsigned MAX_SIZE = 16;
 
-protected:
    /**
     * The TaskPoints in the task.
     */
@@ -73,16 +72,6 @@ protected:
    * Active task point (local copy for speed).
    */
   const unsigned active_index;
-
-  /**
-   * TaskPoint sequence index of first taskpoint included in scan.
-   */
-  int start_index;
-
-  /**
-   * TaskPoint sequence index of last taskpoint included in scan.
-   */
-  int end_index;
 
   const GlideSettings &settings;
 
@@ -99,9 +88,14 @@ public:
    * @param _active_index Current active task point in sequence
    * @param gp Glide polar to copy for calculations
    */
-  TaskMacCready(const std::vector<OrderedTaskPoint*> &_tps,
+  template<class I>
+  TaskMacCready(const I tps_begin, const I tps_end,
                 const unsigned _active_index,
-                const GlideSettings &settings, const GlidePolar &gp);
+                const GlideSettings &_settings, const GlidePolar &gp)
+    :points(tps_begin, tps_end),
+     active_index(_active_index),
+     settings(_settings),
+     glide_polar(gp) {}
 
   /**
    * Constructor for single task points (non-ordered ones)
@@ -110,16 +104,11 @@ public:
    * @param gp Glide polar to copy for calculations
    */
   TaskMacCready(TaskPoint* tp,
-                const GlideSettings &settings, const GlidePolar &gp);
-
-  /**
-   * Constructor for sequence of task points, starting from first point
-   *
-   * @param _tps Vector of ordered task points comprising the task
-   * @param gp Glide polar to copy for calculations
-   */
-  TaskMacCready(const std::vector<TaskPoint*> &_tps,
-                const GlideSettings &settings, const GlidePolar &gp);
+                const GlideSettings &_settings, const GlidePolar &gp)
+    :points(1, tp),
+     active_index(0),
+     settings(_settings),
+     glide_polar(gp) {}
 
   /**
    * Calculate glide solution
@@ -138,8 +127,9 @@ public:
    *
    * @return Glide result for entire task with virtual sink rate
    */
+  gcc_pure
   GlideResult glide_sink(const AircraftState &aircraft,
-                         const fixed S);
+                         const fixed S) const;
 
   /**
    * Adjust MacCready value of internal glide polar
@@ -171,22 +161,6 @@ public:
     return leg_solutions[active_index];
   }
 
-protected:
-
-  /**
-   * Calculate glide solution for specified index, given
-   * aircraft state and virtual sink rate.
-   *
-   * @param index Index of task point
-   * @param state Aircraft state at origin
-   * @param S Sink rate (m/s, positive down)
-   *
-   * @return Glide result for segment
-   */
-  GlideResult tp_sink(const unsigned index,
-                      const AircraftState &state,
-                      const fixed S) const;
-
 private:
 
   /**
@@ -199,23 +173,24 @@ private:
    *
    * @return Min height (m) of entire task
    */
+  gcc_pure
   virtual fixed get_min_height(const AircraftState &state) const = 0;
 
   /**
-   * Pure virtual method to calculate glide solution for specified index, given
+   * Pure virtual method to calculate glide solution for specified point, given
    * aircraft state and height constraint.
    * This is used to provide alternate methods for different perspectives
    * on the task, e.g. planned/remaining/travelled
    *
-   * @param index Index of task point
    * @param state Aircraft state at origin
    * @param minH Minimum height at destination
    *
    * @return Glide result for segment
    */
-  virtual GlideResult tp_solution(const unsigned index,
-                                  const AircraftState &state,
-                                  fixed minH) const = 0;
+  gcc_pure
+  virtual GlideResult SolvePoint(const TaskPoint &tp,
+                                 const AircraftState &state,
+                                 fixed minH) const = 0;
 
   /**
    * Pure virtual method to obtain aircraft state at start of task.
@@ -224,8 +199,9 @@ private:
    *
    * @param state Actual aircraft state
    *
- * @return Aircraft state at start of task
- */
+   * @return Aircraft state at start of task
+   */
+  gcc_pure
   virtual const AircraftState &
   get_aircraft_start(const AircraftState &state) const = 0;
 };

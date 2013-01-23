@@ -24,6 +24,8 @@
 #include "Math/ZeroFinder.hpp"
 #include "GlideSolvers/GlideResult.hpp"
 
+#include <algorithm>
+
 #include <assert.h>
 
 #define fixed_big fixed(1000000)
@@ -66,7 +68,7 @@ AirspaceAircraftPerformance::SolutionGeneral(fixed distance, fixed dh) const
  * Utility class to scan for height difference that produces
  * minimum arrival time intercept with a vertical line
  */
-class AirspaceAircraftInterceptVertical gcc_final : public ZeroFinder {
+class AirspaceAircraftInterceptVertical final : public ZeroFinder {
 public:
   /**
    * Constructor
@@ -140,7 +142,7 @@ AirspaceAircraftPerformance::SolutionVertical(fixed distance, fixed altitude,
  * Utility class to scan for distance that produces
  * minimum arrival time intercept with a horizontal line
  */
-class AirspaceAircraftInterceptHorizontal gcc_final : public ZeroFinder {
+class AirspaceAircraftInterceptHorizontal final : public ZeroFinder {
 public:
   /**
    * Constructor
@@ -233,59 +235,4 @@ AirspaceAircraftPerformance::SolutionExists(fixed distance_max,
     return false;
 
   return true;
-}
-
-AirspaceAircraftPerformanceTask::AirspaceAircraftPerformanceTask(const GlidePolar &polar,
-                                                                 const GlideResult &solution)
-{
-  const fixed time_remaining = solution.time_elapsed;
-
-  if (solution.IsOk() && positive(time_remaining)) {
-    const fixed leg_distance = solution.vector.distance;
-    m_v = leg_distance / time_remaining;
-    if (positive(solution.height_climb)) {
-      m_cruise_descent = -solution.height_climb / time_remaining;
-      m_climb_rate = polar.GetMC();
-    } else {
-      m_cruise_descent = solution.height_glide / time_remaining;
-      m_climb_rate = fixed(0);
-    }
-  } else {
-    m_v = fixed(1);
-    m_cruise_descent = fixed(0);
-    m_climb_rate = fixed(0);
-  }
-  m_max_descent = polar.GetSBestLD();
-
-  SetVerticalTolerance(fixed(0.001));
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetCruiseSpeed() const
-{
-  return m_v;
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetCruiseDescent() const
-{
-  return m_cruise_descent;
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetClimbRate() const
-{
-  return m_climb_rate;
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetDescentRate() const
-{
-  return m_max_descent;
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetMaxSpeed() const
-{
-  return m_v;
 }

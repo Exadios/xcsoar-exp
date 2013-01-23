@@ -72,9 +72,9 @@ DRAWABLE_DIR = $(ANDROID_BUILD)/res/drawable
 RAW_DIR = $(ANDROID_BUILD)/res/raw
 
 ifeq ($(TESTING),y)
-ICON_SVG = $(topdir)/Data/graphics/xcsoarswiftsplash_red.svg
+ICON_SVG = $(topdir)/Data/graphics/logo_red.svg
 else
-ICON_SVG = $(topdir)/Data/graphics/xcsoarswiftsplash.svg
+ICON_SVG = $(topdir)/Data/graphics/logo.svg
 endif
 
 $(ANDROID_BUILD)/res/drawable-ldpi/icon.png: $(ICON_SVG) | $(ANDROID_BUILD)/res/drawable-ldpi/dirstamp

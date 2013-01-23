@@ -108,7 +108,8 @@ bool
 AbstractTask::UpdateIdle(const AircraftState &state,
                          const GlidePolar &glide_polar)
 {
-  if (TaskStarted() && task_behaviour.calc_cruise_efficiency) {
+  if (TaskStarted() && task_behaviour.calc_cruise_efficiency &&
+      glide_polar.IsValid()) {
     fixed val = fixed(1);
     if (CalcCruiseEfficiency(state, glide_polar, val))
       stats.cruise_efficiency = std::max(ce_lpf.Update(val), fixed(0));
@@ -116,7 +117,8 @@ AbstractTask::UpdateIdle(const AircraftState &state,
     stats.cruise_efficiency = ce_lpf.Reset(fixed(1));
   }
 
-  if (TaskStarted() && task_behaviour.calc_effective_mc) {
+  if (TaskStarted() && task_behaviour.calc_effective_mc &&
+      glide_polar.IsValid()) {
     fixed val = glide_polar.GetMC();
     if (CalcEffectiveMC(state, glide_polar, val))
       stats.effective_mc = std::max(em_lpf.Update(val), fixed(0));
@@ -124,7 +126,7 @@ AbstractTask::UpdateIdle(const AircraftState &state,
     stats.effective_mc = em_lpf.Reset(glide_polar.GetMC());
   }
 
-  if (task_behaviour.calc_glide_required)
+  if (task_behaviour.calc_glide_required && glide_polar.IsValid())
     UpdateStatsGlide(state, glide_polar);
   else
     stats.glide_required = fixed(0); // error
@@ -315,7 +317,7 @@ AbstractTask::CalcLegGradient(const AircraftState &aircraft) const
 
   // Get the distance to the next turnpoint
   const fixed d = tp->GetVectorRemaining(aircraft.location).distance;
-  if (!d)
+  if (!positive(d))
     return fixed(0);
 
   // Calculate the geometric gradient (height divided by distance)

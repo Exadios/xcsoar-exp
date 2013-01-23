@@ -466,15 +466,14 @@ OrderedTask::UpdateIdle(const AircraftState &state,
     CalcMinTarget(state, glide_polar,
                   GetOrderedTaskBehaviour().aat_min_time + fixed(task_behaviour.optimise_targets_margin));
 
-    if (task_behaviour.optimise_targets_bearing) {
-      if (task_points[active_task_point]->GetType() == TaskPointType::AAT) {
-        AATPoint *ap = (AATPoint *)task_points[active_task_point];
-        // very nasty hack
-        TaskOptTarget tot(task_points, active_task_point, state,
-                          task_behaviour.glide, glide_polar,
-                          *ap, task_projection, taskpoint_start);
-        tot.search(fixed(0.5));
-      }
+    if (task_behaviour.optimise_targets_bearing &&
+        task_points[active_task_point]->GetType() == TaskPointType::AAT) {
+      AATPoint *ap = (AATPoint *)task_points[active_task_point];
+      // very nasty hack
+      TaskOptTarget tot(task_points, active_task_point, state,
+                        task_behaviour.glide, glide_polar,
+                        *ap, task_projection, taskpoint_start);
+      tot.search(fixed(0.5));
     }
     retval = true;
   }
@@ -763,7 +762,8 @@ OrderedTask::GlideSolutionRemaining(const AircraftState &aircraft,
                                       GlideResult &total,
                                       GlideResult &leg)
 {
-  TaskMacCreadyRemaining tm(task_points, active_task_point,
+  TaskMacCreadyRemaining tm(task_points.cbegin(), task_points.cend(),
+                            active_task_point,
                             task_behaviour.glide, polar);
   total = tm.glide_solution(aircraft);
   leg = tm.get_active_solution();
@@ -775,7 +775,7 @@ OrderedTask::GlideSolutionTravelled(const AircraftState &aircraft,
                                       GlideResult &total,
                                       GlideResult &leg)
 {
-  TaskMacCreadyTravelled tm(task_points, active_task_point,
+  TaskMacCreadyTravelled tm(task_points.cbegin(), active_task_point,
                             task_behaviour.glide, glide_polar);
   total = tm.glide_solution(aircraft);
   leg = tm.get_active_solution();
@@ -791,7 +791,8 @@ OrderedTask::GlideSolutionPlanned(const AircraftState &aircraft,
                                     const GlideResult &solution_remaining_total,
                                     const GlideResult &solution_remaining_leg)
 {
-  TaskMacCreadyTotal tm(task_points, active_task_point,
+  TaskMacCreadyTotal tm(task_points.cbegin(), task_points.cend(),
+                        active_task_point,
                         task_behaviour.glide, glide_polar);
   total = tm.glide_solution(aircraft);
   leg = tm.get_active_solution();
@@ -880,7 +881,7 @@ OrderedTask::CalcEffectiveMC(const AircraftState &aircraft,
 }
 
 
-fixed
+inline fixed
 OrderedTask::CalcMinTarget(const AircraftState &aircraft,
                            const GlidePolar &glide_polar,
                            const fixed t_target)
@@ -913,7 +914,7 @@ OrderedTask::CalcGradient(const AircraftState &state) const
     // Sum up the leg distances
     distance += tp->GetVectorRemaining(state.location).distance;
 
-  if (!distance)
+  if (!positive(distance))
     return fixed(0);
 
   // Calculate gradient to the last turnpoint of the remaining task

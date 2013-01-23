@@ -24,20 +24,12 @@
 #include "TaskSolution.hpp"
 #include "Task/Points/TaskPoint.hpp"
 
-TaskMacCreadyTotal::TaskMacCreadyTotal(const std::vector<OrderedTaskPoint*> &_tps,
-                                       const unsigned _activeTaskPoint,
-                                       const GlideSettings &settings,
-                                       const GlidePolar &_gp)
-  :TaskMacCready(_tps, _activeTaskPoint, settings, _gp)
-{
-}
-
 GlideResult
-TaskMacCreadyTotal::tp_solution(const unsigned i,
-                                const AircraftState &aircraft,
-                                fixed minH) const
+TaskMacCreadyTotal::SolvePoint(const TaskPoint &tp,
+                               const AircraftState &aircraft,
+                               fixed minH) const
 {
-  return TaskSolution::GlideSolutionPlanned(*points[i], aircraft,
+  return TaskSolution::GlideSolutionPlanned(tp, aircraft,
                                             settings, glide_polar, minH);
 }
 
@@ -57,7 +49,7 @@ TaskMacCreadyTotal::effective_distance(const fixed time_remaining) const
 
   fixed t_total = fixed(0);
   fixed d_total = fixed(0);
-  for (int i = end_index; i >= start_index; i--) {
+  for (int i = points.size() - 1; i >= 0; i--) {
     const GlideResult &result = leg_solutions[i];
 
     if (result.IsOk() && positive(result.time_elapsed)) {

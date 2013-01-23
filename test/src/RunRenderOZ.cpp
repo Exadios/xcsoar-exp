@@ -118,7 +118,7 @@ public:
     case ObservationZonePoint::ANNULAR_SECTOR:
       oz = new AnnularSectorZone(location, radius,
                                  Angle::Degrees(0), Angle::Degrees(70),
-                                 radius * fixed(0.5));
+                                 Half(radius));
       break;
 
     case ObservationZonePoint::FAI_SECTOR:
@@ -150,12 +150,12 @@ public:
   }
 
 protected:
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnPaint(Canvas &canvas) override;
 
-  virtual void OnResize(UPixelScalar width, UPixelScalar height) {
-    PaintWindow::OnResize(width, height);
-    projection.SetScale(fixed(width) / 21000);
-    projection.SetScreenOrigin(width / 2, height / 2);
+  virtual void OnResize(PixelSize new_size) override {
+    PaintWindow::OnResize(new_size);
+    projection.SetScale(fixed(new_size.cx) / 21000);
+    projection.SetScreenOrigin(new_size.cx / 2, new_size.cy / 2);
   }
 };
 
@@ -233,7 +233,7 @@ public:
   }
 
 protected:
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -245,12 +245,12 @@ protected:
 
   /* virtual methods from ListItemRenderer */
   virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
-                           unsigned idx) {
+                           unsigned idx) override {
     canvas.DrawText(rc.left + 2, rc.top + 2, oz_type_names[idx]);
   }
 
   /* virtual methods from ListCursorHandler */
-  virtual void OnCursorMoved(unsigned idx) gcc_override {
+  virtual void OnCursorMoved(unsigned idx) override {
     assert(idx < NUM_OZ_TYPES);
 
     oz.set_shape((ObservationZonePoint::Shape)idx);

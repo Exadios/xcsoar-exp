@@ -23,29 +23,14 @@
 #include "TaskMacCreadyRemaining.hpp"
 #include "TaskSolution.hpp"
 #include "Task/Points/TaskPoint.hpp"
-
-TaskMacCreadyRemaining::TaskMacCreadyRemaining(const std::vector<OrderedTaskPoint*> &_tps,
-                                               const unsigned _active_index,
-                                               const GlideSettings &settings,
-                                               const GlidePolar &_gp)
-  :TaskMacCready(_tps, _active_index, settings, _gp)
-{
-  start_index = active_index;
-}
-
-TaskMacCreadyRemaining::TaskMacCreadyRemaining(TaskPoint* tp,
-                                               const GlideSettings &settings,
-                                               const GlidePolar &_gp):
-  TaskMacCready(tp, settings, _gp)
-{
-}
+#include "Task/Ordered/Points/AATPoint.hpp"
 
 GlideResult
-TaskMacCreadyRemaining::tp_solution(const unsigned i,
-                                    const AircraftState &aircraft,
-                                    fixed minH) const
+TaskMacCreadyRemaining::SolvePoint(const TaskPoint &tp,
+                                   const AircraftState &aircraft,
+                                   fixed minH) const
 {
-  return TaskSolution::GlideSolutionRemaining(*points[i],aircraft,
+  return TaskSolution::GlideSolutionRemaining(tp, aircraft,
                                               settings, glide_polar, minH);
 }
 
@@ -59,11 +44,10 @@ TaskMacCreadyRemaining::get_aircraft_start(const AircraftState &aircraft) const
 bool
 TaskMacCreadyRemaining::has_targets() const
 {
-  for (int i = start_index; i <= end_index; i++) {
-    if (points[i]->HasTarget() && !points[i]->IsTargetLocked()) {
+  for (const TaskPoint *point : points)
+    if (point->HasTarget() && !((const AATPoint *)point)->IsTargetLocked())
       return true;
-    }
-  }
+
   return false;
 }
 
@@ -73,17 +57,16 @@ TaskMacCreadyRemaining::set_range(const fixed tp, const bool force_current)
 {
   // first try to modify targets without regard to current inside (unless forced)
   bool modified = force_current;
-  for (int i = start_index; i <= end_index; i++) {
-    modified |= points[i]->SetRange(tp,false);
-  }
+  for (TaskPoint *point : points)
+    if (point->HasTarget())
+      modified |= ((AATPoint *)point)->SetRange(tp, false);
+
   if (!force_current && !modified) {
     // couldn't modify remaining targets, so force move even if inside
-    for (int i = start_index; i <= end_index; i++) {
-      if (points[i]->SetRange(tp,true)) {
-        // quick exit
-        return;
-      }
-    }
+    for (TaskPoint *point : points)
+      if (point->HasTarget() && ((AATPoint *)point)->SetRange(tp, true))
+          // quick exit
+          return;
   }
 }
 
@@ -91,15 +74,23 @@ TaskMacCreadyRemaining::set_range(const fixed tp, const bool force_current)
 void 
 TaskMacCreadyRemaining::target_save()
 {
-  for (int i = start_index; i <= end_index; i++) {
-      points[i]->SaveTarget();
-  }
+  auto saved = saved_targets.begin();
+  for (TaskPoint *point : points)
+    *saved++ = point->HasTarget()
+      ? ((AATPoint *)point)->GetTarget()
+      : GeoPoint::Invalid();
 }
 
 void 
 TaskMacCreadyRemaining::target_restore()
 {
-  for (int i = start_index; i <= end_index; i++) {
-      points[i]->RestoreTarget();
+  auto saved = saved_targets.cbegin();
+  for (TaskPoint *point : points) {
+    if (saved->IsValid()) {
+      assert(point->HasTarget());
+      ((AATPoint *)point)->SetTarget(*saved, true);
+    }
+
+    ++saved;
   }
 }

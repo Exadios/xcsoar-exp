@@ -11,7 +11,6 @@
 #include "Constants.h"
 
 #include <utility>
-#include <complex>
 
 #include <assert.h>
 
@@ -108,7 +107,6 @@ inline fixed accurate_half_sin(fixed a) {
 #define FIXED_INT(x) x.as_int()
 
 #include <type_traits>
-#include <complex>
 #include <climits>
 
 #ifdef HAVE_BOOST
@@ -210,11 +208,6 @@ public:
   constexpr
   friend bool operator>=(const fixed lhs, const fixed rhs) {
     return lhs.m_nVal>=rhs.m_nVal;
-  }
-
-  constexpr explicit
-  operator bool() const {
-    return m_nVal != 0;
   }
 
   constexpr explicit
@@ -364,7 +357,7 @@ public:
 
   constexpr fixed ceil() const {
     return fixed(fixed::internal(),
-                 ((m_nVal - 1) | ~(resolution - 1)) + 1);
+                 ((m_nVal - 1) | (resolution - 1)) + 1);
   }
 
   gcc_pure
@@ -625,10 +618,6 @@ public:
   fixed &operator<<=(int bits) {
     m_nVal <<= bits;
     return *this;
-  }
-
-  constexpr bool operator!() const {
-    return m_nVal==0;
   }
 
   fixed modf(fixed* integral_part) const;
@@ -926,24 +915,6 @@ inline fixed sigmoid(const fixed x)
 {
   return ::fixed::sigmoid(x);
 }
-
- namespace std
- {
-   template<>
-   inline ::fixed arg(const std::complex< ::fixed>& val)
-   {
-     ::fixed r,theta;
-     ::fixed::to_polar(val.real(),val.imag(),&r,&theta);
-     return theta;
-   }
-
-   template<>
-   inline complex< ::fixed> polar(::fixed const& rho,::fixed const& theta)
-   {
-     const auto sc = ::fixed::sin_cos(theta);
-     return complex< ::fixed>(rho * sc.second, rho * sc.first);
-   }
- }
 
 #define fixed_max fixed(fixed::internal(), 0x7fffffffffffffffLL)
 

@@ -60,7 +60,7 @@ public:
   }
 
 protected:
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnPaint(Canvas &canvas) override;
 
   void DrawChart(ChartRenderer &renderer);
 };
@@ -155,7 +155,7 @@ public:
   }
 
 protected:
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -167,14 +167,14 @@ protected:
 
   /* virtual methods from ListItemRenderer */
   virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
-                           unsigned idx) {
+                           unsigned idx) override {
     assert(idx < ARRAY_SIZE(chart_names));
 
     canvas.DrawText(rc.left + 2, rc.top + 2, chart_names[idx]);
   }
 
   /* virtual methods from ListCursorHandler */
-  virtual void OnCursorMoved(unsigned idx) gcc_override {
+  virtual void OnCursorMoved(unsigned idx) override {
     assert(idx < ARRAY_SIZE(chart_names));
 
     chart.SetChart(idx);

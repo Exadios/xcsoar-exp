@@ -21,8 +21,9 @@
  */
 
 #include "TaskBestMc.hpp"
-#include <math.h>
+#include "Task/Ordered/Points/OrderedTaskPoint.hpp"
 #include "Util/Tolerances.hpp"
+
 #include <algorithm>
 
 // @todo only engage this class if above final glide at mc=0
@@ -33,7 +34,7 @@ TaskBestMc::TaskBestMc(const std::vector<OrderedTaskPoint*>& tps,
                        const GlideSettings &settings, const GlidePolar &_gp,
                        const fixed _mc_min)
   :ZeroFinder(_mc_min, fixed(10.0), fixed(TOLERANCE_BEST_MC)),
-   tm(tps, activeTaskPoint, settings, _gp),
+   tm(tps.cbegin(), tps.cend(), activeTaskPoint, settings, _gp),
    aircraft(_aircraft)
 {
 }
@@ -62,7 +63,7 @@ bool
 TaskBestMc::valid(const fixed mc)
 {
   return res.IsOk() &&
-         res.altitude_difference >= -tolerance * fixed(2) * res.vector.distance;
+    res.altitude_difference >= Double(-tolerance) * res.vector.distance;
 }
 
 fixed

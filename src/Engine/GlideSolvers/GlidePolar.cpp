@@ -30,6 +30,8 @@
 #include "Util/Clamp.hpp"
 #include "Navigation/Aircraft.hpp"
 
+#include <algorithm>
+
 #include <assert.h>
 
 GlidePolar::GlidePolar(const fixed _mc, const fixed _bugs, const fixed _ballast) :
@@ -269,7 +271,7 @@ GlidePolar::IsGlidePossible(const GlideState &task) const
  *
  * This finds the speed that maximises the glide angle over the ground
  */
-class GlidePolarSpeedToFly gcc_final : public ZeroFinder {
+class GlidePolarSpeedToFly final : public ZeroFinder {
   const GlidePolar &polar;
   const fixed m_net_sink_rate;
   const fixed m_head_wind;
@@ -329,6 +331,8 @@ fixed
 GlidePolar::SpeedToFly(const AircraftState &state,
     const GlideResult &solution, const bool block_stf) const
 {
+  assert(IsValid());
+
   fixed V_stf;
   const fixed g_scaling (block_stf ? fixed(1) : sqrt(fabs(state.g_load))); 
 

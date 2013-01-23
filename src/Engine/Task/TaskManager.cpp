@@ -30,7 +30,7 @@
 
 TaskManager::TaskManager(const TaskBehaviour &_task_behaviour,
                          const Waypoints &wps)
-  :glide_polar(fixed(0)), safety_polar(fixed(1)),
+  :glide_polar(GlidePolar::Invalid()), safety_polar(GlidePolar::Invalid()),
    task_behaviour(_task_behaviour),
    task_ordered(task_behaviour),
    task_goto(task_behaviour, wps),
@@ -220,7 +220,7 @@ TaskManager::UpdateCommonStatsTask()
 void
 TaskManager::UpdateCommonStatsPolar(const AircraftState &state)
 {
-  if (!state.location.IsValid())
+  if (!state.location.IsValid() || !glide_polar.IsValid())
     return;
 
   common_stats.current_risk_mc =

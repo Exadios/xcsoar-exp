@@ -17,6 +17,8 @@ Version 6.5 - not yet released
   - add task start countdown (#136, #1080)
   - optimise racing tasks for minimum distance
   - allow observation zone sizes up to 200km (#2401)
+  - always use "arrival safety height" when calculating arrival heights
+    for intermediate task turnpoints
 * devices
   - LX: support flight download from LXNAV Nano (#2085)
   - LX: read bugs setting from the LX160 vario (#2167)
@@ -47,8 +49,9 @@ Version 6.5 - not yet released
 * track friends via internet connection (SkyLines live tracking)
 * Documentation
   - started a French translation of the manual
+  - included an almost complete German translation of the manual
 
-Version 6.4.6 - not yet released
+Version 6.4.6 - 2013/01/23
 * devices
   - Leonardo: fixed vario parser for the $c sentence
   - C-Probe: fixed temperature offset bug
@@ -61,6 +64,8 @@ Version 6.4.6 - not yet released
   - fix font scaling on screen rotation change (Android/Linux OpenGL)
 * data files
   - fixed arc airspace approximation threshold handling (#2360)
+* configuration
+  - save waypoint label display configuration changed from menu (#2548)
 
 Version 6.4.5 - 2012/12/14
 * calculations

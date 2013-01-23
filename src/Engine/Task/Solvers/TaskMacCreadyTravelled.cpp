@@ -25,21 +25,12 @@
 #include "Task/Points/TaskPoint.hpp"
 #include "Navigation/Aircraft.hpp"
 
-TaskMacCreadyTravelled::TaskMacCreadyTravelled(const std::vector<OrderedTaskPoint*> &_tps,
-                                               const unsigned _active_index,
-                                               const GlideSettings &settings,
-                                               const GlidePolar &_gp)
-  :TaskMacCready(_tps, _active_index, settings, _gp)
-{
-  end_index = active_index;
-}
-
 GlideResult
-TaskMacCreadyTravelled::tp_solution(const unsigned i,
-                                    const AircraftState &aircraft,
-                                    fixed minH) const
+TaskMacCreadyTravelled::SolvePoint(const TaskPoint &tp,
+                                   const AircraftState &aircraft,
+                                   fixed minH) const
 {
-  return TaskSolution::GlideSolutionTravelled(*points[i], aircraft,
+  return TaskSolution::GlideSolutionTravelled(tp, aircraft,
                                               settings, glide_polar, minH);
 }
 

@@ -67,7 +67,7 @@ enum Buttons {
  * button objects, because the "down" and the "mutate" buttons are
  * exclusive.
  */
-class TaskEditButtons gcc_final : public NullWidget {
+class TaskEditButtons final : public NullWidget {
   ActionListener *listener;
 
   WndButton *edit_button, *mutate_button;
@@ -140,18 +140,18 @@ private:
 
 public:
   /* virtual methods from Widget */
-  virtual PixelSize GetMinimumSize() const gcc_override {
+  virtual PixelSize GetMinimumSize() const override {
     return { ::Layout::Scale(180),
         PixelScalar(::Layout::GetMinimumControlHeight()) };
   }
 
-  virtual PixelSize GetMaximumSize() const gcc_override {
+  virtual PixelSize GetMaximumSize() const override {
     return { ::Layout::Scale(400),
         PixelScalar(::Layout::GetMaximumControlHeight()) };
   }
 
   virtual void Prepare(ContainerWindow &parent,
-                       const PixelRect &rc) gcc_override {
+                       const PixelRect &rc) override {
     assert(!visible);
 
     ButtonWindowStyle style;
@@ -178,7 +178,7 @@ public:
                                      *listener, CLEAR_ALL);
   }
 
-  virtual void Unprepare() gcc_override {
+  virtual void Unprepare() override {
     assert(!visible);
 
     delete clear_all_button;
@@ -188,7 +188,7 @@ public:
     delete edit_button;
   }
 
-  virtual void Show(const PixelRect &rc) gcc_override {
+  virtual void Show(const PixelRect &rc) override {
     assert(!visible);
     visible = true;
 
@@ -196,7 +196,7 @@ public:
     UpdateVisibility();
   }
 
-  virtual void Hide() gcc_override {
+  virtual void Hide() override {
     assert(visible);
     visible = false;
 
@@ -207,7 +207,7 @@ public:
     clear_all_button->Hide();
   }
 
-  virtual void Move(const PixelRect &rc) gcc_override {
+  virtual void Move(const PixelRect &rc) override {
     UpdatePositions(rc);
   }
 };
@@ -254,29 +254,29 @@ public:
   bool OnKeyDown(unsigned key_code);
 
   /* virtual methods from Widget */
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
+  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc) override;
 
-  virtual void Unprepare() gcc_override {
+  virtual void Unprepare() override {
     DeleteWindow();
   }
 
-  virtual void ReClick();
-  virtual void Show(const PixelRect &rc);
-  virtual void Hide();
+  virtual void ReClick() override;
+  virtual void Show(const PixelRect &rc) override;
+  virtual void Hide() override;
 
 protected:
   void RefreshView();
 
 private:
   /* virtual methods from ActionListener */
-  virtual void OnAction(int id) gcc_override;
+  virtual void OnAction(int id) override;
 
   /* virtual methods from List::Handler */
   virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
-                           unsigned idx);
-  virtual void OnCursorMoved(unsigned index);
-  virtual bool CanActivateItem(unsigned index) const;
-  virtual void OnActivateItem(unsigned index);
+                           unsigned idx) override;
+  virtual void OnCursorMoved(unsigned index) override;
+  virtual bool CanActivateItem(unsigned index) const override;
+  virtual void OnActivateItem(unsigned index) override;
 };
 
 void

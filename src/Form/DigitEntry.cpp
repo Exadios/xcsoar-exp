@@ -32,6 +32,8 @@ Copyright_License {
 #include "Units/Descriptor.hpp"
 #include "Time/RoughTime.hpp"
 
+#include <stdio.h>
+
 DigitEntry::~DigitEntry()
 {
 }
@@ -59,9 +61,9 @@ DigitEntry::Create(ContainerWindow &parent, const PixelRect &rc,
   if (digit_size.cy < Layout::Scale(28))
     digit_size.cy = Layout::Scale(28);
 
-  const unsigned digit_width = digit_size.cx + 2 * padding + margin;
+  const unsigned digit_width = digit_size.cx + margin;
   top = Layout::GetMaximumControlHeight();
-  bottom = top + digit_size.cy + 2 * padding;
+  bottom = top + digit_size.cy;
 
   for (unsigned i = 0; i < length; ++i) {
     Column &digit = columns[i];

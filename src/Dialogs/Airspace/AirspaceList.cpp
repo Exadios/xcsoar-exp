@@ -59,14 +59,14 @@ class AirspaceListDialog : public ListItemRenderer, public ListCursorHandler {
 public:
   /* virtual methods from ListItemRenderer */
   virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
-                           unsigned idx) gcc_override;
+                           unsigned idx) override;
 
   /* virtual methods from ListCursorHandler */
-  virtual bool CanActivateItem(unsigned index) const gcc_override {
+  virtual bool CanActivateItem(unsigned index) const override {
     return true;
   }
 
-  virtual void OnActivateItem(unsigned index) gcc_override;
+  virtual void OnActivateItem(unsigned index) override;
 };
 
 /**
@@ -190,7 +190,7 @@ class AirspaceFilterListener: public DataFieldListener
 {
 private:
   /* virtual methods from DataFieldListener */
-  virtual void OnModified(DataField &df);
+  virtual void OnModified(DataField &df) override;
 };
 
 void

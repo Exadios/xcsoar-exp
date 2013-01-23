@@ -25,6 +25,7 @@
 #include "test_debug.hpp"
 #include "harness_airspace.hpp"
 #include "Route/AirspaceRoute.hpp"
+#include "Engine/Airspace/AirspaceAircraftPerformance.hpp"
 #include "Geo/SpeedVector.hpp"
 #include "Geo/GeoVector.hpp"
 #include "GlideSolvers/GlideSettings.hpp"
@@ -51,8 +52,8 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
 
     for (unsigned i = 0; i < nx; ++i) {
       for (unsigned j = 0; j < ny; ++j) {
-        fixed fx = (fixed)i / (nx - 1) * fixed(2.0) - fixed(1);
-        fixed fy = (fixed)j / (ny - 1) * fixed(2.0) - fixed(1);
+        fixed fx = (fixed)i / (nx - 1) * 2 - fixed(1);
+        fixed fy = (fixed)j / (ny - 1) * 2 - fixed(1);
         GeoPoint x(origin.longitude + Angle::Degrees(fixed(0.2) + fixed(0.7) * fx),
                    origin.latitude + Angle::Degrees(fixed(0.9) * fy));
         short h = map.GetInterpolatedHeight(x);
@@ -79,7 +80,7 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
 
     AircraftState state;
     GlidePolar glide_polar(fixed(0.1));
-    AirspaceAircraftPerformanceGlide perf(glide_polar);
+    const AirspaceAircraftPerformance perf(glide_polar);
 
     GeoVector vec(loc_start, loc_end);
     fixed range = fixed(10000) + vec.distance / 2;

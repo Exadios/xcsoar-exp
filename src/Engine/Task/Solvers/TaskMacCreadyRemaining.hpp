@@ -23,22 +23,31 @@
 #define TASKMACCREADYREMAINING_HPP
 
 #include "TaskMacCready.hpp"
+#include "Geo/GeoPoint.hpp"
 
 /**
  * Specialisation of TaskMacCready for task remaining
  */
-class TaskMacCreadyRemaining gcc_final : public TaskMacCready {
+class TaskMacCreadyRemaining final : public TaskMacCready {
+  /**
+   * Storage used by target_save() and target_restore().
+   */
+  std::array<GeoPoint, MAX_SIZE> saved_targets;
+
 public:
   /**
    * Constructor for ordered task points
    *
-   * @param _tps Vector of ordered task points comprising the task
    * @param _activeTaskPoint Current active task point in sequence
    * @param _gp Glide polar to copy for calculations
    */
-  TaskMacCreadyRemaining(const std::vector<OrderedTaskPoint*> &_tps,
+  template<class I>
+  TaskMacCreadyRemaining(const I tps_begin, const I tps_end,
                          const unsigned _activeTaskPoint,
-                         const GlideSettings &settings, const GlidePolar &_gp);
+                         const GlideSettings &settings, const GlidePolar &_gp)
+    :TaskMacCready(std::next(tps_begin, _activeTaskPoint), tps_end, 0,
+                   settings, _gp) {
+  }
 
   /**
    * Constructor for single task points (non-ordered ones)
@@ -47,7 +56,8 @@ public:
    * @param gp Glide polar to copy for calculations
    */
   TaskMacCreadyRemaining(TaskPoint* tp,
-                         const GlideSettings &settings, const GlidePolar &gp);
+                         const GlideSettings &settings, const GlidePolar &gp)
+    :TaskMacCready(tp, settings, gp) {}
 
   /**
    * Set ranges of all remaining task points
@@ -62,6 +72,7 @@ public:
    *
    * @return True if adjustable targets
    */
+  gcc_pure
   bool has_targets() const;
 
   /**
@@ -74,15 +85,16 @@ public:
   void target_restore();
 
 private:
-
-  virtual GlideResult tp_solution(const unsigned i,
-                                  const AircraftState &aircraft,
-                                  fixed minH) const;
-  virtual fixed get_min_height(const AircraftState &aircraft) const {
+  /* virtual methods from class TaskMacCready */
+  virtual fixed get_min_height(const AircraftState &aircraft) const override {
     return fixed(0);
   }
 
-  virtual const AircraftState &get_aircraft_start(const AircraftState &aircraft) const;
+  virtual GlideResult SolvePoint(const TaskPoint &tp,
+                                 const AircraftState &aircraft,
+                                 fixed minH) const override;
+
+  virtual const AircraftState &get_aircraft_start(const AircraftState &aircraft) const override;
 };
 
 #endif
