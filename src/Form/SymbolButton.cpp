@@ -28,6 +28,7 @@ Copyright_License {
 #include "Screen/Canvas.hpp"
 #include "Screen/Bitmap.hpp"
 #include "Screen/Layout.hpp"
+#include "Renderer/SymbolRenderer.hpp"
 #include "resource.h"
 
 void
@@ -56,55 +57,25 @@ WndSymbolButton::OnPaint(Canvas &canvas)
 
   Color color;
 
-  // Draw arrow symbols instead of < and >
-  if (ch == '<' || ch == '>') {
-    int size = std::min(rc.right - rc.left, rc.bottom - rc.top) / 5;
+  // Draw arrow symbol instead of <
+  if (ch == '<')
+    SymbolRenderer::DrawArrow(canvas, rc, SymbolRenderer::LEFT);
 
-    RasterPoint Arrow[3];
-    Arrow[0].x = (rc.left + rc.right) / 2 + (ch == '<' ? size : -size);
-    Arrow[0].y = (rc.top + rc.bottom) / 2 + size;
-    Arrow[1].x = (rc.left + rc.right) / 2 + (ch == '<' ? -size : size);
-    Arrow[1].y = (rc.top + rc.bottom) / 2;
-    Arrow[2].x = (rc.left + rc.right) / 2 + (ch == '<' ? size : -size);
-    Arrow[2].y = (rc.top + rc.bottom) / 2 - size;
+  // Draw arrow symbol instead of >
+  else if (ch == '>')
+    SymbolRenderer::DrawArrow(canvas, rc, SymbolRenderer::RIGHT);
 
-    canvas.DrawTriangleFan(Arrow, 3);
-  }
+  // Draw arrow symbol instead of ^
+  else if (ch == '^')
+    SymbolRenderer::DrawArrow(canvas, rc, SymbolRenderer::UP);
 
-  // Draw arrow symbols instead of v and ^
-  else if (ch == '^' || ch == 'v') {
-    int size = std::min(rc.right - rc.left, rc.bottom - rc.top) / 5;
-
-    RasterPoint Arrow[3];
-    Arrow[0].x = (rc.left + rc.right) / 2 +
-                 size;
-    Arrow[0].y = (rc.top + rc.bottom) / 2 +
-                 (ch == '^' ? size : -size);
-    Arrow[1].x = (rc.left + rc.right) / 2;
-    Arrow[1].y = (rc.top + rc.bottom) / 2 +
-                 (ch == '^' ? -size : size);
-    Arrow[2].x = (rc.left + rc.right) / 2 - size;
-    Arrow[2].y = (rc.top + rc.bottom) / 2 +
-                 (ch == '^' ? size : -size);
-
-    canvas.DrawTriangleFan(Arrow, 3);
-  }
+  // Draw arrow symbol instead of v
+  else if (ch == '^' || ch == 'v')
+    SymbolRenderer::DrawArrow(canvas, rc, SymbolRenderer::DOWN);
 
   // Draw symbols instead of + and -
-  else if (ch == '+' || ch == '-') {
-    int size = std::min(rc.right - rc.left, rc.bottom - rc.top) / 5;
-
-    canvas.Rectangle((rc.left + rc.right) / 2 - size,
-                     (rc.top + rc.bottom) / 2 - size / 3,
-                     (rc.left + rc.right) / 2 + size,
-                     (rc.top + rc.bottom) / 2 + size / 3);
-
-    if (ch == '+')
-      canvas.Rectangle((rc.left + rc.right) / 2 - size / 3,
-                       (rc.top + rc.bottom) / 2 - size,
-                       (rc.left + rc.right) / 2 + size / 3,
-                       (rc.top + rc.bottom) / 2 + size);
-  }
+  else if (ch == '+' || ch == '-')
+    SymbolRenderer::DrawSign(canvas, rc, ch == '+');
 
   // Draw Fly bitmap
   else if (caption == _T("Fly")) {

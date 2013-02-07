@@ -26,74 +26,64 @@
 #include <assert.h>
 #include <algorithm>
 
-TaskLeg::TaskLeg(OrderedTaskPoint &_destination):
-  vector_travelled(fixed(0)),
-  vector_remaining(fixed(0)),
-  vector_planned(fixed(0)),
-  destination(_destination)
-{
-}
-
-const OrderedTaskPoint* 
+inline const OrderedTaskPoint *
 TaskLeg::GetOrigin() const
 {
   return destination.GetPrevious();
 }
 
-const OrderedTaskPoint *
+inline const OrderedTaskPoint *
 TaskLeg::GetNext() const
 {
   return destination.GetNext();
 }
 
-OrderedTaskPoint *
+inline OrderedTaskPoint *
 TaskLeg::GetNext()
 {
   return destination.GetNext();
 }
 
-GeoVector 
+inline GeoVector
 TaskLeg::GetPlannedVector() const
 {
   if (!GetOrigin()) {
-    return GeoVector(fixed(0));
+    return GeoVector::Zero();
   } else {
     return memo_planned.calc(GetOrigin()->GetLocationRemaining(),
                              destination.GetLocationRemaining());
   }
 }
 
-GeoVector 
+inline GeoVector
 TaskLeg::GetRemainingVector(const GeoPoint &ref) const
 {
   switch (destination.GetActiveState()) {
   case OrderedTaskPoint::AFTER_ACTIVE:
-    if (!GetOrigin())
-      return GeoVector(fixed(0));
-
     // this leg totally included
-    return memo_remaining.calc(GetOrigin()->GetLocationRemaining(),
-                               destination.GetLocationRemaining());
-    break;
+    return GetPlannedVector();
+
   case OrderedTaskPoint::CURRENT_ACTIVE:
     // this leg partially included
     return memo_remaining.calc(ref, destination.GetLocationRemaining());
-    break;
+
   case OrderedTaskPoint::BEFORE_ACTIVE:
     // this leg not included
-  default:
-    assert(1); // error!
-    return GeoVector(fixed(0));
-  };
+    return GeoVector::Zero();
+  }
+
+  gcc_unreachable();
+  assert(false);
+  return GeoVector::Invalid();
 }
 
-GeoVector
+inline GeoVector
 TaskLeg::GetTravelledVector(const GeoPoint &ref) const
 {
   switch (destination.GetActiveState()) {
   case OrderedTaskPoint::BEFORE_ACTIVE:
     if (!GetOrigin())
-      return GeoVector(fixed(0));
+      return GeoVector::Zero();
 
     // this leg totally included
     return memo_travelled.calc(GetOrigin()->GetLocationTravelled(),
@@ -113,18 +103,21 @@ TaskLeg::GetTravelledVector(const GeoPoint &ref) const
 
   case OrderedTaskPoint::AFTER_ACTIVE:
     if (!GetOrigin())
-      return GeoVector(fixed(0));
+      return GeoVector::Zero();
 
     // this leg may be partially included
     if (GetOrigin()->HasEntered())
       return memo_travelled.calc(GetOrigin()->GetLocationTravelled(), ref);
 
-  default:
-    return GeoVector(fixed(0));
-  };
+    return GeoVector::Zero();
+  }
+
+  gcc_unreachable();
+  assert(false);
+  return GeoVector::Invalid();
 }
 
-fixed 
+inline fixed
 TaskLeg::GetScoredDistance(const GeoPoint &ref) const
 {
   if (!GetOrigin())
@@ -136,7 +129,7 @@ TaskLeg::GetScoredDistance(const GeoPoint &ref) const
     return std::max(fixed(0),
                     GetOrigin()->GetLocationScored().Distance(destination.GetLocationScored())
                     - GetOrigin()->ScoreAdjustment()-destination.ScoreAdjustment());
-    break;
+
   case OrderedTaskPoint::CURRENT_ACTIVE:
     // this leg partially included
     if (destination.HasEntered()) {
@@ -149,7 +142,7 @@ TaskLeg::GetScoredDistance(const GeoPoint &ref) const
                                             destination.GetLocationScored())
                       -GetOrigin()->ScoreAdjustment());
     }
-    break;
+
   case OrderedTaskPoint::AFTER_ACTIVE:
     // this leg may be partially included
     if (GetOrigin()->HasEntered()) {
@@ -158,31 +151,27 @@ TaskLeg::GetScoredDistance(const GeoPoint &ref) const
                                           ref).distance
                       -GetOrigin()->ScoreAdjustment());
     }
-  default:
-    return fixed(0);
-    break;
-  };
-  return fixed(0);
-}
 
-fixed 
-TaskLeg::GetNominalLegDistance() const
-{
-  return GetNominalLegVector().distance;
+    return fixed(0);
+  }
+
+  gcc_unreachable();
+  assert(false);
+  return fixed(0);
 }
 
 GeoVector
 TaskLeg::GetNominalLegVector() const
 {
   if (!GetOrigin()) {
-    return GeoVector(fixed(0));
+    return GeoVector::Zero();
   } else {
     return memo_nominal.calc(GetOrigin()->GetLocation(),
                              destination.GetLocation());
   }
 }
 
-fixed 
+inline fixed
 TaskLeg::GetMaximumLegDistance() const
 {
   if (GetOrigin())
@@ -191,7 +180,7 @@ TaskLeg::GetMaximumLegDistance() const
   return fixed(0);
 }
 
-fixed 
+inline fixed
 TaskLeg::GetMinimumLegDistance() const
 {
   if (GetOrigin())

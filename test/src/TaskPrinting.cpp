@@ -31,8 +31,10 @@
 #include "Engine/Task/Unordered/GotoTask.hpp"
 #include "Engine/Task/Unordered/AbortTask.hpp"
 #include "Engine/Task/Stats/CommonStats.hpp"
+#include "Engine/Task/ObservationZones/Boundary.hpp"
 #include "Engine/GlideSolvers/GlideResult.hpp"
 #include "Geo/Math.hpp"
+#include "OS/FileUtil.hpp"
 
 #include <fstream>
 
@@ -178,7 +180,7 @@ PrintHelper::orderedtaskpoint_print(std::ostream& f,
                                     const int item) 
 {
   if (item==0) {
-    sampledtaskpoint_print(f,tp,state);
+    taskpoint_print(f,tp,state);
     orderedtaskpoint_print_boundary(f,tp,state);
     f << "# Entered " << tp.GetEnteredState().time << "\n";
     f << "# Bearing travelled " << tp.GetVectorTravelled().bearing << "\n";
@@ -197,27 +199,14 @@ PrintHelper::orderedtaskpoint_print_boundary(std::ostream& f,
                                              const AircraftState &state) 
 {
   f << "#   Boundary points\n";
-  for (double t=0; t<= 1.0; t+= 0.05) {
-    GeoPoint loc = tp.GetBoundaryParametric(fixed(t));
-    f << "     " << loc.longitude << " " << loc.latitude << "\n";
-  }
-  GeoPoint loc = tp.GetBoundaryParametric(fixed(0));
-  f << "     " << loc.longitude << " " << loc.latitude << "\n";
+  for (const auto &i : tp.GetBoundary())
+    f << "     " << i.longitude << " " << i.latitude << "\n";
   f << "\n";
 }
 
-
-void 
-PrintHelper::sampledtaskpoint_print(std::ostream& f, const SampledTaskPoint& tp,
-                                    const AircraftState &state) 
-{
-  taskpoint_print(f,tp,state);
-}
-
-
 void 
 PrintHelper::sampledtaskpoint_print_samples(std::ostream& f,
-                                            const SampledTaskPoint& tp,
+                                            const ScoredTaskPoint &tp,
                                             const AircraftState &state) 
 {
   const unsigned n= tp.GetSearchPoints().size();
@@ -246,7 +235,8 @@ void
 PrintHelper::abstracttask_print(const AbstractTask &task,
                                 const AircraftState &state)
 {
-  std::ofstream fs("results/res-stats-all.txt");
+  Directory::Create(_T("output/results"));
+  std::ofstream fs("output/results/res-stats-all.txt");
 
   const auto &stats = task.GetStats();
 
@@ -255,7 +245,7 @@ PrintHelper::abstracttask_print(const AbstractTask &task,
 
   fs << stats;
 
-  static std::ofstream f6("results/res-stats.txt");
+  static std::ofstream f6("output/results/res-stats.txt");
   static bool first = true;
 
   if (first) {
@@ -295,7 +285,7 @@ PrintHelper::gototask_print(const GotoTask &task,
 
   const TaskWaypoint *tp = task.GetActiveTaskPoint();
   if (tp != nullptr) {
-    std::ofstream f1("results/res-goto.txt");
+    std::ofstream f1("output/results/res-goto.txt");
     taskpoint_print(f1, *tp, state);
   }
 }
@@ -308,7 +298,7 @@ PrintHelper::orderedtask_print(const OrderedTask &task,
   if (!task.CheckTask())
     return;
 
-  std::ofstream fi("results/res-isolines.txt");
+  std::ofstream fi("output/results/res-isolines.txt");
   for (unsigned i = 0; i < task.TaskSize(); ++i) {
     const OrderedTaskPoint &tp = task.GetPoint(i);
     fi << "## point " << i << "\n";
@@ -321,7 +311,7 @@ PrintHelper::orderedtask_print(const OrderedTask &task,
     fi << "\n";
   }
 
-  std::ofstream f1("results/res-task.txt");
+  std::ofstream f1("output/results/res-task.txt");
 
   f1 << "#### Task points\n";
   for (unsigned i = 0; i < task.TaskSize(); ++i) {
@@ -336,7 +326,7 @@ PrintHelper::orderedtask_print(const OrderedTask &task,
     f1 << "\n";
   }
 
-  std::ofstream f5("results/res-ssample.txt");
+  std::ofstream f5("output/results/res-ssample.txt");
   f5 << "#### Task sampled points\n";
   for (unsigned i =0 ; i < task.TaskSize(); ++i) {
     const OrderedTaskPoint &tp = task.GetPoint(i);
@@ -345,7 +335,7 @@ PrintHelper::orderedtask_print(const OrderedTask &task,
     f5 << "\n";
   }
 
-  std::ofstream f2("results/res-max.txt");
+  std::ofstream f2("output/results/res-max.txt");
   f2 << "#### Max task\n";
   for (unsigned i = 0; i < task.TaskSize(); ++i) {
     const OrderedTaskPoint &tp = task.GetPoint(i);
@@ -353,7 +343,7 @@ PrintHelper::orderedtask_print(const OrderedTask &task,
        << tp.GetLocationMax().latitude << "\n";
   }
 
-  std::ofstream f3("results/res-min.txt");
+  std::ofstream f3("output/results/res-min.txt");
   f3 << "#### Min task\n";
   for (unsigned i = 0; i < task.TaskSize(); ++i) {
     const OrderedTaskPoint &tp = task.GetPoint(i);
@@ -361,7 +351,7 @@ PrintHelper::orderedtask_print(const OrderedTask &task,
        << tp.GetLocationMin().latitude << "\n";
   }
 
-  std::ofstream f4("results/res-rem.txt");
+  std::ofstream f4("output/results/res-rem.txt");
   f4 << "#### Remaining task\n";
   for (unsigned i = 0; i < task.TaskSize(); ++i) {
     const OrderedTaskPoint &tp = task.GetPoint(i);
@@ -376,7 +366,7 @@ PrintHelper::aborttask_print(const AbortTask &task, const AircraftState &state)
 {
   abstracttask_print(task, state);
 
-  std::ofstream f1("results/res-abort-task.txt");
+  std::ofstream f1("output/results/res-abort-task.txt");
   f1 << "#### Task points\n";
   for (unsigned i = 0; i < task.TaskSize(); ++i) {
     GeoPoint l = task.GetAlternate(i).GetLocation();

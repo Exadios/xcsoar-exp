@@ -31,9 +31,7 @@
  * Class for unordered task points (e.g. goto and abort)
  *
  */
-class UnorderedTaskPoint : 
-  public TaskWaypoint
-{
+class UnorderedTaskPoint final : public TaskWaypoint {
   fixed safety_height_arrival;
 
 public:
@@ -46,15 +44,10 @@ public:
   UnorderedTaskPoint(const Waypoint & wp,
                      const TaskBehaviour &tb);
 
+  void SetTaskBehaviour(const TaskBehaviour &tb);
+
   /* virtual methods from class TaskPoint */
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb) override;
   virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const override;
-  virtual GeoVector GetVectorPlanned() const override;
-  virtual GeoVector GetVectorTravelled() const override;
-  virtual bool HasEntered() const override {
-    return false;
-  }
-  virtual const AircraftState &GetEnteredState() const override;
   virtual fixed GetElevation() const override;
 };
 

@@ -25,15 +25,17 @@ Copyright_License {
 #define XCSOAR_FORM_DIGIT_ENTRY_HPP
 
 #include "Screen/PaintWindow.hpp"
+#include "Renderer/ButtonRenderer.hpp"
 #include "Math/fixed.hpp"
 
 #include <assert.h>
 #include <stdint.h>
 
 class RoughTime;
-struct DialogLook;
+class Angle;
 class ContainerWindow;
 class ActionListener;
+struct DialogLook;
 
 /**
  * A control that allows entering numbers or other data types digit by
@@ -47,7 +49,8 @@ class DigitEntry : public PaintWindow {
     enum class Type : uint8_t {
       DIGIT,
       DIGIT6,
-      HOUR,
+      HOUR, // i.e. DIGIT24
+      DIGIT36,
       SIGN,
       DECIMAL_POINT,
       COLON,
@@ -74,13 +77,15 @@ class DigitEntry : public PaintWindow {
 
     constexpr bool IsNumber() const {
       return type == Type::DIGIT ||
-        type == Type::DIGIT6 || type == Type::HOUR;
+        type == Type::DIGIT6 ||
+        type == Type::DIGIT36 ||
+        type == Type::HOUR;
     }
 
     constexpr unsigned GetMaxNumber() const {
-      return type == Type::DIGIT
-        ? 9
-        : (type == Type::HOUR ? 23 : 5);
+      return type == Type::DIGIT6 ? 5 :
+             type == Type::HOUR ? 23 :
+             type == Type::DIGIT36 ? 35 : 9;
     }
 
     constexpr bool IsEditable() const {
@@ -92,14 +97,23 @@ class DigitEntry : public PaintWindow {
 
       value = is_negative;
     }
+
+    /**
+     * Returns the number characters that this column can have.
+     * Used for calculating the pixel-based width of the column.
+     */
+    constexpr unsigned GetWidth() const {
+      return type == Type::UNIT ? 4 :
+             type == Type::HOUR || type == Type::DIGIT36 ? 2 : 1;
+    }
   };
 
   const DialogLook &look;
 
+  ButtonRenderer button_renderer;
+
   ActionListener *action_listener;
   int action_id;
-
-  UPixelScalar padding;
 
   /**
    * Total number of columns.
@@ -118,9 +132,7 @@ class DigitEntry : public PaintWindow {
   unsigned cursor;
 
 public:
-  DigitEntry(const DialogLook &_look)
-    :look(_look), action_listener(nullptr) {}
-
+  DigitEntry(const DialogLook &_look);
   virtual ~DigitEntry();
 
 protected:
@@ -133,8 +145,17 @@ public:
                     const WindowStyle style,
                     unsigned ndigits, unsigned precision);
 
+  void CreateUnsigned(ContainerWindow &parent, const PixelRect &rc,
+                      const WindowStyle style,
+                      unsigned ndigits, unsigned precision);
+
   void CreateTime(ContainerWindow &parent, const PixelRect &rc,
                   const WindowStyle style);
+
+  void CreateAngle(ContainerWindow &parent, const PixelRect &rc,
+                   const WindowStyle style);
+
+  void CalculateLayout();
 
   gcc_pure
   PixelSize GetRecommendedSize() const {
@@ -158,6 +179,7 @@ public:
   void SetValue(unsigned value);
   void SetValue(fixed value);
   void SetValue(RoughTime value);
+  void SetValue(Angle value);
 
   gcc_pure
   int GetIntegerValue() const;
@@ -170,6 +192,9 @@ public:
 
   gcc_pure
   RoughTime GetTimeValue() const;
+
+  gcc_pure
+  Angle GetAngleValue() const;
 
 protected:
   gcc_pure

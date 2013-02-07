@@ -21,17 +21,15 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_FLARM_FRIENDS_GLUE_HPP
-#define XCSOAR_FLARM_FRIENDS_GLUE_HPP
+#ifndef XCSOAR_FLARM_PROFILE_HPP
+#define XCSOAR_FLARM_PROFILE_HPP
 
-#include "Friends.hpp"
+class FlarmColorDatabase;
 
-class FlarmId;
-struct TeamCodeSettings;
-
-namespace FlarmFriends
+namespace Profile
 {
-  Color GetFriendColor(FlarmId id, const TeamCodeSettings &settings);
+  void Load(FlarmColorDatabase &db);
+  void Save(const FlarmColorDatabase &db);
 };
 
 #endif

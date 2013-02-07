@@ -41,7 +41,7 @@
 static fixed
 GetOZSize(const ObservationZonePoint &oz)
 {
-  switch (oz.shape) {
+  switch (oz.GetShape()) {
   case ObservationZonePoint::SECTOR:
     return ((const SectorZone &)oz).GetRadius();
 
@@ -179,7 +179,7 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
 
   switch (point.GetType()) {
   case TaskPointType::START:
-    switch (oz.shape) {
+    switch (oz.GetShape()) {
     case ObservationZonePoint::FAI_SECTOR:
       return TaskPointFactoryType::START_SECTOR;
 
@@ -200,7 +200,7 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     break;
 
   case TaskPointType::AAT:
-    switch (oz.shape) {
+    switch (oz.GetShape()) {
     case ObservationZonePoint::SECTOR:
     case ObservationZonePoint::FAI_SECTOR:
     case ObservationZonePoint::KEYHOLE:
@@ -217,7 +217,7 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     break;
 
   case TaskPointType::AST:
-    switch (oz.shape) {
+    switch (oz.GetShape()) {
     case ObservationZonePoint::FAI_SECTOR:
       return TaskPointFactoryType::FAI_SECTOR;
 
@@ -240,7 +240,7 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     break;
 
   case TaskPointType::FINISH:
-    switch (oz.shape) {
+    switch (oz.GetShape()) {
     case ObservationZonePoint::BGA_START:
     case ObservationZonePoint::FAI_SECTOR:
       return TaskPointFactoryType::FINISH_SECTOR;
@@ -261,13 +261,12 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
   case TaskPointType::UNORDERED:
     /* obviously, when we check the type of an OrderedTaskPoint, we
        should never get type==UNORDERED */
-    assert(false);
+    gcc_unreachable();
     break;
   }
 
   // fail, should never get here
-  assert(1);
-  return TaskPointFactoryType::START_LINE;
+  gcc_unreachable();
 }
 
 OrderedTaskPoint* 
@@ -655,11 +654,10 @@ AbstractTaskFactory::IsValidType(const OrderedTaskPoint &new_tp,
   case TaskPointType::UNORDERED:
     /* obviously, when we check the type of an OrderedTaskPoint, we
        should never get type==UNORDERED */
-    assert(false);
-    break;
+    gcc_unreachable();
   }
 
-  return false;
+  gcc_unreachable();
 }
 
 bool

@@ -65,6 +65,8 @@ Copyright_License {
 #include "I2CbaroDevice.hpp"
 #include "NativeNunchuckListener.hpp"
 #include "NunchuckDevice.hpp"
+#include "NativeVoltageListener.hpp"
+#include "VoltageDevice.hpp"
 #endif
 
 #ifndef NDEBUG
@@ -126,6 +128,8 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
   I2CbaroDevice::Initialise(env);
   NativeNunchuckListener::Initialise(env);
   NunchuckDevice::Initialise(env);
+  NativeVoltageListener::Initialise(env);
+  VoltageDevice::Initialise(env);
 #endif
 
   context = new Context(env, _context);
@@ -214,6 +218,8 @@ Java_org_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
   NativeI2CbaroListener::Deinitialise(env);
   NunchuckDevice::Deinitialise(env);
   NativeNunchuckListener::Deinitialise(env);
+  VoltageDevice::Deinitialise(env);
+  NativeVoltageListener::Deinitialise(env);
   IOIOHelper::Deinitialise(env);
 #endif
   BluetoothHelper::Deinitialise(env);
@@ -234,7 +240,8 @@ Java_org_xcsoar_NativeView_resizedNative(JNIEnv *env, jobject obj,
   if (event_queue == NULL)
     return;
 
-  CommonInterface::main_window->AnnounceResize(width, height);
+  if (CommonInterface::main_window != nullptr)
+    CommonInterface::main_window->AnnounceResize(width, height);
 
   event_queue->Purge(Event::RESIZE);
 
@@ -246,7 +253,7 @@ gcc_visibility_default
 JNIEXPORT void JNICALL
 Java_org_xcsoar_NativeView_pauseNative(JNIEnv *env, jobject obj)
 {
-  if (event_queue == NULL)
+  if (event_queue == nullptr || CommonInterface::main_window == nullptr)
     /* pause before we have initialized the event subsystem does not
        work - let's bail out, nothing is lost anyway */
     exit(0);
@@ -261,7 +268,7 @@ gcc_visibility_default
 JNIEXPORT void JNICALL
 Java_org_xcsoar_NativeView_resumeNative(JNIEnv *env, jobject obj)
 {
-  if (event_queue == NULL)
+  if (event_queue == nullptr || CommonInterface::main_window == nullptr)
     /* there is nothing here yet which can be resumed */
     exit(0);
 

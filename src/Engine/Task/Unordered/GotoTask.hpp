@@ -28,13 +28,14 @@
 
 struct Waypoint;
 class Waypoints;
+class UnorderedTaskPoint;
 
 /**
  * Class providing ability to go to a single task point
  */
 class GotoTask final : public UnorderedTask
 {
-  TaskWaypoint* tp;
+  UnorderedTaskPoint *tp;
   const Waypoints &waypoints;
 
 public:
@@ -50,6 +51,8 @@ public:
   GotoTask(const TaskBehaviour &tb,
            const Waypoints &wps);
   ~GotoTask();
+
+  void SetTaskBehaviour(const TaskBehaviour &tb);
 
 /** 
  * Sets go to task point to specified waypoint. 
@@ -73,7 +76,6 @@ public:
 
 public:
   /* virtual methods from class TaskInterface */
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb) override;
   virtual unsigned TaskSize() const override;
   virtual TaskWaypoint *GetActiveTaskPoint() const override;
   virtual void SetActiveTaskPoint(unsigned index) override;

@@ -47,18 +47,13 @@ AbortTask::AbortTask(const TaskBehaviour &_task_behaviour,
   task_points.reserve(32);
 }
 
-AbortTask::~AbortTask()
-{
-  Clear();
-}
-
 void
 AbortTask::SetTaskBehaviour(const TaskBehaviour &tb)
 {
   UnorderedTask::SetTaskBehaviour(tb);
 
   for (auto &tp : task_points)
-    tp.SetTaskBehaviour(tb);
+    tp.point.SetTaskBehaviour(tb);
 }
 
 void 
@@ -66,7 +61,7 @@ AbortTask::SetActiveTaskPoint(unsigned index)
 {
   if (index < task_points.size()) {
     active_task_point = index;
-    active_waypoint = task_points[index].GetWaypoint().id;
+    active_waypoint = task_points[index].point.GetWaypoint().id;
   }
 }
 
@@ -75,7 +70,7 @@ AbortTask::GetActiveTaskPoint() const
 {
   if (active_task_point < task_points.size())
     // XXX eliminate this deconst hack
-    return const_cast<AlternateTaskPoint *>(&task_points[active_task_point]);
+    return const_cast<UnorderedTaskPoint *>(&task_points[active_task_point].point);
 
   return NULL;
 }
@@ -187,11 +182,10 @@ AbortTask::FillReachable(const AircraftState &state,
 
   while (!q.empty() && !IsTaskFull()) {
     const Alternate top = q.top();
-    task_points.push_back(AlternateTaskPoint(top.waypoint, task_behaviour,
-                                             top.solution));
+    task_points.emplace_back(top.waypoint, task_behaviour, top.solution);
 
     const int i = task_points.size() - 1;
-    if (task_points[i].GetWaypoint().id == active_waypoint)
+    if (task_points[i].point.GetWaypoint().id == active_waypoint)
       active_task_point = i;
 
     q.pop();
@@ -223,7 +217,7 @@ public:
    */
   void Visit(const Waypoint& wp) {
     if (wp.IsLandable())
-      vector.push_back(wp);
+      vector.emplace_back(wp);
   }
 
 private:
@@ -286,7 +280,7 @@ AbortTask::UpdateSample(const AircraftState &state,
   ClientUpdate(state, false);
 
   if (task_points.size()) {
-    const TaskWaypoint &task_point = task_points[active_task_point];
+    const TaskWaypoint &task_point = task_points[active_task_point].point;
     active_waypoint = task_point.GetWaypoint().id;
     if (is_active && (active_waypoint_on_entry != active_waypoint)) {
       return true;
@@ -306,8 +300,8 @@ AbortTask::CheckTransitions(const AircraftState &, const AircraftState&)
 void 
 AbortTask::AcceptTaskPointVisitor(TaskPointConstVisitor& visitor) const
 {
-  for (const TaskPoint &tp : task_points)
-    visitor.Visit(tp);
+  for (const auto &tp : task_points)
+    visitor.Visit(tp.point);
 }
 
 void
@@ -330,5 +324,5 @@ AbortTask::GetHomeVector(const AircraftState &state) const
   if (home_waypoint)
     return GeoVector(state.location, home_waypoint->location);
 
-  return GeoVector(fixed(0));
+  return GeoVector::Invalid();
 }

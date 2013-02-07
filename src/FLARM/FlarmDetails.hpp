@@ -26,44 +26,17 @@ Copyright_License {
 #include <tchar.h>
 
 class FlarmId;
-struct FlarmRecord;
+struct FlarmNetRecord;
 
 namespace FlarmDetails
 {
-  /**
-   * Loads XCSoar's own FLARM details file and the FLARMnet file
-   */
-  void
-  Load();
-
-  /**
-   * Loads the FLARMnet file
-   */
-  void
-  LoadFLARMnet();
-
-  /**
-   * Opens XCSoars own FLARM details file, parses it and
-   * adds its entries as FlarmLookupItems
-   * @see AddSecondaryItem
-   */
-  void
-  LoadSecondary();
-
-  /**
-   * Saves XCSoars own FLARM details into the
-   * corresponding file (xcsoar-flarm.txt)
-   */
-  void
-  SaveSecondary();
-
   /**
    * Looks up the FLARM id in the FLARMNet Database
    * and returns the FLARMNet Record
    * @param id FLARM id
    * @return The corresponding FLARMNet Record if found, otherwise NULL
    */
-  const FlarmRecord *
+  const FlarmNetRecord *
   LookupRecord(FlarmId id);
 
   /**
@@ -93,24 +66,6 @@ namespace FlarmDetails
    */
   bool
   AddSecondaryItem(FlarmId id, const TCHAR *name);
-
-  /**
-   * Looks up the FLARM callsign in the FLARM details array
-   * and returns the array id
-   * @param cn Callsign
-   * @return Array id if found, otherwise -1
-   */
-  int
-  LookupSecondaryIndex(const TCHAR *cn);
-
-  /**
-   * Looks up the FLARM id in the FLARM details array
-   * and returns the array id
-   * @param id FLARM id
-   * @return Array id if found, otherwise -1
-   */
-  int
-  LookupSecondaryIndex(FlarmId id);
 
   unsigned
   FindIdsByCallSign(const TCHAR *cn, FlarmId array[], unsigned size);

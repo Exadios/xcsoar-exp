@@ -37,8 +37,7 @@
  * \todo 
  * - better documentation of this class!
  */
-class ScoredTaskPoint:
-  public SampledTaskPoint
+class ScoredTaskPoint : public SampledTaskPoint
 {
   AircraftState state_entered;
   bool has_exited;
@@ -47,28 +46,35 @@ public:
   /**
    * Constructor.  Clears entry/exit states on instantiation.
    *
-   * @param wp Waypoint associated with the task point
-   * @param tb Task Behaviour defining options (esp safety heights)
    * @param b_scored Whether distance within OZ is scored
    *
    * @return Partially initialised object
    */
-  ScoredTaskPoint(TaskPointType _type, const Waypoint &wp, bool b_scored);
-  virtual ~ScoredTaskPoint() {}
+  ScoredTaskPoint(const GeoPoint &location, bool b_scored);
 
-  /* virtual methods from class TaskPoint */
-  virtual const GeoPoint &GetLocationRemaining() const override;
+  const GeoPoint &GetLocationRemaining() const {
+    return GetLocationMin();
+  }
 
-  virtual bool HasEntered() const override {
+  /**
+   * Check whether aircraft has entered the observation zone.
+   *
+   * @return True if observation zone has been entered
+   */
+  bool HasEntered() const {
     return positive(state_entered.time);
   }
 
-  const AircraftState &GetEnteredState() const override {
+  /**
+   * Recall aircraft state where it entered the observation zone.
+   *
+   * @return State at entry, or null if never entered
+   */
+  const AircraftState &GetEnteredState() const {
     return state_entered;
   }
 
-  /* virtual methods from class SampledTaskPoint */
-  virtual void Reset() override;
+  virtual void Reset();
 
   /**
    * Test whether aircraft has exited the OZ

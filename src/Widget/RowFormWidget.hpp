@@ -140,6 +140,17 @@ class RowFormWidget : public WindowWidget {
     }
 
     /**
+     * Determines whether this row is available.  A row that is not
+     * available is hidden and will not be considered in the layout.
+     *
+     * @param expert_mode true if the user has enabled "expert" mode
+     */
+    bool IsAvailable(bool expert_mode) const {
+      return type != Row::Type::DUMMY && available &&
+        (!expert || expert_mode);
+    }
+
+    /**
      * Delete the #Widget or #Window object.
      */
     void Delete() {
@@ -205,23 +216,29 @@ class RowFormWidget : public WindowWidget {
     /**
      * Will this row grow when there is excess screen space?
      */
-    bool IsElastic() const {
-      return GetMaximumHeight() > GetMinimumHeight();
+    bool IsElastic(bool vertical) const {
+      return GetMaximumHeight(vertical) > GetMinimumHeight(vertical);
     }
 
     gcc_pure
-    UPixelScalar GetMinimumHeight() const;
+    unsigned GetMinimumHeight(bool vertical) const;
 
     gcc_pure
-    UPixelScalar GetMaximumHeight() const;
+    unsigned GetMaximumHeight(bool vertical) const;
   };
 
   const DialogLook &look;
 
+  /**
+   * True if "vertical" layout is enabled.  It means that edit control
+   * captions are above the value instead of left of the value.
+   */
+  const bool vertical;
+
   StaticArray<Row, 32u> rows;
 
 public:
-  RowFormWidget(const DialogLook &look);
+  RowFormWidget(const DialogLook &look, bool vertical=false);
   virtual ~RowFormWidget();
 
 protected:
@@ -637,9 +654,9 @@ public:
 
 protected:
   gcc_pure
-  UPixelScalar GetRecommendedCaptionWidth() const;
+  unsigned GetRecommendedCaptionWidth() const;
 
-  void NextControlRect(PixelRect &rc, UPixelScalar height) {
+  void NextControlRect(PixelRect &rc, unsigned height) {
     assert(IsDefined());
 
     rc.top = rc.bottom;
@@ -647,7 +664,7 @@ protected:
   }
 
   gcc_pure
-  PixelRect InitialControlRect(UPixelScalar height) {
+  PixelRect InitialControlRect(unsigned height) {
     assert(IsDefined());
 
     PixelRect rc = GetWindow()->GetClientRect();

@@ -46,6 +46,9 @@ public:
 
   ~ObservationZoneClient();
 
+  ObservationZoneClient(const ObservationZoneClient &) = delete;
+  ObservationZoneClient &operator=(const ObservationZoneClient &) = delete;
+
   /**
    * Accessor for OZ (for modifying parameters etc)
    *
@@ -69,16 +72,11 @@ public:
                             const GeoPoint &last_location) const;
 
   gcc_pure
-  GeoPoint GetBoundaryParametric(fixed t) const;
-
-  gcc_pure
   OZBoundary GetBoundary() const;
 
   virtual fixed ScoreAdjustment() const;
 
-  /* virtual methods from class ObservationZonePoint */
-  void SetLegs(const TaskPoint *previous, const TaskPoint *current,
-               const TaskPoint *next);
+  void SetLegs(const TaskPoint *previous, const TaskPoint *next);
 
   gcc_pure
   GeoPoint GetRandomPointInSector(const fixed mag) const;

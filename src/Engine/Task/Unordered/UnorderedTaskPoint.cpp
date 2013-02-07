@@ -42,29 +42,6 @@ UnorderedTaskPoint::GetVectorRemaining(const GeoPoint &reference) const
   return GeoVector(reference, GetLocationRemaining());
 }
 
-// These are dummies, never get called usually
-
-GeoVector
-UnorderedTaskPoint::GetVectorPlanned() const
-{
-  return GeoVector(fixed(0));
-}
-
-GeoVector
-UnorderedTaskPoint::GetVectorTravelled() const
-{
-  return GeoVector(fixed(0));
-}
-
-const AircraftState& 
-UnorderedTaskPoint::GetEnteredState() const 
-{
-  // this should never get called
-  static AircraftState null_state;
-  return null_state;
-}
-
-
 fixed 
 UnorderedTaskPoint::GetElevation() const
 {

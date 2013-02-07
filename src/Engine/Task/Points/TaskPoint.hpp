@@ -40,9 +40,6 @@ class TaskPoint
 
   GeoPoint location;
 
-  /** Altitude (AMSL, m) of task point terrain */
-  fixed elevation;
-
 public:
   bool IsIntermediatePoint() const {
     return type == TaskPointType::AST || type == TaskPointType::AAT;
@@ -57,28 +54,13 @@ public:
    *
    * @return Initialised object
    */
-  TaskPoint(TaskPointType _type, const GeoPoint &_location,
-            const fixed _elevation) :
-    type(_type), location(_location),
-    elevation(_elevation) {}
-
-  /**
-   * Destructor.  Does nothing yet.
-   */
-  virtual ~TaskPoint() {};
+  TaskPoint(TaskPointType _type, const GeoPoint &_location)
+    :type(_type), location(_location) {}
 
   TaskPointType GetType() const {
     return type;
   }
 
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb) {}
-
-protected:
-  fixed GetBaseElevation() const {
-    return elevation;
-  }
-
-public:
   /**
    * Retrieve location to be used for remaining task
    * (for a pure TaskPoint, this is the reference location)
@@ -99,22 +81,6 @@ public:
   virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const = 0;
 
   /**
-   * Calculate vector from aircraft to destination
-   *
-   * @return Vector for task leg
-   */
-  gcc_pure
-  virtual GeoVector GetVectorPlanned() const = 0;
-
-  /**
-   * Calculate vector travelled along this leg
-   *
-   * @return Vector for task leg
-   */
-  gcc_pure
-  virtual GeoVector GetVectorTravelled() const = 0;
-
-  /**
     * Calculate vector of next leg, if there is one
     *
     * @return Vector for task leg or GeoVector::Invalid() if there is no next leg
@@ -131,22 +97,6 @@ public:
   bool HasTarget() const {
     return type == TaskPointType::AAT;
   }
-
-  /**
-   * Check whether aircraft has entered the observation zone.
-   *
-   * @return True if observation zone has been entered
-   */
-  gcc_pure
-  virtual bool HasEntered() const = 0;
-
-  /**
-   * Recall aircraft state where it entered the observation zone.
-   *
-   * @return State at entry, or null if never entered
-   */
-  gcc_pure
-  virtual const AircraftState &GetEnteredState() const = 0;
 
   /**
    * Retrieve elevation of taskpoint, taking into account

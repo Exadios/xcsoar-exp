@@ -23,16 +23,25 @@ Copyright_License {
 
 #include "DigitEntry.hpp"
 #include "ActionListener.hpp"
-#include "Look/DialogLook.hpp"
 #include "Screen/Font.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Point.hpp"
 #include "Screen/Key.h"
 #include "Screen/Canvas.hpp"
+#include "Look/DialogLook.hpp"
 #include "Units/Descriptor.hpp"
 #include "Time/RoughTime.hpp"
+#include "Math/Angle.hpp"
+#include "Renderer/SymbolRenderer.hpp"
 
 #include <stdio.h>
+
+DigitEntry::DigitEntry(const DialogLook &_look)
+  :look(_look),
+   button_renderer(look.button),
+   action_listener(nullptr)
+{
+}
 
 DigitEntry::~DigitEntry()
 {
@@ -50,28 +59,13 @@ DigitEntry::Create(ContainerWindow &parent, const PixelRect &rc,
   cursor = length - 1;
   valid = true;
 
-  const UPixelScalar margin = 1;
-  padding = Layout::Scale(2);
-
-  PixelSize digit_size = look.text_font->TextSize(_T("8"));
-  digit_size.cx += 2 * padding;
-  digit_size.cy += 2 * padding;
-  if (digit_size.cx < Layout::Scale(20))
-    digit_size.cx = Layout::Scale(20);
-  if (digit_size.cy < Layout::Scale(28))
-    digit_size.cy = Layout::Scale(28);
-
-  const unsigned digit_width = digit_size.cx + margin;
-  top = Layout::GetMaximumControlHeight();
-  bottom = top + digit_size.cy;
-
   for (unsigned i = 0; i < length; ++i) {
     Column &digit = columns[i];
     digit.type = Column::Type::DIGIT;
     digit.value = 0;
-    digit.left = i * digit_width;
-    digit.right = digit.left + digit_width - margin;
   }
+
+  CalculateLayout();
 
   PaintWindow::Create(parent, rc, style);
 }
@@ -94,6 +88,34 @@ DigitEntry::CreateSigned(ContainerWindow &parent, const PixelRect &rc,
 }
 
 void
+DigitEntry::CreateUnsigned(ContainerWindow &parent, const PixelRect &rc,
+                           const WindowStyle style,
+                           unsigned ndigits, unsigned precision)
+{
+  Create(parent, rc, style, ndigits + (precision > 0));
+
+  if (precision > 0) {
+    columns[ndigits - precision].type = Column::Type::DECIMAL_POINT;
+
+    if (ndigits > precision)
+      cursor -= precision + 1;
+  }
+}
+
+void
+DigitEntry::CreateAngle(ContainerWindow &parent, const PixelRect &rc,
+                        const WindowStyle style)
+{
+  Create(parent, rc, style, 3);
+
+  columns[0].type = Column::Type::DIGIT36;
+  columns[2].type = Column::Type::DEGREES;
+  cursor = 0;
+
+  CalculateLayout();
+}
+
+void
 DigitEntry::CreateTime(ContainerWindow &parent, const PixelRect &rc,
                        const WindowStyle style)
 {
@@ -103,6 +125,38 @@ DigitEntry::CreateTime(ContainerWindow &parent, const PixelRect &rc,
   columns[1].type = Column::Type::COLON;
   columns[2].type = Column::Type::DIGIT6;
   cursor = 0;
+
+  CalculateLayout();
+}
+
+void
+DigitEntry::CalculateLayout()
+{
+  const UPixelScalar control_height = Layout::GetMaximumControlHeight();
+  const UPixelScalar padding = Layout::GetTextPadding();
+
+  const UPixelScalar min_value_height = control_height * 3 / 2;
+
+  PixelSize digit_size = look.text_font->TextSize(_T("8"));
+  digit_size.cy += 2 * padding;
+  if (digit_size.cy < (PixelScalar)min_value_height)
+    digit_size.cy = min_value_height;
+
+  top = control_height;
+  bottom = top + digit_size.cy;
+
+  unsigned last_right = 0;
+  for (unsigned i = 0; i < length; ++i) {
+    Column &digit = columns[i];
+
+    PixelScalar value_width = digit.GetWidth() * digit_size.cx;
+    value_width += 2 * padding;
+    if (value_width < (PixelScalar)control_height)
+      value_width = control_height;
+
+    digit.left = last_right;
+    last_right = digit.right = digit.left + value_width;
+  }
 }
 
 int
@@ -128,8 +182,7 @@ DigitEntry::FindEditableRight(unsigned i) const
 void
 DigitEntry::SetCursor(unsigned _cursor)
 {
-  assert(length > 0);
-  assert(cursor < length);
+  assert(_cursor < length);
 
   if (_cursor == cursor)
     return;
@@ -178,16 +231,11 @@ DigitEntry::SetValue(int value)
   if (columns[0].IsSign()) {
     columns[0].SetNegative(value < 0);
   } else if (value < 0)
-    value = 0;
+    uvalue = 0u;
 
   const int dp = FindDecimalPoint();
 
-  int i = length - 1;
-  if (dp >= 0)
-    i = dp;
-  else
-    i = length;
-
+  int i = (dp >= 0) ? dp : length;
   while (true) {
     i = FindNumberLeft(i - 1);
     if (i < 0)
@@ -242,6 +290,22 @@ DigitEntry::SetValue(RoughTime value)
   Invalidate();
 }
 
+void
+DigitEntry::SetValue(Angle value)
+{
+  assert(length == 3);
+  assert(columns[0].type == Column::Type::DIGIT36);
+  assert(columns[1].type == Column::Type::DIGIT);
+  assert(columns[2].type == Column::Type::DEGREES);
+
+  int degrees = iround(value.Degrees());
+
+  columns[0].value = degrees / 10;
+  columns[1].value = degrees % 10;
+
+  Invalidate();
+}
+
 unsigned
 DigitEntry::GetPositiveInteger() const
 {
@@ -253,6 +317,9 @@ DigitEntry::GetPositiveInteger() const
     if (c.type == Column::Type::DIGIT) {
       assert(c.value < 10);
       value = (value * 10) + c.value;
+    } else if (c.type == Column::Type::DIGIT36) {
+      assert(c.value < 36);
+      value = (value * 100) + c.value;
     } else if (c.type == Column::Type::DECIMAL_POINT)
       break;
   }
@@ -364,10 +431,7 @@ int
 DigitEntry::GetIntegerValue() const
 {
   int value = GetPositiveInteger();
-  if (IsNegative())
-    value = -value;
-
-  return value;
+  return IsNegative() ? -value : value;
 }
 
 unsigned
@@ -382,9 +446,13 @@ fixed
 DigitEntry::GetFixedValue() const
 {
   fixed value = fixed(GetPositiveInteger()) + GetPositiveFractional();
-  if (IsNegative())
-    value = -value;
-  return value;
+  return IsNegative() ? -value : value;
+}
+
+Angle
+DigitEntry::GetAngleValue() const
+{
+  return Angle::Degrees(GetFixedValue());
 }
 
 bool
@@ -533,6 +601,11 @@ DigitEntry::OnPaint(Canvas &canvas)
       _stprintf(buffer, _T("%02u"), c.value);
       break;
 
+    case Column::Type::DIGIT36:
+      assert(c.value < 36);
+      _stprintf(buffer, _T("%02u"), c.value);
+      break;
+
     case Column::Type::SIGN:
       buffer[0] = c.IsNegative() ? _T('-') : _T('+');
       break;
@@ -574,20 +647,26 @@ DigitEntry::OnPaint(Canvas &canvas)
   canvas.SetBackgroundTransparent();
   canvas.SetTextColor(look.text_color);
 
-  const int plus_y = (Layout::GetMaximumControlHeight() - text_height) / 2;
-  const int minus_y = bottom + plus_y;
-  const unsigned plus_width = canvas.CalcTextWidth(_T("+"));
-  const unsigned minus_width = canvas.CalcTextWidth(_T("-"));
+  unsigned control_height = Layout::GetMaximumControlHeight();
+
+  PixelRect plus_rc(0, top - control_height, 0, top);
+  PixelRect minus_rc(0, bottom, 0, bottom + control_height);
 
   for (unsigned i = 0; i < length; ++i) {
     const Column &c = columns[i];
     if (!c.IsEditable())
       continue;
 
-    int plus_x = (c.left + c.right - plus_width) / 2;
-    canvas.DrawText(plus_x, plus_y, _T("+"));
+    plus_rc.left = minus_rc.left = c.left;
+    plus_rc.right = minus_rc.right = c.right;
 
-    int minus_x = (c.left + c.right - minus_width) / 2;
-    canvas.DrawText(minus_x, minus_y, _T("-"));
+    button_renderer.DrawButton(canvas, plus_rc, false, false);
+    button_renderer.DrawButton(canvas, minus_rc, false, false);
+
+    canvas.SelectNullPen();
+    canvas.Select(look.button.standard.foreground_brush);
+
+    SymbolRenderer::DrawArrow(canvas, plus_rc, SymbolRenderer::UP);
+    SymbolRenderer::DrawArrow(canvas, minus_rc, SymbolRenderer::DOWN);
   }
 }

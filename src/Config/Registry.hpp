@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_CONFIG_REGISTRY_HPP
 #define XCSOAR_CONFIG_REGISTRY_HPP
 
-#include "Util/NonCopyable.hpp"
+#include <utility>
 
 #include <windows.h>
 #include <tchar.h>
@@ -33,7 +33,7 @@ Copyright_License {
 /**
  * OO wrapper for a HKEY.
  */
-class RegistryKey : private NonCopyable {
+class RegistryKey {
 protected:
   HKEY hKey;
 
@@ -54,13 +54,15 @@ public:
       ::RegCloseKey(hKey);
   }
 
-  RegistryKey &operator=(RegistryKey &&other) {
-    if (hKey != 0)
-      ::RegCloseKey(hKey);
+  RegistryKey(const RegistryKey &) = delete;
+  RegistryKey &operator=(const RegistryKey &) = delete;
 
-    hKey = other.hKey;
+  RegistryKey(RegistryKey &&other):hKey(other.hKey) {
     other.hKey = 0;
+  }
 
+  RegistryKey &operator=(RegistryKey &&other) {
+    std::swap(hKey, other.hKey);
     return *this;
   }
 

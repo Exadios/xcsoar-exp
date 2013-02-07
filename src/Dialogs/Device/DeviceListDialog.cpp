@@ -55,6 +55,11 @@ Copyright_License {
 #include "Profile/Profile.hpp"
 #include "Interface.hpp"
 
+#ifdef ANDROID
+#include "Java/Global.hpp"
+#include "Android/BluetoothHelper.hpp"
+#endif
+
 class DeviceListWidget : public ListWidget, private ActionListener,
                          private NullBlackboardListener {
   enum Buttons {
@@ -330,6 +335,12 @@ DeviceListWidget::OnPaintItem(Canvas &canvas, const PixelRect rc, unsigned idx)
     status = _("N/A");
   } else if (flags.open) {
     status = _("No data");
+#ifdef ANDROID
+  } else if ((config.port_type == DeviceConfig::PortType::RFCOMM ||
+              config.port_type == DeviceConfig::PortType::RFCOMM_SERVER) &&
+             !BluetoothHelper::isEnabled(Java::GetEnv())) {
+    status = _("Bluetooth is disabled");
+#endif
   } else if (flags.error) {
     status = _("Error");
   } else {
@@ -354,6 +365,18 @@ DeviceListWidget::ReconnectCurrent()
   if (current >= NUMDEV)
     return;
 
+#ifdef ANDROID
+  const DeviceConfig &config =
+    CommonInterface::SetSystemSettings().devices[current];
+  if ((config.port_type == DeviceConfig::PortType::RFCOMM ||
+       config.port_type == DeviceConfig::PortType::RFCOMM_SERVER) &&
+      !BluetoothHelper::isEnabled(Java::GetEnv())) {
+    ShowMessageBox(_("Bluetooth is disabled"), _("Reconnect"),
+                   MB_OK | MB_ICONERROR);
+    return;
+  }
+#endif
+
   DeviceDescriptor &device = *device_list[current];
   if (device.IsBorrowed()) {
     ShowMessageBox(_("Device is occupied"), _("Reconnect"), MB_OK | MB_ICONERROR);
@@ -374,8 +397,14 @@ DeviceListWidget::DownloadFlightFromCurrent()
     return;
 
   DeviceDescriptor &device = *device_list[current];
-  if (device.GetState() == PortState::READY)
+  if (!device.IsLogger())
     return;
+
+  if (device.GetState() != PortState::READY) {
+    ShowMessageBox(_("Device is not connected"), _("Manage"),
+                   MB_OK | MB_ICONERROR);
+    return;
+  }
 
   if (!device.Borrow()) {
     ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);
@@ -430,9 +459,14 @@ DeviceListWidget::ManageCurrent()
     return;
 
   DeviceDescriptor &descriptor = *device_list[current];
-  if (descriptor.GetState() != PortState::READY ||
-      !descriptor.IsManageable())
+  if (!descriptor.IsManageable())
     return;
+
+  if (descriptor.GetState() != PortState::READY) {
+    ShowMessageBox(_("Device is not connected"), _("Manage"),
+                   MB_OK | MB_ICONERROR);
+    return;
+  }
 
   if (!descriptor.Borrow()) {
     ShowMessageBox(_("Device is occupied"), _("Manage"), MB_OK | MB_ICONERROR);

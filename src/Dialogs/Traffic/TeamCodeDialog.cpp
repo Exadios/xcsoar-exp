@@ -34,6 +34,7 @@
 #include "Form/DataField/Float.hpp"
 #include "UIGlobals.hpp"
 #include "FLARM/FlarmDetails.hpp"
+#include "FLARM/Glue.hpp"
 #include "ComputerSettings.hpp"
 #include "Screen/Layout.hpp"
 #include "Util/StringUtil.hpp"
@@ -45,6 +46,7 @@
 #include "Interface.hpp"
 #include "Blackboard/ScopeCalculatedListener.hpp"
 #include "Language/Language.hpp"
+#include "TeamActions.hpp"
 
 #include <stdio.h>
 
@@ -79,7 +81,7 @@ Update(const MoreData &basic, const DerivedInfo &calculated)
   SetFormValue(*wf, _T("prpMateCode"), settings.team_code.GetCode());
 
   SetFormValue(*wf, _T("prpFlarmLock"),
-               settings.team_flarm_tracking
+               settings.team_flarm_id.IsDefined()
                ? settings.team_flarm_callsign.c_str()
                : _T(""));
 }
@@ -112,12 +114,8 @@ OnCodeClicked()
   TeamCodeSettings &settings =
     CommonInterface::SetComputerSettings().team_code;
   settings.team_code.Update(newTeammateCode);
-  if (!StringIsEmpty(settings.team_code.GetCode())) {
-    settings.team_code_valid = true;
-    settings.team_flarm_tracking = false;
-  }
-  else
-    settings.team_code_valid = false;
+  if (settings.team_code.IsDefined())
+    settings.team_flarm_id.Clear();
 }
 
 static void
@@ -131,36 +129,29 @@ OnFlarmLockClicked()
   if (!dlgTextEntryShowModal(newTeamFlarmCNTarget, 4))
     return;
 
-  settings.team_flarm_callsign = newTeamFlarmCNTarget;
-  settings.team_code_valid = false;
-
-  if (StringIsEmpty(settings.team_flarm_callsign)) {
-    settings.team_flarm_tracking = false;
+  if (StringIsEmpty(newTeamFlarmCNTarget)) {
     settings.team_flarm_id.Clear();
+    settings.team_flarm_callsign.clear();
     return;
   }
 
+  LoadFlarmDatabases();
+
   FlarmId ids[30];
   unsigned count =
-    FlarmDetails::FindIdsByCallSign(settings.team_flarm_callsign, ids, 30);
+    FlarmDetails::FindIdsByCallSign(newTeamFlarmCNTarget, ids, 30);
 
-  if (count > 0) {
-    const FlarmId id =
-      dlgFlarmDetailsListShowModal(_("Set new teammate:"), ids, count);
-
-    if (id.IsDefined()) {
-      settings.team_flarm_id = id;
-      settings.team_flarm_tracking = true;
-      return;
-    }
-  } else {
+  if (count == 0) {
     ShowMessageBox(_("Unknown Competition Number"),
-                _("Not Found"), MB_OK | MB_ICONINFORMATION);
+                   _("Not Found"), MB_OK | MB_ICONINFORMATION);
+    return;
   }
 
-  settings.team_flarm_tracking = false;
-  settings.team_flarm_id.Clear();
-  settings.team_flarm_callsign.clear();
+  const FlarmId id = PickFlarmTraffic(_("Set new teammate"), ids, count);
+  if (!id.IsDefined())
+    return;
+
+  TeamActions::TrackFlarm(id, newTeamFlarmCNTarget);
 }
 
 static constexpr CallBackTableEntry CallBackTable[] = {

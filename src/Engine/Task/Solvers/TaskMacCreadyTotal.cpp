@@ -23,21 +23,28 @@
 #include "TaskMacCreadyTotal.hpp"
 #include "TaskSolution.hpp"
 #include "Task/Points/TaskPoint.hpp"
+#include "Task/Ordered/Points/OrderedTaskPoint.hpp"
 
 GlideResult
 TaskMacCreadyTotal::SolvePoint(const TaskPoint &tp,
                                const AircraftState &aircraft,
                                fixed minH) const
 {
-  return TaskSolution::GlideSolutionPlanned(tp, aircraft,
+  assert(tp.GetType() != TaskPointType::UNORDERED);
+  const OrderedTaskPoint &otp = (const OrderedTaskPoint &)tp;
+
+  return TaskSolution::GlideSolutionPlanned(otp, aircraft,
                                             settings, glide_polar, minH);
 }
 
 const AircraftState &
 TaskMacCreadyTotal::get_aircraft_start(const AircraftState &aircraft) const
 {
-  if (points[0]->HasEntered()) {
-    return points[0]->GetEnteredState();
+  const OrderedTaskPoint &tp = *(const OrderedTaskPoint *)points[0];
+  assert(tp.GetType() != TaskPointType::UNORDERED);
+
+  if (tp.HasEntered()) {
+    return tp.GetEnteredState();
   } else {
     return aircraft;
   }

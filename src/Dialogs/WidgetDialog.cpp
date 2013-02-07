@@ -79,6 +79,7 @@ WidgetDialog::CreateAuto(SingleWindow &parent, const TCHAR *caption,
 void
 WidgetDialog::CreatePreliminary(SingleWindow &parent, const TCHAR *caption)
 {
+  auto_size = true;
   WndForm::Create(parent, parent.GetClientRect(), caption, GetDialogStyle());
 }
 
@@ -134,8 +135,10 @@ WidgetDialog::AutoSize()
     if (remaining_size.cx > max_size.cx)
       rc.right -= remaining_size.cx - max_size.cx;
 
-    Move(rc);
+    Resize(rc.GetSize());
     widget.Move(buttons.LeftLayout());
+
+    MoveToCenter();
     return;
   }
 
@@ -151,8 +154,10 @@ WidgetDialog::AutoSize()
   if (remaining_size.cy > max_size.cy)
     rc.bottom -= remaining_size.cy - max_size.cy;
 
-  Move(rc);
+  Resize(rc.GetSize());
   widget.Move(buttons.BottomLayout());
+
+  MoveToCenter();
 }
 
 int

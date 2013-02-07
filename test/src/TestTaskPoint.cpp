@@ -21,39 +21,19 @@
 */
 
 #include "Engine/Task/Points/TaskPoint.hpp"
-#include "Engine/Navigation/Aircraft.hpp"
 #include "Geo/GeoVector.hpp"
 #include "TestUtil.hpp"
 
 class DummyTaskPoint: public TaskPoint
 {
-  AircraftState dummy_state;
-
 public:
   friend class TaskPointTest;
 
-  DummyTaskPoint(TaskPointType _type, const GeoPoint &_location,
-                 const fixed _elevation)
-    :TaskPoint(_type, _location, _elevation) {}
+  DummyTaskPoint(TaskPointType _type, const GeoPoint &_location)
+    :TaskPoint(_type, _location) {}
 
   virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const {
     return GeoVector();
-  }
-
-  virtual GeoVector GetVectorPlanned() const {
-    return GeoVector();
-  }
-
-  virtual GeoVector GetVectorTravelled() const {
-    return GeoVector();
-  }
-
-  virtual bool HasEntered() const {
-    return false;
-  }
-
-  virtual const AircraftState& GetEnteredState() const {
-    return dummy_state;
   }
 
   virtual fixed GetElevation() const {
@@ -73,14 +53,13 @@ TaskPointTest::Run()
   GeoPoint gp1(Angle::Degrees(20), Angle::Degrees(50));
   GeoPoint gp2(Angle::Degrees(21), Angle::Degrees(50));
 
-  DummyTaskPoint tp1(TaskPointType::AST, gp1, fixed(1234));
-  DummyTaskPoint tp2(TaskPointType::AAT, gp2, fixed(1337));
-  DummyTaskPoint tp3(TaskPointType::START, gp1, fixed(1234));
-  DummyTaskPoint tp4(TaskPointType::FINISH, gp2, fixed(1337));
+  DummyTaskPoint tp1(TaskPointType::AST, gp1);
+  DummyTaskPoint tp2(TaskPointType::AAT, gp2);
+  DummyTaskPoint tp3(TaskPointType::START, gp1);
+  DummyTaskPoint tp4(TaskPointType::FINISH, gp2);
 
   ok1(tp1.IsIntermediatePoint());
   ok1(tp1.GetType() == TaskPointType::AST);
-  ok1(equals(tp1.GetBaseElevation(), 1234));
   ok1(!tp1.HasTarget());
   ok1(equals(tp1.Distance(gp2), gp1.Distance(gp2)));
   ok1(equals(tp1.GetLocation(), gp1));
@@ -100,7 +79,7 @@ TaskPointTest::Run()
 
 int main(int argc, char **argv)
 {
-  plan_tests(15);
+  plan_tests(14);
 
   TaskPointTest test;
   test.Run();

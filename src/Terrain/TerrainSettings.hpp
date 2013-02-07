@@ -34,6 +34,9 @@ enum class SlopeShading: uint8_t {
 };
 
 struct TerrainRendererSettings {
+  /** Number of available color ramps */
+  static constexpr unsigned NUM_RAMPS = 9;
+
   /** Map will show terrain */
   bool enable;
 
@@ -48,7 +51,7 @@ struct TerrainRendererSettings {
   /** Terrain brightness percentage */
   short brightness;
 
-  short ramp;
+  unsigned short ramp;
 
   /**
    * Set all attributes to the default values.

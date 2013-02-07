@@ -54,8 +54,8 @@ Copyright_License {
 #include <assert.h>
 #include <limits.h>
 
-UPixelScalar
-RowFormWidget::Row::GetMinimumHeight() const
+unsigned
+RowFormWidget::Row::GetMinimumHeight(bool vertical) const
 {
   switch (type) {
   case Type::DUMMY:
@@ -68,6 +68,11 @@ RowFormWidget::Row::GetMinimumHeight() const
     break;
 
   case Type::EDIT:
+    if (vertical && GetControl().HasCaption())
+      return 2 * Layout::GetMinimumControlHeight();
+
+    /* fall through */
+
   case Type::BUTTON:
     return Layout::GetMinimumControlHeight();
 
@@ -81,8 +86,8 @@ RowFormWidget::Row::GetMinimumHeight() const
   return window->GetHeight();
 }
 
-UPixelScalar
-RowFormWidget::Row::GetMaximumHeight() const
+unsigned
+RowFormWidget::Row::GetMaximumHeight(bool vertical) const
 {
   switch (type) {
   case Type::DUMMY:
@@ -95,6 +100,9 @@ RowFormWidget::Row::GetMaximumHeight() const
     break;
 
   case Type::EDIT:
+    if (vertical && GetControl().HasCaption())
+      return 2 * Layout::GetMinimumControlHeight();
+
     return GetControl().IsReadOnly()
       /* rows that are not clickable don't need to be extra-large */
       ? Layout::GetMinimumControlHeight()
@@ -113,8 +121,8 @@ RowFormWidget::Row::GetMaximumHeight() const
   return window->GetHeight();
 }
 
-RowFormWidget::RowFormWidget(const DialogLook &_look)
-  :look(_look)
+RowFormWidget::RowFormWidget(const DialogLook &_look, bool _vertical)
+  :look(_look), vertical(_vertical)
 {
 }
 
@@ -138,12 +146,6 @@ RowFormWidget::SetRowAvailable(unsigned i, bool available)
     return;
 
   row.available = available;
-  if (!available)
-    row.GetWindow().Hide();
-  else if (row.visible &&
-           (!row.expert || UIGlobals::GetDialogSettings().expert))
-    row.GetWindow().Show();
-
   UpdateLayout();
 }
 
@@ -157,8 +159,7 @@ RowFormWidget::SetRowVisible(unsigned i, bool visible)
   row.visible = visible;
   if (!visible)
     row.GetWindow().Hide();
-  else if (row.available &&
-           (!row.expert || UIGlobals::GetDialogSettings().expert))
+  else if (row.IsAvailable(UIGlobals::GetDialogSettings().expert))
     row.GetWindow().Show();
 }
 
@@ -883,14 +884,14 @@ RowFormWidget::SaveValueFileReader(unsigned i, const TCHAR *registry_key)
   return true;
 }
 
-UPixelScalar
+unsigned
 RowFormWidget::GetRecommendedCaptionWidth() const
 {
   const bool expert = UIGlobals::GetDialogSettings().expert;
 
-  UPixelScalar w = 0;
+  unsigned w = 0;
   for (const auto &i : rows) {
-    if (!i.available || (i.expert && !expert))
+    if (!i.IsAvailable(expert))
       continue;
 
     if (i.type == Row::Type::EDIT) {
@@ -920,21 +921,21 @@ RowFormWidget::UpdateLayout()
   unsigned caption_width = 0;
 
   for (const auto &i : rows) {
-    if (!i.available || (i.expert && !expert))
+    if (!i.IsAvailable(expert))
       continue;
 
-    min_height += i.GetMinimumHeight();
-    if (i.IsElastic())
+    min_height += i.GetMinimumHeight(vertical);
+    if (i.IsElastic(vertical))
       ++n_elastic;
 
-    if (i.type == Row::Type::EDIT) {
+    if (!vertical && i.type == Row::Type::EDIT) {
       unsigned cw = i.GetControl().GetRecommendedCaptionWidth();
       if (cw > caption_width)
         caption_width = cw;
     }
   }
 
-  if (caption_width * 3 > total_width * 2)
+  if (!vertical && caption_width * 3 > total_width * 2)
     caption_width = total_width * 2 / 3;
 
   /* how much excess height in addition to the minimum height? */
@@ -944,19 +945,25 @@ RowFormWidget::UpdateLayout()
 
   /* second row traversal: now move and resize the rows */
   for (auto &i : rows) {
-    if (i.type == Row::Type::DUMMY)
+    if (!i.IsAvailable(expert)) {
+      if (i.type == Row::Type::WIDGET)
+        i.GetWidget().Hide();
+      else if (i.type != Row::Type::DUMMY)
+        i.GetWindow().Hide();
+
       continue;
+    }
 
     /* determine this row's height */
-    UPixelScalar height = i.GetMinimumHeight();
-    if (excess_height > 0 && i.IsElastic()) {
+    UPixelScalar height = i.GetMinimumHeight(vertical);
+    if (excess_height > 0 && i.IsElastic(vertical)) {
       assert(n_elastic > 0);
 
       /* distribute excess height among all elastic rows */
       unsigned grow_height = excess_height / n_elastic;
       if (grow_height > 0) {
         height += grow_height;
-        const UPixelScalar max_height = i.GetMaximumHeight();
+        const UPixelScalar max_height = i.GetMaximumHeight(vertical);
         if (height > max_height) {
           /* never grow beyond declared maximum height */
           height = max_height;
@@ -971,11 +978,6 @@ RowFormWidget::UpdateLayout()
 
     if (i.type == Row::Type::WIDGET) {
       Widget &widget = i.GetWidget();
-
-      if (!i.available || (i.expert && !expert)) {
-        widget.Hide();
-        continue;
-      }
 
       /* TODO: visible check - hard to implement without remembering
          the control position, because Widget::Show() wants a
@@ -999,24 +1001,16 @@ RowFormWidget::UpdateLayout()
 
     Window &window = i.GetWindow();
 
-    if (!i.available) {
-      window.Hide();
-      continue;
+    if (i.visible)
+      window.Show();
+
+    if (i.type == Row::Type::EDIT &&
+        i.GetControl().HasCaption()) {
+      if (vertical)
+        i.GetControl().SetCaptionWidth(-1);
+      else if (caption_width > 0)
+        i.GetControl().SetCaptionWidth(caption_width);
     }
-
-    if (i.expert) {
-      if (!expert) {
-        window.Hide();
-        continue;
-      }
-
-      if (i.visible)
-        window.Show();
-    }
-
-    if (caption_width > 0 && i.type == Row::Type::EDIT &&
-        i.GetControl().HasCaption())
-      i.GetControl().SetCaptionWidth(caption_width);
 
     /* finally move and resize */
     NextControlRect(current_rect, height);
@@ -1034,10 +1028,14 @@ RowFormWidget::GetMinimumSize() const
 
   const bool expert = UIGlobals::GetDialogSettings().expert;
 
-  PixelSize size(GetRecommendedCaptionWidth() + value_width, 0u);
+  const unsigned edit_width = vertical
+    ? std::max(GetRecommendedCaptionWidth(), value_width)
+    : (GetRecommendedCaptionWidth() + value_width);
+
+  PixelSize size(edit_width, 0u);
   for (const auto &i : rows)
-    if (i.available && (!i.expert || expert))
-      size.cy += i.GetMinimumHeight();
+    if (i.IsAvailable(expert))
+      size.cy += i.GetMinimumHeight(vertical);
 
   return size;
 }
@@ -1048,9 +1046,13 @@ RowFormWidget::GetMaximumSize() const
   const unsigned value_width =
     look.text_font->TextSize(_T("Foo Bar Foo Bar")).cx * 2;
 
-  PixelSize size(GetRecommendedCaptionWidth() + value_width, 0u);
+  const unsigned edit_width = vertical
+    ? std::max(GetRecommendedCaptionWidth(), value_width)
+    : (GetRecommendedCaptionWidth() + value_width);
+
+  PixelSize size(edit_width, 0u);
   for (const auto &i : rows)
-    size.cy += i.GetMaximumHeight();
+    size.cy += i.GetMaximumHeight(vertical);
 
   return size;
 }

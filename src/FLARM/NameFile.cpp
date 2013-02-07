@@ -21,11 +21,41 @@ Copyright_License {
 }
 */
 
-#include "Record.hpp"
-#include "FlarmId.hpp"
+#include "NameFile.hpp"
+#include "NameDatabase.hpp"
+#include "IO/TextWriter.hpp"
+#include "IO/LineReader.hpp"
 
-FlarmId
-FlarmRecord::GetId() const
+void
+LoadFlarmNameFile(TLineReader &reader, FlarmNameDatabase &db)
 {
-  return FlarmId::Parse(this->id, NULL);
-};
+  TCHAR *line;
+  while ((line = reader.ReadLine()) != NULL) {
+    TCHAR *endptr;
+    FlarmId id = FlarmId::Parse(line, &endptr);
+    if (!id.IsDefined())
+      /* ignore malformed records */
+      continue;
+
+    if (endptr > line && endptr[0] == _T('=') && endptr[1] != _T('\0')) {
+      TCHAR *Name = endptr + 1;
+      TrimRight(Name);
+      if (!db.Set(id, Name))
+        break; // cant add anymore items !
+    }
+  }
+}
+
+void
+SaveFlarmNameFile(TextWriter &writer, FlarmNameDatabase &db)
+{
+  TCHAR id[16];
+
+  for (const auto &i : db) {
+    assert(i.id.IsDefined());
+
+    writer.FormatLine(_T("%s=%s"),
+                       i.id.Format(id),
+                       i.name.c_str());
+  }
+}

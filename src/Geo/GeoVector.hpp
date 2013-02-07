@@ -52,24 +52,24 @@ struct GeoVector {
     :distance(_distance), bearing(_bearing) {}
 
   /**
-   * Dummy constructor given distance, 
-   * used to allow GeoVector x=0 calls. 
-   */
-  GeoVector(const fixed _distance)
-    :distance(_distance), bearing(Angle::Zero()) {}
-
-  /**
    * Constructor given start and end location.  
    * Computes Distance/Bearing internally. 
    */
   GeoVector(const GeoPoint &source, const GeoPoint &target);
 
   /**
+   * Create the zero vector: zero distance, undefined bearing.
+   */
+  constexpr static GeoVector Zero() {
+    return GeoVector(fixed(0), Angle::Zero());
+  }
+
+  /**
    * Create an invalid instance.
    */
-  gcc_const
+  constexpr
   static GeoVector Invalid() {
-    return GeoVector(fixed(-1));
+    return GeoVector(fixed(-1), Angle::Zero());
   }
 
   /**

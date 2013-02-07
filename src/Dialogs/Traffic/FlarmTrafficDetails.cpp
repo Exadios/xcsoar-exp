@@ -37,10 +37,11 @@
 #include "Form/Form.hpp"
 #include "Form/Util.hpp"
 #include "Form/Button.hpp"
-#include "FLARM/FlarmNet.hpp"
+#include "FLARM/FlarmNetRecord.hpp"
 #include "FLARM/Traffic.hpp"
 #include "FLARM/FlarmDetails.hpp"
 #include "FLARM/Friends.hpp"
+#include "FLARM/Glue.hpp"
 #include "Screen/Layout.hpp"
 #include "Geo/Math.hpp"
 #include "LocalPath.hpp"
@@ -53,6 +54,7 @@
 #include "Language/Language.hpp"
 #include "Interface.hpp"
 #include "Blackboard/ScopeGPSListener.hpp"
+#include "TeamActions.hpp"
 #include "Compiler.h"
 
 #include <math.h>
@@ -129,7 +131,7 @@ Update()
 
   // Try to find the target in the FLARMnet database
   /// @todo: make this code a little more usable
-  const FlarmRecord *record = FlarmDetails::LookupRecord(target_id);
+  const FlarmNetRecord *record = FlarmDetails::LookupRecord(target_id);
   if (record) {
     // Fill the pilot name field
     SetFormValue(*wf, _T("prpPilot"), record->pilot);
@@ -199,22 +201,7 @@ OnTeamClicked()
                   _("New Teammate"), MB_YESNO) != IDYES)
     return;
 
-  TeamCodeSettings &settings =
-    CommonInterface::SetComputerSettings().team_code;
-
-  // Set the Teammate callsign
-  const TCHAR *callsign = FlarmDetails::LookupCallsign(target_id);
-  if (callsign == NULL || StringIsEmpty(callsign)) {
-    settings.team_flarm_callsign.clear();
-  } else {
-    // copy the 3 first chars from the name
-    settings.team_flarm_callsign = callsign;
-  }
-
-  // Start tracking
-  settings.team_flarm_id = target_id;
-  settings.team_flarm_tracking = true;
-  settings.team_code_valid = false;
+  TeamActions::TrackFlarm(target_id);
 
   // Close the dialog
   wf->SetModalResult(mrOK);
@@ -230,7 +217,7 @@ OnCallsignClicked()
   newName.clear();
   if (TextEntryDialog(newName, _("Competition ID")) &&
       FlarmDetails::AddSecondaryItem(target_id, newName))
-    FlarmDetails::SaveSecondary();
+    SaveFlarmNames();
 
   Update();
 }
@@ -238,35 +225,35 @@ OnCallsignClicked()
 static void
 OnFriendBlueClicked()
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::BLUE);
+  FlarmFriends::SetFriendColor(target_id, FlarmColor::BLUE);
   wf->SetModalResult(mrOK);
 }
 
 static void
 OnFriendGreenClicked()
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::GREEN);
+  FlarmFriends::SetFriendColor(target_id, FlarmColor::GREEN);
   wf->SetModalResult(mrOK);
 }
 
 static void
 OnFriendYellowClicked()
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::YELLOW);
+  FlarmFriends::SetFriendColor(target_id, FlarmColor::YELLOW);
   wf->SetModalResult(mrOK);
 }
 
 static void
 OnFriendMagentaClicked()
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::MAGENTA);
+  FlarmFriends::SetFriendColor(target_id, FlarmColor::MAGENTA);
   wf->SetModalResult(mrOK);
 }
 
 static void
 OnFriendClearClicked()
 {
-  FlarmFriends::SetFriendColor(target_id, FlarmFriends::Color::NONE);
+  FlarmFriends::SetFriendColor(target_id, FlarmColor::NONE);
   wf->SetModalResult(mrOK);
 }
 

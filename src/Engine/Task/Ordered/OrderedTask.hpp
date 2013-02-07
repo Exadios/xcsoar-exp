@@ -97,7 +97,7 @@ public:
    * @return Initialised object
    */
   OrderedTask(const TaskBehaviour &tb);
-  virtual ~OrderedTask();
+  ~OrderedTask();
 
   /**
    * Accessor for factory system for constructing tasks
@@ -128,6 +128,8 @@ public:
    */
   gcc_pure
   std::vector<TaskFactoryType> GetFactoryTypes(bool all = true) const;
+
+  void SetTaskBehaviour(const TaskBehaviour &tb);
 
   /**
    * Removes all task points.
@@ -625,8 +627,6 @@ public:
 
 public:
   /* virtual methods from class TaskInterface */
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb) override;
-
   virtual unsigned TaskSize() const override {
     return task_points.size();
   }

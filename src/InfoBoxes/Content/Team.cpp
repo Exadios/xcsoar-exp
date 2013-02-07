@@ -25,6 +25,7 @@ Copyright_License {
 #include "InfoBoxes/Data.hpp"
 #include "Interface.hpp"
 #include "Formatter/Units.hpp"
+#include "TeamActions.hpp"
 
 #include <tchar.h>
 #include <stdio.h>
@@ -45,10 +46,10 @@ InfoBoxContentTeamCode::Update(InfoBoxData &data)
   data.SetValue(CommonInterface::Calculated().own_teammate_code.GetCode());
 
   // Set Comment
-  if (teamcode_info.flarm_teammate_code_available) {
+  if (teamcode_info.flarm_teammate_code.IsDefined()) {
     data.SetComment(teamcode_info.flarm_teammate_code.GetCode());
     data.SetCommentColor(teamcode_info.flarm_teammate_code_current ? 2 : 1);
-  } else if (settings.team_code_valid) {
+  } else if (settings.team_code.IsDefined()) {
     data.SetComment(settings.team_code.GetCode());
     data.SetCommentColor(0);
   }
@@ -77,14 +78,7 @@ InfoBoxContentTeamCode::HandleKey(const InfoBoxKeyCodes keycode)
     return false;
 
   if (traffic != NULL) {
-    settings.team_flarm_id = traffic->id;
-
-    if (traffic->HasName()) {
-      // copy the 3 first chars from the name to TeamFlarmCNTarget
-      settings.team_flarm_callsign = traffic->name;
-    } else {
-      settings.team_flarm_callsign.clear();
-    }
+    TeamActions::TrackFlarm(traffic->id, traffic->name);
   } else {
     // no flarm traffic to select!
     settings.team_flarm_id.Clear();

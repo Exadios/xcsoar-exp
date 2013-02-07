@@ -21,50 +21,71 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_FLARM_NET_HPP
-#define XCSOAR_FLARM_NET_HPP
+#ifndef XCSOAR_FLARM_NET_DATABASE_HPP
+#define XCSOAR_FLARM_NET_DATABASE_HPP
 
-#include "Record.hpp"
+#include "FlarmId.hpp"
+#include "FlarmNetRecord.hpp"
+#include "Compiler.h"
 
+#include <map>
 #include <tchar.h>
 
-struct FlarmRecord;
 class NLineReader;
 class FlarmId;
 
 /**
- * Handles the FlarmNet.org file
+ * An in-memory representation of the FlarmNet.org database.
  */
-namespace FlarmNet
-{
-  void Destroy();
+class FlarmNetDatabase {
+  typedef std::map<FlarmId, FlarmNetRecord> RecordMap;
+  RecordMap map;
 
-  unsigned LoadFile(NLineReader &reader);
+public:
+  bool IsEmpty() const {
+    return map.empty();
+  }
 
-  /**
-   * Reads the FlarmNet.org file and fills the map
-   *
-   * @param path the path of the file
-   * @return the number of records read from the file
-   */
-  unsigned LoadFile(const TCHAR *path);
+  void Clear() {
+    map.clear();
+  }
+
+  void Insert(const FlarmNetRecord &record);
 
   /**
    * Finds a FLARMNetRecord object based on the given FLARM id
    * @param id FLARM id
    * @return FLARMNetRecord object
    */
-  const FlarmRecord *FindRecordById(FlarmId id);
+  gcc_pure
+  const FlarmNetRecord *FindRecordById(FlarmId id) const {
+    auto i = map.find(id);
+    return i != map.end()
+      ? &i->second
+      : NULL;
+  }
 
   /**
    * Finds a FLARMNetRecord object based on the given Callsign
    * @param cn Callsign
    * @return FLARMNetRecord object
    */
-  const FlarmRecord *FindFirstRecordByCallSign(const TCHAR *cn);
-  unsigned FindRecordsByCallSign(const TCHAR *cn, const FlarmRecord *array[],
-                                 unsigned size);
-  unsigned FindIdsByCallSign(const TCHAR *cn, FlarmId array[], unsigned size);
+  gcc_pure
+  const FlarmNetRecord *FindFirstRecordByCallSign(const TCHAR *cn) const;
+
+  unsigned FindRecordsByCallSign(const TCHAR *cn,
+                                 const FlarmNetRecord *array[],
+                                 unsigned size) const;
+  unsigned FindIdsByCallSign(const TCHAR *cn, FlarmId array[],
+                             unsigned size) const;
+
+  RecordMap::const_iterator begin() const {
+    return map.begin();
+  }
+
+  RecordMap::const_iterator end() const {
+    return map.end();
+  }
 };
 
 #endif

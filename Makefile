@@ -183,7 +183,7 @@ DIALOG_SOURCES = \
 	$(SRC)/Dialogs/Settings/dlgConfigFonts.cpp \
 	$(SRC)/Dialogs/Settings/dlgConfigInfoboxes.cpp \
 	$(SRC)/Dialogs/Settings/FontEdit.cpp \
-	$(SRC)/Dialogs/Traffic/FlarmTrafficList.cpp \
+	$(SRC)/Dialogs/Traffic/TrafficList.cpp \
 	$(SRC)/Dialogs/Traffic/FlarmTrafficDetails.cpp \
 	$(SRC)/Dialogs/Traffic/TeamCodeDialog.cpp \
 	$(SRC)/Dialogs/dlgAnalysis.cpp \
@@ -346,15 +346,14 @@ XCSOAR_SOURCES := \
 	$(SRC)/FLARM/FlarmId.cpp \
 	$(SRC)/FLARM/Error.cpp \
 	$(SRC)/FLARM/List.cpp \
-	$(SRC)/FLARM/Record.cpp \
-	$(SRC)/FLARM/Database.cpp \
-	$(SRC)/FLARM/FlarmNet.cpp \
+	$(SRC)/FLARM/FlarmNetRecord.cpp \
+	$(SRC)/FLARM/FlarmNetDatabase.cpp \
 	$(SRC)/FLARM/FlarmNetReader.cpp \
 	$(SRC)/FLARM/Traffic.cpp \
 	$(SRC)/FLARM/FlarmCalculations.cpp \
 	$(SRC)/FLARM/Friends.cpp \
-	$(SRC)/FLARM/FriendsGlue.cpp \
 	$(SRC)/FLARM/FlarmComputer.cpp \
+	$(SRC)/FLARM/Global.cpp \
 	$(SRC)/FLARM/Glue.cpp \
 	$(SRC)/Computer/CuComputer.cpp \
 	$(SRC)/Computer/FlyingComputer.cpp \
@@ -423,6 +422,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Replay/TaskAutoPilot.cpp \
 	$(SRC)/Replay/AircraftSim.cpp \
 	$(SRC)/TeamCode.cpp \
+	$(SRC)/TeamActions.cpp \
 	$(SRC)/Waypoint/WaypointList.cpp \
 	$(SRC)/Waypoint/WaypointListBuilder.cpp \
 	$(SRC)/Waypoint/WaypointFilter.cpp \
@@ -667,6 +667,9 @@ XCSOAR_SOURCES := \
 	$(SRC)/Units/Settings.cpp \
 	$(SRC)/Formatter/AngleFormatter.cpp \
 	$(SRC)/FLARM/FlarmDetails.cpp \
+	$(SRC)/FLARM/NameDatabase.cpp \
+	$(SRC)/FLARM/NameFile.cpp \
+	$(SRC)/FLARM/TrafficDatabases.cpp \
 	$(SRC)/UtilsSettings.cpp \
 	$(SRC)/UtilsSystem.cpp \
 	$(SRC)/OS/LogError.cpp \
@@ -695,6 +698,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Profile/InfoBoxConfig.cpp \
 	$(SRC)/Profile/AirspaceConfig.cpp \
 	$(SRC)/Profile/TerrainConfig.cpp \
+	$(SRC)/Profile/FlarmProfile.cpp \
 	$(SRC)/XML/Node.cpp \
 	$(SRC)/XML/Parser.cpp \
 	$(SRC)/XML/Writer.cpp \
@@ -827,6 +831,8 @@ XCSOAR_SOURCES += \
 	$(SRC)/Android/I2CbaroDevice.cpp \
 	$(SRC)/Android/NativeNunchuckListener.cpp \
 	$(SRC)/Android/NunchuckDevice.cpp \
+	$(SRC)/Android/NativeVoltageListener.cpp \
+	$(SRC)/Android/VoltageDevice.cpp \
 	$(SRC)/Android/IOIOHelper.cpp
 endif
 

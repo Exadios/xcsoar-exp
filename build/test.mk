@@ -94,6 +94,7 @@ TEST_NAMES = \
 	TestPlanes \
 	TestTaskPoint \
 	TestTaskWaypoint \
+	TestTeamCode \
 	TestZeroFinder \
 	TestAirspaceParser \
 	TestMETARParser \
@@ -243,6 +244,13 @@ TEST_TASKWAYPOINT_SOURCES = \
 TEST_TASKWAYPOINT_DEPENDS = IO OS TASK GEO MATH UTIL
 $(eval $(call link-program,TestTaskWaypoint,TEST_TASKWAYPOINT))
 
+TEST_TEAM_CODE_SOURCES = \
+	$(SRC)/TeamCode.cpp \
+	$(TEST_SRC_DIR)/tap.c \
+	$(TEST_SRC_DIR)/TestTeamCode.cpp
+TEST_TEAM_CODE_DEPENDS = GEO MATH UTIL
+$(eval $(call link-program,TestTeamCode,TEST_TEAM_CODE))
+
 TEST_TROUTE_SOURCES = \
 	$(SRC)/XML/Node.cpp \
 	$(SRC)/Operation/Operation.cpp \
@@ -335,11 +343,10 @@ TEST_GEO_BOUNDS_DEPENDS = GEO MATH
 $(eval $(call link-program,TestGeoBounds,TEST_GEO_BOUNDS))
 
 TEST_FLARM_NET_SOURCES = \
-	$(SRC)/FLARM/FlarmNet.cpp \
 	$(SRC)/FLARM/FlarmNetReader.cpp \
 	$(SRC)/FLARM/FlarmId.cpp \
-	$(SRC)/FLARM/Record.cpp \
-	$(SRC)/FLARM/Database.cpp \
+	$(SRC)/FLARM/FlarmNetRecord.cpp \
+	$(SRC)/FLARM/FlarmNetDatabase.cpp \
 	$(TEST_SRC_DIR)/tap.c \
 	$(TEST_SRC_DIR)/TestFlarmNet.cpp
 TEST_FLARM_NET_DEPENDS = IO OS MATH UTIL
@@ -667,7 +674,8 @@ DEBUG_PROGRAM_NAMES = \
 	RunTask \
 	ViewImage \
 	RunCanvas RunMapWindow \
-	RunDialog RunListControl RunTextEntry RunNumberEntry RunTimeEntry \
+	RunDialog RunListControl \
+	RunTextEntry RunNumberEntry RunTimeEntry RunAngleEntry \
 	RunTerminal \
 	RunRenderOZ \
 	RunChartRenderer \
@@ -1568,8 +1576,8 @@ RUN_MAP_WINDOW_SOURCES = \
 	$(SRC)/Engine/Navigation/TraceHistory.cpp \
 	$(SRC)/FLARM/FlarmId.cpp \
 	$(SRC)/FLARM/Friends.cpp \
-	$(SRC)/FLARM/FriendsGlue.cpp \
 	$(SRC)/FLARM/List.cpp \
+	$(SRC)/FLARM/Global.cpp \
 	$(SRC)/Airspace/ProtectedAirspaceWarningManager.cpp \
 	$(SRC)/Airspace/AirspaceParser.cpp \
 	$(SRC)/Airspace/AirspaceVisibility.cpp \
@@ -1675,6 +1683,7 @@ RUN_MAP_WINDOW_SOURCES = \
 	$(SRC)/Profile/MapProfile.cpp \
 	$(SRC)/Profile/TerrainConfig.cpp \
 	$(SRC)/Profile/Screen.cpp \
+	$(SRC)/Profile/FlarmProfile.cpp \
 	$(SRC)/Waypoint/HomeGlue.cpp \
 	$(SRC)/Waypoint/LastUsed.cpp \
 	$(SRC)/Waypoint/WaypointFileType.cpp \
@@ -1791,7 +1800,7 @@ $(eval $(call link-program,RunTextEntry,RUN_TEXT_ENTRY))
 RUN_NUMBER_ENTRY_SOURCES = \
 	$(SRC)/Dialogs/NumberEntry.cpp \
 	$(SRC)/Dialogs/DialogSettings.cpp \
-	$(SRC)/UIUtil/KineticManager.cpp \
+	$(SRC)/Dialogs/WidgetDialog.cpp \
 	$(SRC)/Hardware/Display.cpp \
 	$(SRC)/Screen/Layout.cpp \
 	$(SRC)/ResourceLoader.cpp \
@@ -1831,6 +1840,27 @@ RUN_TIME_ENTRY_SOURCES = \
 RUN_TIME_ENTRY_LDADD = $(RESOURCE_BINARY)
 RUN_TIME_ENTRY_DEPENDS = FORM WIDGET DATA_FIELD SCREEN EVENT IO OS THREAD MATH UTIL ZLIB TIME
 $(eval $(call link-program,RunTimeEntry,RUN_TIME_ENTRY))
+
+RUN_ANGLE_ENTRY_SOURCES = \
+	$(SRC)/Dialogs/NumberEntry.cpp \
+	$(SRC)/Dialogs/DialogSettings.cpp \
+	$(SRC)/Dialogs/WidgetDialog.cpp \
+	$(SRC)/Hardware/Display.cpp \
+	$(SRC)/Screen/Layout.cpp \
+	$(SRC)/ResourceLoader.cpp \
+	$(SRC)/Look/DialogLook.cpp \
+	$(SRC)/Look/ButtonLook.cpp \
+	$(SRC)/Units/Descriptor.cpp \
+	$(TEST_SRC_DIR)/Fonts.cpp \
+	$(TEST_SRC_DIR)/FakeBlank.cpp \
+	$(TEST_SRC_DIR)/FakeAsset.cpp \
+	$(TEST_SRC_DIR)/FakeLanguage.cpp \
+	$(TEST_SRC_DIR)/FakeListPicker.cpp \
+	$(TEST_SRC_DIR)/FakeHelpDialog.cpp \
+	$(TEST_SRC_DIR)/RunAngleEntry.cpp
+RUN_ANGLE_ENTRY_LDADD = $(RESOURCE_BINARY)
+RUN_ANGLE_ENTRY_DEPENDS = FORM WIDGET DATA_FIELD SCREEN EVENT IO OS THREAD MATH UTIL ZLIB TIME
+$(eval $(call link-program,RunAngleEntry,RUN_ANGLE_ENTRY))
 
 RUN_TERMINAL_SOURCES = \
 	$(SRC)/Hardware/Display.cpp \
@@ -2398,8 +2428,8 @@ $(eval $(call link-program,DumpTaskFile,DUMP_TASK_FILE))
 DUMP_FLARM_NET_SOURCES = \
 	$(SRC)/FLARM/FlarmNetReader.cpp \
 	$(SRC)/FLARM/FlarmId.cpp \
-	$(SRC)/FLARM/Record.cpp \
-	$(SRC)/FLARM/Database.cpp \
+	$(SRC)/FLARM/FlarmNetRecord.cpp \
+	$(SRC)/FLARM/FlarmNetDatabase.cpp \
 	$(TEST_SRC_DIR)/DumpFlarmNet.cpp
 DUMP_FLARM_NET_DEPENDS = IO OS MATH UTIL
 $(eval $(call link-program,DumpFlarmNet,DUMP_FLARM_NET))

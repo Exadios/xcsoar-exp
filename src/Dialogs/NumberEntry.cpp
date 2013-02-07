@@ -22,11 +22,13 @@ Copyright_License {
 */
 
 #include "Dialogs/NumberEntry.hpp"
+#include "Dialogs/WidgetDialog.hpp"
+#include "Widget/FixedWindowWidget.hpp"
 #include "Form/Form.hpp"
-#include "Form/ButtonPanel.hpp"
 #include "Form/DigitEntry.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Language/Language.hpp"
+#include "Math/Angle.hpp"
 #include "UIGlobals.hpp"
 
 bool
@@ -37,37 +39,35 @@ NumberEntryDialog(const TCHAR *caption,
 
   const DialogLook &look = UIGlobals::GetDialogLook();
 
-  WindowStyle dialog_style;
-  dialog_style.Hide();
-  dialog_style.ControlParent();
-
-  WndForm dialog(look);
-  dialog.Create(UIGlobals::GetMainWindow(), caption, dialog_style);
+  WidgetDialog dialog(look);
+  dialog.CreatePreliminary(UIGlobals::GetMainWindow(), caption);
 
   ContainerWindow &client_area = dialog.GetClientAreaWindow();
 
-  /* create button panel */
-
-  ButtonPanel buttons(client_area, look);
-  const PixelRect rc = buttons.UpdateLayout();
-
-  /* create the command buttons */
+  /* create the input control */
 
   WindowStyle control_style;
+  control_style.Hide();
   control_style.TabStop();
 
   DigitEntry entry(look);
-  entry.CreateSigned(client_area, rc, control_style, length, 0);
+  entry.CreateSigned(client_area, client_area.GetClientRect(), control_style,
+                     length, 0);
+  entry.Resize(entry.GetRecommendedSize());
   entry.SetValue(value);
 
   /* create buttons */
 
-  buttons.Add(_("OK"), dialog, mrOK);
-  buttons.Add(_("Cancel"), dialog, mrCancel);
+  dialog.AddButton(_("OK"), dialog, mrOK);
+  dialog.AddButton(_("Cancel"), dialog, mrCancel);
 
   /* run it */
 
+  FixedWindowWidget widget(&entry);
+  dialog.FinishPreliminary(&widget);
+
   bool result = dialog.ShowModal() == mrOK;
+  dialog.StealWidget();
   if (!result)
     return false;
 
@@ -83,41 +83,80 @@ NumberEntryDialog(const TCHAR *caption,
 
   const DialogLook &look = UIGlobals::GetDialogLook();
 
-  WindowStyle dialog_style;
-  dialog_style.Hide();
-  dialog_style.ControlParent();
-
-  WndForm dialog(look);
-  dialog.Create(UIGlobals::GetMainWindow(), caption, dialog_style);
+  WidgetDialog dialog(look);
+  dialog.CreatePreliminary(UIGlobals::GetMainWindow(), caption);
 
   ContainerWindow &client_area = dialog.GetClientAreaWindow();
 
-  /* create button panel */
-
-  ButtonPanel buttons(client_area, look);
-  const PixelRect rc = buttons.UpdateLayout();
-
-  /* create the command buttons */
+  /* create the input control */
 
   WindowStyle control_style;
+  control_style.Hide();
   control_style.TabStop();
 
   DigitEntry entry(look);
-  entry.CreateSigned(client_area, rc, control_style, length, 0);
+  entry.CreateUnsigned(client_area, client_area.GetClientRect(), control_style,
+                       length, 0);
+  entry.Resize(entry.GetRecommendedSize());
   entry.SetValue(value);
 
   /* create buttons */
 
-  buttons.Add(_("OK"), dialog, mrOK);
-  buttons.Add(_("Cancel"), dialog, mrCancel);
-  entry.Move(buttons.UpdateLayout());
+  dialog.AddButton(_("OK"), dialog, mrOK);
+  dialog.AddButton(_("Cancel"), dialog, mrCancel);
 
   /* run it */
 
+  FixedWindowWidget widget(&entry);
+  dialog.FinishPreliminary(&widget);
+
   bool result = dialog.ShowModal() == mrOK;
+  dialog.StealWidget();
   if (!result)
     return false;
 
   value = entry.GetUnsignedValue();
+  return true;
+}
+
+bool
+AngleEntryDialog(const TCHAR *caption, Angle &value)
+{
+  /* create the dialog */
+
+  const DialogLook &look = UIGlobals::GetDialogLook();
+
+  WidgetDialog dialog(look);
+  dialog.CreatePreliminary(UIGlobals::GetMainWindow(), caption);
+
+  ContainerWindow &client_area = dialog.GetClientAreaWindow();
+
+  /* create the input control */
+
+  WindowStyle control_style;
+  control_style.Hide();
+  control_style.TabStop();
+
+  DigitEntry entry(look);
+  entry.CreateAngle(client_area, client_area.GetClientRect(), control_style);
+  entry.Resize(entry.GetRecommendedSize());
+  entry.SetValue(value);
+
+  /* create buttons */
+
+  dialog.AddButton(_("OK"), dialog, mrOK);
+  dialog.AddButton(_("Cancel"), dialog, mrCancel);
+
+  /* run it */
+
+  FixedWindowWidget widget(&entry);
+  dialog.FinishPreliminary(&widget);
+
+  bool result = dialog.ShowModal() == mrOK;
+  dialog.StealWidget();
+  if (!result)
+    return false;
+
+  value = entry.GetAngleValue();
   return true;
 }

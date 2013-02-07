@@ -37,7 +37,33 @@ class OZBoundary;
 class ObservationZone
 {
 public:
+  enum Shape {
+    LINE,
+    CYLINDER,
+    SECTOR,
+    FAI_SECTOR,
+    KEYHOLE,
+    BGAFIXEDCOURSE,
+    BGAENHANCEDOPTION,
+    BGA_START,
+    ANNULAR_SECTOR,
+  };
+
+private:
+  const Shape shape;
+
+protected:
+  ObservationZone(Shape _shape):shape(_shape) {}
+
+public:
   virtual ~ObservationZone() {}
+
+  ObservationZone(const ObservationZone &) = delete;
+  ObservationZone &operator=(const ObservationZone &) = delete;
+
+  Shape GetShape() const {
+    return shape;
+  }
 
   /** 
    * Check whether observer is within OZ
@@ -68,16 +94,6 @@ public:
   gcc_pure
   virtual bool TransitionConstraint(const GeoPoint &location,
                                     const GeoPoint &last_location) const = 0;
-
-  /**
-   * Get point on boundary from parametric representation
-   *
-   * @param t T value [0,1]
-   *
-   * @return Point on boundary
-   */
-  gcc_pure
-  virtual GeoPoint GetBoundaryParametric(fixed t) const = 0;
 
   /**
    * Return an unordered list of boundary points for evaluation by the

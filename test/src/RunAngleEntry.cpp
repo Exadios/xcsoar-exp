@@ -21,21 +21,21 @@ Copyright_License {
 }
 */
 
-#include "FriendsGlue.hpp"
-#include "FLARM/FlarmId.hpp"
-#include "TeamCodeSettings.hpp"
+#define ENABLE_DIALOG
+#define ENABLE_MAIN_WINDOW
 
-FlarmFriends::Color
-FlarmFriends::GetFriendColor(FlarmId id, const TeamCodeSettings &settings)
+#include "Main.hpp"
+#include "Dialogs/NumberEntry.hpp"
+#include "Math/Angle.hpp"
+
+#include <stdio.h>
+
+static void
+Main()
 {
-  Color team_color = GetFriendColor(id);
+  Angle value = Angle::Zero();
+  if (!AngleEntryDialog(_T("The caption"), value))
+    return;
 
-  // If no color found but target is teammate
-  if (team_color == Color::NONE &&
-      settings.team_flarm_tracking &&
-      id == settings.team_flarm_id)
-    // .. use green color
-    return Color::GREEN;
-
-  return team_color;
+  printf("%u\n", uround(value.Degrees()));
 }

@@ -23,7 +23,7 @@
 
 #include "FlarmTrafficWindow.hpp"
 #include "FLARM/Traffic.hpp"
-#include "FLARM/FriendsGlue.hpp"
+#include "FLARM/Friends.hpp"
 #include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Formatter/UserUnits.hpp"
@@ -304,21 +304,21 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
       hollow_brush = true;
     } else {
       // Search for team color
-      FlarmFriends::Color team_color = GetTeamColor(traffic.id);
+      const FlarmColor team_color = FlarmFriends::GetFriendColor(traffic.id);
 
       // If team color found -> draw a colored circle around the target
-      if (team_color != FlarmFriends::Color::NONE) {
+      if (team_color != FlarmColor::NONE) {
         switch (team_color) {
-        case FlarmFriends::Color::GREEN:
+        case FlarmColor::GREEN:
           circle_pen = &look.team_pen_green;
           break;
-        case FlarmFriends::Color::BLUE:
+        case FlarmColor::BLUE:
           circle_pen = &look.team_pen_blue;
           break;
-        case FlarmFriends::Color::YELLOW:
+        case FlarmColor::YELLOW:
           circle_pen = &look.team_pen_yellow;
           break;
-        case FlarmFriends::Color::MAGENTA:
+        case FlarmColor::MAGENTA:
           circle_pen = &look.team_pen_magenta;
           break;
         default:
@@ -703,12 +703,6 @@ FlarmTrafficWindow::OnPaint(Canvas &canvas)
 {
   canvas.Clear(look.background_color);
   Paint(canvas);
-}
-
-FlarmFriends::Color
-FlarmTrafficWindow::GetTeamColor(const FlarmId &id) const
-{
-  return FlarmFriends::GetFriendColor(id, settings);
 }
 
 bool

@@ -58,9 +58,10 @@ bool
 GlueMapWindow::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
 {
   /* allow a bigger threshold on touch screens */
-  const int threshold = IsEmbedded() ? 50 : 10;
+  const unsigned threshold = Layout::Scale(IsEmbedded() ? 50 : 10);
   if (drag_mode != DRAG_NONE && arm_mapitem_list &&
-      (abs(drag_start.x - x) + abs(drag_start.y - y)) > Layout::Scale(threshold))
+      (manhattan_distance(drag_start, RasterPoint{x, y}) > threshold ||
+       mouse_down_clock.Elapsed() > 200))
     arm_mapitem_list = false;
 
   switch (drag_mode) {
@@ -367,6 +368,10 @@ GlueMapWindow::OnTimer(WindowTimer &timer)
 {
   if (timer == map_item_timer) {
     map_item_timer.Cancel();
+    if (!InputEvents::IsDefault() && !IsPanning()) {
+      InputEvents::HideMenu();
+      return true;
+    }
     ShowMapItems(drag_start_geopoint, false);
     return true;
 #ifdef ENABLE_OPENGL
