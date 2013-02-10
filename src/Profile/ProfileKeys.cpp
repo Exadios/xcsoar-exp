@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -190,6 +190,7 @@ const TCHAR RiskGamma[] = _T("RiskGamma");
 const TCHAR PredictWindDrift[] = _T("PredictWindDrift");
 const TCHAR WindArrowStyle[] = _T("WindArrowStyle");
 const TCHAR EnableFinalGlideBarMC0[] = _T("EnableFinalGlideBarMC0");
+const TCHAR ShowFAITriangleAreas[] = _T("ShowFAITriangleAreas");
 const TCHAR AutoLogger[] = _T("AutoLogger");
 const TCHAR DisableAutoLogger[] = _T("DisableAutoLogger");
 const TCHAR EnableFlightLogger[] = _T("EnableFlightLogger");
@@ -238,6 +239,7 @@ const TCHAR TrackingInterval[] = _T("TrackingInterval");
 const TCHAR TrackingVehicleType[] = _T("TrackingVehicleType");
 const TCHAR SkyLinesTrackingEnabled[] = _T("SkyLinesTrackingEnabled");
 const TCHAR SkyLinesTrackingInterval[] = _T("SkyLinesTrackingInterval");
+const TCHAR SkyLinesTrafficEnabled[] = _T("SkyLinesTrafficEnabled");
 const TCHAR SkyLinesTrackingKey[] = _T("SkyLinesTrackingKey");
 const TCHAR LiveTrack24Enabled[] = _T("LiveTrack24Enabled");
 const TCHAR LiveTrack24Server[] = _T("LiveTrack24Server");
@@ -253,5 +255,7 @@ const TCHAR VarioMaxFrequency[] = _T("VarioMaxFrequency");
 const TCHAR VarioMinPeriod[] = _T("VarioMinPeriod");
 const TCHAR VarioMaxPeriod[] = _T("VarioMaxPeriod");
 const TCHAR VarioDeadBandEnabled[] = _T("VarioDeadBandEnabled");
+const TCHAR VarioDeadBandMin[] = _T("VarioDeadBandMin");
+const TCHAR VarioDeadBandMax[] = _T("VarioDeadBandMax");
 
 }

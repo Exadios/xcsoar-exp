@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,16 +22,14 @@ Copyright_License {
 */
 
 #include "WindEdit.hpp"
-#include "Form/Edit.hpp"
 #include "Form/DataField/Float.hpp"
 #include "Interface.hpp"
 #include "Units/Units.hpp"
-#include "Units/Group.hpp"
-#include "Form/RowFormWidget.hpp"
+#include "Widget/RowFormWidget.hpp"
 #include "Form/DataField/Listener.hpp"
+#include "Form/DataField/Angle.hpp"
 #include "UIGlobals.hpp"
 #include "Language/Language.hpp"
-#include "Screen/Layout.hpp"
 
 enum ControlIndex {
   WindSpeed,
@@ -44,15 +42,16 @@ public:
   WindEditPanel()
     :RowFormWidget(UIGlobals::GetDialogLook()) {}
 
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
+  virtual void Prepare(ContainerWindow &parent,
+                       const PixelRect &rc) override;
 
 protected:
   /* methods from DataFieldListener */
-  virtual void OnModified(DataField &df);
+  virtual void OnModified(DataField &df) override;
 
 private:
   void OnWindSpeed(DataFieldFloat &Sender);
-  void OnWindDirection(DataFieldFloat &Sender);
+  void OnWindDirection(AngleDataField &df);
 };
 
 void
@@ -62,13 +61,13 @@ WindEditPanel::OnModified(DataField &df)
     OnWindSpeed((DataFieldFloat&)df);
 
   else if (IsDataField(WindDirection, df))
-    OnWindDirection((DataFieldFloat&)df);
+    OnWindDirection((AngleDataField &)df);
 }
 
 void
 WindEditPanel::OnWindSpeed(DataFieldFloat &Sender)
 {
-  const NMEAInfo &basic = XCSoarInterface::Basic();
+  const NMEAInfo &basic = CommonInterface::Basic();
   WindSettings &settings = CommonInterface::SetComputerSettings().wind;
   const bool external_wind = basic.external_wind_available &&
     settings.use_external_wind;
@@ -80,15 +79,15 @@ WindEditPanel::OnWindSpeed(DataFieldFloat &Sender)
 }
 
 void
-WindEditPanel::OnWindDirection(DataFieldFloat &Sender)
+WindEditPanel::OnWindDirection(AngleDataField &df)
 {
-  const NMEAInfo &basic = XCSoarInterface::Basic();
+  const NMEAInfo &basic = CommonInterface::Basic();
   WindSettings &settings = CommonInterface::SetComputerSettings().wind;
   const bool external_wind = basic.external_wind_available &&
     settings.use_external_wind;
 
   if (!external_wind) {
-    settings.manual_wind.bearing = Angle::Degrees(Sender.GetAsFixed());
+    settings.manual_wind.bearing = df.GetValue();
     settings.manual_wind_available.Update(basic.clock);
   }
 }
@@ -99,14 +98,13 @@ WindEditPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
   RowFormWidget::Prepare(parent, rc);
 
   AddFloat(_("Speed"), _("Manual adjustment of wind speed."), _T("%.0f"),
-           _T("%.0f"), fixed_zero, fixed(130), fixed(1), false,
+           _T("%.0f"), fixed(0), fixed(130), fixed(1), false,
            UnitGroup::WIND_SPEED,
            CommonInterface::Calculated().GetWindOrZero().norm, this);
 
-  AddFloat(_("Direction"), _("Manual adjustment of wind direction."),
-           _T("%.0f°"), _T("%.0f"), fixed_zero, fixed(355), fixed(5), false, // TO DO Add degrees to first display format
-           CommonInterface::Calculated().GetWindOrZero().bearing.Degrees(),
-           this);
+  AddAngle(_("Direction"), _("Manual adjustment of wind direction."),
+           CommonInterface::Calculated().GetWindOrZero().bearing, 5u,
+           false, this);
 }
 
 Widget *

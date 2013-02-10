@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ Copyright_License {
 
 #include "Wind/CirclingWind.hpp"
 #include "Math/Constants.h"
-#include "Math/FastMath.h"
 #include "LogFile.hpp"
 #include "NMEA/MoreData.hpp"
 #include "NMEA/Derived.hpp"
@@ -181,11 +180,11 @@ CirclingWind::CalcWind()
     return Result(0);
 
   // reject if average time step greater than 2.0 seconds
-  if ((samples.last().time - samples[0].time) / (samples.size() - 1) > fixed_two)
+  if ((samples.last().time - samples[0].time) / (samples.size() - 1) > fixed(2))
     return Result(0);
 
   // find average
-  fixed av = fixed_zero;
+  fixed av = fixed(0);
   for (unsigned i = 0; i < samples.size(); i++)
     av += samples[i].mag;
 
@@ -194,13 +193,13 @@ CirclingWind::CalcWind()
   // find zero time for times above average
   fixed rthisp;
   int ithis = 0;
-  fixed rthismax = fixed_zero;
-  fixed rthismin = fixed_zero;
+  fixed rthismax = fixed(0);
+  fixed rthismin = fixed(0);
   int jmax = -1;
   int jmin = -1;
 
   for (unsigned j = 0; j < samples.size(); j++) {
-    rthisp = fixed_zero;
+    rthisp = fixed(0);
 
     for (unsigned i = 0; i < samples.size(); i++) {
       if (i == j)
@@ -234,12 +233,13 @@ CirclingWind::CalcWind()
 
   // attempt to fit cycloid
 
-  fixed mag = half(samples[jmax].mag - samples[jmin].mag);
-  fixed rthis = fixed_zero;
+  fixed mag = Half(samples[jmax].mag - samples[jmin].mag);
+  fixed rthis = fixed(0);
 
-  for (unsigned i = 0; i < samples.size(); i++) {
-    const auto sc = ::sin_cos(((i + jmax) % samples.size()) * fixed_two_pi
-                              / samples.size());
+  const Angle step = Angle::FullCircle() / samples.size();
+  Angle angle = step * jmax;
+  for (unsigned i = 0; i < samples.size(); i++, angle += step) {
+    const auto sc = angle.SinCos();
     fixed wx = sc.second, wy = sc.first;
     wx = wx * av + mag;
     wy *= av;
@@ -252,7 +252,7 @@ CirclingWind::CalcWind()
 
   int quality;
 
-  if (mag > fixed_one)
+  if (mag > fixed(1))
     quality = 5 - iround(rthis / mag * 3);
   else
     quality = 5 - iround(rthis);

@@ -11,14 +11,25 @@
 #ifndef XCSOAR_SCREEN_RAW_BITMAP_HPP
 #define XCSOAR_SCREEN_RAW_BITMAP_HPP
 
-#include "Screen/Canvas.hpp"
+#include "Screen/Point.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Screen/OpenGL/Surface.hpp"
-#include "Screen/OpenGL/Texture.hpp"
-#include "Screen/OpenGL/Scope.hpp"
 #include "Screen/OpenGL/Features.hpp"
-#include "Screen/OpenGL/Compatibility.hpp"
+#endif
+
+#ifdef ENABLE_SDL
+#include <SDL_endian.h>
+#endif
+
+#include <stdint.h>
+
+class Canvas;
+
+#ifdef ENABLE_OPENGL
+class GLTexture;
+#elif defined(ENABLE_SDL)
+struct SDL_Surface;
 #endif
 
 /**
@@ -33,9 +44,9 @@ struct BGRColor
   /**
    * RGB color value encoded with 5/6/5 bits per channel.
    */
-  unsigned short value;
+  uint16_t value;
 
-  BGRColor(unsigned char R, unsigned char G, unsigned char B)
+  constexpr BGRColor(uint8_t R, uint8_t G, uint8_t B)
     :value(((R & 0xf8) << 8) |
            ((G & 0xfc) << 3) |
            (B >> 3)) {}
@@ -43,21 +54,21 @@ struct BGRColor
 #elif defined(ENABLE_SDL)
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-  unsigned char dummy;
-  unsigned char r;
-  unsigned char g;
-  unsigned char b;
+  uint8_t dummy;
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
 
-  BGRColor(unsigned char R, unsigned char G, unsigned char B)
-    :r(R), g(G), b(B) {}
+  constexpr BGRColor(uint8_t R, uint8_t G, uint8_t B)
+    :dummy(), r(R), g(G), b(B) {}
 #else /* little endian */
-  unsigned char b;
-  unsigned char g;
-  unsigned char r;
-  unsigned char dummy;
+  uint8_t b;
+  uint8_t g;
+  uint8_t r;
+  uint8_t dummy;
 
-  BGRColor(unsigned char R, unsigned char G, unsigned char B)
-    :b(B), g(G), r(R) {}
+  constexpr BGRColor(uint8_t R, uint8_t G, uint8_t B)
+    :b(B), g(G), r(R), dummy() {}
 #endif /* little endian */
 
 #else /* !SDL */
@@ -67,19 +78,19 @@ struct BGRColor
    * RGB color value encoded with 5/5/5 bits per channel.  The most
    * significant bit is unused.
    */
-  unsigned short value;
+  uint16_t value;
 
-  BGRColor(unsigned char R, unsigned char G, unsigned char B)
+  constexpr BGRColor(uint8_t R, uint8_t G, uint8_t B)
     :value(((R & 0xf8) << 7) |
            ((G & 0xf8) << 2) |
            (B >> 3)) {}
 
 #else /* !_WIN32_WCE */
-  unsigned char b;
-  unsigned char g;
-  unsigned char r;
+  uint8_t b;
+  uint8_t g;
+  uint8_t r;
 
-  BGRColor(unsigned char R, unsigned char G, unsigned char B)
+  constexpr BGRColor(uint8_t R, uint8_t G, uint8_t B)
     :b(B), g(G), r(R) {}
 #endif /* !_WIN32_WCE */
 
@@ -203,55 +214,23 @@ public:
     return height;
   }
 
-  void StretchTo(UPixelScalar width, UPixelScalar height, Canvas &dest_canvas,
-                  UPixelScalar dest_width, UPixelScalar dest_height) const {
 #ifdef ENABLE_OPENGL
-    texture->Bind();
-
-    if (dirty) {
-#ifdef HAVE_GLES
-      /* 16 bit 5/6/5 on Android */
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, corrected_width, this->height,
-                      GL_RGB, GL_UNSIGNED_SHORT_5_6_5, buffer);
-#else
-      /* 32 bit R/G/B/A on full OpenGL */
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, corrected_width, this->height,
-                      GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+  /**
+   * Bind the texture and return a reference to it.  If the texture is
+   * "dirty", then the RAM buffer will be copied to the texture by
+   * this method.
+   */
+  GLTexture &BindAndGetTexture() const;
 #endif
 
-      dirty = false;
-    }
-
-    OpenGL::glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    GLEnable scope(GL_TEXTURE_2D);
-    dest_canvas.Stretch(0, 0, dest_width, dest_height,
-                        *texture, 0, 0, width, height);
-#elif defined(ENABLE_SDL)
-    Canvas src_canvas(surface);
-    dest_canvas.Stretch(0, 0, dest_width, dest_height,
-                        src_canvas, 0, 0, width, height);
-#elif defined(_WIN32_WCE) && _WIN32_WCE < 0x0400
-    /* StretchDIBits() is bugged on PPC2002, workaround follows */
-    HDC source_dc = ::CreateCompatibleDC(dest_canvas);
-    ::SelectObject(source_dc, bitmap);
-    ::StretchBlt(dest_canvas, 0, 0,
-                 dest_width, dest_height,
-                 source_dc, 0, 0, width, height,
-                 SRCCOPY);
-    ::DeleteDC(source_dc);
-#else
-    ::StretchDIBits(dest_canvas, 0, 0,
-                    dest_width, dest_height,
-                    0, GetHeight() - height, width, height,
-                    buffer, &bi, DIB_RGB_COLORS, SRCCOPY);
-#endif
-  }
+  void StretchTo(UPixelScalar width, UPixelScalar height, Canvas &dest_canvas,
+                 UPixelScalar dest_width, UPixelScalar dest_height) const;
 
 #ifdef ENABLE_OPENGL
 private:
   /* from GLSurfaceListener */
-  virtual void surface_created();
-  virtual void surface_destroyed();
+  virtual void SurfaceCreated() override;
+  virtual void SurfaceDestroyed() override;
 #endif
 };
 

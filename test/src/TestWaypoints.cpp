@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -54,10 +54,10 @@ public:
 
 static void
 AddSpiralWaypoints(Waypoints &waypoints,
-                   const GeoPoint &center = GeoPoint(Angle::Degrees(fixed(51.4)),
-                                                     Angle::Degrees(fixed(7.85))),
-                   Angle angle_start = Angle::Degrees(fixed(0)),
-                   Angle angle_step = Angle::Degrees(fixed(15)),
+                   const GeoPoint &center = GeoPoint(Angle::Degrees(51.4),
+                                                     Angle::Degrees(7.85)),
+                   Angle angle_start = Angle::Degrees(0),
+                   Angle angle_step = Angle::Degrees(15),
                    fixed distance_start = fixed(0),
                    fixed distance_step = fixed(1000),
                    fixed distance_max = fixed(150000))
@@ -91,7 +91,7 @@ AddSpiralWaypoints(Waypoints &waypoints,
     buffer.AppendFormat(_T(" #%d"), i + 1);
     waypoint.name = buffer;
 
-    waypoints.Append(waypoint);
+    waypoints.Append(std::move(waypoint));
   }
 
   waypoints.Optimise();
@@ -187,25 +187,18 @@ TestRangeVisitor(const Waypoints &waypoints, const GeoPoint &center)
   TestRangeVisitor(waypoints, center, fixed(1000000), 151);
 }
 
-class OriginalIDAbove
-{
-  unsigned threshold;
-
-public:
-  OriginalIDAbove(unsigned _threshold):threshold(_threshold) {}
-
-  bool operator()(const Waypoint &waypoint) {
-    return waypoint.original_id > threshold;
-  }
-};
+static bool
+OriginalIDAbove5(const Waypoint &waypoint) {
+  return waypoint.original_id > 5;
+}
 
 static void
 TestGetNearest(const Waypoints &waypoints, const GeoPoint &center)
 {
   const Waypoint *waypoint;
-  GeoPoint near = GeoVector(fixed(250), Angle::Degrees(fixed(15))).EndPoint(center);
-  GeoPoint far = GeoVector(fixed(750), Angle::Degrees(fixed(15))).EndPoint(center);
-  GeoPoint further = GeoVector(fixed(4200), Angle::Degrees(fixed(48))).EndPoint(center);
+  GeoPoint near = GeoVector(fixed(250), Angle::Degrees(15)).EndPoint(center);
+  GeoPoint far = GeoVector(fixed(750), Angle::Degrees(15)).EndPoint(center);
+  GeoPoint further = GeoVector(fixed(4200), Angle::Degrees(48)).EndPoint(center);
 
   ok1((waypoint = waypoints.GetNearest(center, fixed(1))) != NULL);
   ok1(waypoint->original_id == 0);
@@ -234,9 +227,9 @@ TestGetNearest(const Waypoints &waypoints, const GeoPoint &center)
   ok1((waypoint = waypoints.GetNearestLandable(further, fixed(10000))) != NULL);
   ok1(waypoint->original_id == 3);
 
-  ok1((waypoint = waypoints.GetNearestIf(center, fixed(1), OriginalIDAbove(5))) == NULL);
+  ok1((waypoint = waypoints.GetNearestIf(center, fixed(1), OriginalIDAbove5)) == NULL);
 
-  ok1((waypoint = waypoints.GetNearestIf(center, fixed(10000), OriginalIDAbove(5))) != NULL);
+  ok1((waypoint = waypoints.GetNearestIf(center, fixed(10000), OriginalIDAbove5)) != NULL);
   ok1(waypoint->original_id == 6);
 }
 
@@ -260,7 +253,7 @@ TestCopy(Waypoints& waypoints)
   unsigned size_old = waypoints.size();
   Waypoint wp_copy = *wp;
   wp_copy.id = waypoints.size() + 1;
-  waypoints.Append(wp_copy);
+  waypoints.Append(std::move(wp_copy));
   waypoints.Optimise();
   unsigned size_new = waypoints.size();
   return (size_new == size_old + 1);
@@ -310,7 +303,7 @@ main(int argc, char** argv)
   plan_tests(52);
 
   Waypoints waypoints;
-  GeoPoint center(Angle::Degrees(fixed(51.4)), Angle::Degrees(fixed(7.85)));
+  GeoPoint center(Angle::Degrees(51.4), Angle::Degrees(7.85));
 
   // AddSpiralWaypoints creates 151 waypoints from
   // 0km to 150km distance in 1km steps

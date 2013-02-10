@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,24 +30,24 @@ int main(int argc, char **argv)
   UnitSetting &config = Units::current;
 
   config.distance_unit = Unit::METER;
-  ok1(equals(Units::ToUserDistance(fixed_one), 1));
+  ok1(equals(Units::ToUserDistance(fixed(1)), 1));
 
   config.distance_unit = Unit::KILOMETER;
-  ok1(equals(Units::ToUserDistance(fixed_one), 0.001));
+  ok1(equals(Units::ToUserDistance(fixed(1)), 0.001));
 
   config.temperature_unit = Unit::KELVIN;
-  ok1(equals(Units::ToUserTemperature(fixed_zero), fixed_zero));
-  ok1(equals(Units::ToSysTemperature(fixed_zero), fixed_zero));
+  ok1(equals(Units::ToUserTemperature(fixed(0)), fixed(0)));
+  ok1(equals(Units::ToSysTemperature(fixed(0)), fixed(0)));
 
   config.temperature_unit = Unit::DEGREES_CELCIUS;
-  ok1(equals(Units::ToUserTemperature(fixed_zero), -273.15));
+  ok1(equals(Units::ToUserTemperature(fixed(0)), -273.15));
   ok1(equals(Units::ToUserTemperature(fixed(20)), -253.15));
-  ok1(equals(Units::ToSysTemperature(fixed_zero), 273.15));
+  ok1(equals(Units::ToSysTemperature(fixed(0)), 273.15));
   ok1(equals(Units::ToSysTemperature(fixed(20)), 293.15));
 
   config.temperature_unit = Unit::DEGREES_FAHRENHEIT;
-  ok1(equals(Units::ToUserTemperature(fixed_zero), -459.67));
-  ok1(equals(Units::ToSysTemperature(fixed_zero), 255.37));
+  ok1(equals(Units::ToUserTemperature(fixed(0)), -459.67));
+  ok1(equals(Units::ToSysTemperature(fixed(0)), 255.37));
 
   ok1(equals(Units::ToUserUnit(fixed(1013.25), Unit::TORR), 760));
   ok1(equals(Units::ToUserUnit(fixed(1013.25), Unit::INCH_MERCURY), 29.92));

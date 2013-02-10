@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@ struct ThermalLocatorInfo;
 struct NMEAInfo;
 class RasterTerrain;
 class ProtectedRoutePlanner;
-struct TeamCodeSettings;
 class NOAAStore;
 
 class MapItemListBuilder
@@ -59,7 +58,7 @@ public:
   void AddLocation(const NMEAInfo &basic, const RasterTerrain *terrain);
   void AddArrivalAltitudes(const ProtectedRoutePlanner &route_planner,
                      const RasterTerrain *terrain, fixed safety_height);
-  void AddSelfIfNear(const GeoPoint &self, const Angle &bearing);
+  void AddSelfIfNear(const GeoPoint &self, Angle bearing);
   void AddWaypoints(const Waypoints &waypoints);
   void AddVisibleAirspace(const Airspaces &airspaces,
                           const ProtectedAirspaceWarningManager *warning_manager,
@@ -68,7 +67,7 @@ public:
                           const MoreData &basic, const DerivedInfo &calculated);
   void AddTaskOZs(const ProtectedTaskManager &task);
   void AddMarkers(const ProtectedMarkers &marks);
-  void AddTraffic(const TrafficList &flarm, const TeamCodeSettings &teamcode);
+  void AddTraffic(const TrafficList &flarm);
   void AddThermals(const ThermalLocatorInfo &thermals,
                    const MoreData &basic, const DerivedInfo &calculated);
 

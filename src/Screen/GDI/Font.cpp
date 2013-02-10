@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ Copyright_License {
 #include <assert.h>
 
 bool
-Font::Set(const TCHAR* facename, UPixelScalar height, bool bold, bool italic)
+Font::Load(const TCHAR* facename, UPixelScalar height, bool bold, bool italic)
 {
   LOGFONT font;
   memset((char *)&font, 0, sizeof(LOGFONT));
@@ -44,22 +44,22 @@ Font::Set(const TCHAR* facename, UPixelScalar height, bool bold, bool italic)
     font.lfQuality = NONANTIALIASED_QUALITY;
   else
     font.lfQuality = ANTIALIASED_QUALITY;
-  return Font::Set(font);
+  return Font::Load(font);
 }
 
 bool
-Font::Set(const LOGFONT &log_font)
+Font::Load(const LOGFONT &log_font)
 {
   assert(IsScreenInitialized());
 
-  Reset();
+  Destroy();
 
   font = ::CreateFontIndirect(&log_font);
   if (font == NULL)
     return false;
 
   if (GetObjectType(font) != OBJ_FONT) {
-    Reset();
+    Destroy();
     return false;
   }
 
@@ -91,7 +91,7 @@ Font::CalculateHeights()
   if (IsAltair()) {
     // JMW: don't know why we need this in GNAV, but we do.
 
-    BufferCanvas buffer(canvas, tm.tmAveCharWidth, tm.tmHeight);
+    BufferCanvas buffer(canvas, {tm.tmAveCharWidth, tm.tmHeight});
     const HWColor white = buffer.map(COLOR_WHITE);
 
     buffer.SetBackgroundOpaque();
@@ -99,12 +99,12 @@ Font::CalculateHeights()
     buffer.SetTextColor(COLOR_BLACK);
     buffer.Select(*this);
 
-    RECT rec;
+    PixelRect rec;
     rec.left = 0;
     rec.top = 0;
     rec.right = tm.tmAveCharWidth;
     rec.bottom = tm.tmHeight;
-    buffer.text_opaque(0, 0, rec, _T("M"));
+    buffer.DrawOpaqueText(0, 0, rec, _T("M"));
 
     UPixelScalar top = tm.tmHeight, bottom = 0;
 
@@ -127,7 +127,7 @@ Font::CalculateHeights()
 }
 
 void
-Font::Reset()
+Font::Destroy()
 {
   if (font != NULL) {
     assert(IsScreenInitialized());

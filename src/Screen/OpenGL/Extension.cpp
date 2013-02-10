@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,16 +21,11 @@ Copyright_License {
 }
 */
 
-#include "Screen/OpenGL/Extension.hpp"
-#include "Screen/OpenGL/Features.hpp"
+#include "Extension.hpp"
+#include "Features.hpp"
+#include "System.hpp"
 
 #include <string.h>
-
-#ifdef HAVE_GLES
-#include <GLES/gl.h>
-#else
-#include <SDL/SDL_opengl.h>
-#endif
 
 bool
 OpenGL::IsExtensionSupported(const char *extension)
@@ -38,28 +33,30 @@ OpenGL::IsExtensionSupported(const char *extension)
   /* this code is copied from
      http://www.opengl.org/resources/features/OGLextensions/ */
 
-  const GLubyte *extensions = NULL;
-  const GLubyte *start;
-  const GLubyte *where, *terminator;
+  const GLubyte *const extensions = glGetString(GL_EXTENSIONS);
+#ifdef ANDROID
+  /* some broken Android drivers are insane and return nullptr under
+     certain conditions; under these conditions, the driver doesn't
+     work at all; the following check works around the crash */
+  if (extensions == nullptr)
+    return false;
+#endif
 
-  /* Extension names should not have spaces. */
-  where = (const GLubyte *) strchr(extension, ' ');
-  if (where || *extension == '\0')
-    return 0;
-  extensions = glGetString(GL_EXTENSIONS);
   /* It takes a bit of care to be fool-proof about parsing the
      OpenGL extensions string. Don't be fooled by sub-strings,
      etc. */
-  start = extensions;
+  const GLubyte *start = extensions;
   for (;;) {
-    where = (const GLubyte *) strstr((const char *) start, extension);
+    const GLubyte *where = (const GLubyte *) strstr((const char *) start, extension);
     if (!where)
       break;
-    terminator = where + strlen(extension);
+
+    const GLubyte *terminator = where + strlen(extension);
     if (where == start || *(where - 1) == ' ')
       if (*terminator == ' ' || *terminator == '\0')
-        return 1;
+        return true;
+
     start = terminator;
   }
-  return 0;
+  return false;
 }

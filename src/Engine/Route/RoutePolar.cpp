@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,19 +25,8 @@
 #include "GlideSolvers/GlideResult.hpp"
 #include "GlideSolvers/MacCready.hpp"
 #include "Geo/SpeedVector.hpp"
-#include "Math/FastMath.h"
 
 #include <assert.h>
-
-gcc_const
-static Angle
-IndexToAngle(unsigned i)
-{
-  assert(i < ROUTEPOLAR_POINTS);
-
-  return Angle::QuarterCircle()
-    - Angle::FullCircle() * (fixed(i) / ROUTEPOLAR_POINTS);
-}
 
 GlideResult
 RoutePolar::SolveTask(const GlideSettings &settings,
@@ -46,7 +35,7 @@ RoutePolar::SolveTask(const GlideSettings &settings,
                        const Angle theta, const bool glide) const
 {
   const MacCready mac_cready(settings, glide_polar);
-  GlideState task(GeoVector(fixed_one, theta), fixed_zero, fixed_zero, wind);
+  GlideState task(GeoVector(fixed(1), theta), fixed(0), fixed(0), wind);
   return glide
     ? mac_cready.SolveStraight(task)
     : mac_cready.Solve(task);
@@ -57,8 +46,10 @@ RoutePolar::Initialise(const GlideSettings &settings, const GlidePolar& polar,
                        const SpeedVector& wind,
                        const bool is_glide)
 {
-  for (unsigned i = 0; i < ROUTEPOLAR_POINTS; ++i) {
-    const Angle ang = IndexToAngle(i);
+  static constexpr Angle ang_step = Angle::FullCircle() / ROUTEPOLAR_POINTS;
+
+  Angle ang = Angle::QuarterCircle();
+  for (unsigned i = 0; i < ROUTEPOLAR_POINTS; ++i, ang -= ang_step) {
     GlideResult res = SolveTask(settings, polar, wind, ang, is_glide);
     if (res.IsOk()) {
       RoutePolarPoint point(res.time_elapsed, res.height_glide);

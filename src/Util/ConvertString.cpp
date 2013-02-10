@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -48,12 +48,16 @@ ConvertToWide(const char *p, UINT codepage)
 TCHAR *
 ConvertUTF8ToWide(const char *p)
 {
+  assert(p != nullptr);
+
   return ConvertToWide(p, CP_UTF8);
 }
 
 TCHAR *
 ConvertACPToWide(const char *p)
 {
+  assert(p != nullptr);
+
   return ConvertToWide(p, CP_ACP);
 }
 
@@ -81,12 +85,16 @@ ConvertFromWide(const TCHAR *p, UINT codepage)
 char *
 ConvertWideToUTF8(const TCHAR *p)
 {
+  assert(p != nullptr);
+
   return ConvertFromWide(p, CP_UTF8);
 }
 
 char *
 ConvertWideToACP(const TCHAR *p)
 {
+  assert(p != nullptr);
+
   return ConvertFromWide(p, CP_ACP);
 }
 

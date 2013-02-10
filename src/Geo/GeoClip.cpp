@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -69,16 +69,16 @@ GeoClip::ClipPoint(const GeoPoint &origin, GeoPoint &pt) const
     pt = clip_longitude(origin, pt, width);
   }
 
-  if (pt.latitude < south) {
-    if (origin.latitude <= south)
+  if (pt.latitude < GetSouth()) {
+    if (origin.latitude <= GetSouth())
       return false;
 
-    pt = clip_latitude(origin, pt, south);
-  } else if (pt.latitude > north) {
-    if (origin.latitude >= north)
+    pt = clip_latitude(origin, pt, GetSouth());
+  } else if (pt.latitude > GetNorth()) {
+    if (origin.latitude >= GetNorth())
       return false;
 
-    pt = clip_latitude(origin, pt, north);
+    pt = clip_latitude(origin, pt, GetNorth());
   }
 
   return true;
@@ -313,7 +313,7 @@ GeoClip::ClipPolygon(GeoPoint *dest,
   if (n < 3)
     return 0;
 
-  n = ClipPolygonLatitude(south, north, dest, first_stage, n);
+  n = ClipPolygonLatitude(GetSouth(), GetNorth(), dest, first_stage, n);
   if (n < 3)
     return 0;
 

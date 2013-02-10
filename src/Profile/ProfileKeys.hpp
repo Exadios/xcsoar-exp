@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -186,6 +186,7 @@ extern const TCHAR RiskGamma[];
 extern const TCHAR PredictWindDrift[];
 extern const TCHAR WindArrowStyle[];
 extern const TCHAR EnableFinalGlideBarMC0[];
+extern const TCHAR ShowFAITriangleAreas[];
 extern const TCHAR AutoLogger[];
 extern const TCHAR DisableAutoLogger[];
 extern const TCHAR EnableFlightLogger[];
@@ -236,6 +237,7 @@ extern const TCHAR TrackingInterval[];
 extern const TCHAR TrackingVehicleType[];
 extern const TCHAR SkyLinesTrackingEnabled[];
 extern const TCHAR SkyLinesTrackingInterval[];
+extern const TCHAR SkyLinesTrafficEnabled[];
 extern const TCHAR SkyLinesTrackingKey[];
 extern const TCHAR LiveTrack24Enabled[];
 extern const TCHAR LiveTrack24Server[];
@@ -251,6 +253,8 @@ extern const TCHAR VarioMaxFrequency[];
 extern const TCHAR VarioMinPeriod[];
 extern const TCHAR VarioMaxPeriod[];
 extern const TCHAR VarioDeadBandEnabled[];
+extern const TCHAR VarioDeadBandMin[];
+extern const TCHAR VarioDeadBandMax[];
 
 }
 

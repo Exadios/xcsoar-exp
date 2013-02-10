@@ -7,7 +7,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ Copyright_License {
 
 #include "Math/SunEphemeris.hpp"
 #include "Geo/GeoPoint.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDateTime.hpp"
 
 // Sun radius in degrees (?)
 #define SUN_DIAMETER fixed(0.53)
@@ -100,24 +100,20 @@ SunEphemeris::GetHourAngle(Angle lat, Angle declin)
     dfo.Flip();
 
   fixed fo = (declin + dfo).tan() * lat.tan();
-  fo = asin(fo) + fixed_half_pi;
-
-  return Angle::Radians(fo);
+  return Angle::asin(fo) + Angle::QuarterCircle();
 }
 
 Angle
 SunEphemeris::GetHourAngleTwilight(Angle lat, Angle declin)
 {
-  Angle df1 = Angle::Degrees(fixed(6));
+  Angle df1 = Angle::Degrees(6);
 
   // Correction: different sign at southern hemisphere
   if (negative(lat.Degrees()))
     df1.Flip();
 
   fixed fi = (declin + df1).tan() * lat.tan();
-  fi = asin(fi) + fixed_half_pi;
-
-  return Angle::Radians(fi);
+  return Angle::asin(fi) + Angle::QuarterCircle();
 }
 
 Angle
@@ -127,8 +123,8 @@ SunEphemeris::GetEclipticLongitude(fixed d, Angle L)
   Angle g = Angle::Degrees(fixed(357.528) + fixed(.9856003) * d).AsBearing();
 
   //   Ecliptic longitude of the Sun
-  return (Angle::Degrees(fixed(1.915)) * g.sin() + L +
-          Angle::Degrees(fixed(.02)) * (g * fixed_two).sin()).AsBearing();
+  return (Angle::Degrees(1.915) * g.sin() + L +
+          Angle::Degrees(.02) * (g * 2).sin()).AsBearing();
 }
 
 Angle
@@ -153,11 +149,11 @@ CalculateAzimuth(const GeoPoint &Location, const BrokenTime &time,
   assert(time.Plausible());
 
   fixed T = fixed(time.GetSecondOfDay()) / 3600 - fixed(12) + time_zone;
-  Angle t = Angle::Degrees(fixed(15)) * T;
+  Angle t = Angle::Degrees(15) * T;
 
-  return Angle::Radians(-atan2(dec.cos() * t.sin(),
-                               Location.latitude.cos() * dec.sin() -
-                               Location.latitude.sin() * dec.cos() * t.cos()));
+  return -Angle::FromXY(Location.latitude.cos() * dec.sin() -
+                        Location.latitude.sin() * dec.cos() * t.cos(),
+                        dec.cos() * t.sin());
 }
 
 SunEphemeris::Result
@@ -180,8 +176,8 @@ SunEphemeris::CalcSunTimes(const GeoPoint &location,
   Angle obliquity = Angle::Degrees(fixed(23.439) - fixed(.0000004) * days_to_j2000);
 
   // Find the RA and DEC of the Sun
-  Angle alpha = Angle::Radians(atan2(obliquity.cos() * lambda.sin(), lambda.cos()));
-  Angle delta = Angle::Radians(asin(obliquity.sin() * lambda.sin()));
+  Angle alpha = Angle::FromXY(lambda.cos(), obliquity.cos() * lambda.sin());
+  Angle delta = Angle::asin(obliquity.sin() * lambda.sin());
 
   // Find the Equation of Time in minutes
   // Correction suggested by David Smith
@@ -189,7 +185,7 @@ SunEphemeris::CalcSunTimes(const GeoPoint &location,
   if (l.Radians() < fixed_pi)
     ll += fixed_two_pi;
 
-  fixed equation = fixed(1440) * (fixed_one - ll / fixed_two_pi);
+  fixed equation = fixed(1440) * (fixed(1) - ll / fixed_two_pi);
 
   Angle hour_angle = GetHourAngle(location.latitude, delta);
   Angle hour_angle_twilight = GetHourAngleTwilight(location.latitude, delta);
@@ -204,7 +200,7 @@ SunEphemeris::CalcSunTimes(const GeoPoint &location,
 
   if (result.day_length < fixed(0.0001))
     // arctic winter
-    result.day_length = fixed_zero;
+    result.day_length = fixed(0);
 
   result.time_of_sunrise = fixed(12) - hour_angle.Hours() + time_zone
     - location.longitude.Degrees() / 15 + equation / 60;
@@ -241,7 +237,7 @@ SunEphemeris::CalcAzimuth(const GeoPoint &location,
   Angle obliquity = Angle::Degrees(fixed(23.439) - fixed(.0000004) * days_to_j2000);
 
   // Find the DEC of the Sun
-  Angle delta = Angle::Radians(asin(obliquity.sin() * lambda.sin()));
+  Angle delta = Angle::asin(obliquity.sin() * lambda.sin());
 
   return CalculateAzimuth(location, date_time, time_zone, delta);
 }

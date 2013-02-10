@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ Copyright_License {
 #include "Message.hpp"
 #include "Components.hpp"
 #include "Interface.hpp"
+#include "ActionInterface.hpp"
 #include "Protection.hpp"
 #include "Formatter/UserUnits.hpp"
 #include "Formatter/TimeFormatter.hpp"
@@ -36,17 +37,18 @@ Copyright_License {
 #include "Profile/ProfileKeys.hpp"
 #include "LocalPath.hpp"
 #include "UIGlobals.hpp"
-#include "Dialogs/Task.hpp"
-#include "Dialogs/Waypoint.hpp"
+#include "Dialogs/Task/TaskDialogs.hpp"
+#include "Dialogs/Waypoint/WaypointDialogs.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Task/TaskFile.hpp"
+#include "Engine/Waypoint/Waypoints.hpp"
 
 #include <windef.h> /* for MAX_PATH */
 
 static void
 trigger_redraw()
 {
-  if (!XCSoarInterface::Basic().location_available)
+  if (!CommonInterface::Basic().location_available)
     ForceCalculation();
   TriggerMapUpdate();
 }
@@ -93,6 +95,11 @@ InputEvents::eventArmAdvance(const TCHAR *misc)
       break;
     }
   }
+
+  /* quickly propagate the updated values from the TaskManager to the
+     InterfaceBlackboard, so they are available immediately */
+  task_manager->UpdateCommonStatsTask();
+  CommonInterface::ReadCommonStats(task_manager->GetCommonStats());
 }
 
 void
@@ -135,13 +142,11 @@ InputEvents::eventMacCready(const TCHAR *misc)
   TaskBehaviour &task_behaviour = CommonInterface::SetComputerSettings().task;
 
   if (StringIsEqual(misc, _T("up"))) {
-    mc = std::min(mc + Units::ToSysVSpeed(GetUserVerticalSpeedStep()),
-                  fixed(5));
-    ActionInterface::SetManualMacCready(mc);
+    const fixed step = Units::ToSysVSpeed(GetUserVerticalSpeedStep());
+    ActionInterface::OffsetManualMacCready(step);
   } else if (StringIsEqual(misc, _T("down"))) {
-    mc = std::max(mc - Units::ToSysVSpeed(GetUserVerticalSpeedStep()),
-                  fixed_zero);
-    ActionInterface::SetManualMacCready(mc);
+    const fixed step = Units::ToSysVSpeed(GetUserVerticalSpeedStep());
+    ActionInterface::OffsetManualMacCready(-step);
   } else if (StringIsEqual(misc, _T("auto toggle"))) {
     task_behaviour.auto_mc = !task_behaviour.auto_mc;
     Profile::Set(ProfileKeys::AutoMc, task_behaviour.auto_mc);
@@ -189,6 +194,14 @@ InputEvents::eventAdjustWaypoint(const TCHAR *misc)
   else if (StringIsEqual(misc, _T("previousarm")))
     protected_task_manager->IncrementActiveTaskPointArm(-1); // arm sensitive previous
 
+  {
+    /* quickly propagate the updated values from the TaskManager to
+       the InterfaceBlackboard, so they are available immediately */
+    ProtectedTaskManager::ExclusiveLease tm(*protected_task_manager);
+    tm->UpdateCommonStatsTask();
+    CommonInterface::ReadCommonStats(tm->GetCommonStats());
+  }
+
   trigger_redraw();
 }
 
@@ -212,13 +225,13 @@ InputEvents::eventAbortTask(const TCHAR *misc)
     task_manager->Resume();
   else if (StringIsEqual(misc, _T("show"))) {
     switch (task_manager->GetMode()) {
-    case TaskManager::MODE_ABORT:
+    case TaskType::ABORT:
       Message::AddMessage(_("Task aborted"));
       break;
-    case TaskManager::MODE_GOTO:
+    case TaskType::GOTO:
       Message::AddMessage(_("Go to target"));
       break;
-    case TaskManager::MODE_ORDERED:
+    case TaskType::ORDERED:
       Message::AddMessage(_("Ordered task"));
       break;
     default:
@@ -227,22 +240,27 @@ InputEvents::eventAbortTask(const TCHAR *misc)
   } else {
     // toggle
     switch (task_manager->GetMode()) {
-    case TaskManager::MODE_NULL:
-    case TaskManager::MODE_ORDERED:
+    case TaskType::NONE:
+    case TaskType::ORDERED:
       task_manager->Abort();
       break;
-    case TaskManager::MODE_GOTO:
+    case TaskType::GOTO:
       if (task_manager->CheckOrderedTask()) {
         task_manager->Resume();
       } else {
         task_manager->Abort();
       }
       break;
-    case TaskManager::MODE_ABORT:
+    case TaskType::ABORT:
       task_manager->Resume();
       break;
     }
   }
+
+  /* quickly propagate the updated values from the TaskManager to the
+     InterfaceBlackboard, so they are available immediately */
+  task_manager->UpdateCommonStatsTask();
+  CommonInterface::ReadCommonStats(task_manager->GetCommonStats());
 
   trigger_redraw();
 }

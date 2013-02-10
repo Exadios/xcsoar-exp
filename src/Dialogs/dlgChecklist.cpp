@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Copyright_License {
 #include "Dialogs/XML.hpp"
 #include "Form/Form.hpp"
 #include "Form/Button.hpp"
-#include "Form/Edit.hpp"
+#include "Screen/LargeTextWindow.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "LocalPath.hpp"
@@ -45,7 +45,7 @@ Copyright_License {
 
 static int page = 0;
 static WndForm *wf = NULL;
-static WndProperty *wDetails = NULL;
+static LargeTextWindow *wDetails = NULL;
 
 #define MAXLINES 100
 #define MAXLISTS 20
@@ -79,28 +79,30 @@ NextPage(int Step)
 }
 
 static void
-OnNextClicked(gcc_unused WndButton &button)
+OnNextClicked()
 {
   NextPage(+1);
 }
 
 static void
-OnPrevClicked(gcc_unused WndButton &button)
+OnPrevClicked()
 {
   NextPage(-1);
 }
 
-static void
-OnCloseClicked(gcc_unused WndButton &button)
-{
-  wf->SetModalResult(mrOK);
-}
-
 static bool
-FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
+FormKeyDown(unsigned key_code)
 {
   switch (key_code) {
-  case VK_LEFT:
+  case KEY_UP:
+    wDetails->ScrollVertically(-3);
+    return true;
+
+  case KEY_DOWN:
+    wDetails->ScrollVertically(3);
+    return true;
+
+  case KEY_LEFT:
 #ifdef GNAV
   case '6':
 #endif
@@ -108,7 +110,7 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
     NextPage(-1);
     return true;
 
-  case VK_RIGHT:
+  case KEY_RIGHT:
 #ifdef GNAV
   case '7':
 #endif
@@ -149,21 +151,21 @@ LoadChecklist()
     return;
   }
 
-  TCHAR Details[MAXDETAILS];
+  StaticString<MAXDETAILS> Details;
   TCHAR Name[100];
   bool inDetails = false;
   int i;
 
-  Details[0] = 0;
+  Details.clear();
   Name[0] = 0;
 
   TCHAR *TempString;
-  while ((TempString = reader->read()) != NULL) {
+  while ((TempString = reader->ReadLine()) != NULL) {
     // Look for start
     if (TempString[0] == '[') {
       if (inDetails) {
         addChecklist(Name, Details);
-        Details[0] = 0;
+        Details.clear();
         Name[0] = 0;
       }
 
@@ -179,9 +181,8 @@ LoadChecklist()
       inDetails = true;
     } else {
       // append text to details string
-      _tcsncat(Details, TempString, MAXDETAILS - 2);
-      _tcscat(Details, _T("\n"));
-      // TODO code: check the string is not too long
+      Details.append(TempString);
+      Details.Append(_T('\n'));
     }
   }
 
@@ -195,7 +196,6 @@ LoadChecklist()
 static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnNextClicked),
   DeclareCallBackEntry(OnPrevClicked),
-  DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(NULL)
 };
 
@@ -216,9 +216,9 @@ dlgChecklistShowModal()
 
   nTextLines = 0;
 
-  wf->SetKeyDownNotify(FormKeyDown);
+  wf->SetKeyDownFunction(FormKeyDown);
 
-  wDetails = (WndProperty*)wf->FindByName(_T("frmDetails"));
+  wDetails = (LargeTextWindow *)wf->FindByName(_T("frmDetails"));
   assert(wDetails != NULL);
 
   page = 0;

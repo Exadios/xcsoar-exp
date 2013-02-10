@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -45,15 +45,13 @@ GetPolygonPoints(std::vector<RasterPoint> &pts,
   GeoBounds bounds = airspace.GetGeoBounds();
   GeoPoint center = bounds.GetCenter();
 
-  fixed geo_heigth = GeoPoint(center.longitude, bounds.north).Distance(
-                     GeoPoint(center.longitude, bounds.south));
-  fixed geo_width = GeoPoint(bounds.west, center.latitude).Distance(
-                    GeoPoint(bounds.east, center.latitude));
+  fixed geo_heigth = bounds.GetGeoHeight();
+  fixed geo_width = bounds.GetGeoWidth();
 
   fixed geo_size = std::max(geo_heigth, geo_width);
 
   WindowProjection projection;
-  projection.SetScreenSize(radius * 2, radius * 2);
+  projection.SetScreenSize({radius * 2, radius * 2});
   projection.SetScreenOrigin(pt.x, pt.y);
   projection.SetGeoLocation(center);
   projection.SetScale(fixed(radius * 2) / geo_size);

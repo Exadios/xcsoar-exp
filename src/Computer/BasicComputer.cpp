@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 #include "NMEA/MoreData.hpp"
 #include "NMEA/Derived.hpp"
 #include "ComputerSettings.hpp"
+#include "Atmosphere/AirDensity.hpp"
 
 #define fixed_inv_g fixed(1.0/9.81)
 #define fixed_inv_2g fixed(1.0/(2.0*9.81))
@@ -51,10 +52,9 @@ FillVario(MoreData &data)
 }
 
 static void
-ComputePressure(NMEAInfo &basic, const ComputerSettings &settings_computer)
+ComputePressure(NMEAInfo &basic, const AtmosphericPressure qnh)
 {
-  const AtmosphericPressure &qnh = settings_computer.pressure;
-  const bool qnh_available = settings_computer.pressure_available;
+  const bool qnh_available = qnh.IsPlausible();
   const bool static_pressure_available = basic.static_pressure_available;
   const bool pressure_altitude_available = basic.pressure_altitude_available;
 
@@ -103,10 +103,9 @@ ComputePressure(NMEAInfo &basic, const ComputerSettings &settings_computer)
 }
 
 static void
-ComputeNavAltitude(MoreData &basic,
-                   const ComputerSettings &settings_computer)
+ComputeNavAltitude(MoreData &basic, const FeaturesSettings &features)
 {
-  basic.nav_altitude = settings_computer.features.nav_baro_altitude_enabled &&
+  basic.nav_altitude = features.nav_baro_altitude_enabled &&
     basic.baro_altitude_available
     ? basic.baro_altitude
     : basic.gps_altitude;
@@ -122,8 +121,40 @@ ComputeTrack(NMEAInfo &basic, const NMEAInfo &last)
     return;
 
   const GeoVector v = last.location.DistanceBearing(basic.location);
-  if (v.distance >= fixed_one)
+  if (v.distance >= fixed(1))
     basic.track = v.bearing;
+}
+
+/**
+ * Fallback heading calculation if no compass is connected.
+ */
+static void
+ComputeHeading(AttitudeState &attitude, const NMEAInfo &basic,
+               const DerivedInfo &calculated)
+{
+  if (attitude.heading_available)
+    /* compass connected, don't need to calculate it */
+    return;
+
+  if (!basic.track_available) {
+    /* calculation not possible; set a dummy value (heading north) to
+       avoid accessing uninitialised memory */
+    attitude.heading = Angle::Zero();
+    return;
+  }
+
+  if (basic.ground_speed_available && calculated.wind_available &&
+      (positive(basic.ground_speed) || calculated.wind.IsNonZero()) &&
+      calculated.flight.flying) {
+    fixed x0 = basic.track.fastsine() * basic.ground_speed;
+    fixed y0 = basic.track.fastcosine() * basic.ground_speed;
+    x0 += calculated.wind.bearing.fastsine() * calculated.wind.norm;
+    y0 += calculated.wind.bearing.fastcosine() * calculated.wind.norm;
+
+    attitude.heading = Angle::FromXY(y0, x0).AsBearing();
+  } else {
+    attitude.heading = basic.track;
+  }
 }
 
 static void
@@ -136,7 +167,7 @@ ComputeGroundSpeed(NMEAInfo &basic, const NMEAInfo &last)
   if (basic.ground_speed_available)
     return;
 
-  basic.ground_speed = fixed_zero;
+  basic.ground_speed = fixed(0);
   if (!basic.location_available || !last.location_available)
     return;
 
@@ -146,8 +177,10 @@ ComputeGroundSpeed(NMEAInfo &basic, const NMEAInfo &last)
 }
 
 /**
- * Attempt to compute airspeed from ground speed and wind if it's not
- * available.
+ * Attempt to compute airspeed when it is not yet available from:
+ * 1) dynamic pressure and air density derived from some altitude.
+ * 2) pitot pressure and static pressure.
+ * 3) ground speed and wind.
  */
 static void
 ComputeAirspeed(NMEAInfo &basic, const DerivedInfo &calculated)
@@ -156,6 +189,28 @@ ComputeAirspeed(NMEAInfo &basic, const DerivedInfo &calculated)
     /* got it already */
     return;
 
+  const auto any_altitude = basic.GetAnyAltitude();
+
+  if (!basic.airspeed_available && any_altitude.first) {
+    fixed dyn; bool available = false;
+    if (basic.dyn_pressure_available) {
+      dyn = basic.dyn_pressure.GetHectoPascal();
+      available = true;
+    } else if (basic.pitot_pressure_available && basic.static_pressure_available) {
+      dyn = basic.pitot_pressure.GetHectoPascal() - basic.static_pressure.GetHectoPascal();
+      available = true;
+    }
+    if (available) {
+      basic.indicated_airspeed = sqrt(fixed(163.2653061) * dyn);
+      basic.true_airspeed = basic.indicated_airspeed *
+                            AirDensityRatio(any_altitude.second);
+
+      basic.airspeed_available.Update(basic.clock);
+      basic.airspeed_real = true; // Anyway not less real then any other method.
+      return;
+    }
+  }
+
   if (!basic.ground_speed_available || !calculated.wind_available ||
       !calculated.flight.flying) {
     /* impossible to calculate */
@@ -163,7 +218,7 @@ ComputeAirspeed(NMEAInfo &basic, const DerivedInfo &calculated)
     return;
   }
 
-  fixed TrueAirspeedEstimated = fixed_zero;
+  fixed TrueAirspeedEstimated = fixed(0);
 
   const SpeedVector wind = calculated.wind;
   if (positive(basic.ground_speed) || wind.IsNonZero()) {
@@ -176,8 +231,11 @@ ComputeAirspeed(NMEAInfo &basic, const DerivedInfo &calculated)
   }
 
   basic.true_airspeed = TrueAirspeedEstimated;
-  basic.indicated_airspeed = TrueAirspeedEstimated
-    / AtmosphericPressure::AirDensityRatio(basic.GetAltitudeBaroPreferred());
+
+  basic.indicated_airspeed = TrueAirspeedEstimated;
+  if (any_altitude.first)
+    basic.indicated_airspeed /= AirDensityRatio(any_altitude.second);
+
   basic.airspeed_available.Update(basic.clock);
   basic.airspeed_real = false;
 }
@@ -195,7 +253,7 @@ ComputeEnergyHeight(MoreData &basic)
   else
     /* setting EnergyHeight to zero is the safe approach, as we don't know the kinetic energy
        of the glider for sure. */
-    basic.energy_height = fixed_zero;
+    basic.energy_height = fixed(0);
 
   basic.TE_altitude = basic.nav_altitude + basic.energy_height;
 }
@@ -281,7 +339,7 @@ ComputeGPSVario(MoreData &basic,
       basic.gps_vario_available = basic.gps_altitude_available;
     }
   } else {
-    basic.gps_vario = basic.gps_vario_TE = fixed_zero;
+    basic.gps_vario = basic.gps_vario_TE = fixed(0);
     basic.gps_vario_available.Clear();
   }
 }
@@ -336,29 +394,37 @@ ComputeDynamics(MoreData &basic, const DerivedInfo &calculated)
 
   if (basic.total_energy_vario_available) {
     // estimate pitch angle (assuming balanced turn)
-    basic.attitude.pitch_angle = Angle::Radians(atan2(basic.gps_vario - basic.total_energy_vario,
-                                                      basic.true_airspeed));
+    basic.attitude.pitch_angle = Angle::FromXY(basic.true_airspeed,
+                                               basic.gps_vario - basic.total_energy_vario);
     basic.attitude.pitch_angle_available = true;
   }
 
   if (!basic.acceleration.available)
-    basic.acceleration.ProvideGLoad(
-        fixed_one / max(fixed_small, fabs(cos(angle))), false);
+    basic.acceleration.ProvideGLoad(fixed(1) / std::max(fixed_small, fabs(cos(angle))), false);
+}
+
+void
+BasicComputer::Fill(MoreData &data, const AtmosphericPressure qnh,
+                    const FeaturesSettings &features)
+{
+  FillVario(data);
+  ComputePressure(data, qnh);
+  ComputeNavAltitude(data, features);
 }
 
 void
 BasicComputer::Fill(MoreData &data, const ComputerSettings &settings_computer)
 {
-  FillVario(data);
-  ComputePressure(data, settings_computer);
-  ComputeNavAltitude(data, settings_computer);
+  const AtmosphericPressure qnh = settings_computer.pressure_available
+    ? settings_computer.pressure
+    : AtmosphericPressure::Zero();
+  Fill(data, qnh, settings_computer.features);
 }
 
 void
 BasicComputer::Compute(MoreData &data,
                        const MoreData &last, const MoreData &last_gps,
-                       const DerivedInfo &calculated,
-                       const ComputerSettings &settings_computer)
+                       const DerivedInfo &calculated)
 {
   ComputeTrack(data, last_gps);
 
@@ -366,6 +432,14 @@ BasicComputer::Compute(MoreData &data,
     ComputeGroundSpeed(data, last_gps);
     ComputeAirspeed(data, calculated);
   }
+#ifndef NDEBUG
+  // For testing without gps.
+  // When CPU load is low enough it can be done for every sample.
+  else if (data.dyn_pressure_available)
+    ComputeAirspeed(data, calculated);
+#endif
+
+  ComputeHeading(data.attitude, data, calculated);
 
   ComputeEnergyHeight(data);
   ComputeGPSVario(data, last, last_gps);

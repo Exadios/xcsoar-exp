@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #include "Dialogs/JobDialog.hpp"
 #include "Look/DialogLook.hpp"
 #include "Form/Form.hpp"
-#include "Screen/ProgressWindow.hpp"
+#include "ProgressWindow.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
 #include "Screen/Layout.hpp"
@@ -107,8 +107,7 @@ JobDialog(SingleWindow &parent, const DialogLook &dialog_look,
     rc.left = rc.right - Layout::Scale(78);
     rc.top += Layout::Scale(2);
     rc.bottom = rc.top + Layout::Scale(35);
-    cancel_button.set(client_area, _("Cancel"), rc,
-                      style);
+    cancel_button.Create(client_area, _("Cancel"), rc, style);
     cancel_button.SetFont(*dialog_look.button.font);
     cancel_button.BringToTop();
   }

@@ -604,7 +604,8 @@ convert_gcs(int igcfile_version, FILE *Ausgabedatei, uint8_t *bin_puffer,
       firsttime.tm_sec -= time_relative % 3600;
       firsttime.tm_hour -= time_relative / 3600;
       //xxxtime
-      //JMW TODO	mktime(&firsttime);
+
+      mktime(&firsttime);
       l = 8;
       break;
       /*
@@ -797,7 +798,7 @@ convert_gcs(int igcfile_version, FILE *Ausgabedatei, uint8_t *bin_puffer,
         *serno = (256L * p2[1] + p2[2]);
 
         // sonstiges einlesen
-        strcpy(igcheader.A, wordtoserno(*serno));
+        wordtoserno(igcheader.A, *serno);
 
         sprintf(igcheader.DTM, "%03u", p2[3]);
         sprintf(igcheader.RHW, "%0X.%0X", p2[4] >> 4, (p2[4] & 0xf));
@@ -855,7 +856,7 @@ convert_gcs(int igcfile_version, FILE *Ausgabedatei, uint8_t *bin_puffer,
       task.TDECL.tm_sec += decl_time % 3600;
       task.TDECL.tm_hour += decl_time / 3600;
       task.TDECL.tm_isdst = -1;
-      //JMW TODO      mktime(&task.TDECL);
+      mktime(&task.TDECL);
       task.print(igcfile_version, Ausgabedatei);
     }
   }
@@ -890,7 +891,7 @@ convert_gcs(int igcfile_version, FILE *Ausgabedatei, uint8_t *bin_puffer,
       time_relative += p[2];
       realtime.tm_sec += p[2];
       realtime.tm_isdst = -1;
-      //JMW TODO			mktime(&realtime);
+      mktime(&realtime);
       igcfix.valid = ((p[0] & 0x10) >> 4) ? 'A' : 'V';
       igcfix.press = ((word)p[0] & 0x0f) << 8 | p[1];
       if (Haupttyp == rectyp_pos) {
@@ -973,7 +974,7 @@ convert_gcs(int igcfile_version, FILE *Ausgabedatei, uint8_t *bin_puffer,
       case rectyp_vrt:
         realtime.tm_sec += p[2];
         realtime.tm_isdst = -1;
-        //JMW TODO						mktime(&realtime);
+        mktime(&realtime);
         p2 = p + 3;
         break;
       default:
@@ -996,7 +997,7 @@ convert_gcs(int igcfile_version, FILE *Ausgabedatei, uint8_t *bin_puffer,
     case rectyp_tnd:
       realtime.tm_sec += p[1];
       realtime.tm_isdst = -1;
-      //JMW//JMW TODO		    mktime(&realtime);
+      mktime(&realtime);
       l = 8;
       break;
 
@@ -1008,46 +1009,6 @@ convert_gcs(int igcfile_version, FILE *Ausgabedatei, uint8_t *bin_puffer,
     p += l;
   } while (!ende);
   return pl;
-}
-
-// Members of class DIRENTRY
-static char *
-gen_filename(DIRENTRY *de, int flightnum)
-{
-  static char tempfn[15];
-  char temps[17];
-  int dd, mm, yy;
-
-  yy = de->firsttime.tm_year % 10;
-  mm = de->firsttime.tm_mon % 12 + 1;
-  dd = de->firsttime.tm_mday % 32;
-
-  itoa(yy, temps, 10);
-  strcpy(tempfn, temps);
-
-  itoa(mm, temps, 36);
-  strcat(tempfn, temps);
-
-  itoa(dd, temps, 36);
-  strcat(tempfn, temps);
-
-  strcat(tempfn, MFR_ID2); // Manufacturer code
-
-  strcat(tempfn, wordtoserno(de->serno));
-
-  if (flightnum < 36) // Flightnumber between 0 and 35
-    itoa(flightnum, temps, 36); // otherwise "_"
-  else
-    strcpy(temps, "_");
-
-  strcat(tempfn, temps);
-  strcat(tempfn, ".igc");
-  strupr(tempfn);
-
-  // The filename should also be saved
-  strcpy(de->filename, tempfn);
-
-  return tempfn;
 }
 
 // Members of class DIR
@@ -1086,7 +1047,6 @@ conv_dir(DIRENTRY* flights, uint8_t *p, int countonly)
       pilot3[0] = 0;
       pilot4[0] = 0;
       de.takeoff = 0;
-      de.filename[0] = 0;
       bfv = p[0] & ~rectyp_msk;
       if (bfv > max_bfv)
         return -1;
@@ -1166,7 +1126,7 @@ conv_dir(DIRENTRY* flights, uint8_t *p, int countonly)
       if (timetm1.tm_year < 80)
         timetm1.tm_year += 100;
       timetm1.tm_isdst = -1;
-      //JMW TODO			mktime(&timetm1);
+      mktime(&timetm1);
       l = 8;
       break;
     case rectyp_end:
@@ -1178,7 +1138,7 @@ conv_dir(DIRENTRY* flights, uint8_t *p, int countonly)
 
         de.firsttime.tm_hour -= temptime / 3600;
         de.firsttime.tm_isdst = -1;
-        //JMW TODO				mktime(&de.firsttime);
+        mktime(&de.firsttime);
         de.lasttime = de.firsttime;
 
         temptime = 65536L * p[1] + 256L * p[2] + p[3]; // Aufzeichnungsdauer
@@ -1186,7 +1146,7 @@ conv_dir(DIRENTRY* flights, uint8_t *p, int countonly)
         de.lasttime.tm_sec += temptime % 3600;
         de.lasttime.tm_hour += temptime / 3600;
         de.lasttime.tm_isdst = -1;
-        //JMW TODO				mktime(&de.lasttime);
+        mktime(&de.lasttime);
 
         if (!olddate_flg) {
           olddate = de.firsttime;
@@ -1206,7 +1166,6 @@ conv_dir(DIRENTRY* flights, uint8_t *p, int countonly)
         strcat(de.pilot, pilot2);
         strcat(de.pilot, pilot3);
         strcat(de.pilot, pilot4);
-        gen_filename(&de, flight_of_day);
 
         flights[number_of_flights] = de;
       }

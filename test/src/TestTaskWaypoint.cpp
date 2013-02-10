@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,42 +21,23 @@
 */
 
 #include "Engine/Task/Points/TaskWaypoint.hpp"
-#include "Engine/Navigation/Aircraft.hpp"
 #include "Geo/GeoVector.hpp"
 #include "TestUtil.hpp"
 
 class DummyTaskWaypoint: public TaskWaypoint
 {
-  AircraftState dummy_state;
-
 public:
   friend class TaskWaypointTest;
 
-  DummyTaskWaypoint(Type _type, const Waypoint & wp)
+  DummyTaskWaypoint(TaskPointType _type, const Waypoint & wp)
     :TaskWaypoint(_type, wp) {}
 
   virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const {
     return GeoVector();
   }
 
-  virtual GeoVector GetVectorPlanned() const {
-    return GeoVector();
-  }
-
-  virtual GeoVector GetVectorTravelled() const {
-    return GeoVector();
-  }
-
-  virtual bool HasEntered() const {
-    return false;
-  }
-
-  virtual const AircraftState& GetEnteredState() const {
-    return dummy_state;
-  }
-
   virtual fixed GetElevation() const {
-    return fixed_zero;
+    return fixed(0);
   }
 };
 
@@ -69,12 +50,12 @@ public:
 void
 TaskWaypointTest::Run()
 {
-  GeoPoint gp(Angle::Degrees(fixed(20)), Angle::Degrees(fixed(50)));
+  GeoPoint gp(Angle::Degrees(20), Angle::Degrees(50));
   Waypoint wp(gp);
   wp.name = _T("Test");
   wp.elevation = fixed(42);
 
-  DummyTaskWaypoint tw(TaskPoint::AST, wp);
+  DummyTaskWaypoint tw(TaskPointType::AST, wp);
 
   const Waypoint &wp2 = tw.GetWaypoint();
   ok1(wp2.name == _T("Test"));

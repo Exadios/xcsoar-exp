@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -47,6 +47,7 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "InputEvents.hpp"
 #include "InputConfig.hpp"
 #include "InputParser.hpp"
+#include "UIActions.hpp"
 #include "Interface.hpp"
 #include "MainWindow.hpp"
 #include "Protection.hpp"
@@ -110,7 +111,7 @@ static InputConfig input_config;
 void
 InputEvents::readFile()
 {
-  LogStartUp(_T("Loading input events file"));
+  LogFormat("Loading input events file");
 
   // clear the GCE and NMEA queues
   ClearQueues();
@@ -189,10 +190,17 @@ InputEvents::IsFlavour(const TCHAR *_flavour)
   return StringIsEqual(flavour, _flavour);
 }
 
+bool
+InputEvents::IsDefault()
+{
+  return current_mode == MODE_DEFAULT;
+}
+
+
 void
 InputEvents::drawButtons(Mode mode, bool full)
 {
-  if (!globalRunningEvent.Test())
+  if (!global_running)
     return;
 
   const Menu &menu = input_config.menus[mode];
@@ -304,11 +312,11 @@ bool
 InputEvents::ProcessKey(Mode mode, unsigned key_code)
 {
   if (IsAltair() && key_code == 0xF5) {
-    XCSoarInterface::SignalShutdown(false);
+    UIActions::SignalShutdown(false);
     return true;
   }
 
-  if (!globalRunningEvent.Test())
+  if (!global_running)
     return false;
 
   // Which key - can be defined locally or at default (fall back to default)
@@ -365,7 +373,7 @@ InputEvents::processGesture(const TCHAR *data)
 bool
 InputEvents::processNmea_real(unsigned ne_id)
 {
-  if (!globalRunningEvent.Test())
+  if (!global_running)
     return false;
 
   int event_id = 0;
@@ -390,7 +398,7 @@ InputEvents::processNmea_real(unsigned ne_id)
 bool
 InputEvents::processGlideComputer_real(unsigned gce_id)
 {
-  if (!globalRunningEvent.Test())
+  if (!global_running)
     return false;
   int event_id = 0;
 
@@ -415,7 +423,7 @@ InputEvents::processGo(unsigned eventid)
 {
   /* eventid 0 is special for "noop" */
 
-  while (globalRunningEvent.Test() && eventid > 0) {
+  while (global_running && eventid > 0) {
     const InputConfig::Event &event = input_config.events[eventid];
     if (event.event != NULL) {
       event.event(event.misc);
@@ -469,8 +477,6 @@ InputEvents::ProcessMenuTimer()
 void
 InputEvents::ProcessTimer()
 {
-  if (globalRunningEvent.Test()) {
-    DoQueuedEvents();
-  }
+  DoQueuedEvents();
   ProcessMenuTimer();
 }

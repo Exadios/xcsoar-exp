@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef GAUGE_VARIO_H
 #define GAUGE_VARIO_H
 
-#include "Screen/BufferWindow.hpp"
+#include "Screen/AntiFlickerWindow.hpp"
 #include "Screen/Bitmap.hpp"
 #include "Screen/Point.hpp"
 #include "Blackboard/FullBlackboard.hpp"
@@ -34,7 +34,7 @@ struct UnitsLook;
 class ContainerWindow;
 class UnitSymbol;
 
-class GaugeVario : public BufferWindow
+class GaugeVario : public AntiFlickerWindow
 {
   enum {
     NARROWS = 3,
@@ -93,9 +93,7 @@ public:
   GaugeVario(const FullBlackboard &blackboard,
              ContainerWindow &parent, const VarioLook &look,
              const UnitsLook &units_look,
-             PixelScalar left, PixelScalar top,
-             UPixelScalar width, UPixelScalar height,
-             const WindowStyle style=WindowStyle());
+             PixelRect rc, const WindowStyle style=WindowStyle());
 
 protected:
   const MoreData &Basic() const {
@@ -119,8 +117,11 @@ protected:
   }
 
 protected:
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-  virtual void OnPaintBuffer(Canvas &canvas);
+  /* virtual methods from class Window */
+  virtual void OnResize(PixelSize new_size) override;
+
+  /* virtual methods from class AntiFlickerWindow */
+  virtual void OnPaintBuffer(Canvas &canvas) override;
 
 private:
   void RenderZero(Canvas &canvas);

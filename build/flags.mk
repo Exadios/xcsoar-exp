@@ -3,14 +3,6 @@ CXX_FEATURES += -std=gnu++0x
 CXX_FEATURES += -fno-threadsafe-statics
 CXX_FEATURES += -fmerge-all-constants
 
-# Another instance of the libstdc++ 4.4 workaround.  This command-line
-# option is used by debian/rules, to allow building on old Debian
-# versions.
-RTTI ?= n
-ifeq ($(RTTI),y)
-CXX_FEATURES += -frtti
-endif
-
 ifeq ($(CLANG),n)
 CXX_FEATURES += -fconserve-space -fno-operator-names
 endif
@@ -34,6 +26,9 @@ C_FEATURES += -ffunction-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
 endif
 
-ALL_CPPFLAGS = $(TARGET_INCLUDES) $(INCLUDES) $(TARGET_CPPFLAGS) $(CPPFLAGS)
-ALL_CXXFLAGS = $(OPTIMIZE) $(FLAGS_PROFILE) $(CXX_FEATURES) $(CXXFLAGS)
-ALL_CFLAGS = $(OPTIMIZE) $(FLAGS_PROFILE) $(C_FEATURES) $(CFLAGS)
+ALL_CPPFLAGS = $(TARGET_INCLUDES) $(INCLUDES) $(TARGET_CPPFLAGS) $(CPPFLAGS) $(EXTRA_CPPFLAGS)
+ALL_CXXFLAGS = $(OPTIMIZE) $(FLAGS_PROFILE) $(CXX_FEATURES) $(CXXFLAGS) $(EXTRA_CXXFLAGS)
+ALL_CFLAGS = $(OPTIMIZE) $(FLAGS_PROFILE) $(C_FEATURES) $(CFLAGS) $(EXTRA_CFLAGS)
+
+ALL_LDFLAGS = $(filter-out -emit-llvm,$(OPTIMIZE)) $(TARGET_LDFLAGS) $(FLAGS_PROFILE) $(LDFLAGS)
+ALL_LDLIBS = $(TARGET_LDLIBS) $(COVERAGE_LDLIBS) $(LDLIBS)

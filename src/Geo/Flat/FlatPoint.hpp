@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,6 +37,11 @@ struct FlatPoint
   fixed y;
 
   /**
+   * Non-initialising default constructor.
+   */
+  FlatPoint() = default;
+
+  /**
    * Constructor given known location
    *
    * @param _x X position
@@ -46,14 +51,6 @@ struct FlatPoint
    */
   constexpr
   FlatPoint(const fixed _x, const fixed _y): x(_x), y(_y) {}
-
-  /**
-   * Constructor at origin
-   *
-   * @return Initialised object
-   */
-  constexpr
-  FlatPoint(): x(fixed_zero), y(fixed_zero) {}
 
   /**
    * Calculate cross product of two points
@@ -136,7 +133,8 @@ struct FlatPoint
    *
    * @return Dot product
    */
-  fixed DotProduct(const FlatPoint &other) const {
+  gcc_pure
+  fixed DotProduct(FlatPoint other) const {
     return x*other.x+y*other.y;
   }
 
@@ -148,13 +146,9 @@ struct FlatPoint
    * @return Scaled point
    */
   gcc_pure
-  FlatPoint
-  operator* (const fixed &p) const
+  FlatPoint operator*(fixed p) const
   {
-    FlatPoint res = *this;
-    res.x *= p;
-    res.y *= p;
-    return res;
+    return { x * p, y * p };
   }
 
   /**
@@ -164,14 +158,9 @@ struct FlatPoint
    *
    * @return Added value
    */
-  gcc_pure
-  FlatPoint
-  operator+ (const FlatPoint &p2) const
+  constexpr FlatPoint operator+(FlatPoint other) const
   {
-    FlatPoint res = *this;
-    res.x += p2.x;
-    res.y += p2.y;
-    return res;
+    return { x + other.x, y + other.y };
   }
 
   /**
@@ -196,19 +185,14 @@ struct FlatPoint
    *
    * @return Subtracted value
    */
-  gcc_pure
-  FlatPoint
-  operator- (const FlatPoint &p2) const
+  constexpr FlatPoint operator-(const FlatPoint other) const
   {
-    FlatPoint res = *this;
-    res.x -= p2.x;
-    res.y -= p2.y;
-    return res;
+    return { x - other.x, y - other.y };
   }
 
   constexpr
   FlatPoint Half() const {
-    return FlatPoint(::half(x), ::half(y));
+    return FlatPoint(::Half(x), ::Half(y));
   }
 };
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,8 +25,9 @@ Copyright_License {
 #define XCSOAR_GLUE_MAP_WINDOW_HPP
 
 #include "MapWindow.hpp"
-#include "PeriodClock.hpp"
-#include "TrackingGestureManager.hpp"
+#include "Time/PeriodClock.hpp"
+#include "UIUtil/TrackingGestureManager.hpp"
+#include "UIUtil/KineticManager.hpp"
 #include "Renderer/ThermalBandRenderer.hpp"
 #include "Renderer/FinalGlideBarRenderer.hpp"
 #include "Screen/Timer.hpp"
@@ -82,6 +83,11 @@ class GlueMapWindow : public MapWindow {
   RasterPoint drag_start;
   TrackingGestureManager gestures;
   bool ignore_single_click;
+
+#ifdef ENABLE_OPENGL
+  KineticManager kinetic_x, kinetic_y;
+  WindowTimer kinetic_timer;
+#endif
 
   /** flag to indicate if the MapItemList should be shown on mouse up */
   bool arm_mapitem_list;
@@ -161,9 +167,7 @@ public:
 
   bool Idle();
 
-  virtual void Render(Canvas &canvas, const PixelRect &rc);
-
-  virtual void set(ContainerWindow &parent, const PixelRect &rc);
+  void Create(ContainerWindow &parent, const PixelRect &rc);
 
   void SetPan(bool enable);
   void TogglePan();
@@ -173,16 +177,28 @@ public:
                     bool show_empty_message = true) const;
 
 protected:
-  // events
-  virtual bool OnMouseDouble(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseWheel(PixelScalar x, PixelScalar y, int delta);
+  /* virtual methods from class MapWindow */
+  virtual void Render(Canvas &canvas, const PixelRect &rc) override;
+  virtual void DrawThermalEstimate(Canvas &canvas) const override;
+  virtual void RenderTrail(Canvas &canvas,
+                           const RasterPoint aircraft_pos) override;
+
+  /* virtual methods from class Window */
+  virtual bool OnMouseDouble(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys) override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseWheel(PixelScalar x, PixelScalar y, int delta) override;
 
 #ifdef HAVE_MULTI_TOUCH
-  virtual bool OnMultiTouchDown();
+  virtual bool OnMultiTouchDown() override;
 #endif
+
+  virtual bool OnKeyDown(unsigned key_code) override;
+  virtual void OnCancelMode() override;
+  virtual void OnPaint(Canvas &canvas) override;
+  virtual void OnPaintBuffer(Canvas& canvas) override;
+  virtual bool OnTimer(WindowTimer &timer) override;
 
   /**
    * This event handler gets called when a gesture has
@@ -192,12 +208,6 @@ protected:
    * event handler, False otherwise
    */
   bool OnMouseGesture(const TCHAR* gesture);
-
-  virtual bool OnKeyDown(unsigned key_code);
-  virtual bool OnCancelMode();
-  virtual void OnPaint(Canvas &canvas);
-  virtual void OnPaintBuffer(Canvas& canvas);
-  bool OnTimer(WindowTimer &timer);
 
 private:
   void DrawGesture(Canvas &canvas) const;
@@ -211,8 +221,6 @@ private:
   void DrawThermalBand(Canvas &canvas, const PixelRect &rc) const;
   void DrawFinalGlide(Canvas &canvas, const PixelRect &rc) const;
   void DrawStallRatio(Canvas &canvas, const PixelRect &rc) const;
-  virtual void DrawThermalEstimate(Canvas &canvas) const;
-  virtual void RenderTrail(Canvas &canvas, const RasterPoint aircraft_pos);
 
   void SwitchZoomClimb(bool circling);
 

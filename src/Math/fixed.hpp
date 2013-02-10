@@ -8,46 +8,21 @@
 // Extensions and bug/compilation fixes by John Wharington 2009
 
 #include "Compiler.h"
-
-#include <algorithm>
 #include "Constants.h"
+
+#include <utility>
+
 #include <assert.h>
-using std::max;
-using std::min;
 
-#ifdef FIXED_MATH
-#define fixed_constant(d, f) fixed(fixed::internal(), (f))
-#else
-#define fixed_constant(d, f) (d)
-#endif
+#define fixed_third fixed(1./3.)
+#define fixed_two_thirds fixed(2./3.)
 
-#define fixed_int_constant(i) fixed_constant((double)(i), ((fixed::value_t)(i)) << fixed::resolution_shift)
+#define fixed_pi fixed(M_PI)
+#define fixed_two_pi fixed(M_2PI)
+#define fixed_half_pi fixed(M_HALFPI)
 
-#define fixed_zero fixed_int_constant(0)
-#define fixed_one fixed_int_constant(1)
-#define fixed_minus_one fixed_int_constant(-1)
-#define fixed_two fixed_int_constant(2)
-#define fixed_four fixed_int_constant(4)
-#define fixed_ten fixed_int_constant(10)
-
-#define fixed_half fixed_constant(0.5, 1 << (fixed::resolution_shift - 1))
-#define fixed_third fixed_constant(1./3., (1 << fixed::resolution_shift) / 3)
-#define fixed_two_thirds fixed_constant(2./3., (2 << (fixed::resolution_shift)) / 3)
-
-#define fixed_deg_to_rad fixed_constant(0.0174532925199432958, 0x477d1bLL)
-#define fixed_rad_to_deg fixed_constant(57.2957795131, 0x394bb834cLL)
-#define fixed_pi fixed_constant(M_PI, 0x3243f6a8LL)
-#define fixed_two_pi fixed_constant(M_2PI, 0x6487ed51LL)
-#define fixed_half_pi fixed_constant(M_HALFPI, 0x1921fb54LL)
-#define fixed_quarter_pi fixed_constant(M_HALFPI/2, 0xc90fdaaLL)
-
-#define fixed_90 fixed_int_constant(90)
-#define fixed_180 fixed_int_constant(180)
-#define fixed_270 fixed_int_constant(270)
-#define fixed_360 fixed_int_constant(360)
-
-#define fixed_sqrt_two fixed_constant(1.4142135623730951, 0x16a09e66LL)
-#define fixed_sqrt_half fixed_constant(0.70710678118654757, 0xb504f33LL)
+#define fixed_sqrt_two fixed(1.4142135623730951)
+#define fixed_sqrt_half fixed(0.70710678118654757)
 
 #ifndef FIXED_MATH
 #include <math.h>
@@ -74,9 +49,16 @@ sin_cos(const fixed thetha)
 
 constexpr
 static inline fixed
-half(fixed a)
+Half(fixed a)
 {
   return a * 0.5;
+}
+
+constexpr
+static inline fixed
+Quarter(fixed a)
+{
+  return a * 0.25;
 }
 
 constexpr
@@ -124,9 +106,7 @@ inline fixed accurate_half_sin(fixed a) {
 #define FIXED_DOUBLE(x) x.as_double()
 #define FIXED_INT(x) x.as_int()
 
-#include "Util/TypeTraits.hpp"
-
-#include <complex>
+#include <type_traits>
 #include <climits>
 
 #ifdef HAVE_BOOST
@@ -146,9 +126,9 @@ class fixed
 public:
   typedef int64_t value_t;
 
-  static const unsigned resolution_shift = 28;
-  static const value_t resolution = 1 << resolution_shift;
-  static const unsigned accurate_cordic_shift = 11;
+  static constexpr unsigned resolution_shift = 28;
+  static constexpr value_t resolution = 1 << resolution_shift;
+  static constexpr unsigned accurate_cordic_shift = 11;
 
 private:
     value_t m_nVal;
@@ -228,11 +208,6 @@ public:
   constexpr
   friend bool operator>=(const fixed lhs, const fixed rhs) {
     return lhs.m_nVal>=rhs.m_nVal;
-  }
-
-  constexpr explicit
-  operator bool() const {
-    return m_nVal != 0;
   }
 
   constexpr explicit
@@ -357,6 +332,11 @@ public:
   }
 
   constexpr
+  fixed Quarter() const {
+    return fixed(internal(), m_nVal >> 2);
+  }
+
+  constexpr
   fixed Double() const {
     return fixed(internal(), m_nVal << 1);
   }
@@ -370,11 +350,15 @@ public:
                  x & ((int64_t)-1 << resolution_shift));
   }
 
-  gcc_pure
-  fixed floor() const;
+  constexpr fixed floor() const {
+    return fixed(fixed::internal(),
+                 m_nVal & ~(resolution - 1));
+  }
 
-  gcc_pure
-  fixed ceil() const;
+  constexpr fixed ceil() const {
+    return fixed(fixed::internal(),
+                 ((m_nVal - 1) | (resolution - 1)) + 1);
+  }
 
   gcc_pure
   fixed sqrt() const;
@@ -484,15 +468,15 @@ public:
     return fixed(fixed::internal(), a.m_nVal / b);
   }
 
-  fixed& operator%=(fixed const& other);
-  fixed& operator*=(fixed const& val);
+  fixed& operator%=(const fixed other);
+  fixed& operator*=(const fixed val);
   fixed& operator/=(fixed const divisor);
-  fixed& operator-=(fixed const& val) {
+  fixed& operator-=(const fixed val) {
     m_nVal -= val.m_nVal;
     return *this;
   }
 
-  fixed& operator+=(fixed const& val) {
+  fixed& operator+=(const fixed val) {
     m_nVal += val.m_nVal;
     return *this;
   }
@@ -636,11 +620,6 @@ public:
     return *this;
   }
 
-  constexpr bool operator!() const {
-    return m_nVal==0;
-  }
-
-  gcc_pure
   fixed modf(fixed* integral_part) const;
 
   gcc_pure
@@ -649,13 +628,13 @@ public:
   gcc_const
   static std::pair<fixed, fixed> sin_cos(fixed theta);
 
-  static void to_polar(fixed const& x,fixed const& y,fixed* r,fixed*theta);
+  static void to_polar(const fixed x, const fixed y, fixed* r, fixed*theta);
 
   gcc_pure
-  static fixed atan2(fixed const& y,fixed const& x);
+  static fixed atan2(const fixed y, const fixed x);
 
   gcc_pure
-  static fixed sigmoid(fixed const& x);
+  static fixed sigmoid(const fixed x);
 
   gcc_pure
   fixed sin() const {
@@ -685,7 +664,7 @@ public:
   fixed abs() const;
 };
 
-static_assert(is_trivial<fixed>::value, "type is not trivial");
+static_assert(std::is_trivial<fixed>::value, "type is not trivial");
 
 constexpr
 inline bool fixed::positive() const
@@ -748,7 +727,7 @@ inline fixed operator*(char a, const fixed b)
 }
 
 gcc_pure
-inline fixed operator*(fixed const& a,fixed const& b)
+inline fixed operator*(const fixed a, const fixed b)
 {
   fixed temp(a);
   return temp*=b;
@@ -777,7 +756,7 @@ inline fixed fast_mult(fixed a, fixed b, int b_bits)
 }
 
 gcc_pure
-inline fixed operator/(fixed const& a,fixed const& b)
+inline fixed operator/(const fixed a, const fixed b)
 {
   fixed temp(a);
   return temp/=b;
@@ -789,78 +768,78 @@ static inline fixed pow(fixed x, fixed y)
   return fixed(pow((double)x, (double)y));
 }
 
-inline fixed sin(fixed const& x)
+inline fixed sin(const fixed x)
 {
   return x.sin();
 }
-inline fixed cos(fixed const& x)
+inline fixed cos(const fixed x)
 {
   return x.cos();
 }
-inline fixed tan(fixed const& x)
+inline fixed tan(const fixed x)
 {
   return x.tan();
 }
-inline fixed atan(fixed const& x)
+inline fixed atan(const fixed x)
 {
     return x.atan();
 }
-inline fixed accurate_half_sin(fixed const& x)
+inline fixed accurate_half_sin(const fixed x)
 {
   return x.accurate_half_sin();
 }
 
 gcc_pure
-inline fixed atan2(fixed const& y, fixed const& x)
+inline fixed atan2(const fixed y, const fixed x)
 {
   return fixed::atan2(y,x);
 }
 
 static inline fixed asin(fixed x)
 {
-  return atan2(x, (fixed_one-x*x).sqrt());
+  return atan2(x, (fixed(1)-x*x).sqrt());
 }
 
 static inline fixed acos(fixed x)
 {
-  return atan2((fixed_one-x*x).sqrt(), x);
+  return atan2((fixed(1)-x*x).sqrt(), x);
 }
 
 gcc_pure
-inline fixed sqr(fixed const& x)
+inline fixed sqr(const fixed x)
 {
   return x.sqr();
 }
 
 gcc_pure
-inline fixed sqrt(fixed const& x)
+inline fixed sqrt(const fixed x)
 {
   return x.sqrt();
 }
 
 gcc_pure
-inline fixed fast_sqrt(fixed const& x)
+inline fixed fast_sqrt(const fixed x)
 {
   assert(!x.negative());
   if (!x.positive())
-    return fixed_zero;
+    return fixed(0);
   return x.rsqrt()*x;
 }
 
 gcc_pure
-inline fixed rsqrt(fixed const& x)
+inline fixed rsqrt(const fixed x)
 {
   return x.rsqrt();
 }
 
 gcc_pure
-inline fixed exp(fixed const& x)
+inline fixed exp(const fixed x)
 {
   return x.exp();
 }
 
 gcc_pure
-inline fixed log(fixed const& x)
+inline fixed log(const fixed x)
 {
   return x.log();
 }
@@ -870,13 +849,16 @@ inline fixed trunc(fixed x)
   return x.trunc();
 }
 
-inline fixed floor(fixed const& x)
+constexpr
+static inline fixed
+floor(fixed x)
 {
   return x.floor();
 }
 
-gcc_pure
-inline fixed ceil(fixed const& x)
+constexpr
+static inline fixed
+ceil(fixed x)
 {
   return x.ceil();
 }
@@ -887,8 +869,7 @@ inline fixed fabs(fixed const x)
   return x.abs();
 }
 
-gcc_pure
-inline fixed modf(fixed const& x,fixed*integral_part)
+inline fixed modf(const fixed x, fixed *integral_part)
 {
   return x.modf(integral_part);
 }
@@ -897,27 +878,6 @@ gcc_pure
 static inline fixed fmod(fixed x, fixed y)
 {
   return fixed(fmod((double)x, (double)y));
-}
-
-inline fixed fixed::ceil() const
-{
-  if (m_nVal%resolution)
-    return floor() + fixed(1);
-  else
-    return *this;
-}
-
-inline fixed fixed::floor() const
-{
-  fixed res(*this);
-  value_t const remainder=m_nVal%resolution;
-  if (remainder) {
-    res.m_nVal -= remainder;
-    if (m_nVal < 0)
-      res -= fixed(1);
-  }
-
-  return res;
 }
 
 constexpr
@@ -951,33 +911,15 @@ sin_cos(const fixed theta)
 }
 
 gcc_pure
-inline fixed sigmoid(fixed const& x)
+inline fixed sigmoid(const fixed x)
 {
   return ::fixed::sigmoid(x);
 }
 
- namespace std
- {
-   template<>
-   inline ::fixed arg(const std::complex< ::fixed>& val)
-   {
-     ::fixed r,theta;
-     ::fixed::to_polar(val.real(),val.imag(),&r,&theta);
-     return theta;
-   }
-
-   template<>
-   inline complex< ::fixed> polar(::fixed const& rho,::fixed const& theta)
-   {
-     const auto sc = ::fixed::sin_cos(theta);
-     return complex< ::fixed>(rho * sc.second, rho * sc.first);
-   }
- }
-
 #define fixed_max fixed(fixed::internal(), 0x7fffffffffffffffLL)
 
-inline fixed fixed::sigmoid(const fixed&x) {
-  return fixed_two/(fixed_one+(-x).exp())-fixed_one;
+inline fixed fixed::sigmoid(const fixed x) {
+  return fixed(2) / (fixed(1) + (-x).exp()) - fixed(1);
 }
 
 constexpr
@@ -992,9 +934,16 @@ inline bool negative(const fixed f) {
 
 constexpr
 static inline fixed
-half(fixed a)
+Half(fixed a)
 {
   return a.Half();
+}
+
+constexpr
+static inline fixed
+Quarter(fixed a)
+{
+  return a.Quarter();
 }
 
 constexpr
@@ -1080,12 +1029,37 @@ inline void limit_tolerance(fixed& f, const fixed tol_act) {
 }
 
 /**
+ * Convert this number to a signed integer, with rounding.
+ */
+gcc_const static inline int
+iround(fixed x)
+{
+#ifdef FIXED_MATH
+  return (int)(x + fixed(0.5));
+#else
+  return (int)lround(x);
+#endif
+}
+
+/**
  * Convert this number to an unsigned integer, with rounding.
  */
 gcc_const static inline unsigned
 uround(const fixed x)
 {
-  return (unsigned)(x + fixed_half);
+  return (unsigned)(x + fixed(0.5));
+}
+
+/**
+ * The sign function.
+ *
+ * Returns 1 for positive values, -1 for negative values and 0 for zero.
+ */
+constexpr
+static inline int
+sgn(const fixed x)
+{
+  return positive(x) ? 1 : (negative(x) ? -1 : 0);
 }
 
 #endif

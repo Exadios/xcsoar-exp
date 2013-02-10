@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@ Copyright_License {
 #ifndef XCSOAR_DIALOGS_LIST_PICKER_HPP
 #define XCSOAR_DIALOGS_LIST_PICKER_HPP
 
-#include "Form/List.hpp"
+#include <tchar.h>
 
-class SingleWindow;
+class ListItemRenderer;
 
 typedef void (*ListHelpCallback_t)(unsigned item);
 
@@ -35,23 +35,22 @@ typedef const TCHAR* (*ItemHelpCallback_t)(unsigned item);
 
 /**
  * Shows a list dialog and lets the user pick an item.
- * @param parent
  * @param caption
  * @param num_items
  * @param initial_value
  * @param item_height
- * @param paint_callback Paint a single item
+ * @param item_renderer Paint a single item
  * @param update Update per timer
  * @param help_callback Callback for Helpbutton
  * @param itemhelp_callback Callback to return string for current item help
  * @return the list index, or -1 if the user cancelled the dialog
  */
 int
-ListPicker(SingleWindow &parent, const TCHAR *caption,
+ListPicker(const TCHAR *caption,
            unsigned num_items, unsigned initial_value,
-           UPixelScalar item_height,
-           ListControl::PaintItemCallback paint_callback, bool update = false,
-           ListHelpCallback_t help_callback = NULL,
-           ItemHelpCallback_t itemhelp_callback = NULL);
+           unsigned item_height,
+           ListItemRenderer &item_renderer, bool update = false,
+           ListHelpCallback_t help_callback = nullptr,
+           ItemHelpCallback_t itemhelp_callback = nullptr);
 
 #endif

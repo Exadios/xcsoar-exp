@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,55 +31,39 @@ Copyright_License {
 #include "ResourceLoader.hpp"
 #include "Geo/GeoPoint.hpp"
 
-#include <stdlib.h>
-#include <string.h>
 #include <tchar.h>
+#include <stdint.h>
 
 #define EGM96SIZE 16200
 
-unsigned char* egm96data= NULL;
+static const uint8_t *egm96data;
 
 void
 EGM96::Load()
 {
   ResourceLoader::Data data = ResourceLoader::Load(_T("IDR_RASTER_EGM96S"),
                                                    _T("RASTERDATA"));
-  if (data.first == NULL) {
-    // unable to find the resource
-    egm96data = NULL;
-    return;
-  }
-
+  assert(data.first != nullptr);
   assert(data.second == EGM96SIZE);
-  egm96data = (unsigned char *)malloc(data.second);
-  memcpy(egm96data, data.first, data.second);
-}
 
-void
-EGM96::Close()
-{
-  if (!egm96data)
-    return;
-
-  free(egm96data);
-  egm96data = NULL;
+  egm96data = (const uint8_t *)data.first;
 }
 
 fixed
-EGM96::LookupSeparation(const GeoPoint pt)
+EGM96::LookupSeparation(const GeoPoint &pt)
 {
   if (!egm96data)
-    return fixed_zero;
+    return fixed(0);
 
   int ilat, ilon;
-  ilat = iround((Angle::Degrees(fixed_90) - pt.latitude).Half().Degrees());
+  ilat = iround((Angle::QuarterCircle() - pt.latitude).Half().Degrees());
   ilon = iround(pt.longitude.AsBearing().Half().Degrees());
 
   int offset = ilat * 180 + ilon;
   if (offset >= EGM96SIZE)
-    return fixed_zero;
+    return fixed(0);
   if (offset < 0)
-    return fixed_zero;
+    return fixed(0);
 
   return fixed((int)egm96data[offset] - 127);
 }

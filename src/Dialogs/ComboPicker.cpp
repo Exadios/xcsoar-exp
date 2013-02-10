@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,9 +23,11 @@ Copyright_License {
 
 #include "Dialogs/ComboPicker.hpp"
 #include "Dialogs/ListPicker.hpp"
+#include "Form/List.hpp"
 #include "Form/Edit.hpp"
 #include "Form/DataField/Base.hpp"
 #include "Form/DataField/ComboList.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "UIGlobals.hpp"
 #include "Look/DialogLook.hpp"
@@ -35,17 +37,25 @@ Copyright_License {
 static WndProperty *wComboPopupWndProperty;
 static DataField *ComboPopupDataField;
 static const ComboList *ComboListPopup;
-static UPixelScalar padding;
 
-static void
-OnPaintComboPopupListItem(Canvas &canvas, const PixelRect rc, unsigned i)
-{
-  assert(i < (unsigned)ComboListPopup->size());
+class ComboPickerSupport : public ListItemRenderer {
+  const ComboList &combo_list;
+  const UPixelScalar padding;
 
-  canvas.text_clipped(rc.left + padding,
-                      rc.top + padding, rc,
-                      (*ComboListPopup)[i].StringValueFormatted);
-}
+public:
+  ComboPickerSupport(const ComboList &_combo_list,
+                     const UPixelScalar _padding)
+    :combo_list(_combo_list), padding(_padding) {}
+
+
+  virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
+                           unsigned i) override {
+    canvas.DrawClippedText(rc.left + padding,
+                           rc.top + padding, rc,
+                           combo_list[i].StringValueFormatted);
+  }
+};
+
 static const TCHAR*
 OnItemHelp(unsigned i)
 {
@@ -56,7 +66,7 @@ OnItemHelp(unsigned i)
 }
 
 int
-ComboPicker(SingleWindow &parent, const TCHAR *caption,
+ComboPicker(const TCHAR *caption,
             const ComboList &combo_list,
             ListHelpCallback_t help_callback,
             bool enable_item_help)
@@ -72,13 +82,14 @@ ComboPicker(SingleWindow &parent, const TCHAR *caption,
        and too large: */
     : (font_height + max_height) / 2;
 
-  padding = (row_height - font_height) / 2;
+  const UPixelScalar padding = (row_height - font_height) / 2;
 
-  return ListPicker(parent, caption,
+  ComboPickerSupport support(combo_list, padding);
+  return ListPicker(caption,
                     combo_list.size(),
                     combo_list.ComboPopupItemSavedIndex,
                     row_height,
-                    OnPaintComboPopupListItem, false,
+                    support, false,
                     help_callback,
                     enable_item_help ? OnItemHelp : NULL);
 }
@@ -96,14 +107,16 @@ OnHelpClicked(unsigned i)
 }
 
 static int
-ComboPicker(SingleWindow &parent, const WndProperty &control,
+ComboPicker(const WndProperty &control,
             const ComboList &combo_list, bool EnableItemHelp)
 {
-  return ComboPicker(parent, control.GetCaption(), combo_list, OnHelpClicked, EnableItemHelp);
+  return ComboPicker(control.GetCaption(), combo_list,
+                     control.HasHelp() ? OnHelpClicked : nullptr,
+                     EnableItemHelp);
 }
 
 int
-dlgComboPicker(SingleWindow &parent, WndProperty *theProperty)
+dlgComboPicker(WndProperty *theProperty)
 {
   static bool bInComboPicker = false;
   bool bInitialPage = true;
@@ -136,7 +149,7 @@ dlgComboPicker(SingleWindow &parent, WndProperty *theProperty)
       ComboPopupDataField->CopyString(sSavedInitialValue, false);
     }
 
-    int idx = ComboPicker(parent, *theProperty, *ComboListPopup, ComboPopupDataField->GetItemHelpEnabled());
+    int idx = ComboPicker(*theProperty, *ComboListPopup, ComboPopupDataField->GetItemHelpEnabled());
 
     bOpenCombo = false; //tell  combo to exit loop after close
 

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,10 +23,11 @@
 #define FLATBOUNDINGBOX_HPP
 
 #include "FlatGeoPoint.hpp"
-#include "FlatRay.hpp"
-#include "TaskProjection.hpp"
-#include "BoundingBoxDistance.hpp"
 #include "Compiler.h"
+
+#include <algorithm>
+
+class FlatRay;
 
 /**
  * Structure defining 2-d integer projected coordinates defining
@@ -67,6 +68,14 @@ public:
     :bb_ll(loc.longitude - range, loc.latitude - range),
      bb_ur(loc.longitude + range, loc.latitude + range) {}
 
+  constexpr const FlatGeoPoint &GetLowerLeft() const {
+    return bb_ll;
+  }
+
+  constexpr const FlatGeoPoint &GetUpperRight() const {
+    return bb_ur;
+  }
+
   /**
    * Calculate non-overlapping distance from one box to another.
    *
@@ -86,59 +95,6 @@ public:
    */
   gcc_pure
   bool IsInside(const FlatGeoPoint& loc) const;
-
-  /** Function object used by kd-tree to index coordinates */
-  struct kd_get_bounds
-  {
-    /** Used by kd-tree */
-    typedef int result_type;
-
-    /**
-     * Retrieve coordinate value given coordinate index and object
-     *
-     * @param d Object being stored in kd-tree
-     * @param k Index of coordinate
-     *
-     * @return Coordinate value
-     */
-    int operator() ( const FlatBoundingBox &d, const unsigned k) const {
-      switch(k) {
-      case 0:
-        return d.bb_ll.longitude;
-      case 1:
-        return d.bb_ll.latitude;
-      case 2:
-        return d.bb_ur.longitude;
-      case 3:
-        return d.bb_ur.latitude;
-      };
-      return 0; 
-    };
-  };
-
-  /**
-   * Distance metric function object used by kd-tree.  This specialisation
-   * allows for overlap; distance is zero with overlap, otherwise the minimum
-   * distance between two regions.
-   */
-  struct kd_distance
-  {
-    /** Distance operator for overlap functionality */
-    typedef BBDist distance_type;
-
-    /**
-     * \todo document this!
-     *
-     * @param a
-     * @param b
-     * @param dim
-     *
-     * @return Distance on axis
-     */
-    distance_type operator()(const int a, const int b, const size_t dim) const {
-      return BBDist(dim, max((dim < 2) ? (b - a) : (a - b), 0));
-    }
-  };
 
   /**
    * Test ray-box intersection

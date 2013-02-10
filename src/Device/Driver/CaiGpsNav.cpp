@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ Copyright_License {
 
 #include <tchar.h>
 
-static const char CtrlC = '\x03';
+static constexpr char CtrlC = '\x03';
 
 class CaiGpsNavDevice : public AbstractDevice {
 private:
@@ -45,14 +45,14 @@ public:
   CaiGpsNavDevice(Port &_port):port(_port) {}
 
 public:
-  virtual bool EnableNMEA(OperationEnvironment &env);
+  virtual bool EnableNMEA(OperationEnvironment &env) override;
 };
 
 bool
 CaiGpsNavDevice::EnableNMEA(OperationEnvironment &env)
 {
   port.Write(CtrlC);
-  env.Sleep(50);
+  env.Sleep(200);
   port.Write("NMEA\r");
 
   // This is for a slightly different mode, that
@@ -69,7 +69,7 @@ CaiGpsNavCreateOnPort(const DeviceConfig &config, Port &com_port)
   return new CaiGpsNavDevice(com_port);
 }
 
-const struct DeviceRegister caiGpsNavDevice = {
+const struct DeviceRegister gps_nav_driver = {
   _T("CAI GPS-NAV"),
   _T("Cambridge CAI GPS-NAV"),
   0,

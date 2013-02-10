@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -109,9 +109,9 @@ private:
 };
 
 
-class AirspaceMapVisible: public AirspaceVisiblePredicate
+class AirspaceMapVisible : public AirspacePredicate
 {
-private:
+  const AirspaceVisibility visible_predicate;
   const AirspaceWarningCopy &warnings;
 
 public:
@@ -119,11 +119,11 @@ public:
                      const AirspaceRendererSettings &_renderer_settings,
                      const AircraftState& _state,
                      const AirspaceWarningCopy& _warnings)
-    :AirspaceVisiblePredicate(_computer_settings, _renderer_settings, _state),
+    :visible_predicate(_computer_settings, _renderer_settings, _state),
      warnings(_warnings) {}
 
   bool operator()(const AbstractAirspace& airspace) const {
-    return AirspaceVisiblePredicate::operator()(airspace) ||
+    return visible_predicate(airspace) ||
            warnings.IsInside(airspace) ||
            warnings.HasWarning(airspace);
   }
@@ -131,7 +131,8 @@ public:
 
 #ifdef ENABLE_OPENGL
 
-class AirspaceVisitorRenderer : public AirspaceVisitor, protected MapCanvas
+class AirspaceVisitorRenderer final
+  : public AirspaceVisitor, protected MapCanvas
 {
   const AirspaceLook &look;
   const AirspaceWarningCopy &warning_manager;
@@ -155,8 +156,8 @@ public:
     glStencilMask(0xff);
   }
 
-public:
-  void Visit(const AirspaceCircle &airspace) {
+private:
+  void VisitCircle(const AirspaceCircle &airspace) {
     RasterPoint screen_center = projection.GeoToScreen(airspace.GetCenter());
     unsigned screen_radius = projection.GeoToScreenDistance(airspace.GetRadius());
     GLEnable stencil(GL_STENCIL_TEST);
@@ -189,7 +190,7 @@ public:
       canvas.DrawCircle(screen_center.x, screen_center.y, screen_radius);
   }
 
-  void Visit(const AirspacePolygon &airspace) {
+  void VisitPolygon(const AirspacePolygon &airspace) {
     if (!PreparePolygon(airspace.GetPoints()))
       return;
 
@@ -225,6 +226,19 @@ public:
     // draw outline
     if (SetupOutline(airspace))
       DrawPrepared();
+  }
+
+protected:
+  virtual void Visit(const AbstractAirspace &airspace) override {
+    switch (airspace.GetShape()) {
+    case AbstractAirspace::Shape::CIRCLE:
+      VisitCircle((const AirspaceCircle &)airspace);
+      break;
+
+    case AbstractAirspace::Shape::POLYGON:
+      VisitPolygon((const AirspacePolygon &)airspace);
+      break;
+    }
   }
 
 private:
@@ -286,7 +300,8 @@ private:
   }
 };
 
-class AirspaceFillRenderer : public AirspaceVisitor, protected MapCanvas
+class AirspaceFillRenderer final
+  : public AirspaceVisitor, protected MapCanvas
 {
   const AirspaceLook &look;
   const AirspaceWarningCopy &warning_manager;
@@ -304,8 +319,8 @@ public:
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   }
 
-public:
-  void Visit(const AirspaceCircle &airspace) {
+private:
+  void VisitCircle(const AirspaceCircle &airspace) {
     RasterPoint screen_center = projection.GeoToScreen(airspace.GetCenter());
     unsigned screen_radius = projection.GeoToScreenDistance(airspace.GetRadius());
 
@@ -320,7 +335,7 @@ public:
       canvas.DrawCircle(screen_center.x, screen_center.y, screen_radius);
   }
 
-  void Visit(const AirspacePolygon &airspace) {
+  void VisitPolygon(const AirspacePolygon &airspace) {
     if (!PreparePolygon(airspace.GetPoints()))
       return;
 
@@ -336,6 +351,19 @@ public:
     // draw outline
     if (SetupOutline(airspace))
       DrawPrepared();
+  }
+
+protected:
+  virtual void Visit(const AbstractAirspace &airspace) override {
+    switch (airspace.GetShape()) {
+    case AbstractAirspace::Shape::CIRCLE:
+      VisitCircle((const AirspaceCircle &)airspace);
+      break;
+
+    case AbstractAirspace::Shape::POLYGON:
+      VisitPolygon((const AirspacePolygon &)airspace);
+      break;
+    }
   }
 
 private:
@@ -371,9 +399,8 @@ private:
  * The old way of doing it was possibly faster but required a lot
  * of code overhead.
  */
-class AirspaceVisitorMap: 
-  public AirspaceVisitor,
-  public MapDrawHelper
+class AirspaceVisitorMap final
+  : public AirspaceVisitor, public MapDrawHelper
 {
   const AirspaceLook &look;
   const AirspaceWarningCopy &warnings;
@@ -398,7 +425,8 @@ public:
     }
   }
 
-  void Visit(const AirspaceCircle &airspace) {
+private:
+  void VisitCircle(const AirspaceCircle &airspace) {
     if (warnings.IsAcked(airspace))
       return;
 
@@ -415,7 +443,7 @@ public:
     DrawCircle(center, radius);
   }
 
-  void Visit(const AirspacePolygon &airspace) {
+  void VisitPolygon(const AirspacePolygon &airspace) {
     if (warnings.IsAcked(airspace))
       return;
 
@@ -429,6 +457,20 @@ public:
     DrawSearchPointVector(airspace.GetPoints());
   }
 
+protected:
+  virtual void Visit(const AbstractAirspace &airspace) override {
+    switch (airspace.GetShape()) {
+    case AbstractAirspace::Shape::CIRCLE:
+      VisitCircle((const AirspaceCircle &)airspace);
+      break;
+
+    case AbstractAirspace::Shape::POLYGON:
+      VisitPolygon((const AirspacePolygon &)airspace);
+      break;
+    }
+  }
+
+public:
   void DrawIntercepts() {
     BufferRenderFinish();
   }
@@ -476,9 +518,8 @@ private:
   }
 };
 
-class AirspaceOutlineRenderer
-  :public AirspaceVisitor,
-   protected MapCanvas
+class AirspaceOutlineRenderer final
+  : public AirspaceVisitor, protected MapCanvas
 {
   const AirspaceLook &look;
   const AirspaceRendererSettings &settings;
@@ -512,14 +553,26 @@ protected:
   }
 
 public:
-  void Visit(const AirspaceCircle &airspace) {
+  void VisitCircle(const AirspaceCircle &airspace) {
     if (SetupCanvas(airspace))
       DrawCircle(airspace.GetCenter(), airspace.GetRadius());
   }
 
-  void Visit(const AirspacePolygon &airspace) {
+  void VisitPolygon(const AirspacePolygon &airspace) {
     if (SetupCanvas(airspace))
       DrawPolygon(airspace.GetPoints());
+  }
+
+  virtual void Visit(const AbstractAirspace &airspace) override {
+    switch (airspace.GetShape()) {
+    case AbstractAirspace::Shape::CIRCLE:
+      VisitCircle((const AirspaceCircle &)airspace);
+      break;
+
+    case AbstractAirspace::Shape::POLYGON:
+      VisitPolygon((const AirspacePolygon &)airspace);
+      break;
+    }
   }
 };
 

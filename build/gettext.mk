@@ -9,10 +9,9 @@ MSGMERGE = msgmerge
 GETTEXT_PACKAGE = xcsoar
 GETTEXT_SOURCES = $(XCSOAR_SOURCES) \
 	$(wildcard $(SRC)/Dialogs/Vega/*Parameters.hpp) \
-	$(DRIVER_SOURCES)
+	$(SRC)/Terrain/RasterWeather.cpp
 GETTEXT_DIALOGS = $(wildcard Data/Dialogs/*.xml)
 GETTEXT_DIALOGS += $(wildcard Data/Dialogs/Configuration/*.xml)
-GETTEXT_DIALOGS += $(wildcard Data/Dialogs/Infobox/*.xml)
 GETTEXT_EVENTS = Data/Input/default.xci
 PO_FILES = $(wildcard po/*.po)
 MO_FILES = $(patsubst po/%.po,$(OUT)/po/%.mo,$(PO_FILES))

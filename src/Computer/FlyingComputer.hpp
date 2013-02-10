@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,10 @@ Copyright_License {
 #ifndef XCSOAR_FLYING_COMPUTER_HPP
 #define XCSOAR_FLYING_COMPUTER_HPP
 
+#include "StateClock.hpp"
 #include "Math/fixed.hpp"
 #include "Geo/GeoPoint.hpp"
+#include "DeltaTime.hpp"
 
 struct NMEAInfo;
 struct DerivedInfo;
@@ -36,10 +38,26 @@ struct FlyingState;
  * Detect takeoff and landing.
  */
 class FlyingComputer {
-  unsigned short time_on_ground;
-  unsigned short time_in_flight;
+  DeltaTime delta_time;
 
-  unsigned short sinking_count;
+  /**
+   * Tracks the duration the aircraft has been stationary.
+   */
+  StateClock<60, 5> stationary_clock;
+
+  /**
+   * Tracks the duration the aircraft has been moving.
+   */
+  StateClock<30, 5> moving_clock;
+
+  /**
+   * Tracks the duration the aircraft has been climbing.  If the
+   * aircraft has been climbing for a certain amount of time, it is
+   * assumed that it is still flying, even if the ground speed is
+   * small (for example, when flying in a wave without airspeed
+   * input).
+   */
+  StateClock<20, 5> climbing_clock;
 
   /**
    * If the aircraft is currenly assumed to be moving, then this
@@ -56,36 +74,68 @@ class FlyingComputer {
    */
   GeoPoint moving_at;
 
+  fixed stationary_since;
+  GeoPoint stationary_at;
+
+  fixed climbing_altitude;
+
   fixed sinking_since;
 
   GeoPoint sinking_location;
 
   fixed sinking_altitude;
 
+  /**
+   * The last altitude when the aircraft was supposed to be on the
+   * ground.  This is usually the elevation of the take-off airfield.
+   *
+   * A negative value means unknown.  Sorry for these few airfields
+   * that are below MSL ...
+   */
+  fixed last_ground_altitude;
+
 public:
   void Reset();
 
   void Compute(fixed takeoff_speed,
-               const NMEAInfo &basic, const NMEAInfo &last_basic,
+               const NMEAInfo &basic,
                const DerivedInfo &calculated,
                FlyingState &flying);
 
   void Compute(fixed takeoff_speed,
-               const AircraftState &state,
+               const AircraftState &state, fixed dt,
                FlyingState &flying);
+
+  /**
+   * Finish the landing detection.  If landing has not been detected,
+   * but the aircraft has not been moving, this force-detects the
+   * landing now.  Call at the end of a replay.
+   */
+  void Finish(FlyingState &flying, fixed time);
 
 protected:
   void CheckRelease(FlyingState &state, fixed time, const GeoPoint &location,
                     fixed altitude);
 
-  void Check(FlyingState &state, fixed time, const GeoPoint &location);
+  /**
+   * Check for monotonic climb.  This check is used for "flying"
+   * detection in a wave, when ground speed is low, no airspeed is
+   * available and no map was loaded.
+   *
+   * @return true if the aircraft has been climbing for more than 10
+   * seconds
+   */
+  bool CheckClimbing(fixed dt, fixed altitude);
+
+  void Check(FlyingState &state, fixed time);
 
   /**
    * Update flying state when moving 
    *
    * @param time Time the aircraft is moving
    */
-  void Moving(FlyingState &state, fixed time, const GeoPoint &location);
+  void Moving(FlyingState &state, fixed time, fixed dt,
+              const GeoPoint &location);
 
   /**
    * Update flying state when stationary 
@@ -93,7 +143,8 @@ protected:
    * @param time Time the aircraft is stationary
    * @param on_ground Whether the aircraft is known to be on the ground
    */
-  void Stationary(FlyingState &state, fixed time, const GeoPoint &location);
+  void Stationary(FlyingState &state, fixed time, fixed dt,
+                  const GeoPoint &location);
 };
 
 #endif

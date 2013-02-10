@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ TerrainInfo::Clear()
   terrain_base_valid = false;
 
   altitude_agl_valid = false;
-  altitude_agl = fixed_zero;
+  altitude_agl = fixed(0);
 }
 
 void
@@ -41,8 +41,6 @@ TeamInfo::Clear()
   teammate_available = false;
 
   own_teammate_code.Clear();
-
-  flarm_teammate_code_available = false;
 
   flarm_teammate_code.Clear();
 }
@@ -63,7 +61,6 @@ DerivedInfo::Reset()
   TerrainInfo::Clear();
   TeamInfo::Clear();
 
-  heading = Angle::Zero();
   pressure_available.Clear();
 
   climb_history.Clear();
@@ -73,6 +70,7 @@ DerivedInfo::Reset()
   head_wind_available.Clear();
   sun_data_available.Clear();
   task_stats.reset();
+  ordered_task_stats.reset();
   common_stats.Reset();
   contest_stats.Reset();
 

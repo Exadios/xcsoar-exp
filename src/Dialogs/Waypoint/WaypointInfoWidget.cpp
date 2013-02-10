@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ WaypointInfoWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
   StaticString<64> buffer;
 
   if (!waypoint.comment.empty())
-    AddMultiLine(_("Comment"), NULL, waypoint.comment.c_str());
+    AddMultiLine(waypoint.comment.c_str());
 
   if (waypoint.radio_frequency.IsDefined() &&
       waypoint.radio_frequency.Format(buffer.buffer(),
@@ -123,11 +123,13 @@ WaypointInfoWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
       SunEphemeris::CalcSunTimes(waypoint.location, basic.date_time_utc,
                                  fixed(GetUTCOffset()) / 3600);
 
+    const unsigned sunrisehours = (int)sun.time_of_sunrise;
+    const unsigned sunrisemins = (int)((sun.time_of_sunrise - fixed(sunrisehours)) * 60);
     const unsigned sunset_hour = (int)sun.time_of_sunset;
     const unsigned sunset_minute = (int)((sun.time_of_sunset - fixed(sunset_hour)) * 60);
 
-    buffer.UnsafeFormat(_T("%02u:%02u"), sunset_hour, sunset_minute);
-    AddReadOnly(_("Sunset"), NULL, buffer);
+    buffer.UnsafeFormat(_T("%02u:%02u - %02u:%02u"), sunrisehours, sunrisemins, sunset_hour, sunset_minute);
+    AddReadOnly(_("Daylight time"), NULL, buffer);
   }
 
   if (basic.location_available) {
@@ -150,7 +152,7 @@ WaypointInfoWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
                                  calculated.GetWindOrZero());
 
     GlidePolar gp0 = settings.polar.glide_polar_task;
-    gp0.SetMC(fixed_zero);
+    gp0.SetMC(fixed(0));
     AddGlideResult(_("Alt. diff. MC 0"),
                    MacCready::Solve(settings.task.glide,
                                     gp0, glide_state));

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,9 +27,6 @@ Copyright_License {
 #include "Thread/Guard.hpp"
 
 class Markers;
-class WindowProjection;
-class Canvas;
-struct MarkerLook;
 struct GeoPoint;
 struct BrokenDateTime;
 
@@ -40,8 +37,6 @@ public:
     Guard<Markers>(markers) {}
 
   void Reset();
-  void Draw(Canvas &canvas, const WindowProjection &projection,
-            const MarkerLook &look) const;
   void MarkLocation(const GeoPoint &loc, const BrokenDateTime &time);
 };
 

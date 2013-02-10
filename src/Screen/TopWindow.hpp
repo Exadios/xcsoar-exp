@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,9 +31,7 @@ Copyright_License {
 #endif
 
 #ifndef USE_GDI
-#include "Thread/Mutex.hpp"
-#include "Screen/SDL/TopCanvas.hpp"
-#include "Screen/SDL/DoubleClick.hpp"
+#include "Screen/Custom/DoubleClick.hpp"
 #endif
 
 #ifdef ANDROID
@@ -41,17 +39,32 @@ Copyright_License {
 #include "Thread/Cond.hpp"
 
 struct Event;
+
+#elif defined(USE_EGL)
+struct Event;
+#elif defined(ENABLE_SDL)
+union SDL_Event;
+#endif
+
+#ifndef USE_GDI
+#include <atomic>
+#endif
+
+#include <tchar.h>
+
+#ifndef USE_GDI
+class TopCanvas;
 #endif
 
 class TopWindowStyle : public WindowStyle {
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
   bool full_screen;
   bool resizable;
 #endif
 
 public:
   TopWindowStyle()
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
     :full_screen(false), resizable(false)
 #endif
   {
@@ -60,7 +73,7 @@ public:
 
   TopWindowStyle(const WindowStyle other)
     :WindowStyle(other)
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
     , full_screen(false), resizable(false)
 #endif
   {
@@ -68,13 +81,13 @@ public:
   }
 
   void FullScreen() {
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
     full_screen = true;
 #endif
   }
 
   bool GetFullScreen() const {
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
     return full_screen;
 #else
     return false;
@@ -82,7 +95,7 @@ public:
   }
 
   void Resizable() {
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
     resizable = true;
 #elif defined(USE_GDI)
     style &= ~WS_BORDER;
@@ -91,7 +104,7 @@ public:
   }
 
   bool GetResizable() const {
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
     return resizable;
 #else
     return false;
@@ -104,10 +117,9 @@ public:
  */
 class TopWindow : public ContainerWindow {
 #ifndef USE_GDI
-  TopCanvas screen;
+  TopCanvas *screen;
 
-  Mutex invalidated_lock;
-  bool invalidated;
+  std::atomic<bool> invalidated;
 
 #ifdef ANDROID
   Mutex paused_mutex;
@@ -163,15 +175,36 @@ public:
 #endif
 
 public:
-  TopWindow();
+#ifdef ANDROID
+  TopWindow():screen(nullptr), paused(false), resumed(false), resized(false) {}
+#elif !defined(USE_GDI)
+  TopWindow():screen(nullptr) {}
+#endif
 
+#ifndef USE_GDI
+  virtual ~TopWindow();
+#endif
+
+#ifdef USE_GDI
   static bool find(const TCHAR *cls, const TCHAR *text);
 
-  void set(const TCHAR *cls, const TCHAR *text, PixelRect rc,
-           TopWindowStyle style=TopWindowStyle());
+  void Create(const TCHAR *cls, const TCHAR *text, PixelSize size,
+              TopWindowStyle style=TopWindowStyle());
+#else
+  void Create(const TCHAR *text, PixelSize size,
+              TopWindowStyle style=TopWindowStyle());
+#endif
 
 #ifdef _WIN32_WCE
-  void reset();
+  void Destroy();
+#endif
+
+#ifndef USE_GDI
+#ifdef ANDROID
+  void SetCaption(gcc_unused const TCHAR *caption) {}
+#else
+  void SetCaption(const TCHAR *caption);
+#endif
 #endif
 
   /**
@@ -194,7 +227,7 @@ public:
         placement.rcNormalPosition.bottom -= placement.rcNormalPosition.top;
         placement.rcNormalPosition.left = 0;
         placement.rcNormalPosition.top = 0;
-        return placement.rcNormalPosition;
+        return reinterpret_cast<const PixelRect &>(placement.rcNormalPosition);
       }
     }
 
@@ -216,7 +249,7 @@ public:
   void Fullscreen();
 
 #ifndef USE_GDI
-  virtual void Invalidate();
+  virtual void Invalidate() override;
 
 protected:
   void Expose();
@@ -235,12 +268,12 @@ public:
 
 #ifndef USE_GDI
     OnClose();
-#else /* ENABLE_SDL */
+#else
     ::SendMessage(hWnd, WM_CLOSE, 0, 0);
 #endif
   }
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(USE_EGL)
   bool OnEvent(const Event &event);
 #elif defined(ENABLE_SDL)
   bool OnEvent(const SDL_Event &event);
@@ -270,6 +303,10 @@ public:
    */
   void RefreshSize();
 #else
+  bool CheckResumeSurface() {
+    return true;
+  }
+
   void RefreshSize() {}
 #endif
 
@@ -277,15 +314,19 @@ protected:
   virtual bool OnActivate();
   virtual bool OnDeactivate();
 
-#ifdef ENABLE_SDL
   virtual bool OnClose();
-#else
+
+#ifdef USE_VIDEOCORE
+  virtual void OnPaint(Canvas &canvas) override;
+#endif
+
+#ifdef USE_GDI
   virtual LRESULT OnMessage(HWND _hWnd, UINT message,
-                             WPARAM wParam, LPARAM lParam);
-#endif /* !ENABLE_SDL */
+                             WPARAM wParam, LPARAM lParam) override;
+#endif
 
 #ifndef USE_GDI
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
+  virtual void OnResize(PixelSize new_size) override;
 #endif
 
 #ifdef ANDROID

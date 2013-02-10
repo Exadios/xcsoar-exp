@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ Copyright_License {
 #define XCSOAR_VALIDITY_HPP
 
 #include "Math/fixed.hpp"
-#include "Util/TypeTraits.hpp"
+
+#include <type_traits>
 
 #include <stdint.h>
 
@@ -35,21 +36,31 @@ Copyright_License {
  * track if the attribute is not set (timestamp is zero).
  */
 class Validity {
+  static constexpr int BITS = 6;
+
   uint32_t last;
 
-  gcc_pure
+  constexpr
   static uint32_t Import(fixed time) {
-    return (uint32_t)(time * 64);
+#ifdef FIXED_MATH
+    return (uint32_t)(time << BITS);
+#else
+    return (uint32_t)(time * (1 << BITS));
+#endif
   }
 
-  gcc_pure
+  constexpr
   static uint32_t Import(unsigned time) {
-    return (uint32_t)(time * 64);
+    return (uint32_t)(time << BITS);
   }
 
-  gcc_pure
+  constexpr
   static fixed Export(uint32_t i) {
-    return fixed(i) / 64;
+#ifdef FIXED_MATH
+    return fixed(i) >> BITS;
+#else
+    return fixed(i) / (1 << BITS);
+#endif
   }
 
 public:
@@ -61,7 +72,7 @@ public:
   /**
    * Initialize the object with the specified timestamp.
    */
-  explicit Validity(fixed _last):last(Import(_last)) {}
+  explicit constexpr Validity(fixed _last):last(Import(_last)) {}
 
 public:
   /**
@@ -120,7 +131,7 @@ public:
             now > last + max_age); /* expired? */
   }
 
-  bool IsValid() const {
+  constexpr bool IsValid() const {
     return last > 0;
   }
 
@@ -140,15 +151,15 @@ public:
    * Was the value modified since the time the "other" object was
    * taken?
    */
-  bool Modified(const Validity &other) const {
+  constexpr bool Modified(const Validity &other) const {
     return last > other.last;
   }
 
-  bool operator==(const Validity &other) const {
+  constexpr bool operator==(const Validity &other) const {
     return last == other.last;
   }
 
-  bool operator!=(const Validity &other) const {
+  constexpr bool operator!=(const Validity &other) const {
     return last != other.last;
   }
 
@@ -184,11 +195,11 @@ public:
     return false;
   }
 
-  operator bool() const {
+  constexpr operator bool() const {
     return IsValid();
   }
 };
 
-static_assert(is_trivial<Validity>::value, "type is not trivial");
+static_assert(std::is_trivial<Validity>::value, "type is not trivial");
 
 #endif

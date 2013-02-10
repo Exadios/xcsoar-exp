@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ Copyright_License {
 #include <stdio.h>
 
 void
-InfoBoxContentTimeLocal::Update(InfoBoxData &data)
+UpdateInfoBoxTimeLocal(InfoBoxData &data)
 {
   if (!CommonInterface::Basic().time_available) {
     data.SetInvalid();
@@ -39,7 +39,7 @@ InfoBoxContentTimeLocal::Update(InfoBoxData &data)
   }
 
   // Set Value
-  int dd = DetectCurrentTime(XCSoarInterface::Basic());
+  int dd = DetectCurrentTime(CommonInterface::Basic());
   const BrokenTime t = BrokenTime::FromSecondOfDayChecked(abs(dd));
 
   // Set Value
@@ -50,7 +50,7 @@ InfoBoxContentTimeLocal::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentTimeUTC::Update(InfoBoxData &data)
+UpdateInfoBoxTimeUTC(InfoBoxData &data)
 {
   if (!CommonInterface::Basic().time_available) {
     data.SetInvalid();
@@ -58,7 +58,7 @@ InfoBoxContentTimeUTC::Update(InfoBoxData &data)
   }
 
   // Set Value
-  const BrokenDateTime t = XCSoarInterface::Basic().date_time_utc;
+  const BrokenDateTime t = CommonInterface::Basic().date_time_utc;
   data.UnsafeFormatValue(_T("%02d:%02d"), t.hour, t.minute);
 
   // Set Comment
@@ -66,7 +66,7 @@ InfoBoxContentTimeUTC::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentTimeFlight::Update(InfoBoxData &data)
+UpdateInfoBoxTimeFlight(InfoBoxData &data)
 {
   if (!positive(CommonInterface::Calculated().flight.flight_time)) {
     data.SetInvalid();
@@ -76,7 +76,7 @@ InfoBoxContentTimeFlight::Update(InfoBoxData &data)
   // Set Value
   TCHAR value[32], comment[32];
   FormatTimeTwoLines(value, comment,
-                         (int)XCSoarInterface::Calculated().flight.flight_time);
+                         (int)CommonInterface::Calculated().flight.flight_time);
 
   data.SetValue(value);
   data.SetComment(comment);

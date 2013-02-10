@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,9 @@ Copyright_License {
 #include "TargetMapWindow.hpp"
 #include "Look/TaskLook.hpp"
 #include "Screen/Icon.hpp"
-#include "Interface.hpp"
 #include "Task/ProtectedTaskManager.hpp"
+#include "Engine/Task/Ordered/Points/AATPoint.hpp"
+#include "Engine/Task/ObservationZones/ObservationZonePoint.hpp"
 #include "Screen/Layout.hpp"
 
 void
@@ -66,13 +67,8 @@ TargetMapWindow::isClickOnTarget(const RasterPoint pc)
     return false;
 
   ProtectedTaskManager::Lease task_manager(*task);
-  if (!task_manager->HasTarget(target_index))
-    return false;
-
-  const GeoPoint gnull(Angle::Zero(), Angle::Zero());
-  const GeoPoint& t = task_manager->GetLocationTarget(target_index, gnull);
-
-  if (t == gnull)
+  const GeoPoint t = task_manager->GetLocationTarget(target_index);
+  if (!t.IsValid())
     return false;
 
   const GeoPoint gp = projection.ScreenToGeo(pc.x, pc.y);
@@ -88,7 +84,8 @@ TargetMapWindow::isInSector(const int x, const int y)
   assert(task != NULL);
 
   GeoPoint gp = projection.ScreenToGeo(x, y);
-  AircraftState a;
-  a.location = gp;
-  return task->IsInSector(target_index, a);
+
+  ProtectedTaskManager::Lease lease(*task);
+  AATPoint *p = lease->GetOrderedTask().GetAATTaskPoint(target_index);
+  return p != nullptr && p->GetObservationZone().IsInSector(gp);
 }

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,12 +38,16 @@ static const fixed r((3. - sqrt(5.0)) / 2); /* Gold section ratio */
 
 #define fixed_threequaters fixed(0.75)
 
-fixed ZeroFinder::tolerance_actual_min(const fixed x) const {
+inline fixed
+ZeroFinder::tolerance_actual_min(const fixed x) const
+{
   return sqrt_epsilon * fabs(x) + tolerance * fixed_third;
 }
 
-fixed ZeroFinder::tolerance_actual_zero(const fixed x) const {
-  return Double(epsilon * fabs(x)) + half(tolerance);
+inline fixed
+ZeroFinder::tolerance_actual_zero(const fixed x) const
+{
+  return Double(epsilon * fabs(x)) + Half(tolerance);
 }
 
 //#define INSTRUMENT_ZERO
@@ -52,8 +56,10 @@ unsigned long zero_skipped = 0;
 unsigned long zero_total = 0;
 #endif
 
-bool ZeroFinder::solution_within_tolerance(const fixed x,
-                                           const fixed tol_act) {
+inline bool
+ZeroFinder::solution_within_tolerance(const fixed x,
+                                      const fixed tol_act)
+{
 
   // are we away from the edges? if so, check improved solution
   const fixed x_minus = x-tol_act;
@@ -138,8 +144,9 @@ fixed ZeroFinder::find_zero(const fixed xstart) {
   return xstart;
 }
 
-
-fixed ZeroFinder::find_zero_actual(const fixed xstart) {
+inline fixed
+ZeroFinder::find_zero_actual(const fixed xstart)
+{
   fixed a, b, c; // Abscissae, descr. see above
   fixed fa; // f(a)
   fixed fb; // f(b)
@@ -177,7 +184,7 @@ fixed ZeroFinder::find_zero_actual(const fixed xstart) {
     const fixed tol_act = tolerance_actual_zero(b);
 
     // Step at this iteration
-    fixed new_step = half(c - b);
+    fixed new_step = Half(c - b);
 
     if (fabs(new_step) <= tol_act || fabs(fb) < sqrt_epsilon) {
       if (!b_best)
@@ -204,14 +211,14 @@ fixed ZeroFinder::find_zero_actual(const fixed xstart) {
       if (a == c) {
         const fixed t1 = fb / fa;
         p = cb * t1;
-        q = fixed_one - t1;
+        q = fixed(1) - t1;
       } else {
         // Quadric inverse interpolation
         q = fa / fc;
         const fixed t1 = fb / fc;
         const fixed t2 = fb / fa;
-        p = t2 * (cb * q * (q - t1) - (b - a) * (t1 - fixed_one));
-        q = (q - fixed_one) * (t1 - fixed_one) * (t2 - fixed_one);
+        p = t2 * (cb * q * (q - t1) - (b - a) * (t1 - fixed(1)));
+        q = (q - fixed(1)) * (t1 - fixed(1)) * (t2 - fixed(1));
       }
 
       // p was calculated with the opposite sign;
@@ -224,8 +231,8 @@ fixed ZeroFinder::find_zero_actual(const fixed xstart) {
       // If b+p/q falls in [b,c] and isn't too large it is accepted
       // If p/q is too large then the bissection procedure can
       // reduce [b,c] range to more extent
-      if (p < (fixed_threequaters * cb * q - half(fabs(tol_act * q)))
-          && p < fabs(half(prev_step * q)))
+      if (p < (fixed_threequaters * cb * q - Half(fabs(tol_act * q)))
+          && p < fabs(Half(prev_step * q)))
         new_step = p / q;
     }
 
@@ -315,7 +322,8 @@ fixed ZeroFinder::find_min(const fixed xstart) {
   return xstart;
 }
 
-fixed ZeroFinder::find_min_actual(const fixed xstart)
+inline fixed
+ZeroFinder::find_min_actual(const fixed xstart)
 {
   fixed x, v, w; // Abscissae, descr. see above
   fixed fx; // f(x)
@@ -335,13 +343,13 @@ fixed ZeroFinder::find_min_actual(const fixed xstart)
   for (;;) {
     // Range over which the minimum is seeked for
     const fixed range = b - a;
-    const fixed middle_range = half(a + b);
+    const fixed middle_range = Half(a + b);
 
     // Actual tolerance
     const fixed tol_act = tolerance_actual_min(x);
     const fixed double_tol_act = Double(tol_act);
 
-    if (fabs(x-middle_range) + half(range) <= double_tol_act) {
+    if (fabs(x-middle_range) + Half(range) <= double_tol_act) {
       if (!x_best)
         // call once more
         fx = f(x);

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,16 +23,17 @@
 #ifndef ONLINE_CONTEST_HPP
 #define ONLINE_CONTEST_HPP
 
+#include "Settings.hpp"
 #include "Solvers/OLCSprint.hpp"
 #include "Solvers/OLCFAI.hpp"
 #include "Solvers/OLCClassic.hpp"
 #include "Solvers/OLCLeague.hpp"
 #include "Solvers/OLCPlus.hpp"
+#include "Solvers/DMStQuad.hpp"
 #include "Solvers/XContestFree.hpp"
 #include "Solvers/XContestTriangle.hpp"
 #include "Solvers/OLCSISAT.hpp"
 #include "Solvers/NetCoupe.hpp"
-#include "Solvers/Contests.hpp"
 #include "ContestStatistics.hpp"
 
 class Trace;
@@ -44,7 +45,7 @@ class ContestManager
 {
   friend class PrintHelper;
 
-  Contests contest;
+  Contest contest;
 
   ContestStatistics stats;
 
@@ -53,18 +54,19 @@ class ContestManager
   OLCClassic olc_classic;
   OLCLeague olc_league;
   OLCPlus olc_plus;
-  XContestFree olc_xcontest_free;
-  XContestTriangle olc_xcontest_triangle;
-  XContestFree olc_dhvxc_free;
-  XContestTriangle olc_dhvxc_triangle;
-  OLCSISAT olc_sisat;
-  NetCoupe olc_netcoupe;
+  DMStQuad dmst_quad;
+  XContestFree xcontest_free;
+  XContestTriangle xcontest_triangle;
+  XContestFree dhv_xc_free;
+  XContestTriangle dhv_xc_triangle;
+  OLCSISAT sis_at;
+  NetCoupe net_coupe;
 
 public:
   /**
    * Base constructor.
    *
-   * @param _contest Contests that shall be used
+   * @param _contest Contest that shall be used
    * @param trace_full Trace object reference
    * containing full flight history for scanning
    * @param trace_sprint Trace object reference
@@ -72,7 +74,7 @@ public:
    * @param predict_triangle assume the the pilot will close the
    * triangle?
    */
-  ContestManager(const Contests _contest,
+  ContestManager(const Contest _contest,
                  const Trace &trace_full, const Trace &trace_sprint,
                  bool predict_triangle=false);
 
@@ -83,7 +85,7 @@ public:
    */
   void SetPredicted(const TracePoint &predicted);
 
-  void SetContest(Contests _contest) {
+  void SetContest(Contest _contest) {
     contest = _contest;
   }
 

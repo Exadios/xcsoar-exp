@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ public:
    * 
    * @return Initialised object
    */
-  Deserialiser(DataNode &_node, const Waypoints *_waypoints=NULL)
+  Deserialiser(DataNode &_node, const Waypoints *_waypoints=nullptr)
     :node(_node), waypoints(_waypoints) {}
 
   /** 
@@ -73,7 +73,7 @@ protected:
   /** 
    * Deserialise a Waypoint; client responsible for deletion
    * 
-   * @return Newly constructed Waypoint or NULL on failure
+   * @return Newly constructed Waypoint or nullptr on failure
    */
   Waypoint* DeserialiseWaypoint();
 
@@ -90,7 +90,7 @@ protected:
    * @param wp Waypoint base of point
    * @param is_turnpoint Whether the point is a turnpoint
    *
-   * @return Newly constructed ObservationZonePoint or NULL on failure
+   * @return Newly constructed ObservationZonePoint or nullptr on failure
    */
   ObservationZonePoint* DeserialiseOZ(const Waypoint &wp, bool is_turnpoint);
 
@@ -102,7 +102,7 @@ protected:
   void DeserialiseTaskpoint(OrderedTask &data);
 
 private:
-  HeightReferenceType GetHeightRef(const TCHAR *nodename) const;
+  AltitudeReference GetHeightRef(const TCHAR *nodename) const;
   TaskFactoryType GetTaskFactoryType() const;
 };
 

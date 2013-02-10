@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,47 +24,19 @@ Copyright_License {
 #ifndef XCSOAR_NMEA_INFO_H
 #define XCSOAR_NMEA_INFO_H
 
-#include "Util/TypeTraits.hpp"
 #include "NMEA/Validity.hpp"
 #include "NMEA/ExternalSettings.hpp"
 #include "NMEA/Acceleration.hpp"
 #include "NMEA/Attitude.hpp"
-#include "DateTime.hpp"
+#include "SwitchState.hpp"
+#include "Time/BrokenDateTime.hpp"
 #include "Geo/GeoPoint.hpp"
 #include "Atmosphere/Pressure.hpp"
 #include "DeviceInfo.hpp"
 #include "FLARM/Data.hpp"
 #include "Geo/SpeedVector.hpp"
 
-/**
- * State of external switch devices (esp Vega)
- */
-struct SwitchInfo
-{
-  enum class FlightMode: uint8_t {
-    UNKNOWN,
-    CIRCLING,
-    CRUISE,
-  };
-
-  FlightMode flight_mode;
-
-  bool airbrake_locked;
-  bool flap_positive;
-  bool flap_neutral;
-  bool flap_negative;
-  bool gear_extended;
-  bool acknowledge;
-  bool repeat;
-  bool speed_command;
-  bool user_switch_up;
-  bool user_switch_middle;
-  bool user_switch_down;
-  bool flap_landing;
-  // bool stall;
-
-  void Reset();
-};
+#include <type_traits>
 
 enum class FixQuality: uint8_t {
   NO_FIX,
@@ -83,7 +55,7 @@ enum class FixQuality: uint8_t {
  */
 struct GPSState
 {
-  static const unsigned MAXSATELLITES = 12;
+  static constexpr unsigned MAXSATELLITES = 12;
 
   //############
   //   Status
@@ -226,6 +198,30 @@ struct NMEAInfo {
   Validity static_pressure_available;
 
   /**
+   * Pitot pressure value [Pa].
+   */
+  AtmosphericPressure pitot_pressure;
+  Validity pitot_pressure_available;
+
+  /**
+   * Dynamic pressure value = pitot_pressure - static_pressure [Pa].
+   * Use only to compute indicated airspeed.
+   */
+  AtmosphericPressure dyn_pressure;
+  Validity dyn_pressure_available;
+
+  /**
+   * Generic sensor calibration data for linear sensors.
+   * Used by some sensors e.g.:
+   *   1) pitot pressure offset relative to static_pressure [hPa].
+   *   2) outside air temperature sensor
+   *   3) battery voltage measurement
+   */
+  fixed sensor_calibration_offset;
+  fixed sensor_calibration_factor; // 0 is not a valid factor.
+  Validity sensor_calibration_available;
+
+  /**
    * Is a barometric altitude available?
    * @see BaroAltitude
    */
@@ -271,12 +267,17 @@ struct NMEAInfo {
    */
   Validity time_available;
 
-  fixed time; /**< global time (seconds UTC) */
+  /**
+   * Global time (seconds after UTC midnight)
+   */
+  fixed time;
 
   /** GPS date and time (UTC) */
   BrokenDateTime date_time_utc;
 
-  /** Is the BrokenDate part of DateTime available? */
+  /**
+   * Is the BrokenDate part of #date_time_utc available?
+   */
   bool date_available;
 
   //###########
@@ -384,10 +385,8 @@ struct NMEAInfo {
   /** Battery supply information in percent (0.0 - 100.0; if available) */
   fixed battery_level;
 
-  bool switch_state_available;
-
   /** Switch state of the user inputs */
-  SwitchInfo switch_state;
+  SwitchState switch_state;
 
   fixed stall_ratio;
   Validity stall_ratio_available;
@@ -414,8 +413,18 @@ struct NMEAInfo {
     return !last.time_available || (time_available && time < last.time);
   }
 
+  /**
+   * Returns a #BrokenDate referring to the given time stamp (all
+   * UTC).  This object's #date_time_utc and #time attributes are used
+   * to calculate the date.
+   *
+   * @param other_time the time stamp (see attribute #time)
+   */
+  gcc_pure
+  BrokenDateTime GetDateTimeAt(fixed other_time) const;
+
   bool MovementDetected() const {
-    return ground_speed_available && ground_speed > fixed_two;
+    return ground_speed_available && ground_speed > fixed(2);
   }
 
   /**
@@ -507,13 +516,54 @@ struct NMEAInfo {
   }
 
   /**
-   * Returns the barometric altitude, and falls back to the GPS
-   * altitude.
+   * Provide dynamic pressure from a pitot tube.
+   * Use only to compute indicated airspeed when static pressure is known.
+   * When both pitot- and dynamic pressure are available use dynamic.
    */
-  fixed GetAltitudeBaroPreferred() const {
-    return baro_altitude_available
-      ? baro_altitude
-      : gps_altitude;
+  void ProvideDynamicPressure(AtmosphericPressure value) {
+    dyn_pressure = value;
+    dyn_pressure_available.Update(clock);
+  }
+
+  /**
+   * Used to compute indicated airspeed
+   * when static pressure is known.
+   * Value already includes calibration data.
+   */
+  void ProvidePitotPressure(AtmosphericPressure value) {
+    pitot_pressure = value;
+    pitot_pressure_available.Update(clock);
+  }
+
+  /**
+   * Used only as a config value that should be saved.
+   *
+   * Currently used for:
+   *       battery voltage measurement (multiplier)
+   *       offset between the pitot- and the static pressure sensor in hPa (zero).
+   *       temperature sensor
+   */
+  void ProvideSensorCalibration(fixed value, fixed offset) {
+    sensor_calibration_factor = value;
+    sensor_calibration_offset = offset;
+    sensor_calibration_available.Update(clock);
+  }
+
+  /**
+   * Returns the pressure altitude, and falls back to the barometric
+   * altitude or the GPS altitude.  The "first" element is false if no
+   * altitude is available.  The "second" element contains the
+   * altitude value [m] if "first" is true.
+   */
+  gcc_pure
+  std::pair<bool, fixed> GetAnyAltitude() const {
+    return pressure_altitude_available
+      ? std::make_pair(true, pressure_altitude)
+      : (baro_altitude_available
+         ? std::make_pair(true, baro_altitude)
+         : (gps_altitude_available
+            ? std::make_pair(true, gps_altitude)
+            : std::make_pair(false, fixed(0))));
   }
 
   /**
@@ -542,33 +592,25 @@ struct NMEAInfo {
    * Set the true airspeed [m/s] and derive the indicated airspeed
    * from it, using the specified altitude [m].
    */
-  void ProvideTrueAirspeedWithAltitude(fixed tas, fixed altitude) {
-    true_airspeed = tas;
-    indicated_airspeed = true_airspeed /
-      AtmosphericPressure::AirDensityRatio(altitude);
-    airspeed_available.Update(clock);
-    airspeed_real = true;
-  }
+  void ProvideTrueAirspeedWithAltitude(fixed tas, fixed altitude);
 
   /**
-   * Set the true airspeed [m/s] and derive the indicated airspeed
+   * Set the indicated airspeed [m/s] and derive the true airspeed
    * from it, using the specified altitude [m].
    */
-  void ProvideIndicatedAirspeedWithAltitude(fixed ias, fixed altitude) {
-    indicated_airspeed = ias;
-    true_airspeed = indicated_airspeed *
-      AtmosphericPressure::AirDensityRatio(altitude);
-    airspeed_available.Update(clock);
-    airspeed_real = true;
-  }
+  void ProvideIndicatedAirspeedWithAltitude(fixed ias, fixed altitude);
 
   /**
    * Set the true airspeed [m/s] and derive the indicated airspeed
    * from it, using the current altitude.
    */
-  void ProvideTrueAirspeed(fixed tas) {
-    ProvideTrueAirspeedWithAltitude(tas, GetAltitudeBaroPreferred());
-  }
+  void ProvideTrueAirspeed(fixed tas);
+
+  /**
+   * Set the indicated airspeed [m/s] and derive the true airspeed
+   * from it, using the current altitude.
+   */
+  void ProvideIndicatedAirspeed(fixed ias);
 
   /**
    * Set the gross, non-compensated, plain-old vertical speed vario value [m/s].
@@ -634,6 +676,6 @@ struct NMEAInfo {
   void Complement(const NMEAInfo &add);
 };
 
-static_assert(is_trivial<NMEAInfo>::value, "type is not trivial");
+static_assert(std::is_trivial<NMEAInfo>::value, "type is not trivial");
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@ Copyright_License {
 #include "Util/NonCopyable.hpp"
 #include "Util/Serial.hpp"
 #include "Terrain/TerrainSettings.hpp"
+
+#ifndef ENABLE_OPENGL
 #include "Projection/CompareProjection.hpp"
+#endif
 
 class Canvas;
 class WindowProjection;
@@ -43,7 +46,9 @@ class TerrainRenderer : private NonCopyable {
 protected:
   struct TerrainRendererSettings settings;
 
+#ifndef ENABLE_OPENGL
   CompareProjection compare_projection;
+#endif
 
   Angle last_sun_azimuth;
 
@@ -52,21 +57,17 @@ protected:
   RasterRenderer raster_renderer;
 
 public:
-  RasterPoint spot_max_pt;
-  RasterPoint spot_min_pt;
-  short spot_max_val;
-  short spot_min_val;
-
-public:
   TerrainRenderer(const RasterTerrain *_terrain);
   virtual ~TerrainRenderer() {}
 
 protected:
-  void ScanSpotHeights();
-
   void CopyTo(Canvas &canvas, unsigned width, unsigned height) const;
 
 public:
+  const TerrainRendererSettings &GetSettings() const {
+    return settings;
+  }
+
   void SetSettings(const TerrainRendererSettings &_settings);
 
   virtual void Generate(const WindowProjection &map_projection,

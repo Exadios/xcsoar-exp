@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ Copyright_License {
 #include "Task/ProtectedTaskManager.hpp"
 #include "Units/Units.hpp"
 #include "Renderer/AircraftRenderer.hpp"
+#include "Renderer/MarkerRenderer.hpp"
 
 #ifdef HAVE_NOAA
 #include "Weather/NOAAStore.hpp"
@@ -81,8 +82,8 @@ void
 MapWindow::RenderMarkers(Canvas &canvas)
 {
   if (marks != NULL &&
-      render_projection.GetMapScale() <= fixed_int_constant(30000))
-    marks->Draw(canvas, render_projection, look.marker);
+      render_projection.GetMapScale() <= fixed(30000))
+    ::RenderMarkers(canvas, render_projection, look.marker, *marks);
 }
 
 void
@@ -124,37 +125,39 @@ MapWindow::Render(Canvas &canvas, const PixelRect &rc)
   label_block.reset();
 
   // Render terrain, groundline and topography
-  draw_sw.Mark(_T("RenderTerrain"));
+  draw_sw.Mark("RenderTerrain");
   RenderTerrain(canvas);
 
-  draw_sw.Mark(_T("RenderTopography"));
+  draw_sw.Mark("RenderTopography");
   RenderTopography(canvas);
 
-  draw_sw.Mark(_T("RenderFinalGlideShading"));
+  draw_sw.Mark("RenderFinalGlideShading");
   RenderFinalGlideShading(canvas);
 
   // Render track bearing (ground track)
-  draw_sw.Mark(_T("DrawTrackBearing"));
+  draw_sw.Mark("DrawTrackBearing");
   DrawTrackBearing(canvas, aircraft_pos);
 
   // Render airspace
-  draw_sw.Mark(_T("RenderAirspace"));
+  draw_sw.Mark("RenderAirspace");
   RenderAirspace(canvas);
 
   // Render task, waypoints
-  draw_sw.Mark(_T("DrawTask"));
+  draw_sw.Mark("DrawContest");
+  DrawContest(canvas);
+
+  draw_sw.Mark("DrawTask");
   DrawTask(canvas);
 
-  draw_sw.Mark(_T("DrawWaypoints"));
+  draw_sw.Mark("DrawWaypoints");
   DrawWaypoints(canvas);
 
-  draw_sw.Mark(_T("DrawNOAAStations"));
+  draw_sw.Mark("DrawNOAAStations");
   RenderNOAAStations(canvas);
 
-  draw_sw.Mark(_T("RenderMisc1"));
+  draw_sw.Mark("RenderMisc1");
   // Render weather/terrain max/min values
-  if (!background.DrawSpotHeights(canvas, label_block))
-    DrawTaskOffTrackIndicator(canvas);
+  DrawTaskOffTrackIndicator(canvas);
 
   // Render the snail trail
   if (basic.location_available)
@@ -166,14 +169,14 @@ MapWindow::Render(Canvas &canvas, const PixelRect &rc)
   DrawThermalEstimate(canvas);
 
   // Render topography on top of airspace, to keep the text readable
-  draw_sw.Mark(_T("RenderTopographyLabels"));
+  draw_sw.Mark("RenderTopographyLabels");
   RenderTopographyLabels(canvas);
 
   // Render glide through terrain range
-  draw_sw.Mark(_T("RenderGlide"));
+  draw_sw.Mark("RenderGlide");
   RenderGlide(canvas);
 
-  draw_sw.Mark(_T("RenderMisc2"));
+  draw_sw.Mark("RenderMisc2");
 
   DrawBestCruiseTrack(canvas, aircraft_pos);
 
@@ -184,6 +187,11 @@ MapWindow::Render(Canvas &canvas, const PixelRect &rc)
     DrawWind(canvas, aircraft_pos, rc);
 
   // Draw traffic
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  DrawSkyLinesTraffic(canvas);
+#endif
+
   DrawTeammate(canvas);
 
   if (basic.location_available)
@@ -192,7 +200,7 @@ MapWindow::Render(Canvas &canvas, const PixelRect &rc)
   // Finally, draw you!
   if (basic.location_available)
     AircraftRenderer::Draw(canvas, GetMapSettings(), look.aircraft,
-                           Calculated().heading - render_projection.GetScreenAngle(),
+                           basic.attitude.heading - render_projection.GetScreenAngle(),
                            aircraft_pos);
 
   // Render compass

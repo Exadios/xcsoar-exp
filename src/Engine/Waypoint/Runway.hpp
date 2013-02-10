@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,11 +34,22 @@ class Runway {
   /** Main runway length in m (0 for unknown) */
   uint16_t length;
 
+  constexpr Runway(int _direction, unsigned _length)
+    :direction(_direction), length(_length) {}
+
 public:
   /**
    * No initialisation.
    */
   Runway() = default;
+
+  /**
+   * Construct an empty instance.  Its IsDefined() method will return
+   * false.
+   */
+  static constexpr Runway Null() {
+    return { -1, 0 };
+  }
 
   bool IsDirectionDefined() const {
     return direction >= 0;
@@ -71,7 +82,7 @@ public:
   Angle GetDirection() const {
     assert(IsDirectionDefined());
 
-    return Angle::Degrees(fixed(direction));
+    return Angle::Degrees(direction);
   }
 
   gcc_pure

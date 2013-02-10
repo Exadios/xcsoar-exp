@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@ Copyright_License {
 #include "Dialogs/dlgAnalysis.hpp"
 #include "Dialogs/CallBackTable.hpp"
 #include "Dialogs/Dialogs.h"
-#include "Dialogs/AirspaceWarningDialog.hpp"
-#include "Dialogs/Task.hpp"
+#include "Dialogs/Airspace/AirspaceWarningDialog.hpp"
+#include "Dialogs/Task/TaskDialogs.hpp"
 #include "Dialogs/XML.hpp"
 #include "Form/Form.hpp"
 #include "Form/Frame.hpp"
@@ -33,7 +33,7 @@ Copyright_License {
 #include "CrossSection/CrossSectionWindow.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "ComputerSettings.hpp"
-#include "Math/FastMath.h"
+#include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Look/Look.hpp"
@@ -49,9 +49,11 @@ Copyright_License {
 #include "Renderer/ThermalBandRenderer.hpp"
 #include "Renderer/WindChartRenderer.hpp"
 #include "Renderer/CuRenderer.hpp"
-#include "GestureManager.hpp"
+#include "UIUtil/GestureManager.hpp"
 #include "Blackboard/FullBlackboard.hpp"
 #include "Language/Language.hpp"
+#include "Engine/Contest/Solvers/Contests.hpp"
+#include "Event/LambdaTimer.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Screen/OpenGL/Scissor.hpp"
@@ -99,9 +101,10 @@ public:
     :CrossSectionWindow(look, airspace_look, chart_look) {}
 
 protected:
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
+  /* virtual methods from class Window */
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys) override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
 };
 
 class ChartControl: public PaintWindow
@@ -110,31 +113,29 @@ class ChartControl: public PaintWindow
   const ThermalBandLook &thermal_band_look;
 
 public:
-  ChartControl(ContainerWindow &parent,
-               PixelScalar x, PixelScalar y,
-               UPixelScalar Width, UPixelScalar Height,
+  ChartControl(ContainerWindow &parent, PixelRect rc,
                const WindowStyle style,
                const ChartLook &chart_look,
                const ThermalBandLook &thermal_band_look);
 
 protected:
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
+  /* virtual methods from class Window */
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys) override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
 
-  virtual void OnPaint(Canvas &canvas);
+  /* virtual methods from class PaintWindow */
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
-ChartControl::ChartControl(ContainerWindow &parent,
-                           PixelScalar X, PixelScalar Y,
-                           UPixelScalar Width, UPixelScalar Height,
+ChartControl::ChartControl(ContainerWindow &parent, PixelRect rc,
                            const WindowStyle style,
                            const ChartLook &_chart_look,
                            const ThermalBandLook &_thermal_band_look)
   :chart_look(_chart_look),
    thermal_band_look(_thermal_band_look)
 {
-  set(parent, X, Y, Width, Height, style);
+  Create(parent, rc, style);
 }
 
 static void
@@ -223,7 +224,7 @@ ChartControl::OnPaint(Canvas &canvas)
         ? &glide_computer->GetTraceComputer()
         : NULL;
       const FlightStatisticsRenderer fs(chart_look, look->map);
-      fs.RenderTask(canvas, rcgfx, basic, calculated,
+      fs.RenderTask(canvas, rcgfx, basic,
                     settings_computer, settings_map,
                     *protected_task_manager,
                     trace_computer);
@@ -232,7 +233,7 @@ ChartControl::OnPaint(Canvas &canvas)
   case AnalysisPage::OLC:
     if (glide_computer != NULL) {
       const FlightStatisticsRenderer fs(chart_look, look->map);
-      fs.RenderOLC(canvas, rcgfx, basic, calculated,
+      fs.RenderOLC(canvas, rcgfx, basic,
                    settings_computer, settings_map,
                    calculated.contest_stats,
                    glide_computer->GetTraceComputer());
@@ -356,10 +357,11 @@ Update()
 
   case AnalysisPage::OLC:
     _stprintf(sTmp, _T("%s: %s"), _("Analysis"),
-              ContestToString(settings_computer.task.contest));
+              ContestToString(settings_computer.contest.contest));
     wf->SetCaption(sTmp);
     SetCalcCaption(_T(""));
-    FlightStatisticsRenderer::CaptionOLC(sTmp, settings_computer.task, calculated);
+    FlightStatisticsRenderer::CaptionOLC(sTmp, settings_computer.contest,
+                                         calculated);
     wInfo->SetCaption(sTmp);
     break;
 
@@ -372,8 +374,7 @@ Update()
     break;
 
   case AnalysisPage::COUNT:
-    assert(false);
-    break;
+    gcc_unreachable();
   }
 
   switch (page) {
@@ -464,30 +465,24 @@ CrossSectionControl::OnMouseUp(PixelScalar x, PixelScalar y)
 }
 
 static void
-OnNextClicked(gcc_unused WndButton &Sender)
+OnNextClicked()
 {
   NextPage(+1);
 }
 
 static void
-OnPrevClicked(gcc_unused WndButton &Sender)
+OnPrevClicked()
 {
   NextPage(-1);
 }
 
-static void
-OnCloseClicked(gcc_unused WndButton &button)
-{
-  wf->SetModalResult(mrOK);
-}
-
 static bool
-FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
+FormKeyDown(unsigned key_code)
 {
   assert(wf != NULL);
 
   switch (key_code) {
-  case VK_LEFT:
+  case KEY_LEFT:
 #ifdef GNAV
   case '6':
 #endif
@@ -495,7 +490,7 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
     NextPage(-1);
     return true;
 
-  case VK_RIGHT:
+  case KEY_RIGHT:
 #ifdef GNAV
   case '7':
 #endif
@@ -509,7 +504,7 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
 }
 
 static void
-OnCalcClicked(gcc_unused WndButton &Sender)
+OnCalcClicked()
 {
   assert(wf != NULL);
 
@@ -545,14 +540,12 @@ OnCalcClicked(gcc_unused WndButton &Sender)
 }
 
 static Window *
-OnCreateCrossSectionControl(ContainerWindow &parent,
-                            PixelScalar left, PixelScalar top,
-                            UPixelScalar width, UPixelScalar height,
+OnCreateCrossSectionControl(ContainerWindow &parent, PixelRect rc,
                             const WindowStyle style)
 {
   csw = new CrossSectionControl(look->cross_section, look->map.airspace,
                                 look->chart);
-  csw->set(parent, left, top, width, height, style);
+  csw->Create(parent, rc, style);
   csw->SetAirspaces(airspaces);
   csw->SetTerrain(terrain);
   UpdateCrossSection();
@@ -560,20 +553,12 @@ OnCreateCrossSectionControl(ContainerWindow &parent,
 }
 
 static Window *
-OnCreateChartControl(ContainerWindow &parent,
-                     PixelScalar left, PixelScalar top,
-                     UPixelScalar width, UPixelScalar height,
+OnCreateChartControl(ContainerWindow &parent, PixelRect rc,
                      const WindowStyle style)
 {
-  return new ChartControl(parent, left, top, width, height, style,
+  return new ChartControl(parent, rc, style,
                           look->chart,
                           look->thermal_band);
-}
-
-static void
-OnTimer(WndForm &Sender)
-{
-  Update();
 }
 
 static constexpr CallBackTableEntry CallBackTable[] = {
@@ -582,7 +567,6 @@ static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnNextClicked),
   DeclareCallBackEntry(OnPrevClicked),
   DeclareCallBackEntry(OnCalcClicked),
-  DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(NULL)
 };
 
@@ -607,7 +591,7 @@ dlgAnalysisShowModal(SingleWindow &parent, const Look &_look,
                                       _T("IDR_XML_ANALYSIS"));
   assert(wf != NULL);
 
-  wf->SetKeyDownNotify(FormKeyDown);
+  wf->SetKeyDownFunction(FormKeyDown);
 
   wGrid = (ChartControl*)wf->FindByName(_T("frmGrid"));
   wInfo = (WndFrame *)wf->FindByName(_T("frmInfo"));
@@ -618,8 +602,11 @@ dlgAnalysisShowModal(SingleWindow &parent, const Look &_look,
 
   Update();
 
-  wf->SetTimerNotify(OnTimer, 2500);
+  auto update_timer = MakeLambdaTimer([](){ Update(); });
+  update_timer.Schedule(2500);
+
   wf->ShowModal();
+  update_timer.Cancel();
 
   delete wf;
 }

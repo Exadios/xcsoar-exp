@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,14 +23,12 @@
 #define COMMON_STATS_HPP
 
 #include "Math/fixed.hpp"
+#include "Time/RoughTime.hpp"
 #include "Geo/GeoVector.hpp"
-#include "GlideSolvers/GlideResult.hpp"
-#include "Util/TypeTraits.hpp"
 #include "TaskSummary.hpp"
+#include "../TaskType.hpp"
 
-#ifdef DO_PRINT
-#include <iostream>
-#endif
+#include <type_traits>
 
 /** 
  * Task statistics that are common across all managed tasks.
@@ -41,14 +39,15 @@
 class CommonStats 
 {
 public:
+  /**
+   * A copy of #StartConstraints::open_time_span.
+   */
+  RoughTimeSpan start_open_time_span;
+
   /** Whether the task found landable reachable waypoints (aliases abort) */
   bool landable_reachable;
-  /** Whether the task is started (aliases ordered task) */
-  bool task_started;
   /** time UTC ship descended through max task start height */
   fixed TimeUnderStartMaxHeight;
-  /** Whether the task is finished (aliases ordered task) */
-  bool task_finished;
   /** Time (s) until assigned minimum time is achieved */
   fixed aat_time_remaining;
   /**
@@ -60,20 +59,12 @@ public:
   fixed aat_speed_max;
   /** Average speed over min task at minimum assigned time (m/s) */
   fixed aat_speed_min;
-  /** Time (s) remaining for ordered task */
-  fixed task_time_remaining;
-  /** Time (s) elapsed for ordered task */
-  fixed task_time_elapsed;
   /** Vector to home waypoint */
   GeoVector vector_home;
-  /** Whether task is abort mode */
-  bool mode_abort;
-  /** Whether task is goto mode */
-  bool mode_ordered;
-  /** Whether task is goto mode */
-  bool mode_goto;
-  /** Whether ordered task is valid */
-  bool ordered_valid;
+
+  /** The current task type/mode */
+  TaskType task_type;
+
   /** Whether ordered task has AAT areas */
   bool ordered_has_targets;
   /** Whether ordered task has optional starts */
@@ -110,12 +101,8 @@ public:
    * Reset the task stats
    */
   void ResetTask();
-
-#ifdef DO_PRINT
-  friend std::ostream& operator<< (std::ostream& o, const CommonStats& ts);
-#endif
 };
 
-static_assert(is_trivial<CommonStats>::value, "type is not trivial");
+static_assert(std::is_trivial<CommonStats>::value, "type is not trivial");
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,9 +21,12 @@ Copyright_License {
 }
 */
 
+#define ENABLE_SCREEN
+
+#include "Main.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
-#include "Screen/Init.hpp"
+#include "Screen/Canvas.hpp"
 
 #include <algorithm>
 
@@ -62,32 +65,32 @@ protected:
   }
 
 protected:
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) {
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override {
     SetFocus();
     return true;
   }
 
-  virtual bool OnKeyDown(unsigned key_code) {
+  virtual bool OnKeyDown(unsigned key_code) override {
     add_event(key_code, true);
     return true;
   }
 
-  virtual bool OnKeyUp(unsigned key_code) {
+  virtual bool OnKeyUp(unsigned key_code) override {
     add_event(key_code, false);
     return true;
   }
 
-  virtual void OnSetFocus() {
+  virtual void OnSetFocus() override {
     PaintWindow::OnSetFocus();
     Invalidate();
   }
 
-  virtual void OnKillFocus() {
+  virtual void OnKillFocus() override {
     PaintWindow::OnKillFocus();
     Invalidate();
   }
 
-  virtual void OnPaint(Canvas &canvas) {
+  virtual void OnPaint(Canvas &canvas) override {
     canvas.SelectWhiteBrush();
     if (HasFocus())
       canvas.SelectBlackPen();
@@ -95,13 +98,17 @@ protected:
       canvas.SelectWhitePen();
     canvas.Clear();
 
+    canvas.SetTextColor(COLOR_BLACK);
+    canvas.SetBackgroundTransparent();
+    canvas.Select(normal_font);
+
     unsigned text_height = canvas.CalcTextSize(_T("W")).cy;
     for (int i = num_events - 1, y = 4; i >= 0; --i, y += text_height) {
       const struct key_event &event = events[i];
       TCHAR buffer[64];
       _stprintf(buffer, _T("key %s = 0x%x"),
                 event.down ? _T("down") : _T("up"), event.code);
-      canvas.text(4, y, buffer);
+      canvas.DrawText(4, y, buffer);
     }
   }
 };
@@ -116,50 +123,32 @@ class TestWindow : public SingleWindow {
   };
 
 public:
-#ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance) {
-    WNDCLASS wc;
-
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = Window::WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    wc.lpszMenuName = 0;
-    wc.lpszClassName = _T("KeyCodeDumper");
-
-    return RegisterClass(&wc);
-  }
-#endif /* USE_GDI */
-
-  void set(PixelRect _rc) {
-    SingleWindow::set(_T("KeyCodeDumper"), _T("KeyCodeDumper"), _rc);
+  void Create(PixelSize size) {
+    SingleWindow::Create(_T("KeyCodeDumper"), size);
 
     PixelRect rc = GetClientRect();
 
     PixelRect d_rc = rc;
     d_rc.bottom = (rc.top + rc.bottom + 1) / 2;
-    key_code_dumper.set(*this, d_rc);
+    key_code_dumper.Create(*this, d_rc);
 
     PixelRect button_rc = rc;
     button_rc.top = (rc.top + rc.bottom + 1) / 2;
 
-    close_button.set(*this, _T("Close"), ID_CLOSE, button_rc);
+    close_button.Create(*this, _T("Close"), ID_CLOSE, button_rc);
+    close_button.SetFont(normal_font);
 
     key_code_dumper.SetFocus();
   }
 
 protected:
-  virtual void OnResize(UPixelScalar width, UPixelScalar height) {
-    SingleWindow::OnResize(width, height);
-    key_code_dumper.Move(0, 0, width, (height + 1) / 2);
-    close_button.Move(0, (height + 1) / 2, width, height / 2);
+  virtual void OnResize(PixelSize new_size) override {
+    SingleWindow::OnResize(new_size);
+    key_code_dumper.Move(0, 0, new_size.cx, (new_size.cy + 1) / 2);
+    close_button.Move(0, (new_size.cy + 1) / 2, new_size.cx, new_size.cy / 2);
   }
 
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -170,30 +159,12 @@ protected:
   }
 };
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
+static void
+Main()
 {
-  ScreenGlobalInit screen_init;
-
-#ifdef USE_GDI
-  TestWindow::register_class(hInstance);
-#endif
-
   TestWindow window;
-  window.set(PixelRect{0, 0, 240, 100});
+  window.Create({240, 100});
   window.Show();
 
   window.RunEventLoop();
-
-  return 0;
 }

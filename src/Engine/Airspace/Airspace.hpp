@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,11 +29,13 @@
 #include <iostream>
 #endif
 
+struct GeoPoint;
 struct AircraftState;
 class AtmosphericPressure;
 class AbstractAirspace;
 class AirspaceActivity;
 class AirspaceIntersectionVector;
+class TaskProjection;
 
 /**
  * Single object container for actual airspaces, to be stored in Airspaces object
@@ -74,12 +76,7 @@ public:
    * @return dummy airspace envelope
    */
   Airspace(const GeoPoint&loc, const TaskProjection& task_projection,
-           const fixed range=fixed_zero)
-    :FlatBoundingBox(task_projection.ProjectInteger(loc),
-                     task_projection.ProjectRangeInteger(loc, range)),
-     airspace(NULL)
-  {
-  }
+           const fixed range=fixed(0));
 
   /** 
    * Constructor for virtual airspaces for use in bounding-box
@@ -92,12 +89,7 @@ public:
    * @return dummy airspace envelope
    */
   Airspace(const GeoPoint &ll, const GeoPoint &ur,
-           const TaskProjection& task_projection)
-    :FlatBoundingBox(task_projection.ProjectInteger(ll),
-                     task_projection.ProjectInteger(ur)),
-     airspace(NULL)
-  {
-  }
+           const TaskProjection &task_projection);
 
   /** 
    * Checks whether an aircraft is inside the airspace. 

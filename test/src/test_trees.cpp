@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,10 +23,12 @@
 #include "harness_waypoints.hpp"
 #include "harness_airspace.hpp"
 #include "test_debug.hpp"
+#include "OS/FileUtil.hpp"
 
 #define n_test 500
 
 #include "Waypoint/WaypointVisitor.hpp"
+#include "Engine/Waypoint/Waypoints.hpp"
 
 class WaypointVisitorPrint: public WaypointVisitor {
 public:
@@ -94,7 +96,8 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  std::ofstream fw("results/res-tree-wp.txt");
+  Directory::Create(_T("output/results"));
+  std::ofstream fw("output/results/res-tree-wp.txt");
 
   plan_tests(2);
 
@@ -106,7 +109,7 @@ int main(int argc, char** argv) {
   fw << "\n";
   ok(fine,"waypoint tree",0);
 
-  std::ofstream fa("results/res-tree-as.txt");
+  std::ofstream fa("output/results/res-tree-as.txt");
 
   fine = true;
   fa << "# test airspace tree\n";

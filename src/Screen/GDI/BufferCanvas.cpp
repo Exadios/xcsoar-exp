@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,52 +25,53 @@ Copyright_License {
 
 #include <assert.h>
 
-BufferCanvas::BufferCanvas(const Canvas &canvas,
-                           UPixelScalar _width, UPixelScalar _height)
-  :VirtualCanvas(canvas, _width, _height)
+BufferCanvas::BufferCanvas(const Canvas &canvas, PixelSize new_size)
+  :VirtualCanvas(canvas, new_size)
 {
-  bitmap = ::CreateCompatibleBitmap(canvas, width, height);
+  bitmap = ::CreateCompatibleBitmap(canvas, new_size.cx, new_size.cy);
   ::SelectObject(dc, bitmap);
 }
 
 BufferCanvas::~BufferCanvas()
 {
-  reset();
+  Destroy();
 }
 
-void BufferCanvas::set(const Canvas &canvas,
-                       UPixelScalar _width, UPixelScalar _height)
+void
+BufferCanvas::Create(const Canvas &canvas, PixelSize new_size)
 {
   assert(canvas.IsDefined());
 
-  reset();
-  VirtualCanvas::set(canvas, _width, _height);
-  bitmap = ::CreateCompatibleBitmap(canvas, width, height);
+  Destroy();
+  VirtualCanvas::Create(canvas, new_size);
+  bitmap = ::CreateCompatibleBitmap(canvas, new_size.cx, new_size.cy);
   ::SelectObject(dc, bitmap);
 }
 
 void
-BufferCanvas::set(const Canvas &canvas)
+BufferCanvas::Create(const Canvas &canvas)
 {
-  set(canvas, canvas.get_width(), canvas.get_height());
+  Create(canvas, canvas.GetSize());
 }
 
-void BufferCanvas::reset()
+void
+BufferCanvas::Destroy()
 {
-  VirtualCanvas::reset();
+  VirtualCanvas::Destroy();
   if (bitmap != NULL)
     ::DeleteObject(bitmap);
 }
 
-void BufferCanvas::resize(UPixelScalar _width, UPixelScalar _height)
+void
+BufferCanvas::Resize(PixelSize new_size)
 {
   assert(dc != NULL);
 
-  if (_width == width && _height == height)
+  if (new_size == size)
     return;
 
   ::DeleteObject(bitmap);
-  Canvas::resize(_width, _height);
-  bitmap = ::CreateCompatibleBitmap(dc, width, height);
+  Canvas::Resize(new_size);
+  bitmap = ::CreateCompatibleBitmap(dc, new_size.cx, new_size.cy);
   ::SelectObject(dc, bitmap);
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ Copyright_License {
 
 class GTAltimeterDevice : public AbstractDevice {
 public:
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 };
 
 static bool
@@ -49,7 +49,7 @@ LK8EX1(NMEAInputLine &line, NMEAInfo &info)
 
   int vario;
   if (line.ReadChecked(vario) && vario != 9999)
-    info.ProvideNettoVario(fixed(vario) / 100);
+    info.ProvideNoncompVario(fixed(vario) / 100);
 
   int temperature;
   if (line.ReadChecked(temperature) && temperature != 99) {
@@ -59,7 +59,7 @@ LK8EX1(NMEAInputLine &line, NMEAInfo &info)
 
   fixed battery_value;
   if (line.ReadChecked(battery_value) &&
-      (unsigned)(battery_value + fixed_half) != 999) {
+      (unsigned)(battery_value + fixed(0.5)) != 999) {
     if (battery_value > fixed(1000)) {
       info.battery_level = battery_value - fixed(1000);
       info.battery_level_available.Update(info.clock);
@@ -95,7 +95,7 @@ GTAltimeterDeviceCreateOnPort(gcc_unused const DeviceConfig &config,
   return new GTAltimeterDevice();
 }
 
-const struct DeviceRegister gt_altimeter_device_driver = {
+const struct DeviceRegister gt_altimeter_driver = {
   _T("GTAltimeter"),
   _T("GT Altimeter (GliderTools)"),
   0,

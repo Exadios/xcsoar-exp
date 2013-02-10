@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,8 +35,8 @@
 static void
 OnAdvance(Trace &trace, const GeoPoint &loc, const fixed alt, const fixed t)
 {
-  if (t>fixed_one) {
-    const TracePoint point(loc, unsigned(t), alt, fixed_zero, 0);
+  if (t>fixed(1)) {
+    const TracePoint point(loc, unsigned(t), alt, fixed(0), 0);
     trace.push_back(point);
   }
 // get the trace, just so it's included in timing
@@ -61,7 +61,7 @@ TestTrace(const char *filename, unsigned ntrace, bool output=false)
 
   char *line;
   int i = 0;
-  for (; (line = reader.read()) != NULL; i++) {
+  for (; (line = reader.ReadLine()) != NULL; i++) {
     if (output && (i % 500 == 0)) {
       putchar('.');
       fflush(stdout);

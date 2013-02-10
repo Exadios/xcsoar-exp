@@ -2,49 +2,58 @@
 #define AIRSPACE_VISIBILITY_HPP
 
 #include "Airspace/Predicate/AirspacePredicate.hpp"
-#include "Math/fixed.hpp"
 
 struct AirspaceComputerSettings;
 struct AirspaceRendererSettings;
 struct AltitudeState;
 
-class AirspaceVisiblePredicate: public AirspacePredicate
-{
-protected:
+/**
+ * Checks the airspace visibility settings that use the airspace type.
+ */
+gcc_pure
+bool
+IsAirspaceTypeVisible(const AbstractAirspace &airspace,
+                      const AirspaceRendererSettings &renderer_settings);
+
+/**
+ * Checks the airspace visibility settings that use the aircraft
+ * altitude.
+ */
+gcc_pure
+bool
+IsAirspaceAltitudeVisible(const AbstractAirspace &airspace,
+                          const AltitudeState &state,
+                          const AirspaceComputerSettings &computer_settings,
+                          const AirspaceRendererSettings &renderer_settings);
+
+class AirspaceVisibility {
   const AirspaceComputerSettings &computer_settings;
   const AirspaceRendererSettings &renderer_settings;
   const AltitudeState &state;
 
 public:
-  AirspaceVisiblePredicate(const AirspaceComputerSettings &_computer_settings,
-                           const AirspaceRendererSettings &_renderer_settings,
-                           const AltitudeState& _state)
+  constexpr
+  AirspaceVisibility(const AirspaceComputerSettings &_computer_settings,
+                     const AirspaceRendererSettings &_renderer_settings,
+                     const AltitudeState& _state)
     :computer_settings(_computer_settings),
      renderer_settings(_renderer_settings),
      state(_state) {}
 
-  virtual bool operator()(const AbstractAirspace &airspace) const {
-    return IsTypeVisible(airspace) && IsAltitudeVisible(airspace);
-  }
-
-  /**
-   * Determine if airspace is visible based on observers' altitude
-   *
-   * @param airspace Airspace to test
-   *
-   * @return True if visible
-   */
-  bool IsAltitudeVisible(const AbstractAirspace &airspace) const;
-
-  /**
-   * Determine if airspace is visible based on type
-   *
-   * @param airspace Airspace to test
-   *
-   * @return True if visible
-   */
-  bool IsTypeVisible(const AbstractAirspace &airspace) const;
+  gcc_pure
+  bool operator()(const AbstractAirspace &airspace) const;
 };
 
+class AirspaceVisiblePredicate
+  :public AirspacePredicate, private AirspaceVisibility
+{
+public:
+  AirspaceVisiblePredicate(const AirspaceComputerSettings &_computer_settings,
+                           const AirspaceRendererSettings &_renderer_settings,
+                           const AltitudeState& _state)
+    :AirspaceVisibility(_computer_settings, _renderer_settings, _state) {}
+
+  virtual bool operator()(const AbstractAirspace &airspace) const override;
+};
 
 #endif

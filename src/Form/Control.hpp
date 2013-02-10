@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_FORM_CONTROL_HPP
 #define XCSOAR_FORM_CONTROL_HPP
 
-#include "Screen/Brush.hpp"
-#include "Screen/ContainerWindow.hpp"
+#include "Screen/PaintWindow.hpp"
 #include "Util/StaticString.hpp"
 
 #include <tchar.h>
@@ -36,7 +35,7 @@ struct DialogLook;
  * The WindowControl class is the base class for every other control
  * including the forms/windows itself, using the ContainerControl.
  */
-class WindowControl : public ContainerWindow {
+class WindowControl : public PaintWindow {
 public:
   typedef void (*HelpCallback)(WindowControl *Sender);
 
@@ -62,30 +61,18 @@ public:
   virtual ~WindowControl();
 
   /**
-   * The OnSetFocus event is called when the control gets focused
-   * (derived from Window)
-   */
-  virtual void OnSetFocus();
-
-  /**
-   * The OnKillFocus event is called when the control loses the focus
-   * (derived from Window)
-   */
-  virtual void OnKillFocus();
-
-  /**
    * The OnKeyDown event is called when a key is pressed while the
    * control is focused
    * (derived from Window)
    */
-  virtual bool OnKeyDown(unsigned key_code);
+  virtual bool OnKeyDown(unsigned key_code) override;
 
   /**
    * The OnKeyUp event is called when a key is released while the
    * control is focused
    * (derived from Window)
    */
-  virtual bool OnKeyUp(unsigned key_code);
+  virtual bool OnKeyUp(unsigned key_code) override;
 
   /**
    * Does this control have a help text?

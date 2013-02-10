@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,8 +29,13 @@ Copyright_License {
 #include "Screen/OpenGL/Init.hpp"
 #endif
 
-#include <SDL.h>
+#ifdef USE_FREETYPE
+#include "Screen/FreeType/Init.hpp"
+#else
 #include <SDL_ttf.h>
+#endif
+
+#include <SDL.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,11 +43,12 @@ Copyright_License {
 ScreenGlobalInit::ScreenGlobalInit()
 {
   if (::SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER) != 0) {
-    fprintf(stderr, "SDL_Init() has failed\n");
+    fprintf(stderr, "SDL_Init() has failed: %s\n", ::SDL_GetError());
     exit(EXIT_FAILURE);
   }
 
   ::SDL_EnableKeyRepeat(250, 50);
+  ::SDL_EnableUNICODE(true);
 
 #if defined(ENABLE_OPENGL)
   ::SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -51,10 +57,14 @@ ScreenGlobalInit::ScreenGlobalInit()
   OpenGL::Initialise();
 #endif
 
+#ifdef USE_FREETYPE
+  FreeType::Initialise();
+#else
   if (::TTF_Init() != 0) {
     fprintf(stderr, "TTF_Init() has failed\n");
     exit(EXIT_FAILURE);
   }
+#endif
 
   Font::Initialise();
 
@@ -67,7 +77,12 @@ ScreenGlobalInit::~ScreenGlobalInit()
   OpenGL::Deinitialise();
 #endif
 
+#ifdef USE_FREETYPE
+  FreeType::Deinitialise();
+#else
   ::TTF_Quit();
+#endif
+
   ::SDL_Quit();
 
   ScreenDeinitialized();

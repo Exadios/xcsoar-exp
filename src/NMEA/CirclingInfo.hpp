@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,9 +24,12 @@ Copyright_License {
 #ifndef XCSOAR_CIRCLING_INFO_HPP
 #define XCSOAR_CIRCLING_INFO_HPP
 
-#include "Util/TypeTraits.hpp"
 #include "Geo/GeoPoint.hpp"
 #include "Math/fixed.hpp"
+
+#include <type_traits>
+
+#include <stdint.h>
 
 /** Enumeration for cruise/circling mode detection */
 enum class CirclingMode: uint8_t {
@@ -54,8 +57,17 @@ struct CirclingInfo
 
   /** StartLocation of the current/last climb */
   GeoPoint climb_start_location;
-  /** StartAltitude of the current/last climb */
+
+  /**
+   * Start altitude of the current/last climb.
+   */
   fixed climb_start_altitude;
+
+  /**
+   * Start altitude of the current/last climb (total energy).
+   */
+  fixed climb_start_altitude_te;
+
   /** StartTime of the current/last climb */
   fixed climb_start_time;
 
@@ -63,17 +75,10 @@ struct CirclingInfo
   GeoPoint cruise_start_location;
   /** StartAltitude of the current/last cruise */
   fixed cruise_start_altitude;
+  /** StartAltitude of the current/last cruise (total energy) */
+  fixed cruise_start_altitude_te;
   /** StartTime of the current/last cruise */
   fixed cruise_start_time;
-
-  /** Start/End time of the turn (used for flight mode determination) */
-  fixed turn_start_time;
-  /** Start/End location of the turn (used for flight mode determination) */
-  GeoPoint turn_start_location;
-  /** Start/End altitude of the turn (used for flight mode determination) */
-  fixed turn_start_altitude;
-  /** Start/End energy height of the turn (used for flight mode determination) */
-  fixed turn_start_energy_height;
 
   /** Current TurnMode (Cruise, Climb or somewhere between) */
   CirclingMode turn_mode;
@@ -86,16 +91,16 @@ struct CirclingInfo
   /** True if in circling mode, False otherwise */
   bool circling;
 
-  /** Circling/Cruise ratio in percent */
+  /**
+   * Circling/Cruise ratio in percent.  Negative value means
+   * "unknown".
+   */
   fixed circling_percentage;
 
   /** Time spent in cruise mode */
   fixed time_cruise;
   /** Time spent in circling mode */
   fixed time_climb;
-
-  /** Minimum altitude since start of task */
-  fixed min_altitude;
 
   /** Maximum height gain (from MinAltitude) during task */
   fixed max_height_gain;
@@ -110,6 +115,6 @@ struct CirclingInfo
   }
 };
 
-static_assert(is_trivial<CirclingInfo>::value, "type is not trivial");
+static_assert(std::is_trivial<CirclingInfo>::value, "type is not trivial");
 
 #endif

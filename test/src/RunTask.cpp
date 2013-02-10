@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ Run(DebugReplay &replay, TaskManager &task_manager)
 
   while (replay.Next()) {
     const MoreData &basic = replay.Basic();
-    DerivedInfo &calculated = replay.SetCalculated();
+    const DerivedInfo &calculated = replay.Calculated();
 
     if (!basic.HasTimeAdvancedSince(last_basic) ||
         !basic.location_available)
@@ -75,11 +75,10 @@ Run(DebugReplay &replay, TaskManager &task_manager)
     last_calculated = calculated;
   }
 
-  const CommonStats &common_stats = task_manager.GetCommonStats();
-  printf("task_started=%d task_finished=%d\n",
-         common_stats.task_started, common_stats.task_finished);
+  const TaskStats &task_stats = task_manager.GetOrderedTask().GetStats();
 
-  const TaskStats &task_stats = task_manager.GetStats();
+  printf("task_started=%d task_finished=%d\n",
+         task_stats.task_started, task_stats.task_finished);
 
   printf("task elapsed %ds\n", (int)task_stats.total.time_elapsed);
   printf("task speed %1.1f kph\n",
@@ -117,6 +116,8 @@ int main(int argc, char **argv)
   }
 
   TaskManager task_manager(task_behaviour, way_points);
+  task_manager.SetGlidePolar(GlidePolar(fixed(1)));
+
   if (!task_manager.Commit(*task)) {
     fprintf(stderr, "Failed to commit task\n");
     return EXIT_FAILURE;

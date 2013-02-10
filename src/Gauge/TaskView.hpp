@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,26 +24,55 @@
 #ifndef XCSOAR_TASK_VIEW_HPP
 #define XCSOAR_TASK_VIEW_HPP
 
-#include "Screen/Point.hpp"
-
+struct PixelRect;
 class Canvas;
 class OrderedTask;
 class OrderedTaskPoint;
 class RasterTerrain;
 class Airspaces;
+class WindowProjection;
 struct GeoPoint;
 struct MapSettings;
 struct TaskLook;
 struct AirspaceLook;
 
+/**
+ * Draw Task with the given projection.
+ *
+ * @param fai_sectors render FAI triangle sectors?
+ * @highlight_index highlight the task point as beeing manually edited
+ */
+void
+PaintTask(Canvas &canvas, const WindowProjection &projection,
+          const OrderedTask &task,
+          bool location_available, const GeoPoint &location,
+          const MapSettings &settings_map,
+          const TaskLook &task_look,
+          const AirspaceLook &airspace_look,
+          const RasterTerrain *terrain, const Airspaces *airspaces,
+          bool fai_sectors,
+          int highlight_index);
+
+/**
+ * Draw the whole Task into a rectangle.
+ *
+ * @param fai_sectors render FAI triangle sectors?
+ * @highlight_index highlight the task point as beeing manually edited
+ */
 void
 PaintTask(Canvas &canvas, const PixelRect &rc, const OrderedTask &task,
           bool location_available, const GeoPoint &location,
           const MapSettings &settings_map,
           const TaskLook &task_look,
           const AirspaceLook &airspace_look,
-          const RasterTerrain *terrain, const Airspaces *airspaces);
+          const RasterTerrain *terrain, const Airspaces *airspaces,
+          bool fai_sectors=false,
+          int highlight_index = -1);
 
+/**
+ * Draw a detailed view of a TaskPoint into a rectangle.
+ * @highlight_index highlight the task point as beeing manually edited
+ */
 void
 PaintTaskPoint(Canvas &canvas, const PixelRect &rc,
                const OrderedTask &task, const OrderedTaskPoint &point,
@@ -51,6 +80,7 @@ PaintTaskPoint(Canvas &canvas, const PixelRect &rc,
                const MapSettings &settings_map,
                const TaskLook &task_look,
                const AirspaceLook &airspace_look,
-               const RasterTerrain *terrain, const Airspaces *airspaces);
+               const RasterTerrain *terrain, const Airspaces *airspaces,
+               int highlight_index = -1);
 
 #endif

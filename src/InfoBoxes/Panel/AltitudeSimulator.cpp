@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,91 +22,44 @@ Copyright_License {
 */
 
 #include "AltitudeSimulator.hpp"
-#include "Interface.hpp"
+#include "Widget/OffsetButtonsWidget.hpp"
 #include "Components.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Units/Units.hpp"
+#include "Interface.hpp"
+#include "UIGlobals.hpp"
 #include "Simulator.hpp"
-#include "Dialogs/CallBackTable.hpp"
-#include "Form/XMLWidget.hpp"
 
-class WndButton;
-
-class AltitudeSimulatorPanel : public XMLWidget {
+class AltitudeSimulatorOffsetButtons final : public OffsetButtonsWidget {
 public:
-  void Refresh();
+  template<typename... Args>
+  AltitudeSimulatorOffsetButtons(Args&&... args):OffsetButtonsWidget(args...) {}
 
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
+protected:
+  /* virtual methods from OffsetButtonsWidget */
+  virtual void OnOffset(fixed offset) override;
 };
 
-static void
-ChangeAltitude(const fixed step)
+void
+AltitudeSimulatorOffsetButtons::OnOffset(const fixed step)
 {
+  if (!is_simulator())
+    return;
+
   const NMEAInfo &basic = CommonInterface::Basic();
 
   device_blackboard->SetAltitude(basic.gps_altitude +
                                  (fixed)Units::ToSysAltitude(step));
 }
 
-static void
-PnlSimulatorOnPlusBig(gcc_unused WndButton &Sender)
-{
-  if (!is_simulator())
-    return;
-
-  ChangeAltitude(fixed(+100));
-}
-
-static void
-PnlSimulatorOnPlusSmall(gcc_unused WndButton &Sender)
-{
-  if (!is_simulator())
-    return;
-
-  ChangeAltitude(fixed(+10));
-}
-
-static void
-PnlSimulatorOnMinusSmall(gcc_unused WndButton &Sender)
-{
-  if (!is_simulator())
-    return;
-
-  ChangeAltitude(fixed(-10));
-}
-
-static void
-PnlSimulatorOnMinusBig(gcc_unused WndButton &Sender)
-{
-  if (!is_simulator())
-    return;
-
-  ChangeAltitude(fixed(-100));
-}
-
-static constexpr
-CallBackTableEntry CallBackTable[] = {
-  DeclareCallBackEntry(PnlSimulatorOnPlusBig),
-  DeclareCallBackEntry(PnlSimulatorOnPlusSmall),
-  DeclareCallBackEntry(PnlSimulatorOnMinusSmall),
-  DeclareCallBackEntry(PnlSimulatorOnMinusBig),
-  DeclareCallBackEntry(NULL)
-};
-
-void
-AltitudeSimulatorPanel::Prepare(ContainerWindow &parent,
-                                const PixelRect &rc)
-{
-  LoadWindow(CallBackTable, parent, _T("IDR_XML_INFOBOXALTITUDESIMULATOR"));
-}
-
 Widget *
 LoadAltitudeSimulatorPanel(unsigned id)
 {
   const NMEAInfo &basic = CommonInterface::Basic();
-
   if (!basic.gps.simulator)
-    return NULL;
+    return nullptr;
 
-  return new AltitudeSimulatorPanel();
+  return new AltitudeSimulatorOffsetButtons(UIGlobals::GetDialogLook(),
+                                            _T("%+.0f"),
+                                            fixed(10), fixed(100));
 }

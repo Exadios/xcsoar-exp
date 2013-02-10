@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@ Copyright_License {
 #include "NMEA/Info.hpp"
 #include "NMEA/InputLine.hpp"
 #include "Atmosphere/Temperature.hpp"
+#include "Util/Clamp.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,12 +43,12 @@ class B50Device : public AbstractDevice {
 public:
   B50Device(Port &_port):port(_port) {}
 
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 
-  virtual bool PutMacCready(fixed mc, OperationEnvironment &env);
-  virtual bool PutBugs(fixed bugs, OperationEnvironment &env);
+  virtual bool PutMacCready(fixed mc, OperationEnvironment &env) override;
+  virtual bool PutBugs(fixed bugs, OperationEnvironment &env) override;
   virtual bool PutBallast(fixed fraction, fixed overload,
-                          OperationEnvironment &env);
+                          OperationEnvironment &env) override;
 };
 
 /*
@@ -97,8 +98,7 @@ PBB50(NMEAInputLine &line, NMEAInfo &info)
   // of max performance
 
   if (line.ReadChecked(value))
-    info.settings.ProvideBugs(fixed_one - max(fixed_zero,
-                                              min(fixed(30), value)) / 100,
+    info.settings.ProvideBugs(fixed(1) - Clamp(value, fixed(0), fixed(30)) / 100,
                               info.clock);
 
   fixed ballast_overload;
@@ -108,11 +108,11 @@ PBB50(NMEAInputLine &line, NMEAInfo &info)
   // inclimb/incruise 1=cruise,0=climb, OAT
   switch (line.Read(-1)) {
   case 0:
-    info.switch_state.flight_mode = SwitchInfo::FlightMode::CRUISE;
+    info.switch_state.flight_mode = SwitchState::FlightMode::CRUISE;
     break;
 
   case 1:
-    info.switch_state.flight_mode = SwitchInfo::FlightMode::CIRCLING;
+    info.switch_state.flight_mode = SwitchState::FlightMode::CIRCLING;
     break;
   }
 
@@ -173,7 +173,7 @@ B50CreateOnPort(const DeviceConfig &config, Port &com_port)
   return new B50Device(com_port);
 }
 
-const struct DeviceRegister b50Device = {
+const struct DeviceRegister b50_driver = {
   _T("Borgelt B50"),
   _T("Borgelt B50/B800"),
   DeviceRegister::RECEIVE_SETTINGS | DeviceRegister::SEND_SETTINGS,

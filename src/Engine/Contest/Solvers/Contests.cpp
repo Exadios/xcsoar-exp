@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,13 +34,14 @@ static const TCHAR *contest_to_string[] = {
   _T("DHV-XC"),
   _T("SIS-AT"),
   _T("FFVV NetCoupe"),
+  _T("DMSt"),
 };
 
 const TCHAR*
-ContestToString(Contests contest)
+ContestToString(Contest contest)
 {
   unsigned i = (unsigned)contest;
   return i < ARRAY_SIZE(contest_to_string)
     ? contest_to_string[i]
-    : NULL;
+    : nullptr;
 }

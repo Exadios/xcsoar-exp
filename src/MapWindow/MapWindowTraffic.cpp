@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,15 +24,16 @@ Copyright_License {
 #include "MapWindow.hpp"
 #include "Math/Screen.hpp"
 #include "Screen/Icon.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Layout.hpp"
-#include "Screen/TextInBox.hpp"
 #include "Util/StringUtil.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
 #include "Formatter/UserUnits.hpp"
 #include "Look/TrafficLook.hpp"
+#include "Renderer/TextInBox.hpp"
 #include "Renderer/TrafficRenderer.hpp"
-#include "FLARM/FriendsGlue.hpp"
+#include "FLARM/Friends.hpp"
+#include "Look/Fonts.hpp"
+#include "Tracking/SkyLines/Data.hpp"
 
 #include <stdio.h>
 
@@ -58,8 +59,10 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
   // if zoomed in too far out, dont draw traffic since it will be too close to
   // the glider and so will be meaningless (serves only to clutter, cant help
   // the pilot)
-  if (projection.GetMapScale() > fixed_int_constant(7300))
+  if (projection.GetMapScale() > fixed(7300))
     return;
+
+  canvas.Select(Fonts::map);
 
   // Circle through the FLARM targets
   for (auto it = flarm.list.begin(), end = flarm.list.end();
@@ -88,7 +91,7 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
     sc_av.y += Layout::Scale(5);
 
     TextInBoxMode mode;
-    mode.mode = RM_OUTLINED;
+    mode.shape = LabelShape::OUTLINED;
 
     // JMW TODO enhancement: decluttering of FLARM altitudes (sort by max lift)
 
@@ -111,8 +114,7 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
       }
     }
 
-    auto color = FlarmFriends::GetFriendColor(traffic.id,
-                                              GetComputerSettings().team_code);
+    auto color = FlarmFriends::GetFriendColor(traffic.id);
     TrafficRenderer::Draw(canvas, traffic_look, traffic,
                           traffic.track - projection.GetScreenAngle(),
                           color, sc);
@@ -135,3 +137,24 @@ MapWindow::DrawTeammate(Canvas &canvas) const
       traffic_look.teammate_icon.Draw(canvas, sc);
   }
 }
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+
+void
+MapWindow::DrawSkyLinesTraffic(Canvas &canvas) const
+{
+  if (skylines_data == nullptr)
+    return;
+
+  canvas.Select(Fonts::map);
+
+  ScopeLock protect(skylines_data->mutex);
+  for (auto &i : skylines_data->traffic) {
+    RasterPoint pt;
+    if (render_projection.GeoToScreenIfVisible(i.second.location, pt)) {
+      traffic_look.teammate_icon.Draw(canvas, pt);
+    }
+  }
+}
+
+#endif

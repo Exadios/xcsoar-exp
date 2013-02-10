@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,10 @@ Copyright_License {
 #include "Screen/BufferWindow.hpp"
 
 #ifndef ENABLE_OPENGL
-
 #include "Screen/WindowCanvas.hpp"
+#endif
+
+#ifndef ENABLE_OPENGL
 
 void
 BufferWindow::OnCreate()
@@ -35,7 +37,7 @@ BufferWindow::OnCreate()
   dirty = true;
 
   WindowCanvas a_canvas(*this);
-  buffer.set(a_canvas);
+  buffer.Create(a_canvas);
 }
 
 void
@@ -43,31 +45,48 @@ BufferWindow::OnDestroy()
 {
   PaintWindow::OnDestroy();
 
-  buffer.reset();
-}
-
-void
-BufferWindow::OnResize(UPixelScalar width, UPixelScalar height)
-{
-  buffer.resize(width, height);
-  PaintWindow::OnResize(width, height);
-  Invalidate();
+  buffer.Destroy();
 }
 
 #endif
 
 void
+BufferWindow::OnResize(PixelSize new_size)
+{
+#ifdef ENABLE_OPENGL
+  buffer.Destroy();
+#else
+  buffer.Resize(new_size);
+  Invalidate();
+#endif
+
+  PaintWindow::OnResize(new_size);
+}
+
+void
 BufferWindow::OnPaint(Canvas &canvas)
 {
 #ifdef ENABLE_OPENGL
-  /* paint directly on OpenGL */
-  OnPaintBuffer(canvas);
+  if (!buffer.IsDefined()) {
+    buffer.Create(canvas.GetSize());
+    dirty = true;
+  }
+
+  if (dirty) {
+    dirty = false;
+    buffer.Begin(canvas);
+    OnPaintBuffer(buffer);
+    buffer.Commit(canvas);
+  } else
+    buffer.CopyTo(canvas);
+
 #else
+
   if (dirty) {
     dirty = false;
     OnPaintBuffer(buffer);
   }
 
-  canvas.copy(buffer);
+  canvas.Copy(buffer);
 #endif
 }

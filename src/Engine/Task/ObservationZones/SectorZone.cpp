@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,29 +24,6 @@
 #include "Boundary.hpp"
 #include "Geo/GeoVector.hpp"
 
-GeoPoint
-SectorZone::GetBoundaryParametric(fixed t) const
-{
-  const Angle sweep = (end_radial - start_radial).AsBearing();
-  const fixed l = GetRadius();
-  const fixed c1 = sweep.Radians() * GetRadius();
-  const fixed tt = t * (c1 + 2 * l);
-  Angle a;
-  fixed d;
-  if (tt < l) {
-    d = (tt / l) * GetRadius();
-    a = start_radial;
-  } else if (tt < l + c1) {
-    d = GetRadius();
-    a = start_radial + Angle::Radians(((tt - l) / c1) * sweep.Radians());
-  } else {
-    d = GetRadius() - (tt - l - c1) / l * GetRadius();
-    a = end_radial;
-  }
-  return GeoVector(d, a).EndPoint(GetReference());
-}
-
-
 OZBoundary
 SectorZone::GetBoundary() const
 {
@@ -65,7 +42,7 @@ SectorZone::GetBoundary() const
 fixed
 SectorZone::ScoreAdjustment() const
 {
-  return fixed_zero;
+  return fixed(0);
 }
 
 void 

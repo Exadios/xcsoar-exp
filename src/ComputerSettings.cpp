@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@ WindSettings::SetDefaults()
 void
 PolarSettings::SetDefaults()
 {
-  degradation_factor = fixed_one;
-  bugs = fixed_one;
+  degradation_factor = fixed(1);
+  bugs = fixed(1);
   glide_polar_task = GlidePolar::Invalid();
   ballast_timer_active = false;
 }
@@ -76,7 +76,7 @@ PlacesOfInterestSettings::SetHome(const Waypoint &wp)
 void
 FeaturesSettings::SetDefaults()
 {
-  final_glide_terrain = FGT_LINE;
+  final_glide_terrain = FinalGlideTerrain::LINE;
   block_stf_enabled = false;
   nav_baro_altitude_enabled = true;
 }
@@ -90,8 +90,8 @@ ComputerSettings::SetDefaults()
   voice.SetDefaults();
   poi.SetDefaults();
   features.SetDefaults();
+  circling.SetDefaults();
 
-  external_trigger_cruise_enabled =false;
   average_eff_time = ae30seconds;
   set_system_time_from_gps = IsAltair() && IsEmbedded();
   utc_offset = GetSystemUTCOffset();
@@ -100,6 +100,7 @@ ComputerSettings::SetDefaults()
   pressure_available.Clear();
   airspace.SetDefaults();
   task.SetDefaults();
+  contest.SetDefaults();
   logger.SetDefaults();
 
 #ifdef HAVE_TRACKING

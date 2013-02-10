@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,8 +26,9 @@ Copyright_License {
 #include "Math/FastMath.h"
 #include "Screen/Layout.hpp"
 #include "Screen/Point.hpp"
+#include "Util/Clamp.hpp"
 
-#include <math.h>
+#include <algorithm>
 
 // note these use static vars! not thread-safe
 
@@ -50,13 +51,14 @@ ScreenClosestPoint(const RasterPoint &p1, const RasterPoint &p2,
     // fractional distance
     if (offset > 0) {
       if (offset * 2 < mag12) {
-        proj = max(0, min(proj, mag12));
-        proj = max(offset, min(mag12 - offset, proj + offset));
+        proj = std::max(0, std::min(proj, mag12));
+        proj = std::max(offset, std::min(mag12 - offset, proj + offset));
       } else {
         proj = mag12 / 2;
       }
     }
-    const fixed f = min(fixed_one, max(fixed_zero, fixed(proj) / mag12));
+
+    const fixed f = Clamp(fixed(proj) / mag12, fixed(0), fixed(1));
     // location of 'closest' point
     p4->x = iround(v12x * f) + p1.x;
     p4->y = iround(v12y * f) + p1.y;
@@ -92,7 +94,7 @@ PolygonRotateShift(RasterPoint *poly, const int n,
                    const PixelScalar xs, const PixelScalar ys,
                    Angle angle, const int scale)
 {
-  static Angle lastangle = Angle::Native(-fixed_one);
+  static Angle lastangle = Angle::Native(fixed(-1));
   static int cost = 1024, sint = 0;
   static int last_scale = 0;
   angle = angle.AsBearing();

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,41 +22,58 @@ Copyright_License {
 */
 
 #include "Look.hpp"
-#include "Screen/Fonts.hpp"
 #include "UISettings.hpp"
 
 void
-Look::Initialise()
+Look::Initialise(const Font &map_font, const Font &map_bold_font,
+                 const Font &map_label_font)
 {
-  dialog.Initialise(Fonts::map_bold, Fonts::map, Fonts::map_label,
-                    Fonts::map_bold, Fonts::map_bold);
+  dialog.Initialise(map_bold_font, map_font, map_label_font,
+                    map_bold_font, map_font, map_bold_font);
   traffic.Initialise();
   flarm_dialog.Initialise(traffic, false);
-  flarm_gauge.Initialise(traffic, true);
   gesture.Initialise();
   thermal_assistant_dialog.Initialise(false);
   thermal_assistant_gauge.Initialise(true);
+  chart.Initialise();
 }
 
 void
-Look::InitialiseConfigured(const UISettings &settings)
+Look::InitialiseConfigured(const UISettings &settings,
+                           const Font &map_font, const Font &map_bold_font,
+                           const Font &map_label_font,
+                           const Font &cdi_font,
+                           const Font &monospace_font,
+                           const Font &infobox_value_font,
+                           const Font &infobox_small_font,
+#ifndef GNAV
+                           const Font &infobox_unit_font,
+#endif
+                           const Font &infobox_title_font)
 {
-  dialog.Initialise(Fonts::map_bold, Fonts::map, Fonts::map_label,
-                    Fonts::map_bold, Fonts::map_bold);
-  terminal.Initialise(Fonts::monospace);
+  dialog.Initialise(map_bold_font, map_font, map_label_font,
+                    map_bold_font, map_font, map_bold_font);
+  terminal.Initialise(monospace_font);
   units.Initialise();
   vario.Initialise(settings.info_boxes.inverse,
                    settings.info_boxes.use_colors,
-                   Fonts::title, Fonts::cdi);
-  chart.Initialise(Fonts::map, Fonts::map_label, Fonts::title);
-  cross_section.Initialise();
+                   infobox_title_font, cdi_font);
+  cross_section.Initialise(map_font);
   horizon.Initialise();
   thermal_band.Initialise(settings.info_boxes.inverse,
                           cross_section.sky_color);
   trace_history.Initialise(settings.info_boxes.inverse);
   info_box.Initialise(settings.info_boxes.inverse,
-                      settings.info_boxes.use_colors);
-  final_glide_bar.Initialise();
-  map.Initialise(settings.map);
+                      settings.info_boxes.use_colors,
+                      infobox_value_font,
+                      infobox_small_font,
+#ifndef GNAV
+                      infobox_unit_font,
+#endif
+                      infobox_title_font);
+  wind_arrow_info_box.Initialise(map_bold_font, settings.info_boxes.inverse);
+  flarm_gauge.Initialise(traffic, true, settings.info_boxes.inverse);
+  final_glide_bar.Initialise(map_font);
+  map.Initialise(settings.map, map_font, map_bold_font);
   icon.Initialise();
 }

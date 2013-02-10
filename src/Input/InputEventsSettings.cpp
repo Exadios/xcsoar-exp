@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,12 +24,15 @@ Copyright_License {
 #include "InputEvents.hpp"
 #include "Language/Language.hpp"
 #include "Interface.hpp"
+#include "ActionInterface.hpp"
 #include "Message.hpp"
 #include "Profile/Profile.hpp"
 #include "Profile/ProfileKeys.hpp"
 #include "Util/Macros.hpp"
+#include "Util/Enum.hpp"
 #include "Units/Units.hpp"
 #include "Protection.hpp"
+#include "UtilsSettings.hpp"
 #include "Components.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Audio/VarioGlue.hpp"
@@ -178,17 +181,17 @@ InputEvents::eventBugs(const TCHAR *misc)
   fixed oldBugs = BUGS;
 
   if (StringIsEqual(misc, _T("up"))) {
-    BUGS += fixed_one / 10;
-    if (BUGS > fixed_one)
-      BUGS = fixed_one;
+    BUGS += fixed(1) / 10;
+    if (BUGS > fixed(1))
+      BUGS = fixed(1);
   } else if (StringIsEqual(misc, _T("down"))) {
-    BUGS -= fixed_one / 10;
-    if (BUGS < fixed_half)
-      BUGS = fixed_half;
+    BUGS -= fixed(1) / 10;
+    if (BUGS < fixed(0.5))
+      BUGS = fixed(0.5);
   } else if (StringIsEqual(misc, _T("max")))
-    BUGS = fixed_one;
+    BUGS = fixed(1);
   else if (StringIsEqual(misc, _T("min")))
-    BUGS = fixed_half;
+    BUGS = fixed(0.5);
   else if (StringIsEqual(misc, _T("show"))) {
     TCHAR Temp[100];
     _stprintf(Temp, _T("%d"), (int)(BUGS * 100));
@@ -220,17 +223,17 @@ InputEvents::eventBallast(const TCHAR *misc)
   fixed oldBallast = BALLAST;
 
   if (StringIsEqual(misc, _T("up"))) {
-    BALLAST += fixed_one / 10;
-    if (BALLAST >= fixed_one)
-      BALLAST = fixed_one;
+    BALLAST += fixed(1) / 10;
+    if (BALLAST >= fixed(1))
+      BALLAST = fixed(1);
   } else if (StringIsEqual(misc, _T("down"))) {
-    BALLAST -= fixed_one / 10;
-    if (BALLAST < fixed_zero)
-      BALLAST = fixed_zero;
+    BALLAST -= fixed(1) / 10;
+    if (BALLAST < fixed(0))
+      BALLAST = fixed(0);
   } else if (StringIsEqual(misc, _T("max")))
-    BALLAST = fixed_one;
+    BALLAST = fixed(1);
   else if (StringIsEqual(misc, _T("min")))
-    BALLAST = fixed_zero;
+    BALLAST = fixed(0);
   else if (StringIsEqual(misc, _T("show"))) {
     TCHAR Temp[100];
     _stprintf(Temp, _T("%d"), (int)(BALLAST * 100));
@@ -256,7 +259,6 @@ InputEvents::eventProfileLoad(const TCHAR *misc)
     WaypointFileChanged = true;
     AirspaceFileChanged = true;
     AirfieldFileChanged = true;
-    PolarFileChanged = true;
 
     // assuming all is ok, we can...
     Profile::Use();
@@ -281,9 +283,9 @@ void
 InputEvents::eventAdjustForecastTemperature(const TCHAR *misc)
 {
   if (StringIsEqual(misc, _T("+")))
-    CommonInterface::SetComputerSettings().forecast_temperature += fixed_one;
+    CommonInterface::SetComputerSettings().forecast_temperature += fixed(1);
   else if (StringIsEqual(misc, _T("-")))
-    CommonInterface::SetComputerSettings().forecast_temperature -= fixed_one;
+    CommonInterface::SetComputerSettings().forecast_temperature -= fixed(1);
   else if (StringIsEqual(misc, _T("show"))) {
     fixed temperature =
       CommonInterface::GetComputerSettings().forecast_temperature;
@@ -293,11 +295,6 @@ InputEvents::eventAdjustForecastTemperature(const TCHAR *misc)
     Message::AddMessage(_("Forecast temperature"), Temp);
   }
 }
-
-#if GCC_VERSION >= 40400 && GCC_VERSION < 40500
-/* workaround for bogus warning on Android's gcc 4.4 */
-#pragma GCC diagnostic ignored "-Wtype-limits"
-#endif
 
 void
 InputEvents::eventDeclutterLabels(const TCHAR *misc)
@@ -313,7 +310,7 @@ InputEvents::eventDeclutterLabels(const TCHAR *misc)
                                           _T("none")};
 
   WaypointRendererSettings::LabelSelection &wls =
-    XCSoarInterface::SetMapSettings().waypoint.label_selection;
+    CommonInterface::SetMapSettings().waypoint.label_selection;
   if (StringIsEqual(misc, _T("toggle")))
     wls = WaypointRendererSettings::LabelSelection(((unsigned)wls + 1) %  n);
   else if (StringIsEqual(misc, _T("show"))) {
@@ -327,6 +324,10 @@ InputEvents::eventDeclutterLabels(const TCHAR *misc)
       if (StringIsEqual(misc, actions[i]))
         wls = (WaypointRendererSettings::LabelSelection)i;
   }
+
+  /* save new values to profile */
+  Profile::Set(ProfileKeys::WaypointLabelSelection,
+               EnumCast<WaypointRendererSettings::LabelSelection>()(wls));
 
   ActionInterface::SendMapSettings(true);
 }
@@ -357,20 +358,20 @@ InputEvents::eventOrientation(const TCHAR *misc)
   MapSettings &settings_map = CommonInterface::SetMapSettings();
 
   if (StringIsEqual(misc, _T("northup"))) {
-    settings_map.cruise_orientation = NORTHUP;
-    settings_map.circling_orientation = NORTHUP;
+    settings_map.cruise_orientation = DisplayOrientation::NORTH_UP;
+    settings_map.circling_orientation = DisplayOrientation::NORTH_UP;
   } else if (StringIsEqual(misc, _T("northcircle"))) {
-    settings_map.cruise_orientation = TRACKUP;
-    settings_map.circling_orientation = NORTHUP;
+    settings_map.cruise_orientation = DisplayOrientation::TRACK_UP;
+    settings_map.circling_orientation = DisplayOrientation::NORTH_UP;
   } else if (StringIsEqual(misc, _T("trackcircle"))) {
-    settings_map.cruise_orientation = NORTHUP;
-    settings_map.circling_orientation = TRACKUP;
+    settings_map.cruise_orientation = DisplayOrientation::NORTH_UP;
+    settings_map.circling_orientation = DisplayOrientation::TRACK_UP;
   } else if (StringIsEqual(misc, _T("trackup"))) {
-    settings_map.cruise_orientation = TRACKUP;
-    settings_map.circling_orientation = TRACKUP;
+    settings_map.cruise_orientation = DisplayOrientation::TRACK_UP;
+    settings_map.circling_orientation = DisplayOrientation::TRACK_UP;
   } else if (StringIsEqual(misc, _T("northtrack"))) {
-    settings_map.cruise_orientation = TRACKUP;
-    settings_map.circling_orientation = TARGETUP;
+    settings_map.cruise_orientation = DisplayOrientation::TRACK_UP;
+    settings_map.circling_orientation = DisplayOrientation::TARGET_UP;
   }
 
   ActionInterface::SendMapSettings(true);

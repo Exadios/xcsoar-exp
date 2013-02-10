@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -41,13 +41,15 @@ Copyright_License {
 struct flat_event_map {
   unsigned char mode;
 
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
 #if defined(SDLK_SCANCODE_MASK) && SDLK_SCANCODE_MASK >= 0x10000
   /* need a bigger type for SDL 1.3+ */
   unsigned key;
 #else
   unsigned short key;
 #endif
+#elif defined(USE_EGL)
+  uint16_t key;
 #else
   unsigned char key;
 #endif

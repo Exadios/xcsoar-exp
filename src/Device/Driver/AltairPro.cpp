@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 #include "Device/Driver.hpp"
 #include "Device/Internal.hpp"
 #include "Device/Port/Port.hpp"
+#include "Device/Declaration.hpp"
 #include "NMEA/Checksum.hpp"
 #include "NMEA/Info.hpp"
 #include "NMEA/InputLine.hpp"
@@ -32,7 +33,7 @@ Copyright_License {
 #include "Waypoint/Waypoint.hpp"
 #include "Util/StringUtil.hpp"
 #include "Util/Macros.hpp"
-#include "TimeoutClock.hpp"
+#include "Time/TimeoutClock.hpp"
 
 #include <stdio.h>
 #include <string.h>
@@ -62,10 +63,10 @@ public:
   AltairProDevice(Port &_port):port(_port){}
 
 public:
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
   virtual bool Declare(const struct Declaration &declaration,
                        const Waypoint *home,
-                       OperationEnvironment &env);
+                       OperationEnvironment &env) override;
 };
 
 static bool
@@ -355,7 +356,7 @@ AltairProCreateOnPort(const DeviceConfig &config, Port &com_port)
   return new AltairProDevice(com_port);
 }
 
-const struct DeviceRegister atrDevice = {
+const struct DeviceRegister altair_pro_driver = {
   _T("Altair RU"),
   _T("Altair Recording Unit"),
   DeviceRegister::DECLARE,

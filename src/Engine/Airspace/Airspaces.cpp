@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,10 +21,13 @@
 */
 
 #include "Airspaces.hpp"
+#include "AbstractAirspace.hpp"
 #include "AirspaceVisitor.hpp"
 #include "AirspaceIntersectionVisitor.hpp"
 #include "Atmosphere/Pressure.hpp"
 #include "Navigation/Aircraft.hpp"
+#include "Geo/Flat/FlatRay.hpp"
+#include "Geo/Flat/TaskProjection.hpp"
 
 #ifdef INSTRUMENT_TASK
 extern unsigned n_queries;
@@ -136,37 +139,6 @@ Airspaces::FindNearest(const GeoPoint &location,
                                   predicate);
 
   return found.first != airspace_tree.end() ? &*found.first : NULL;
-}
-
-const Airspaces::AirspaceVector
-Airspaces::ScanNearest(const GeoPoint &location,
-                       const AirspacePredicate &condition) const
-{
-  if (empty())
-    // nothing to do
-    return AirspaceVector();
-
-  Airspace bb_target(location, task_projection);
-
-  std::pair<AirspaceTree::const_iterator, AirspaceTree::distance_type>
-    found = airspace_tree.find_nearest(bb_target);
-
-#ifdef INSTRUMENT_TASK
-  n_queries++;
-#endif
-
-  AirspaceVector res;
-  if (found.first != airspace_tree.end()) {
-    // also should do scan_range with range = 0 since there
-    // could be more than one with zero dist
-    if (found.second.is_zero())
-      return ScanRange(location, fixed_zero, condition);
-
-    if (condition(*found.first->GetAirspace()))
-      res.push_back(*found.first);
-  }
-
-  return res;
 }
 
 const Airspaces::AirspaceVector
@@ -345,18 +317,6 @@ Airspaces::SetActivity(const AirspaceActivity mask)
   }
 }
 
-Airspaces::AirspaceTree::const_iterator
-Airspaces::begin() const
-{
-  return airspace_tree.begin();
-}
-
-Airspaces::AirspaceTree::const_iterator
-Airspaces::end() const
-{
-  return airspace_tree.end();
-}
-
 Airspaces::Airspaces(const Airspaces& master, bool _owns_children):
   qnh(master.qnh),
   activity_mask(master.activity_mask),
@@ -382,7 +342,7 @@ Airspaces::SynchroniseInRange(const Airspaces& master,
   bool changed = false;
   const AirspaceVector contents_master = master.ScanRange(location, range, condition);
   AirspaceVector contents_self;
-  contents_self.reserve(max(airspace_tree.size(), contents_master.size()));
+  contents_self.reserve(std::max(airspace_tree.size(), contents_master.size()));
 
   task_projection = master.task_projection; // ensure these are up to date
 
@@ -411,7 +371,7 @@ Airspaces::SynchroniseInRange(const Airspaces& master,
   // anything left in the self list are items that were not in the query,
   // so delete them --- including the clearances!
   for (auto v = contents_self.begin(); v != contents_self.end();) {
-    bool found = false;
+    gcc_unused bool found = false;
     for (auto t = airspace_tree.begin(); t != airspace_tree.end(); ) {
       if (t->GetAirspace() == v->GetAirspace()) {
         AirspaceTree::const_iterator new_t = t;

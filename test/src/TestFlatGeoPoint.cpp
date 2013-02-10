@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -58,9 +58,9 @@ int main(int argc, char **argv)
   ok1(p3.Sort(p2));
 
   // test * (and ==)
-  ok1(p1 * fixed_two == FlatGeoPoint(2, 2));
-  ok1(p2 * fixed_two == FlatGeoPoint(2, 4));
-  ok1(p3 * fixed_two == FlatGeoPoint(6, 20));
+  ok1(p1 * fixed(2) == FlatGeoPoint(2, 2));
+  ok1(p2 * fixed(2) == FlatGeoPoint(2, 4));
+  ok1(p3 * fixed(2) == FlatGeoPoint(6, 20));
 
   // test +
   p2 = p2 + p1;

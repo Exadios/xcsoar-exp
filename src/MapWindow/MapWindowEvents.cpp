@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,22 +34,22 @@ Copyright_License {
 #include "Weather/Features.hpp"
 
 void
-MapWindow::OnResize(UPixelScalar width, UPixelScalar height)
+MapWindow::OnResize(PixelSize new_size)
 {
-  DoubleBufferWindow::OnResize(width, height);
+  DoubleBufferWindow::OnResize(new_size);
 
 #ifndef ENABLE_OPENGL
   ++ui_generation;
 
   // We only grow() the buffer here because resizing it everytime has
   // a huge negative effect on the heap fragmentation
-  buffer_canvas.grow(width, height);
+  buffer_canvas.Grow(new_size);
 
   if (!IsAncientHardware())
-    stencil_canvas.grow(width, height);
+    stencil_canvas.Grow(new_size);
 #endif
 
-  visible_projection.SetScreenSize(width, height);
+  visible_projection.SetScreenSize(new_size);
   visible_projection.UpdateScreenBounds();
 }
 
@@ -60,10 +60,10 @@ MapWindow::OnCreate()
 
 #ifndef ENABLE_OPENGL
   WindowCanvas canvas(*this);
-  buffer_canvas.set(canvas);
+  buffer_canvas.Create(canvas);
 
   if (!IsAncientHardware())
-    stencil_canvas.set(canvas);
+    stencil_canvas.Create(canvas);
 #endif
 }
 
@@ -81,10 +81,10 @@ MapWindow::OnDestroy()
   SetWeather(NULL);
 
 #ifndef ENABLE_OPENGL
-  buffer_canvas.reset();
+  buffer_canvas.Destroy();
 
   if (!IsAncientHardware())
-    stencil_canvas.reset();
+    stencil_canvas.Destroy();
 #endif
 
   DoubleBufferWindow::OnDestroy();
@@ -135,23 +135,23 @@ MapWindow::OnPaint(Canvas &canvas)
     canvas.SelectWhiteBrush();
 
     if (top_left.x > 0)
-      canvas.Rectangle(0, 0, top_left.x, canvas.get_height());
+      canvas.Rectangle(0, 0, top_left.x, canvas.GetHeight());
 
-    if (bottom_right.x < (int)canvas.get_width())
+    if (bottom_right.x < (int)canvas.GetWidth())
       canvas.Rectangle(bottom_right.x, 0,
-                       canvas.get_width(), canvas.get_height());
+                       canvas.GetWidth(), canvas.GetHeight());
 
     if (top_left.y > 0)
       canvas.Rectangle(top_left.x, 0, bottom_right.x, top_left.y);
 
-    if (bottom_right.y < (int)canvas.get_height())
+    if (bottom_right.y < (int)canvas.GetHeight())
       canvas.Rectangle(top_left.x, bottom_right.y,
-                       bottom_right.x, canvas.get_height());
+                       bottom_right.x, canvas.GetHeight());
 
     /* now stretch the buffer into the window Canvas */
 
     ScopeLock protect(DoubleBufferWindow::mutex);
-    const Canvas &src = get_visible_canvas();
+    const Canvas &src = GetVisibleCanvas();
     canvas.Stretch(top_left.x, top_left.y,
                    bottom_right.x - top_left.x, bottom_right.y - top_left.y,
                    src, 0, 0, buffer_width, buffer_height);

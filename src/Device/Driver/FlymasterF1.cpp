@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@ class FlymasterF1Device : public AbstractDevice {
 public:
   FlymasterF1Device(Port &_port):port(_port) {}
 
-  virtual bool EnableNMEA(OperationEnvironment &env);
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool EnableNMEA(OperationEnvironment &env) override;
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 };
 
 bool
@@ -111,7 +111,7 @@ FlymasterF1CreateOnPort(const DeviceConfig &config, Port &port)
   return new FlymasterF1Device(port);
 }
 
-const struct DeviceRegister flymasterf1Device = {
+const struct DeviceRegister flymaster_f1_driver = {
   _T("FlymasterF1"),
   _T("Flymaster F1"),
   0,

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,8 +25,11 @@ Copyright_License {
 #define XCSOAR_FORM_FRAME_HPP
 
 #include "Screen/PaintWindow.hpp"
+#include "Screen/Color.hpp"
 #include "Screen/Features.hpp"
 #include "Util/StaticString.hpp"
+
+#include <tchar.h>
 
 struct DialogLook;
 
@@ -35,25 +38,17 @@ class WndFrame : public PaintWindow {
 
   Color caption_color;
 
-  const Font *font;
+  unsigned mCaptionStyle;
+
   StaticString<300> text;
 
 public:
   WndFrame(ContainerWindow &parent, const DialogLook &look,
-           int X, int Y, int Width, int Height,
+           PixelRect rc,
            const WindowStyle style=WindowStyle());
 
   void SetAlignCenter();
   void SetVAlignCenter();
-
-  const Font &GetFont() const {
-    return *font;
-  }
-
-  void SetFont(const Font &_font) {
-    font = &_font;
-    Invalidate();
-  }
 
   void SetText(const TCHAR *_text);
 
@@ -69,13 +64,12 @@ public:
     caption_color = color;
   }
 
-  unsigned GetTextHeight();
+  gcc_pure
+  unsigned GetTextHeight() const;
 
 protected:
-  unsigned mCaptionStyle;
-
   /** from class PaintWindow */
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
 #endif

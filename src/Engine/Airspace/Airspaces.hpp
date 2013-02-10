@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -214,19 +214,6 @@ public:
                                        AirspacePredicate::always_true) const;
 
   /** 
-   * Search for airspaces nearest to the aircraft.
-   * 
-   * @param location location of aircraft, from which to search
-   * @param condition condition to be applied to matches
-   * 
-   * @return single nearest airspace if external, or all airspaces enclosing the aircraft
-   */
-  gcc_pure
-  const AirspaceVector ScanNearest(const GeoPoint &location,
-                                   const AirspacePredicate &condition =
-                                         AirspacePredicate::always_true) const;
-
-  /** 
    * Find airspaces the aircraft is inside (taking altitude into account)
    * 
    * @param state state of aircraft for which to search
@@ -245,7 +232,9 @@ public:
    * @return First airspace in store
    */
   gcc_pure
-  AirspaceTree::const_iterator begin() const;
+  AirspaceTree::const_iterator begin() const {
+    return airspace_tree.begin();
+  }
 
   /**
    * Access end airspace in store, for use in iterators as end point.
@@ -253,7 +242,9 @@ public:
    * @return End airspace in store
    */
   gcc_pure
-  AirspaceTree::const_iterator end() const;
+  AirspaceTree::const_iterator end() const {
+    return airspace_tree.end();
+  }
 
   const TaskProjection &GetProjection() const {
     return task_projection;

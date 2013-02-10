@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 #include "InfoBoxes/Data.hpp"
 #include "Interface.hpp"
 #include "Formatter/Units.hpp"
+#include "TeamActions.hpp"
 
 #include <tchar.h>
 #include <stdio.h>
@@ -34,7 +35,7 @@ InfoBoxContentTeamCode::Update(InfoBoxData &data)
 {
   const TeamCodeSettings &settings =
     CommonInterface::GetComputerSettings().team_code;
-  const TeamInfo &teamcode_info = XCSoarInterface::Calculated();
+  const TeamInfo &teamcode_info = CommonInterface::Calculated();
 
   if (!settings.team_code_reference_waypoint) {
     data.SetInvalid();
@@ -42,13 +43,13 @@ InfoBoxContentTeamCode::Update(InfoBoxData &data)
   }
 
   // Set Value
-  data.SetValue(XCSoarInterface::Calculated().own_teammate_code.GetCode());
+  data.SetValue(CommonInterface::Calculated().own_teammate_code.GetCode());
 
   // Set Comment
-  if (teamcode_info.flarm_teammate_code_available) {
+  if (teamcode_info.flarm_teammate_code.IsDefined()) {
     data.SetComment(teamcode_info.flarm_teammate_code.GetCode());
     data.SetCommentColor(teamcode_info.flarm_teammate_code_current ? 2 : 1);
-  } else if (settings.team_code_valid) {
+  } else if (settings.team_code.IsDefined()) {
     data.SetComment(settings.team_code.GetCode());
     data.SetCommentColor(0);
   }
@@ -61,7 +62,7 @@ InfoBoxContentTeamCode::HandleKey(const InfoBoxKeyCodes keycode)
 {
   TeamCodeSettings &settings =
     CommonInterface::SetComputerSettings().team_code;
-  const TrafficList &flarm = XCSoarInterface::Basic().flarm.traffic;
+  const TrafficList &flarm = CommonInterface::Basic().flarm.traffic;
   const FlarmTraffic *traffic =
     settings.team_flarm_id.IsDefined()
     ? flarm.FindTraffic(settings.team_flarm_id)
@@ -77,14 +78,7 @@ InfoBoxContentTeamCode::HandleKey(const InfoBoxKeyCodes keycode)
     return false;
 
   if (traffic != NULL) {
-    settings.team_flarm_id = traffic->id;
-
-    if (traffic->HasName()) {
-      // copy the 3 first chars from the name to TeamFlarmCNTarget
-      settings.team_flarm_callsign = traffic->name;
-    } else {
-      settings.team_flarm_callsign.clear();
-    }
+    TeamActions::TrackFlarm(traffic->id, traffic->name);
   } else {
     // no flarm traffic to select!
     settings.team_flarm_id.Clear();
@@ -94,11 +88,11 @@ InfoBoxContentTeamCode::HandleKey(const InfoBoxKeyCodes keycode)
 }
 
 void
-InfoBoxContentTeamBearing::Update(InfoBoxData &data)
+UpdateInfoBoxTeamBearing(InfoBoxData &data)
 {
   const TeamCodeSettings &settings =
     CommonInterface::GetComputerSettings().team_code;
-  const TrafficList &flarm = XCSoarInterface::Basic().flarm.traffic;
+  const TrafficList &flarm = CommonInterface::Basic().flarm.traffic;
   const TeamInfo &teamcode_info = CommonInterface::Calculated();
 
   if (teamcode_info.teammate_available) {
@@ -123,11 +117,11 @@ InfoBoxContentTeamBearing::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentTeamBearingDiff::Update(InfoBoxData &data)
+UpdateInfoBoxTeamBearingDiff(InfoBoxData &data)
 {
   const TeamCodeSettings &settings =
     CommonInterface::GetComputerSettings().team_code;
-  const NMEAInfo &basic = XCSoarInterface::Basic();
+  const NMEAInfo &basic = CommonInterface::Basic();
   const TrafficList &flarm = basic.flarm.traffic;
   const TeamInfo &teamcode_info = CommonInterface::Calculated();
 
@@ -153,7 +147,7 @@ InfoBoxContentTeamBearingDiff::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentTeamDistance::Update(InfoBoxData &data)
+UpdateInfoBoxTeamDistance(InfoBoxData &data)
 {
   const TeamCodeSettings &settings =
     CommonInterface::GetComputerSettings().team_code;

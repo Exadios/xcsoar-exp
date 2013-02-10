@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,13 +38,13 @@ AirspacePolygon::AirspacePolygon(const std::vector<GeoPoint> &pts,
     m_border.reserve(pts.size() + 1);
 
     for (const GeoPoint &pt : pts)
-      m_border.push_back(SearchPoint(pt));
+      m_border.emplace_back(pt);
 
     // ensure airspace is closed
     GeoPoint p_start = pts[0];
     GeoPoint p_end = *(pts.end() - 1);
     if (p_start != p_end)
-      m_border.push_back(SearchPoint(p_start));
+      m_border.emplace_back(p_start);
 
 
     if (prune) {

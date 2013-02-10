@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ Copyright_License {
 #include "Util/CRC.hpp"
 #include "Device/Port/Port.hpp"
 #include "Operation/Operation.hpp"
-#include "TimeoutClock.hpp"
+#include "Time/TimeoutClock.hpp"
 
 #include <string.h>
 
@@ -347,16 +347,25 @@ Volkslogger::SendCommandReadBulk(Port &port, OperationEnvironment &env,
 {
   unsigned old_baud_rate = port.GetBaudrate();
 
-  if (!SendCommandSwitchBaudRate(port, env, cmd, param1, baud_rate))
-    return -1;
+  if (old_baud_rate != 0) {
+    if (!SendCommandSwitchBaudRate(port, env, cmd, param1, baud_rate))
+      return -1;
 
-  /* after switching baud rates, this sleep time is necessary; it has
-     been verified experimentally */
-  env.Sleep(300);
+    /* after switching baud rates, this sleep time is necessary; it has
+       been verified experimentally */
+    env.Sleep(300);
+  } else {
+    /* port does not support baud rate switching, use plain
+       SendCommand() without new baud rate */
+
+    if (!SendCommand(port, env, cmd, param1))
+      return -1;
+  }
 
   int nbytes = ReadBulk(port, env, buffer, max_length);
 
-  port.SetBaudrate(old_baud_rate);
+  if (old_baud_rate != 0)
+    port.SetBaudrate(old_baud_rate);
 
   return nbytes;
 }

@@ -13,39 +13,10 @@
    height="15"
    id="svg3040"
    version="1.1"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="title.svg">
   <defs
-     id="defs3042">
-    <inkscape:perspective
-       sodipodi:type="inkscape:persp3d"
-       inkscape:vp_x="0 : 526.18109 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="744.09448 : 526.18109 : 1"
-       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
-       id="perspective3048" />
-    <inkscape:perspective
-       id="perspective3033"
-       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
-       inkscape:vp_z="1 : 0.5 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_x="0 : 0.5 : 1"
-       sodipodi:type="inkscape:persp3d" />
-    <inkscape:perspective
-       id="perspective3033-0"
-       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
-       inkscape:vp_z="1 : 0.5 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_x="0 : 0.5 : 1"
-       sodipodi:type="inkscape:persp3d" />
-    <inkscape:perspective
-       id="perspective3129"
-       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
-       inkscape:vp_z="1 : 0.5 : 1"
-       inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_x="0 : 0.5 : 1"
-       sodipodi:type="inkscape:persp3d" />
-  </defs>
+     id="defs3042" />
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -119,6 +90,6 @@
          id="tspan9395-4-7-2"
          x="77.828217"
          y="13.240745"
-         style="font-size:17.93197632px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;fill:#3f76a8;fill-opacity:1;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans Bold">6.4</tspan></text>
+         style="font-size:17.93197632px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;fill:#3f76a8;fill-opacity:1;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans Bold">6.5</tspan></text>
   </g>
 </svg>

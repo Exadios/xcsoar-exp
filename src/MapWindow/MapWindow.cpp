@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ MapWindow::MapWindow(const MapLook &_look,
    waypoints(NULL),
    topography(NULL), topography_renderer(NULL),
    terrain(NULL),
-   terrain_radius(fixed_zero),
+   terrain_radius(fixed(0)),
    weather(NULL),
    traffic_look(_traffic_look),
    waypoint_renderer(NULL, look.waypoint),
@@ -54,6 +54,9 @@ MapWindow::MapWindow(const MapLook &_look,
    marks(NULL),
 #ifdef HAVE_NOAA
    noaa_store(NULL),
+#endif
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+   skylines_data(nullptr),
 #endif
    compass_visible(true)
 #ifndef ENABLE_OPENGL
@@ -68,16 +71,14 @@ MapWindow::~MapWindow()
 }
 
 void
-MapWindow::set(ContainerWindow &parent, const PixelRect &rc)
+MapWindow::Create(ContainerWindow &parent, const PixelRect &rc)
 {
   WindowStyle style;
   style.EnableDoubleClicks();
-  DoubleBufferWindow::set(parent, rc.left, rc.top,
-                          rc.right - rc.left, rc.bottom - rc.top,
-                          style);
+  DoubleBufferWindow::Create(parent, rc, style);
 
   // initialize other systems
-  visible_projection.SetMapScale(fixed_int_constant(5000));
+  visible_projection.SetMapScale(fixed(5000));
   visible_projection.SetScreenOrigin((rc.left + rc.right) / 2,
                                      (rc.bottom + rc.top) / 2);
   visible_projection.UpdateScreenBounds();
@@ -94,13 +95,6 @@ MapWindow::SetGlideComputer(GlideComputer *_gc)
   airspace_renderer.SetAirspaceWarnings(glide_computer != NULL
                                         ? &glide_computer->GetAirspaceWarnings()
                                         : NULL);
-}
-
-void
-MapWindow::ReadBlackboard(const MoreData &nmea_info,
-                          const DerivedInfo &derived_info)
-{
-  MapWindowBlackboard::ReadBlackboard(nmea_info, derived_info);
 }
 
 /**
@@ -148,7 +142,7 @@ MapWindow::UpdateTerrain()
   RasterTerrain::ExclusiveLease lease(*terrain);
   lease->SetViewCenter(location, radius);
   if (lease->IsDirty())
-    terrain_radius = fixed_zero;
+    terrain_radius = fixed(0);
   else {
     terrain_radius = radius;
     terrain_center = location;
@@ -181,9 +175,6 @@ MapWindow::OnPaintBuffer(Canvas &canvas)
 {
 #ifndef ENABLE_OPENGL
   unsigned render_generation = ui_generation;
-
-  // Start the drawing timer (for drawing time calculation)
-  StartTimer();
 #endif
 
   // Render the moving map

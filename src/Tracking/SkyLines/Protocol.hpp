@@ -1,6 +1,6 @@
 /*
  * XCSoar Glide Computer - http://www.xcsoar.org/
- * Copyright (C) 2000-2012 The XCSoar Project
+ * Copyright (C) 2000-2013 The XCSoar Project
  * A detailed list of copyright holders can be found in the file "AUTHORS".
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,8 @@ namespace SkyLinesTracking {
     PING = 1,
     ACK = 2,
     FIX = 3,
+    TRAFFIC_REQUEST = 4,
+    TRAFFIC_RESPONSE = 5,
   };
 
   /**
@@ -78,8 +80,11 @@ namespace SkyLinesTracking {
     uint32_t magic;
 
     /**
-     * The CRC16-CCITT of this packet including the header, assuming
-     * this attribute is 0.
+     * The CRC of this packet including the header, assuming this
+     * attribute is 0.
+     *
+     * The CRC algorithm is CRC16-CCITT with initial value 0x0000
+     * (XModem) instead of CCITT's default 0xffff.
      */
     uint16_t crc;
 
@@ -136,7 +141,7 @@ namespace SkyLinesTracking {
      * silently discarded, but the server may use this flag to respond
      * to a bad key in a PING packet.
      */
-    static const uint64_t FLAG_BAD_KEY = 0x1;
+    static const uint32_t FLAG_BAD_KEY = 0x1;
 
     Header header;
 
@@ -172,13 +177,13 @@ namespace SkyLinesTracking {
    * A GPS fix being uploaded to the server.
    */
   struct FixPacket {
-    static const uint64_t FLAG_LOCATION = 0x1;
-    static const uint64_t FLAG_TRACK = 0x2;
-    static const uint64_t FLAG_GROUND_SPEED = 0x4;
-    static const uint64_t FLAG_AIRSPEED = 0x8;
-    static const uint64_t FLAG_ALTITUDE = 0x10;
-    static const uint64_t FLAG_VARIO = 0x20;
-    static const uint64_t FLAG_ENL = 0x40;
+    static const uint32_t FLAG_LOCATION = 0x1;
+    static const uint32_t FLAG_TRACK = 0x2;
+    static const uint32_t FLAG_GROUND_SPEED = 0x4;
+    static const uint32_t FLAG_AIRSPEED = 0x8;
+    static const uint32_t FLAG_ALTITUDE = 0x10;
+    static const uint32_t FLAG_VARIO = 0x20;
+    static const uint32_t FLAG_ENL = 0x40;
 
     Header header;
 
@@ -231,6 +236,93 @@ namespace SkyLinesTracking {
 
 #ifdef __cplusplus
   static_assert(sizeof(FixPacket) == 48, "Wrong struct size");
+#endif
+
+  /**
+   * The client requests traffic information.
+   */
+  struct TrafficRequestPacket {
+    /**
+     * The client wants to receive information about all pilots he
+     * follows on the SkyLines web site.
+     */
+    static const uint32_t FLAG_FOLLOWEES = 0x1;
+
+    /**
+     * The client wants to receive information about all members in
+     * the same club.
+     */
+    static const uint32_t FLAG_CLUB = 0x2;
+
+    Header header;
+
+    uint32_t flags;
+
+    uint32_t reserved;
+  };
+
+#ifdef __cplusplus
+  static_assert(sizeof(TrafficRequestPacket) == 24, "Wrong struct size");
+#endif
+
+  /**
+   * The responds to #TrafficRequestPacket.  This packet has a dynamic
+   * length.  If there are many records being sent, the packet should
+   * be split at a reasonable size, to avoid implicit UDP datagram
+   * fragmentation.
+   */
+  struct TrafficResponsePacket {
+    struct Traffic {
+      uint32_t pilot_id;
+
+      uint32_t time;
+
+      GeoPoint location;
+
+      int16_t altitude;
+
+      /**
+       * Reserved for future use.
+       */
+      uint16_t reserved;
+
+      /**
+       * Reserved for future use.
+       */
+      uint32_t reserved2;
+    };
+
+#ifdef __cplusplus
+    static_assert(sizeof(Traffic) == 24, "Wrong struct size");
+#endif
+
+    Header header;
+
+    /**
+     * Reserved for future use.
+     */
+    uint16_t reserved;
+
+    /**
+     * Reserved for future use.
+     */
+    uint8_t reserved2;
+
+    /**
+     * The number of #Traffic instances following this struct.
+     */
+    uint8_t traffic_count;
+
+    /**
+     * Reserved for future use.
+     */
+    uint32_t reserved3;
+
+    /* followed by a number of #Traffic instances */
+  };
+
+#ifdef __cplusplus
+  static_assert(sizeof(TrafficRequestPacket) == 24, "Wrong struct size");
 #endif
 };
 

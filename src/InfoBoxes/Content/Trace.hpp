@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,10 +32,10 @@ class TraceVariableHistory;
 class InfoBoxContentSpark: public InfoBoxContent
 {
 protected:
-  void do_paint(InfoBoxWindow &infobox, Canvas &canvas,
+  void Paint(Canvas &canvas, const PixelRect &rc,
                 const TraceVariableHistory& var,
                 const bool center = true);
-  void label_vspeed(InfoBoxData &data,
+  void SetVSpeedComment(InfoBoxData &data,
                     const TraceVariableHistory& var);
 
 };
@@ -43,44 +43,44 @@ protected:
 class InfoBoxContentVarioSpark : public InfoBoxContentSpark
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
 };
 
 class InfoBoxContentNettoVarioSpark : public InfoBoxContentSpark
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
 };
 
 class InfoBoxContentCirclingAverageSpark : public InfoBoxContentSpark
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
 };
 
 class InfoBoxContentBarogram : public InfoBoxContentAltitude
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
-  virtual bool HandleKey(const InfoBoxKeyCodes keycode);
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
+  virtual bool HandleKey(const InfoBoxKeyCodes keycode) override;
 };
 
 class InfoBoxContentThermalBand : public InfoBoxContent
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
 };
 
 class InfoBoxContentTaskProgress : public InfoBoxContent
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
 };
 
 #endif

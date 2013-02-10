@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,13 +22,67 @@ Copyright_License {
 */
 
 #include "Glue.hpp"
+#include "Settings.hpp"
 #include "NMEA/Info.hpp"
-#include "LogFile.hpp"
+
+#ifdef HAVE_POSIX
+#include "IO/Async/GlobalIOThread.hpp"
+#endif
+
+#include <assert.h>
+
+SkyLinesTracking::Glue::Glue()
+  :interval(0), clock(fixed(10))
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  , traffic_clock(fixed(60)), traffic_enabled(false)
+#endif
+{
+#ifdef HAVE_POSIX
+  assert(io_thread != nullptr);
+  client.SetIOThread(io_thread);
+#endif
+}
 
 void
-SkyLinesTracking::Glue::SendFix(const NMEAInfo &basic)
+SkyLinesTracking::Glue::Tick(const NMEAInfo &basic)
 {
-  if (client.IsDefined() && basic.time_available &&
-      clock.CheckAdvance(basic.time))
+  if (!client.IsDefined())
+    return;
+
+  if (!basic.time_available) {
+    clock.Reset();
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    traffic_clock.Reset();
+#endif
+    return;
+  }
+
+  if (clock.CheckAdvance(basic.time))
     client.SendFix(basic);
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  if (traffic_enabled && traffic_clock.CheckAdvance(basic.time))
+    client.SendTrafficRequest(true, true);
+#endif
+}
+
+void
+SkyLinesTracking::Glue::SetSettings(const Settings &settings)
+{
+  client.SetKey(settings.key);
+
+  if (interval != settings.interval) {
+    interval = settings.interval;
+    clock = GPSClock(fixed(std::max(settings.interval, 1u)));
+  }
+
+  if (!settings.enabled)
+    client.Close();
+  else if (!client.IsDefined())
+    // TODO: fix hard-coded IP address:
+    client.Open("78.47.50.46");
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  traffic_enabled = settings.traffic_enabled;
+#endif
 }

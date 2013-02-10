@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ WaypointGlue::LoadWaypoints(Waypoints &way_points,
                             const RasterTerrain *terrain,
                             OperationEnvironment &operation)
 {
-  LogStartUp(_T("ReadWaypoints"));
+  LogFormat("ReadWaypoints");
   operation.SetText(_("Loading Waypoints..."));
 
   bool found = false;
@@ -153,7 +153,7 @@ bool
 WaypointGlue::SaveWaypointFile(const Waypoints &way_points, int num)
 {
   if (!IsWritable(num)) {
-    LogStartUp(_T("Waypoint file %d can not be written"), num);
+    LogFormat("Waypoint file %d can not be written", num);
     return false;
   }
 
@@ -162,14 +162,14 @@ WaypointGlue::SaveWaypointFile(const Waypoints &way_points, int num)
 
   TextWriter writer(file);
   if (!writer.IsOpen()) {
-    LogStartUp(_T("Waypoint file %d can not be written"), num);
+    LogFormat("Waypoint file %d can not be written", num);
     return false;
   }
 
   WaypointWriter wp_writer(way_points, num);
   wp_writer.Save(writer);
 
-  LogStartUp(_T("Waypoint file %d saved"), num);
+  LogFormat("Waypoint file %d saved", num);
   return true;
 }
 
@@ -177,7 +177,6 @@ bool
 WaypointGlue::SaveWaypoints(const Waypoints &way_points)
 {
   bool result = false;
-  LogStartUp(_T("SaveWaypoints"));
 
   // ### FIRST FILE ###
   result |= SaveWaypointFile(way_points, 1);

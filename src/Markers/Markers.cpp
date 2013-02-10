@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,30 +22,13 @@ Copyright_License {
 */
 
 #include "Markers.hpp"
-#include "Compatibility/string.h"
 #include "LocalPath.hpp"
-#include "LogFile.hpp"
-#include "resource.h"
 #include "IO/TextWriter.hpp"
 #include "IO/DataFile.hpp"
-#include "Projection/WindowProjection.hpp"
-#include "Look/MarkerLook.hpp"
-
-Markers::Markers()
-{
-  LogStartUp(_T("Initialise marks"));
-  Reset();
-}
 
 void
 Markers::Reset()
 {
-  marker_store.clear();
-}
-
-Markers::~Markers()
-{
-  LogStartUp(_T("CloseMarks"));
   marker_store.clear();
 }
 
@@ -68,15 +51,5 @@ Markers::MarkLocation(const GeoPoint &loc, const BrokenDateTime &time)
   if (writer != NULL) {
     writer->WriteLine(message);
     delete writer;
-  }
-}
-
-void Markers::Draw(Canvas &canvas, const WindowProjection &projection,
-                 const MarkerLook &look) const
-{
-  for (auto it = begin(), it_end = end(); it != it_end; ++it) {
-    RasterPoint sc;
-    if (projection.GeoToScreenIfVisible(it->location, sc))
-      look.icon.Draw(canvas, sc);
   }
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -68,8 +68,8 @@ public:
 
   /* internally used structure for tracking menu down and selection status */
   struct MenuTabIndex {
-    static const unsigned NO_MAIN_MENU = 997;
-    static const unsigned NO_SUB_MENU = 998;
+    static constexpr unsigned NO_MAIN_MENU = 997;
+    static constexpr unsigned NO_SUB_MENU = 998;
 
     unsigned main_index;
     unsigned sub_index;
@@ -128,15 +128,12 @@ public:
   /**
    * @param parent
    * @param Caption the page caption shown on the menu page
-   * @param x, y Location of the tab bar. (frame of the content windows)
-   * @param width, height.  Size of the tab bar
    * @param style
    * @return
    */
   TabMenuControl(ContainerWindow &parent, WndForm &_form,
                  const DialogLook &look, const TCHAR * Caption,
-                 PixelScalar x, PixelScalar y,
-                 UPixelScalar width, UPixelScalar height,
+                 PixelRect rc,
                  const WindowStyle style = WindowStyle());
   ~TabMenuControl();
 

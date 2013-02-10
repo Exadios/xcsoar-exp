@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,11 +25,13 @@ Copyright_License {
 #define XCSOAR_GLIDECOMPUTER_AIRDATA_HPP
 
 #include "AutoQNH.hpp"
-#include "GlideRatioCalculator.hpp"
+#include "GlideRatioComputer.hpp"
 #include "FlyingComputer.hpp"
 #include "CirclingComputer.hpp"
 #include "ThermalBandComputer.hpp"
 #include "WindComputer.hpp"
+#include "LiftDatabaseComputer.hpp"
+#include "AverageVarioComputer.hpp"
 #include "ThermalLocator.hpp"
 #include "Math/WindowFilter.hpp"
 
@@ -54,17 +56,17 @@ class GlideComputerAirData {
 
   AutoQNH auto_qnh;
 
-  GlideRatioCalculator gr_calculator;
+  GlideRatioComputer gr_computer;
 
   FlyingComputer flying_computer;
   CirclingComputer circling_computer;
   ThermalBandComputer thermal_band_computer;
   WindComputer wind_computer;
+  LiftDatabaseComputer lift_database_computer;
 
   ThermalLocator thermallocator;
 
-  WindowFilter<30> vario_30s_filter;
-  WindowFilter<30> netto_30s_filter;
+  AverageVarioComputer average_vario;
 
 public:
   GlideComputerAirData(const Waypoints &way_points);
@@ -77,8 +79,11 @@ public:
     return wind_computer.GetWindStore();
   }
 
-  void ResetFlight(DerivedInfo &calculated, const ComputerSettings &settings,
-                   const bool full=true);
+  void ResetFlight(DerivedInfo &calculated, const bool full=true);
+
+  void ResetStats() {
+    circling_computer.ResetStats();
+  }
 
   /**
    * Calculates some basic values
@@ -91,13 +96,8 @@ public:
    */
   void ProcessVertical(const MoreData &basic, const MoreData &last_basic,
                        DerivedInfo &calculated,
-                       const DerivedInfo &last_calculated,
                        const ComputerSettings &settings);
 
-protected:
-  void OnSwitchClimbMode(const ComputerSettings &settings);
-
-public:
   /**
    * 1. Detects time retreat and calls ResetFlight if GPS lost
    * 2. Detects change in replay status and calls ResetFlight if so
@@ -109,27 +109,19 @@ public:
                    const ComputerSettings &settings);
 
 private:
-  /**
-   * Calculates the heading
-   */
-  void Heading(const NMEAInfo &basic, DerivedInfo &calculated);
-  void EnergyHeight();
   void NettoVario(const NMEAInfo &basic, const FlyingState &flight,
                   VarioInfo &vario, const ComputerSettings &settings_computer);
   void AverageClimbRate(const NMEAInfo &basic, DerivedInfo &calculated);
   void Average30s(const MoreData &basic, const NMEAInfo &last_basic,
-                  DerivedInfo &calculated, const DerivedInfo &last_calculated);
+                  DerivedInfo &calculated, bool last_circling);
   void CurrentThermal(const MoreData &basic, const CirclingInfo &circling,
                       OneClimbInfo &current_thermal);
-  void ResetLiftDatabase(DerivedInfo &calculated);
-  void UpdateLiftDatabase(const MoreData &basic, DerivedInfo &calculated,
-                          const DerivedInfo &last_calculated);
-  void GR(const MoreData &basic, const MoreData &last_basic,
-          const DerivedInfo &calculated, VarioInfo &vario_info);
+  void GR(const MoreData &basic, const FlyingState &flying,
+          VarioInfo &vario_info);
   void CruiseGR(const MoreData &basic, DerivedInfo &calculated);
 
   void TerrainHeight(const MoreData &basic, TerrainInfo &calculated);
-  void FlightState(const NMEAInfo &basic, const NMEAInfo &last_basic,
+  void FlightState(const NMEAInfo &basic,
                    const DerivedInfo &calculated, FlyingState &flying,
                    const GlidePolar &glide_polar);
 
@@ -151,15 +143,14 @@ private:
    *  LastThermalAverageSmooth
    */
   void LastThermalStats(const MoreData &basic, DerivedInfo &calculated,
-                        const DerivedInfo &last_calculated);
+                        bool last_circling);
 
   /**
    * Calculates the turn rate and the derived features.
    * Determines the current flight mode (cruise/circling).
    */
-  void Turning(const MoreData &basic, const MoreData &last_basic,
-               DerivedInfo &calculated, const DerivedInfo &last_calculated,
-               const ComputerSettings &settings);
+  void Turning(const MoreData &basic,
+               DerivedInfo &calculated, const ComputerSettings &settings);
   void ProcessSun(const NMEAInfo &basic, DerivedInfo &calculated,
                   const ComputerSettings &settings);
 

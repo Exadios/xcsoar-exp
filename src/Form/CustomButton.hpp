@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -46,26 +46,22 @@ public:
    * @param Parent Parent window/ContainerControl
    * @param Name Name of the button
    * @param Caption Text on the button
-   * @param X x-Coordinate relative to the parent
-   * @param Y y-Coordinate relative to the parent
-   * @param Width Width of the button
-   * @param Height Height of the button
    * @param Function The function that should be called
    * when the button is clicked
    */
   WndCustomButton(ContainerWindow &Parent, const DialogLook &look,
-                  const TCHAR *Caption,
+                  tstring::const_pointer Caption,
                   const PixelRect &rc, const ButtonWindowStyle style,
-                  ClickNotifyCallback Function = NULL)
+                  ActionListener &listener, int id)
     :WndButton(Parent, look, Caption, rc,
-               custom_painting(style), Function) {}
+               custom_painting(style), listener, id) {}
 
 protected:
   /**
    * The OnPaint event is called when the button needs to be drawn
    * (derived from PaintWindow)
    */
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
 #endif

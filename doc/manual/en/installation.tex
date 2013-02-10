@@ -53,66 +53,27 @@ connect to an external device:
 \subsection*{Supported external devices and features}
 \label{sec:supported-varios}
 
+\newcommand{\y}[0]{{ $\surd$ }}
+%{0.8\textwidth}
 \noindent\makebox[\textwidth]{%
-\begin{tabularx}{1.2\textwidth}{l|cccc}
-
-NMEA & Feature \\
-Device & Airspeed & Vario & Declaration & Download \\
+\begin{tabular}{l|ccc|cc|cc|c}
+       \multicolumn{1}{r}{Supported:} & \multicolumn{3}{c|}{-Features} & \multicolumn{5}{c}{-Stream Data} \\
+NMEA Device &
+  \begin{sideways} Declaration\end{sideways} &
+  \begin{sideways} Remote ctrl.\end{sideways} &
+  \begin{sideways} Download\end{sideways} &
+  \begin{sideways} Airspeed\end{sideways} &
+  \begin{sideways} Vario\end{sideways} &
+  \begin{sideways} Baro. altitude\end{sideways} &
+  \begin{sideways} Wind\end{sideways} &
+  \begin{sideways} G-Sensor\end{sideways} \\
 \hline
-
-Borgelt B50 & $\surd$ \\
-
-CAI 302 & $\surd$ & $\surd$ & $\surd$ & $\surd$ \\
-
-CAI GPS Nav \\
-
-Condor & $\surd$ \\
-\hline
-
-Digifly Leonardo & $\surd$ & $\surd$ \\
-
-EW Logger &&& $\surd$ \\
-
-EW microRecorder &&& $\surd$ \\
-
-Flarm &&& $\surd$ & $\surd$ \\
-\hline
-
-Flymaster F1 && $\surd$ \\
-
-Flytec 5030 & $\surd$ & $\surd$ \\
-
-ILEC SN10 & & $\surd$ \\
-
-IMI ERIXX &&& $\surd$ & $\surd$ \\
-\hline
-
-LX20, Colibri &&& $\surd$ & $\surd$ \\
-
-LX 5000, 7000 & $\surd$ & $\surd$ & $\surd$ \\
-
-LXNAV Nano &&& $\surd$ \\
-
-LXNAV V7 & $\surd$ & $\surd$ \\
-
-PosiGraph &&& $\surd$ \\
-
-Triadis Altair &&& $\surd$ \\
-\hline
-
-Triadis Vega & $\surd$ & $\surd$ \\
-
-Volkslogger &&& $\surd$ \\
-
-Westerboer VW1150 & $\surd$ & $\surd$ \\
-
-Westerboer VW921, 922 & $\surd$ & $\surd$ \\
-\hline
-
-Zander / SDI & $\surd$ & $\surd$ \\
-
-\end{tabularx}}
-
+\input{supported_devices_table.tex}
+\end{tabular}}
+\footnotetext{LX Navigation offers a variety of intelligent vario
+  devices such as LX1600, LX5000, LX7000. They all share their NMEA functionality.
+  The offered functionality in connection to XCSoar depends on
+  last not least e.g. the vario's firmware revision. }
 
 While most Windows CE based devices have a serial port, such legacy
 hardware is not present in modern Android devices.  Those can either
@@ -168,11 +129,11 @@ hard disk.
 
 The file downloaded is \verb|xcsoar_XXX.deb|, where \verb|XXX| includes
 the version number and platform, e.g. \verb|xcsoar_6.0.4_i386.deb|.
-The is a Debian package and can be installed using 
+The is a Debian package and can be installed using
 \begin{center}
 \verb|sudo dpkg -i xcsoar_XXX.deb|.
 \end{center}
-Use \verb|dpkg-query -L xcsoar| to see where the executable and 
+Use \verb|dpkg-query -L xcsoar| to see where the executable and
 other files are installed,
 Additional data files must be placed in the directory
 \verb|~/.xcsoar/XCSoarData/|.
@@ -210,12 +171,12 @@ internal storage is used.
 
 
 XCSoar will generate a number of additional files at run time.  These
-will be placed in the  \texttt{XCSoarData} directory (Windows PC and 
+will be placed in the  \texttt{XCSoarData} directory (Windows PC and
 Windows Mobile devices), or the \texttt{.xcsoar} directory (Unix/Linux
-PC).  At first run, XCSoar will create the files 
-\texttt{Default.tsk} (Default Task),  \texttt{xcsoar-registry.prf} 
+PC).  At first run, XCSoar will create the files
+\texttt{Default.tsk} (Default Task),  \texttt{xcsoar-registry.prf}
 (configuration settings), \newline
-\texttt{xcsoar-startup.log} (log of the startup progress), 
+\texttt{xcsoar-startup.log} (log of the startup progress),
 plus three directories: \texttt{cache},
 \texttt{config} and \texttt{logs}.  Additional files may be
 created/modified while XCSoar is running, such as task files
@@ -225,10 +186,10 @@ created/modified while XCSoar is running, such as task files
 \section{Running XCSoar}
 %\subsection*{Fly and simulator modes}
 
-Two modes are available inside the XCSoar application: 
+Two modes are available inside the XCSoar application:
 \begin{description}
-\item[FLY] This mode is used when actually flying.  The simulator is 
-  disabled and serial communications are active. 
+\item[FLY] This mode is used when actually flying.  The simulator is
+  disabled and serial communications are active.
 \item[SIM] This starts XCSoar in simulator mode, no serial communications
   are attempted.
 \end{description}
@@ -264,7 +225,7 @@ loaded automatically.
  conjunction with flight simulators e.g.\ Condor.
 \end{description}
 To change the screen orientation, it is convenient to create a shortcut to the
-program, then right click on the shortcut icon and click on ``Shortcut''. 
+program, then right click on the shortcut icon and click on ``Shortcut''.
 In the field ``Target'' add one of the desired options listed above.
 
 \subsection*{XCSoar Unix/Linux PC version}
@@ -273,14 +234,14 @@ desktop.  The location of the executable file may be found using
 \verb|which xcsoar|.  Only landscape mode is  supported for now.
 
 \subsection*{Loading data files}
-The first time that XCSoar is run, it does not automatically load the 
-data files that you placed in the \verb|XCSoarData| directory.  
+The first time that XCSoar is run, it does not automatically load the
+data files that you placed in the \verb|XCSoarData| directory.
 To tell XCSoar which files to load, double click/tap the map (the large,
 blank white part with the glider symbol in the center),
-choose the menu \bmenu{Config} (click/tap it twice), then select
+choose the menu \bmenu{Config 2} (click/tap it twice), then select the item
 \bmenu{System Setup}.  The System Setup screen should be displayed:
 \sketch{figures/config-basic.png}
-The first page allows you to choose the map, 
+The first page allows you to choose the map,
 waypoint and airspace files, by clicking/tapping on the text boxes.
 Many other features of XCSoar may be configured with
 \bmenu{System Setup}. These are described in detail in Chapter
@@ -304,9 +265,9 @@ can be useful for example in the following cases:
 \subsection*{SIM mode}
 The simulator contains a simple interface allowing the user to fly
 the glider about.  On the map screen, clicking/touching the glider symbol
-(with touchscreen or mouse) and dragging 
+(with touchscreen or mouse) and dragging
 causes the glider to move in the direction of the drag, the
-speed being proportional to the length of the drag.  
+speed being proportional to the length of the drag.
 
 In the PC version and for embedded devices with buttons, the aircraft
 speed, height and direction may be changed using the \InfoBox es.

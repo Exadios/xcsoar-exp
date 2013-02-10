@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@ Copyright_License {
 #ifndef XCSOAR_BACKGROUND_RENDERER_HPP
 #define XCSOAR_BACKGROUND_RENDERER_HPP
 
-#include "Screen/Point.hpp"
 #include "Math/Angle.hpp"
 
 #include <tchar.h>
 
+struct RasterPoint;
 class Canvas;
 class WindowProjection;
 struct TerrainRendererSettings;
@@ -57,8 +57,6 @@ public:
             const WindowProjection& proj,
             const TerrainRendererSettings &terrain_settings);
 
-  bool DrawSpotHeights(Canvas& canvas, LabelBlock& block);
-
   void SetShadingAngle(const WindowProjection &projection,
                        const TerrainRendererSettings &settings,
                        const DerivedInfo &calculated);
@@ -68,8 +66,6 @@ public:
 
 private:
   void SetShadingAngle(const WindowProjection& proj, Angle angle);
-  static void DrawSpotHeight(Canvas &canvas,  LabelBlock &block,
-                             const TCHAR *Buffer, RasterPoint pt);
 };
 
 #endif

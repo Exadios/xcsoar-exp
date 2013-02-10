@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,21 +25,29 @@
 
 #include "Math/fixed.hpp"
 
+#include <array>
+
 /**
  * Differentiating low-pass IIR filter
  * @see http://www.dsprelated.com/showarticle/35.php
  */
 class DiffFilter 
 {
-  fixed x[7];
+  std::array<fixed, 7> x;
 
 public:
+  /**
+   * Non-initialising default constructor.  To initialise this
+   * instance, call Reset().
+   */
+  DiffFilter() = default;
+
   /**
    * Constructor.  Initialises as if fed x_default continuously.
    *
    * @param x_default Default value of input
    */
-  DiffFilter(const fixed x_default = fixed_zero)
+  DiffFilter(const fixed x_default)
   {
     Reset(x_default);
   }
@@ -60,7 +68,7 @@ public:
    * @param x0 Steady state value of filter input
    * @param y0 Desired value of differentiated output
    */
-  void Reset(const fixed x0 = fixed_zero, const fixed y0 = fixed_zero);
+  void Reset(const fixed x0 = fixed(0), const fixed y0 = fixed(0));
 };
 
 

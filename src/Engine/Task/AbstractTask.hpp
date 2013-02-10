@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -41,8 +41,6 @@ class GlidePolar;
 class AbstractTask: 
   public TaskInterface 
 {
-  friend class PrintHelper;
-
 protected:
   /** task point sequence index */
   unsigned active_task_point;
@@ -77,7 +75,7 @@ public:
    * 
    * @param tb Global task behaviour settings
    */
-  AbstractTask(Type _type, const TaskBehaviour &tb);
+  AbstractTask(TaskType _type, const TaskBehaviour &tb);
 
   /**
    * Set the handler for task events.  This method may be called only
@@ -95,13 +93,18 @@ public:
   /** Reset the auto Mc calculator */
   void ResetAutoMC();
 
+  void SetTaskBehaviour(const TaskBehaviour &tb) {
+    task_behaviour = tb;
+  }
+
   /** 
    * Retrieves the active task point sequence.
    * 
    * @return Index of active task point sequence
    */
-  gcc_pure
-  unsigned GetActiveTaskPointIndex() const;
+  unsigned GetActiveTaskPointIndex() const {
+    return active_task_point;
+  }
 
   /**
    * Test if task has finished.  Used to determine whether
@@ -127,6 +130,10 @@ public:
   gcc_pure
   virtual bool TaskStarted(bool soft = false) const {
     return true;
+  }
+
+  const TaskStats &GetStats() const {
+    return stats;
   }
 
   /** 
@@ -155,26 +162,6 @@ public:
   gcc_pure
   virtual fixed GetFinishHeight() const = 0;
 
-  /** 
-   * Find location of center of task (for rendering purposes)
-   * 
-   * @param fallback_location Location to use if no valid task
-   * 
-   * @return Location of center of task
-   */
-  gcc_pure
-  virtual GeoPoint GetTaskCenter(const GeoPoint& fallback_location) const = 0;
-
-  /** 
-   * Find approximate radius of task from center to edge (for rendering purposes)
-   * 
-   * @param fallback_location Location to use if no valid task
-   * 
-   * @return Radius (m) from center to edge of task
-   */
-  gcc_pure
-  virtual fixed GetTaskRadius(const GeoPoint& fallback_location) const = 0;
-    
 protected:
   /**
    * Pure abstract method to be defined for concrete task classes to update
@@ -245,7 +232,7 @@ protected:
   virtual bool CalcCruiseEfficiency(const AircraftState &state_now,
                                     const GlidePolar &glide_polar,
                                     fixed &val) const {
-    val = fixed_one;
+    val = fixed(1);
     return true;
   }
 
@@ -264,24 +251,6 @@ protected:
   virtual bool CalcEffectiveMC(const AircraftState &state_now,
                                const GlidePolar &glide_polar,
                                fixed &val) const;
-
-  /**
-   * Optimise target ranges (for adjustable tasks) to produce an estimated
-   * time remaining with the current glide polar, equal to a target value.
-   *
-   * For non-ordered tasks, this doesn't do anything and returns 0.0
-   *
-   * @param state_now Aircraft state
-   * @param t_target Desired time for remainder of task (s)
-   *
-   * @return Target range parameter (0-1)
-   */
-  gcc_pure
-  virtual fixed CalcMinTarget(const AircraftState &state_now, 
-                              const GlidePolar &glide_polar,
-                              const fixed t_target) {
-    return fixed_zero;
-  };
 
   /**
    * Calculate angle from aircraft to destination of current leg
@@ -431,10 +400,6 @@ protected:
                                     const GlideResult &solution_remaining_total,
                                     const GlideResult &solution_remaining_leg) = 0;
 
-  /** Determines whether the task has adjustable targets */
-  gcc_pure
-  virtual bool HasTargets() const = 0;
-
   /** Determines whether this task is scored */
   gcc_pure
   virtual bool IsScored() const = 0;
@@ -470,30 +435,13 @@ public:
    */
   virtual void AcceptTaskPointVisitor(TaskPointConstVisitor &visitor) const = 0;
 
-  /**
-   * Accept a (const) task point visitor; makes the visitor visit
-   * all optional start points in the task
-   *
-   * @param visitor Visitor to accept
-   * @param reverse Visit task points in reverse order
-   */
-  virtual void AcceptStartPointVisitor(TaskPointConstVisitor &visitor) const = 0;
-
 public:
   /* virtual methods from class TaskInterface */
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb) {
-    task_behaviour = tb;
-  }
-
-  virtual const TaskStats& GetStats() const {
-    return stats;
-  }
-
   virtual bool Update(const AircraftState &state_now,
                       const AircraftState &state_last,
-                      const GlidePolar &glide_polar);
+                      const GlidePolar &glide_polar) override;
   virtual bool UpdateIdle(const AircraftState &state_now,
-                          const GlidePolar &glide_polar);
+                          const GlidePolar &glide_polar) override;
 };
 
 #endif //ABSTRACTTASK_H

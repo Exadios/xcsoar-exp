@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,12 +25,10 @@
 #include "Geo/GeoPoint.hpp"
 #include "Geo/GeoVector.hpp"
 #include "GlideSolvers/GlideResult.hpp"
-#ifdef DO_PRINT
-#include <iostream>
-#endif
 #include "DistanceStat.hpp"
 #include "TaskVario.hpp"
-#include "Util/TypeTraits.hpp"
+
+#include <type_traits>
 
 struct AircraftState;
 
@@ -117,13 +115,9 @@ struct ElementStat
   bool IsAchievable() const {
     return solution_remaining.IsAchievable();
   }
-
-#ifdef DO_PRINT
-  friend std::ostream& operator<< (std::ostream &o, const ElementStat &es);
-#endif
 };
 
-static_assert(is_trivial<ElementStat>::value, "type is not trivial");
+static_assert(std::is_trivial<ElementStat>::value, "type is not trivial");
 
 class ElementStatComputer
 {

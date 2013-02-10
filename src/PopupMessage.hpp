@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "Thread/Mutex.hpp"
 #include "Util/StaticString.hpp"
-#include "Screen/EditWindow.hpp"
+#include "Screen/LargeTextWindow.hpp"
 
 #include <tchar.h>
 
@@ -49,7 +49,7 @@ class StatusMessageList;
  * - Optional logging of all messages to file
  * - Thread locking so available from any thread
  */
-class PopupMessage : public EditWindow
+class PopupMessage : public LargeTextWindow
 {
 public:
   enum Type {
@@ -124,7 +124,7 @@ public:
   PopupMessage(const StatusMessageList &_status_messages,
                SingleWindow &_parent, const UISettings &settings);
 
-  void set(const PixelRect _rc);
+  void Create(const PixelRect _rc);
 
   /** returns true if messages have changed */
   bool Render();

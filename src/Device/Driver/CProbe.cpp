@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,20 +25,22 @@ Copyright_License {
 #include "Device/Driver.hpp"
 #include "NMEA/Info.hpp"
 #include "NMEA/InputLine.hpp"
+#include "Atmosphere/Temperature.hpp"
 
 #include <stdint.h>
 
 class CProbeDevice : public AbstractDevice {
 public:
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 };
 
 static bool
 ParseData(NMEAInputLine &line, NMEAInfo &info)
 {
   // $PCPROBE,T,Q0,Q1,Q2,Q3,ax,ay,az,temp,rh,batt,delta_press,abs_press,C,
+  // see http://www.compassitaly.com/CMS/index.php/en/download/c-probe/231-c-probeusermanual/download
 
-  long _q[4];
+  unsigned _q[4];
   bool q_available = line.ReadHexChecked(_q[0]);
   if (!line.ReadHexChecked(_q[1]))
     q_available = false;
@@ -54,27 +56,26 @@ ParseData(NMEAInputLine &line, NMEAInfo &info)
       q[i] = fixed((int16_t)_q[i]) / 1000;
 
     fixed sin_pitch = -2 * (q[0] * q[2] - q[3] * q[1]);
-    if (sin_pitch <= fixed_one && sin_pitch >= fixed_minus_one) {
-      fixed pitch = asin(sin_pitch);
-
+    if (sin_pitch <= fixed(1) && sin_pitch >= fixed(-1)) {
       info.attitude.pitch_angle_available = true;
-      info.attitude.pitch_angle = Angle::Radians(pitch);
+      info.attitude.pitch_angle = Angle::asin(sin_pitch);
 
-      fixed heading = fixed_pi + atan2(Double(q[1] * q[2] + q[3] * q[0]),
-                                       sqr(q[3]) - sqr(q[0]) - sqr(q[1]) + sqr(q[2]));
+      Angle heading = Angle::HalfCircle() +
+        Angle::FromXY(sqr(q[3]) - sqr(q[0]) - sqr(q[1]) + sqr(q[2]),
+                      Double(q[1] * q[2] + q[3] * q[0]));
 
       info.attitude.heading_available.Update(info.clock);
-      info.attitude.heading = Angle::Radians(heading);
+      info.attitude.heading = heading;
 
-      fixed roll = atan2(Double(q[0] * q[1] + q[3] * q[2]),
-                         sqr(q[3]) + sqr(q[0]) - sqr(q[1]) - sqr(q[2]));
+      Angle roll = Angle::FromXY(sqr(q[3]) + sqr(q[0]) - sqr(q[1]) - sqr(q[2]),
+                                 Double(q[0] * q[1] + q[3] * q[2]));
 
       info.attitude.bank_angle_available = true;
-      info.attitude.bank_angle = Angle::Radians(roll);
+      info.attitude.bank_angle = roll;
     }
   }
 
-  long _a[3];
+  unsigned _a[3];
   bool a_available = line.ReadHexChecked(_a[0]);
   if (!line.ReadHexChecked(_a[1]))
     a_available = false;
@@ -90,22 +91,28 @@ ParseData(NMEAInputLine &line, NMEAInfo &info)
     info.acceleration.ProvideGLoad(sqrt(sqr(a[0]) + sqr(a[1]) + sqr(a[2])), true);
   }
 
-  long temperature;
+  unsigned temperature;
   if (line.ReadHexChecked(temperature)) {
     info.temperature_available = true;
-    info.temperature = fixed((int16_t)temperature) / 10;
+    info.temperature = CelsiusToKelvin(fixed((int16_t)temperature) / 10);
   }
 
-  long humidity;
+  unsigned humidity;
   if (line.ReadHexChecked(humidity)) {
     info.humidity_available = true;
     info.humidity = fixed((int16_t)humidity) / 10;
   }
 
-  long battery_level;
+  unsigned battery_level;
   if (line.ReadHexChecked(battery_level)) {
     info.battery_level_available.Update(info.clock);
     info.battery_level = fixed((int16_t)battery_level);
+  }
+
+  unsigned _delta_pressure;
+  if (line.ReadHexChecked(_delta_pressure)) {
+    fixed delta_pressure = fixed((int16_t)_delta_pressure) / 10;
+    info.ProvideDynamicPressure(AtmosphericPressure::Pascal(delta_pressure));
   }
 
   return true;

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ Copyright_License {
 #include <stack>
 #include <assert.h>
 
+struct Event;
 class WndForm;
 
 /**
@@ -36,10 +37,34 @@ class WndForm;
  * the process quits.
  */
 class SingleWindow : public TopWindow {
+#ifdef USE_GDI
+  static constexpr const TCHAR *class_name = _T("XCSoarMain");
+#endif
+
 protected:
   std::stack<WndForm *> dialogs;
 
 public:
+#ifdef USE_GDI
+  static bool Find(const TCHAR *text) {
+    return TopWindow::find(class_name, text);
+  }
+
+  /**
+   * Register the WIN32 window class.
+   */
+  static bool RegisterClass(HINSTANCE hInstance);
+#endif
+
+  void Create(const TCHAR *text, PixelSize size,
+              TopWindowStyle style=TopWindowStyle()) {
+#ifdef USE_GDI
+    TopWindow::Create(class_name, text, size, style);
+#else
+    TopWindow::Create(text, size, style);
+#endif
+  }
+
   void AddDialog(WndForm *dialog);
   void RemoveDialog(WndForm *dialog);
 
@@ -48,14 +73,16 @@ public:
    */
   void CancelDialog();
 
-  bool HasDialog() {
+  gcc_pure
+  bool HasDialog() const {
     return !dialogs.empty();
   }
 
   /**
    * Check whether the specified dialog is the top-most one.
    */
-  bool IsTopDialog(WndForm &dialog) {
+  gcc_pure
+  bool IsTopDialog(const WndForm &dialog) const {
     assert(HasDialog());
 
     return &dialog == dialogs.top();
@@ -79,20 +106,12 @@ public:
    * rejected when a modal dialog is active, and the event should go
    * to a window outside of the dialog.
    */
-#ifdef ANDROID
   gcc_pure
   bool FilterEvent(const Event &event, Window *allowed) const;
-#elif defined(ENABLE_SDL)
-  gcc_pure
-  bool FilterEvent(const SDL_Event &event, Window *allowed) const;
-#else
-  gcc_pure
-  bool FilterEvent(const MSG &message, Window *allowed) const;
-#endif
 
 protected:
-  virtual bool OnClose();
-  virtual void OnDestroy();
+  virtual bool OnClose() override;
+  virtual void OnDestroy() override;
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,215 +26,123 @@ Copyright_License {
 
 #include "InfoBoxes/Content/Base.hpp"
 
-class InfoBoxContentBearing : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxBearing(InfoBoxData &data);
 
-class InfoBoxContentBearingDiff : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxBearingDiff(InfoBoxData &data);
 
 class InfoBoxContentNextWaypoint : public InfoBoxContent
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual bool HandleKey(const InfoBoxKeyCodes keycode);
+  virtual void Update(InfoBoxData &data) override;
+  virtual bool HandleKey(const InfoBoxKeyCodes keycode) override;
 };
 
-class InfoBoxContentNextDistance : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextDistance(InfoBoxData &data);
 
-class InfoBoxContentNextETE : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextETE(InfoBoxData &data);
 
-class InfoBoxContentNextETA : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextETA(InfoBoxData &data);
 
-class InfoBoxContentNextAltitudeDiff : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextAltitudeDiff(InfoBoxData &data);
 
-class InfoBoxContentNextMC0AltitudeDiff : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextMC0AltitudeDiff(InfoBoxData &data);
 
-class InfoBoxContentNextAltitudeRequire : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextAltitudeRequire(InfoBoxData &data);
 
-class InfoBoxContentNextAltitudeArrival : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextAltitudeArrival(InfoBoxData &data);
 
-class InfoBoxContentNextGR: public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextGR(InfoBoxData &data);
 
-class InfoBoxContentFinalDistance : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFinalDistance(InfoBoxData &data);
 
-class InfoBoxContentFinalETE : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFinalETE(InfoBoxData &data);
 
-class InfoBoxContentFinalETA : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFinalETA(InfoBoxData &data);
 
-class InfoBoxContentFinalAltitudeDiff : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFinalAltitudeDiff(InfoBoxData &data);
 
-class InfoBoxContentFinalAltitudeRequire : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFinalAltitudeRequire(InfoBoxData &data);
 
-class InfoBoxContentFinalGRTE: public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFinalGRTE(InfoBoxData &data);
 
-class InfoBoxContentFinalGR: public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFinalGR(InfoBoxData &data);
 
-class InfoBoxContentHomeDistance: public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxHomeDistance(InfoBoxData &data);
 
 class InfoBoxContentOLC: public InfoBoxContent
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual bool HandleKey(const InfoBoxKeyCodes keycode);
+  virtual void Update(InfoBoxData &data) override;
+  virtual bool HandleKey(const InfoBoxKeyCodes keycode) override;
 };
 
-class InfoBoxContentTaskSpeed : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskSpeed(InfoBoxData &data);
 
-class InfoBoxContentTaskSpeedAchieved : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskSpeedAchieved(InfoBoxData &data);
 
-class InfoBoxContentTaskSpeedInstant : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskSpeedInstant(InfoBoxData &data);
 
-class InfoBoxContentTaskAATime : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskAATime(InfoBoxData &data);
 
-class InfoBoxContentTaskAATimeDelta : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskAATimeDelta(InfoBoxData &data);
 
-class InfoBoxContentTaskAADistance : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskAADistance(InfoBoxData &data);
 
-class InfoBoxContentTaskAADistanceMax : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskAADistanceMax(InfoBoxData &data);
 
-class InfoBoxContentTaskAADistanceMin : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskAADistanceMin(InfoBoxData &data);
 
-class InfoBoxContentTaskAASpeed : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskAASpeed(InfoBoxData &data);
 
-class InfoBoxContentTaskAASpeedMax : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskAASpeedMax(InfoBoxData &data);
 
-class InfoBoxContentTaskAASpeedMin : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskAASpeedMin(InfoBoxData &data);
 
-class InfoBoxContentTaskTimeUnderMaxHeight : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTaskTimeUnderMaxHeight(InfoBoxData &data);
 
-class InfoBoxContentNextETEVMG : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxNextETEVMG(InfoBoxData &data);
 
-class InfoBoxContentFinalETEVMG : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFinalETEVMG(InfoBoxData &data);
 
-class InfoBoxContentCruiseEfficiency : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxCruiseEfficiency(InfoBoxData &data);
+
+void
+UpdateInfoBoxStartOpen(InfoBoxData &data);
+
+void
+UpdateInfoBoxStartOpenArrival(InfoBoxData &data);
+
 #endif

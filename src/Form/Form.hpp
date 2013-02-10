@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,9 +27,12 @@ Copyright_License {
 #include "ActionListener.hpp"
 #include "SubForm.hpp"
 #include "Screen/ContainerWindow.hpp"
-#include "Screen/Timer.hpp"
 #include "Util/StaticString.hpp"
 #include "Util/tstring.hpp"
+
+#include <functional>
+
+#include <tchar.h>
 
 struct DialogLook;
 class SingleWindow;
@@ -52,26 +55,23 @@ class WndForm : public ContainerWindow, public SubForm,
     const DialogLook &look;
 
   public:
-    typedef bool (*CommandCallback_t)(unsigned cmd);
-    CommandCallback_t command_callback;
-
-  public:
     ClientAreaWindow(const DialogLook &_look)
-      :look(_look), command_callback(NULL) {}
+      :look(_look) {}
 
   protected:
-    virtual bool OnCommand(unsigned id, unsigned code);
-    virtual const Brush *on_color(Window &window, Canvas &canvas);
-    virtual void OnPaint(Canvas &canvas);
+#ifdef USE_GDI
+    virtual const Brush *OnChildColor(Window &window,
+                                      Canvas &canvas) override;
+#endif
+
+    virtual void OnPaint(Canvas &canvas) override;
   };
 
 public:
-  typedef void (*TimerNotifyCallback)(WndForm &sender);
-  typedef bool (*KeyDownNotifyCallback)(WndForm &sender, unsigned key_code);
+  typedef std::function<bool(unsigned)> KeyDownFunction;
+  typedef std::function<bool(unsigned)> CharacterFunction;
 
 protected:
-  SingleWindow &main_window;
-
   const DialogLook &look;
 
   int modal_result;
@@ -88,6 +88,8 @@ protected:
    */
   bool modeless;
 
+  bool dragging;
+
   /** The ClientWindow */
   ClientAreaWindow client_area;
   /** Coordinates of the ClientWindow */
@@ -95,41 +97,50 @@ protected:
   /** Coordinates of the titlebar */
   PixelRect title_rect;
 
-  TimerNotifyCallback timer_notify_callback;
-  KeyDownNotifyCallback key_down_notify_callback;
+  KeyDownFunction key_down_function;
+  CharacterFunction character_function;
 
   /*
    * Control which should get the focus by default
    */
   Window *default_focus;
 
+  RasterPoint last_drag;
+
   /**
    * The OnPaint event is called when the button needs to be drawn
    * (derived from PaintWindow)
    */
-  virtual void OnPaint(Canvas &canvas);
-
-  WindowTimer timer;
+  virtual void OnPaint(Canvas &canvas) override;
 
   StaticString<256> caption;
 
 public:
+  WndForm(const DialogLook &_look);
+
   /**
    * Constructor of the WndForm class
    * @param _main_window
    * @param Caption Titlebar text of the Window
-   * @param X x-Coordinate of the Window
-   * @param Y y-Coordinate of the Window
-   * @param Width Width of the Window
-   * @param Height Height of the Window
    */
   WndForm(SingleWindow &_main_window, const DialogLook &_look,
           const PixelRect &rc,
-          const TCHAR *Caption = _T(""),
+          const TCHAR *caption=nullptr,
           const WindowStyle style = WindowStyle());
 
   /** Destructor */
   virtual ~WndForm();
+
+  void Create(SingleWindow &main_window, const PixelRect &rc,
+              const TCHAR *caption=nullptr,
+              const WindowStyle style=WindowStyle());
+
+  /**
+   * Create a full-screen dialog.
+   */
+  void Create(SingleWindow &main_window,
+              const TCHAR *caption=nullptr,
+              const WindowStyle style=WindowStyle());
 
 protected:
   void UpdateLayout();
@@ -139,15 +150,16 @@ public:
    * Returns a reference to the main window.  This is used by dialogs
    * when they want to open another dialog.
    */
-  SingleWindow &GetMainWindow() {
-    return main_window;
-  }
+  gcc_pure
+  SingleWindow &GetMainWindow();
 
   const DialogLook &GetLook() const {
     return look;
   }
 
-  ContainerWindow &GetClientAreaWindow();
+  ContainerWindow &GetClientAreaWindow() {
+    return client_area;
+  }
 
   unsigned GetTitleHeight() const {
     return title_rect.bottom - title_rect.top;
@@ -164,7 +176,7 @@ public:
   }
 
   /** inherited from ActionListener */
-  virtual void OnAction(int id) {
+  virtual void OnAction(int id) override {
     SetModalResult(id);
   }
 
@@ -188,22 +200,29 @@ public:
   void SetCaption(const TCHAR *_caption);
 
   /** from class Window */
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-  virtual void OnDestroy();
-  virtual bool OnTimer(WindowTimer &timer);
+  virtual void OnCreate() override;
+  virtual void OnResize(PixelSize new_size) override;
+  virtual void OnDestroy() override;
+
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys) override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual void OnCancelMode() override;
 
 #ifdef WIN32
-  virtual bool OnCommand(unsigned id, unsigned code);
+  virtual bool OnCommand(unsigned id, unsigned code) override;
 #endif
 
-  void SetKeyDownNotify(KeyDownNotifyCallback KeyDownNotify) {
-    key_down_notify_callback = KeyDownNotify;
+  void SetKeyDownFunction(KeyDownFunction function) {
+    key_down_function = function;
   }
 
-  void SetTimerNotify(TimerNotifyCallback OnTimerNotify, unsigned ms = 500);
+  void ClearKeyDownFunction() {
+    key_down_function = KeyDownFunction();
+  }
 
-  void SetCommandCallback(ClientAreaWindow::CommandCallback_t CommandCallback) {
-    client_area.command_callback = CommandCallback;
+  void SetCharacterFunction(CharacterFunction function) {
+    character_function = function;
   }
 
   void SetDefaultFocus(Window *_defaultFocus) {

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@ Copyright_License {
 #include "Language/Language.hpp"
 
 #include <algorithm>
+
+#include <string.h>
 
 DataFieldEnum::Entry::~Entry()
 {
@@ -131,7 +133,7 @@ DataFieldEnum::GetAsString() const
 {
   if (entries.empty()) {
     assert(value == 0);
-    return NULL;
+    return _T("");
   } else {
     assert(value < entries.size());
     return entries[value].GetString();
@@ -143,7 +145,7 @@ DataFieldEnum::GetAsDisplayString() const
 {
   if (entries.empty()) {
     assert(value == 0);
-    return NULL;
+    return _T("");
   } else {
     assert(value < entries.size());
     return entries[value].GetDisplayString();
@@ -243,17 +245,13 @@ DataFieldEnum::Dec()
   }
 }
 
-static bool
-DataFieldEnumCompare(const DataFieldEnum::Entry &a,
-                     const DataFieldEnum::Entry &b)
-{
-  return _tcscmp(a.GetDisplayString(), b.GetDisplayString()) < 0;
-}
-
 void
 DataFieldEnum::Sort(int startindex)
 {
-  std::sort(entries.begin() + startindex, entries.end(), DataFieldEnumCompare);
+  std::sort(entries.begin() + startindex, entries.end(),
+            [](const DataFieldEnum::Entry &a, const DataFieldEnum::Entry &b) {
+              return _tcscmp(a.GetDisplayString(), b.GetDisplayString()) < 0;
+            });
 }
 
 ComboList *

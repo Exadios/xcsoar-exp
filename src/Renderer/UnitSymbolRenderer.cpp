@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,10 +23,11 @@ Copyright_License {
 
 #include "UnitSymbolRenderer.hpp"
 #include "Screen/Canvas.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Pen.hpp"
 #include "Util/Macros.hpp"
+
+#include <algorithm>
 
 #include <tchar.h>
 #include <cstdio>
@@ -37,7 +38,7 @@ struct UnitSymbolStrings {
   bool is_fraction;
 };
 
-static const UnitSymbolStrings symbol_strings[] = {
+static constexpr UnitSymbolStrings symbol_strings[] = {
   { NULL, NULL },
   { NULL, _T("km"), false },
   { NULL, _T("NM"), false },
@@ -128,7 +129,7 @@ UnitSymbolRenderer::Draw(Canvas &canvas, const RasterPoint pos,
   assert(strings.line2 != NULL);
 
   if (!strings.line1) {
-    canvas.text(pos.x, pos.y, strings.line2);
+    canvas.DrawText(pos.x, pos.y, strings.line2);
     return;
   }
 
@@ -141,9 +142,9 @@ UnitSymbolRenderer::Draw(Canvas &canvas, const RasterPoint pos,
       canvas.DrawLine(pos.x, pos.y + size1.cy, pos.x + size1.cx, pos.y + size1.cy);
     }
 
-    canvas.text(pos.x, pos.y, strings.line1);
+    canvas.DrawText(pos.x, pos.y, strings.line1);
     PixelScalar x = pos.x + (size1.cx - size2.cx) / 2;
-    canvas.text(x, pos.y + size1.cy, strings.line2);
+    canvas.DrawText(x, pos.y + size1.cy, strings.line2);
   } else {
     if (strings.is_fraction) {
       canvas.Select(unit_fraction_pen);
@@ -151,7 +152,7 @@ UnitSymbolRenderer::Draw(Canvas &canvas, const RasterPoint pos,
     }
 
     PixelScalar x = pos.x + (size2.cx - size1.cx) / 2;
-    canvas.text(x, pos.y, strings.line1);
-    canvas.text(pos.x, pos.y + size1.cy, strings.line2);
+    canvas.DrawText(x, pos.y, strings.line1);
+    canvas.DrawText(pos.x, pos.y + size1.cy, strings.line2);
   }
 }

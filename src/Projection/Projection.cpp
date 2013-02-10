@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,11 +25,13 @@ Copyright_License {
 #include "Geo/Constants.hpp"
 #include "Math/Angle.hpp"
 
+#include <algorithm>
+
 Projection::Projection() :
   geo_location(Angle::Zero(), Angle::Zero()),
   screen_rotation(Angle::Zero())
 {
-  SetScale(fixed_one);
+  SetScale(fixed(1));
   screen_origin.x = 0;
   screen_origin.y = 0;
 }
@@ -47,9 +49,8 @@ Projection::ScreenToGeo(int x, int y) const
   /* paranoid sanity check to avoid integer overflow near the poles;
      our projection isn't doing well at all there; this check avoids
      assertion failures when the user pans all the way up/down */
-  const Angle latitude(std::min(Angle::Degrees(fixed(80)),
-                                std::max(Angle::Degrees(fixed(-80)),
-                                         g.latitude)));
+  const Angle latitude(std::min(Angle::Degrees(80),
+                                std::max(Angle::Degrees(-80), g.latitude)));
 
   g.longitude = geo_location.longitude + g.longitude * latitude.invfastcosine();
 
@@ -78,7 +79,7 @@ Projection::SetScale(const fixed _scale)
   scale = _scale;
 
   // Calculate earth radius in pixels
-  draw_scale = fixed_earth_r * scale;
+  draw_scale = REARTH * scale;
   // Save inverted value for faster calculations
-  inv_draw_scale = fixed_one / draw_scale;
+  inv_draw_scale = fixed(1) / draw_scale;
 }

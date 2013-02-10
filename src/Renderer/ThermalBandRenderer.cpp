@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,15 +34,15 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 
 void
-ThermalBandRenderer::scale_chart(const DerivedInfo &calculated,
+ThermalBandRenderer::ScaleChart(const DerivedInfo &calculated,
                                  const ComputerSettings &settings_computer,
                                  ChartRenderer &chart) const
 {
-  chart.ScaleYFromValue(fixed_zero);
+  chart.ScaleYFromValue(fixed(0));
   chart.ScaleYFromValue(calculated.thermal_band.max_thermal_height);
 
-  chart.ScaleXFromValue(fixed_zero);
-  chart.ScaleXFromValue(fixed_half);
+  chart.ScaleXFromValue(fixed(0));
+  chart.ScaleXFromValue(fixed(0.5));
   chart.ScaleXFromValue(settings_computer.polar.glide_polar_task.GetMC());
 }
 
@@ -62,25 +62,25 @@ ThermalBandRenderer::_DrawThermalBand(const MoreData &basic,
   fixed hoffset = task_props.route_planner.safety_height_terrain +
     calculated.GetTerrainBaseFallback();
 
-  fixed h = fixed_zero;
+  fixed h = fixed(0);
   if (basic.NavAltitudeAvailable()) {
     h = basic.nav_altitude - hoffset;
     chart.ScaleYFromValue(h);
   }
 
   bool draw_start_height = false;
-  fixed hstart = fixed_zero;
+  fixed hstart = fixed(0);
 
   draw_start_height = ordered_props
-    && calculated.common_stats.ordered_valid
-    && (ordered_props->start_max_height != 0)
+    && calculated.ordered_task_stats.task_valid
+    && ordered_props->start_constraints.max_height != 0
     && calculated.terrain_valid;
   if (draw_start_height) {
-    if (ordered_props->start_max_height_ref == HeightReferenceType::AGL) {
-      hstart = fixed(ordered_props->start_max_height) + calculated.terrain_altitude;
-    } else {
-      hstart = fixed(ordered_props->start_max_height);
-    }
+    hstart = fixed(ordered_props->start_constraints.max_height);
+    if (ordered_props->start_constraints.max_height_ref == AltitudeReference::AGL &&
+        calculated.terrain_valid)
+      hstart += calculated.terrain_altitude;
+
     hstart -= hoffset;
     chart.ScaleYFromValue(hstart);
   }
@@ -92,8 +92,8 @@ ThermalBandRenderer::_DrawThermalBand(const MoreData &basic,
   // calculate averages
   int numtherm = 0;
 
-  fixed Wmax = fixed_zero;
-  fixed Wav = fixed_zero;
+  fixed Wmax = fixed(0);
+  fixed Wav = fixed(0);
   fixed Wt[ThermalBandInfo::NUMTHERMALBUCKETS];
   fixed ht[ThermalBandInfo::NUMTHERMALBUCKETS];
 
@@ -127,19 +127,19 @@ ThermalBandRenderer::_DrawThermalBand(const MoreData &basic,
 
   // position of thermal band
   if (numtherm > 1) {
-    std::vector< std::pair<fixed, fixed> > ThermalProfile; 
-    ThermalProfile.reserve(numtherm);
-    for (int i = 0; i < numtherm; ++i) {
-      ThermalProfile.push_back(std::make_pair(Wt[i], ht[i]));
-    }
-    chart.DrawFilledY(ThermalProfile, look.brush, fpen);
+    std::vector< std::pair<fixed, fixed> > thermal_profile;
+    thermal_profile.reserve(numtherm);
+    for (int i = 0; i < numtherm; ++i)
+      thermal_profile.emplace_back(Wt[i], ht[i]);
+
+    chart.DrawFilledY(thermal_profile, look.brush, fpen);
   }
 
   // position of thermal band
   if (basic.NavAltitudeAvailable()) {
     const Pen &pen = is_infobox && look.inverse
       ? look.white_pen : look.black_pen;
-    chart.DrawLine(fixed_zero, h,
+    chart.DrawLine(fixed(0), h,
                    settings_computer.polar.glide_polar_task.GetMC(), h, pen);
 
     if (is_infobox && look.inverse)
@@ -149,33 +149,6 @@ ThermalBandRenderer::_DrawThermalBand(const MoreData &basic,
     chart.DrawDot(settings_computer.polar.glide_polar_task.GetMC(),
                   h, Layout::Scale(2));
   }
-
-  /*
-  RasterPoint GliderBand[5] = { { 0, 0 }, { 23, 0 }, { 22, 0 }, { 24, 0 }, { 0, 0 } };
-  GliderBand[0].y = Layout::Scale(4) + iround(TBSCALEY * (fixed_one - hglider)) + rc.top;
-  GliderBand[1].y = GliderBand[0].y;
-  GliderBand[1].x =
-      max(iround((mc / Wmax) * Layout::Scale(TBSCALEX)), Layout::Scale(4)) + rc.left;
-
-  GliderBand[2].x = GliderBand[1].x - Layout::Scale(4);
-  GliderBand[2].y = GliderBand[0].y - Layout::Scale(4);
-  GliderBand[3].x = GliderBand[1].x;
-  GliderBand[3].y = GliderBand[1].y;
-  GliderBand[4].x = GliderBand[1].x - Layout::Scale(4);
-  GliderBand[4].y = GliderBand[0].y + Layout::Scale(4);
-
-  canvas.Select(look.pen);
-
-  canvas.DrawPolyline(GliderBand, 2);
-  canvas.DrawPolyline(GliderBand + 2, 3); // arrow head
-
-  if (draw_start_height) {
-    canvas.Select(Graphics::hpFinalGlideBelow);
-    GliderBand[0].y = Layout::Scale(4) + iround(TBSCALEY * (fixed_one - hstart)) + rc.top;
-    GliderBand[1].y = GliderBand[0].y;
-    canvas.DrawPolyline(GliderBand, 2);
-  }
-  */
 }
 
 void 
@@ -193,15 +166,14 @@ ThermalBandRenderer::DrawThermalBand(const MoreData &basic,
     chart.padding_bottom = 0;
     chart.padding_left = 0;
   }
-  scale_chart(calculated, settings_computer, chart);
+  ScaleChart(calculated, settings_computer, chart);
   _DrawThermalBand(basic, calculated, settings_computer,
                    chart, task_props, false, ordered_props);
 
   if (!is_map) {
-    chart.DrawXGrid(Units::ToSysVSpeed(fixed_one), fixed_zero,
-                    ChartLook::STYLE_THINDASHPAPER, fixed_one, true);
+    chart.DrawXGrid(Units::ToSysVSpeed(fixed(1)),
+                    ChartLook::STYLE_THINDASHPAPER, fixed(1), true);
     chart.DrawYGrid(Units::ToSysAltitude(fixed(1000)),
-                    fixed_zero,
                     ChartLook::STYLE_THINDASHPAPER,
                     fixed(1000), true);
     chart.DrawXLabel(_T("w"), Units::GetVerticalSpeedName());
@@ -220,7 +192,7 @@ ThermalBandRenderer::DrawThermalBandSpark(const MoreData &basic,
   ChartRenderer chart(chart_look, canvas, rc);
   chart.padding_bottom = 0;
   chart.padding_left = Layout::Scale(3);
-  scale_chart(calculated, settings_computer, chart);
+  ScaleChart(calculated, settings_computer, chart);
   _DrawThermalBand(basic, calculated, settings_computer,
                    chart, task_props, true, NULL);
 }

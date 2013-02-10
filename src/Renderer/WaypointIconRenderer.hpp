@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,10 +24,10 @@ Copyright_License {
 #ifndef XCSOAR_WAYPOINT_ICON_RENDERER_HPP
 #define XCSOAR_WAYPOINT_ICON_RENDERER_HPP
 
-#include "Screen/Point.hpp"
 #include "Math/fixed.hpp"
 #include "Math/Angle.hpp"
 
+struct RasterPoint;
 struct WaypointRendererSettings;
 struct WaypointLook;
 class Canvas;
@@ -52,7 +52,7 @@ public:
   WaypointIconRenderer(const WaypointRendererSettings &_settings,
                        const WaypointLook &_look,
                        Canvas &_canvas, bool _small_icons = false,
-                       Angle _screen_rotation = Angle::Degrees(fixed_zero))
+                       Angle _screen_rotation = Angle::Zero())
     :settings(_settings), look(_look),
      canvas(_canvas), small_icons(_small_icons),
      screen_rotation(_screen_rotation) {}

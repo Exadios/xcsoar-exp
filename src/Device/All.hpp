@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,18 +25,15 @@ Copyright_License {
 #define XCSOAR_DEVICE_ALL_HPP
 
 #include "Math/fixed.hpp"
-#include "Compiler.h"
-#include "RadioFrequency.hpp"
 
-#include <tchar.h>
-
-struct NMEAInfo;
+struct MoreData;
 struct DerivedInfo;
 class OperationEnvironment;
 class AtmosphericPressure;
+class RadioFrequency;
 
 void
-devTick(const DerivedInfo &calculated);
+devTick();
 
 void
 AllDevicesAutoReopen(OperationEnvironment &env);
@@ -52,7 +49,7 @@ AllDevicesPutBallast(fixed fraction, fixed overload,
                      OperationEnvironment &env);
 
 void
-AllDevicesPutVolume(int volume, OperationEnvironment &env);
+AllDevicesPutVolume(unsigned volume, OperationEnvironment &env);
 
 void
 AllDevicesPutActiveFrequency(RadioFrequency frequency,
@@ -64,5 +61,12 @@ AllDevicesPutStandbyFrequency(RadioFrequency frequency,
 
 void
 AllDevicesPutQNH(const AtmosphericPressure &pres, OperationEnvironment &env);
+
+void
+AllDevicesNotifySensorUpdate(const MoreData &basic);
+
+void
+AllDevicesNotifyCalculatedUpdate(const MoreData &basic,
+                                 const DerivedInfo &calculated);
 
 #endif

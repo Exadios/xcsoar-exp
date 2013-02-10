@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,37 +24,37 @@ Copyright_License {
 #include "ZipLineReader.hpp"
 
 char *
-ZipLineReaderA::read()
+ZipLineReaderA::ReadLine()
 {
-  return splitter.read();
+  return splitter.ReadLine();
 }
 
 long
-ZipLineReaderA::size() const
+ZipLineReaderA::GetSize() const
 {
-  return splitter.size();
+  return splitter.GetSize();
 }
 
 long
-ZipLineReaderA::tell() const
+ZipLineReaderA::Tell() const
 {
-  return splitter.tell();
+  return splitter.Tell();
 }
 
 TCHAR *
-ZipLineReader::read()
+ZipLineReader::ReadLine()
 {
-  return convert.read();
+  return convert.ReadLine();
 }
 
 long
-ZipLineReader::size() const
+ZipLineReader::GetSize() const
 {
-  return convert.size();
+  return convert.GetSize();
 }
 
 long
-ZipLineReader::tell() const
+ZipLineReader::Tell() const
 {
-  return convert.tell();
+  return convert.Tell();
 }

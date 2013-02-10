@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,18 +24,18 @@
 #define GOTOTASK_H
 
 #include "UnorderedTask.hpp"
-#include "Waypoint/Waypoints.hpp"
 #include "Compiler.h"
+
+struct Waypoint;
+class Waypoints;
+class UnorderedTaskPoint;
 
 /**
  * Class providing ability to go to a single task point
  */
-class GotoTask : 
-  public UnorderedTask 
+class GotoTask final : public UnorderedTask
 {
-  friend class PrintHelper;
-
-  TaskWaypoint* tp;
+  UnorderedTaskPoint *tp;
   const Waypoints &waypoints;
 
 public:
@@ -51,6 +51,8 @@ public:
   GotoTask(const TaskBehaviour &tb,
            const Waypoints &wps);
   ~GotoTask();
+
+  void SetTaskBehaviour(const TaskBehaviour &tb);
 
 /** 
  * Sets go to task point to specified waypoint. 
@@ -74,22 +76,19 @@ public:
 
 public:
   /* virtual methods from class TaskInterface */
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb);
-  virtual unsigned TaskSize() const;
-  virtual TaskWaypoint *GetActiveTaskPoint() const;
-  virtual void SetActiveTaskPoint(unsigned index);
-  virtual bool IsValidTaskPoint(const int index_offset) const;
+  virtual unsigned TaskSize() const override;
+  virtual TaskWaypoint *GetActiveTaskPoint() const override;
+  virtual void SetActiveTaskPoint(unsigned index) override;
+  virtual bool IsValidTaskPoint(const int index_offset) const override;
 
-  /* virtual methods from class AbstractTask */
-  virtual void Reset();
 protected:
   virtual bool UpdateSample(const AircraftState &state_now,
                             const GlidePolar &glide_polar,
-                            const bool full_update);
+                            const bool full_update) override;
   virtual bool CheckTransitions(const AircraftState &state_now,
-                                const AircraftState &state_last);
+                                const AircraftState &state_last) override;
 public:
-  virtual void AcceptTaskPointVisitor(TaskPointConstVisitor& visitor) const gcc_override;
+  virtual void AcceptTaskPointVisitor(TaskPointConstVisitor& visitor) const override;
 };
 
 #endif //GOTOTASK_H

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "Screen/OpenGL/Triangulate.hpp"
 #include "Screen/Point.hpp"
+#include "Topography/XShapePoint.hpp"
 
 #include <algorithm>
 #include <math.h>
@@ -111,8 +112,8 @@ Normalize(RasterPoint *v, float length)
   double squared_length = v->x * (RasterPoint::SquareType)v->x +
                           v->y * (RasterPoint::SquareType)v->y;
   float scale = length / sqrt(squared_length);
-  v->x = floor(v->x * scale + 0.5f);
-  v->y = floor(v->y * scale + 0.5f);
+  v->x = lround(v->x * scale);
+  v->y = lround(v->y * scale);
 }
 
 template <typename PT>
@@ -580,8 +581,8 @@ LineToTriangles(const RasterPoint *points, unsigned num_points,
         }
 
         float scale = half_line_width / projected_length;
-        bisector_x = sign*floor(bisector_x * scale + 0.5f);
-        bisector_y = sign*floor(bisector_y * scale + 0.5f);
+        bisector_x = sign * (int)lround(bisector_x * scale);
+        bisector_y = sign * (int)lround(bisector_y * scale);
 
         AppendPoint(s, b->x - bisector_x, b->y - bisector_y);
         AppendPoint(s, b->x + bisector_x, b->y + bisector_y);

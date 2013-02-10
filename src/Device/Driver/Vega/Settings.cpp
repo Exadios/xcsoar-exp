@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -64,33 +64,16 @@ VegaDevice::GetSetting(const char *name) const
   return std::make_pair(true, *i);
 }
 
-void
-VegaDevice::VarioWriteSettings(const DerivedInfo &calculated,
-                               OperationEnvironment &env) const
-{
-    char mcbuf[100];
-
-    sprintf(mcbuf, "PDVMC,%d,%d,%d,%d,%d",
-            iround(mc * 10),
-            iround(calculated.V_stf*10),
-            calculated.circling,
-            iround(calculated.terrain_altitude),
-            uround(qnh.GetHectoPascal() * 10));
-
-    PortWriteNMEA(port, mcbuf, env);
-}
-
 bool
 VegaDevice::PutMacCready(fixed _mc, OperationEnvironment &env)
 {
-  mc = _mc;
-  return true;
+  volatile_data.mc = uround(_mc * 10);
+  return volatile_data.SendTo(port, env);
 }
 
 bool
 VegaDevice::PutQNH(const AtmosphericPressure& pres, OperationEnvironment &env)
 {
-  qnh = pres;
-
-  return true;
+  volatile_data.qnh = uround(pres.GetHectoPascal() * 10);
+  return volatile_data.SendTo(port, env);
 }

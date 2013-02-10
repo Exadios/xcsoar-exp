@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,21 +34,19 @@ Copyright_License {
 
 BufferCanvas::BufferCanvas(const Canvas &canvas,
                            UPixelScalar _width, UPixelScalar _height)
-  :Canvas(_width, _height),
+  :Canvas({_width, _height}),
    texture(new GLTexture(_width, _height))
 {
   assert(canvas.IsDefined());
 }
 
 void
-BufferCanvas::set(const Canvas &canvas,
-                  UPixelScalar _width, UPixelScalar _height)
+BufferCanvas::Create(PixelSize new_size)
 {
-  assert(canvas.IsDefined());
   assert(!active);
 
-  reset();
-  texture = new GLTexture(_width, _height);
+  Destroy();
+  texture = new GLTexture(new_size.cx, new_size.cy);
 
   if (OpenGL::frame_buffer_object) {
     frame_buffer = new GLFrameBuffer();
@@ -64,12 +62,12 @@ BufferCanvas::set(const Canvas &canvas,
     stencil_buffer->Unbind();
   }
 
-  Canvas::set(_width, _height);
+  Canvas::Create(new_size);
   AddSurfaceListener(*this);
 }
 
 void
-BufferCanvas::reset()
+BufferCanvas::Destroy()
 {
   assert(!active);
 
@@ -88,14 +86,13 @@ BufferCanvas::reset()
 }
 
 void
-BufferCanvas::resize(UPixelScalar _width, UPixelScalar _height)
+BufferCanvas::Resize(PixelSize new_size)
 {
   assert(IsDefined());
 
-  if (_width == width && _height == height)
+  if (new_size == GetSize())
     return;
 
-  PixelSize new_size { PixelScalar(_width), PixelScalar(_height) };
   texture->ResizeDiscard(new_size);
 
   if (stencil_buffer != NULL) {
@@ -109,7 +106,7 @@ BufferCanvas::resize(UPixelScalar _width, UPixelScalar _height)
     stencil_buffer->Unbind();
   }
 
-  Canvas::set(_width, _height);
+  Canvas::Create(new_size);
 }
 
 void
@@ -118,7 +115,7 @@ BufferCanvas::Begin(Canvas &other)
   assert(IsDefined());
   assert(!active);
 
-  resize(other.get_width(), other.get_height());
+  Resize(other.GetSize());
 
   if (frame_buffer != NULL) {
     /* activate the frame buffer */
@@ -129,19 +126,16 @@ BufferCanvas::Begin(Canvas &other)
     stencil_buffer->AttachFramebuffer(FBO::STENCIL_ATTACHMENT);
 
     /* save the old viewport */
-    old_translate.x = OpenGL::translate_x;
-    old_translate.y = OpenGL::translate_y;
+    old_translate = OpenGL::translate;
     old_size.cx = OpenGL::screen_width;
     old_size.cy = OpenGL::screen_height;
     glPushMatrix();
 
     /* configure a new viewport */
-    OpenGL::SetupViewport(get_width(), get_height());
-    OpenGL::translate_x = 0;
-    OpenGL::translate_y = 0;
+    OpenGL::SetupViewport(GetWidth(), GetHeight());
+    OpenGL::translate = {0, 0};
   } else {
-    x_offset = other.x_offset;
-    y_offset = other.y_offset;
+    offset = other.offset;
   }
 
   active = true;
@@ -152,37 +146,29 @@ BufferCanvas::Commit(Canvas &other)
 {
   assert(IsDefined());
   assert(active);
-  assert(get_width() == other.get_width());
-  assert(get_height() == other.get_height());
+  assert(GetWidth() == other.GetWidth());
+  assert(GetHeight() == other.GetHeight());
 
   if (frame_buffer != NULL) {
     frame_buffer->Unbind();
 
     /* restore the old viewport */
 
-    assert(OpenGL::translate_x == 0);
-    assert(OpenGL::translate_y == 0);
+    assert(OpenGL::translate == RasterPoint(0, 0));
 
     OpenGL::SetupViewport(old_size.cx, old_size.cy);
 
-    OpenGL::translate_x = old_translate.x;
-    OpenGL::translate_y = old_translate.y;
+    OpenGL::translate = old_translate;
 
     glPopMatrix();
 
     /* copy frame buffer to screen */
     CopyTo(other);
   } else {
-    assert(x_offset == other.x_offset);
-    assert(y_offset == other.y_offset);
+    assert(offset == other.offset);
 
     /* copy screen to texture */
-    PixelRect rc;
-    rc.left = 0;
-    rc.top = 0;
-    rc.right = get_width();
-    rc.bottom = get_height();
-    CopyToTexture(*texture, rc);
+    CopyToTexture(*texture, GetRect());
   }
 
   active = false;
@@ -198,21 +184,19 @@ BufferCanvas::CopyTo(Canvas &other)
 
   GLEnable scope(GL_TEXTURE_2D);
   texture->Bind();
-
-  texture->DrawFlipped({ 0, 0, PixelScalar(other.get_width()), PixelScalar(other.get_height()) },
-                       { 0, 0, PixelScalar(get_width()), PixelScalar(get_height()) });
+  texture->DrawFlipped(other.GetRect(), GetRect());
 }
 
 void
-BufferCanvas::surface_created()
+BufferCanvas::SurfaceCreated()
 {
 }
 
 void
-BufferCanvas::surface_destroyed()
+BufferCanvas::SurfaceDestroyed()
 {
   /* discard the buffer when the Android app is suspended; it needs a
      full redraw to restore it after resuming */
 
-  reset();
+  Destroy();
 }

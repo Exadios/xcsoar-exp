@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,7 +27,8 @@ Copyright_License {
 #include "UIGlobals.hpp"
 #include "Look/DialogLook.hpp"
 #include "Form/List.hpp"
-#include "Form/ListWidget.hpp"
+#include "Widget/ListWidget.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Language/Language.hpp"
 #include "LocalPath.hpp"
@@ -36,7 +37,7 @@ Copyright_License {
 #include "IO/FileLineReader.hpp"
 #include "Formatter/ByteSizeFormatter.hpp"
 #include "Formatter/TimeFormatter.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDateTime.hpp"
 #include "Net/Features.hpp"
 #include "Util/ConvertString.hpp"
 #include "Repository/FileRepository.hpp"
@@ -51,9 +52,9 @@ Copyright_License {
 #include "ListPicker.hpp"
 #include "Form/Button.hpp"
 #include "Net/DownloadManager.hpp"
-#include "Thread/Notify.hpp"
+#include "Event/Notify.hpp"
 #include "Thread/Mutex.hpp"
-#include "Timer.hpp"
+#include "Event/Timer.hpp"
 
 #include <map>
 #include <set>
@@ -162,7 +163,7 @@ class ManagedFileListWidget
     }
   };
 
-  UPixelScalar font_height;
+  unsigned font_height;
 
 #ifdef HAVE_DOWNLOAD_MANAGER
   WndButton *download_button, *add_button, *cancel_button;
@@ -283,11 +284,11 @@ public:
 
 #ifdef HAVE_DOWNLOAD_MANAGER
   /* virtual methods from class Timer */
-  virtual void OnTimer() gcc_override;
+  virtual void OnTimer() override;
 
   /* virtual methods from class Net::DownloadListener */
   virtual void OnDownloadAdded(const TCHAR *path_relative,
-                               int64_t size, int64_t position) gcc_override;
+                               int64_t size, int64_t position) override;
   virtual void OnDownloadComplete(const TCHAR *path_relative, bool success);
 
   /* virtual methods from class Notify */
@@ -299,10 +300,10 @@ void
 ManagedFileListWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
 {
   const DialogLook &look = UIGlobals::GetDialogLook();
-  UPixelScalar margin = Layout::Scale(2);
+  const unsigned margin = Layout::GetTextPadding();
   font_height = look.list.font->GetHeight();
 
-  UPixelScalar row_height = std::max(UPixelScalar(3 * margin + 2 * font_height),
+  UPixelScalar row_height = std::max(3u * margin + 2u * font_height,
                                      Layout::GetMaximumControlHeight());
   CreateList(parent, look, rc, row_height);
   LoadRepositoryFile();
@@ -401,9 +402,9 @@ ManagedFileListWidget::CreateButtons(WidgetDialog &dialog)
 {
 #ifdef HAVE_DOWNLOAD_MANAGER
   if (Net::DownloadManager::IsAvailable()) {
-    download_button = dialog.AddButton(_("Download"), this, DOWNLOAD);
-    add_button = dialog.AddButton(_("Add"), this, ADD);
-    cancel_button = dialog.AddButton(_("Cancel"), this, CANCEL);
+    download_button = dialog.AddButton(_("Download"), *this, DOWNLOAD);
+    add_button = dialog.AddButton(_("Add"), *this, ADD);
+    cancel_button = dialog.AddButton(_("Cancel"), *this, CANCEL);
   }
 #endif
 }
@@ -428,9 +429,9 @@ ManagedFileListWidget::OnPaintItem(Canvas &canvas, const PixelRect rc,
 {
   const FileItem &file = items[i];
 
-  const UPixelScalar margin = Layout::Scale(2);
+  const UPixelScalar margin = Layout::GetTextPadding();
 
-  canvas.text(rc.left + margin, rc.top + margin, file.name.c_str());
+  canvas.DrawText(rc.left + margin, rc.top + margin, file.name.c_str());
 
   if (file.downloading) {
     StaticString<64> text;
@@ -447,18 +448,18 @@ ManagedFileListWidget::OnPaintItem(Canvas &canvas, const PixelRect rc,
     }
 
     UPixelScalar width = canvas.CalcTextWidth(text);
-    canvas.text(rc.right - width - margin, rc.top + margin, text);
+    canvas.DrawText(rc.right - width - margin, rc.top + margin, text);
   } else if (file.failed) {
     const TCHAR *text = _("Error");
     UPixelScalar width = canvas.CalcTextWidth(text);
-    canvas.text(rc.right - width - margin, rc.top + margin, text);
+    canvas.DrawText(rc.right - width - margin, rc.top + margin, text);
   }
 
-  canvas.text(rc.left + margin, rc.top + 2 * margin + font_height,
-              file.size.c_str());
+  canvas.DrawText(rc.left + margin, rc.top + 2 * margin + font_height,
+                  file.size.c_str());
 
-  canvas.text((rc.left + rc.right) / 2, rc.top + 2 * margin + font_height,
-              file.last_modified.c_str());
+  canvas.DrawText((rc.left + rc.right) / 2, rc.top + 2 * margin + font_height,
+                  file.last_modified.c_str());
 }
 
 void
@@ -507,7 +508,8 @@ OnPaintAddItem(Canvas &canvas, const PixelRect rc, unsigned i)
 
   ACPToWideConverter name(file.GetName());
   if (name.IsValid())
-    canvas.text(rc.left + Layout::Scale(2), rc.top + Layout::Scale(2), name);
+    canvas.DrawText(rc.left + Layout::GetTextPadding(),
+                    rc.top + Layout::GetTextPadding(), name);
 }
 
 #endif
@@ -517,9 +519,6 @@ ManagedFileListWidget::Add()
 {
 #ifdef HAVE_DOWNLOAD_MANAGER
   assert(Net::DownloadManager::IsAvailable());
-
-  if (items.empty())
-    return;
 
   std::vector<AvailableFile> list;
   for (auto i = repository.begin(), end = repository.end(); i != end; ++i) {
@@ -541,9 +540,11 @@ ManagedFileListWidget::Add()
     return;
 
   add_list = &list;
-  int i = ListPicker(UIGlobals::GetMainWindow(), _("Select a file"),
+
+  FunctionListItemRenderer item_renderer(OnPaintAddItem);
+  int i = ListPicker(_("Select a file"),
                      list.size(), 0, Layout::FastScale(18),
-                     OnPaintAddItem);
+                     item_renderer);
   add_list = NULL;
   if (i < 0)
     return;
@@ -668,7 +669,9 @@ ManagedFileListWidget::OnNotification()
 {
   mutex.Lock();
   bool repository_modified2 = repository_modified;
+  repository_modified = false;
   const bool repository_failed2 = repository_failed;
+  repository_failed = false;
   mutex.Unlock();
 
   if (repository_modified2)
@@ -686,7 +689,8 @@ static void
 ShowFileManager2()
 {
   ManagedFileListWidget widget;
-  WidgetDialog dialog(_("File Manager"), &widget);
+  WidgetDialog dialog(UIGlobals::GetDialogLook());
+  dialog.CreateFull(UIGlobals::GetMainWindow(), _("File Manager"), &widget);
   dialog.AddButton(_("Close"), mrOK);
   widget.CreateButtons(dialog);
 

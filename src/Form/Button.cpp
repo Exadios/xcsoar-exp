@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,41 +31,34 @@ Copyright_License {
 WndButton::WndButton(ContainerWindow &parent, const DialogLook &_look,
                      const TCHAR *Caption, const PixelRect &rc,
                      ButtonWindowStyle style,
-                     ClickNotifyCallback _click_callback,
-                     LeftRightNotifyCallback _left_callback,
-                     LeftRightNotifyCallback _right_callback)
+                     ClickNotifyCallback _click_callback)
   :look(_look), renderer(look.button),
    listener(NULL),
-   click_callback(_click_callback),
-   left_callback(_left_callback),
-   right_callback(_right_callback)
+   click_callback(_click_callback)
 {
   style.EnableCustomPainting();
-  set(parent, Caption, rc, style);
-  SetFont(*look.button.font);
+  Create(parent, Caption, rc, style);
 }
-
 
 WndButton::WndButton(ContainerWindow &parent, const DialogLook &_look,
                      const TCHAR *caption, const PixelRect &rc,
                      ButtonWindowStyle style,
-                     ActionListener *_listener, int _id)
+                     ActionListener &_listener, int _id)
   :look(_look), renderer(look.button),
 #ifdef USE_GDI
    id(_id),
 #endif
-   listener(_listener),
-   click_callback(NULL), left_callback(NULL), right_callback(NULL)
+   listener(&_listener),
+   click_callback(NULL)
 {
   style.EnableCustomPainting();
 #ifdef USE_GDI
   /* use BaseButtonWindow::COMMAND_BOUNCE_ID */
-  set(parent, caption, rc, style);
+  Create(parent, caption, rc, style);
 #else
   /* our custom SDL/OpenGL button doesn't need this hack */
-  set(parent, caption, _id, rc, style);
+  Create(parent, caption, _id, rc, style);
 #endif
-  SetFont(*look.button.font);
 }
 
 bool
@@ -81,33 +74,11 @@ WndButton::OnClicked()
 
   // Call the OnClick function
   if (click_callback != NULL) {
-    click_callback(*this);
+    click_callback();
     return true;
   }
 
   return ButtonWindow::OnClicked();
-}
-
-bool
-WndButton::on_left()
-{
-  // call on Left key function
-  if (left_callback != NULL) {
-    left_callback(*this);
-    return true;
-  }
-  return false;
-}
-
-bool
-WndButton::on_right()
-{
-  // call on Left key function
-  if (right_callback != NULL) {
-    right_callback(*this);
-    return true;
-  }
-  return false;
 }
 
 #ifdef USE_GDI
@@ -135,50 +106,17 @@ WndButton::OnKillFocus()
 
 #endif
 
-bool
-WndButton::OnKeyCheck(unsigned key_code) const
-{
-  switch (key_code) {
-  case VK_LEFT:
-    return left_callback != NULL;
-
-  case VK_RIGHT:
-    return right_callback != NULL;
-
-  default:
-    return ButtonWindow::OnKeyCheck(key_code);
-  }
-}
-
-bool
-WndButton::OnKeyDown(unsigned key_code)
-{
-  switch (key_code) {
-  case VK_LEFT:
-    return on_left();
-
-  case VK_RIGHT:
-    return on_right();
-  }
-
-  return ButtonWindow::OnKeyDown(key_code);
-}
-
 void
 WndButton::OnPaint(Canvas &canvas)
 {
-  PixelRect rc = {
-    PixelScalar(0), PixelScalar(0), PixelScalar(canvas.get_width()),
-    PixelScalar(canvas.get_height())
-  };
-
   const bool focused = HasFocus();
-  const bool pressed = is_down();
+  const bool pressed = IsDown();
 
+  PixelRect rc = canvas.GetRect();
   renderer.DrawButton(canvas, rc, focused, pressed);
 
   // If button has text on it
-  tstring caption = get_text();
+  const tstring caption = GetText();
   if (caption.empty())
     return;
 
@@ -195,12 +133,12 @@ WndButton::OnPaint(Canvas &canvas)
   canvas.Select(*(look.button.font));
 
 #ifndef USE_GDI
-  canvas.formatted_text(&rc, caption.c_str(), GetTextStyle());
+  canvas.DrawFormattedText(&rc, caption.c_str(), GetTextStyle());
 #else
   unsigned style = DT_CENTER | DT_NOCLIP | DT_WORDBREAK;
 
   PixelRect text_rc = rc;
-  canvas.formatted_text(&text_rc, caption.c_str(), style | DT_CALCRECT);
+  canvas.DrawFormattedText(&text_rc, caption.c_str(), style | DT_CALCRECT);
   text_rc.right = rc.right;
 
   PixelScalar offset = rc.bottom - text_rc.bottom;
@@ -210,6 +148,6 @@ WndButton::OnPaint(Canvas &canvas)
     text_rc.bottom += offset;
   }
 
-  canvas.formatted_text(&text_rc, caption.c_str(), style);
+  canvas.DrawFormattedText(&text_rc, caption.c_str(), style);
 #endif
 }

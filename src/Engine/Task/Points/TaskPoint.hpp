@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #ifndef TASKPOINT_HPP
 #define TASKPOINT_HPP
 
+#include "Type.hpp"
 #include "Geo/GeoPoint.hpp"
 #include "Compiler.h"
 
@@ -35,29 +36,13 @@ struct AircraftState;
  */
 class TaskPoint
 {
-public:
-  friend class PrintHelper;
-
-  enum Type: uint8_t {
-    UNORDERED,
-    START,
-    AST,
-    AAT,
-    FINISH,
-    ROUTE
-  };
-
-private:
-  Type type;
+  TaskPointType type;
 
   GeoPoint location;
 
-  /** Altitude (AMSL, m) of task point terrain */
-  fixed elevation;
-
 public:
   bool IsIntermediatePoint() const {
-    return type == AST || type == AAT;
+    return type == TaskPointType::AST || type == TaskPointType::AAT;
   }
 
   /**
@@ -69,28 +54,13 @@ public:
    *
    * @return Initialised object
    */
-  TaskPoint(Type _type, const GeoPoint &_location,
-            const fixed _elevation) :
-    type(_type), location(_location),
-    elevation(_elevation) {}
+  TaskPoint(TaskPointType _type, const GeoPoint &_location)
+    :type(_type), location(_location) {}
 
-  /**
-   * Destructor.  Does nothing yet.
-   */
-  virtual ~TaskPoint() {};
-
-  Type GetType() const {
+  TaskPointType GetType() const {
     return type;
   }
 
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb) {}
-
-protected:
-  fixed GetBaseElevation() const {
-    return elevation;
-  }
-
-public:
   /**
    * Retrieve location to be used for remaining task
    * (for a pure TaskPoint, this is the reference location)
@@ -111,22 +81,6 @@ public:
   virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const = 0;
 
   /**
-   * Calculate vector from aircraft to destination
-   *
-   * @return Vector for task leg
-   */
-  gcc_pure
-  virtual GeoVector GetVectorPlanned() const = 0;
-
-  /**
-   * Calculate vector travelled along this leg
-   *
-   * @return Vector for task leg
-   */
-  gcc_pure
-  virtual GeoVector GetVectorTravelled() const = 0;
-
-  /**
     * Calculate vector of next leg, if there is one
     *
     * @return Vector for task leg or GeoVector::Invalid() if there is no next leg
@@ -135,67 +89,14 @@ public:
   virtual GeoVector GetNextLegVector() const;
 
   /**
-   * Set target to parametric value between min and max locations.
-   * Targets are only moved for current or after taskpoints, unless
-   * force_if_current is true.
-   *
-   * @param p Parametric range (0:1) to set target
-   * @param force_if_current If current active, force range move (otherwise ignored)
-   *
-   * @return True if target was moved
-   */
-  virtual bool SetRange(const fixed p, const bool force_if_current) {
-    return false;
-  }
-
-  /**
-   * If this TaskPoint has the capability to adjust the
-   * target/range, this indicates whether it is locked from
-   * being updated by the optimizer
-   * Only valid for TaskPoints where has_target() returns true
-   *
-   * @return True if target is locked
-   *    or False if target is unlocked or tp has no target
-   */
-  gcc_pure
-  virtual bool IsTargetLocked() const {
-    return false;
-  }
-
-  /**
    * Capability of this TaskPoint to have adjustable range/target
    *
    * @return True if task point has a target (can have range set)
    */
   gcc_pure
   bool HasTarget() const {
-    return type == AAT;
+    return type == TaskPointType::AAT;
   }
-
-  /**
-   * Save local copy of target in case optimisation fails
-   */
-  virtual void SaveTarget() {}
-  /**
-   * Restore target from local copy
-   */
-  virtual void RestoreTarget() {}
-
-  /**
-   * Check whether aircraft has entered the observation zone.
-   *
-   * @return True if observation zone has been entered
-   */
-  gcc_pure
-  virtual bool HasEntered() const = 0;
-
-  /**
-   * Recall aircraft state where it entered the observation zone.
-   *
-   * @return State at entry, or null if never entered
-   */
-  gcc_pure
-  virtual const AircraftState &GetEnteredState() const = 0;
 
   /**
    * Retrieve elevation of taskpoint, taking into account

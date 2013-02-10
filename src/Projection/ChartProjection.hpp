@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,10 +24,8 @@ Copyright_License {
 #include "WindowProjection.hpp"
 
 class TaskProjection;
-class TaskManager;
-class AbstractTask;
+class OrderedTask;
 class OrderedTaskPoint;
-class ContestTraceVector;
 
 /**
  * Utility class to determine projection for a chart from task data,
@@ -45,12 +43,7 @@ public:
     Set(rc, task_projection, radius_factor);
   }
 
-  ChartProjection(const PixelRect &rc, const TaskManager &task,
-                  const GeoPoint &fallback_loc) {
-    Set(rc, task, fallback_loc);
-  }
-
-  ChartProjection(const PixelRect &rc, const AbstractTask &task,
+  ChartProjection(const PixelRect &rc, const OrderedTask &task,
                   const GeoPoint &fallback_loc) {
     Set(rc, task, fallback_loc);
   }
@@ -63,10 +56,7 @@ public:
   void Set(const PixelRect &rc, const TaskProjection &task_projection,
            fixed radius_factor=fixed(1.1));
 
-  void Set(const PixelRect &rc, const TaskManager &task,
-           const GeoPoint &fallback_loc);
-
-  void Set(const PixelRect &rc, const AbstractTask &task,
+  void Set(const PixelRect &rc, const OrderedTask &task,
            const GeoPoint &fallback_loc);
 
   void Set(const PixelRect &rc, const OrderedTaskPoint &point,

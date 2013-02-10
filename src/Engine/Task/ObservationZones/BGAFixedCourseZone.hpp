@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ public:
   }
 
   /* virtual methods from class ObservationZonePoint */
-  virtual ObservationZonePoint *Clone(const GeoPoint &_reference) const {
+  virtual ObservationZonePoint *Clone(const GeoPoint &_reference) const override {
     return new BGAFixedCourseZone(*this, _reference);
   }
 };

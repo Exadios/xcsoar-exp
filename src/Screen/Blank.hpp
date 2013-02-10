@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,26 +27,11 @@ Copyright_License {
 #if defined(_WIN32_WCE) && !defined(GNAV)
 #define HAVE_BLANK
 
-extern unsigned DisplayTimeOut;
-
-static inline  void
-ResetDisplayTimeOut()
-{
-  DisplayTimeOut = 0;
-}
-
 void CheckDisplayTimeOut(bool sticky);
 
 #else /* !HAVE_BLANK */
 
 #include "Compiler.h"
-
-enum {
-  EnableAutoBlank = false,
-};
-
-static inline void
-ResetDisplayTimeOut() {}
 
 static inline void CheckDisplayTimeOut(gcc_unused bool sticky) {}
 

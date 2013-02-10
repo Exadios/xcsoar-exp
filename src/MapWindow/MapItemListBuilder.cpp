@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,11 +24,9 @@ Copyright_License {
 #include "MapItemListBuilder.hpp"
 
 #include "Util/StaticArray.hpp"
-#include "Engine/Airspace/AirspacePolygon.hpp"
-#include "Engine/Airspace/AirspaceCircle.hpp"
 #include "Engine/Airspace/AirspaceVisitor.hpp"
 #include "Engine/Airspace/AirspaceWarning.hpp"
-#include "Engine/Airspace/Predicate/AirspacePredicateInside.hpp"
+#include "Engine/Airspace/AbstractAirspace.hpp"
 #include "Engine/Airspace/Airspaces.hpp"
 #include "Engine/Airspace/AirspaceWarningManager.hpp"
 #include "Engine/Task/Ordered/Points/OrderedTaskPoint.hpp"
@@ -47,7 +45,7 @@ Copyright_License {
 #include "NMEA/MoreData.hpp"
 #include "NMEA/Derived.hpp"
 #include "Terrain/RasterTerrain.hpp"
-#include "FLARM/FriendsGlue.hpp"
+#include "FLARM/Friends.hpp"
 #include "TeamCodeSettings.hpp"
 
 #ifdef HAVE_NOAA
@@ -56,19 +54,17 @@ Copyright_License {
 
 class AirspaceWarningList
 {
-  StaticArray<const AbstractAirspace *,64> ids_inside, ids_warning;
+  StaticArray<const AbstractAirspace *,64> list;
 
 public:
   void Add(const AirspaceWarning& as) {
-    if (as.GetWarningState() == AirspaceWarning::WARNING_INSIDE)
-      ids_inside.checked_append(&as.GetAirspace());
-    else if (as.GetWarningState() > AirspaceWarning::WARNING_CLEAR)
-      ids_warning.checked_append(&as.GetAirspace());
+    if (as.GetWarningState() > AirspaceWarning::WARNING_CLEAR)
+      list.checked_append(&as.GetAirspace());
   }
 
   void Fill(const AirspaceWarningManager &awm) {
-    for (auto i = awm.begin(), end = awm.end(); i != end; ++i)
-      Add(*i);
+    for (const AirspaceWarning &as : awm)
+      Add(as);
   }
 
   void Fill(const ProtectedAirspaceWarningManager &awm) {
@@ -76,34 +72,16 @@ public:
     Fill(lease);
   }
 
-  bool ContainsWarning(const AbstractAirspace& as) const {
-    return ids_warning.contains(&as);
-  }
-
-  bool ContainsInside(const AbstractAirspace& as) const {
-    return ids_inside.contains(&as);
-  }
-};
-
-class AirspaceWarningPredicate: public AirspacePredicate
-{
-  const AirspaceWarningList &warnings;
-
-public:
-  AirspaceWarningPredicate(const AirspaceWarningList &_warnings)
-    :warnings(_warnings) {}
-
-  bool operator()(const AbstractAirspace& airspace) const {
-    return warnings.ContainsInside(airspace) ||
-           warnings.ContainsWarning(airspace);
+  bool Contains(const AbstractAirspace& as) const {
+    return list.contains(&as);
   }
 };
 
 class AirspaceAtPointPredicate: public AirspacePredicate
 {
-  AirspaceVisiblePredicate visible_predicate;
-  AirspaceWarningPredicate warning_predicate;
-  AirspacePredicateInside inside_predicate;
+  const AirspaceVisibility visible_predicate;
+  const AirspaceWarningList &warnings;
+  const GeoPoint location;
 
 public:
   AirspaceAtPointPredicate(const AirspaceComputerSettings &_computer_settings,
@@ -112,35 +90,29 @@ public:
                            const AirspaceWarningList &_warnings,
                            const GeoPoint _location)
     :visible_predicate(_computer_settings, _renderer_settings, _state),
-     warning_predicate(_warnings),
-     inside_predicate(_location) {}
+     warnings(_warnings),
+     location(_location) {}
 
   bool operator()(const AbstractAirspace& airspace) const {
     // Airspace should be visible or have a warning/inside status
     // and airspace needs to be at specified location
 
-    return (visible_predicate(airspace) || warning_predicate(airspace)) &&
-           inside_predicate(airspace);
+    return (visible_predicate(airspace) || warnings.Contains(airspace)) &&
+      airspace.Inside(location);
   }
 };
 
 /**
  * Class to display airspace details dialog
  */
-class AirspaceListBuilderVisitor:
-  public AirspaceVisitor
+class AirspaceListBuilderVisitor final : public AirspaceVisitor
 {
   MapItemList &list;
 
 public:
   AirspaceListBuilderVisitor(MapItemList &_list):list(_list) {}
 
-  void Visit(const AirspacePolygon &airspace) {
-    if (!list.full())
-      list.append(new AirspaceMapItem(airspace));
-  }
-
-  void Visit(const AirspaceCircle &airspace) {
+  virtual void Visit(const AbstractAirspace &airspace) override {
     if (!list.full())
       list.append(new AirspaceMapItem(airspace));
   }
@@ -218,7 +190,7 @@ MapItemListBuilder::AddArrivalAltitudes(
 }
 
 void
-MapItemListBuilder::AddSelfIfNear(const GeoPoint &self, const Angle &bearing)
+MapItemListBuilder::AddSelfIfNear(const GeoPoint &self, Angle bearing)
 {
   if (!list.full() && location.Distance(self) < range)
     list.append(new SelfMapItem(self, bearing));
@@ -255,7 +227,7 @@ void
 MapItemListBuilder::AddTaskOZs(const ProtectedTaskManager &task)
 {
   ProtectedTaskManager::Lease task_manager(task);
-  if (task_manager->GetMode() != TaskManager::MODE_ORDERED)
+  if (task_manager->GetMode() != TaskType::ORDERED)
     return;
 
   const OrderedTask &ordered_task = task_manager->GetOrderedTask();
@@ -282,12 +254,13 @@ MapItemListBuilder::AddMarkers(const ProtectedMarkers &marks)
 {
   ProtectedMarkers::Lease lease(marks);
   unsigned i = 0;
-  for (auto it = lease->begin(), it_end = lease->end(); it != it_end; ++it) {
+
+  for (const auto &m : (const Markers &)lease) {
     if (list.full())
       break;
 
-    if (location.Distance(it->location) < range)
-      list.append(new MarkerMapItem(i, *it));
+    if (location.Distance(m.location) < range)
+      list.append(new MarkerMapItem(i, m));
 
     i++;
   }
@@ -310,16 +283,15 @@ MapItemListBuilder::AddWeatherStations(NOAAStore &store)
 #endif
 
 void
-MapItemListBuilder::AddTraffic(const TrafficList &flarm,
-                               const TeamCodeSettings &teamcode)
+MapItemListBuilder::AddTraffic(const TrafficList &flarm)
 {
-  for (auto it = flarm.list.begin(), end = flarm.list.end(); it != end; ++it) {
+  for (const auto &t : flarm.list) {
     if (list.full())
       break;
 
-    if (location.Distance(it->location) < range) {
-      auto color = FlarmFriends::GetFriendColor(it->id, teamcode);
-      list.append(new TrafficMapItem(*it, color));
+    if (location.Distance(t.location) < range) {
+      auto color = FlarmFriends::GetFriendColor(t.id);
+      list.append(new TrafficMapItem(t, color));
     }
   }
 }
@@ -329,20 +301,19 @@ MapItemListBuilder::AddThermals(const ThermalLocatorInfo &thermals,
                                 const MoreData &basic,
                                 const DerivedInfo &calculated)
 {
-  for (auto it = thermals.sources.begin(), end = thermals.sources.end();
-       it != end; ++it) {
+  for (const auto &t : thermals.sources) {
     if (list.full())
       break;
 
     // find height difference
-    if (basic.nav_altitude < it->ground_height)
+    if (basic.nav_altitude < t.ground_height)
       continue;
 
-    GeoPoint loc = calculated.wind_available ?
-      it->CalculateAdjustedLocation(basic.nav_altitude, calculated.wind) :
-      it->location;
+    GeoPoint loc = calculated.wind_available
+      ? t.CalculateAdjustedLocation(basic.nav_altitude, calculated.wind)
+      : t.location;
 
     if (location.Distance(loc) < range)
-      list.append(new ThermalMapItem(*it));
+      list.append(new ThermalMapItem(t));
   }
 }

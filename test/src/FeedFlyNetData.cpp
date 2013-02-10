@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "Util/StaticString.hpp"
 #include "Math/fixed.hpp"
-#include "PeriodClock.hpp"
+#include "Time/PeriodClock.hpp"
 #include "OS/SocketDescriptor.hpp"
 #include "OS/SocketAddress.hpp"
 
@@ -84,9 +84,9 @@ int main(int argc, char **argv)
       int elapsed_ms = start_clock.Elapsed();
       fixed elapsed = fixed(elapsed_ms) / 1000;
       fixed vario = sin(elapsed / 3) * cos(elapsed / 10) *
-                    cos(elapsed / 20 + fixed_two) * fixed(3);
+        cos(elapsed / 20 + fixed(2)) * 3;
 
-      fixed pressure_vario = vario * fixed(12.5);
+      fixed pressure_vario = -vario * fixed(12.5);
       fixed delta_pressure = pressure_vario * 48 / 1000;
       pressure += delta_pressure;
 

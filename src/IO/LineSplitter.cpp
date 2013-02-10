@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -42,12 +42,12 @@ extract_line(const char *data, unsigned length)
 }
 
 char *
-LineSplitter::read()
+LineSplitter::ReadLine()
 {
   /* is there enough data left in the buffer to read another line? */
   if (memchr(remaining.data, '\n', remaining.length) == NULL) {
     /* no: read more data from the Source */
-    remaining = source.read();
+    remaining = source.Read();
     if (remaining.IsEmpty())
       /* end of file */
       return NULL;
@@ -58,7 +58,7 @@ LineSplitter::read()
   Source<char>::Range range = remaining;
   std::pair<unsigned, unsigned> bounds =
     extract_line(range.data, range.length);
-  source.consume(bounds.second);
+  source.Consume(bounds.second);
   remaining.data += bounds.second;
   remaining.length -= bounds.second;
 
@@ -81,13 +81,13 @@ LineSplitter::read()
 }
 
 long
-LineSplitter::size() const
+LineSplitter::GetSize() const
 {
-  return source.size();
+  return source.GetSize();
 }
 
 long
-LineSplitter::tell() const
+LineSplitter::Tell() const
 {
-  return source.tell();
+  return source.Tell();
 }

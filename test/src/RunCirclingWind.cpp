@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
 #include "OS/Args.hpp"
 #include "DebugReplay.hpp"
 #include "Formatter/TimeFormatter.hpp"
+#include "ComputerSettings.hpp"
 
 #include <stdio.h>
 #include <memory>
@@ -41,19 +42,24 @@ int main(int argc, char **argv)
 
   printf("# time quality wind_bearing (deg) wind_speed (m/s)\n");
 
+  CirclingSettings circling_settings;
+  circling_settings.SetDefaults();
+
   CirclingComputer circling_computer;
   CirclingWind circling_wind;
 
   while (replay->Next()) {
-    circling_computer.TurnRate(replay->SetCalculated(),
-                               replay->Basic(), replay->LastBasic(),
-                               replay->Calculated(), replay->LastCalculated());
-    circling_computer.Turning(replay->SetCalculated(),
-                              replay->Basic(), replay->LastBasic(),
-                              replay->Calculated(), replay->LastCalculated(),
-                              replay->GetComputerSettings());
+    const bool last_circling = replay->Calculated().circling;
 
-    if (replay->LastCalculated().circling != replay->Calculated().circling)
+    circling_computer.TurnRate(replay->SetCalculated(),
+                               replay->Basic(),
+                               replay->Calculated().flight);
+    circling_computer.Turning(replay->SetCalculated(),
+                              replay->Basic(),
+                              replay->Calculated().flight,
+                              circling_settings);
+
+    if (replay->Calculated().circling != last_circling)
       circling_wind.NewFlightMode(replay->Calculated());
 
     CirclingWind::Result result = circling_wind.NewSample(replay->Basic());
@@ -61,10 +67,10 @@ int main(int argc, char **argv)
       fixed mag = result.wind.Magnitude();
 
       Angle bearing;
-      if (result.wind.y == fixed_zero && result.wind.x == fixed_zero)
+      if (result.wind.y == fixed(0) && result.wind.x == fixed(0))
         bearing = Angle::Zero();
       else
-        bearing = Angle::Radians(atan2(result.wind.y, result.wind.x)).AsBearing();
+        bearing = Angle::FromXY(result.wind.x, result.wind.y).AsBearing();
 
       TCHAR time_buffer[32];
       FormatTime(time_buffer, replay->Basic().time);

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -82,19 +82,6 @@ LoadFormProperty(SubForm &form, const TCHAR *control_name, bool value)
   DataFieldBoolean &df = *(DataFieldBoolean *)ctl->GetDataField();
   assert(df.GetType() == DataField::Type::BOOLEAN);
   df.Set(value);
-  ctl->RefreshDisplay();
-}
-
-void
-LoadFormProperty(SubForm &form, const TCHAR *control_name, int value)
-{
-  assert(control_name != NULL);
-
-  WndProperty *ctl = (WndProperty *)form.FindByName(control_name);
-  if (ctl == NULL)
-    return;
-
-  ctl->GetDataField()->SetAsInteger(value);
   ctl->RefreshDisplay();
 }
 
@@ -277,50 +264,6 @@ bool
 SaveFormProperty(const SubForm &form, const TCHAR *field, unsigned int &value)
 {
   unsigned new_value = (unsigned)GetFormValueInteger(form, field);
-  if (new_value == value)
-    return false;
-
-  value = new_value;
-  return true;
-}
-
-bool
-SaveFormProperty(const SubForm &form, const TCHAR *field, int &value)
-{
-  int new_value = GetFormValueInteger(form, field);
-  if (new_value == value)
-    return false;
-
-  value = new_value;
-  return true;
-}
-
-bool
-SaveFormProperty(const SubForm &form, const TCHAR *field, short &value)
-{
-  short new_value = (short)GetFormValueInteger(form, field);
-  if (new_value == value)
-    return false;
-
-  value = new_value;
-  return true;
-}
-
-bool
-SaveFormProperty(const SubForm &form, const TCHAR *field, uint8_t &value)
-{
-  uint8_t new_value = (uint8_t)GetFormValueInteger(form, field);
-  if (new_value == value)
-    return false;
-
-  value = new_value;
-  return true;
-}
-
-bool
-SaveFormProperty(const SubForm &form, const TCHAR *field, uint16_t &value)
-{
-  uint16_t new_value = (uint16_t)GetFormValueInteger(form, field);
   if (new_value == value)
     return false;
 

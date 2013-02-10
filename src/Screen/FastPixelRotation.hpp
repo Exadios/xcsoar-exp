@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -51,9 +51,9 @@ public:
   }
 
   gcc_pure
-  RasterPoint Rotate(PixelScalar x, PixelScalar y) const {
+  RasterPoint Rotate(int x, int y) const {
     auto result = rotation.Rotate(x, y);
-    return RasterPoint{ PixelScalar(result.first), PixelScalar(result.second) };
+    return RasterPoint{result.first, result.second};
   }
 
   gcc_pure

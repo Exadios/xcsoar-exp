@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,8 @@ Copyright_License {
 #include "IGCFix.hpp"
 #include "IGCExtensions.hpp"
 #include "IGCDeclaration.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDate.hpp"
+#include "Time/BrokenTime.hpp"
 #include "Util/CharUtil.hpp"
 #include "Util/Macros.hpp"
 
@@ -36,7 +37,7 @@ Copyright_License {
 /**
  * Character table for base-36.
  */
-static const char c36[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static constexpr char c36[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /**
  * Convert a 5 digit logger serial to a 3 letter logger id.

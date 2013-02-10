@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,15 +22,15 @@
 #ifndef GLIDEPOLAR_HPP
 #define GLIDEPOLAR_HPP
 
+#include "PolarCoefficients.hpp"
+#include "Math/fixed.hpp"
+#include "Compiler.h"
+
+#include <type_traits>
+
 struct GlideState;
 struct GlideResult;
 struct AircraftState;
-
-#include "PolarCoefficients.hpp"
-#include "Math/fixed.hpp"
-#include "Util/TypeTraits.hpp"
-#include "Compiler.h"
-
 class Angle;
 struct PolarInfo;
 struct SpeedVector;
@@ -114,15 +114,15 @@ public:
    * @param _bugs Bugs (clean) ratio (default clean)
    * @param _ballast Ballast ratio (default empty)
    */
-  GlidePolar(const fixed _mc, const fixed _bugs = fixed_one,
-      const fixed _ballast = fixed_zero);
+  GlidePolar(const fixed _mc, const fixed _bugs = fixed(1),
+      const fixed _ballast = fixed(0));
 
   /**
    * Constructs a GlidePolar object that is invalid.
    */
   gcc_const
   static GlidePolar Invalid() {
-    GlidePolar gp(fixed_zero);
+    GlidePolar gp(fixed(0));
     gp.SetInvalid();
     return gp;
   }
@@ -585,6 +585,6 @@ private:
   void UpdateSMin();
 };
 
-static_assert(is_trivial<GlidePolar>::value, "type is not trivial");
+static_assert(std::is_trivial<GlidePolar>::value, "type is not trivial");
 
 #endif

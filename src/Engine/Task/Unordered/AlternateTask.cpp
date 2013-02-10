@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,8 +33,7 @@ const unsigned AlternateTask::max_alternates = 6;
 
 AlternateTask::AlternateTask(const TaskBehaviour &tb,
                              const Waypoints &wps):
-  AbortTask(tb, wps),
-  best_alternate_id(UINT_MAX)
+  AbortTask(tb, wps)
 {
   alternates.reserve(64);
 }
@@ -44,7 +43,6 @@ AlternateTask::Reset()
 {
   AbortTask::Reset();
   destination.SetInvalid();
-  best_alternate_id = UINT_MAX;
 }
 
 void
@@ -70,21 +68,6 @@ struct AlternateRank:
   }
 };
 
-void
-AlternateTask::CheckAlternateChanged()
-{
-  // remember previous value (or invalid)
-  unsigned id = (alternates.empty() ? UINT_MAX : alternates[0].waypoint.id);
-
-  // send notification on change
-  if (best_alternate_id != id) {
-    best_alternate_id = id;
-
-    if (task_events != NULL)
-      task_events->AlternateTransition();
-  }
-}
-
 void 
 AlternateTask::ClientUpdate(const AircraftState &state_now,
                              const bool reachable)
@@ -103,7 +86,7 @@ AlternateTask::ClientUpdate(const AircraftState &state_now,
   const fixed straight_distance = state_now.location.Distance(destination);
 
   for (auto i = task_points.begin(), end = task_points.end(); i != end; ++i) {
-    const TaskWaypoint &tp = *i;
+    const TaskWaypoint &tp = i->point;
     const Waypoint &wp = tp.GetWaypoint();
 
     const fixed diversion_distance =
@@ -124,9 +107,6 @@ AlternateTask::ClientUpdate(const AircraftState &state_now,
 
     q.pop();
   }
-
-  // check for notifications
-  CheckAlternateChanged();
 }
 
 void 

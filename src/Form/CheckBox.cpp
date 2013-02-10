@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,23 +22,55 @@ Copyright_License {
 */
 
 #include "Form/CheckBox.hpp"
+#include "Form/ActionListener.hpp"
 #include "Look/DialogLook.hpp"
+#include "Screen/Key.h"
 
 CheckBoxControl::CheckBoxControl(ContainerWindow &parent,
                                  const DialogLook &look,
-                                 const TCHAR *caption,
+                                 tstring::const_pointer caption,
                                  const PixelRect &rc,
                                  const CheckBoxStyle style,
                                  ClickNotifyCallback _click_notify_callback)
-  :click_notify_callback(_click_notify_callback)
+  :listener(nullptr), click_notify_callback(_click_notify_callback)
 {
-  set(parent, caption, rc, style);
+  Create(parent, caption, rc, style);
+  SetFont(*look.text_font);
+}
+
+CheckBoxControl::CheckBoxControl(ContainerWindow &parent,
+                                 const DialogLook &look,
+                                 tstring::const_pointer caption,
+                                 const PixelRect &rc,
+                                 const CheckBoxStyle style,
+                                 ActionListener *_listener, int _id)
+  :listener(_listener),
+#ifdef USE_GDI
+   id(_id),
+#endif
+   click_notify_callback(nullptr)
+{
+#ifdef USE_GDI
+  Create(parent, caption, rc, style);
+#else
+  /* our custom SDL/OpenGL button doesn't need this hack */
+  Create(parent, caption, _id, rc, style);
+#endif
   SetFont(*look.text_font);
 }
 
 bool
 CheckBoxControl::OnClicked()
 {
+  if (listener != nullptr) {
+#ifndef USE_GDI
+    unsigned id = GetID();
+#endif
+
+    listener->OnAction(id);
+    return true;
+  }
+
   // Call the OnClick function
   if (click_notify_callback != NULL) {
     click_notify_callback(*this);
@@ -54,7 +86,7 @@ bool
 CheckBoxControl::OnKeyCheck(unsigned key_code) const
 {
   switch (key_code) {
-  case VK_RETURN:
+  case KEY_RETURN:
     return true;
 
   default:
@@ -68,9 +100,9 @@ CheckBoxControl::OnKeyDown(unsigned key_code)
   switch (key_code) {
 #ifdef GNAV
   // JMW added this to make data entry easier
-  case VK_APP4:
+  case KEY_APP4:
 #endif
-  case VK_RETURN:
+  case KEY_RETURN:
     SetState(!GetState());
     return OnClicked();
   }

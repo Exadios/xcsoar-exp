@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,24 +29,6 @@ Copyright_License {
 #include "Units/Descriptor.hpp"
 
 #include <assert.h>
-
-void
-LoadFormProperty(SubForm &form, const TCHAR *control_name,
-                 UnitGroup unit_group, int value)
-{
-  assert(control_name != NULL);
-
-  WndProperty *ctl = (WndProperty *)form.FindByName(control_name);
-  if (ctl == NULL)
-    return;
-
-  Unit unit = Units::GetUserUnitByGroup(unit_group);
-  DataFieldFloat &df = *(DataFieldFloat *)ctl->GetDataField();
-  assert(df.GetType() == DataField::Type::REAL);
-  df.SetUnits(Units::GetUnitName(unit));
-  df.Set(fixed(iround(Units::ToUserUnit(fixed(value), unit))));
-  ctl->RefreshDisplay();
-}
 
 void
 LoadFormProperty(SubForm &form, const TCHAR *control_name,
@@ -83,20 +65,6 @@ LoadOptionalFormProperty(SubForm &form, const TCHAR *control_name,
   df.SetUnits(Units::GetUnitName(unit));
   df.Set(fixed(iround(Units::ToUserUnit(fixed(value), unit))));
   ctl->RefreshDisplay();
-}
-
-bool
-SaveFormProperty(const SubForm &form, const TCHAR *control_name,
-                 UnitGroup unit_group, unsigned &value,
-                 const TCHAR *registry_name)
-{
-  int value2 = value;
-  if (SaveFormProperty(form, control_name, unit_group, value2,
-                       registry_name)) {
-    value = value2;
-    return true;
-  } else
-    return false;
 }
 
 bool

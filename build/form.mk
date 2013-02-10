@@ -3,8 +3,9 @@
 FORM_SRC_DIR = $(SRC)/Form
 
 FORM_SOURCES = \
-	$(SRC)/KineticManager.cpp \
+	$(SRC)/UIUtil/KineticManager.cpp \
 	$(SRC)/Renderer/ButtonRenderer.cpp \
+	$(SRC)/Renderer/SymbolRenderer.cpp \
 	$(FORM_SRC_DIR)/Internal.cpp \
 	$(FORM_SRC_DIR)/Control.cpp \
 	$(FORM_SRC_DIR)/Panel.cpp \
@@ -19,16 +20,7 @@ FORM_SOURCES = \
 	$(FORM_SRC_DIR)/List.cpp \
 	$(FORM_SRC_DIR)/ScrollBar.cpp \
 	$(FORM_SRC_DIR)/Edit.cpp \
-	$(FORM_SRC_DIR)/Widget.cpp \
-	$(FORM_SRC_DIR)/WindowWidget.cpp \
-	$(FORM_SRC_DIR)/ListWidget.cpp \
-	$(FORM_SRC_DIR)/PanelWidget.cpp \
-	$(FORM_SRC_DIR)/OverlappedWidget.cpp \
-	$(FORM_SRC_DIR)/TwoWidgets.cpp \
-	$(FORM_SRC_DIR)/RowFormWidget.cpp \
-	$(FORM_SRC_DIR)/ManagedWidget.cpp \
-	$(FORM_SRC_DIR)/PagerWidget.cpp \
-	$(FORM_SRC_DIR)/DockWindow.cpp \
+	$(FORM_SRC_DIR)/DigitEntry.cpp \
 	$(FORM_SRC_DIR)/Tabbed.cpp \
 	$(FORM_SRC_DIR)/TabBar.cpp \
 	$(FORM_SRC_DIR)/TabDisplay.cpp \

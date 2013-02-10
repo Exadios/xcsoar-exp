@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,79 +23,28 @@ Copyright_License {
 
 #include "Screen/Font.hpp"
 #include "Screen/Debug.hpp"
-#include "OS/FileUtil.hpp"
-#include "Compiler.h"
+#include "Screen/Custom/Files.hpp"
 
 #include <assert.h>
 
-static const char *const all_font_paths[] = {
-#ifdef __APPLE__
-  "/Library/Fonts/Tahoma.ttf",
-  "/Library/Fonts/Georgia.ttf",
-  "/Library/Fonts/Arial Narrow.ttf",
-  "/Library/Fonts/Times New Roman.ttf",
-  "/Library/Fonts/Microsoft/Arial.ttf",
-#else
-  "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSansCondensed.ttf",
-  "/usr/share/fonts/dejavu/DejaVuSansCondensed.ttf",
-  "/usr/share/fonts/truetype/ttf-droid/DroidSans.ttf",
-  "/usr/share/fonts/droid/DroidSans.ttf",
-  "/usr/share/fonts/truetype/droid/DroidSans.ttf",
-  "/usr/share/fonts/truetype/msttcorefonts/Arial.ttf",
-  "/usr/share/fonts/corefonts/arial.ttf",
-  "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
-  "/usr/share/fonts/freefont-ttf/FreeSans.ttf",
-  "/usr/share/fonts/truetype/unifont/unifont.ttf",
-  "/usr/share/fonts/unifont/unifont.ttf",
-  "/usr/share/fonts/local/tahoma.ttf",
-  "/usr/share/fonts/corefonts/tahoma.ttf",
-#endif
-  NULL
-};
-
-static const char *const all_monospace_font_paths[] = {
-#ifdef __APPLE__
-  "/Library/Fonts/Courier New.ttf",
-#else
-  "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf",
-  "/usr/share/fonts/truetype/ttf-droid/DroidSansMono.ttf",
-  "/usr/share/fonts/truetype/droid/DroidSansMono.ttf",
-  "/usr/share/fonts/truetype/msttcorefonts/couri.ttf",
-  "/usr/share/fonts/truetype/freefont/FreeMono.ttf",
-#endif
-  NULL
-};
-
 static const char *font_path;
+static const char *bold_font_path;
 static const char *monospace_font_path;
-
-gcc_const
-static const char *
-DetectFont(const char *const* fonts)
-{
-  for (const char *const* i = fonts; *i != NULL; ++i)
-    if (File::Exists(*i))
-      return *i;
-
-  return NULL;
-}
 
 void
 Font::Initialise()
 {
-  font_path = DetectFont(all_font_paths);
-
-  monospace_font_path = DetectFont(all_monospace_font_paths);
-  if (monospace_font_path == NULL)
-    monospace_font_path = font_path;
+  font_path = FindDefaultFont();
+  bold_font_path = FindDefaultBoldFont();
+  monospace_font_path = FindDefaultMonospaceFont();
 }
 
 bool
-Font::_set(const char *file, UPixelScalar ptsize, bool bold, bool italic)
+Font::LoadFile(const char *file, UPixelScalar ptsize, bool bold, bool italic)
 {
   assert(IsScreenInitialized());
 
-  Reset();
+  Destroy();
 
   font = TTF_OpenFont(file, ptsize);
   if (font == NULL)
@@ -114,31 +63,41 @@ Font::_set(const char *file, UPixelScalar ptsize, bool bold, bool italic)
 }
 
 bool
-Font::Set(const TCHAR *facename, UPixelScalar height, bool bold, bool italic)
+Font::Load(const TCHAR *facename, UPixelScalar height, bool bold, bool italic)
 {
   LOGFONT lf;
   lf.lfWeight = bold ? 700 : 500;
   lf.lfHeight = height;
   lf.lfItalic = italic;
   lf.lfPitchAndFamily = FF_DONTCARE | VARIABLE_PITCH;
-  return Set(lf);
+  return Load(lf);
 }
 
 bool
-Font::Set(const LOGFONT &log_font)
+Font::Load(const LOGFONT &log_font)
 {
   assert(IsScreenInitialized());
 
-  const TCHAR *path = (log_font.lfPitchAndFamily & 0x03) == FIXED_PITCH
-    ? monospace_font_path
-    : font_path;
+  bool bold = log_font.lfWeight >= 700;
+
+  const char *path;
+  if ((log_font.lfPitchAndFamily & 0x03) == FIXED_PITCH &&
+      monospace_font_path != nullptr) {
+    path = monospace_font_path;
+  } else if (bold && bold_font_path != nullptr) {
+    /* a bold variant of the font exists: clear the "bold" flag, so
+       SDL_TTF does not apply it again */
+    path = bold_font_path;
+    bold = false;
+  } else {
+    path = font_path;
+  }
 
   if (path == NULL)
     return false;
 
-  return _set(path, log_font.lfHeight > 0 ? log_font.lfHeight : 10,
-              log_font.lfWeight >= 700,
-              log_font.lfItalic);
+  return LoadFile(path, log_font.lfHeight > 0 ? log_font.lfHeight : 10,
+                  bold, log_font.lfItalic);
 }
 
 void
@@ -154,7 +113,7 @@ Font::CalculateHeights()
 }
 
 void
-Font::Reset()
+Font::Destroy()
 {
   assert(!IsDefined() || IsScreenInitialized());
 

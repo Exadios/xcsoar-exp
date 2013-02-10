@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,22 @@ Copyright_License {
 #include "Profile/AirspaceConfig.hpp"
 #include "Profile/Profile.hpp"
 #include "MapSettings.hpp"
+#include "Util/Clamp.hpp"
+
+static bool
+IsValidMapOrientation(unsigned value)
+{
+  switch (value) {
+  case (unsigned)DisplayOrientation::TRACK_UP:
+  case (unsigned)DisplayOrientation::NORTH_UP:
+  case (unsigned)DisplayOrientation::TARGET_UP:
+  case (unsigned)DisplayOrientation::HEADING_UP:
+  case (unsigned)DisplayOrientation::WIND_UP:
+    return true;
+  }
+
+  return false;
+}
 
 void
 Profile::Load(MapSettings &settings)
@@ -52,79 +68,53 @@ Profile::Load(MapSettings &settings)
 
   bool orientation_found = false;
 
-  unsigned Temp = NORTHUP;
+  unsigned Temp = (unsigned)DisplayOrientation::NORTH_UP;
   if (Get(ProfileKeys::OrientationCircling, Temp))
     orientation_found = true;
 
-  switch (Temp) {
-  case TRACKUP:
-    settings.circling_orientation = TRACKUP;
-    break;
-  case NORTHUP:
-    settings.circling_orientation = NORTHUP;
-    break;
-  case TARGETUP:
-    settings.circling_orientation = TARGETUP;
-    break;
-  case HEADINGUP:
-    settings.circling_orientation = HEADINGUP;
-    break;
-  }
+  if (IsValidMapOrientation(Temp))
+    settings.circling_orientation = (DisplayOrientation)Temp;
 
-  Temp = NORTHUP;
+  Temp = (unsigned)DisplayOrientation::NORTH_UP;
   if (Get(ProfileKeys::OrientationCruise, Temp))
     orientation_found = true;
 
-  switch (Temp) {
-  case TRACKUP:
-    settings.cruise_orientation = TRACKUP;
-    break;
-  case NORTHUP:
-    settings.cruise_orientation = NORTHUP;
-    break;
-  case TARGETUP:
-    settings.cruise_orientation = TARGETUP;
-    break;
-  case HEADINGUP:
-    settings.cruise_orientation = HEADINGUP;
-    break;
-  }
+  if (IsValidMapOrientation(Temp))
+    settings.cruise_orientation = (DisplayOrientation)Temp;
 
   if (!orientation_found) {
     Temp = 1;
     Get(ProfileKeys::DisplayUpValue, Temp);
     switch (Temp) {
     case 0:
-      settings.cruise_orientation = TRACKUP;
-      settings.circling_orientation = TRACKUP;
+      settings.cruise_orientation = DisplayOrientation::TRACK_UP;
+      settings.circling_orientation = DisplayOrientation::TRACK_UP;
       break;
     case 1:
-      settings.cruise_orientation = NORTHUP;
-      settings.circling_orientation = NORTHUP;
+      settings.cruise_orientation = DisplayOrientation::NORTH_UP;
+      settings.circling_orientation = DisplayOrientation::NORTH_UP;
       break;
     case 2:
-      settings.cruise_orientation = TRACKUP;
-      settings.circling_orientation = NORTHUP;
+      settings.cruise_orientation = DisplayOrientation::TRACK_UP;
+      settings.circling_orientation = DisplayOrientation::NORTH_UP;
       break;
     case 3:
-      settings.cruise_orientation = TRACKUP;
-      settings.circling_orientation = TARGETUP;
+      settings.cruise_orientation = DisplayOrientation::TRACK_UP;
+      settings.circling_orientation = DisplayOrientation::TARGET_UP;
       break;
     case 4:
-      settings.cruise_orientation = NORTHUP;
-      settings.circling_orientation = TRACKUP;
+      settings.cruise_orientation = DisplayOrientation::NORTH_UP;
+      settings.circling_orientation = DisplayOrientation::TRACK_UP;
       break;
     }
   }
 
   fixed tmp;
   if (Profile::Get(ProfileKeys::ClimbMapScale, tmp))
-    settings.circling_scale =
-      std::max(fixed(0.0003), std::min(tmp / 10000, fixed(10)));
+    settings.circling_scale = Clamp(tmp / 10000, fixed(0.0003), fixed(10));
 
   if (Profile::Get(ProfileKeys::CruiseMapScale, tmp))
-    settings.cruise_scale =
-      std::max(fixed(0.0003), std::min(tmp / 10000, fixed(10)));
+    settings.cruise_scale = Clamp(tmp / 10000, fixed(0.0003), fixed(10));
 
   GetEnum(ProfileKeys::MapShiftBias, settings.map_shift_bias);
   Get(ProfileKeys::EnableFLARMMap, settings.show_flarm_on_map);
@@ -132,6 +122,8 @@ Profile::Load(MapSettings &settings)
   Get(ProfileKeys::EnableThermalProfile, settings.show_thermal_profile);
   Get(ProfileKeys::EnableFinalGlideBarMC0,
       settings.final_glide_bar_mc0_enabled);
+  Get(ProfileKeys::ShowFAITriangleAreas,
+      settings.show_fai_triangle_areas);
 
   Load(settings.trail);
   Load(settings.item_list);

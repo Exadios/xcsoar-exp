@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,19 +24,34 @@ Copyright_License {
 #include "FinalGlideBarLook.hpp"
 #include "Screen/Layout.hpp"
 
-void
-FinalGlideBarLook::Initialise()
+static Color
+ColorWithAlpha(const Color &c, uint8_t a)
 {
-  brush_below.Set(COLOR_RED);
-  brush_below_mc0.Set(LightColor(COLOR_RED));
+#ifdef ENABLE_OPENGL
+  return Color(c.Red(), c.Green(), c.Blue(), a);
+#else
+  return c;
+#endif
+}
+
+
+void
+FinalGlideBarLook::Initialise(const Font &_font)
+{
+  const uint8_t alpha = 0xA0;
+
+  brush_below.Set(ColorWithAlpha(COLOR_RED, alpha));
+  brush_below_mc0.Set(ColorWithAlpha(LightColor(COLOR_RED), alpha));
   pen_below.Set(Layout::ScalePenWidth(1), DarkColor(COLOR_RED));
 
-  brush_below_landable.Set(COLOR_ORANGE);
-  brush_below_landable_mc0.Set(LightColor(COLOR_ORANGE));
+  brush_below_landable.Set(ColorWithAlpha(COLOR_ORANGE, alpha));
+  brush_below_landable_mc0.Set(ColorWithAlpha(LightColor(COLOR_ORANGE), alpha));
   pen_below_landable.Set(Layout::ScalePenWidth(1),
                          DarkColor(COLOR_ORANGE));
 
-  brush_above.Set(COLOR_GREEN);
-  brush_above_mc0.Set(LightColor(LightColor(COLOR_GREEN)));
+  brush_above.Set(ColorWithAlpha(COLOR_GREEN, alpha));
+  brush_above_mc0.Set(ColorWithAlpha(LightColor(LightColor(COLOR_GREEN)), alpha));
   pen_above.Set(Layout::ScalePenWidth(1), DarkColor(COLOR_GREEN));
+
+  font = &_font;
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -163,7 +163,7 @@ protected:
    * adding it to the list
    */
   gcc_pure
-  bool do_append(const unsigned time, const Angle &ang) const;
+  bool do_append(const unsigned time, Angle ang) const;
 
   /**
    * Set blackout timer

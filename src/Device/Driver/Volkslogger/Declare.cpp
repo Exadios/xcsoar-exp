@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@ Copyright_License {
 #include "Internal.hpp"
 #include "Protocol.hpp"
 #include "Device/Port/Port.hpp"
+#include "Device/Declaration.hpp"
 #include "Operation/Operation.hpp"
 #include "vlapi2.h"
 #include "Engine/Waypoint/Waypoint.hpp"
@@ -154,7 +155,7 @@ VolksloggerDevice::Declare(const Declaration &declaration,
   unsigned old_baud_rate = port.GetBaudrate();
   if (old_baud_rate == 9600)
     old_baud_rate = 0;
-  else if (!port.SetBaudrate(9600))
+  else if (old_baud_rate != 0 && !port.SetBaudrate(9600))
     return false;
 
   bool success = DeclareInner(port, declaration, home, env);

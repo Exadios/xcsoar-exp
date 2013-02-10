@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,6 +31,14 @@ Copyright_License {
 enum {
   ComboPopupITEMMAX = 100
 };
+
+DataField::DataField(Type _type, bool _supports_combolist,
+                     DataFieldListener *_listener)
+  :listener(_listener), data_access_callback(nullptr),
+   supports_combolist(_supports_combolist), type(_type),
+   item_help_enabled(false), detach_gui(false)
+{
+}
 
 DataField::DataField(Type _type, bool _supports_combolist,
                      DataAccessCallback _data_access_callback)

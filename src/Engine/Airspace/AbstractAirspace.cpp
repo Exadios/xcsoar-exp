@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,14 +26,12 @@
 #include "AirspaceAircraftPerformance.hpp"
 #include "AirspaceInterceptSolution.hpp"
 #include "Geo/Flat/FlatBoundingBox.hpp"
+#include "Geo/Flat/FlatRay.hpp"
+#include "Geo/Flat/TaskProjection.hpp"
 #include "Geo/GeoBounds.hpp"
 #include "AirspaceIntersectionVector.hpp"
 
 #include <assert.h>
-
-#if defined(__WINE__) && !defined(_UNICODE)
-#include <windows.h>
-#endif
 
 AbstractAirspace::~AbstractAirspace() {}
 
@@ -62,7 +60,7 @@ AbstractAirspace::SetFlightLevel(const AtmosphericPressure &press)
 AirspaceInterceptSolution 
 AbstractAirspace::InterceptVertical(const AircraftState &state,
                                     const AirspaceAircraftPerformance &perf,
-                                    const fixed &distance) const
+                                    fixed distance) const
 {
   AirspaceInterceptSolution solution;
   solution.distance = distance;
@@ -76,10 +74,10 @@ AbstractAirspace::InterceptVertical(const AircraftState &state,
 
 AirspaceInterceptSolution 
 AbstractAirspace::InterceptHorizontal(const AircraftState &state,
-                                       const AirspaceAircraftPerformance &perf,
-                                       const fixed &distance_start,
-                                       const fixed &distance_end,
-                                       const bool lower) const
+                                      const AirspaceAircraftPerformance &perf,
+                                      fixed distance_start,
+                                      fixed distance_end,
+                                      const bool lower) const
 {
   if (lower && altitude_base.IsTerrain())
     // impossible to be lower than terrain
@@ -106,12 +104,12 @@ AbstractAirspace::Intercept(const AircraftState &state,
                              (loc_start == state.location);
 
   const fixed distance_start = only_vertical ?
-                               fixed_zero : state.location.Distance(loc_start);
+                               fixed(0) : state.location.Distance(loc_start);
 
   const fixed distance_end =
       (loc_start == loc_end) ?
       distance_start :
-      (only_vertical ? fixed_zero : state.location.Distance(loc_end));
+      (only_vertical ? fixed(0) : state.location.Distance(loc_end));
 
   AirspaceInterceptSolution solution_this =
     AirspaceInterceptSolution::Invalid();
@@ -208,20 +206,7 @@ bool
 AbstractAirspace::MatchNamePrefix(const TCHAR *prefix) const
 {
   size_t prefix_length = _tcslen(prefix);
-#if defined(__WINE__) && !defined(_UNICODE)
-  if (name.length() < prefix_length)
-    return false;
-
-  /* on WINE, we don't have _tcsnicmp() */
-  return CompareStringA(LOCALE_USER_DEFAULT,
-                        NORM_IGNORECASE|NORM_IGNOREKANATYPE|
-                        NORM_IGNORENONSPACE|NORM_IGNORESYMBOLS|
-                        NORM_IGNOREWIDTH,
-                        name.c_str(), prefix_length,
-                        prefix, prefix_length) == CSTR_EQUAL;
-#else
   return StringIsEqualIgnoreCase(name.c_str(), prefix, prefix_length);
-#endif
 }
 
 const tstring 

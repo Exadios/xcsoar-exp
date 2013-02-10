@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,24 +29,22 @@
 #include "Waypoint/Waypoints.hpp"
 #include "Waypoint/WaypointVisitor.hpp"
 #include "Util/ReservablePriorityQueue.hpp"
+#include "Util/Clamp.hpp"
 
-const unsigned AbortTask::max_abort = 10; 
-const fixed AbortTask::min_search_range(50000.0);
-const fixed AbortTask::max_search_range(100000.0);
+/** min search range in m */
+static constexpr fixed min_search_range = fixed(50000);
+
+/** max search range in m */
+static constexpr fixed max_search_range = fixed(100000);
 
 AbortTask::AbortTask(const TaskBehaviour &_task_behaviour,
                      const Waypoints &wps)
-  :UnorderedTask(ABORT, _task_behaviour),
+  :UnorderedTask(TaskType::ABORT, _task_behaviour),
    waypoints(wps),
    intersection_test(NULL),
    active_waypoint(0)
 {
   task_points.reserve(32);
-}
-
-AbortTask::~AbortTask()
-{
-  Clear();
 }
 
 void
@@ -55,7 +53,7 @@ AbortTask::SetTaskBehaviour(const TaskBehaviour &tb)
   UnorderedTask::SetTaskBehaviour(tb);
 
   for (auto &tp : task_points)
-    tp.SetTaskBehaviour(tb);
+    tp.point.SetTaskBehaviour(tb);
 }
 
 void 
@@ -63,7 +61,7 @@ AbortTask::SetActiveTaskPoint(unsigned index)
 {
   if (index < task_points.size()) {
     active_task_point = index;
-    active_waypoint = task_points[index].GetWaypoint().id;
+    active_waypoint = task_points[index].point.GetWaypoint().id;
   }
 }
 
@@ -72,7 +70,7 @@ AbortTask::GetActiveTaskPoint() const
 {
   if (active_task_point < task_points.size())
     // XXX eliminate this deconst hack
-    return const_cast<AlternateTaskPoint *>(&task_points[active_task_point]);
+    return const_cast<UnorderedTaskPoint *>(&task_points[active_task_point].point);
 
   return NULL;
 }
@@ -102,8 +100,8 @@ AbortTask::GetAbortRange(const AircraftState &state,
                          const GlidePolar &glide_polar) const
 {
   // always scan at least min range or approx glide range
-  return min(max_search_range,
-             max(min_search_range, state.altitude * glide_polar.GetBestLD()));
+  return Clamp(state.altitude * glide_polar.GetBestLD(),
+               min_search_range, max_search_range);
 }
 
 bool
@@ -184,11 +182,10 @@ AbortTask::FillReachable(const AircraftState &state,
 
   while (!q.empty() && !IsTaskFull()) {
     const Alternate top = q.top();
-    task_points.push_back(AlternateTaskPoint(top.waypoint, task_behaviour,
-                                             top.solution));
+    task_points.emplace_back(top.waypoint, task_behaviour, top.solution);
 
     const int i = task_points.size() - 1;
-    if (task_points[i].GetWaypoint().id == active_waypoint)
+    if (task_points[i].point.GetWaypoint().id == active_waypoint)
       active_task_point = i;
 
     q.pop();
@@ -220,7 +217,7 @@ public:
    */
   void Visit(const Waypoint& wp) {
     if (wp.IsLandable())
-      vector.push_back(wp);
+      vector.emplace_back(wp);
   }
 
 private:
@@ -249,6 +246,10 @@ AbortTask::UpdateSample(const AircraftState &state,
   }
 
   active_task_point = 0; // default to best result if can't find user-set one 
+
+  if (!glide_polar.IsValid())
+    /* can't work without a polar */
+    return false;
 
   AlternateVector approx_waypoints; 
   approx_waypoints.reserve(128);
@@ -279,11 +280,9 @@ AbortTask::UpdateSample(const AircraftState &state,
   ClientUpdate(state, false);
 
   if (task_points.size()) {
-    const TaskWaypoint &task_point = task_points[active_task_point];
+    const TaskWaypoint &task_point = task_points[active_task_point].point;
     active_waypoint = task_point.GetWaypoint().id;
     if (is_active && (active_waypoint_on_entry != active_waypoint)) {
-      if (task_events != NULL)
-        task_events->ActiveChanged(task_point);
       return true;
     }
   }
@@ -301,8 +300,8 @@ AbortTask::CheckTransitions(const AircraftState &, const AircraftState&)
 void 
 AbortTask::AcceptTaskPointVisitor(TaskPointConstVisitor& visitor) const
 {
-  for (const TaskPoint &tp : task_points)
-    visitor.Visit(tp);
+  for (const auto &tp : task_points)
+    visitor.Visit(tp.point);
 }
 
 void
@@ -325,41 +324,5 @@ AbortTask::GetHomeVector(const AircraftState &state) const
   if (home_waypoint)
     return GeoVector(state.location, home_waypoint->location);
 
-  return GeoVector(fixed_zero);
-}
-
-GeoPoint 
-AbortTask::GetTaskCenter(const GeoPoint& fallback_location) const
-{
-  if (task_points.empty())
-    return fallback_location;
-
-  TaskProjection task_projection;
-  for (unsigned i = 0; i < task_points.size(); ++i) {
-    const GeoPoint location = task_points[i].GetLocation();
-    if (i == 0)
-      task_projection.Reset(location);
-    else
-      task_projection.Scan(location);
-  }
-  task_projection.Update();
-  return task_projection.GetCenter();
-}
-
-fixed 
-AbortTask::GetTaskRadius(const GeoPoint& fallback_location) const
-{ 
-  if (task_points.empty())
-    return fixed_zero;
-
-  TaskProjection task_projection;
-  for (unsigned i = 0; i < task_points.size(); ++i) {
-    const GeoPoint location = task_points[i].GetLocation();
-    if (i == 0)
-      task_projection.Reset(location);
-    else
-      task_projection.Scan(location);
-  }
-  task_projection.Update();
-  return task_projection.ApproxRadius();
+  return GeoVector::Invalid();
 }

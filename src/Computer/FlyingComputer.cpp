@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,30 +30,37 @@ Copyright_License {
 void
 FlyingComputer::Reset()
 {
-  time_on_ground = time_in_flight = 0;
-  moving_since = fixed_minus_one;
-  sinking_since = fixed_minus_one;
+  delta_time.Reset();
+
+  stationary_clock.Clear();
+  moving_clock.Clear();
+  climbing_clock.Clear();
+  moving_since = fixed(-1);
+  stationary_since = fixed(-1);
+  climbing_altitude = fixed(0);
+  sinking_since = fixed(-1);
+  last_ground_altitude = fixed(-1);
 }
 
-void
+inline void
 FlyingComputer::CheckRelease(FlyingState &state, fixed time,
                              const GeoPoint &location, fixed altitude)
 {
-  if (!state.flying || !negative(state.release_time) || time_on_ground > 0)
+  if (!state.flying || !negative(state.release_time) ||
+      stationary_clock.IsDefined())
     return;
 
   if (negative(sinking_since)) {
     sinking_since = time;
     sinking_location = location;
     sinking_altitude = altitude;
-    sinking_count = 0;
     return;
   }
 
   if (time < sinking_since || altitude >= sinking_altitude) {
     /* cancel release detection when the aircraft has been climbing
        more than it has lost recently */
-    sinking_since = fixed_minus_one;
+    sinking_since = fixed(-1);
     return;
   }
 
@@ -63,12 +70,13 @@ FlyingComputer::CheckRelease(FlyingState &state, fixed time,
        enters a thermal right after releasing */
     state.release_time = sinking_since;
     state.release_location = sinking_location;
-
+    state.far_location.SetInvalid();
+    state.far_distance = fixed(-1);
   }
 }
 
 void
-FlyingComputer::Check(FlyingState &state, fixed time, const GeoPoint &location)
+FlyingComputer::Check(FlyingState &state, fixed time)
 {
   // Logic to detect takeoff and landing is as follows:
   //   detect takeoff when above threshold speed for 10 seconds
@@ -77,41 +85,48 @@ FlyingComputer::Check(FlyingState &state, fixed time, const GeoPoint &location)
 
   if (!state.flying) {
     // We are moving for 10sec now
-    if (time_in_flight > 10) {
+    if (moving_clock >= fixed(10)) {
       // We certainly must be flying after 10sec movement
       assert(!negative(moving_since));
 
       state.flying = true;
       state.takeoff_time = moving_since;
       state.takeoff_location = moving_at;
-      state.flight_time = fixed_zero;
+      state.flight_time = fixed(0);
 
       /* when a new flight starts, forget the old release time */
-      state.release_time = fixed_minus_one;
+      state.release_time = fixed(-1);
+      state.far_location.SetInvalid();
+      state.far_distance = fixed(-1);
     }
   } else {
     // update time of flight
     state.flight_time = time - state.takeoff_time;
 
     // We are not moving anymore for 60sec now
-    if (time_in_flight == 0)
+    if (!moving_clock.IsDefined()) {
       // We are probably not flying anymore
+      assert(!negative(stationary_since));
+
       state.flying = false;
+      state.flight_time = stationary_since - state.takeoff_time;
+      state.landing_time = stationary_since;
+      state.landing_location = stationary_at;
+    }
   }
 
   // If we are not certainly flying we are probably on the ground
   // To make sure that we are, wait for 10sec to make sure there
   // is no more movement
-  state.on_ground = !state.flying && time_on_ground > 10;
+  state.on_ground = !state.flying && stationary_clock >= fixed(10);
 }
 
 void
-FlyingComputer::Moving(FlyingState &state, fixed time,
+FlyingComputer::Moving(FlyingState &state, fixed time, fixed dt,
                        const GeoPoint &location)
 {
   // Increase InFlight countdown for further evaluation
-  if (time_in_flight < 60)
-    time_in_flight++;
+  moving_clock.Add(dt);
 
   if (negative(moving_since)) {
     moving_since = time;
@@ -119,74 +134,158 @@ FlyingComputer::Moving(FlyingState &state, fixed time,
   }
 
   // We are moving so we are certainly not on the ground
-  time_on_ground = 0;
+  stationary_clock.Clear();
+  stationary_since = fixed(-1);
 
   // Update flying state
-  Check(state, time, location);
+  Check(state, time);
 }
 
 void
-FlyingComputer::Stationary(FlyingState &state, fixed time,
+FlyingComputer::Stationary(FlyingState &state, fixed time, fixed dt,
                            const GeoPoint &location)
 {
   // Decrease InFlight countdown for further evaluation
-  if (time_in_flight > 0) {
-    time_in_flight--;
-
-    if (time_in_flight == 0)
-      moving_since = fixed_minus_one;
+  if (moving_clock.IsDefined()) {
+    moving_clock.Subtract(dt);
+    if (!moving_clock.IsDefined())
+      moving_since = fixed(-1);
   }
 
-  if (time_on_ground < 30)
-    time_on_ground++;
+  stationary_clock.Add(dt);
+
+  if (negative(stationary_since)) {
+    stationary_since = time;
+    stationary_at = location;
+  }
 
   // Update flying state
-  Check(state, time, location);
+  Check(state, time);
 }
 
-void
-FlyingComputer::Compute(fixed takeoff_speed,
-                        const NMEAInfo &basic, const NMEAInfo &last_basic,
-                        const DerivedInfo &calculated,
-                        FlyingState &flying)
+gcc_pure
+static bool
+CheckTakeOffSpeed(fixed takeoff_speed, const NMEAInfo &basic)
 {
-  if (basic.HasTimeRetreatedSince(last_basic)) {
-    Reset();
-    flying.Reset();
-  }
-
-  // GPS not lost
-  if (!basic.location_available)
-    return;
-
-  // Speed too high for being on the ground
   const fixed speed = basic.airspeed_available
     ? std::max(basic.true_airspeed, basic.ground_speed)
     : basic.ground_speed;
 
-  if (speed > takeoff_speed ||
-      (calculated.altitude_agl_valid && calculated.altitude_agl > fixed(300)))
-    Moving(flying, basic.time, basic.location);
-  else
-    Stationary(flying, basic.time, basic.location);
+  // Speed too high for being on the ground
+  return speed >= takeoff_speed;
+}
 
-  if (basic.pressure_altitude_available)
-    CheckRelease(flying, basic.time, basic.location, basic.pressure_altitude);
-  else if (basic.baro_altitude_available)
-    CheckRelease(flying, basic.time, basic.location, basic.baro_altitude);
-  else if (basic.gps_altitude_available)
-    CheckRelease(flying, basic.time, basic.location, basic.gps_altitude);
+/**
+ * After take-off has been detected, we check if the ground speed goes
+ * below a certain threshold that indicates the aircraft has ceased
+ * flying.  To avoid false positives while wave/ridge soaring, this
+ * threshold is half of the given take-off speed.
+ */
+gcc_pure
+static bool
+CheckLandingSpeed(fixed takeoff_speed, const NMEAInfo &basic)
+{
+  return !CheckTakeOffSpeed(Half(takeoff_speed), basic);
+}
+
+gcc_pure
+static bool
+CheckAltitudeAGL(const DerivedInfo &calculated)
+{
+  return calculated.altitude_agl_valid && calculated.altitude_agl >= fixed(300);
+}
+
+inline bool
+FlyingComputer::CheckClimbing(fixed dt, fixed altitude)
+{
+  if (altitude > climbing_altitude)
+    climbing_clock.Add(dt);
   else
-    sinking_since = fixed_minus_one;
+    climbing_clock.Subtract(dt);
+
+  climbing_altitude = altitude;
+
+  return climbing_clock >= dt + fixed(1);
 }
 
 void
 FlyingComputer::Compute(fixed takeoff_speed,
-                        const AircraftState &state,
+                        const NMEAInfo &basic,
+                        const DerivedInfo &calculated,
+                        FlyingState &flying)
+{
+  if (!basic.time_available || !basic.location_available)
+    return;
+
+  const fixed dt = delta_time.Update(basic.time, fixed(0.5), fixed(20));
+  if (negative(dt)) {
+    Reset();
+    flying.Reset();
+  }
+
+  if (!positive(dt))
+    return;
+
+  const auto any_altitude = basic.GetAnyAltitude();
+
+  if (!basic.airspeed_available && !calculated.altitude_agl_valid &&
+      any_altitude.first && !negative(last_ground_altitude) &&
+      any_altitude.second > last_ground_altitude + fixed(250)) {
+    /* lower the threshold for "not moving" when the aircraft is high
+       above the take-off airfield and there's no airspeed probe; this
+       shall reduce the risk of false landing detection when flying in
+       strong head wind (e.g. ridge or wave) */
+    fixed dh = any_altitude.second - last_ground_altitude;
+
+    if (dh > fixed(1000))
+      takeoff_speed /= 4;
+    else if (dh > fixed(500))
+      takeoff_speed /= 2;
+    else
+      takeoff_speed = takeoff_speed * 2 / 3;
+  }
+
+  if (CheckTakeOffSpeed(takeoff_speed, basic) ||
+      CheckAltitudeAGL(calculated))
+    Moving(flying, basic.time, dt, basic.location);
+  else if (!flying.flying ||
+           (CheckLandingSpeed(takeoff_speed, basic) &&
+            (!any_altitude.first || !CheckClimbing(dt, any_altitude.second))))
+    Stationary(flying, basic.time, dt, basic.location);
+
+  if (any_altitude.first) {
+    if (flying.on_ground)
+      last_ground_altitude = any_altitude.second;
+
+    CheckRelease(flying, basic.time, basic.location, any_altitude.second);
+  } else
+    sinking_since = fixed(-1);
+
+  if (flying.flying && flying.release_location.IsValid()) {
+    fixed distance = basic.location.Distance(flying.release_location);
+    if (distance > flying.far_distance) {
+      flying.far_location = basic.location;
+      flying.far_distance = distance;
+    }
+  }
+}
+
+void
+FlyingComputer::Compute(fixed takeoff_speed,
+                        const AircraftState &state, fixed dt,
                         FlyingState &flying)
 {
   if (state.ground_speed > takeoff_speed)
-    Moving(flying, state.time, state.location);
+    Moving(flying, state.time, dt, state.location);
   else
-    Stationary(flying, state.time, state.location);
+    Stationary(flying, state.time, dt, state.location);
+}
+
+void
+FlyingComputer::Finish(FlyingState &flying, fixed time)
+{
+  if (flying.flying && stationary_clock >= fixed(5))
+    moving_clock.Clear();
+
+  Check(flying, time);
 }

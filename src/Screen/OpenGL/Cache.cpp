@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -49,18 +49,7 @@ struct TextCacheKey {
   char *allocated;
   size_t hash;
 
-#if GCC_VERSION > 40500
   TextCacheKey(const TextCacheKey &other) = delete;
-#else
-  /* workaround for gcc version in the Android NDK */
-  TextCacheKey(const TextCacheKey &other)
-    :font(other.font),
-     text(other.text), allocated(NULL),
-     hash(other.hash) {
-    if (other.allocated != NULL)
-      Allocate();
-  }
-#endif
 
   TextCacheKey(TextCacheKey &&other)
     :font(other.font),
@@ -133,7 +122,14 @@ struct RenderedText : public ListHead {
     other.texture = NULL;
   }
 
-#ifdef ANDROID
+#ifdef USE_FREETYPE
+  RenderedText(unsigned width, unsigned height, const uint8_t *buffer) {
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    texture = new GLTexture(GL_LUMINANCE, width, height,
+                            GL_LUMINANCE, GL_UNSIGNED_BYTE,
+                            buffer);
+  }
+#elif defined(ANDROID)
   RenderedText(int id, unsigned width, unsigned height)
     :texture(new GLTexture(id, width, height)) {}
 #else
@@ -207,7 +203,20 @@ TextCache::Get(const Font *font, const char *text)
 
   /* render the text into a OpenGL texture */
 
-#ifdef ANDROID
+#ifdef USE_FREETYPE
+  PixelSize size = font->TextSize(text);
+  size_t buffer_size = font->BufferSize(size);
+  if (buffer_size == 0)
+    return nullptr;
+
+  uint8_t *buffer = new uint8_t[buffer_size];
+  if (buffer == nullptr)
+    return nullptr;
+
+  font->Render(text, size, buffer);
+  RenderedText rt(size.cx, size.cy, buffer);
+  delete[] buffer;
+#elif defined(ANDROID)
   PixelSize size;
   int texture_id = font->TextTextureGL(text, size);
   if (texture_id == 0)
@@ -215,8 +224,8 @@ TextCache::Get(const Font *font, const char *text)
 
   RenderedText rt(texture_id, size.cx, size.cy);
 #else
-  const Color background_color = COLOR_BLACK;
-  const Color text_color = COLOR_WHITE;
+  static constexpr SDL_Color background_color { 0, 0, 0, 0 };
+  static constexpr SDL_Color text_color = { 0xff, 0xff, 0xff, 0 };
   SDL_Surface *surface = ::TTF_RenderUTF8_Shaded(font->Native(), text,
                                                  text_color, background_color);
   if (surface == NULL)

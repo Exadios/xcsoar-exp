@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,11 +28,12 @@ Copyright_License {
 #include "Form/Button.hpp"
 #include "Form/Tabbed.hpp"
 #include "Form/Draw.hpp"
-#include "Screen/EditWindow.hpp"
+#include "Look/StandardFonts.hpp"
+#include "Screen/Canvas.hpp"
+#include "Screen/LargeTextWindow.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Bitmap.hpp"
 #include "Screen/Font.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Key.h"
 #include "ResourceLoader.hpp"
 #include "Version.hpp"
@@ -46,20 +47,20 @@ static WndForm *wf = NULL;
 static TabbedControl *tab = NULL;
 
 static void
-OnNext(gcc_unused WndButton &button)
+OnNext()
 {
   tab->NextPage();
 }
 
 static void
-OnPrev(gcc_unused WndButton &button)
+OnPrev()
 {
   tab->PreviousPage();
 }
 
 gcc_pure
-static EditWindow *
-FindEditWindow()
+static LargeTextWindow *
+FindLargeTextWindow()
 {
   const TCHAR *name;
   switch (tab->GetCurrentPage()) {
@@ -75,39 +76,39 @@ FindEditWindow()
     return NULL;
   }
 
-  return (EditWindow *)wf->FindByName(name);
+  return (LargeTextWindow *)wf->FindByName(name);
 }
 
 static bool
-FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
+FormKeyDown(unsigned key_code)
 {
   switch (key_code) {
-    EditWindow *edit;
+    LargeTextWindow *edit;
 
-  case VK_UP:
-    edit = FindEditWindow();
+  case KEY_UP:
+    edit = FindLargeTextWindow();
     if (edit != NULL) {
       edit->ScrollVertically(-3);
       return true;
     } else
       return false;
 
-  case VK_DOWN:
-    edit = FindEditWindow();
+  case KEY_DOWN:
+    edit = FindLargeTextWindow();
     if (edit != NULL) {
       edit->ScrollVertically(3);
       return true;
     } else
       return false;
 
-  case VK_LEFT:
+  case KEY_LEFT:
 #ifdef GNAV
   case '6':
 #endif
     tab->PreviousPage();
     return true;
 
-  case VK_RIGHT:
+  case KEY_RIGHT:
 #ifdef GNAV
   case '7':
 #endif
@@ -120,15 +121,9 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
 }
 
 static void
-OnClose(gcc_unused WndButton &button)
-{
-  wf->SetModalResult(mrOK);
-}
-
-static void
 OnLogoPaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
 {
-  const UPixelScalar width = canvas.get_width();
+  const UPixelScalar width = canvas.GetWidth();
   PixelScalar x = Layout::FastScale(10), y = x;
 
   canvas.ClearWhite();
@@ -139,34 +134,34 @@ OnLogoPaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
   PixelSize title_size = title.GetSize();
 
   // Draw 'XCSoar N.N' title
-  canvas.copy(x, y, title_size.cx, title_size.cy, title, 0, 0);
+  canvas.Copy(x, y, title_size.cx, title_size.cy, title, 0, 0);
   y += title_size.cy + Layout::FastScale(20);
 
   Font font;
-  font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(16));
+  font.Load(GetStandardFontFace(), Layout::FastScale(16));
   canvas.Select(font);
   canvas.SetTextColor(COLOR_BLACK);
   canvas.SetBackgroundTransparent();
 
-  canvas.text(x, y, _T("version: "));
-  canvas.text(x + Layout::FastScale(80), y, XCSoar_VersionString);
+  canvas.DrawText(x, y, _T("version: "));
+  canvas.DrawText(x + Layout::FastScale(80), y, XCSoar_VersionString);
   y += Layout::FastScale(22);
 
-  canvas.text(x, y, _T("date: "));
-  canvas.text(x + Layout::FastScale(80), y, _T(__DATE__));
+  canvas.DrawText(x, y, _T("date: "));
+  canvas.DrawText(x + Layout::FastScale(80), y, _T(__DATE__));
 #ifdef GIT_COMMIT_ID
   y += Layout::FastScale(22);
 
-  canvas.text(x, y, _T("git: "));
-  canvas.text(x + Layout::FastScale(80), y, _T(GIT_COMMIT_ID));
+  canvas.DrawText(x, y, _T("git: "));
+  canvas.DrawText(x + Layout::FastScale(80), y, _T(GIT_COMMIT_ID));
 #endif
   y += Layout::FastScale(37);
 
-  canvas.text(x, y, _T("more information at"));
+  canvas.DrawText(x, y, _T("more information at"));
   y += Layout::FastScale(22);
 
   canvas.SetTextColor(COLOR_XCSOAR);
-  canvas.text(x, y, _T("http://www.xcsoar.org"));
+  canvas.DrawText(x, y, _T("http://www.xcsoar.org"));
 }
 
 static void
@@ -179,13 +174,12 @@ LoadTextFromResource(const TCHAR* name, const TCHAR* control)
 
   UTF8ToWideConverter text(buffer);
   if (text.IsValid())
-    ((EditWindow *)wf->FindByName(control))->SetText(text);
+    ((LargeTextWindow *)wf->FindByName(control))->SetText(text);
 
   delete[] buffer;
 }
 
 static constexpr CallBackTableEntry CallBackTable[] = {
-  DeclareCallBackEntry(OnClose),
   DeclareCallBackEntry(OnNext),
   DeclareCallBackEntry(OnPrev),
   DeclareCallBackEntry(OnLogoPaint),
@@ -202,7 +196,7 @@ dlgCreditsShowModal(SingleWindow &parent)
   tab = ((TabbedControl *)wf->FindByName(_T("tab")));
   assert(tab != NULL);
 
-  wf->SetKeyDownNotify(FormKeyDown);
+  wf->SetKeyDownFunction(FormKeyDown);
 
   LoadTextFromResource(_T("LICENSE"), _T("prpLicense"));
   LoadTextFromResource(_T("AUTHORS"), _T("prpAuthors"));

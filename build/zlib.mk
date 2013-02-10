@@ -27,23 +27,20 @@ else
 ZLIB_SRC_DIR = $(SRC)/zlib
 ZLIB_SOURCES = \
 	$(ZLIB_SRC_DIR)/adler32.c \
-	$(ZLIB_SRC_DIR)/compress.c \
 	$(ZLIB_SRC_DIR)/crc32.c \
-	$(ZLIB_SRC_DIR)/deflate.c \
-	$(ZLIB_SRC_DIR)/infback.c \
 	$(ZLIB_SRC_DIR)/inffast.c \
 	$(ZLIB_SRC_DIR)/inflate.c \
 	$(ZLIB_SRC_DIR)/inftrees.c \
-	$(ZLIB_SRC_DIR)/trees.c \
-	$(ZLIB_SRC_DIR)/uncompr.c \
 	$(ZLIB_SRC_DIR)/zutil.c
 
 ZLIB_LDLIBS =
 
-ZLIB_CPPFLAGS_INTERNAL = -DNO_VIZ -DHAVE_UNISTD_H
+ZLIB_CPPFLAGS_INTERNAL = -DHAVE_UNISTD_H
 ZLIB_CPPFLAGS = -I$(ZLIB_SRC_DIR)
 
-$(eval $(call link-library,zlip,ZLIB))
+$(eval $(call link-library,zlib,ZLIB))
 
 endif
 endif
+
+ZLIB_CPPFLAGS += -DZLIB_CONST

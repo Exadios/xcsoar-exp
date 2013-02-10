@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 #include "harness_task.hpp"
 #include "test_debug.hpp"
 
-#include "Dialogs/dlgTaskHelpers.hpp"
 #include "Task/Factory/AbstractTaskFactory.hpp"
 #include "Task/Factory/TaskFactoryConstraints.hpp"
 #include "Engine/Task/Ordered/Points/StartPoint.hpp"
@@ -32,6 +31,7 @@
 #include "Engine/Task/Ordered/Points/AATPoint.hpp"
 #include "Task/ObservationZones/CylinderZone.hpp"
 #include "Task/Visitors/TaskPointVisitor.hpp"
+#include "Engine/Waypoint/Waypoints.hpp"
 
 #include "harness_waypoints.hpp"
 #include <string.h>
@@ -77,7 +77,7 @@ public:
   }
 
   void Visit(const ObservationZonePoint &oz) {
-    switch (oz.shape) {
+    switch (oz.GetShape()) {
     case ObservationZonePoint::FAI_SECTOR:
       Visit((const FAISectorZone &)oz);
       break;
@@ -120,29 +120,34 @@ public:
 class TaskPointVisitorPrint: public TaskPointConstVisitor
 {
 public:
-  virtual void Visit(const UnorderedTaskPoint& tp) {
-    printf("# got a tp\n");
+  virtual void Visit(const TaskPoint& tp) override {
+    switch (tp.GetType()) {
+    case TaskPointType::UNORDERED:
+      printf("# got a tp\n");
+      break;
+
+    case TaskPointType::FINISH:
+      printf("# got an ftp\n");
+      ozv.Visit(((const FinishPoint &)tp).GetObservationZone());
+      break;
+
+    case TaskPointType::START:
+      printf("# got an stp\n");
+      ozv.Visit(((const StartPoint &)tp).GetObservationZone());
+      break;
+
+    case TaskPointType::AAT:
+      printf("# got an aat\n");
+      ozv.Visit(((const AATPoint &)tp).GetObservationZone());
+      break;
+
+    case TaskPointType::AST:
+      printf("# got an ast\n");
+      ozv.Visit(((const ASTPoint &)tp).GetObservationZone());
+      break;
+    }
   }
-  virtual void Visit(const OrderedTaskPoint& tp) {
-    printf("# got an otp\n");
-    ozv.Visit(tp.GetObservationZone());
-  }
-  virtual void Visit(const FinishPoint& tp) {
-    printf("# got an ftp\n");
-    ozv.Visit(tp.GetObservationZone());
-  }
-  virtual void Visit(const StartPoint& tp) {
-    printf("# got an stp\n");
-    ozv.Visit(tp.GetObservationZone());
-  }
-  virtual void Visit(const AATPoint& tp) {
-    printf("# got an aat\n");
-    ozv.Visit(tp.GetObservationZone());
-  }
-  virtual void Visit(const ASTPoint& tp) {
-    printf("# got an ast\n");
-    ozv.Visit(tp.GetObservationZone());
-  }
+
 private:
   ObservationZoneVisitorPrint ozv;
 };
@@ -163,15 +168,19 @@ void task_report(TaskManager& task_manager, const char* text)
     const AbstractTask *task = task_manager.GetActiveTask();
     if (task != NULL) {
       switch (task->GetType()) {
-      case TaskInterface::ORDERED:
+      case TaskType::NONE:
+        printf("# task is none\n");
+        break;
+
+      case TaskType::ORDERED:
         printf("# task is ordered\n");
         break;
 
-      case TaskInterface::ABORT:
+      case TaskType::ABORT:
         printf("# task is abort\n");
         break;
 
-      case TaskInterface::GOTO:
+      case TaskType::GOTO:
         printf("# task is goto\n");
         break;
       }
@@ -181,7 +190,7 @@ void task_report(TaskManager& task_manager, const char* text)
       printf("# - dist nominal %g\n",
              (double)task->GetStats().distance_nominal);
 
-      if (task->GetType() == TaskInterface::ORDERED &&
+      if (task->GetType() == TaskType::ORDERED &&
           task->GetStats().distance_max > task->GetStats().distance_min) {
         printf("# - dist max %g\n", (double)task->GetStats().distance_max);
         printf("# - dist min %g\n", (double)task->GetStats().distance_min);
@@ -400,7 +409,7 @@ bool test_task_mixed(TaskManager& task_manager,
   wp = waypoints.LookupId(1);
   if (wp) {
     tp = fact.CreateStart(TaskPointFactoryType::START_LINE,*wp);
-    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+    if (tp->GetObservationZone().GetShape() == ObservationZonePoint::CYLINDER) {
       CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
       cz.SetRadius(fixed(5000.0));
       tp->UpdateOZ(projection);
@@ -428,7 +437,7 @@ bool test_task_mixed(TaskManager& task_manager,
   wp = waypoints.LookupId(3);
   if (wp) {
     tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
-    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+    if (tp->GetObservationZone().GetShape() == ObservationZonePoint::CYLINDER) {
       CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
       cz.SetRadius(fixed(30000.0));
       tp->UpdateOZ(projection);
@@ -453,7 +462,7 @@ bool test_task_mixed(TaskManager& task_manager,
   wp = waypoints.LookupId(5);
   if (wp) {
     tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
-    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+    if (tp->GetObservationZone().GetShape() == ObservationZonePoint::CYLINDER) {
       CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
       cz.SetRadius(fixed(30000.0));
       tp->UpdateOZ(projection);
@@ -575,7 +584,7 @@ bool test_task_aat(TaskManager& task_manager,
   wp = waypoints.LookupId(2);
   if (wp) {
     OrderedTaskPoint* tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
-    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+    if (tp->GetObservationZone().GetShape() == ObservationZonePoint::CYLINDER) {
       CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
       cz.SetRadius(fixed(30000.0));
       tp->UpdateOZ(projection);
@@ -590,7 +599,7 @@ bool test_task_aat(TaskManager& task_manager,
   wp = waypoints.LookupId(3);
   if (wp) {
     OrderedTaskPoint* tp = fact.CreateIntermediate(TaskPointFactoryType::AAT_CYLINDER,*wp);
-    if (tp->GetObservationZone().shape == ObservationZonePoint::CYLINDER) {
+    if (tp->GetObservationZone().GetShape() == ObservationZonePoint::CYLINDER) {
       CylinderZone &cz = (CylinderZone &)tp->GetObservationZone();
       cz.SetRadius(fixed(40000.0));
       tp->UpdateOZ(projection);
@@ -875,8 +884,8 @@ bool test_task_random_RT_AAT_FAI(TaskManager& task_manager,
   const TaskFactoryConstraints &constraints =
     task_manager.GetOrderedTask().GetFactoryConstraints();
   const unsigned num_points_total =
-    max(constraints.min_points,
-        _num_points % constraints.max_points) + 1;
+    std::max(constraints.min_points,
+             _num_points % constraints.max_points) + 1;
   const unsigned num_int_points = num_points_total - 2;
 
   test_note("# adding start\n");

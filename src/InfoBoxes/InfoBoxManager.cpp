@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@ Copyright_License {
 #include "InfoBoxes/Content/Base.hpp"
 #include "Profile/InfoBoxConfig.hpp"
 #include "Screen/Layout.hpp"
-#include "Screen/Fonts.hpp"
 #include "Hardware/Battery.hpp"
 #include "Language/Language.hpp"
 #include "Form/DataField/ComboList.hpp"
@@ -45,8 +44,6 @@ Copyright_License {
 #include <stdio.h>
 
 #include <algorithm>
-
-using namespace InfoBoxFactory;
 
 namespace InfoBoxManager
 {
@@ -124,59 +121,7 @@ InfoBoxManager::Event_Select(int i)
   if (InfoFocus >= 0)
     infoboxes[InfoFocus]->SetFocus();
   else
-    infoboxes[InfoFocus]->FocusParent();
-}
-
-unsigned
-InfoBoxManager::GetCurrentPanel()
-{
-  const UIState &ui_state = CommonInterface::GetUIState();
-
-  if (ui_state.auxiliary_enabled) {
-    unsigned panel = ui_state.auxiliary_index;
-    if (panel >= InfoBoxSettings::MAX_PANELS)
-      panel = PANEL_AUXILIARY;
-    return panel;
-  }
-  else if (ui_state.display_mode == DisplayMode::CIRCLING)
-    return PANEL_CIRCLING;
-  else if (ui_state.display_mode == DisplayMode::FINAL_GLIDE)
-    return PANEL_FINAL_GLIDE;
-  else
-    return PANEL_CRUISE;
-}
-
-const TCHAR*
-InfoBoxManager::GetPanelName(unsigned panelIdx)
-{
-  const InfoBoxSettings &infoBoxManagerConfig =
-    CommonInterface::GetUISettings().info_boxes;
-
-  return gettext(infoBoxManagerConfig.panels[panelIdx].name);
-}
-
-const TCHAR*
-InfoBoxManager::GetCurrentPanelName()
-{
-  return GetPanelName(GetCurrentPanel());
-}
-
-const TCHAR*
-InfoBoxManager::GetTitle(unsigned box)
-{
-  if (infoboxes[box] != NULL)
-    return infoboxes[box]->GetTitle();
-  else
-    return NULL;
-}
-
-bool
-InfoBoxManager::IsEmpty(unsigned panelIdx)
-{
-  const InfoBoxSettings &infoBoxManagerConfig =
-    CommonInterface::GetUISettings().info_boxes;
-
-  return infoBoxManagerConfig.panels[panelIdx].IsEmpty();
+    infoboxes[0]->FocusParent();
 }
 
 void
@@ -190,7 +135,7 @@ InfoBoxManager::Event_Change(int i)
     return;
 
   InfoBoxSettings &settings = CommonInterface::SetUISettings().info_boxes;
-  const unsigned panel_index = GetCurrentPanel();
+  const unsigned panel_index = CommonInterface::GetUIState().panel_index;
   InfoBoxSettings::Panel &panel = settings.panels[panel_index];
 
   k = panel.contents[InfoFocus];
@@ -216,7 +161,7 @@ InfoBoxManager::DisplayInfoBox()
 
   // JMW note: this is updated every GPS time step
 
-  const unsigned panel = GetCurrentPanel();
+  const unsigned panel = CommonInterface::GetUIState().panel_index;
 
   const InfoBoxSettings::Panel &settings =
     CommonInterface::GetUISettings().info_boxes.panels[panel];
@@ -242,25 +187,6 @@ InfoBoxManager::DisplayInfoBox()
   }
 
   first = false;
-}
-
-void
-InfoBoxManager::ProcessQuickAccess(const int id, const TCHAR *Value)
-{
-  if (id < 0)
-    return;
-
-  // do approciate action
-  if (infoboxes[id] != NULL)
-    infoboxes[id]->HandleQuickAccess(Value);
-
-  SetDirty();
-}
-
-bool
-InfoBoxManager::HasFocus()
-{
-  return GetFocused() >= 0;
 }
 
 void
@@ -312,9 +238,7 @@ InfoBoxManager::Create(ContainerWindow &parent,
          settings.geometry is the configured layout */
       : InfoBoxLayout::GetBorder(layout.geometry, i);
 
-    infoboxes[i] = new InfoBoxWindow(parent,
-                                     rc.left, rc.top,
-                                     rc.right - rc.left, rc.bottom - rc.top,
+    infoboxes[i] = new InfoBoxWindow(parent, rc,
                                      Border, settings, look, units_look,
                                      i, style);
   }
@@ -336,18 +260,18 @@ static const ComboList *info_box_combo_list;
 static void
 OnInfoBoxHelp(unsigned item)
 {
-  Type type = (Type)(*info_box_combo_list)[item].DataFieldIndex;
+  InfoBoxFactory::Type type = (InfoBoxFactory::Type)
+    (*info_box_combo_list)[item].DataFieldIndex;
 
   StaticString<100> caption;
   caption.Format(_T("%s: %s"), _("InfoBox"),
                  gettext(InfoBoxFactory::GetName(type)));
 
   const TCHAR* text = InfoBoxFactory::GetDescription(type);
-  if (text)
-    dlgHelpShowModal(UIGlobals::GetMainWindow(), caption, gettext(text));
-  else
-    dlgHelpShowModal(UIGlobals::GetMainWindow(), caption,
-                     _("No help available on this item"));
+  if (text == nullptr)
+    text = N_("No help available on this item");
+
+  dlgHelpShowModal(UIGlobals::GetMainWindow(), caption, gettext(text));
 }
 
 void
@@ -362,16 +286,16 @@ InfoBoxManager::ShowInfoBoxPicker(const int id)
     return;
 
   InfoBoxSettings &settings = CommonInterface::SetUISettings().info_boxes;
-  const unsigned panel_index = GetCurrentPanel();
+  const unsigned panel_index = CommonInterface::GetUIState().panel_index;
   InfoBoxSettings::Panel &panel = settings.panels[panel_index];
 
   const InfoBoxFactory::Type old_type = panel.contents[i];
 
   ComboList list;
   for (unsigned j = InfoBoxFactory::MIN_TYPE_VAL; j < InfoBoxFactory::NUM_TYPES; j++) {
-    const TCHAR * desc = InfoBoxFactory::GetDescription((Type) j);
-    list.Append(j, gettext(InfoBoxFactory::GetName((Type) j)),
-                gettext(InfoBoxFactory::GetName((Type) j)),
+    const TCHAR *desc = InfoBoxFactory::GetDescription((InfoBoxFactory::Type)j);
+    list.Append(j, gettext(InfoBoxFactory::GetName((InfoBoxFactory::Type)j)),
+                gettext(InfoBoxFactory::GetName((InfoBoxFactory::Type)j)),
                 desc != NULL ? gettext(desc) : NULL);
   }
 
@@ -383,8 +307,7 @@ InfoBoxManager::ShowInfoBoxPicker(const int id)
   StaticString<20> caption;
   caption.Format(_T("%s: %d"), _("InfoBox"), i + 1);
   info_box_combo_list = &list;
-  int result = ComboPicker(UIGlobals::GetMainWindow(), caption, list,
-                           OnInfoBoxHelp, true);
+  int result = ComboPicker(caption, list, OnInfoBoxHelp, true);
   if (result < 0)
     return;
 

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 */
 
 #include "FLARM/FlarmNetReader.hpp"
-#include "FLARM/Database.hpp"
+#include "FLARM/FlarmNetDatabase.hpp"
 #include "OS/Args.hpp"
 
 #include <stdlib.h>
@@ -32,11 +32,11 @@ int main(int argc, char **argv)
   tstring path = args.ExpectNextT();
   args.ExpectEnd();
 
-  FlarmDatabase database;
+  FlarmNetDatabase database;
   FlarmNetReader::LoadFile(path.c_str(), database);
 
   for (auto i = database.begin(), end = database.end(); i != end; ++i) {
-    const FlarmRecord &record = i->second;
+    const FlarmNetRecord &record = i->second;
 
     _tprintf(_T("%s\t%s\t%s\t%s\n"),
              record.id.c_str(), record.pilot.c_str(),

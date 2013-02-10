@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ ParseAngle(const TCHAR *&src, Angle &angle)
     return false;
 
   src = endptr;
-  angle = Angle::Degrees(fixed(value));
+  angle = Angle::Degrees(value);
 
   // Skip until next whitespace and look for NSEW signs
   bool found = false;
@@ -232,20 +232,20 @@ WaypointReaderCompeGPS::ParseLine(const TCHAR* line, const unsigned linenum,
   // Parse waypoint name
   waypoint.comment.assign(line);
 
-  waypoints.Append(waypoint);
+  waypoints.Append(std::move(waypoint));
   return true;
 }
 
 bool
 WaypointReaderCompeGPS::VerifyFormat(TLineReader &reader)
 {
-  TCHAR* line = reader.read();
+  const TCHAR *line = reader.ReadLine();
   if (line == NULL)
     return false;
 
   // Ignore optional line with encoding information
   if (StringStartsWith(line, _T("B ")))
-    if ((line = reader.read()) == NULL)
+    if ((line = reader.ReadLine()) == NULL)
       return false;
 
   return StringStartsWith(line, _T("G  WGS 84"));

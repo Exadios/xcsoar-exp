@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -147,7 +147,7 @@ WaypointReaderBase::CheckAltitude(Waypoint &new_waypoint,
   // Load waypoint altitude from terrain
   const short t_alt = terrain->GetTerrainHeight(new_waypoint.location);
   if (RasterBuffer::IsSpecial(t_alt))
-    new_waypoint.elevation = fixed_zero;
+    new_waypoint.elevation = fixed(0);
   else
     // TERRAIN_VALID
     new_waypoint.elevation = (fixed)t_alt;
@@ -165,16 +165,16 @@ void
 WaypointReaderBase::Parse(Waypoints &way_points, TLineReader &reader,
                           OperationEnvironment &operation)
 {
-  long filesize = std::max(reader.size(), 1l);
+  const long filesize = std::max(reader.GetSize(), 1l);
   operation.SetProgressRange(100);
 
   // Read through the lines of the file
   TCHAR *line;
-  for (unsigned i = 0; (line = reader.read()) != NULL; i++) {
+  for (unsigned i = 0; (line = reader.ReadLine()) != NULL; i++) {
     // and parse them
     ParseLine(line, i, way_points);
 
     if ((i & 0x3f) == 0)
-      operation.SetProgressPosition(reader.tell() * 100 / filesize);
+      operation.SetProgressPosition(reader.Tell() * 100 / filesize);
   }
 }

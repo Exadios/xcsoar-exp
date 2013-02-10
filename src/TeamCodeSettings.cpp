@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,8 +27,21 @@ void
 TeamCodeSettings::SetDefaults()
 {
   team_code_reference_waypoint = -1;
-  team_flarm_tracking = false;
-  team_code_valid = false;
   team_flarm_callsign.clear();
   team_flarm_id.Clear();
+}
+
+void
+TeamCodeSettings::TrackFlarm(FlarmId id, const TCHAR *name)
+{
+  // Start tracking
+  team_flarm_id = id;
+  team_code.Clear();
+
+  // Set the Teammate callsign
+  if (name != nullptr)
+    // copy the 3 first chars from the name
+    team_flarm_callsign = name;
+  else
+    team_flarm_callsign.clear();
 }

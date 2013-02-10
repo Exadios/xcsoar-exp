@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -57,13 +57,13 @@ TaskRenderer::Draw(const OrderedTask &task)
         i != TaskPointRenderer::LAYER_LEG) {
       tpv.SetModeOptional(true);
 
-      for (unsigned j = 0, end = task.GetOptionalStartPointCount(); j < end; ++j)
-        tpv.Draw(task.GetOptionalStartPoint(j), (TaskPointRenderer::Layer)i);
+      for (const auto &tp : task.GetOptionalStartPoints())
+        tpv.Draw(tp, (TaskPointRenderer::Layer)i);
     }
 
     tpv.SetModeOptional(false);
-    for (unsigned j = 0, end = task.TaskSize(); j < end; ++j)
-      tpv.Draw(task.GetTaskPoint(j), (TaskPointRenderer::Layer)i);
+    for (const auto &tp : task.GetPoints())
+      tpv.Draw(tp, (TaskPointRenderer::Layer)i);
   }
 }
 
@@ -83,15 +83,18 @@ void
 TaskRenderer::Draw(const TaskInterface &task)
 {
   switch (task.GetType()) {
-  case TaskInterface::ORDERED:
+  case TaskType::NONE:
+    break;
+
+  case TaskType::ORDERED:
     Draw((const OrderedTask &)task);
     break;
 
-  case TaskInterface::ABORT:
+  case TaskType::ABORT:
     Draw((const AbortTask &)task);
     break;
 
-  case TaskInterface::GOTO:
+  case TaskType::GOTO:
     Draw((const GotoTask &)task);
     break;
   }

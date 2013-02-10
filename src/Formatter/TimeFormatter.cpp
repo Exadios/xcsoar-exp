@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ Copyright_License {
 */
 
 #include "TimeFormatter.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDateTime.hpp"
 #include "Util/StringUtil.hpp"
 #include "Util/StaticString.hpp"
 
@@ -105,8 +105,8 @@ FormatTimeTwoLines(TCHAR *buffer1, TCHAR *buffer2, int _time)
     _stprintf(buffer2, _T("%02u"), time.second);
 
   } else { // mm:ss
-    _stprintf(buffer1, _T("%02u:%02u"), time.minute, time.second);
-      buffer2[0] = '\0';
+    _stprintf(buffer1, _T("%02u'%02u"), time.minute, time.second);
+    buffer2[0] = '\0';
   }
 }
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,14 +21,13 @@ Copyright_License {
 }
 */
 
+#define ENABLE_SCREEN
+
+#include "Main.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/TerminalWindow.hpp"
-#include "Screen/Init.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Timer.hpp"
 #include "Look/TerminalLook.hpp"
-
-#include <stdlib.h>
 
 class TestWindow : public SingleWindow {
   TerminalWindow terminal;
@@ -39,46 +38,26 @@ public:
   TestWindow(const TerminalLook &look)
     :terminal(look), timer(*this) {}
 
-#ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance) {
-    WNDCLASS wc;
-
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = Window::WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    wc.lpszMenuName = 0;
-    wc.lpszClassName = _T("RunTerminal");
-
-    return RegisterClass(&wc);
-  }
-#endif /* USE_GDI */
-
-  void set(PixelRect _rc) {
-    SingleWindow::set(_T("RunTerminal"), _T("RunTerminal"), _rc);
+  void Create(PixelSize size) {
+    SingleWindow::Create(_T("RunTerminal"), size);
 
     PixelRect rc = GetClientRect();
 
-    terminal.set(*this, rc.left, rc.top,
-                 rc.right - rc.left, rc.bottom - rc.top);
+    terminal.Create(*this, rc);
   }
 
 protected:
-  virtual void OnCreate() {
+  virtual void OnCreate() override {
     SingleWindow::OnCreate();
     timer.Schedule(10);
   }
 
-  virtual void OnDestroy() {
+  virtual void OnDestroy() override {
     timer.Cancel();
     SingleWindow::OnDestroy();
   }
 
-  virtual bool OnTimer(WindowTimer &_timer) {
+  virtual bool OnTimer(WindowTimer &_timer) override {
     if (_timer == timer) {
       unsigned r = rand();
       char ch;
@@ -93,36 +72,15 @@ protected:
   }
 };
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
+static void
+Main()
 {
-  ScreenGlobalInit screen_init;
-  Fonts::Initialize();
-
-#ifdef USE_GDI
-  TestWindow::register_class(hInstance);
-#endif
-
   TerminalLook look;
-  look.Initialise(Fonts::monospace);
+  look.Initialise(monospace_font);
 
   TestWindow window(look);
-  window.set(PixelRect{0, 0, 400, 400});
+  window.Create({400, 400});
   window.Show();
 
   window.RunEventLoop();
-
-  Fonts::Deinitialize();
-
-  return 0;
 }

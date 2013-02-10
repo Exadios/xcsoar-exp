@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,11 +38,9 @@ AATPoint::GetLocationRemaining() const
 
 bool 
 AATPoint::UpdateSampleNear(const AircraftState& state,
-                           TaskEvents *task_events,
                            const TaskProjection &projection)
 {
-  bool retval = OrderedTaskPoint::UpdateSampleNear(state, task_events,
-                                                   projection);
+  bool retval = OrderedTaskPoint::UpdateSampleNear(state, projection);
   retval |= CheckTarget(state, false);
 
   return retval;
@@ -50,12 +48,11 @@ AATPoint::UpdateSampleNear(const AircraftState& state,
 
 bool 
 AATPoint::UpdateSampleFar(const AircraftState& state,
-                          TaskEvents *task_events,
                           const TaskProjection &projection)
 {
   // the orderedtaskpoint::update_sample_far does nothing for now
   // but we are calling this in case that changes.
-  return OrderedTaskPoint::UpdateSampleFar(state, task_events, projection) ||
+  return OrderedTaskPoint::UpdateSampleFar(state, projection) ||
     CheckTarget(state, true);
 }
 
@@ -168,30 +165,19 @@ AATPoint::SetTarget(const GeoPoint &loc, const bool override_lock)
 }
 
 void
-AATPoint::SetTarget(const fixed range, const fixed radial,
-                    const TaskProjection &proj)
+AATPoint::SetTarget(RangeAndRadial rar, const TaskProjection &proj)
 {
-  fixed oldrange = fixed_zero;
-  fixed oldradial = fixed_zero;
-  GetTargetRangeRadial(oldrange, oldradial);
-
   const FlatPoint fprev =
     proj.ProjectFloat(GetPrevious()->GetLocationRemaining());
   const FlatPoint floc = proj.ProjectFloat(GetLocation());
   const FlatLine flb (fprev,floc);
   const FlatLine fradius (floc,proj.ProjectFloat(GetLocationMin()));
-  const fixed bearing = fixed_minus_one * flb.angle().Degrees();
-  const fixed radius = fradius.d();
+  const fixed radius = fradius.d() * fabs(rar.range);
 
-  fixed swapquadrants = fixed_zero;
-  if (positive(range) != positive(oldrange))
-    swapquadrants = fixed(180);
-  const FlatPoint ftarget1 (fabs(range) * radius *
-        cos((bearing + radial + swapquadrants)
-            / fixed(360) * fixed_two_pi),
-      fabs(range) * radius *
-        sin( fixed_minus_one * (bearing + radial + swapquadrants)
-            / fixed(360) * fixed_two_pi));
+  const Angle angle = rar.radial - flb.angle();
+
+  const FlatPoint ftarget1(radius * angle.cos(),
+                           radius * -(angle).sin());
 
   const FlatPoint ftarget2 = floc + ftarget1;
   const GeoPoint targetG = proj.Unproject(ftarget2);
@@ -199,11 +185,9 @@ AATPoint::SetTarget(const fixed range, const fixed radial,
   SetTarget(targetG, true);
 }
 
-void
-AATPoint::GetTargetRangeRadial(fixed &range, fixed &radial) const
+RangeAndRadial
+AATPoint::GetTargetRangeRadial(fixed oldrange) const
 {
-  const fixed oldrange = range;
-
   const GeoPoint fprev = GetPrevious()->GetLocationRemaining();
   const GeoPoint floc = GetLocation();
   const Angle radialraw = (floc.Bearing(GetTargetLocation()) -
@@ -211,15 +195,17 @@ AATPoint::GetTargetRangeRadial(fixed &range, fixed &radial) const
 
   const fixed d = floc.Distance(GetTargetLocation());
   const fixed radius = floc.Distance(GetLocationMin());
-  const fixed rangeraw = min(fixed_one, d / radius);
+  const fixed rangeraw = std::min(fixed(1), d / radius);
 
-  radial = radialraw.AsDelta().Degrees();
-  const fixed rangesign = (fabs(radial) > fixed(90)) ?
-      fixed_minus_one : fixed_one;
-  range = rangeraw * rangesign;
+  Angle radial = radialraw.AsDelta();
+  fixed range = rangeraw;
+  if (radial < -Angle::QuarterCircle() || radial > Angle::QuarterCircle())
+    range = -range;
 
-  if ((oldrange == fixed_zero) && (range == fixed_zero))
-    radial = fixed_zero;
+  if ((oldrange == fixed(0)) && (range == fixed(0)))
+    radial = Angle::Zero();
+
+  return RangeAndRadial{ range, radial };
 }
 
 bool

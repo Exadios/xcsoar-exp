@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,8 +27,19 @@ Copyright_License {
 #include "Math/fixed.hpp"
 #include "Compiler.h"
 
+/**
+ * Implements a low-pass filter
+ * @see http://en.wikipedia.org/wiki/Low-pass_filter
+ * @param y_last Last output value (y-1)
+ * @param x_in Input value (x)
+ * @param fact Smoothing factor (alpha)
+ * @return Output value (y)
+ */
 gcc_const
-fixed
-LowPassFilter(fixed y_last, fixed x_in, fixed fact);
+static inline fixed
+LowPassFilter(fixed y_last, fixed x_in, fixed fact)
+{
+  return (fixed(1) - fact) * y_last + (fact) * x_in;
+}
 
 #endif

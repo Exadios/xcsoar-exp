@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -40,24 +40,18 @@ Copyright_License {
 static WndForm *wf = NULL;
 
 static void
-OnStopClicked(gcc_unused WndButton &Sender)
+OnStopClicked()
 {
   replay->Stop();
 }
 
 static void
-OnStartClicked(gcc_unused WndButton &Sender)
+OnStartClicked()
 {
   const TCHAR *path = GetFormValueFile(*wf, _T("prpFile"));
   if (!replay->Start(path))
     ShowMessageBox(_("Could not open IGC file!"),
-                   _("Flight replay"), MB_OK | MB_ICONINFORMATION);
-}
-
-static void
-OnCloseClicked(gcc_unused WndButton &Sender)
-{
-  wf->SetModalResult(mrOK);
+                   _("Replay"), MB_OK | MB_ICONINFORMATION);
 }
 
 static void
@@ -79,7 +73,6 @@ static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnStopClicked),
   DeclareCallBackEntry(OnStartClicked),
   DeclareCallBackEntry(OnRateData),
-  DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(NULL)
 };
 

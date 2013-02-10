@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,28 +26,30 @@ Copyright_License {
 
 #include "Util/StaticString.hpp"
 
-class SingleWindow;
+#include <functional>
 
-typedef const TCHAR *(*AllowedCharactersCallback_t)(const TCHAR *value);
+#include <tchar.h>
+
+typedef std::function<const TCHAR *(const TCHAR *)> AllowedCharacters;
 
 bool
-dlgTextEntryShowModal(SingleWindow &parent, TCHAR *text,
-                      int width, const TCHAR* caption = NULL,
-                      AllowedCharactersCallback_t accb = NULL);
+dlgTextEntryShowModal(TCHAR *text, size_t size,
+                      const TCHAR *caption=nullptr,
+                      AllowedCharacters ac=AllowedCharacters());
 
 template<size_t N>
 static inline bool
-TextEntryDialog(SingleWindow &parent, StaticString<N> &text,
+TextEntryDialog(StaticString<N> &text,
                 const TCHAR *caption=NULL,
-                AllowedCharactersCallback_t accb=NULL)
+                AllowedCharacters accb=AllowedCharacters())
 {
-  return dlgTextEntryShowModal(parent, text.buffer(), text.MAX_SIZE,
+  return dlgTextEntryShowModal(text.buffer(), text.MAX_SIZE,
                                caption, accb);
 }
 
 bool
-dlgTextEntryKeyboardShowModal(SingleWindow &parent, TCHAR *text,
-                              int width = 0, const TCHAR* caption = NULL,
-                              AllowedCharactersCallback_t accb = NULL);
+dlgTextEntryKeyboardShowModal(TCHAR *text, size_t size,
+                              const TCHAR* caption=nullptr,
+                              AllowedCharacters ac=AllowedCharacters());
 
 #endif

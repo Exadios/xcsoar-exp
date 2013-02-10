@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,76 +22,28 @@ Copyright_License {
 */
 
 #include "Screen/TopWindow.hpp"
-
-#ifdef ANDROID
-#include "Screen/Android/Event.hpp"
-#include "Android/Main.hpp"
-#else
-#include "Screen/SDL/Event.hpp"
+#include "Event/SDL/Event.hpp"
+#include "Event/SDL/Loop.hpp"
+#include "Screen/Custom/TopCanvas.hpp"
 #include "Util/ConvertString.hpp"
-#endif
-
-TopWindow::TopWindow()
-  :invalidated(true)
-#ifdef ANDROID
-  , paused(false), resumed(false), resized(false)
-#endif
-{
-}
-
-bool
-TopWindow::find(const TCHAR *cls, const TCHAR *text)
-{
-  return false; // XXX
-}
 
 void
-TopWindow::set(const TCHAR *cls, const TCHAR *text, PixelRect rc,
-               TopWindowStyle style)
+TopWindow::SetCaption(const TCHAR *caption)
 {
-  const UPixelScalar width = rc.right - rc.left;
-  const UPixelScalar height = rc.bottom - rc.top;
-
-  screen.Set(width, height, style.GetFullScreen(), style.GetResizable());
-
-  ContainerWindow::set(NULL, 0, 0, width, height, style);
-
-#ifndef ANDROID
-  UTF8ToWideConverter text2(text);
-  if (text2.IsValid())
-    ::SDL_WM_SetCaption(text2, NULL);
-#endif
-}
-
-void
-TopWindow::CancelMode()
-{
-  OnCancelMode();
-}
-
-void
-TopWindow::Fullscreen()
-{
-  screen.Fullscreen();
+  WideToUTF8Converter caption2(caption);
+  if (caption2.IsValid())
+    ::SDL_WM_SetCaption(caption2, nullptr);
 }
 
 void
 TopWindow::Invalidate()
 {
-  invalidated_lock.Lock();
-  if (invalidated) {
+  if (invalidated.exchange(true, std::memory_order_relaxed))
     /* already invalidated, don't send the event twice */
-    invalidated_lock.Unlock();
     return;
-  }
-
-  invalidated = true;
-  invalidated_lock.Unlock();
 
   /* wake up the event loop */
-#ifdef ANDROID
-  event_queue->Push(Event::NOP);
-#else
+
   /* note that SDL_NOEVENT is not documented, but since we just want
      to wake up without actually sending an event, I hope this works
      on all future SDL versions; if SDL_NOEVENT ever gets remove, I'll
@@ -99,57 +51,7 @@ TopWindow::Invalidate()
   SDL_Event event;
   event.type = SDL_NOEVENT;
   ::SDL_PushEvent(&event);
-#endif
 }
-
-void
-TopWindow::Expose() {
-  OnPaint(screen);
-  screen.Flip();
-}
-
-void
-TopWindow::Refresh()
-{
-#ifdef ANDROID
-  if (!CheckResumeSurface())
-    /* the application is paused/suspended, and we don't have an
-       OpenGL surface - ignore all drawing requests */
-    return;
-#endif
-
-  invalidated_lock.Lock();
-  if (!invalidated) {
-    invalidated_lock.Unlock();
-    return;
-  }
-
-  invalidated = false;
-  invalidated_lock.Unlock();
-
-  Expose();
-}
-
-bool
-TopWindow::OnActivate()
-{
-  return false;
-}
-
-bool
-TopWindow::OnDeactivate()
-{
-  return false;
-}
-
-bool
-TopWindow::OnClose()
-{
-  reset();
-  return true;
-}
-
-#ifndef ANDROID
 
 bool
 TopWindow::OnEvent(const SDL_Event &event)
@@ -158,9 +60,7 @@ TopWindow::OnEvent(const SDL_Event &event)
     Window *w;
 
   case SDL_VIDEOEXPOSE:
-    invalidated_lock.Lock();
-    invalidated = false;
-    invalidated_lock.Unlock();
+    invalidated.store(false, std::memory_order_relaxed);
 
     Expose();
     return true;
@@ -173,7 +73,9 @@ TopWindow::OnEvent(const SDL_Event &event)
     if (!w->IsEnabled())
       return false;
 
-    return w->OnKeyDown(event.key.keysym.sym);
+    return w->OnKeyDown(event.key.keysym.sym) ||
+      (event.key.keysym.unicode != 0 &&
+       w->OnCharacter(event.key.keysym.unicode));
 
   case SDL_KEYUP:
     w = GetFocusedWindow();
@@ -195,8 +97,7 @@ TopWindow::OnEvent(const SDL_Event &event)
     else if (event.button.button == SDL_BUTTON_WHEELDOWN)
       return OnMouseWheel(event.button.x, event.button.y, -1);
 
-    return double_click.Check(RasterPoint{PixelScalar(event.button.x),
-                                          PixelScalar(event.button.y)})
+    return double_click.Check(RasterPoint(event.button.x, event.button.y))
       ? OnMouseDouble(event.button.x, event.button.y)
       : OnMouseDown(event.button.x, event.button.y);
 
@@ -206,8 +107,7 @@ TopWindow::OnEvent(const SDL_Event &event)
       /* the wheel has already been handled in SDL_MOUSEBUTTONDOWN */
       return false;
 
-    double_click.Moved(RasterPoint{PixelScalar(event.button.x),
-                                   PixelScalar(event.button.y)});
+    double_click.Moved(RasterPoint(event.button.x, event.button.y));
 
     return OnMouseUp(event.button.x, event.button.y);
 
@@ -228,7 +128,7 @@ TopWindow::RunEventLoop()
   Refresh();
 
   EventLoop loop(*this);
-  SDL_Event event;
+  Event event;
   while (IsDefined() && loop.Get(event))
     loop.Dispatch(event);
 
@@ -244,11 +144,10 @@ TopWindow::PostQuit()
 }
 
 void
-TopWindow::OnResize(UPixelScalar width, UPixelScalar height)
+TopWindow::OnResize(PixelSize new_size)
 {
-  ContainerWindow::OnResize(width, height);
+  ContainerWindow::OnResize(new_size);
 
-  screen.OnResize(width, height);
+  screen->OnResize(new_size);
 }
 
-#endif /* !ANDROID */

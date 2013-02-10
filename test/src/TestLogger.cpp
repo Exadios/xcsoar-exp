@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ CheckTextFile(const TCHAR *path, const char *const* expect)
   ok1(!reader.error());
 
   const char *line;
-  while ((line = reader.read()) != NULL) {
+  while ((line = reader.ReadLine()) != NULL) {
     if (*line == 'G')
       break;
 
@@ -85,20 +85,16 @@ static const char *const expect[] = {
   NULL
 };
 
-int main(int argc, char **argv)
+static void
+Run(IGCWriter &writer)
 {
-  plan_tests(51);
-
-  const TCHAR *path = _T("output/test/test.igc");
-  File::Delete(path);
-
-  static const GeoPoint home(Angle::Degrees(fixed(7.7061111111111114)),
-                             Angle::Degrees(fixed(51.051944444444445)));
-  static const GeoPoint tp(Angle::Degrees(fixed(10.726111111111111)),
-                           Angle::Degrees(fixed(50.6322)));
+  static const GeoPoint home(Angle::Degrees(7.7061111111111114),
+                             Angle::Degrees(51.051944444444445));
+  static const GeoPoint tp(Angle::Degrees(10.726111111111111),
+                           Angle::Degrees(50.6322));
 
   static NMEAInfo i;
-  i.clock = fixed_one;
+  i.clock = fixed(1);
   i.time = fixed(1);
   i.time_available.Update(i.clock);
   i.date_time_utc.year = 2010;
@@ -111,9 +107,8 @@ int main(int argc, char **argv)
   i.location_available.Update(i.clock);
   i.gps_altitude = fixed(487);
   i.gps_altitude_available.Update(i.clock);
-  i.ProvideBaroAltitudeTrue(fixed(490));
-
-  IGCWriter writer(path, false);
+  i.ProvidePressureAltitude(fixed(490));
+  i.ProvideBaroAltitudeTrue(fixed(400));
 
   writer.WriteHeader(i.date_time_utc, _T("Pilot Name"), _T("ASK-21"),
                      _T("D-1234"), _T("34"), "FOO", _T("bar"), false);
@@ -143,19 +138,35 @@ int main(int argc, char **argv)
   i.date_time_utc.second += 5;
   writer.LogFRecord(i.date_time_utc, satellites);
 
-  i.location = GeoPoint(Angle::Degrees(fixed(-7.7061111111111114)),
-                        Angle::Degrees(fixed(-51.051944444444445)));
+  i.location = GeoPoint(Angle::Degrees(-7.7061111111111114),
+                        Angle::Degrees(-51.051944444444445));
   writer.LogPoint(i);
 
-  writer.Finish();
+  writer.Flush();
   writer.Sign();
+}
+
+static void
+Run(const TCHAR *path)
+{
+  IGCWriter writer(path);
+  Run(writer);
+}
+
+int main(int argc, char **argv)
+{
+  plan_tests(51);
+
+  const TCHAR *path = _T("output/test/test.igc");
+  File::Delete(path);
+
+  Run(path);
 
   CheckTextFile(path, expect);
 
   GRecord grecord;
   grecord.Initialize();
-  grecord.SetFileName(path);
-  ok1(grecord.VerifyGRecordInFile());
+  ok1(grecord.VerifyGRecordInFile(path));
 
   return exit_status();
 }

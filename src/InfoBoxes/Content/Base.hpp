@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,15 +24,15 @@ Copyright_License {
 #ifndef XCSOAR_INFOBOX_CONTENT_HPP
 #define XCSOAR_INFOBOX_CONTENT_HPP
 
+#include "Compiler.h"
+
 #include <tchar.h>
 
+struct PixelRect;
 struct InfoBoxData;
-class InfoBoxWindow;
-struct Waypoint;
-class Angle;
+struct InfoBoxPanel;
 class Widget;
 class Canvas;
-struct CallBackTableEntry;
 
 class InfoBoxContent
 {
@@ -50,32 +50,10 @@ public:
   virtual void Update(InfoBoxData &data) = 0;
   virtual bool HandleKey(const InfoBoxKeyCodes keycode);
 
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc);
 
-  /**
-   * This is a generic handler for the InfoBox. It takes the argument and
-   * processes it like the HandleKey handler, but is just more generic.
-   * @param misc
-   * @return True on success, Fales otherwise
-   */
-  virtual bool HandleQuickAccess(const TCHAR *misc);
-
-  struct PanelContent {
-    constexpr
-    PanelContent(const TCHAR* _name,
-                        Widget *(*_load)(unsigned id)) :
-                        name(_name),
-                        load(_load) {};
-    const TCHAR* name;
-    Widget *(*load)(unsigned id); // ptr to Load function
-  };
-
-  struct DialogContent {
-    const int PANELSIZE;
-    const PanelContent *Panels;
-  };
-
-  virtual const DialogContent *GetDialogContent();
+  gcc_pure
+  virtual const InfoBoxPanel *GetDialogContent();
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ Copyright_License {
 #include "Engine/Util/Gradient.hpp"
 #include "Dialogs/Dialogs.h"
 #include "UIGlobals.hpp"
+#include "Language/Language.hpp"
 
 #include <stdio.h>
 #include <tchar.h>
@@ -57,9 +58,9 @@ InfoBoxContentAlternateName::Update(InfoBoxData &data)
     }
   }
 
-  data.FormatTitle(_T("Altn %d"), index + 1);
+  data.FormatTitle(_("Altn %d"), index + 1);
 
-  if (alternate == NULL || !XCSoarInterface::Basic().track_available) {
+  if (alternate == NULL || !CommonInterface::Basic().track_available) {
     data.SetInvalid();
     return;
   }
@@ -68,7 +69,7 @@ InfoBoxContentAlternateName::Update(InfoBoxData &data)
 
   // Set Value
   Angle Value = alternate->solution.vector.bearing -
-    XCSoarInterface::Basic().track;
+    CommonInterface::Basic().track;
 
   data.SetValueFromBearingDifference(Value);
 

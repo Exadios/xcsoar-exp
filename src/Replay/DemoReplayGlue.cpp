@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ DemoReplayGlue::DemoReplayGlue(ProtectedTaskManager &_task_manager)
   :task_manager(&_task_manager)
 {
   ProtectedTaskManager::ExclusiveLease protected_task_manager(*task_manager);
-  const TaskAccessor ta(protected_task_manager, fixed_zero);
+  const TaskAccessor ta(protected_task_manager, fixed(0));
   parms.SetRealistic();
   parms.start_alt = device_blackboard->Basic().nav_altitude;
   DemoReplay::Start(ta, device_blackboard->Basic().location);

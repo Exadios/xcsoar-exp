@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,43 +23,6 @@
 #include "KeyholeZone.hpp"
 #include "Boundary.hpp"
 #include "Geo/GeoVector.hpp"
-
-GeoPoint
-KeyholeZone::GetBoundaryParametric(fixed t) const
-{
-  const fixed sweep = (GetEndRadial() - GetStartRadial()).AsBearing().Radians();
-  const fixed small_sweep = fixed_two_pi - sweep;
-  const fixed SmallRadius = fixed(500);
-  // length of sector element
-  const fixed c1 = sweep * GetRadius();
-  // length of cylinder element
-  const fixed c2 = small_sweep * SmallRadius * fixed(5);
-  // length of straight elements
-  const fixed l = (GetRadius() - SmallRadius) * fixed(0.2);
-  // total distance
-  const fixed tt = t * (c1 + l + l + c2);
-
-  Angle a;
-  fixed d;
-  if (tt < l) {
-    // first straight element
-    d = (tt / l) * (GetRadius() - SmallRadius) + SmallRadius;
-    a = GetStartRadial();
-  } else if (tt < l + c1) {
-    // sector element
-    d = GetRadius();
-    a = GetStartRadial() + Angle::Radians((tt - l) / c1 * sweep);
-  } else if (tt < l + l + c1) {
-    // second straight element
-    d = (fixed_one - (tt - l - c1) / l) * (GetRadius() - SmallRadius) + SmallRadius;
-    a = GetEndRadial();
-  } else {
-    // cylinder element
-    d = SmallRadius;
-    a = GetEndRadial() + Angle::Radians((tt - l - l - c1) / c2 * small_sweep);
-  }
-  return GeoVector(d, a).EndPoint(GetReference());
-}
 
 OZBoundary
 KeyholeZone::GetBoundary() const

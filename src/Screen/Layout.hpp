@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -49,6 +49,11 @@ namespace Layout
 
   extern unsigned pen_width_scale;
 
+  /**
+   * Recommended padding from Window boundary to text.
+   */
+  extern UPixelScalar text_padding;
+
   extern UPixelScalar minimum_control_height, maximum_control_height;
 
   extern UPixelScalar hit_radius;
@@ -57,10 +62,9 @@ namespace Layout
    * Initializes the screen layout information provided by this
    * namespace.
    *
-   * @param width the width of the screen in pixels
-   * @param height the width of the screen in pixels
+   * @param screen_size the size of the screen in pixels
    */
-  void Initialize(unsigned width, unsigned height);
+  void Initialize(PixelSize screen_size);
 
   /**
    * Is scaling supported by this platform?
@@ -135,13 +139,26 @@ namespace Layout
     return y;
   }
 
+  gcc_const
+  static inline UPixelScalar
+  GetTextPadding()
+  {
+    if (!ScaleSupported())
+      return 2;
+
+    return text_padding;
+  }
+
   /**
    * Returns the minimum height of an dialog control.
    */
   gcc_pure
-  static inline UPixelScalar
+  static inline unsigned
   GetMinimumControlHeight()
   {
+    if (IsAltair())
+      return 22;
+
     return minimum_control_height;
   }
 
@@ -149,9 +166,12 @@ namespace Layout
    * Returns the maximum useful height of a dialog control.
    */
   gcc_pure
-  static inline UPixelScalar
+  static inline unsigned
   GetMaximumControlHeight()
   {
+    if (IsAltair())
+      return 22;
+
     return maximum_control_height;
   }
 
@@ -163,6 +183,9 @@ namespace Layout
   static inline UPixelScalar
   GetHitRadius()
   {
+    if (!HasPointer())
+      return 0;
+
     return hit_radius;
   }
 }

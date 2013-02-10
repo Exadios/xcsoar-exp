@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ Copyright_License {
 #include "Task/TaskFile.hpp"
 #include "LocalPath.hpp"
 #include "Task/RoutePlannerGlue.hpp"
+#include "Task/Ordered/Points/AATPoint.hpp"
 #include "Engine/Route/ReachResult.hpp"
 
 #include <windef.h> // for MAX_PATH
@@ -40,7 +41,7 @@ ProtectedTaskManager::ProtectedTaskManager(TaskManager &_task_manager,
 }
 
 ProtectedTaskManager::~ProtectedTaskManager() {
-  ExclusiveLease lease(*this);
+  UnprotectedLease lease(*this);
   lease->SetIntersectionTest(NULL); // de-register
 }
 
@@ -67,22 +68,6 @@ ProtectedTaskManager::GetActiveWaypoint() const
     return &tp->GetWaypoint();
 
   return NULL;
-}
-
-bool
-ProtectedTaskManager::IsInSector (const unsigned index,
-                                  const AircraftState &ref) const
-{
-  Lease lease(*this);
-  return lease->IsInSector(index, ref);
-}
-
-bool
-ProtectedTaskManager::SetTarget(const unsigned index, const fixed range,
-   const fixed radial)
-{
-  ExclusiveLease lease(*this);
-  return lease->SetTarget(index, range, radial);
 }
 
 bool

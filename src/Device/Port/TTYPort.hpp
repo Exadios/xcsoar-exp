@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,10 +25,11 @@ Copyright_License {
 #define XCSOAR_DEVICE_TTY_PORT_HPP
 
 #include "Thread/StoppableThread.hpp"
-#include "Thread/Flag.hpp"
 #include "BufferedPort.hpp"
 #include "OS/TTYDescriptor.hpp"
 #include "IO/Async/FileEventHandler.hpp"
+
+#include <atomic>
 
 /**
  * A serial port class for POSIX (/dev/ttyS*, /dev/ttyUSB*).
@@ -39,7 +40,7 @@ class TTYPort : public BufferedPort, protected FileEventHandler
 
   TTYDescriptor tty;
 
-  Flag valid;
+  std::atomic<bool> valid;
 
 public:
   /**
@@ -69,16 +70,16 @@ public:
   WaitResult WaitWrite(unsigned timeout_ms);
 
   /* virtual methods from class Port */
-  virtual bool IsValid() const;
-  virtual bool Drain();
-  virtual void Flush();
-  virtual bool SetBaudrate(unsigned baud_rate);
-  virtual unsigned GetBaudrate() const;
-  virtual size_t Write(const void *data, size_t length);
+  virtual PortState GetState() const override;
+  virtual bool Drain() override;
+  virtual void Flush() override;
+  virtual bool SetBaudrate(unsigned baud_rate) override;
+  virtual unsigned GetBaudrate() const override;
+  virtual size_t Write(const void *data, size_t length) override;
 
 protected:
   /* virtual methods from class FileEventHandler */
-  virtual bool OnFileEvent(int fd, unsigned mask);
+  virtual bool OnFileEvent(int fd, unsigned mask) override;
 };
 
 #endif

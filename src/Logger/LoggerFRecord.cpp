@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ Copyright_License {
 */
 
 #include "Logger/LoggerFRecord.hpp"
-#include "DateTime.hpp"
 
 /*
  * From FAI_Tech_Spec_Gnss.pdf 
@@ -55,7 +54,7 @@ LoggerFRecord::Reset()
   std::fill_n(satellite_ids, GPSState::MAXSATELLITES, 0);
 
   clock.Reset(); // reset clock / timer
-  clock.SetDT(fixed_one); // 1 sec so it appears at top of each file
+  clock.SetDT(fixed(1)); // 1 sec so it appears at top of each file
 }
 
 bool

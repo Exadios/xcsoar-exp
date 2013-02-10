@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -53,14 +53,14 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "MapSettings.hpp"
 #include "Math/FastMath.h"
 #include "Dialogs/Dialogs.h"
-#include "Dialogs/Vega/VoiceSettingsDialog.hpp"
-#include "Dialogs/Airspace.hpp"
-#include "Dialogs/Task.hpp"
-#include "Dialogs/Traffic.hpp"
-#include "Dialogs/Waypoint.hpp"
+#include "Dialogs/Device/Vega/VoiceSettingsDialog.hpp"
+#include "Dialogs/Device/Vega/SwitchesDialog.hpp"
+#include "Dialogs/Airspace/Airspace.hpp"
+#include "Dialogs/Task/TaskDialogs.hpp"
+#include "Dialogs/Traffic/TrafficDialogs.hpp"
+#include "Dialogs/Waypoint/WaypointDialogs.hpp"
 #include "Dialogs/Weather.hpp"
-#include "Dialogs/TextEntry.hpp"
-#include "Dialogs/Planes.hpp"
+#include "Dialogs/Plane/PlaneDialogs.hpp"
 #include "Dialogs/Message.hpp"
 #include "Dialogs/dlgAnalysis.hpp"
 #include "Dialogs/FileManager.hpp"
@@ -75,7 +75,9 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "Profile/ProfileKeys.hpp"
 #include "Util/StringUtil.hpp"
 #include "Audio/Sound.hpp"
+#include "UIActions.hpp"
 #include "Interface.hpp"
+#include "ActionInterface.hpp"
 #include "Components.hpp"
 #include "Language/Language.hpp"
 #include "Logger/Logger.hpp"
@@ -88,8 +90,6 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "Pages.hpp"
 #include "Hardware/AltairControl.hpp"
 #include "NMEA/Aircraft.hpp"
-#include "FLARM/FlarmDetails.hpp"
-#include "FLARM/Glue.hpp"
 #include "Compiler.h"
 #include "Weather/Features.hpp"
 #include "MapWindow/GlueMapWindow.hpp"
@@ -103,7 +103,7 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 static void
 trigger_redraw()
 {
-  if (!XCSoarInterface::Basic().location_available)
+  if (!CommonInterface::Basic().location_available)
     ForceCalculation();
   TriggerMapUpdate();
 }
@@ -193,15 +193,6 @@ InputEvents::eventClearStatusMessages(gcc_unused const TCHAR *misc)
   CommonInterface::main_window->popup.Acknowledge();
 }
 
-void
-InputEvents::eventFLARMRadar(gcc_unused const TCHAR *misc)
-{
-  if (StringIsEqual(misc, _T("ForceToggle"))) {
-    CommonInterface::main_window->ToggleForceFLARMRadar();
-  } else
-    CommonInterface::main_window->ToggleSuppressFLARMRadar();
-}
-
 // Mode
 // Sets the current event mode.
 //  The argument is the label of the mode to activate.
@@ -230,45 +221,6 @@ void
 InputEvents::eventChecklist(gcc_unused const TCHAR *misc)
 {
   dlgChecklistShowModal();
-}
-
-// FLARM Traffic
-// Displays the FLARM traffic dialog
-//  See the checklist dialog section of the reference manual for more info.
-void
-InputEvents::eventFlarmTraffic(gcc_unused const TCHAR *misc)
-{
-  LoadFlarmDatabases();
-
-  if (!XCSoarInterface::Basic().flarm.traffic.IsEmpty())
-    dlgFlarmTrafficShowModal();
-}
-
-void
-InputEvents::eventFlarmDetails(gcc_unused const TCHAR *misc)
-{
-  LoadFlarmDatabases();
-
-  StaticString<4> callsign;
-  callsign.clear();
-  if (!TextEntryDialog(*CommonInterface::main_window, callsign,
-                       _("Competition ID")) ||
-      callsign.empty())
-    return;
-
-  FlarmId ids[30];
-  unsigned count = FlarmDetails::FindIdsByCallSign(callsign, ids, 30);
-
-  if (count > 0) {
-    FlarmId id = dlgFlarmDetailsListShowModal(*CommonInterface::main_window,
-                                              _("Show details:"), ids, count);
-
-    if (id.IsDefined())
-      dlgFlarmTrafficDetailsShowModal(id);
-  } else {
-    ShowMessageBox(_("Unknown competition number"),
-                _("Not found"), MB_OK | MB_ICONINFORMATION);
-  }
 }
 
 // Status
@@ -388,7 +340,7 @@ InputEvents::eventAutoLogger(const TCHAR *misc)
 void
 InputEvents::eventLogger(const TCHAR *misc)
 {
-  if (protected_task_manager == NULL)
+  if (logger == nullptr)
     return;
 
   // TODO feature: start logger without requiring feedback
@@ -399,21 +351,21 @@ InputEvents::eventLogger(const TCHAR *misc)
     CommonInterface::GetComputerSettings();
 
   if (StringIsEqual(misc, _T("start ask")))
-    logger.GUIStartLogger(basic, settings_computer,
-                          *protected_task_manager);
+    logger->GUIStartLogger(basic, settings_computer,
+                           protected_task_manager);
   else if (StringIsEqual(misc, _T("start")))
-    logger.GUIStartLogger(basic, settings_computer,
-                          *protected_task_manager, true);
+    logger->GUIStartLogger(basic, settings_computer,
+                           protected_task_manager, true);
   else if (StringIsEqual(misc, _T("stop ask")))
-    logger.GUIStopLogger(basic);
+    logger->GUIStopLogger(basic);
   else if (StringIsEqual(misc, _T("stop")))
-    logger.GUIStopLogger(basic, true);
+    logger->GUIStopLogger(basic, true);
   else if (StringIsEqual(misc, _T("toggle ask")))
-    logger.GUIToggleLogger(basic, settings_computer,
-                           *protected_task_manager);
+    logger->GUIToggleLogger(basic, settings_computer,
+                            protected_task_manager);
   else if (StringIsEqual(misc, _T("toggle")))
-    logger.GUIToggleLogger(basic, settings_computer,
-                           *protected_task_manager, true);
+    logger->GUIToggleLogger(basic, settings_computer,
+                            protected_task_manager, true);
   else if (StringIsEqual(misc, _T("nmea"))) {
     NMEALogger::enabled = !NMEALogger::enabled;
     if (NMEALogger::enabled) {
@@ -422,14 +374,14 @@ InputEvents::eventLogger(const TCHAR *misc)
       Message::AddMessage(_("NMEA log off"));
     }
   } else if (StringIsEqual(misc, _T("show")))
-    if (logger.IsLoggerActive()) {
+    if (logger->IsLoggerActive()) {
       Message::AddMessage(_("Logger on"));
     } else {
       Message::AddMessage(_("Logger off"));
     }
   else if (_tcsncmp(misc, _T("note"), 4))
     // add note to logger file if available..
-    logger.LoggerNote(misc + 4);
+    logger->LoggerNote(misc + 4);
 }
 
 // RepeatStatusMessage
@@ -532,7 +484,7 @@ InputEvents::eventSetup(const TCHAR *misc)
   else if (StringIsEqual(misc, _T("Target")))
     dlgTargetShowModal();
   else if (StringIsEqual(misc, _T("Plane")))
-    dlgPlanesShowModal(*CommonInterface::main_window);
+    dlgPlanesShowModal();
   else if (StringIsEqual(misc, _T("Alternates")))
     dlgAlternatesListShowModal(*CommonInterface::main_window);
 
@@ -575,7 +527,7 @@ InputEvents::eventBrightness(gcc_unused const TCHAR *misc)
 void
 InputEvents::eventExit(gcc_unused const TCHAR *misc)
 {
-  XCSoarInterface::SignalShutdown(false);
+  UIActions::SignalShutdown(false);
 }
 
 void
@@ -591,11 +543,9 @@ InputEvents::eventUserDisplayModeForce(const TCHAR *misc)
     ui_state.force_display_mode = DisplayMode::CRUISE;
   else if (StringIsEqual(misc, _T("forcefinal")))
     ui_state.force_display_mode = DisplayMode::FINAL_GLIDE;
-  else if (StringIsEqual(misc, _T("show")))
-    Message::AddMessage(_("Map labels on"));
 
-  /* trigger mode update by GlueMapWindow */
-  CommonInterface::main_window->FullRedraw();
+  ActionInterface::UpdateDisplayMode();
+  ActionInterface::SendUIState();
 }
 
 void
@@ -619,7 +569,7 @@ InputEvents::eventAddWaypoint(const TCHAR *misc)
     }
     {
       ScopeSuspendAllThreads suspend;
-      way_points.Append(edit_waypoint);
+      way_points.Append(std::move(edit_waypoint));
       way_points.Optimise();
     }
   }
@@ -673,7 +623,7 @@ InputEvents::eventWeather(const TCHAR *misc)
 {
 #ifdef HAVE_NOAA
   if (StringIsEqual(misc, _T("list")))
-    dlgNOAAListShowModal(*CommonInterface::main_window);
+    dlgNOAAListShowModal();
 #endif
 }
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,33 +21,29 @@ Copyright_License {
 }
 */
 
-#include "Screen/SDL/TopCanvas.hpp"
+#include "Screen/Custom/TopCanvas.hpp"
 #include "Screen/Features.hpp"
 #include "Asset.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Screen/OpenGL/Init.hpp"
 #include "Screen/OpenGL/Features.hpp"
-#endif
-
 #ifdef HAVE_EGL
 #include "Screen/OpenGL/EGL.hpp"
 #include "Screen/OpenGL/Globals.hpp"
 #endif
-
-#ifdef ANDROID
-#include "Android/Main.hpp"
-#include "Android/NativeView.hpp"
 #endif
 
-#include <assert.h>
+#include <SDL_video.h>
 
-void
-TopCanvas::Set(UPixelScalar width, UPixelScalar height,
-               bool full_screen, bool resizable)
+#include <assert.h>
+#include <stdio.h>
+
+gcc_const
+static Uint32
+MakeSDLFlags(bool full_screen, bool resizable)
 {
-#ifndef ANDROID
-  flags = SDL_ANYFORMAT;
+  Uint32 flags = SDL_ANYFORMAT;
 
 #ifdef ENABLE_OPENGL
   flags |= SDL_OPENGL;
@@ -71,9 +67,22 @@ TopCanvas::Set(UPixelScalar width, UPixelScalar height,
   if (resizable)
     flags |= SDL_RESIZABLE;
 
-  SDL_Surface *s = ::SDL_SetVideoMode(width, height, 0, flags);
-  if (s == NULL)
+  return flags;
+}
+
+void
+TopCanvas::Create(PixelSize new_size,
+                  bool full_screen, bool resizable)
+{
+  const Uint32 flags = MakeSDLFlags(full_screen, resizable);
+
+  SDL_Surface *s = ::SDL_SetVideoMode(new_size.cx, new_size.cy, 0, flags);
+  if (s == NULL) {
+    fprintf(stderr, "SDL_SetVideoMode(%u, %u, 0, %#x) has failed: %s\n",
+            new_size.cx, new_size.cy, (unsigned)flags,
+            ::SDL_GetError());
     return;
+  }
 
 #ifdef ENABLE_OPENGL
   if (full_screen)
@@ -81,44 +90,38 @@ TopCanvas::Set(UPixelScalar width, UPixelScalar height,
        SDL_GL_SwapBuffers() call gets ignored; could be a SDL bug, and
        the following dummy call works around it: */
     ::SDL_GL_SwapBuffers();
-#endif
-#endif
 
-#ifdef ENABLE_OPENGL
   OpenGL::SetupContext();
-  OpenGL::SetupViewport(width, height);
-  Canvas::set(width, height);
+  OpenGL::SetupViewport(new_size.cx, new_size.cy);
+  Canvas::Create(new_size);
 #else
-  Canvas::set(s);
+  Canvas::Create(s);
 #endif
 }
 
-#ifdef ENABLE_OPENGL
-
 void
-TopCanvas::Resume()
+TopCanvas::OnResize(PixelSize new_size)
 {
-  OpenGL::SetupContext();
-  OpenGL::SetupViewport(width, height);
-}
-
-#endif
-
-void
-TopCanvas::OnResize(UPixelScalar width, UPixelScalar height)
-{
-  if (width == get_width() && height == get_height())
+  if (new_size == size)
     return;
 
-#ifndef ANDROID
-  SDL_Surface *s = ::SDL_SetVideoMode(width, height, 0, flags);
+#ifdef ENABLE_OPENGL
+  const SDL_Surface *old = ::SDL_GetVideoSurface();
+#else
+  const SDL_Surface *old = surface;
+#endif
+  if (old == nullptr)
+    return;
+
+  const Uint32 flags = old->flags;
+
+  SDL_Surface *s = ::SDL_SetVideoMode(new_size.cx, new_size.cy, 0, flags);
   if (s == NULL)
     return;
-#endif
 
 #ifdef ENABLE_OPENGL
-  OpenGL::SetupViewport(width, height);
-  Canvas::set(width, height);
+  OpenGL::SetupViewport(new_size.cx, new_size.cy);
+  Canvas::Create(new_size);
 #endif
 }
 
@@ -133,6 +136,7 @@ TopCanvas::Fullscreen()
 void
 TopCanvas::Flip()
 {
+#ifdef ENABLE_OPENGL
 #ifdef HAVE_EGL
   if (OpenGL::egl) {
     /* if native EGL support was detected, we can circumvent the JNI
@@ -142,9 +146,6 @@ TopCanvas::Flip()
   }
 #endif
 
-#ifdef ANDROID
-  native_view->swap();
-#elif defined(ENABLE_OPENGL)
   ::SDL_GL_SwapBuffers();
 #else
   ::SDL_Flip(surface);

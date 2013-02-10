@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ Copyright_License {
 #include "Dialogs/Weather.hpp"
 #include "Dialogs/HelpDialog.hpp"
 #include "Dialogs/XML.hpp"
-#include "Dialogs/CallBackTable.hpp"
 #include "Units/Units.hpp"
 #include "LocalTime.hpp"
 #include "Terrain/RasterWeather.hpp"
@@ -38,49 +37,11 @@ Copyright_License {
 
 #include <stdio.h>
 
-class WindowControl;
-class WndButton;
-
-static WndForm *wf = NULL;
-
-static void
-OnCloseClicked(gcc_unused WndButton &Sender)
-{
-  wf->SetModalResult(mrOK);
-}
-
-static void
-OnWeatherHelp(WindowControl * Sender)
-{
-  WndProperty *wp = (WndProperty*)Sender;
-  int type = wp->GetDataField()->GetAsInteger();
-  TCHAR caption[256];
-  _tcscpy(caption, _("Weather parameters"));
-  const TCHAR *label = RASP.ItemLabel(type);
-  if (label != NULL) {
-    _tcscat(caption, _T(": "));
-    _tcscat(caption, label);
-  }
-
-  const TCHAR *help = RASP.ItemHelp(type);
-  if (help == NULL)
-    help = _("No help available on this item");
-
-  dlgHelpShowModal(UIGlobals::GetMainWindow(), caption, help);
-}
-
-static constexpr CallBackTableEntry CallBackTable[] = {
-  DeclareCallBackEntry(OnCloseClicked),
-  DeclareCallBackEntry(OnWeatherHelp),
-  DeclareCallBackEntry(NULL)
-};
-
 void
 dlgWeatherShowModal()
 {
-
-  wf = LoadDialog(CallBackTable, UIGlobals::GetMainWindow(),
-                  _T("IDR_XML_WEATHER"));
+  WndForm *wf = LoadDialog(nullptr, UIGlobals::GetMainWindow(),
+                           _T("IDR_XML_WEATHER"));
   if (wf == NULL)
     return;
 
@@ -90,7 +51,7 @@ dlgWeatherShowModal()
   if (wp) {
     DataFieldEnum* dfe;
     dfe = (DataFieldEnum*)wp->GetDataField();
-    dfe->addEnumText(_T("Now"));
+    dfe->addEnumText(_("Now"));
     for (unsigned i = 1; i < RasterWeather::MAX_WEATHER_TIMES; i++) {
       if (RASP.isWeatherAvailable(i)) {
         TCHAR timetext[10];
@@ -108,12 +69,13 @@ dlgWeatherShowModal()
   DataFieldEnum* dfe;
   if (wp) {
     dfe = (DataFieldEnum*)wp->GetDataField();
+    dfe->EnableItemHelp(true);
     dfe->addEnumText(_("Terrain"));
 
     for (int i = 1; i <= 15; i++) {
       const TCHAR *label = RASP.ItemLabel(i);
       if (label != NULL)
-        dfe->addEnumText(label, i);
+        dfe->AddChoice(i, label, nullptr, RASP.ItemHelp(i));
     }
     dfe->Set(RASP.GetParameter());
     wp->RefreshDisplay();

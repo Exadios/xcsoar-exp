@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -78,21 +78,26 @@ public:
   ButtonWindow():dragging(false), down(false) {}
 
 public:
-  void set(ContainerWindow &parent, const TCHAR *text, unsigned id,
-           const PixelRect &rc,
-           const ButtonWindowStyle style=ButtonWindowStyle());
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              unsigned id,
+              const PixelRect &rc,
+              const ButtonWindowStyle style=ButtonWindowStyle());
 
-  void set(ContainerWindow &parent, const TCHAR *text,
-           const PixelRect &rc,
-           const ButtonWindowStyle style=ButtonWindowStyle()) {
-    set(parent, text, 0, rc, style);
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              const PixelRect &rc,
+              const ButtonWindowStyle style=ButtonWindowStyle()) {
+    Create(parent, text, 0, rc, style);
   }
 
   unsigned GetID() const {
     return id;
   }
 
-  void set_text(const TCHAR *_text) {
+  void SetID(unsigned _id) {
+    id = _id;
+  }
+
+  void SetText(tstring::const_pointer _text) {
     AssertNoneLocked();
     AssertThread();
 
@@ -100,15 +105,15 @@ public:
     Invalidate();
   }
 
-  const tstring &get_text() const {
+  const tstring &GetText() const {
     return text;
   }
 
 protected:
-  void set_down(bool _down);
+  void SetDown(bool _down);
 
 public:
-  bool is_down() const {
+  bool IsDown() const {
     return down;
   }
 
@@ -118,15 +123,18 @@ public:
   virtual bool OnClicked();
 
 protected:
-  bool OnKeyCheck(unsigned key_code) const;
-  virtual bool OnKeyDown(unsigned key_code);
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  virtual void OnSetFocus();
-  virtual void OnKillFocus();
-  virtual bool OnCancelMode();
-  virtual void OnPaint(Canvas &canvas);
+  /* virtual methods from class Window */
+  virtual bool OnKeyCheck(unsigned key_code) const override;
+  virtual bool OnKeyDown(unsigned key_code) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys) override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual void OnSetFocus() override;
+  virtual void OnKillFocus() override;
+  virtual void OnCancelMode() override;
+
+  /* virtual methods from class PaintWindow */
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
 #else /* USE_GDI */
@@ -151,19 +159,24 @@ public:
   };
 
 public:
-  void set(ContainerWindow &parent, const TCHAR *text, unsigned id,
-           const PixelRect &rc,
-           const WindowStyle style);
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              unsigned id,
+              const PixelRect &rc,
+              const WindowStyle style);
 
-  void set(ContainerWindow &parent, const TCHAR *text,
-           const PixelRect &rc,
-           const WindowStyle style) {
-    set(parent, text, COMMAND_BOUNCE_ID, rc, style);
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              const PixelRect &rc,
+              const WindowStyle style) {
+    Create(parent, text, COMMAND_BOUNCE_ID, rc, style);
   }
 
   gcc_pure
   unsigned GetID() const {
     return ::GetWindowLong(hWnd, GWL_ID);
+  }
+
+  void SetID(unsigned _id) {
+    ::SetWindowLong(hWnd, GWL_ID, _id);
   }
 
   /**
@@ -183,32 +196,33 @@ protected:
  */
 class ButtonWindow : public BaseButtonWindow {
 public:
-  void set(ContainerWindow &parent, const TCHAR *text, unsigned id,
-           const PixelRect &rc,
-           const ButtonWindowStyle style=ButtonWindowStyle()) {
-    BaseButtonWindow::set(parent, text, id, rc, style);
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              unsigned id,
+              const PixelRect &rc,
+              const ButtonWindowStyle style=ButtonWindowStyle()) {
+    BaseButtonWindow::Create(parent, text, id, rc, style);
   }
 
-  void set(ContainerWindow &parent, const TCHAR *text,
-           const PixelRect &rc,
-           const ButtonWindowStyle style=ButtonWindowStyle()) {
-    BaseButtonWindow::set(parent, text, rc, style);
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              const PixelRect &rc,
+              const ButtonWindowStyle style=ButtonWindowStyle()) {
+    BaseButtonWindow::Create(parent, text, rc, style);
   }
 
-  bool is_down() const {
+  bool IsDown() const {
     AssertNoneLocked();
     AssertThread();
 
     return (Button_GetState(hWnd) & BST_PUSHED) != 0;
   }
 
-  void set_text(const TCHAR *text);
+  void SetText(tstring::const_pointer text);
 
-  const tstring get_text() const;
+  const tstring GetText() const;
 
 protected:
-  virtual bool OnKeyCheck(unsigned key_code) const;
-  virtual bool OnKeyDown(unsigned key_code);
+  virtual bool OnKeyCheck(unsigned key_code) const override;
+  virtual bool OnKeyDown(unsigned key_code) override;
 };
 
 #endif /* USE_GDI */

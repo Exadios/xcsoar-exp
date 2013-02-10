@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,6 +34,9 @@ enum class SlopeShading: uint8_t {
 };
 
 struct TerrainRendererSettings {
+  /** Number of available color ramps */
+  static constexpr unsigned NUM_RAMPS = 9;
+
   /** Map will show terrain */
   bool enable;
 
@@ -48,7 +51,7 @@ struct TerrainRendererSettings {
   /** Terrain brightness percentage */
   short brightness;
 
-  short ramp;
+  unsigned short ramp;
 
   /**
    * Set all attributes to the default values.

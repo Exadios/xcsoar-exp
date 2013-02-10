@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@
 #ifdef DO_PRINT
 #include <iostream>
 #endif
+
+#include <tchar.h>
 
 struct AircraftState;
 struct AltitudeState;
@@ -370,7 +372,7 @@ private:
   gcc_pure
   AirspaceInterceptSolution InterceptVertical(const AircraftState &state,
                                               const AirspaceAircraftPerformance &perf,
-                                              const fixed &distance) const;
+                                              fixed distance) const;
 
   /**
    * Find time/distance to specified horizontal boundary from an observer
@@ -388,8 +390,8 @@ private:
   gcc_pure
   AirspaceInterceptSolution InterceptHorizontal(const AircraftState &state,
                                                 const AirspaceAircraftPerformance &perf,
-                                                const fixed &distance_start,
-                                                const fixed &distance_end,
+                                                fixed distance_start,
+                                                fixed distance_end,
                                                 const bool lower = true) const;
 };
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,10 +32,13 @@ Copyright_License {
 #endif
 
 #include <winuser.h>
+#include <tchar.h>
 
 class EditWindowStyle : public WindowStyle {
+#ifndef USE_GDI
 public:
   bool is_read_only;
+#endif
 
 public:
 #ifndef USE_GDI
@@ -65,16 +68,6 @@ public:
 #endif
   }
 
-  void SetMultiLine() {
-#ifndef USE_GDI
-    text_style &= ~DT_VCENTER;
-    text_style |= DT_WORDBREAK;
-#else
-    style &= ~ES_AUTOHSCROLL;
-    style |= ES_MULTILINE;
-#endif
-  }
-
   void SetCenter() {
 #ifndef USE_GDI
     text_style &= ~DT_LEFT;
@@ -101,50 +94,23 @@ class EditWindow : public Window {
 #ifndef USE_GDI
   bool read_only;
 
-  tstring value;
+  size_t max_length;
 
-  /**
-   * The first visible line.
-   */
-  unsigned origin;
+  tstring value;
 #endif
 
 public:
-  void set(ContainerWindow &parent, PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height,
-           const EditWindowStyle style);
+  void Create(ContainerWindow &parent, PixelRect rc,
+              const EditWindowStyle style,
+              size_t max_length=0);
 
-  void set(ContainerWindow &parent, const PixelRect rc,
-           const EditWindowStyle style);
-
-#ifndef USE_GDI
-  gcc_pure
-  unsigned GetVisibleRows() const {
-    assert(IsMultiLine());
-
-    return GetHeight() / GetFont().GetHeight();
+#ifdef USE_GDI
+  void SetText(const TCHAR *text) {
+    ::SetWindowText(hWnd, text);
   }
-#endif
-
-  gcc_pure
-  unsigned GetRowCount() const {
-    AssertNoneLocked();
-
-#ifndef USE_GDI
-    const TCHAR *str = value.c_str();
-    int row_count = 1;
-
-    while ((str = strchr(str, _T('\n'))) != NULL) {
-      str++;
-      row_count++;
-    }
-    return row_count;
-#else /* USE_GDI */
-    return ::SendMessage(hWnd, EM_GETLINECOUNT, 0, 0);
-#endif /* USE_GDI */
-  }
-
+#else
   void SetText(const TCHAR *text);
+#endif
 
   void GetText(TCHAR *text, size_t max_length) {
 #ifndef USE_GDI
@@ -173,14 +139,6 @@ public:
 #endif
   }
 
-  bool IsMultiLine() const {
-#ifndef USE_GDI
-    return (GetTextStyle() & DT_WORDBREAK) != 0;
-#else
-    return (GetStyle() & ES_MULTILINE) != 0;
-#endif
-  }
-
   void Select(int start, int end) {
     AssertNoneLocked();
 
@@ -200,17 +158,31 @@ public:
   }
 
   /**
-   * Scroll the contents of a multi-line control by the specified
-   * number of lines.
+   * Simulate a key press.
    */
-  void ScrollVertically(int delta_lines);
+  void SendKey(unsigned key_code) {
+#ifdef USE_GDI
+    ::SendMessage(hWnd, WM_KEYDOWN, (WPARAM)key_code, (LPARAM)0);
+#else
+    OnKeyDown(key_code);
+#endif
+  }
+
+  /**
+   * Simulate a key press.
+   */
+  void SendCharacter(TCHAR ch) {
+#ifdef USE_GDI
+    ::SendMessage(hWnd, WM_CHAR, (WPARAM)ch, (LPARAM)0);
+#else
+    OnCharacter(ch);
+#endif
+  }
 
 #ifndef USE_GDI
 protected:
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-  virtual void OnPaint(Canvas &canvas);
-  virtual bool OnKeyCheck(unsigned key_code) const;
-  virtual bool OnKeyDown(unsigned key_code);
+  virtual void OnPaint(Canvas &canvas) override;
+  virtual bool OnCharacter(unsigned ch) override;
 #endif /* !USE_GDI */
 };
 

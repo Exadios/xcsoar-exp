@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,7 @@
 #include "Geo/GeoPoint.hpp"
 
 void
-SymmetricSectorZone::SetLegs(const GeoPoint *previous, const GeoPoint *current,
-                             const GeoPoint *next)
+SymmetricSectorZone::SetLegs(const GeoPoint *previous, const GeoPoint *next)
 {
   /* Important: all bearings must be calculated from "current" as the
      primary reference, because this is the turn point we're currently
@@ -36,13 +35,14 @@ SymmetricSectorZone::SetLegs(const GeoPoint *previous, const GeoPoint *current,
   Angle biSector;
   if (!next && previous)
     // final
-    biSector = current->Bearing(*previous).Reciprocal();
+    biSector = GetReference().Bearing(*previous).Reciprocal();
   else if (next && previous)
     // intermediate
-    biSector = current->Bearing(*previous).HalfAngle(current->Bearing(*next));
+    biSector = GetReference().Bearing(*previous)
+      .HalfAngle(GetReference().Bearing(*next));
   else if (next && !previous)
     // start
-    biSector = current->Bearing(*next).Reciprocal();
+    biSector = GetReference().Bearing(*next).Reciprocal();
   else
     // single point
     biSector = Angle::Zero();

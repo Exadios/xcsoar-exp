@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ Copyright_License {
 
 #include <assert.h>
 
-void
+inline void
 ThermalLocator::Point::Drift(fixed t, const TaskProjection& projection,
                              const GeoPoint& wind_drift)
 {
@@ -45,11 +45,6 @@ ThermalLocator::Point::Drift(fixed t, const TaskProjection& projection,
   loc_drift = projection.ProjectFloat(p);
 }
 
-ThermalLocator::ThermalLocator()
-{
-  Reset();
-}
-
 void
 ThermalLocator::Reset()
 {
@@ -57,12 +52,12 @@ ThermalLocator::Reset()
   n_points = 0;
 }
 
-void
+inline void
 ThermalLocator::AddPoint(const fixed t, const GeoPoint &location, const fixed w)
 {
   points[n_index].location = location;
   points[n_index].t_0 = t;
-  points[n_index].w = max(w, fixed(-0.1));
+  points[n_index].w = std::max(w, fixed(-0.1));
   // lift_weight and recency_weight are set by Drift()
 
   n_index = (n_index + 1) % TLOCATOR_NMAX;
@@ -94,8 +89,8 @@ ThermalLocator::Update(const fixed t_0,
   FlatPoint av = glider_average();
   // find thermal center relative to glider's average position
 
-  FlatPoint f0(fixed_zero, fixed_zero);
-  fixed acc = fixed_zero;
+  FlatPoint f0(fixed(0), fixed(0));
+  fixed acc = fixed(0);
   for (unsigned i = 0; i < n_points; ++i) {
     f0 += (points[i].loc_drift-av)*points[i].lift_weight;
     acc += points[i].lift_weight;
@@ -107,22 +102,22 @@ ThermalLocator::Update(const fixed t_0,
     therm.estimate_valid = false;
     return;
   }
-  f0 = f0 * (fixed_one/acc) + av;
+  f0 = f0 * (fixed(1)/acc) + av;
 
   therm.estimate_location = projection.Unproject(f0);
   therm.estimate_valid = true;
 }
 
-FlatPoint
+inline FlatPoint
 ThermalLocator::glider_average()
 {
-  FlatPoint result(fixed_zero, fixed_zero);
+  FlatPoint result(fixed(0), fixed(0));
   assert(n_points>0);
   if (n_points == 0)
     return result;
 
   // find glider's average position
-  fixed acc = fixed_zero;
+  fixed acc = fixed(0);
   for (unsigned i = 0; i < n_points; ++i) {
     result += points[i].loc_drift*points[i].recency_weight;
     acc += points[i].recency_weight;
@@ -136,7 +131,7 @@ ThermalLocator::glider_average()
   return result;
 }
 
-void
+inline void
 ThermalLocator::Drift(const fixed t_0, const TaskProjection& projection,
                       const GeoPoint& traildrift)
 {

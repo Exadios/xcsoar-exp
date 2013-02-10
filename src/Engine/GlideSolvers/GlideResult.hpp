@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,13 +23,12 @@
 #define GLIDERESULT_HPP
 
 #include "Geo/GeoVector.hpp"
-#include "Util/TypeTraits.hpp"
 #include "GlideSettings.hpp"
 #include "Compiler.h"
 
-#ifdef DO_PRINT
-#include <iostream>
-#endif
+#include <type_traits>
+
+#include <stdint.h>
 
 struct GlideState;
 struct AircraftState;
@@ -313,11 +312,6 @@ struct GlideResult {
   /** Reset/clear the solution */
   void Reset();
 
-#ifdef DO_PRINT
-  friend std::ostream& operator<< (std::ostream& o, 
-                                   const GlideResult& gl);
-#endif
-
 private:
   /**
    * Calculate cruise track bearing from internal variables.
@@ -326,6 +320,6 @@ private:
   void CalcCruiseBearing();
 };
 
-static_assert(is_trivial<GlideResult>::value, "type is not trivial");
+static_assert(std::is_trivial<GlideResult>::value, "type is not trivial");
 
 #endif

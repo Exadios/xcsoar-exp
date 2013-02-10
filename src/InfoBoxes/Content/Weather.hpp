@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,62 +26,39 @@ Copyright_License {
 
 #include "InfoBoxes/Content/Base.hpp"
 
-class InfoBoxContentHumidity : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxHumidity(InfoBoxData &data);
 
-class InfoBoxContentTemperature : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxTemperature(InfoBoxData &data);
 
 class InfoBoxContentTemperatureForecast : public InfoBoxContent
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual bool HandleKey(const InfoBoxKeyCodes keycode);
+  virtual void Update(InfoBoxData &data) override;
+  virtual bool HandleKey(const InfoBoxKeyCodes keycode) override;
 };
 
-class InfoBoxContentWind : public InfoBoxContent
+extern const InfoBoxPanel wind_infobox_panels[];
+
+void
+UpdateInfoBoxWindSpeed(InfoBoxData &data);
+
+void
+UpdateInfoBoxWindBearing(InfoBoxData &data);
+
+void
+UpdateInfoBoxHeadWind(InfoBoxData &data);
+
+void
+UpdateInfoBoxHeadWindSimplified(InfoBoxData &data);
+
+class InfoBoxContentWindArrow: public InfoBoxContent
 {
 public:
-  virtual const DialogContent *GetDialogContent();
-
-  static const DialogContent dlgContent;
-};
-
-class InfoBoxContentWindSpeed : public InfoBoxContentWind
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
-
-class InfoBoxContentWindBearing : public InfoBoxContentWind
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
-
-class InfoBoxContentHeadWind: public InfoBoxContentWind
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
-
-class InfoBoxContentHeadWindSimplified: public InfoBoxContentWind
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
-
-class InfoBoxContentWindArrow: public InfoBoxContentWind
-{
-public:
-  virtual void Update(InfoBoxData &data);
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
+  virtual const InfoBoxPanel *GetDialogContent() override;
 };
 
 #endif

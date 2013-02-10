@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ Copyright_License {
 #include "Math/fixed.hpp"
 #include "Compiler.h"
 
-struct GeoBounds;
+class GeoBounds;
 
 /**
  * This class manages the projection from GeoPoint to RasterMap
@@ -40,53 +40,60 @@ class RasterProjection {
   fixed x_scale, y_scale;
 
 public:
-  void set(const GeoBounds &bounds, unsigned width, unsigned height);
+  /**
+   * Initialise the projection.
+   *
+   * @param bounds the geographic bounds of the map file
+   * @param width the sub-pixel ("fine)" width of the map file
+   * @param height the sub-pixel ("fine)" height of the map file
+   */
+  void Set(const GeoBounds &bounds, unsigned width, unsigned height);
 
   gcc_pure
-  Angle width_to_angle(fixed pixels) const {
+  Angle WidthToAngle(fixed pixels) const {
     return Angle::Native(fixed(pixels) / x_scale);
   }
 
   gcc_pure
-  Angle height_to_angle(fixed pixels) const {
+  Angle HeightToAngle(fixed pixels) const {
     return Angle::Native(fixed(pixels) / y_scale);
   }
 
   gcc_pure
-  unsigned angle_to_height(Angle angle) const {
+  int AngleToWidth(Angle angle) const {
+    return (int)(angle.Native() * x_scale);
+  }
+
+  gcc_pure
+  unsigned AngleToHeight(Angle angle) const {
     return (unsigned)(angle.Native() * y_scale);
   }
 
   gcc_pure RasterLocation
-  project(const GeoPoint &location) const {
-    const unsigned x = ((int)(location.longitude.Native() * x_scale)) - left;
-    const unsigned y = top - ((int)(location.latitude.Native() * y_scale));
+  ProjectFine(const GeoPoint &location) const {
+    const unsigned x = AngleToWidth(location.longitude) - left;
+    const unsigned y = top - AngleToHeight(location.latitude);
 
     return RasterLocation(x, y);
   }
 
   gcc_pure
   GeoPoint
-  unproject(const RasterLocation &coords) const {
-    const fixed x = fixed((int)coords.x + left) / x_scale;
-    const fixed y = fixed(top - (int)coords.y) / y_scale;
-    return GeoPoint(Angle::Native(x),Angle::Native(y));
+  UnprojectFine(const RasterLocation &coords) const {
+    const Angle x = WidthToAngle(fixed((int)coords.x + left));
+    const Angle y = HeightToAngle(fixed(top - (int)coords.y));
+    return GeoPoint(x, y);
   }
 
   gcc_pure RasterLocation
-  project_coarse(const GeoPoint &location) const {
-    const int x = ((int)(location.longitude.Native() * x_scale)) - left;
-    const int y = top - ((int)(location.latitude.Native() * y_scale));
-
-    return RasterLocation(x >> 8, y >> 8);
+  ProjectCoarse(const GeoPoint &location) const {
+    return ProjectFine(location) >> 8;
   }
 
   gcc_pure
   GeoPoint
-  unproject_coarse(const RasterLocation &coords) const {
-    const fixed x = fixed(((int)coords.x << 8) + left) / x_scale;
-    const fixed y = fixed(top - ((int)coords.y << 8)) / y_scale;
-    return GeoPoint(Angle::Native(x),Angle::Native(y));
+  UnprojectCoarse(const RasterLocation &coords) const {
+    return UnprojectFine(coords << 8);
   }
 
   /**
@@ -95,7 +102,12 @@ public:
    * @param pixels the pixel distance between two pixels
    */
   gcc_pure fixed
-  pixel_distance(const GeoPoint &location, unsigned pixels) const;
+  FinePixelDistance(const GeoPoint &location, unsigned pixels) const;
+
+  gcc_pure
+  fixed CoarsePixelDistance(const GeoPoint &location, unsigned pixels) const {
+    return FinePixelDistance(location, pixels << 8);
+  }
 
   /**
    * Converts a distance (in meters) to a pixel distance.
@@ -103,7 +115,11 @@ public:
    * @param pixels the pixel distance between two pixels
    */
   gcc_pure unsigned
-  distance_pixels(fixed distance) const;
+  DistancePixelsFine(fixed distance) const;
+
+  gcc_pure unsigned DistancePixelsCoarse(fixed distance) const {
+    return DistancePixelsFine(distance) >> 8;
+  }
 };
 
 #endif

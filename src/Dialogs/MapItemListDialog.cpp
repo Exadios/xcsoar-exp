@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,22 +23,24 @@ Copyright_License {
 
 #include "Dialogs/MapItemListDialog.hpp"
 #include "Dialogs/WidgetDialog.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
-#include "Dialogs/Airspace.hpp"
-#include "Dialogs/Task.hpp"
-#include "Dialogs/Waypoint.hpp"
-#include "Dialogs/Traffic.hpp"
+#include "Dialogs/Airspace/Airspace.hpp"
+#include "Dialogs/Task/TaskDialogs.hpp"
+#include "Dialogs/Waypoint/WaypointDialogs.hpp"
+#include "Dialogs/Traffic/TrafficDialogs.hpp"
 #include "Look/DialogLook.hpp"
 #include "Language/Language.hpp"
 #include "MapSettings.hpp"
 #include "MapWindow/MapItem.hpp"
 #include "MapWindow/MapItemList.hpp"
 #include "Renderer/MapItemListRenderer.hpp"
-#include "Form/ListWidget.hpp"
+#include "Widget/ListWidget.hpp"
 #include "Form/Button.hpp"
 #include "Weather/Features.hpp"
 #include "Components.hpp"
 #include "Task/ProtectedTaskManager.hpp"
+#include "Interface.hpp"
 
 #ifdef HAVE_NOAA
 #include "Dialogs/Weather.hpp"
@@ -129,8 +131,12 @@ public:
   }
 
   bool CanGotoItem(unsigned index) const {
+    return CanGotoItem(*list[index]);
+  }
+
+  static bool CanGotoItem(const MapItem &item) {
     return protected_task_manager != NULL &&
-      list[index]->type == MapItem::WAYPOINT;
+      item.type == MapItem::WAYPOINT;
   }
 
   virtual void OnActivateItem(unsigned index);
@@ -142,8 +148,8 @@ public:
 void
 MapItemListWidget::CreateButtons(WidgetDialog &dialog)
 {
-  settings_button = dialog.AddButton(_("Settings"), this, SETTINGS);
-  goto_button = dialog.AddButton(_("Goto"), this, GOTO);
+  settings_button = dialog.AddButton(_("Settings"), *this, SETTINGS);
+  goto_button = dialog.AddButton(_("Goto"), *this, GOTO);
   details_button = dialog.AddButton(_("Details"), mrOK);
   cancel_button = dialog.AddButton(_("Close"), mrCancel);
 }
@@ -151,7 +157,7 @@ MapItemListWidget::CreateButtons(WidgetDialog &dialog)
 void
 MapItemListWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
 {
-  UPixelScalar item_height = dialog_look.list.font->GetHeight()
+  UPixelScalar item_height = dialog_look.list.font_bold->GetHeight()
     + Layout::Scale(6) + dialog_look.small_font->GetHeight();
   assert(item_height > 0);
 
@@ -159,6 +165,14 @@ MapItemListWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
 
   GetList().SetLength(list.size());
   UpdateButtons();
+
+  for (unsigned i = 0; i < list.size(); ++i) {
+    const MapItem &item = *list[i];
+    if (HasDetails(item) || CanGotoItem(item)) {
+      GetList().SetCursorIndex(i);
+      break;
+    }
+  }
 }
 
 void
@@ -168,7 +182,8 @@ MapItemListWidget::OnPaintItem(Canvas &canvas, const PixelRect rc,
   const MapItem &item = *list[idx];
   MapItemListRenderer::Draw(canvas, rc, item,
                             dialog_look, look, traffic_look,
-                            final_glide_look, settings);
+                            final_glide_look, settings,
+                            &CommonInterface::Basic().flarm.traffic);
 
   if ((settings.item_list.add_arrival_altitude &&
        item.type == MapItem::Type::ARRIVAL_ALTITUDE) ||
@@ -220,7 +235,8 @@ ShowMapItemListDialog(SingleWindow &parent,
   MapItemListWidget widget(list, dialog_look, look,
                            traffic_look, final_glide_look,
                            settings);
-  WidgetDialog dialog(_("Map elements at this location"), &widget);
+  WidgetDialog dialog(dialog_look);
+  dialog.CreateFull(parent, _("Map elements at this location"), &widget);
   widget.CreateButtons(dialog);
 
   int result = dialog.ShowModal() == mrOK
@@ -255,7 +271,7 @@ ShowMapItemDialog(const MapItem &item, SingleWindow &parent,
     dlgTargetShowModal(((const TaskOZMapItem &)item).index);
     break;
   case MapItem::TRAFFIC:
-    dlgFlarmTrafficDetailsShowModal(((const TrafficMapItem &)item).traffic.id);
+    dlgFlarmTrafficDetailsShowModal(((const TrafficMapItem &)item).id);
     break;
 
 #ifdef HAVE_NOAA

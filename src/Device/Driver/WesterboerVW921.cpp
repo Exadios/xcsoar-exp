@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ class WesterboerVW921Device : public AbstractDevice
 
 public:
   virtual bool DataReceived(const void *data, size_t length,
-                            struct NMEAInfo &info);
+                            struct NMEAInfo &info) override;
 
   void SentenceReceived(unsigned sentence_number,
                         const void *data, size_t length, struct NMEAInfo &info);
@@ -220,14 +220,10 @@ WesterboerVW921Device::SentenceZero(const void *_data, size_t length,
 
   uint8_t flight_status2 = *(data + 6);
   if ((flight_status2 & (1 << 7)) == 0) {
-    info.switch_state.flight_mode = SwitchInfo::FlightMode::CRUISE;
-    info.switch_state.speed_command = true;
+    info.switch_state.flight_mode = SwitchState::FlightMode::CRUISE;
   } else {
-    info.switch_state.flight_mode = SwitchInfo::FlightMode::CIRCLING;
-    info.switch_state.speed_command = false;
+    info.switch_state.flight_mode = SwitchState::FlightMode::CIRCLING;
   }
-
-  info.switch_state_available = true;
 
   // 7      Byte  GPS status (Bitmask)
   // Bit 3: GPS-Status-Flag ("A"-valid position/"V"- NAV receiver warning)
@@ -322,7 +318,7 @@ WesterboerVW921Device::SentenceOne(const void *_data, size_t length,
 
     uint8_t polar_type = *(data + 30);
     if (polar_type == 0)
-      info.settings.ProvideBugs(fixed_one, info.clock);
+      info.settings.ProvideBugs(fixed(1), info.clock);
     else if (polar_type == 1)
       info.settings.ProvideBugs(fixed(0.85), info.clock);
     else if (polar_type == 2)
@@ -337,7 +333,7 @@ WesterboerVW921Device::SentenceOne(const void *_data, size_t length,
 
     uint8_t polar_type = *(data + 13);
     if (polar_type == 0)
-      info.settings.ProvideBugs(fixed_one, info.clock);
+      info.settings.ProvideBugs(fixed(1), info.clock);
     else if (polar_type == 1)
       info.settings.ProvideBugs(fixed(0.95), info.clock);
     else if (polar_type == 2)
@@ -361,7 +357,7 @@ WesterboerVW921CreateOnPort(const DeviceConfig &config, Port &com_port)
   return new WesterboerVW921Device();
 }
 
-const struct DeviceRegister westerboer_vw921_device_driver = {
+const struct DeviceRegister westerboer_vw921_driver = {
   _T("VW921"),
   _T("Westerboer VW921/VW922"),
   DeviceRegister::RAW_GPS_DATA | DeviceRegister::RECEIVE_SETTINGS,

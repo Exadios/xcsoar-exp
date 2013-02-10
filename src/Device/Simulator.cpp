@@ -3,7 +3,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -44,8 +44,8 @@ Simulator::Init(NMEAInfo &basic)
 
   basic.location = GeoPoint::Zero();
   basic.track = Angle::Zero();
-  basic.ground_speed = fixed_zero;
-  basic.gps_altitude = fixed_zero;
+  basic.ground_speed = fixed(0);
+  basic.gps_altitude = fixed(0);
   basic.date_available = true;
 }
 
@@ -65,8 +65,8 @@ Simulator::GenerateFLARMTraffic(NMEAInfo &basic)
   if (i > 80)
     return;
 
-  const Angle angle = Angle::Degrees(fixed((i * 360) / 255)).AsBearing();
-  Angle dangle = (angle + Angle::Degrees(fixed(120))).AsBearing();
+  const Angle angle = Angle::FullCircle() * i / 255;
+  Angle dangle = (angle + Angle::Degrees(120)).AsBearing();
   Angle hangle = dangle.Flipped().AsBearing();
 
   int alt = (angle.ifastsine()) / 7;
@@ -117,7 +117,7 @@ Simulator::Touch(NMEAInfo &basic)
   basic.gps_altitude_available.Update(basic.clock);
 
   basic.time_available.Update(basic.clock);
-  basic.time += fixed_one;
+  basic.time += fixed(1);
   basic.date_time_utc = basic.date_time_utc + 1;
 }
 

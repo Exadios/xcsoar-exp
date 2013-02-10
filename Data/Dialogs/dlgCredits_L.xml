@@ -1,23 +1,15 @@
 <?xml version="1.0"?>
 
 <Form Caption="XCSoar">
-  <SymbolButton Name="cmdNext" Caption="&gt;" Y="-70" Width="70" Height="35" OnClick="OnNext" />
+  <SymbolButton Name="cmdNext" Caption="&gt;" Y="-105" Width="70" Height="35" OnClick="OnNext" />
 
-  <Button Name="cmdClose" Caption="Close" Y="-35" Width="70" Height="35" OnClick="OnClose" />
+  <CloseButton Y="-35" Width="70" Height="35"/>
 
   <Tabbed Name="tab" X="70" Y="0">
-    <Panel Name="frmInfo">
-      <Canvas OnPaint="OnLogoPaint" />
-    </Panel>
-    
-    <Panel Name="frmAuthors">
-      <TextEdit Name="prpAuthors" ReadOnly="1" MultiLine="1" />
-    </Panel>
-  
-    <Panel Name="frmLicense">
-      <TextEdit Name="prpLicense" ReadOnly="1" MultiLine="1" />
-    </Panel>
+    <Canvas OnPaint="OnLogoPaint" />
+    <LargeText Name="prpAuthors"/>
+    <LargeText Name="prpLicense"/>
   </Tabbed>
 
-  <SymbolButton Name="cmdPrev" Caption="&lt;" Y="-105" Width="70" Height="35" OnClick="OnPrev" />
+  <SymbolButton Name="cmdPrev" Caption="&lt;" Y="-70" Width="70" Height="35" OnClick="OnPrev" />
 </Form>

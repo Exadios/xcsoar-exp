@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
 #include "Profile/TaskProfile.hpp"
 #include "Profile/TrackingProfile.hpp"
 #include "Profile/Profile.hpp"
+#include "ContestProfile.hpp"
 #include "ComputerSettings.hpp"
 
 namespace Profile {
@@ -36,6 +37,7 @@ namespace Profile {
   static void Load(VoiceSettings &settings);
   static void Load(PlacesOfInterestSettings &settings);
   static void Load(FeaturesSettings &settings);
+  static void Load(CirclingSettings &settings);
 };
 
 void
@@ -53,7 +55,7 @@ Profile::Load(PolarSettings &settings)
 {
   fixed degradation;
   if (Get(ProfileKeys::PolarDegradation, degradation) &&
-      degradation >= fixed_half && degradation <= fixed_one)
+      degradation >= fixed(0.5) && degradation <= fixed(1))
     settings.SetDegradationFactor(degradation);
 }
 
@@ -62,7 +64,6 @@ Profile::Load(LoggerSettings &settings)
 {
   Get(ProfileKeys::LoggerTimeStepCruise, settings.time_step_cruise);
   Get(ProfileKeys::LoggerTimeStepCircling, settings.time_step_circling);
-  Get(ProfileKeys::LoggerShort, settings.short_name);
 
   if (!GetEnum(ProfileKeys::AutoLogger, settings.auto_logger)) {
     // Legacy
@@ -118,6 +119,13 @@ Profile::Load(FeaturesSettings &settings)
 }
 
 void
+Profile::Load(CirclingSettings &settings)
+{
+  Get(ProfileKeys::EnableExternalTriggerCruise,
+      settings.external_trigger_cruise_enabled);
+}
+
+void
 Profile::Load(ComputerSettings &settings)
 {
   Load(settings.wind);
@@ -127,9 +135,7 @@ Profile::Load(ComputerSettings &settings)
   Load(settings.poi);
   Load(settings.features);
   Load(settings.airspace);
-
-  Get(ProfileKeys::EnableExternalTriggerCruise,
-      settings.external_trigger_cruise_enabled);
+  Load(settings.circling);
 
   GetEnum(ProfileKeys::AverEffTime, settings.average_eff_time);
 
@@ -149,6 +155,7 @@ Profile::Load(ComputerSettings &settings)
     settings.utc_offset = 0;
 
   Load(settings.task);
+  Load(settings.contest);
   Load(settings.logger);
 
 #ifdef HAVE_TRACKING

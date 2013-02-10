@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,85 +22,70 @@ Copyright_License {
 */
 
 #include "MacCreadySetup.hpp"
-#include "Dialogs/CallBackTable.hpp"
-#include "Dialogs/dlgInfoBoxAccess.hpp"
-#include "Form/TabBar.hpp"
-#include "Form/XMLWidget.hpp"
+#include "Screen/Layout.hpp"
+#include "Widget/WindowWidget.hpp"
 #include "Form/Button.hpp"
-#include "InfoBoxes/InfoBoxManager.hpp"
+#include "Form/ActionListener.hpp"
 #include "Interface.hpp"
+#include "UIGlobals.hpp"
 #include "Language/Language.hpp"
+#include "Profile/Profile.hpp"
 
 class WndButton;
 
-class MacCreadySetupPanel : public XMLWidget {
-  unsigned id;
-
+class MacCreadySetupPanel : public WindowWidget,
+                            private ActionListener {
 public:
-  MacCreadySetupPanel(unsigned _id):id(_id) {}
-
-  void QuickAccess(const TCHAR *value) {
-    InfoBoxManager::ProcessQuickAccess(id, value);
+  WndButton &GetButton() {
+    return *(WndButton *)GetWindow();
   }
 
-  void Setup();
+  gcc_pure
+  static const TCHAR *GetCaption() {
+    return CommonInterface::GetComputerSettings().task.auto_mc
+      ? _("MANUAL")
+      : _("AUTO");
+  }
 
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
-  virtual void Show(const PixelRect &rc);
+  void UpdateCaption() {
+    GetButton().SetCaption(GetCaption());
+  }
+
+  /* virtual methods from class Widget */
+  virtual PixelSize GetMinimumSize() const override {
+    return PixelSize{Layout::Scale(80u), Layout::Scale(30u)};
+  }
+
+  virtual void Prepare(ContainerWindow &parent,
+                       const PixelRect &rc) override;
+
+  /* virtual methods from class ActionListener */
+  virtual void OnAction(int id) override;
 };
-
-/** XXX this hack is needed because the form callbacks don't get a
-    context pointer - please refactor! */
-static MacCreadySetupPanel *instance;
 
 void
-MacCreadySetupPanel::Setup()
+MacCreadySetupPanel::OnAction(int id)
 {
-  InfoBoxManager::ShowInfoBoxPicker(id);
-  dlgInfoBoxAccess::OnClose();
+  TaskBehaviour &task_behaviour = CommonInterface::SetComputerSettings().task;
+  task_behaviour.auto_mc = !task_behaviour.auto_mc;
+  Profile::Set(ProfileKeys::AutoMc, task_behaviour.auto_mc);
+
+  UpdateCaption();
 }
-
-static void
-PnlSetupOnSetup(gcc_unused WndButton &Sender) {
-  instance->Setup();
-}
-
-static void
-PnlSetupOnMode(gcc_unused WndButton &Sender)
-{
-  if (XCSoarInterface::GetComputerSettings().task.auto_mc)
-    Sender.SetCaption(_("AUTO"));
-  else
-    Sender.SetCaption(_("MANUAL"));
-
-  instance->QuickAccess(_T("mode"));
-}
-
-static constexpr CallBackTableEntry call_back_table[] = {
-  DeclareCallBackEntry(PnlSetupOnSetup),
-  DeclareCallBackEntry(PnlSetupOnMode),
-  DeclareCallBackEntry(NULL)
-};
 
 void
 MacCreadySetupPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 {
-  LoadWindow(call_back_table, parent, _T("IDR_XML_INFOBOXMACCREADYSETUP"));
-}
+  ButtonWindowStyle style;
+  style.Hide();
+  style.TabStop();
 
-void
-MacCreadySetupPanel::Show(const PixelRect &rc)
-{
-  if (XCSoarInterface::GetComputerSettings().task.auto_mc)
-    ((WndButton *)form.FindByName(_T("cmdMode")))->SetCaption(_("MANUAL"));
-  else
-    ((WndButton *)form.FindByName(_T("cmdMode")))->SetCaption(_("AUTO"));
-
-  XMLWidget::Show(rc);
+  SetWindow(new WndButton(parent, UIGlobals::GetDialogLook(), GetCaption(), rc,
+                          style, *this, 1));
 }
 
 Widget *
 LoadMacCreadySetupPanel(unsigned id)
 {
-  return instance = new MacCreadySetupPanel(id);
+  return new MacCreadySetupPanel();
 }

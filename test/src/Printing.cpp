@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -19,19 +19,20 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
 */
+
 #include "Printing.hpp"
 #include "Trace/Trace.hpp"
+#include "OS/FileUtil.hpp"
+#include "Waypoint/Waypoint.hpp"
 
 #include <fstream>
 
 #ifdef FIXED_MATH
-std::ostream& operator<<(std::ostream& os,fixed const& value)
+std::ostream& operator<<(std::ostream& os, fixed value)
 {
   return os<<value.as_double();
 }
 #endif
-
-#include "Waypoint/Waypoint.hpp"
 
 std::ostream &
 operator<< (std::ostream& f, const Waypoint& wp)
@@ -97,7 +98,8 @@ PrintTracePoint(const TracePoint &point, std::ofstream& fs)
 void
 PrintHelper::trace_print(const Trace& trace, const GeoPoint &loc)
 {
-  std::ofstream fs("results/res-trace.txt");
+  Directory::Create(_T("output/results"));
+  std::ofstream fs("output/results/res-trace.txt");
 
   for (auto it = trace.begin(); it != trace.end(); ++it)
     PrintTracePoint(*it, fs);
@@ -106,7 +108,7 @@ PrintHelper::trace_print(const Trace& trace, const GeoPoint &loc)
 
 #include "Math/Angle.hpp"
 
-std::ostream& operator<< (std::ostream& o, const Angle& a)
+std::ostream& operator<< (std::ostream& o, Angle a)
 {
   o << a.Degrees();
   return o;

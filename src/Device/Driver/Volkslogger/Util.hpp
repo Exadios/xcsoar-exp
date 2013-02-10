@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,6 +34,16 @@ Copyright_License {
  */
 void
 copy_padded(char *dest, size_t size, const char *src);
+
+/**
+ * Copy a string from a fixed-size buffer that may not be
+ * null-terminated, converting ASCII lower-case letters to upper case.
+ * The destination buffer will be null-terminated.
+ *
+ * @param size the size of the source buffer
+ */
+void
+CopyTerminatedUpper(char *dest, const char *src, size_t size);
 
 /**
  * Copy a string to a fixed-size buffer, converting ASCII lower-case

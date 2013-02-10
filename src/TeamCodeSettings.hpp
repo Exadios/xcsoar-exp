@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,7 +27,8 @@ Copyright_License {
 #include "Util/StaticString.hpp"
 #include "TeamCode.hpp"
 #include "FLARM/FlarmId.hpp"
-#include "Util/TypeTraits.hpp"
+
+#include <type_traits>
 
 /**
  * Settings for teamcode calculations
@@ -35,23 +36,32 @@ Copyright_License {
 struct TeamCodeSettings {
   /** Reference waypoint id for code origin */
   int team_code_reference_waypoint;
-  /** Whether to enable tracking by FLARM */
-  bool team_flarm_tracking;
-  /** Whether the teammate code is valid */
-  bool team_code_valid;
 
   /** CN of the glider to track */
   StaticString<4> team_flarm_callsign;
-  /** auto-detected, see also in Info.h */
+
+  /**
+   * Check TeamCode::IsDefined() before using this attribute.
+   */
   TeamCode team_code;
 
-  /** FlarmId of the glider to track */
+  /**
+   * FlarmId of the glider to track.  Check FlarmId::IsDefined()
+   * before using this attribute.
+   */
   FlarmId team_flarm_id;
 
   void SetDefaults();
+
+  /**
+   * Track a specific FLARM.
+   *
+   * Don't use this method directory, use TeamActions::TrackFlarm()
+   * instead.
+   */
+  void TrackFlarm(FlarmId id, const TCHAR *callsign);
 };
 
-static_assert(is_trivial<TeamCodeSettings>::value, "type is not trivial");
+static_assert(std::is_trivial<TeamCodeSettings>::value, "type is not trivial");
 
 #endif
-

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,8 +23,9 @@
 #define TASK_SUMMARY_HPP
 
 #include "Util/TrivialArray.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Math/fixed.hpp"
+
+#include <type_traits>
 
 struct TaskSummaryPoint {
   /** Distance planned to this point from previous, (m) */
@@ -48,18 +49,19 @@ struct TaskSummary {
 
   void clear() {
     active = 0;
-    p_remaining = fixed_one;
+    p_remaining = fixed(1);
     pts.clear();
   }
   void append(const TaskSummaryPoint& tsp) {
     pts.push_back(tsp);
   }
-  void update(const fixed &d_remaining, const fixed &d_planned) {
+
+  void update(fixed d_remaining, fixed d_planned) {
     if (!positive(d_planned))
       return;
 
     p_remaining = d_remaining/d_planned;
-    fixed p = fixed_zero;
+    fixed p = fixed(0);
     for (auto &i : pts) {
       p += i.d_planned / d_planned;
       i.p = p;
@@ -67,6 +69,6 @@ struct TaskSummary {
   }
 };
 
-static_assert(is_trivial<TaskSummary>::value, "type is not trivial");
+static_assert(std::is_trivial<TaskSummary>::value, "type is not trivial");
 
 #endif

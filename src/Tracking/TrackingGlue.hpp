@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,17 +29,24 @@ Copyright_License {
 #ifdef HAVE_TRACKING
 
 #include "Tracking/TrackingSettings.hpp"
+#include "Tracking/SkyLines/Handler.hpp"
 #include "Tracking/SkyLines/Glue.hpp"
+#include "Tracking/SkyLines/Data.hpp"
 #include "Thread/StandbyThread.hpp"
 #include "Tracking/LiveTrack24.hpp"
-#include "PeriodClock.hpp"
+#include "Time/PeriodClock.hpp"
 #include "Geo/GeoPoint.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDateTime.hpp"
 
 struct MoreData;
 struct DerivedInfo;
 
-class TrackingGlue : protected StandbyThread {
+class TrackingGlue final
+  : protected StandbyThread
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  , private SkyLinesTracking::Handler
+#endif
+{
   struct LiveTrack24State
   {
     LiveTrack24::SessionID session_id;
@@ -59,6 +66,10 @@ class TrackingGlue : protected StandbyThread {
   TrackingSettings settings;
 
   SkyLinesTracking::Glue skylines;
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  SkyLinesTracking::Data skylines_data;
+#endif
 
   LiveTrack24State state;
 
@@ -85,6 +96,18 @@ public:
 
 protected:
   virtual void Tick();
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+private:
+  /* virtual methods from SkyLinesTracking::Handler */
+  virtual void OnTraffic(unsigned pilot_id, unsigned time_of_day_ms,
+                         const GeoPoint &location, int altitude) override;
+
+public:
+  const SkyLinesTracking::Data &GetSkyLinesData() const {
+    return skylines_data;
+  }
+#endif
 };
 
 #endif /* HAVE_TRACKING */

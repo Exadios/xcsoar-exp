@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ Copyright_License {
 void
 FlightLogger::Reset()
 {
-  last_time = fixed_zero;
+  last_time = fixed(0);
   seen_on_ground = seen_flying = false;
   start_time.Clear();
   landing_time.Clear();
@@ -108,7 +108,7 @@ FlightLogger::Tick(const MoreData &basic, const DerivedInfo &calculated)
     if (negative(time_delta) || time_delta > fixed(300))
       /* reset on time warp (positive or negative) */
       Reset();
-    else if (time_delta < fixed_half)
+    else if (time_delta < fixed(0.5))
       /* not enough time has passed since the last call: ignore this
          GPS fix, don't update last_time, just return */
       return;

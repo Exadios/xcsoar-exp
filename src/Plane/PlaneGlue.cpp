@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ PlaneGlue::FromProfile(Plane &plane)
   if (positive(polar.v_no))
     plane.max_speed = polar.v_no;
   else if (!Profile::Get(ProfileKeys::SafteySpeed, plane.max_speed))
-    plane.max_speed = fixed_zero;
+    plane.max_speed = fixed(0);
 
   if (!Profile::Get(ProfileKeys::DryMass, plane.dry_mass))
     plane.dry_mass = plane.reference_mass;
@@ -106,7 +106,7 @@ void
 PlaneGlue::Synchronize(const Plane &plane, ComputerSettings &settings,
                        GlidePolar &gp)
 {
-  settings.task.contest_handicap = plane.handicap;
+  settings.contest.handicap = plane.handicap;
 
   PolarCoefficients pc = plane.polar_shape.CalculateCoefficients();
   if (!pc.IsValid())

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@ Copyright_License {
 
 #include "StatusMessage.hpp"
 #include "Profile/Profile.hpp"
-#include "LogFile.hpp"
 #include "LocalPath.hpp"
 #include "Util/EscapeBackslash.hpp"
 #include "Util/StringUtil.hpp"
@@ -57,8 +56,6 @@ StatusMessageList::StatusMessageList()
 void
 StatusMessageList::LoadFile()
 {
-  LogStartUp(_T("Loading status file"));
-
   std::unique_ptr<TLineReader> reader(OpenConfiguredTextFile(ProfileKeys::StatusFile));
   if (reader)
     LoadFile(*reader);
@@ -89,7 +86,7 @@ StatusMessageList::LoadFile(TLineReader &reader)
   /* Read from the file */
   TCHAR *buffer;
   const TCHAR *key, *value;
-  while ((buffer = reader.read()) != NULL) {
+  while ((buffer = reader.ReadLine()) != NULL) {
     // Check valid line? If not valid, assume next record (primative, but works ok!)
     if (*buffer == _T('#') || !parse_assignment(buffer, key, value)) {
       // Global counter (only if the last entry had some data)

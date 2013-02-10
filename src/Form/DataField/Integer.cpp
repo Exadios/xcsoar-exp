@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@ Copyright_License {
 
 #include "Integer.hpp"
 #include "ComboList.hpp"
-#include "Math/FastMath.h"
 #include "Util/NumberParser.hpp"
 #include "Asset.hpp"
 
@@ -147,11 +146,12 @@ DataFieldInteger::CreateComboList() const
   bool found_current = false;
   for (int i = first; i <= last; i += step) {
     if (!found_current && value <= i) {
+      combo_list->ComboPopupItemSavedIndex = combo_list->size();
+
       if (value < i)
         /* the current value is not listed - insert it here */
         AppendComboValue(*combo_list, value);
 
-      combo_list->ComboPopupItemSavedIndex = combo_list->size();
       found_current = true;
     }
 
@@ -161,8 +161,8 @@ DataFieldInteger::CreateComboList() const
   if (value > last) {
     /* the current value out of range - append it here */
     last = value;
-    AppendComboValue(*combo_list, value);
     combo_list->ComboPopupItemSavedIndex = combo_list->size();
+    AppendComboValue(*combo_list, value);
   }
 
   if (last < max)

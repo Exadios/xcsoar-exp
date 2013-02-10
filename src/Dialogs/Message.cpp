@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -87,15 +87,13 @@ ShowMessageBox(const TCHAR *text, const TCHAR *caption, unsigned flags)
   ContainerWindow &client_area = wf.GetClientAreaWindow();
 
   // Create text element
-  WndFrame *text_frame = new WndFrame(client_area, dialog_look,
-                                      0, Layout::Scale(2),
-                                      dialog_width, dialog_height);
+  WndFrame *text_frame = new WndFrame(client_area, dialog_look, form_rc);
 
   text_frame->SetCaption(text);
   text_frame->SetAlignCenter();
 
   UPixelScalar text_height = text_frame->GetTextHeight();
-  text_frame->Resize(dialog_width, text_height + Layout::Scale(2));
+  text_frame->Resize(dialog_width, text_height + Layout::GetTextPadding());
 
   const PixelSize root_size = main_window.GetSize();
 
@@ -173,7 +171,7 @@ ShowMessageBox(const TCHAR *text, const TCHAR *caption, unsigned flags)
   for (unsigned i = 0; i < buttons.size(); ++i)
     delete buttons[i];
 
-  wf.reset();
+  wf.Destroy();
 
   return res;
 }

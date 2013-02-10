@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,9 +31,7 @@
  * Class for unordered task points (e.g. goto and abort)
  *
  */
-class UnorderedTaskPoint : 
-  public TaskWaypoint
-{
+class UnorderedTaskPoint final : public TaskWaypoint {
   fixed safety_height_arrival;
 
 public:
@@ -46,16 +44,11 @@ public:
   UnorderedTaskPoint(const Waypoint & wp,
                      const TaskBehaviour &tb);
 
+  void SetTaskBehaviour(const TaskBehaviour &tb);
+
   /* virtual methods from class TaskPoint */
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb);
-  virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const;
-  virtual GeoVector GetVectorPlanned() const;
-  virtual GeoVector GetVectorTravelled() const;
-  virtual bool HasEntered() const {
-    return false;
-  }
-  virtual const AircraftState &GetEnteredState() const;
-  virtual fixed GetElevation() const;
+  virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const override;
+  virtual fixed GetElevation() const override;
 };
 
 #endif

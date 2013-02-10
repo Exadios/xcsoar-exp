@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,37 +23,27 @@ Copyright_License {
 
 #include "Form/TabBar.hpp"
 #include "Form/TabDisplay.hpp"
-#include "Screen/PaintWindow.hpp"
-#include "Screen/Layout.hpp"
-#include "Screen/Key.h"
-#include "Screen/Canvas.hpp"
 #include "Asset.hpp"
 
-#include <assert.h>
-#include <winuser.h>
+#ifdef HAVE_CLIPPING
+#include "Screen/Canvas.hpp"
+#include "Look/DialogLook.hpp"
+#endif
 
 TabBarControl::TabBarControl(ContainerWindow &_parent, const DialogLook &look,
-                             PixelScalar x, PixelScalar y,
-                             UPixelScalar _width, UPixelScalar _height,
-                             const WindowStyle style, bool _flipOrientation)
-  :tab_display(NULL),
-   tab_line_height((Layout::landscape ^ _flipOrientation)
-                 ? (Layout::Scale(TabLineHeightInitUnscaled) * 0.75)
-                 : Layout::Scale(TabLineHeightInitUnscaled)),
-   flip_orientation(_flipOrientation),
-   page_flipped_callback(NULL)
+                             PixelRect tab_rc,
+                             const WindowStyle style, bool vertical)
+  :tab_display(NULL)
 {
-  set(_parent, 0, 0, _parent.GetWidth(), _parent.GetHeight(), style),
+  Create(_parent, _parent.GetClientRect(), style);
 
-  tab_display = new TabDisplay(*this, look, *this,
-                                 x, y, _width, _height,
-                                 flip_orientation);
+  tab_display = new TabDisplay(*this, look, *this, tab_rc, vertical);
 
   PixelRect rc = GetClientRect();
-  if (Layout::landscape ^ flip_orientation)
-    rc.left += tab_display->GetTabWidth();
+  if (vertical)
+    rc.left = tab_rc.right;
   else
-    rc.top += tab_display->GetTabHeight();
+    rc.top = tab_rc.bottom;
 
   pager.Move(rc);
 }
@@ -62,7 +52,35 @@ TabBarControl::~TabBarControl()
 {
   delete tab_display;
 
-  reset();
+  Destroy();
+}
+
+PixelSize
+TabBarControl::GetMinimumSize() const
+{
+  PixelSize s = pager.GetMinimumSize();
+  if (tab_display != nullptr) {
+    if (tab_display->IsVertical())
+      s.cx += tab_display->GetWidth();
+    else
+      s.cy += tab_display->GetHeight();
+  }
+
+  return s;
+}
+
+PixelSize
+TabBarControl::GetMaximumSize() const
+{
+  PixelSize s = pager.GetMaximumSize();
+  if (tab_display != nullptr) {
+    if (tab_display->IsVertical())
+      s.cx += tab_display->GetWidth();
+    else
+      s.cy += tab_display->GetHeight();
+  }
+
+  return s;
 }
 
 const TCHAR*
@@ -87,15 +105,14 @@ TabBarControl::ClickPage(unsigned i)
     /* failure */
     return;
 
+  /* switching to a new page by mouse click focuses the first control
+     of the page, which is important for Altair hot keys */
+  pager.SetFocus();
+
   if (tab_display != NULL)
     tab_display->Invalidate();
 
-  if (!is_current)
-    /* switching to a new page by mouse click focuses the first
-       control of the page, which is important for Altair hot keys */
-    pager.SetFocus();
-
-  if (page_flipped_callback != NULL)
+  if (page_flipped_callback)
     page_flipped_callback();
 }
 
@@ -113,7 +130,7 @@ TabBarControl::SetCurrentPage(unsigned i)
   if (tab_display != NULL)
     tab_display->Invalidate();
 
-  if (page_flipped_callback != NULL)
+  if (page_flipped_callback)
     page_flipped_callback();
 }
 
@@ -127,7 +144,7 @@ TabBarControl::NextPage()
   if (tab_display != NULL)
     tab_display->Invalidate();
 
-  if (page_flipped_callback != NULL)
+  if (page_flipped_callback)
     page_flipped_callback();
 }
 
@@ -141,20 +158,8 @@ TabBarControl::PreviousPage()
   if (tab_display != NULL)
     tab_display->Invalidate();
 
-  if (page_flipped_callback != NULL)
+  if (page_flipped_callback)
     page_flipped_callback();
-}
-
-UPixelScalar
-TabBarControl::GetTabHeight() const
-{
-  return tab_display->GetTabHeight();
-}
-
-UPixelScalar
-TabBarControl::GetTabWidth() const
-{
-  return tab_display->GetTabWidth();
 }
 
 void
@@ -176,3 +181,35 @@ TabBarControl::OnDestroy()
 
   ContainerWindow::OnDestroy();
 }
+
+void
+TabBarControl::OnResize(PixelSize new_size)
+{
+  ContainerWindow::OnResize(new_size);
+
+  if (tab_display != nullptr) {
+    const PixelRect tab_rc = tab_display->GetPosition();
+    PixelRect rc = GetClientRect();
+    if (tab_display->IsVertical())
+      rc.left = tab_rc.right;
+    else
+      rc.top = tab_rc.bottom;
+
+    pager.Move(rc);
+  }
+}
+
+#ifdef HAVE_CLIPPING
+
+void
+TabBarControl::OnPaint(Canvas &canvas)
+{
+  /* erase the remaining background area, just in case the TabDisplay
+     does not cover the whole height or width; this is necessary only
+     on GDI */
+
+  if (tab_display != NULL)
+    canvas.Clear(tab_display->GetLook().background_color);
+}
+
+#endif

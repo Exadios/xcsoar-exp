@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ Copyright_License {
 #include <assert.h>
 
 void
-Angle::ToDMS(int &dd, int &mm, int &ss, bool &is_positive) const
+Angle::ToDMS(unsigned &dd, unsigned &mm, unsigned &ss, bool &is_positive) const
 {
   is_positive = !negative(value);
 
@@ -41,7 +41,7 @@ Angle::ToDMS(int &dd, int &mm, int &ss, bool &is_positive) const
 }
 
 int
-Angle::Sign(const fixed& tolerance) const
+Angle::Sign(const fixed tolerance) const
 {
   if ((value > tolerance))
     return 1;
@@ -62,30 +62,16 @@ Angle::Sign() const
   return 0;
 }
 
-void
-Angle::Flip()
-{
-  value = -value;
-}
-
 fixed
 Angle::AbsoluteDegrees() const 
 {
-  return fabs(Degrees());
+  return Absolute().Degrees();
 }
 
 fixed
 Angle::AbsoluteRadians() const 
 {
-  return fabs(Radians());
-}
-
-Angle
-Angle::Flipped() const
-{
-  Angle retval(value);
-  retval.Flip();
-  return retval;
+  return Absolute().Radians();
 }
 
 Angle
@@ -166,4 +152,11 @@ Angle::Between(const Angle start, const Angle end) const
   Angle delta = (*this - start).AsBearing();
 
   return delta <= width;
+}
+
+bool
+Angle::CompareRoughly(Angle other, Angle threshold) const
+{
+  const Angle delta = (*this - other).AsDelta();
+  return delta >= -threshold && delta <= threshold;
 }

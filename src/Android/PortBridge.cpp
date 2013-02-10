@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ Copyright_License {
 
 jmethodID PortBridge::close_method;
 jmethodID PortBridge::setListener_method;
-jmethodID PortBridge::isValid_method;
+jmethodID PortBridge::getState_method;
 jmethodID PortBridge::drain_method;
 jmethodID PortBridge::getBaudRate_method;
 jmethodID PortBridge::setBaudRate_method;
@@ -43,7 +43,7 @@ PortBridge::Initialise(JNIEnv *env)
   close_method = env->GetMethodID(cls, "close", "()V");
   setListener_method = env->GetMethodID(cls, "setListener",
                                         "(Lorg/xcsoar/InputListener;)V");
-  isValid_method = env->GetMethodID(cls, "isValid", "()Z");
+  getState_method = env->GetMethodID(cls, "getState", "()I");
   drain_method = env->GetMethodID(cls, "drain", "()Z");
   getBaudRate_method = env->GetMethodID(cls, "getBaudRate", "()I");
   setBaudRate_method = env->GetMethodID(cls, "setBaudRate", "(I)Z");

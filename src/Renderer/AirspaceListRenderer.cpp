@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -59,36 +59,49 @@ AirspaceListRenderer::Draw(Canvas &canvas, const PixelRect rc,
 {
   const PixelScalar line_height = rc.bottom - rc.top;
 
-  const Font &name_font = *dialog_look.list.font;
+  const Font &name_font = *dialog_look.list.font_bold;
   const Font &small_font = *dialog_look.small_font;
 
-  PixelScalar left = rc.left + line_height + Layout::FastScale(2);
-  canvas.Select(name_font);
-  canvas.text_clipped(left, rc.top + Layout::FastScale(2), rc,
-                      airspace.GetName());
+  // Y-Coordinate of the second row
+  PixelScalar top2 = rc.top + name_font.GetHeight() + Layout::FastScale(4);
 
   canvas.Select(small_font);
-  canvas.text_clipped(left,
-                      rc.top + name_font.GetHeight() + Layout::FastScale(4),
-                      rc, comment);
 
-  tstring top = AirspaceFormatter::GetTopShort(airspace);
-  PixelScalar altitude_width =
-    canvas.CalcTextWidth(top.c_str());
-  canvas.text_clipped(rc.right - altitude_width - Layout::FastScale(4),
-                      rc.top + name_font.GetHeight() -
-                      small_font.GetHeight() + Layout::FastScale(2), rc,
-                      top.c_str());
+  // Draw upper airspace altitude limit
+  TCHAR buffer[40];
+  AirspaceFormatter::FormatAltitudeShort(buffer, airspace.GetTop());
+  UPixelScalar altitude_width = canvas.CalcTextWidth(buffer);
+  canvas.DrawClippedText(rc.right - altitude_width - Layout::FastScale(4),
+                         rc.top + name_font.GetHeight() -
+                         small_font.GetHeight() + Layout::FastScale(2), rc,
+                         buffer);
 
-  tstring base = AirspaceFormatter::GetBaseShort(airspace);
-  altitude_width = canvas.CalcTextWidth(base.c_str());
+  UPixelScalar max_altitude_width = altitude_width;
 
-  canvas.text_clipped(rc.right - altitude_width - Layout::FastScale(4),
-                      rc.top + name_font.GetHeight() + Layout::FastScale(4),
-                      rc, base.c_str());
+  // Draw lower airspace altitude limit
+  AirspaceFormatter::FormatAltitudeShort(buffer, airspace.GetBase());
+  altitude_width = canvas.CalcTextWidth(buffer);
+  canvas.DrawClippedText(rc.right - altitude_width - Layout::FastScale(4), top2,
+                         rc, buffer);
 
-  RasterPoint pt = { PixelScalar(rc.left + line_height / 2),
-                     PixelScalar(rc.top + line_height / 2) };
+  if (altitude_width > max_altitude_width)
+    max_altitude_width = altitude_width;
+
+  UPixelScalar max_altitude_width_with_padding =
+    max_altitude_width + Layout::FastScale(10);
+
+  // Draw comment line
+  PixelScalar left = rc.left + line_height + Layout::FastScale(2);
+  PixelScalar width = rc.right - max_altitude_width_with_padding - left;
+  canvas.DrawClippedText(left, top2, width, comment);
+
+  // Draw airspace name
+  canvas.Select(name_font);
+  canvas.DrawClippedText(left, rc.top + Layout::FastScale(2), width,
+                         airspace.GetName());
+
+  const RasterPoint pt(rc.left + line_height / 2,
+                       rc.top + line_height / 2);
   PixelScalar radius = std::min(PixelScalar(line_height / 2
                                             - Layout::FastScale(4)),
                                 Layout::FastScale(10));

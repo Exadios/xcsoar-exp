@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,12 @@ Copyright_License {
 #include <algorithm>
 
 void
-BufferCanvas::grow(UPixelScalar _width, UPixelScalar _height)
+BufferCanvas::Grow(PixelSize new_size)
 {
-  resize(std::max(get_width(), _width), std::max(get_height(), _height));
+  const unsigned old_width = GetWidth();
+  const unsigned old_height = GetHeight();
+  const unsigned new_width = new_size.cx;
+  const unsigned new_height = new_size.cy;
+
+  Resize({std::max(old_width, new_width), std::max(old_height, new_height)});
 }

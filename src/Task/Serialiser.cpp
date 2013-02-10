@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -36,33 +36,35 @@
 #include <assert.h>
 #include <memory>
 
-void
-Serialiser::Visit(const StartPoint &data)
+gcc_const
+static const TCHAR *
+GetName(TaskPointType type, bool mode_optional_start)
 {
-  Serialise(data, mode_optional_start ? _T("OptionalStart"): _T("Start"));
+  switch (type) {
+  case TaskPointType::UNORDERED:
+    gcc_unreachable();
+
+  case TaskPointType::START:
+    return mode_optional_start ? _T("OptionalStart") : _T("Start");
+
+  case TaskPointType::AST:
+    return _T("Turn");
+
+  case TaskPointType::AAT:
+    return _T("Area");
+
+  case TaskPointType::FINISH:
+    return _T("Finish");
+  }
+
+  gcc_unreachable();
 }
 
-void
-Serialiser::Visit(const ASTPoint &data)
+gcc_pure
+static const TCHAR *
+GetName(const OrderedTaskPoint &tp, bool mode_optional_start)
 {
-  Serialise(data, _T("Turn"));
-}
-
-void
-Serialiser::Visit(const AATPoint &data)
-{
-  Serialise(data, _T("Area"));
-}
-
-void
-Serialiser::Visit(const FinishPoint &data)
-{
-  Serialise(data, _T("Finish"));
-}
-
-void
-Serialiser::Visit(gcc_unused const UnorderedTaskPoint &data)
-{
+  return GetName(tp.GetType(), mode_optional_start);
 }
 
 void
@@ -81,10 +83,18 @@ Serialiser::Serialise(const OrderedTaskPoint &data, const TCHAR* name)
   oser.Serialise(data.GetObservationZone());
 }
 
+void
+Serialiser::Serialise(const OrderedTaskPoint &tp)
+{
+  const TCHAR *name = GetName(tp, mode_optional_start);
+  assert(name != nullptr);
+  Serialise(tp, name);
+}
+
 void 
 Serialiser::Serialise(const ObservationZonePoint &data)
 {
-  switch (data.shape) {
+  switch (data.GetShape()) {
   case ObservationZonePoint::FAI_SECTOR:
     Visit((const FAISectorZone &)data);
     break;
@@ -207,14 +217,19 @@ void
 Serialiser::Serialise(const OrderedTaskBehaviour &data)
 {
   node.SetAttribute(_T("aat_min_time"), data.aat_min_time);
-  node.SetAttribute(_T("start_max_speed"), data.start_max_speed);
-  node.SetAttribute(_T("start_max_height"), data.start_max_height);
+  node.SetAttribute(_T("start_max_speed"), data.start_constraints.max_speed);
+  node.SetAttribute(_T("start_max_height"), data.start_constraints.max_height);
   node.SetAttribute(_T("start_max_height_ref"),
-                       GetHeightRef(data.start_max_height_ref));
-  node.SetAttribute(_T("finish_min_height"), data.finish_min_height);
+                       GetHeightRef(data.start_constraints.max_height_ref));
+  node.SetAttribute(_T("start_open_time"),
+                    data.start_constraints.open_time_span.GetStart());
+  node.SetAttribute(_T("start_close_time"),
+                    data.start_constraints.open_time_span.GetEnd());
+  node.SetAttribute(_T("finish_min_height"),
+                    data.finish_constraints.min_height);
   node.SetAttribute(_T("finish_min_height_ref"),
-                       GetHeightRef(data.finish_min_height_ref));
-  node.SetAttribute(_T("fai_finish"), data.fai_finish);
+                       GetHeightRef(data.finish_constraints.min_height_ref));
+  node.SetAttribute(_T("fai_finish"), data.finish_constraints.fai_finish);
 }
 
 void 
@@ -223,19 +238,28 @@ Serialiser::Serialise(const OrderedTask &task)
   node.SetAttribute(_T("type"), GetTaskFactoryType(task.GetFactoryType()));
   Serialise(task.GetOrderedTaskBehaviour());
   mode_optional_start = false;
-  task.AcceptTaskPointVisitor(*this);
+
+  for (const auto &tp : task.GetPoints())
+    Serialise(tp);
+
   mode_optional_start = true;
-  task.AcceptStartPointVisitor(*this);
+  for (const auto &tp : task.GetOptionalStartPoints())
+    Serialise(tp);
 }
 
 const TCHAR*
-Serialiser::GetHeightRef(HeightReferenceType height_ref) const
+Serialiser::GetHeightRef(AltitudeReference height_ref) const
 {
   switch(height_ref) {
-  case HeightReferenceType::AGL:
+  case AltitudeReference::AGL:
     return _T("AGL");
-  case HeightReferenceType::MSL:
+  case AltitudeReference::MSL:
     return _T("MSL");
+
+  case AltitudeReference::STD:
+  case AltitudeReference::NONE:
+    /* not applicable here */
+    break;
   }
   return NULL;
 }

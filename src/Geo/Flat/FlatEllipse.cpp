@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,10 +24,8 @@
 // Circle radius r at (0,0)
 
 #include "FlatEllipse.hpp"
-#include "Math/FastMath.h"
-#include <algorithm>
-#include "Math/fixed.hpp"
 
+#include <algorithm>
 
 FlatEllipse::FlatEllipse(const FlatPoint &_f1, const FlatPoint &_f2,
                          const FlatPoint &_ap)
@@ -38,8 +36,8 @@ FlatEllipse::FlatEllipse(const FlatPoint &_f1, const FlatPoint &_f2,
   theta = f12.angle();
   const fixed csq = f12.dsq();
   a = (f1.Distance(ap) + f2.Distance(ap));
-  b = half(sqrt(sqr(a) - csq));
-  a = half(a);
+  b = Half(sqrt(sqr(a) - csq));
+  a = Half(a);
 
   // a.sin(t) = ap.x
   // b.cos(t) = ap.y
@@ -47,7 +45,7 @@ FlatEllipse::FlatEllipse(const FlatPoint &_f1, const FlatPoint &_f2,
   FlatPoint op = ap;
   op.Subtract(p);
   op.Rotate(-theta);
-  theta_initial = Angle::Radians(atan2(op.y * a, op.x * b)).AsDelta();
+  theta_initial = Angle::FromXY(op.x * b, op.y * a).AsDelta();
 }
 
 fixed
@@ -111,7 +109,7 @@ FlatEllipse::IntersectExtended(const FlatPoint &pe, FlatPoint &i1,
   const FlatLine l_pf2(pe, f2);
   const Angle ang = l_f1p.angle();
 
-  const fixed d = l_pf2.d() + max(a, b); // max line length
+  const fixed d = l_pf2.d() + std::max(a, b); // max line length
 
   const auto sc = ang.SinCos();
   fixed san = sc.first, can = sc.second;

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,10 +22,12 @@ Copyright_License {
 */
 
 #include "InfoBoxes/Content/Altitude.hpp"
+#include "Factory.hpp"
+#include "InfoBoxes/Data.hpp"
+#include "InfoBoxes/Panel/Panel.hpp"
 #include "InfoBoxes/Panel/AltitudeInfo.hpp"
 #include "InfoBoxes/Panel/AltitudeSimulator.hpp"
 #include "InfoBoxes/Panel/AltitudeSetup.hpp"
-#include "InfoBoxes/InfoBoxWindow.hpp"
 #include "InfoBoxes/InfoBoxManager.hpp"
 #include "Units/Units.hpp"
 #include "Interface.hpp"
@@ -47,33 +49,24 @@ Copyright_License {
  * Subpart callback function pointers
  */
 
-static constexpr
-InfoBoxContentAltitude::PanelContent Panels[] = {
-  InfoBoxContentAltitude::PanelContent (
-    N_("Simulator"),
-    LoadAltitudeSimulatorPanel),
-
-  InfoBoxContentAltitude::PanelContent (
-    N_("Info"),
-    LoadAltitudeInfoPanel),
-
-  InfoBoxContentAltitude::PanelContent (
-    N_("Setup"),
-    LoadAltitudeSetupPanel)
+#ifdef __clang__
+/* gcc gives "redeclaration differs in 'constexpr'" */
+constexpr
+#endif
+const InfoBoxPanel altitude_infobox_panels[] = {
+  { N_("Simulator"), LoadAltitudeSimulatorPanel },
+  { N_("Info"), LoadAltitudeInfoPanel },
+  { N_("Setup"), LoadAltitudeSetupPanel },
+  { nullptr, nullptr }
 };
 
-static constexpr
-InfoBoxContentAltitude::DialogContent dlgContent = {
-  ARRAY_SIZE(Panels), &Panels[0],
-};
-
-const InfoBoxContentAltitude::DialogContent *
+const InfoBoxPanel *
 InfoBoxContentAltitude::GetDialogContent() {
-  return &dlgContent;
+  return altitude_infobox_panels;
 }
 
 void
-InfoBoxContentAltitudeNav::Update(InfoBoxData &data)
+UpdateInfoBoxAltitudeNav(InfoBoxData &data)
 {
   const MoreData &basic = CommonInterface::Basic();
 
@@ -90,9 +83,9 @@ InfoBoxContentAltitudeNav::Update(InfoBoxData &data)
 
   if (basic.baro_altitude_available &&
       settings_computer.features.nav_baro_altitude_enabled)
-    data.SetTitle(InfoBoxFactory::meta_data[InfoBoxFactory::e_H_Baro].caption);
+    data.SetTitle(InfoBoxFactory::GetCaption(InfoBoxFactory::e_H_Baro));
   else
-    data.SetTitle(InfoBoxFactory::meta_data[InfoBoxFactory::e_HeightGPS].caption);
+    data.SetTitle(InfoBoxFactory::GetCaption(InfoBoxFactory::e_HeightGPS));
 
   data.SetValueFromAltitude(basic.nav_altitude);
   data.SetCommentFromAlternateAltitude(basic.nav_altitude);
@@ -131,7 +124,7 @@ InfoBoxContentAltitudeGPS::HandleKey(const InfoBoxKeyCodes keycode)
   if (!basic.gps.simulator)
     return false;
 
-  const Angle a5 = Angle::Degrees(fixed(5));
+  const Angle a5 = Angle::Degrees(5);
 
   switch (keycode) {
   case ibkUp:
@@ -160,7 +153,7 @@ InfoBoxContentAltitudeGPS::HandleKey(const InfoBoxKeyCodes keycode)
 }
 
 void
-InfoBoxContentAltitudeAGL::Update(InfoBoxData &data)
+UpdateInfoBoxAltitudeAGL(InfoBoxData &data)
 {
   const DerivedInfo &calculated = CommonInterface::Calculated();
 
@@ -174,11 +167,11 @@ InfoBoxContentAltitudeAGL::Update(InfoBoxData &data)
 
   // Set Color (red/black)
   data.SetValueColor(calculated.altitude_agl <
-      XCSoarInterface::GetComputerSettings().task.route_planner.safety_height_terrain ? 1 : 0);
+      CommonInterface::GetComputerSettings().task.route_planner.safety_height_terrain ? 1 : 0);
 }
 
 void
-InfoBoxContentAltitudeBaro::Update(InfoBoxData &data)
+UpdateInfoBoxAltitudeBaro(InfoBoxData &data)
 {
   const NMEAInfo &basic = CommonInterface::Basic();
 
@@ -196,7 +189,7 @@ InfoBoxContentAltitudeBaro::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentAltitudeQFE::Update(InfoBoxData &data)
+UpdateInfoBoxAltitudeQFE(InfoBoxData &data)
 {
   const NMEAInfo &basic = CommonInterface::Basic();
 
@@ -216,7 +209,7 @@ InfoBoxContentAltitudeQFE::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentFlightLevel::Update(InfoBoxData &data)
+UpdateInfoBoxAltitudeFlightLevel(InfoBoxData &data)
 {
   const NMEAInfo &basic = CommonInterface::Basic();
   const ComputerSettings &settings_computer =

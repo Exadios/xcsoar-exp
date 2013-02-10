@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,77 +25,53 @@ Copyright_License {
 #define XCSOAR_INFOBOX_CONTENT_THERMAL_HPP
 
 #include "InfoBoxes/Content/Base.hpp"
+#include "Gauge/ThermalAssistantRenderer.hpp"
 
-class InfoBoxContentVario : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxVario(InfoBoxData &data);
 
-class InfoBoxContentVarioNetto : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxVarioNetto(InfoBoxData &data);
 
-class InfoBoxContentThermal30s : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxThermal30s(InfoBoxData &data);
 
-class InfoBoxContentThermalLastAvg : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxThermalLastAvg(InfoBoxData &data);
 
-class InfoBoxContentThermalLastGain : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxThermalLastGain(InfoBoxData &data);
 
-class InfoBoxContentThermalLastTime : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxThermalLastTime(InfoBoxData &data);
 
-class InfoBoxContentThermalAllAvg : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxThermalAllAvg(InfoBoxData &data);
 
-class InfoBoxContentThermalAvg : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxThermalAvg(InfoBoxData &data);
 
-class InfoBoxContentThermalGain : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxThermalGain(InfoBoxData &data);
 
-class InfoBoxContentThermalRatio : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxThermalRatio(InfoBoxData &data);
 
-class InfoBoxContentVarioDistance : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxVarioDistance(InfoBoxData &data);
 
-class InfoBoxContentNextLegEqThermal : public InfoBoxContent
+void
+UpdateInfoBoxNextLegEqThermal(InfoBoxData &data);
+
+class InfoBoxContentThermalAssistant: public InfoBoxContent
 {
+  ThermalAssistantRenderer renderer;
+
 public:
-  virtual void Update(InfoBoxData &data);
+  InfoBoxContentThermalAssistant();
+
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,9 +26,6 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Projection/WindowProjection.hpp"
 #include "Engine/Task/Unordered/UnorderedTaskPoint.hpp"
-#include "Engine/Task/Ordered/Points/StartPoint.hpp"
-#include "Engine/Task/Ordered/Points/FinishPoint.hpp"
-#include "Engine/Task/Ordered/Points/ASTPoint.hpp"
 #include "Engine/Task/Ordered/Points/AATPoint.hpp"
 #include "Engine/Task/Ordered/AATIsolineSegment.hpp"
 #include "Look/TaskLook.hpp"
@@ -139,8 +136,8 @@ TaskPointRenderer::DrawTaskLine(const GeoPoint &start, const GeoPoint &end)
   const RasterPoint p_start = m_proj.GeoToScreen(start);
   const RasterPoint p_end = m_proj.GeoToScreen(end);
 
-  const Angle ang = Angle::Radians(atan2(fixed(p_end.x - p_start.x),
-                                         fixed(p_start.y - p_end.y))).AsBearing();
+  const Angle ang = Angle::FromXY(fixed(p_start.y - p_end.y),
+                                  fixed(p_end.x - p_start.x)).AsBearing();
 
   ScreenClosestPoint(p_start, p_end, m_proj.GetScreenOrigin(), &p_p, Layout::Scale(25));
   PolygonRotateShift(Arrow, 2, p_p.x, p_p.y, ang);
@@ -163,8 +160,8 @@ TaskPointRenderer::DrawIsoline(const AATPoint &tp)
 
   #define fixed_twentieth fixed(1.0 / 20.0)
 
-  GeoPoint start = seg.Parametric(fixed_zero);
-  GeoPoint end = seg.Parametric(fixed_one);
+  GeoPoint start = seg.Parametric(fixed(0));
+  GeoPoint end = seg.Parametric(fixed(1));
 
   if (m_proj.GeoToScreenDistance(start.Distance(end)) <= 2)
     return;
@@ -212,7 +209,7 @@ TaskPointRenderer::Draw(const TaskPoint &tp, Layer layer)
   const AATPoint &atp = (const AATPoint &)tp;
 
   switch (tp.GetType()) {
-  case TaskPoint::UNORDERED:
+  case TaskPointType::UNORDERED:
     if (layer == LAYER_LEG && location_available)
       DrawTaskLine(location, tp.GetLocationRemaining());
 
@@ -222,7 +219,7 @@ TaskPointRenderer::Draw(const TaskPoint &tp, Layer layer)
     index++;
     break;
 
-  case TaskPoint::START:
+  case TaskPointType::START:
     index = 0;
 
     DrawOrdered(otp, layer);
@@ -233,7 +230,7 @@ TaskPointRenderer::Draw(const TaskPoint &tp, Layer layer)
 
     break;
 
-  case TaskPoint::AST:
+  case TaskPointType::AST:
     index++;
 
     DrawOrdered(otp, layer);
@@ -243,7 +240,7 @@ TaskPointRenderer::Draw(const TaskPoint &tp, Layer layer)
     }
     break;
 
-  case TaskPoint::AAT:
+  case TaskPointType::AAT:
     index++;
 
     DrawOrdered(otp, layer);
@@ -254,7 +251,7 @@ TaskPointRenderer::Draw(const TaskPoint &tp, Layer layer)
     }
     break;
 
-  case TaskPoint::FINISH:
+  case TaskPointType::FINISH:
     index++;
 
     DrawOrdered(otp, layer);
@@ -262,11 +259,6 @@ TaskPointRenderer::Draw(const TaskPoint &tp, Layer layer)
       DrawBearing(tp);
       DrawTarget(tp);
     }
-    break;
-
-  case TaskPoint::ROUTE:
-    /* unreachable */
-    assert(false);
     break;
   }
 }

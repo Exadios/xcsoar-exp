@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
 */
 
 #include "ThermalAssistantLook.hpp"
+#include "StandardFonts.hpp"
 #include "Screen/Layout.hpp"
-#include "Screen/Fonts.hpp"
 
 void
 ThermalAssistantLook::Initialise(bool small)
@@ -50,6 +50,6 @@ ThermalAssistantLook::Initialise(bool small)
   outer_circle_pen.Set(Pen::DASH, 1, circle_color);
   plane_pen.Set(width, COLOR_BLACK);
 
-  overlay_font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(24));
-  circle_label_font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(12));
+  overlay_font.Load(GetStandardFontFace(), Layout::FastScale(24));
+  circle_label_font.Load(GetStandardFontFace(), Layout::FastScale(12));
 }

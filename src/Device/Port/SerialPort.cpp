@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -52,10 +52,16 @@ SerialPort::~SerialPort()
   if (hPort != INVALID_HANDLE_VALUE) {
     StoppableThread::BeginStop();
 
+    /* Some CE widcomm drivers has a bug that locks/hangs
+       ReadFile if the handle is closed.
+       Wait for the thread to finish before closing the handle. */
+    bool finished = is_widcomm && Thread::Join(2000);
+
     if (CloseHandle(hPort) && !IsEmbedded())
       Sleep(2000); // needed for windows bug
 
-    Thread::Join();
+    if (!finished)
+      Thread::Join();
   }
 
   BufferedPort::EndClose();
@@ -139,17 +145,22 @@ SerialPort::Open(const TCHAR *path, unsigned _baud_rate)
   return true;
 }
 
-bool
-SerialPort::IsValid() const
+PortState
+SerialPort::GetState() const
 {
-  return hPort != INVALID_HANDLE_VALUE;
+  return hPort != INVALID_HANDLE_VALUE
+    ? PortState::READY
+    : PortState::FAILED;
 }
 
 bool
 SerialPort::Drain()
 {
-  if (hPort == INVALID_HANDLE_VALUE)
+  int nbytes = GetDataQueued();
+  if (nbytes < 0)
     return false;
+  else if (nbytes == 0)
+    return true;
 
   ::SetCommMask(hPort, EV_ERR|EV_TXEMPTY);
   DWORD events;
@@ -162,6 +173,19 @@ SerialPort::Flush()
 {
   PurgeComm(hPort, PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR);
   BufferedPort::Flush();
+}
+
+int
+SerialPort::GetDataQueued() const
+{
+  if (hPort == INVALID_HANDLE_VALUE)
+    return -1;
+
+  COMSTAT com_stat;
+  DWORD errors;
+  return ::ClearCommError(hPort, &errors, &com_stat)
+    ? (int)com_stat.cbOutQue
+    : -1;
 }
 
 int

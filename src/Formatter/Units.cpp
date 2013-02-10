@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@ Copyright_License {
 #include "Units/Descriptor.hpp"
 #include "Math/Angle.hpp"
 #include "Atmosphere/Pressure.hpp"
-#include "DateTime.hpp"
 #include "Util/StringUtil.hpp"
 
 #include <stdio.h>
@@ -176,7 +175,7 @@ GetVerticalSpeedStep(Unit unit)
 {
   switch (unit) {
   case Unit::FEET_PER_MINUTE:
-    return fixed_ten;
+    return fixed(10);
   case Unit::KNOTS:
     return fixed(0.2);
   default:
@@ -235,5 +234,5 @@ GetPressureFormat(Unit unit, bool include_unit)
 fixed
 GetPressureStep(Unit unit)
 {
-  return unit == Unit::INCH_MERCURY ? fixed(0.01) : fixed_one;
+  return unit == Unit::INCH_MERCURY ? fixed(0.01) : fixed(1);
 }

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 static const TaskBehaviour&
 GetTaskBehaviour()
 {
-  return XCSoarInterface::GetComputerSettings().task;
+  return CommonInterface::GetComputerSettings().task;
 }
 
 static MapTaskManager::TaskEditResult
@@ -113,13 +113,13 @@ MapTaskManager::AppendToTask(const Waypoint &waypoint)
     delete task;
   } else { // ordered task invalid
     switch (task_manager->GetMode()) {
-    case TaskManager::MODE_NULL:
-    case TaskManager::MODE_ABORT:
-    case TaskManager::MODE_ORDERED:
+    case TaskType::NONE:
+    case TaskType::ABORT:
+    case TaskType::ORDERED:
       result = task_manager->DoGoto(waypoint) ? MapTaskManager::MUTATED_TO_GOTO :
                               MapTaskManager::UNMODIFIED;
       break;
-    case TaskManager::MODE_GOTO:
+    case TaskType::GOTO:
     {
       OrderedTask *task = task_manager->Clone(GetTaskBehaviour());
       const TaskWaypoint *OldGotoTWP = task_manager->GetActiveTaskPoint();
@@ -188,13 +188,13 @@ MapTaskManager::InsertInTask(const Waypoint &waypoint)
     delete task;
   } else { // ordered task invalid
     switch (task_manager->GetMode()) {
-    case TaskManager::MODE_NULL:
-    case TaskManager::MODE_ABORT:
-    case TaskManager::MODE_ORDERED:
+    case TaskType::NONE:
+    case TaskType::ABORT:
+    case TaskType::ORDERED:
       result = task_manager->DoGoto(waypoint) ? MapTaskManager::MUTATED_TO_GOTO :
                               MapTaskManager::UNMODIFIED;
       break;
-    case TaskManager::MODE_GOTO:
+    case TaskType::GOTO:
     {
       OrderedTask *task = task_manager->Clone(GetTaskBehaviour());
       const TaskWaypoint *OldGotoTWP = task_manager->GetActiveTaskPoint();
@@ -272,7 +272,7 @@ MapTaskManager::GetIndexInTask(const Waypoint &waypoint)
 {
   assert(protected_task_manager != NULL);
   ProtectedTaskManager::ExclusiveLease task_manager(*protected_task_manager);
-  if (task_manager->GetMode() == TaskManager::MODE_ORDERED) {
+  if (task_manager->GetMode() == TaskType::ORDERED) {
     const OrderedTask &task = task_manager->GetOrderedTask();
     return GetIndexInTask(task, waypoint);
   }

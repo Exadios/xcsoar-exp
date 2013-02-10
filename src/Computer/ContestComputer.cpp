@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,44 +22,44 @@ Copyright_License {
 */
 
 #include "ContestComputer.hpp"
-#include "ComputerSettings.hpp"
+#include "Engine/Contest/Settings.hpp"
 #include "NMEA/Derived.hpp"
 
 ContestComputer::ContestComputer(const Trace &trace_full,
                                  const Trace &trace_sprint)
-  :contest_manager(OLC_Sprint, trace_full, trace_sprint, true)
+  :contest_manager(Contest::OLC_SPRINT, trace_full, trace_sprint, true)
 {
   contest_manager.SetIncremental(true);
 }
 
 void
-ContestComputer::Solve(const ComputerSettings &settings_computer,
-                       DerivedInfo &calculated)
+ContestComputer::Solve(const ContestSettings &settings,
+                       ContestStatistics &contest_stats)
 {
-  if (!settings_computer.task.enable_olc)
+  if (!settings.enable)
     return;
 
-  contest_manager.SetHandicap(settings_computer.task.contest_handicap);
-  contest_manager.SetContest(settings_computer.task.contest);
+  contest_manager.SetHandicap(settings.handicap);
+  contest_manager.SetContest(settings.contest);
 
   contest_manager.UpdateIdle();
 
-  calculated.contest_stats = contest_manager.GetStats();
+  contest_stats = contest_manager.GetStats();
 }
 
 bool
-ContestComputer::SolveExhaustive(const ComputerSettings &settings_computer,
-                                 DerivedInfo &calculated)
+ContestComputer::SolveExhaustive(const ContestSettings &settings,
+                                 ContestStatistics &contest_stats)
 {
-  if (!settings_computer.task.enable_olc)
+  if (!settings.enable)
     return false;
 
-  contest_manager.SetHandicap(settings_computer.task.contest_handicap);
-  contest_manager.SetContest(settings_computer.task.contest);
+  contest_manager.SetHandicap(settings.handicap);
+  contest_manager.SetContest(settings.contest);
 
   bool result = contest_manager.SolveExhaustive();
 
-  calculated.contest_stats = contest_manager.GetStats();
+  contest_stats = contest_manager.GetStats();
 
   return result;
 }

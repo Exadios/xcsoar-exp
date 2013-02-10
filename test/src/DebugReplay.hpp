@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_DEBUG_REPLAY_HPP
 #define XCSOAR_DEBUG_REPLAY_HPP
 
-#include "ComputerSettings.hpp"
 #include "NMEA/MoreData.hpp"
 #include "NMEA/Derived.hpp"
 #include "Computer/BasicComputer.hpp"
@@ -45,9 +44,22 @@ protected:
   BasicComputer computer;
   FlyingComputer flying_computer;
 
-  ComputerSettings settings_computer;
-  MoreData basic, last_basic;
-  DerivedInfo calculated, last_calculated;
+  /**
+   * Raw values parsed from the NMEA/IGC file.
+   */
+  NMEAInfo raw_basic;
+
+  /**
+   * A copy of #raw_basic with #BasicComputer changes.
+   */
+  MoreData computed_basic;
+
+  /**
+   * The #computed_basic value from the previous iteration.
+   */
+  MoreData last_basic;
+
+  DerivedInfo calculated;
 
 public:
   DebugReplay(NLineReader *reader);
@@ -61,12 +73,8 @@ public:
 
   virtual bool Next() = 0;
 
-  const ComputerSettings &GetComputerSettings() const {
-    return settings_computer;
-  }
-
   const MoreData &Basic() const {
-    return basic;
+    return computed_basic;
   }
 
   const MoreData &LastBasic() const {
@@ -75,10 +83,6 @@ public:
 
   const DerivedInfo &Calculated() const {
     return calculated;
-  }
-
-  const DerivedInfo &LastCalculated() const {
-    return last_calculated;
   }
 
   DerivedInfo &SetCalculated() {

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "BatteryTimer.hpp"
 #include "Hardware/Battery.hpp"
-#include "Interface.hpp"
+#include "UIActions.hpp"
 #include "LogFile.hpp"
 #include "Simulator.hpp"
 #include "Language/Language.hpp"
@@ -50,9 +50,9 @@ BatteryTimer::Process()
   if (Power::External::Status == Power::External::OFF) {
     if (is_simulator() && Power::Battery::RemainingPercentValid &&
         Power::Battery::RemainingPercent < BATTERY_EXIT) {
-      LogStartUp(_T("Battery low exit..."));
+      LogFormat("Battery low exit...");
       // TODO feature: Warning message on battery shutdown
-      XCSoarInterface::SignalShutdown(true);
+      UIActions::SignalShutdown(true);
     } else {
       if (Power::Battery::RemainingPercentValid &&
           Power::Battery::RemainingPercent < BATTERY_WARNING) {

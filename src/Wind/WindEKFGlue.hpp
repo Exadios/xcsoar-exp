@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,6 +33,11 @@ struct DerivedInfo;
 
 class WindEKFGlue
 {
+  /**
+   * time to not add points after flight condition is false
+   */
+  static constexpr unsigned BLACKOUT_TIME = 3;
+
   WindEKF ekf;
 
   /**
@@ -71,8 +76,13 @@ private:
     time_blackout = (unsigned)-1;
   }
 
-  bool in_blackout(const unsigned time) const;
-  void blackout(const unsigned time);
+  bool InBlackout(const unsigned time) const {
+    return (time < time_blackout + BLACKOUT_TIME);
+  }
+
+  void SetBlackout(const unsigned time) {
+    time_blackout = time;
+  }
 };
 
 #endif

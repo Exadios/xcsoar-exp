@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
 #include "Device/Driver/CAI302.hpp"
 #include "Device/Driver/CaiGpsNav.hpp"
 #include "Device/Driver/EW.hpp"
+#include "Device/Driver/Eye.hpp"
 #include "Device/Driver/AltairPro.hpp"
 #include "Device/Driver/Generic.hpp"
 #include "Device/Driver/Vega.hpp"
@@ -49,37 +50,45 @@ Copyright_License {
 #include "Device/Driver/FLARM.hpp"
 #include "Device/Driver/FlyNet.hpp"
 #include "Device/Driver/CProbe.hpp"
+#include "Device/Driver/LevilAHRS_G.hpp"
+#include "Device/Driver/BlueFlyVario.hpp"
 #include "Util/Macros.hpp"
+
+#include <assert.h>
+#include <string.h>
 
 /** NULL terminated array of available device drivers. */
 static const struct DeviceRegister *const driver_list[] = {
   // IMPORTANT: ADD NEW ONES TO BOTTOM OF THIS LIST
-  &genDevice, // MUST BE FIRST
-  &cai302Device,
-  &ewDevice,
-  &atrDevice,
-  &vgaDevice,
-  &caiGpsNavDevice,
-  &nmoDevice,
-  &pgDevice,
-  &b50Device,
-  &vlDevice,
-  &ewMicroRecorderDevice,
-  &lxDevice,
-  &zanderDevice,
-  &flymasterf1Device,
-  &xcom760Device,
-  &condorDevice,
-  &leonardo_device_driver,
-  &flytec_device_driver,
-  &ilec_device_driver,
-  &westerboer_device_driver,
-  &imi_device_driver,
-  &flarm_device,
-  &westerboer_vw921_device_driver,
+  &generic_driver, // MUST BE FIRST
+  &cai302_driver,
+  &ew_driver,
+  &altair_pro_driver,
+  &vega_driver,
+  &gps_nav_driver,
+  &nmea_out_driver,
+  &posigraph_driver,
+  &b50_driver,
+  &volkslogger_driver,
+  &ew_microrecorder_driver,
+  &lx_driver,
+  &zander_driver,
+  &flymaster_f1_driver,
+  &xcom760_driver,
+  &condor_driver,
+  &leonardo_driver,
+  &flytec_driver,
+  &ilec_driver,
+  &westerboer_driver,
+  &imi_driver,
+  &flarm_driver,
+  &westerboer_vw921_driver,
   &flynet_driver,
-  &gt_altimeter_device_driver,
+  &gt_altimeter_driver,
   &c_probe_driver,
+  &levil_driver,
+  &eye_driver,
+  &bluefly_driver,
   NULL
 };
 

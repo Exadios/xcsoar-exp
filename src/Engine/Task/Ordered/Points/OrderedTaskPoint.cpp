@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,18 +34,20 @@
 #include <assert.h>
 #include <math.h>
 
-OrderedTaskPoint::OrderedTaskPoint(Type _type, ObservationZonePoint* _oz,
+OrderedTaskPoint::OrderedTaskPoint(TaskPointType _type,
+                                   ObservationZonePoint *_oz,
                                    const Waypoint &wp,
-                                   const OrderedTaskBehaviour &to,
                                    const bool b_scored)
-  :TaskLeg(*this), ScoredTaskPoint(_type, wp, b_scored),
-   ObservationZoneClient(_oz), ordered_task_behaviour(to),
-   active_state(NOTFOUND_ACTIVE), tp_next(NULL), tp_previous(NULL),
+  :TaskLeg(*this),
+   TaskWaypoint(_type, wp),
+   ScoredTaskPoint(wp.location, b_scored),
+   ObservationZoneClient(_oz),
+   tp_next(NULL), tp_previous(NULL),
    flat_bb(FlatGeoPoint(0,0),0) // empty, not initialised!
 {
 }
 
-void 
+void
 OrderedTaskPoint::SetNeighbours(OrderedTaskPoint *_previous,
                                 OrderedTaskPoint *_next)
 {
@@ -55,14 +57,10 @@ OrderedTaskPoint::SetNeighbours(OrderedTaskPoint *_previous,
   UpdateGeometry();
 }
 
-/** 
- * Update observation zone geometry (or other internal data) when
- * previous/next turnpoint changes.
- */
 void
 OrderedTaskPoint::UpdateGeometry()
 {
-  SetLegs(tp_previous, this, tp_next);
+  SetLegs(tp_previous, tp_next);
 }
 
 void
@@ -70,15 +68,12 @@ OrderedTaskPoint::UpdateOZ(const TaskProjection &projection)
 {
   UpdateGeometry();
 
-  SampledTaskPoint::UpdateOZ(projection);
+  SampledTaskPoint::UpdateOZ(projection, GetBoundary());
 }
 
 bool
 OrderedTaskPoint::ScanActive(const OrderedTaskPoint &atp)
 {
-  // reset
-  active_state = NOTFOUND_ACTIVE;
-
   if (&atp == this)
     active_state = CURRENT_ACTIVE;
   else if (tp_previous &&
@@ -88,23 +83,22 @@ OrderedTaskPoint::ScanActive(const OrderedTaskPoint &atp)
   else
     active_state = BEFORE_ACTIVE;
 
+  SetPast(active_state == BEFORE_ACTIVE);
+
   if (tp_next)
     // propagate to remainder of task
     return GetNext()->ScanActive(atp);
 
-  return active_state != BEFORE_ACTIVE && active_state != NOTFOUND_ACTIVE;
+  return active_state != BEFORE_ACTIVE;
 }
 
-bool
-OrderedTaskPoint::SearchBoundaryPoints() const
+const SearchPointVector &
+OrderedTaskPoint::GetSearchPoints() const
 {
-  return active_state == AFTER_ACTIVE;
-}
+  if (active_state == AFTER_ACTIVE)
+    return GetBoundaryPoints();
 
-bool
-OrderedTaskPoint::SearchNominalIfUnsampled() const
-{
-  return active_state == BEFORE_ACTIVE;
+  return SampledTaskPoint::GetSearchPoints();
 }
 
 bool
@@ -113,10 +107,15 @@ OrderedTaskPoint::IsInSector(const AircraftState &ref) const
   return ObservationZoneClient::IsInSector(ref.location);
 }
 
-OZBoundary
-OrderedTaskPoint::GetBoundary() const
+bool
+OrderedTaskPoint::UpdateSampleNear(const AircraftState &state,
+                                   const TaskProjection &projection)
 {
-  return ObservationZoneClient::GetBoundary();
+  if (!IsInSector(state))
+    // return false (no update required)
+    return false;
+
+  return AddInsideSample(state, projection);
 }
 
 bool
@@ -127,7 +126,7 @@ OrderedTaskPoint::CheckEnterTransition(const AircraftState &ref_now,
     TransitionConstraint(ref_now.location, ref_last.location);
 }
 
-fixed 
+fixed
 OrderedTaskPoint::DoubleLegDistance(const GeoPoint &ref) const
 {
   assert(tp_previous);
@@ -137,7 +136,7 @@ OrderedTaskPoint::DoubleLegDistance(const GeoPoint &ref) const
                           ref, GetNext()->GetLocationRemaining());
 }
 
-bool 
+bool
 OrderedTaskPoint::Equals(const OrderedTaskPoint &other) const
 {
   return GetWaypoint() == other.GetWaypoint() &&
@@ -146,35 +145,37 @@ OrderedTaskPoint::Equals(const OrderedTaskPoint &other) const
     other.GetObservationZone().Equals(GetObservationZone());
 }
 
-OrderedTaskPoint* 
+OrderedTaskPoint *
 OrderedTaskPoint::Clone(const TaskBehaviour &task_behaviour,
                         const OrderedTaskBehaviour &ordered_task_behaviour,
-                        const Waypoint* waypoint) const
+                        const Waypoint *waypoint) const
 {
   if (waypoint == NULL)
     waypoint = &GetWaypoint();
 
   switch (GetType()) {
-  case START:
+  case TaskPointType::START:
     return new StartPoint(GetObservationZone().Clone(waypoint->location),
-                          *waypoint, task_behaviour, ordered_task_behaviour);
+                          *waypoint, task_behaviour,
+                          ordered_task_behaviour.start_constraints);
 
-  case AST:
+  case TaskPointType::AST:
     return new ASTPoint(GetObservationZone().Clone(waypoint->location),
-                        *waypoint, task_behaviour, ordered_task_behaviour);
+                        *waypoint, task_behaviour, IsBoundaryScored());
 
-  case AAT:
+  case TaskPointType::AAT:
     return new AATPoint(GetObservationZone().Clone(waypoint->location),
-                        *waypoint, task_behaviour, ordered_task_behaviour);
+                        *waypoint, task_behaviour);
 
-  case FINISH:
+  case TaskPointType::FINISH:
     return new FinishPoint(GetObservationZone().Clone(waypoint->location),
-                           *waypoint, task_behaviour, ordered_task_behaviour,
-                           boundary_scored);
+                           *waypoint, task_behaviour,
+                           ordered_task_behaviour.finish_constraints,
+                           IsBoundaryScored());
 
-  case UNORDERED:
-  case ROUTE:
-    /* an OrderedTaskPoint must never be UNORDERED or ROUTE */
+  case TaskPointType::UNORDERED:
+    /* an OrderedTaskPoint must never be UNORDERED */
+    gcc_unreachable();
     assert(false);
     break;
   }
@@ -186,7 +187,6 @@ void
 OrderedTaskPoint::ScanProjection(TaskProjection &task_projection) const
 {
   task_projection.Scan(GetLocation());
-  #define fixed_steps fixed(0.05)
 
   for (const auto &i : GetBoundary())
     task_projection.Scan(i);
@@ -213,7 +213,7 @@ GeoVector
 OrderedTaskPoint::GetNextLegVector() const
 {
   if (tp_next)
-    return tp_next->vector_planned;
+    return tp_next->GetVectorPlanned();
 
   return GeoVector::Invalid();
 }

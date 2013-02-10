@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@ class AbstractTaskFactory;
 class TaskEvents;
 class TaskAdvance;
 class Waypoints;
+struct RangeAndRadial;
 
 /**
  *  Main interface exposed to clients for providing access to common types
@@ -46,18 +47,6 @@ class Waypoints;
 class TaskManager: 
   private NonCopyable
 {
-public:
-  /**
-   * Enumeration of task modes
-   */
-  enum TaskMode {
-    MODE_NULL = 0,
-    MODE_ORDERED,
-    MODE_ABORT,
-    MODE_GOTO
-  };
-
-private:
   GlidePolar glide_polar;
 
   /**
@@ -71,7 +60,7 @@ private:
   GotoTask task_goto;
   AlternateTask task_abort;
 
-  TaskMode mode;
+  TaskType mode;
   AbstractTask* active_task;
 
   TaskStats null_stats;
@@ -79,9 +68,6 @@ private:
   CommonStats common_stats;
 
 public:
-  friend class Serialiser;
-  friend class PrintHelper;
-
   /**
    * Constructor for task manager
    *
@@ -144,7 +130,7 @@ public:
    * @return Location of point
    */
   GeoPoint RandomPointInTask(const unsigned index,
-                             const fixed mag = fixed_one) const;
+                             const fixed mag = fixed(1)) const;
 
   /**
    * Retrieve a copy of the task alternates
@@ -162,7 +148,7 @@ public:
 
   /** Set active task to abort mode. */
   void Abort() {
-    SetMode(MODE_ABORT);
+    SetMode(TaskType::ABORT);
   }
 
   /**
@@ -170,7 +156,7 @@ public:
    * goto or aborting.
    */
   void Resume() {
-    SetMode(MODE_ORDERED);
+    SetMode(TaskType::ORDERED);
   }
 
   /**
@@ -288,11 +274,9 @@ public:
    * Set type of task factory to be used for constructing tasks
    *
    * @param _factory Type of task
-   *
-   * @return Type of task
    */
-  TaskFactoryType SetFactory(const TaskFactoryType _factory) {
-    return task_ordered.SetFactory(_factory);
+  void SetFactory(const TaskFactoryType _factory) {
+    task_ordered.SetFactory(_factory);
   }
 
   /**
@@ -340,7 +324,7 @@ public:
    * @return Active task mode
    */
   gcc_pure
-  TaskMode GetMode() const {
+  TaskType GetMode() const {
     return mode;
   }
 
@@ -352,7 +336,7 @@ public:
    * @return True if modes match
    */
   gcc_pure
-  bool IsMode(const TaskMode _mode) const {
+  bool IsMode(const TaskType _mode) const {
     return mode == _mode;
   }
 
@@ -397,6 +381,7 @@ public:
       return safety_polar;
     }
 
+    gcc_unreachable();
     assert(false);
     return glide_polar;
   }
@@ -425,27 +410,13 @@ public:
   fixed GetFinishHeight() const;
 
   /**
-   * Check whether observer is within OZ of specified tp
-   *
-   * @param TPindex index of tp in task
-   * @param ref state of aircraft to be checked
-   * @parm AATOnly if true then returns false for non-AAT points
-   *
-   * @return True if reference point is inside sector
-   */
- bool IsInSector(const unsigned index, const AircraftState &ref,
-                 const bool AATOnly = true) const;
-
-  /**
    * Accessor to get target location of specified tp
    *
    * @param TPindex index of tp in task
-   *
-   * @return Target location or fallback_location if TPindex is
-   *    invalid or has no target
+   * @return the target location or GeoPoint::Invalid() if that's not
+   * a valid AAT point
    */
- const GeoPoint& GetLocationTarget(const unsigned index,
-                                   const GeoPoint& fallback_location) const;
+ const GeoPoint GetLocationTarget(const unsigned index) const;
 
   /**
    * Accessor for locked state of target of specified tp
@@ -455,15 +426,6 @@ public:
    * @return True if target is locked or tp location if has no target
    */
  bool TargetIsLocked(const unsigned index) const;
-
-  /**
-   * Capability of specified TaskPoint to have adjustable range (true for AAT)
-   *
-   * @param TPindex index of tp in task
-   *
-   * @return True if task point has a target (can have range set)
-   */
- bool HasTarget(const unsigned index) const;
 
   /**
    * Set target location explicitly of specified tp
@@ -479,27 +441,8 @@ public:
    * Set target location from a range and radial
    * referenced on the bearing from the previous target
    * used by dlgTarget
-   *
-   * @param range the range [0,1] from center to perimeter
-   * of the oz
-   *
-   * @param radial the angle in degrees of the target
    */
- bool SetTarget(const unsigned index, const fixed range, const fixed radial);
-
-  /**
-   * returns position of the target in range / radial format
-   * referenced on the bearing from the previous target
-   * used by dlgTarget
-   *
-   * @param &range returns the range [0,1] from center
-   * to perimeter of the oz
-   *
-   * @param &radial returns the angle in degrees of
-   * the target in the sector in polar coordinates
-   */
- bool GetTargetRangeRadial(const unsigned index, fixed &range,
-                           fixed &radial) const;
+ bool SetTarget(const unsigned index, RangeAndRadial rar);
 
   /**
    * Lock/unlock the target from automatic shifts of specified tp
@@ -523,8 +466,8 @@ public:
    * 
    * @return OrderedTaskBehaviour reference
    */
-  OrderedTaskBehaviour &GetOrderedTaskBehaviour() {
-    return task_ordered.GetOrderedTaskBehaviour();
+  void SetOrderedTaskBehaviour(const OrderedTaskBehaviour &otb) {
+    task_ordered.SetOrderedTaskBehaviour(otb);
   }
 
   /** 
@@ -558,12 +501,13 @@ public:
    */
   void TakeoffAutotask(const GeoPoint &ref, const fixed terrain_alt);
 
+  void UpdateCommonStatsTask();
+
 private:
-  TaskMode SetMode(const TaskMode mode);
+  TaskType SetMode(const TaskType mode);
 
   void UpdateCommonStats(const AircraftState &state);
   void UpdateCommonStatsTimes(const AircraftState &state);
-  void UpdateCommonStatsTask();
   void UpdateCommonStatsWaypoints(const AircraftState &state);
   void UpdateCommonStatsPolar(const AircraftState &state);
 };

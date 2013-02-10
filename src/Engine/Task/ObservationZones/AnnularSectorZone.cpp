@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,36 +23,6 @@
 #include "AnnularSectorZone.hpp"
 #include "Boundary.hpp"
 #include "Geo/GeoVector.hpp"
-
-GeoPoint
-AnnularSectorZone::GetBoundaryParametric(fixed t) const
-{
-  const Angle sweep = (GetEndRadial() - GetStartRadial()).AsBearing();
-  const fixed c0 = sweep.Radians() * inner_radius;
-  const fixed l = GetRadius() - inner_radius;
-  const fixed c1 = sweep.Radians() * GetRadius();
-  const fixed tt = t * (c0 + c1 + 2 * l);
-  Angle a;
-  fixed d;
-  if (tt < c0) {
-    d = inner_radius;
-    a = Angle::Radians((tt / c0) * sweep.Radians()) + GetStartRadial();
-  } else if (positive(l) && (tt < c0 + l)) {
-    d = (tt - c0) / l * (GetRadius() - inner_radius) + inner_radius;
-    a = GetEndRadial();
-  } else if (tt < c0 + l + c1) {
-    d = GetRadius();
-    a = GetEndRadial()
-        - Angle::Radians(((tt - c0 - l) / c1) * sweep.Radians());
-  } else if (positive(l)) {
-    d = (tt - c0 - l - c1) / l * (inner_radius - GetRadius()) + GetRadius();
-    a = GetStartRadial();
-  } else {
-    d = inner_radius;
-    a = GetStartRadial();
-  }
-  return GeoVector(d, a).EndPoint(GetReference());
-}
 
 OZBoundary
 AnnularSectorZone::GetBoundary() const

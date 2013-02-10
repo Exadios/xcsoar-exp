@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
  * @file XCSoar.cpp
  */
 
+#include "Startup.hpp"
 #include "resource.h"
 #include "LocalPath.hpp"
 #include "Version.hpp"
@@ -36,7 +37,7 @@ Copyright_License {
 #include "MainWindow.hpp"
 #include "Interface.hpp"
 #include "Compiler.h"
-#include "Screen/Fonts.hpp"
+#include "Look/Fonts.hpp"
 #include "Screen/Init.hpp"
 #include "Net/Init.hpp"
 #include "UtilsSystem.hpp"
@@ -108,25 +109,20 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   LogStartUp(_T("Starting XCSoar %s"), XCSoar_ProductToken);
 
   // Read options from the command line
-#ifndef WIN32
-  CommandLine::Parse(Args(argc, argv, Usage));
+  {
+#ifdef WIN32
+    Args args(GetCommandLine(), Usage);
 #else
-  CommandLine::Parse(Args(GetCommandLine(), Usage));
+    Args args(argc, argv, Usage);
 #endif
+    CommandLine::Parse(args);
+  }
 
   ScreenGlobalInit screen_init;
-
-  // Write initialization note to logfile
-  LogStartUp(_T("Initialise application instance"));
 
 #ifdef WIN32
   /* try to make the UI most responsive */
   SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-#endif
-
-  // Register window classes
-#ifdef USE_GDI
-  MainWindow::register_class(hInstance);
 #endif
 
   AllowLanguage();
@@ -135,7 +131,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   // Perform application initialization and run loop
   int ret = EXIT_FAILURE;
-  if (XCSoarInterface::Startup())
+  if (Startup())
     ret = CommonInterface::main_window->RunEventLoop();
 
   delete CommonInterface::main_window;

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,10 +26,10 @@
 static void
 TestLinearDistance()
 {
-  const GeoPoint lon_start(Angle::Degrees(fixed(90)),
-                           Angle::Degrees(fixed_zero));
+  const GeoPoint lon_start(Angle::Degrees(90),
+                           Angle::Zero());
   for (unsigned i = 0; i < 180; i += 5) {
-    const GeoPoint lon_end(lon_start.longitude + Angle::Degrees(fixed(i)),
+    const GeoPoint lon_end(lon_start.longitude + Angle::Degrees(i),
                            lon_start.latitude);
     fixed distance = Distance(lon_start, lon_end);
 
@@ -39,11 +39,11 @@ TestLinearDistance()
     ok1(between(distance, min, max));
   }
 
-  const GeoPoint lat_start(Angle::Degrees(fixed_zero),
-                           Angle::Degrees(fixed_zero));
+  const GeoPoint lat_start(Angle::Zero(),
+                           Angle::Zero());
   for (unsigned i = 0; i < 90; i += 5) {
     const GeoPoint lat_end(lat_start.longitude,
-                           lat_start.latitude + Angle::Degrees(fixed(i)));
+                           lat_start.latitude + Angle::Degrees(i));
     fixed distance = Distance(lat_start, lat_end);
 
     double min = 111100 * i;
@@ -57,12 +57,12 @@ int main(int argc, char **argv)
 {
   plan_tests(9 + 36 + 18);
 
-  const GeoPoint a(Angle::Degrees(fixed(7.7061111111111114)),
-                   Angle::Degrees(fixed(51.051944444444445)));
-  const GeoPoint b(Angle::Degrees(fixed(7.599444444444444)),
-                   Angle::Degrees(fixed(51.099444444444444)));
-  const GeoPoint c(Angle::Degrees(fixed(4.599444444444444)),
-                   Angle::Degrees(fixed(47.099444444444444)));
+  const GeoPoint a(Angle::Degrees(7.7061111111111114),
+                   Angle::Degrees(51.051944444444445));
+  const GeoPoint b(Angle::Degrees(7.599444444444444),
+                   Angle::Degrees(51.099444444444444));
+  const GeoPoint c(Angle::Degrees(4.599444444444444),
+                   Angle::Degrees(47.099444444444444));
 
   fixed distance = Distance(a, b);
   ok1(distance > fixed(9130) && distance < fixed(9140));
@@ -80,8 +80,8 @@ int main(int argc, char **argv)
   distance = ProjectedDistance(a, b, b);
   ok1(distance > fixed(9120) && distance < fixed(9140));
 
-  const GeoPoint middle(a.longitude.Fraction(b.longitude, fixed_half),
-                        a.latitude.Fraction(b.latitude, fixed_half));
+  const GeoPoint middle(a.longitude.Fraction(b.longitude, fixed(0.5)),
+                        a.latitude.Fraction(b.latitude, fixed(0.5)));
   distance = ProjectedDistance(a, b, middle);
   ok1(distance > fixed(9100/2) && distance < fixed(9140/2));
 

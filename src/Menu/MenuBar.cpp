@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -125,7 +125,7 @@ MenuBar::MenuBar(ContainerWindow &parent)
 
   for (unsigned i = 0; i < MAX_BUTTONS; ++i) {
     PixelRect button_rc = GetButtonPosition(i, rc);
-    buttons[i].set(parent, _T(""), button_rc, style);
+    buttons[i].Create(parent, _T(""), button_rc, style);
   }
 }
 
@@ -144,7 +144,7 @@ MenuBar::ShowButton(unsigned i, bool enabled, const TCHAR *text,
 
   Button &button = buttons[i];
 
-  button.set_text(text);
+  button.SetText(text);
   button.SetEnabled(enabled && event > 0);
   button.SetEvent(event);
   button.ShowOnTop();

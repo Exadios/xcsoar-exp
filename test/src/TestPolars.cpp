@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -149,15 +149,13 @@ TestBuiltInPolarsPlausibility()
     assert(i < PolarStore::Count());
     unsigned si = performanceData[i].storeIndex;
     PolarInfo polar = PolarStore::GetItem(si).ToPolarInfo();
-    PolarCoefficients pc =
-      PolarCoefficients::From3VW(polar.shape[0].v, polar.shape[1].v, polar.shape[2].v,
-                                 polar.shape[0].w, polar.shape[1].w, polar.shape[2].w);
+    PolarCoefficients pc = polar.CalculateCoefficients();
 
     WideToUTF8Converter polarName(PolarStore::GetItem(i).name);
 
     ok(pc.IsValid(), polarName);
 
-    GlidePolar gp(fixed_zero);
+    GlidePolar gp(fixed(0));
     gp.SetCoefficients(pc, false);
 
     // Glider empty weight

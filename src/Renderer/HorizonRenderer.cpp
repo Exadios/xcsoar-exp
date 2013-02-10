@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,9 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Look/HorizonLook.hpp"
 #include "NMEA/Attitude.hpp"
+#include "Util/Clamp.hpp"
+
+#include <algorithm>
 
 void
 HorizonRenderer::Draw(Canvas &canvas, const PixelRect &rc,
@@ -47,24 +50,23 @@ HorizonRenderer::Draw(Canvas &canvas, const PixelRect &rc,
   RasterPoint center;
   center.y = (rc.top + rc.bottom) / 2;
   center.x = (rc.left + rc.right) / 2;
-  const int radius = min(rc.right - rc.left, rc.bottom - rc.top) / 2 -
-                     Layout::Scale(1);
+  const int radius = std::min(rc.right - rc.left, rc.bottom - rc.top) / 2
+    - Layout::Scale(1);
 
 #define fixed_div fixed(1.0 / 50.0)
-#define fixed_89 fixed_int_constant(89)
 
   fixed bank_degrees = attitude.bank_angle_available ?
-                       attitude.bank_angle.Degrees() : fixed_zero;
+                       attitude.bank_angle.Degrees() : fixed(0);
 
   fixed pitch_degrees = attitude.pitch_angle_available ?
-                        attitude.pitch_angle.Degrees() : fixed_zero;
+                        attitude.pitch_angle.Degrees() : fixed(0);
 
-  fixed phi = max(-fixed_89, min(fixed_89, bank_degrees));
-  fixed alpha = fixed_rad_to_deg * acos(max(-fixed_one,min(fixed_one,
-                  pitch_degrees * fixed_div)));
-  fixed sphi = fixed_180 - phi;
-  Angle alpha1 = Angle::Degrees(sphi - alpha);
-  Angle alpha2 = Angle::Degrees(sphi + alpha);
+  fixed phi = Clamp(bank_degrees, fixed(-89), fixed(89));
+  Angle alpha = Angle::acos(Clamp(pitch_degrees * fixed_div,
+                                  fixed(-1), fixed(1)));
+  Angle sphi = Angle::HalfCircle() - Angle::Degrees(phi);
+  Angle alpha1 = sphi - alpha;
+  Angle alpha2 = sphi + alpha;
 
   // draw sky part
   canvas.Select(look.sky_pen);

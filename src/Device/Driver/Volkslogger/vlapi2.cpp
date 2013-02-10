@@ -24,6 +24,7 @@
 #include "Util.hpp"
 #include "Protocol.hpp"
 #include "Operation/Operation.hpp"
+#include "Util/CharUtil.hpp"
 
 #include <memory.h>
 #include <string.h>
@@ -249,9 +250,9 @@ VLA_ERROR VLAPI::read_directory() {
 }
 
 VLA_ERROR
-VLAPI::read_igcfile(const char *filename, int index, int secmode)
+VLAPI::read_igcfile(const TCHAR *filename, int index, int secmode)
 {
-  FILE *outfile = fopen(filename,"wt");
+  FILE *outfile = _tfopen(filename,_T("wt"));
   if(!outfile)
     return VLA_ERR_FILE;
 
@@ -290,9 +291,7 @@ VLAPI::read_igcfile(const char *filename, int index, int secmode)
 void VLAPI_DATA::WPT::get(const void *p) {
   const Volkslogger::Waypoint *src = (const Volkslogger::Waypoint *)p;
 
-  memcpy(name, src->name, sizeof(src->name));
-  name[sizeof(src->name)] = 0;
-  strupr(name);
+  CopyTerminatedUpper(name, src->name, sizeof(src->name));
 
   typ = (WPTTYP)(src->type_and_longitude_sign & 0x7f);
 
@@ -365,9 +364,7 @@ void VLAPI_DATA::DCLWPT::put(void *p) const {
 void VLAPI_DATA::ROUTE::get(const void *p) {
   const Volkslogger::Route *src = (const Volkslogger::Route *)p;
 
-  memcpy(name, src->name, sizeof(src->name));
-  name[sizeof(src->name)] = 0;
-  strupr(name);
+  CopyTerminatedUpper(name, src->name, sizeof(src->name));
 
   for(int i=0; i<10; i++)
     wpt[i].get(&src->waypoints[i]);
@@ -389,9 +386,7 @@ VLAPI_DATA::PILOT::get(const void *p)
 {
   const Volkslogger::Pilot *src = (const Volkslogger::Pilot *)p;
 
-  memcpy(name, src->name, sizeof(src->name));
-  name[sizeof(src->name)] = 0;
-  strupr(name);
+  CopyTerminatedUpper(name, src->name, sizeof(src->name));
 }
 
 void
@@ -517,30 +512,25 @@ void VLAPI_DATA::DECLARATION::get(DBB *dbb) {
   }
 }
 
-
-void VLAPI_DATA::DECLARATION::put(DBB *dbb) {
-  strupr(flightinfo.pilot);
-  strupr(flightinfo.glidertype);
-  strupr(flightinfo.gliderid);
-  strupr(flightinfo.competitionclass);
-  strupr(flightinfo.competitionid);
-
-  char name[65];
-  char name2[17];
-  strncpy(name,flightinfo.pilot,sizeof(name));
+void
+VLAPI_DATA::DECLARATION::put(DBB *dbb) const
+{
+  const char *src = flightinfo.pilot;
   int i;
   for(i=0; i<4; i++) {
-    strncpy(name2,name+16*i,16);
-    name2[16] = 0;
-    dbb->add_fdf(i+1,17,name2);
+    char *dest = (char *)dbb->AddFDF(FLDPLT + i, 17);
+    if (dest == nullptr)
+      break;
+
+    for (unsigned i = 0; i < 16; ++i)
+      *dest++ = ToUpperASCII(*src++);
+    *dest = '\0';
   }
 
-  dbb->add_fdf(FLDGTY, strlen(flightinfo.glidertype)+1, flightinfo.glidertype);
-  dbb->add_fdf(FLDGID, strlen(flightinfo.gliderid)+1, flightinfo.gliderid);
-  dbb->add_fdf(FLDCCL, strlen(flightinfo.competitionclass)+1,
-               flightinfo.competitionclass);
-  dbb->add_fdf(FLDCID, strlen(flightinfo.competitionid)+1,
-               flightinfo.competitionid);
+  dbb->AddFDFStringUpper(FLDGTY, flightinfo.glidertype);
+  dbb->AddFDFStringUpper(FLDGID, flightinfo.gliderid);
+  dbb->AddFDFStringUpper(FLDCCL, flightinfo.competitionclass);
+  dbb->AddFDFStringUpper(FLDCID, flightinfo.competitionid);
 
   uint8_t fdfwpt[16]; // temporary space for data conversions
   flightinfo.homepoint.put(fdfwpt);

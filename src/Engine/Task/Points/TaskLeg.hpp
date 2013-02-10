@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -45,8 +45,6 @@ class OrderedTaskPoint;
  * This class uses mementos to reduce expensive re-calculation of static data.
  */
 class TaskLeg {
-
-protected:
   /** Saved vector for current leg's travelled route */
   GeoVector vector_travelled;
   /** Saved vector for current leg's remaining route */
@@ -54,7 +52,6 @@ protected:
   /** Saved vector for current leg's planned route */
   GeoVector vector_planned;
 
-private:
   DistanceMemento memo_max;
   DistanceMemento memo_min;
   GeoVectorMemento memo_nominal;
@@ -68,7 +65,8 @@ public:
   /**
    * Constructor.  Takes local copy of taskpoint data used in internal computations
    */
-  TaskLeg(OrderedTaskPoint &_destination);
+  TaskLeg(OrderedTaskPoint &_destination)
+    :destination(_destination) {}
 
   /**
    * Calculate distance of nominal task (sum of distances from each
@@ -162,10 +160,33 @@ public:
    * @return Distance (m)
    */
   gcc_pure
-  fixed GetNominalLegDistance() const;
+  fixed GetNominalLegDistance() const {
+    return GetNominalLegVector().distance;
+  }
 
   gcc_pure
   GeoVector GetNominalLegVector() const;
+
+  /**
+   * Calculate vector from aircraft to destination
+   */
+  const GeoVector &GetVectorRemaining() const {
+    return vector_remaining;
+  }
+
+  /**
+   * Calculate vector from aircraft to destination
+   */
+  const GeoVector &GetVectorPlanned() const {
+    return vector_planned;
+  }
+
+  /**
+   * Calculate vector travelled along this leg
+   */
+  const GeoVector &GetVectorTravelled() const {
+    return vector_travelled;
+  }
 
 private:
   gcc_pure

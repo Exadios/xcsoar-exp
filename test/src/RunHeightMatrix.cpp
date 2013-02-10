@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 
   NullOperationEnvironment operation;
   RasterMap map(jp2_path, j2w_path, NULL, operation);
-  if (!map.isMapLoaded()) {
+  if (!map.IsDefined()) {
     fprintf(stderr, "failed to load map\n");
     return EXIT_FAILURE;
   }
@@ -64,14 +64,20 @@ int main(int argc, char **argv)
 
   fixed radius = fixed(50000);
   WindowProjection projection;
-  projection.SetScreenSize(640, 480);
+  projection.SetScreenSize({640, 480});
   projection.SetScaleFromRadius(radius);
   projection.SetGeoLocation(map.GetMapCenter());
   projection.SetScreenOrigin(320, 240);
   projection.UpdateScreenBounds();
 
   HeightMatrix matrix;
+#ifdef ENABLE_OPENGL
+  matrix.Fill(map, projection.GetScreenBounds(),
+              projection.GetScreenWidth(), projection.GetScreenHeight(),
+              false);
+#else
   matrix.Fill(map, projection, 1, false);
+#endif
 
   return EXIT_SUCCESS;
 }

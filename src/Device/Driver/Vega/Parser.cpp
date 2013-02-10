@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@ Copyright_License {
 
 #include "Internal.hpp"
 #include "Message.hpp"
-#include "Input/InputQueue.hpp"
 #include "NMEA/Info.hpp"
 #include "NMEA/InputLine.hpp"
 #include "Compiler.h"
@@ -37,108 +36,54 @@ Copyright_License {
 #include <windows.h>
 #endif
 
-#define INPUT_BIT_FLAP_POS                  0 // 1 flap pos
-#define INPUT_BIT_FLAP_ZERO                 1 // 1 flap zero
-#define INPUT_BIT_FLAP_NEG                  2 // 1 flap neg
-#define INPUT_BIT_SC                        3 // 1 circling
-#define INPUT_BIT_GEAR_EXTENDED             5 // 1 gear extended
-#define INPUT_BIT_AIRBRAKENOTLOCKED         6 // 1 airbrake extended
-#define INPUT_BIT_ACK                       8 // 1 ack pressed
-#define INPUT_BIT_REP                       9 // 1 rep pressed
-//#define INPUT_BIT_STALL                     20  // 1 if detected
-#define INPUT_BIT_AIRBRAKELOCKED            21 // 1 airbrake locked
-#define INPUT_BIT_USERSWUP                  23 // 1 if up
-#define INPUT_BIT_USERSWMIDDLE              24 // 1 if middle
-#define INPUT_BIT_USERSWDOWN                25
-#define OUTPUT_BIT_CIRCLING                 0  // 1 if circling
-#define OUTPUT_BIT_FLAP_LANDING             7  // 1 if positive flap
-
 static bool
-PDSWC(NMEAInputLine &line, NMEAInfo &info)
+PDSWC(NMEAInputLine &line, NMEAInfo &info, Vega::VolatileData &volatile_data)
 {
-  static long last_switchinputs;
-  static long last_switchoutputs;
+  unsigned value;
+  if (line.ReadChecked(value) &&
+      info.settings.ProvideMacCready(fixed(value) / 10, info.clock))
+    volatile_data.mc = value;
 
-  fixed value;
-  if (line.ReadChecked(value))
-    info.settings.ProvideMacCready(value / 10, info.clock);
+  auto &switches = info.switch_state;
+  auto &vs = switches.vega;
+  vs.inputs = line.ReadHex(0);
+  vs.outputs = line.ReadHex(0);
 
-  long switchinputs = line.ReadHex(0L);
-  long switchoutputs = line.ReadHex(0L);
+  if (vs.GetFlapLanding())
+    switches.flap_position = SwitchState::FlapPosition::LANDING;
+  else if (vs.GetFlapZero())
+    switches.flap_position = SwitchState::FlapPosition::NEUTRAL;
+  else if (vs.GetFlapNegative())
+    switches.flap_position = SwitchState::FlapPosition::NEGATIVE;
+  else if (vs.GetFlapPositive())
+    switches.flap_position = SwitchState::FlapPosition::POSITIVE;
+  else
+    switches.flap_position = SwitchState::FlapPosition::UNKNOWN;
+
+  if (vs.GetUserSwitchMiddle())
+    switches.user_switch = SwitchState::UserSwitch::MIDDLE;
+  else if (vs.GetUserSwitchUp())
+    switches.user_switch = SwitchState::UserSwitch::UP;
+  else if (vs.GetUserSwitchDown())
+    switches.user_switch = SwitchState::UserSwitch::DOWN;
+  else
+    switches.user_switch = SwitchState::UserSwitch::UNKNOWN;
+
+  if (vs.GetAirbrakeLocked())
+    switches.airbrake_state = SwitchState::AirbrakeState::LOCKED;
+  else if (vs.GetAirbrakeNotLocked())
+    switches.airbrake_state = SwitchState::AirbrakeState::NOT_LOCKED;
+  else
+    switches.airbrake_state = SwitchState::AirbrakeState::UNKNOWN;
+
+  switches.flight_mode = vs.GetCircling()
+    ? SwitchState::FlightMode::CIRCLING
+    : SwitchState::FlightMode::CRUISE;
 
   if (line.ReadChecked(value)) {
-    info.voltage = value / 10;
+    info.voltage = fixed(value) / 10;
     info.voltage_available.Update(info.clock);
   }
-
-  info.switch_state_available = true;
-
-  info.switch_state.airbrake_locked =
-    (switchinputs & (1<<INPUT_BIT_AIRBRAKELOCKED))>0;
-  info.switch_state.flap_positive =
-    (switchinputs & (1<<INPUT_BIT_FLAP_POS))>0;
-  info.switch_state.flap_neutral =
-    (switchinputs & (1<<INPUT_BIT_FLAP_ZERO))>0;
-  info.switch_state.flap_negative =
-    (switchinputs & (1<<INPUT_BIT_FLAP_NEG))>0;
-  info.switch_state.gear_extended =
-    (switchinputs & (1<<INPUT_BIT_GEAR_EXTENDED))>0;
-  info.switch_state.acknowledge =
-    (switchinputs & (1<<INPUT_BIT_ACK))>0;
-  info.switch_state.repeat =
-    (switchinputs & (1<<INPUT_BIT_REP))>0;
-  info.switch_state.speed_command =
-    (switchinputs & (1<<INPUT_BIT_SC))>0;
-  info.switch_state.user_switch_up =
-    (switchinputs & (1<<INPUT_BIT_USERSWUP))>0;
-  info.switch_state.user_switch_middle =
-    (switchinputs & (1<<INPUT_BIT_USERSWMIDDLE))>0;
-  info.switch_state.user_switch_down =
-    (switchinputs & (1<<INPUT_BIT_USERSWDOWN))>0;
-  /*
-  info.switch_state.Stall =
-    (switchinputs & (1<<INPUT_BIT_STALL))>0;
-  */
-  info.switch_state.flight_mode =
-    (switchoutputs & (1 << OUTPUT_BIT_CIRCLING)) > 0
-    ? SwitchInfo::FlightMode::CIRCLING
-    : SwitchInfo::FlightMode::CRUISE;
-  info.switch_state.flap_landing =
-    (switchoutputs & (1<<OUTPUT_BIT_FLAP_LANDING))>0;
-
-  long up_switchinputs;
-  long down_switchinputs;
-  long up_switchoutputs;
-  long down_switchoutputs;
-
-  // detect changes to ON: on now (x) and not on before (!lastx)
-  // detect changes to OFF: off now (!x) and on before (lastx)
-
-  down_switchinputs = (switchinputs & (~last_switchinputs));
-  up_switchinputs = ((~switchinputs) & (last_switchinputs));
-  down_switchoutputs = (switchoutputs & (~last_switchoutputs));
-  up_switchoutputs = ((~switchoutputs) & (last_switchoutputs));
-
-  int i;
-  long thebit;
-  for (i=0; i<32; i++) {
-    thebit = 1<<i;
-    if ((down_switchinputs & thebit) == thebit) {
-      InputEvents::processNmea(i);
-    }
-    if ((down_switchoutputs & thebit) == thebit) {
-      InputEvents::processNmea(i+32);
-    }
-    if ((up_switchinputs & thebit) == thebit) {
-      InputEvents::processNmea(i+64);
-    }
-    if ((up_switchoutputs & thebit) == thebit) {
-      InputEvents::processNmea(i+96);
-    }
-  }
-
-  last_switchinputs = switchinputs;
-  last_switchoutputs = switchoutputs;
 
   return true;
 }
@@ -191,20 +136,22 @@ VegaDevice::PDVSC(NMEAInputLine &line, gcc_unused NMEAInfo &info)
 static bool
 PDVDV(NMEAInputLine &line, NMEAInfo &info)
 {
-  fixed value;
+  int value;
 
   if (line.ReadChecked(value))
-    info.ProvideTotalEnergyVario(value / 10);
+    info.ProvideTotalEnergyVario(fixed(value) / 10);
 
   bool ias_available = line.ReadChecked(value);
-  fixed tas_ratio = line.Read(fixed(1024)) / 1024;
-  if (ias_available)
-    info.ProvideBothAirspeeds(value / 10, value / 10 * tas_ratio);
+  int tas_ratio = line.Read(1024);
+  if (ias_available) {
+    const fixed ias = fixed(value) / 10;
+    info.ProvideBothAirspeeds(ias, ias * tas_ratio / 1024);
+  }
 
   //hasVega = true;
 
   if (line.ReadChecked(value))
-    info.ProvidePressureAltitude(value);
+    info.ProvidePressureAltitude(fixed(value));
 
   return true;
 }
@@ -214,23 +161,22 @@ PDVDV(NMEAInputLine &line, NMEAInfo &info)
 static bool
 PDVDS(NMEAInputLine &line, NMEAInfo &info)
 {
-  fixed AccelX = line.Read(fixed_zero);
-  fixed AccelZ = line.Read(fixed_zero);
+  const int accel_x = line.Read(0), accel_z = line.Read(0);
 
-  fixed mag = SmallHypot(AccelX, AccelZ);
-  info.acceleration.ProvideGLoad(fixed(mag) / 100, true);
+  fixed mag = SmallHypot(fixed(accel_x), fixed(accel_z));
+  info.acceleration.ProvideGLoad(mag / 100, true);
 
   /*
   double flap = line.Read(0.0);
   */
   line.Skip();
 
-  info.stall_ratio = line.Read(fixed_zero);
+  info.stall_ratio = line.Read(fixed(0));
   info.stall_ratio_available.Update(info.clock);
 
-  fixed value;
+  int value;
   if (line.ReadChecked(value))
-    info.ProvideNettoVario(value / 10);
+    info.ProvideNettoVario(fixed(value) / 10);
 
   //hasVega = true;
 
@@ -240,10 +186,10 @@ PDVDS(NMEAInputLine &line, NMEAInfo &info)
 static bool
 PDVVT(NMEAInputLine &line, NMEAInfo &info)
 {
-  fixed value;
+  int value;
   info.temperature_available = line.ReadChecked(value);
   if (info.temperature_available)
-    info.temperature = value / 10;
+    info.temperature = fixed(value) / 10;
 
   info.humidity_available = line.ReadChecked(info.humidity);
 
@@ -281,7 +227,7 @@ VegaDevice::ParseNMEA(const char *String, NMEAInfo &info)
     detected = true;
 
   if (strcmp(type, "$PDSWC") == 0)
-    return PDSWC(line, info);
+    return PDSWC(line, info, volatile_data);
   else if (strcmp(type, "$PDAAV") == 0)
     return PDAAV(line, info);
   else if (strcmp(type, "$PDVSC") == 0)

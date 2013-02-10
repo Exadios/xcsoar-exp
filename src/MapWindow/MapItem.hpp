@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,10 +28,9 @@ Copyright_License {
 #include "Geo/GeoPoint.hpp"
 #include "Geo/GeoVector.hpp"
 #include "Task/ObservationZones/ObservationZonePoint.hpp"
-#include "Engine/Task/Points/TaskPoint.hpp"
-#include "Markers/Markers.hpp"
+#include "Markers/Marker.hpp"
 #include "FLARM/Traffic.hpp"
-#include "FLARM/Friends.hpp"
+#include "FLARM/Color.hpp"
 #include "NMEA/ThermalLocator.hpp"
 #include "Weather/Features.hpp"
 #include "Engine/Route/ReachResult.hpp"
@@ -39,6 +38,8 @@ Copyright_License {
 #ifdef HAVE_NOAA
 #include "Weather/NOAAStore.hpp"
 #endif
+
+enum class TaskPointType : uint8_t;
 
 class AbstractAirspace;
 struct Waypoint;
@@ -110,11 +111,11 @@ struct TaskOZMapItem: public MapItem
 {
   int index;
   const ObservationZonePoint *oz;
-  TaskPoint::Type tp_type;
+  TaskPointType tp_type;
   const Waypoint &waypoint;
 
   TaskOZMapItem(int _index, const ObservationZonePoint &_oz,
-                TaskPoint::Type _tp_type, const Waypoint &_waypoint)
+                TaskPointType _tp_type, const Waypoint &_waypoint)
     :MapItem(TASK_OZ), index(_index), oz(_oz.Clone()),
      tp_type(_tp_type), waypoint(_waypoint) {}
 
@@ -142,9 +143,9 @@ struct WaypointMapItem: public MapItem
 struct MarkerMapItem: public MapItem
 {
   unsigned id;
-  Markers::Marker marker;
+  Marker marker;
 
-  MarkerMapItem(unsigned _id, const Markers::Marker &_marker)
+  MarkerMapItem(unsigned _id, const Marker &_marker)
     :MapItem(MARKER), id(_id), marker(_marker) {}
 };
 
@@ -160,11 +161,11 @@ struct WeatherStationMapItem: public MapItem
 
 struct TrafficMapItem: public MapItem
 {
-  const FlarmTraffic &traffic;
-  FlarmFriends::Color color;
+  FlarmId id;
+  FlarmColor color;
 
-  TrafficMapItem(const FlarmTraffic &_traffic, FlarmFriends::Color _color)
-    :MapItem(TRAFFIC), traffic(_traffic), color(_color) {}
+  TrafficMapItem(const FlarmTraffic &_traffic, FlarmColor _color)
+    :MapItem(TRAFFIC), id(_traffic.id), color(_color) {}
 };
 
 struct ThermalMapItem: public MapItem

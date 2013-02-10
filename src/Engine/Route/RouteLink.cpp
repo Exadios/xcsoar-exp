@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdlib.h>
 
 gcc_const
 static unsigned
@@ -69,8 +70,8 @@ RouteLink::CalcSpeedups(const TaskProjection& proj)
   const fixed dx = fixed(first.longitude - second.longitude);
   const fixed dy = fixed(first.latitude - second.latitude);
   if (!positive(fabs(dx)) && !positive(fabs(dy))) {
-    d = fixed_zero;
-    inv_d = fixed_zero;
+    d = fixed(0);
+    inv_d = fixed(0);
     polar_index = 0;
     return;
   }

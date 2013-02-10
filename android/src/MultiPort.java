@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,22 +38,45 @@ class MultiPort implements AndroidPort, InputListener {
   private static final String TAG = "XCSoar";
 
   private Collection<AndroidPort> ports = new LinkedList<AndroidPort>();
+  private boolean error = false;
 
-  private synchronized boolean checkValid() {
+  private synchronized int checkValid() {
+    boolean ready = false, limbo = false;
+
     for (Iterator<AndroidPort> i = ports.iterator(); i.hasNext();) {
       AndroidPort port = i.next();
-      if (!port.isValid()) {
+
+      switch (port.getState()) {
+      case STATE_READY:
+        ready = true;
+        break;
+
+      case STATE_FAILED:
         Log.i(TAG, "Bluetooth disconnect from " + port);
 
         i.remove();
         port.close();
+        error = true;
+        break;
+
+      case STATE_LIMBO:
+        limbo = true;
+        break;
       }
     }
 
-    return !ports.isEmpty();
+    if (ready) {
+      error = false;
+      return STATE_READY;
+    } else if (limbo || !error) {
+      error = false;
+      return STATE_LIMBO;
+    } else
+      return STATE_FAILED;
   }
 
   public synchronized void add(AndroidPort port) {
+    error = false;
     checkValid();
 
     ports.add(port);
@@ -65,13 +88,15 @@ class MultiPort implements AndroidPort, InputListener {
   }
 
   @Override public synchronized void close() {
+    error = true;
+
     for (AndroidPort port : ports)
       port.close();
 
     ports.clear();
   }
 
-  @Override public boolean isValid() {
+  @Override public int getState() {
     return checkValid();
   }
 
@@ -96,7 +121,8 @@ class MultiPort implements AndroidPort, InputListener {
     for (Iterator<AndroidPort> i = ports.iterator(); i.hasNext();) {
       AndroidPort port = i.next();
       int nbytes = port.write(data, length);
-      if (nbytes < 0 && !port.isValid()) {
+      if (nbytes < 0 && port.getState() == STATE_FAILED) {
+        error = true;
         i.remove();
         port.close();
       } else if (nbytes > result)

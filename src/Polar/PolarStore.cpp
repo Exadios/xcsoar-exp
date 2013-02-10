@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -113,7 +113,7 @@ static constexpr PolarStore::Item internal_polars[] =
   { _T("IS-29D2 Lark"), 360, 0, 100, -0.82, 135.67, -1.55, 184.12, -3.3, 10.4, 0.0, 0 },
   { _T("Janus B (PAS)"), 603, 170, 115.5, -0.76, 171.79, -1.98, 209.96, -4.0, 17.4, 47.222, 106 },
   { _T("Janus B (PIL)"), 508, 170, 105.7, -0.7, 157.65, -1.82, 192.68, -3.6, 17.4, 47.222, 106 },
-  { _T("Ka 6CR"), 310, 0, 87.35, -0.81, 141.92, -2.03, 174.68, -3.5, 12.4, 0.0, 84 },
+  { _T("Ka 6CR"), 310, 0, 64.83 , -0.67 , 130.0, -2.26 , 170.0, -4.69 , 12.5 , 0.0 , 82 },
   { _T("Ka 8"), 290, 0, 74.1, -0.76, 101.9, -1.27, 166.7, -4.64, 14.15, 0.0, 78 },
   { _T("L 33 Solo"), 330, 0, 87.2, -0.8, 135.64, -1.73, 174.4, -3.4, 11.0, 0.0, 0 },
   { _T("LAK17a (18m)"), 298, 180, 115, -0.680, 158, -1.379, 200, -2.975, 9.80, 0.0, 120 },
@@ -260,6 +260,17 @@ static constexpr PolarStore::Item internal_polars[] =
 
   // from SeeYou
   { _T("ASW-28 (15m)"), 310, 200, 92.6, -0.571, 120.38, -0.875, 148.16, -1.394, 10.5, 55.555, 108 },
+
+  // idaflieg measurement, 23.08.2012 at Aalen Elchingen (preliminary result)
+  { _T("AK-8"), 360 , 100, 87.3 , -0.658 , 130.0, -0.973 , 170.0, -1.957 , 9.75 , 50.0 , 107 },
+
+  // from factory polar (flight manual)
+  { _T("Blanik L13-AC"), 500, 0, 70, -0.85, 110, -1.25, 160, -3.2, 17.44, 44.44, 0 },
+  // from idaflieg measured 1970
+  { _T("Ka 6E"),  310, 0, 87.35, -0.81, 141.92, -2.03, 174.68, -3.5, 12.4, 0.0, 85 },
+
+  // from marius@sargevicius.com
+  { _T("LAK-12"),  430, 190, 75, -0.48, 125, -0.88, 175, -1.97, 14.63, 48.611, 114 },
 };
 
 const PolarStore::Item &

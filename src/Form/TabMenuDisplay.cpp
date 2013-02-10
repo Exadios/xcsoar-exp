@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ TabMenuDisplay::TabMenuDisplay(TabMenuControl& _theTabBar,
 {
   WindowStyle mystyle;
   mystyle.TabStop();
-  set(parent, rc, mystyle);
+  Create(parent, rc, mystyle);
 }
 
 void
@@ -79,9 +79,9 @@ TabMenuDisplay::OnKeyCheck(unsigned key_code) const
 {
  switch (key_code) {
 
- case VK_RETURN:
- case VK_LEFT:
- case VK_RIGHT:
+ case KEY_RETURN:
+ case KEY_LEFT:
+ case KEY_RIGHT:
    return menu.IsCurrentPageTheMenu();
 
  default:
@@ -97,15 +97,15 @@ TabMenuDisplay::OnKeyDown(unsigned key_code)
  if (menu.IsCurrentPageTheMenu()) {
    switch (key_code) {
 
-   case VK_RETURN:
+   case KEY_RETURN:
      menu.SetCurrentPage(page);
      return true;
 
-   case VK_RIGHT:
+   case KEY_RIGHT:
      menu.HighlightNextMenuItem();
      return true;
 
-   case VK_LEFT:
+   case KEY_LEFT:
      menu.HighlightPreviousMenuItem();
      return true;
    }
@@ -188,11 +188,7 @@ TabMenuDisplay::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
     return false;
 
   const PixelRect rc = GetDownButtonRC();
-  RasterPoint Pos;
-  Pos.x = x;
-  Pos.y = y;
-
-  const bool tmp = !PtInRect(&rc, Pos);
+  const bool tmp = !rc.IsInside({x, y});
   if (drag_off_button != tmp) {
     drag_off_button = tmp;
     Invalidate(rc);
@@ -209,10 +205,8 @@ TabMenuDisplay::PaintMainMenuBorder(Canvas &canvas) const
   const PixelRect rcFirst = tb.GetMainMenuButtonSize(0);
   const UPixelScalar menuBottom = tb.GetMainMenuButtonSize(
       tb.GetNumMainMenuItems() - 1).bottom;
-  const PixelRect rcBlackBorder = { PixelScalar(rcFirst.left - bwidth),
-                                    PixelScalar(rcFirst.top - bwidth),
-                                    PixelScalar(rcFirst.right + bwidth),
-                                    PixelScalar(menuBottom + bwidth) };
+  const PixelRect rcBlackBorder(rcFirst.left - bwidth, rcFirst.top - bwidth,
+                                rcFirst.right + bwidth, menuBottom + bwidth);
 
   canvas.DrawFilledRectangle(rcBlackBorder, COLOR_BLACK);
 }
@@ -260,10 +254,8 @@ TabMenuDisplay::PaintSubMenuBorder(Canvas &canvas,
   const UPixelScalar subTop =
     tb.GetSubMenuButtonSize(main_button.first_page_index).top;
   const PixelRect bLast = tb.GetSubMenuButtonSize(main_button.last_page_index);
-  const PixelRect rcBlackBorder = { PixelScalar(bLast.left - bwidth),
-                                    PixelScalar(subTop - bwidth),
-                                    PixelScalar(bLast.right + bwidth),
-                                    PixelScalar(bLast.bottom + bwidth) };
+  const PixelRect rcBlackBorder(bLast.left - bwidth, subTop - bwidth,
+                                bLast.right + bwidth, bLast.bottom + bwidth);
 
   canvas.DrawFilledRectangle(rcBlackBorder, COLOR_BLACK);
 }

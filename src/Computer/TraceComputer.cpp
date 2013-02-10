@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ TraceComputer::Update(const ComputerSettings &settings_computer,
     return;
 
   // either olc or basic trace requires trace_full
-  if (settings_computer.task.enable_olc ||
+  if (settings_computer.contest.enable ||
       settings_computer.task.enable_trace) {
     const TracePoint point(basic);
 
@@ -95,7 +95,7 @@ TraceComputer::Update(const ComputerSettings &settings_computer,
     mutex.Unlock();
 
     // only olc requires trace_sprint
-    if (settings_computer.task.enable_olc)
+    if (settings_computer.contest.enable)
       sprint.push_back(point);
   }
 }

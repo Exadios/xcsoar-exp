@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,30 +31,32 @@ Copyright_License {
 #include "Renderer/AirspaceRendererSettings.hpp"
 #include "Renderer/WaypointRendererSettings.hpp"
 #include "Terrain/TerrainSettings.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Math/fixed.hpp"
+
+#include <type_traits>
 
 #include <stdint.h>
 
-enum AircraftSymbol {
-  acSimple = 0,
-  acDetailed,
-  acSimpleLarge,
-  acHangGlider,
-  acParaGlider,
+enum class AircraftSymbol : uint8_t {
+  SIMPLE,
+  DETAILED,
+  SIMPLE_LARGE,
+  HANGGLIDER,
+  PARAGLIDER,
 };
 
-enum DisplayOrientation {
-  TRACKUP = 0,
-  NORTHUP,
-  TARGETUP,
-  HEADINGUP,
+enum class DisplayOrientation : uint8_t {
+  TRACK_UP,
+  NORTH_UP,
+  TARGET_UP,
+  HEADING_UP,
+  WIND_UP,
 };
 
-enum MapShiftBias {
-  MAP_SHIFT_BIAS_NONE = 0,
-  MAP_SHIFT_BIAS_TRACK,
-  MAP_SHIFT_BIAS_TARGET
+enum class MapShiftBias : uint8_t {
+  NONE,
+  TRACK,
+  TARGET
 };
 
 enum class DisplayGroundTrack: uint8_t {
@@ -74,7 +76,7 @@ struct MapItemListSettings {
   void SetDefaults();
 };
 
-static_assert(is_trivial<MapItemListSettings>::value, "type is not trivial");
+static_assert(std::is_trivial<MapItemListSettings>::value, "type is not trivial");
 
 struct TrailSettings {
   /** Snailtrail wind drifting in circling mode */
@@ -100,7 +102,7 @@ struct TrailSettings {
   void SetDefaults();
 };
 
-static_assert(is_trivial<TrailSettings>::value, "type is not trivial");
+static_assert(std::is_trivial<TrailSettings>::value, "type is not trivial");
 
 // user interface options
 
@@ -110,6 +112,7 @@ static_assert(is_trivial<TrailSettings>::value, "type is not trivial");
 enum class WindArrowStyle: uint8_t {
   ARROW_HEAD,
   FULL_ARROW,
+  NO_ARROW,
 };
 
 struct MapSettings {
@@ -167,12 +170,17 @@ struct MapSettings {
   /** Show FinalGlideBar mc0 arrow */
   bool final_glide_bar_mc0_enabled;
 
+  /**
+   * Overlay FAI triangle areas on the map while flying?
+   */
+  bool show_fai_triangle_areas;
+
   TrailSettings trail;
   MapItemListSettings item_list;
 
   void SetDefaults();
 };
 
-static_assert(is_trivial<MapSettings>::value, "type is not trivial");
+static_assert(std::is_trivial<MapSettings>::value, "type is not trivial");
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,17 +25,12 @@ Copyright_License {
 #define XCSOAR_SCREEN_BUFFER_WINDOW_HXX
 
 #include "Screen/PaintWindow.hpp"
-
-#ifndef ENABLE_OPENGL
 #include "Screen/BufferCanvas.hpp"
-#endif
 
 /**
  * A #PaintWindow with buffered painting, to avoid flickering.
  */
 class BufferWindow : public PaintWindow {
-#ifndef ENABLE_OPENGL
-private:
   BufferCanvas buffer;
 
   /**
@@ -49,33 +44,29 @@ public:
     dirty = true;
     PaintWindow::Invalidate();
   }
-#endif
 
 protected:
   /**
    * Determines whether this BufferWindow maintains a persistent
    * buffer which allows incremental drawing in each frame.
    */
-  static bool is_persistent() {
-#ifdef ENABLE_OPENGL
-    /* on OpenGL, there is no per-window buffer, each frame needs to
-       be redrawn from scratch */
-    return false;
-#else
+  static bool IsPersistent() {
     return true;
-#endif
   }
 
 protected:
+  /* virtual methods from class Window */
 #ifndef ENABLE_OPENGL
-  virtual void OnCreate();
-  virtual void OnDestroy();
-
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
+  virtual void OnCreate() override;
+  virtual void OnDestroy() override;
 #endif
 
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnResize(PixelSize new_size) override;
 
+  /* virtual methods from class PaintWindow */
+  virtual void OnPaint(Canvas &canvas) override;
+
+  /* our virtual methods */
   virtual void OnPaintBuffer(Canvas &canvas) = 0;
 };
 

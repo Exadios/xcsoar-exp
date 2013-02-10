@@ -6,6 +6,7 @@
 #include "Engine/Contest/ContestManager.hpp"
 #include "ComputerSettings.hpp"
 #include "OS/PathName.hpp"
+#include "OS/FileUtil.hpp"
 #include "IO/FileLineReader.hpp"
 #include "Navigation/Aircraft.hpp"
 #include "NMEA/MoreData.hpp"
@@ -53,10 +54,10 @@ inline void load_score_file(std::ifstream& fscore,
   fscore >> tmp; score.score = (fixed)tmp;
   fscore >> tmp; score.distance = (fixed)tmp;
   fscore >> tmp; fixed speed(tmp);
-  if (speed>fixed_zero) {
+  if (speed>fixed(0)) {
     score.time = fixed(3600)*score.distance/speed;
   } else {
-    score.time = fixed_zero;
+    score.time = fixed(0);
   }
   score.distance *= fixed(1000);
 }
@@ -115,8 +116,8 @@ protected:
     state.ground_speed = speed;
     state.track = bearing;
     state.altitude = alt;
-    state.netto_vario = fixed_zero;
-    state.vario = fixed_zero;
+    state.netto_vario = fixed(0);
+    state.vario = fixed(0);
     state.time = t;
     if (positive(t)) {
       started = true;
@@ -125,12 +126,13 @@ protected:
 };
 
 static bool
-test_replay(const Contests olc_type, 
+test_replay(const Contest olc_type,
             const ContestResult &official_score)
 {
-  std::ofstream f("results/res-sample.txt");
+  Directory::Create(_T("output/results"));
+  std::ofstream f("output/results/res-sample.txt");
 
-  GlidePolar glide_polar(fixed_two);
+  GlidePolar glide_polar(fixed(2));
   AircraftState state_last;
 
   FileLineReaderA *reader = new FileLineReaderA(replay_file.c_str());
@@ -143,24 +145,24 @@ test_replay(const Contests olc_type,
 
   ComputerSettings settings_computer;
   settings_computer.SetDefaults();
-  settings_computer.task.enable_olc = true;
-  load_scores(settings_computer.task.contest_handicap);
+  settings_computer.contest.enable = true;
+  load_scores(settings_computer.contest.handicap);
 
   if (verbose) {
     switch (olc_type) {
-    case OLC_League:
+    case Contest::OLC_LEAGUE:
       std::cout << "# OLC-League\n";
       break;
-    case OLC_Sprint:
+    case Contest::OLC_SPRINT:
       std::cout << "# OLC-Sprint\n";
       break;
-    case OLC_FAI:
+    case Contest::OLC_FAI:
       std::cout << "# OLC-FAI\n";
       break;
-    case OLC_Classic:
+    case Contest::OLC_CLASSIC:
       std::cout << "# OLC-Classic\n";
       break;
-    case OLC_Plus:
+    case Contest::OLC_PLUS:
       std::cout << "# OLC-Plus\n";
       break;
     default:
@@ -175,7 +177,7 @@ test_replay(const Contests olc_type,
   MoreData basic;
   basic.Reset();
 
-  while (sim.Update(basic, fixed_one) && !sim.started) {
+  while (sim.Update(basic, fixed(1)) && !sim.started) {
   }
   state_last = sim.state;
 
@@ -192,17 +194,18 @@ test_replay(const Contests olc_type,
   ContestManager contest_manager(olc_type,
                                  trace_computer.GetFull(),
                                  trace_computer.GetSprint());
-  contest_manager.SetHandicap(settings_computer.task.contest_handicap);
+  contest_manager.SetHandicap(settings_computer.contest.handicap);
 
   DerivedInfo calculated;
 
-  while (sim.Update(basic, fixed_one)) {
+  while (sim.Update(basic, fixed(1))) {
     if (sim.state.time>time_last) {
 
       n_samples++;
 
       flying_computer.Compute(glide_polar.GetVTakeoff(),
-                              sim.state, flying_state);
+                              sim.state, sim.state.time - time_last,
+                              flying_state);
 
       calculated.flight.flying = flying_state.flying;
 
@@ -242,11 +245,16 @@ int main(int argc, char** argv)
 
   plan_tests(5);
 
-  ok(test_replay(OLC_League, official_score_sprint),"replay league",0);
-  ok(test_replay(OLC_FAI, official_score_fai),"replay fai",0);
-  ok(test_replay(OLC_Classic, official_score_classic),"replay classic",0);
-  ok(test_replay(OLC_Sprint, official_score_sprint),"replay sprint",0);
-  ok(test_replay(OLC_Plus, official_score_plus),"replay plus",0);
+  ok(test_replay(Contest::OLC_LEAGUE, official_score_sprint),
+     "replay league", 0);
+  ok(test_replay(Contest::OLC_FAI, official_score_fai),
+     "replay fai", 0);
+  ok(test_replay(Contest::OLC_CLASSIC, official_score_classic),
+     "replay classic", 0);
+  ok(test_replay(Contest::OLC_SPRINT, official_score_sprint),
+     "replay sprint", 0);
+  ok(test_replay(Contest::OLC_PLUS, official_score_plus),
+     "replay plus", 0);
 
   return exit_status();
 }

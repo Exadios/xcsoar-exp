@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ IgcReplay::IgcReplay(NLineReader *_reader)
   :AbstractReplay(),
    cli(fixed(0.98)),
    reader(_reader),
-   t_simulation(fixed_zero)
+   t_simulation(fixed(0))
 {
   cli.Reset();
 }
@@ -52,7 +52,7 @@ IgcReplay::ReadPoint(IGCFix &fix)
 {
   char *buffer;
 
-  while ((buffer = reader->read()) != NULL) {
+  while ((buffer = reader->ReadLine()) != NULL) {
     if (ScanBuffer(buffer, fix))
       return true;
   }
@@ -65,7 +65,7 @@ IgcReplay::UpdateTime(fixed time_scale)
 {
   const fixed t_simulation_last = t_simulation;
 
-  t_simulation += fixed_one * time_scale;
+  t_simulation += fixed(1) * time_scale;
 
   return (t_simulation > t_simulation_last);
 }

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  */
 
 #include "FlatBoundingBox.hpp"
-
+#include "FlatRay.hpp"
 #include "Math/fixed.hpp"
 #include "Math/FastMath.h"
 
@@ -33,10 +33,10 @@ FlatBoundingBox::Distance(const FlatBoundingBox &f) const
   if (Overlaps(f))
     return 0;
 
-  int dx = max(0, min(f.bb_ll.longitude - bb_ur.longitude,
-                      bb_ll.longitude - f.bb_ur.longitude));
-  int dy = max(0, min(f.bb_ll.latitude - bb_ur.latitude,
-                      bb_ll.latitude - f.bb_ur.latitude));
+  int dx = std::max(0, std::min(f.bb_ll.longitude - bb_ur.longitude,
+                                bb_ll.longitude - f.bb_ur.longitude));
+  int dy = std::max(0, std::min(f.bb_ll.latitude - bb_ur.latitude,
+                                bb_ll.latitude - f.bb_ur.latitude));
 
   return ihypot(dx, dy);
 }
@@ -44,8 +44,8 @@ FlatBoundingBox::Distance(const FlatBoundingBox &f) const
 bool
 FlatBoundingBox::Intersects(const FlatRay& ray) const
 {
-  fixed tmin = fixed_zero;
-  fixed tmax = fixed_one;
+  fixed tmin = fixed(0);
+  fixed tmax = fixed(1);
   
   // Longitude
   if (ray.vector.longitude == 0) {
@@ -61,8 +61,8 @@ FlatBoundingBox::Intersects(const FlatRay& ray) const
     if (t1 > t2)
       std::swap(t1, t2);
 
-    tmin = max(tmin, t1);
-    tmax = min(tmax, t2);
+    tmin = std::max(tmin, t1);
+    tmax = std::min(tmax, t2);
     // exit with no collision as soon as slab intersection becomes empty
     if (tmin > tmax)
       return false;
@@ -83,8 +83,8 @@ FlatBoundingBox::Intersects(const FlatRay& ray) const
     if (t1 > t2)
       std::swap(t1, t2);
 
-    tmin = max(tmin, t1);
-    tmax = min(tmax, t2);
+    tmin = std::max(tmin, t1);
+    tmax = std::min(tmax, t2);
     // exit with no collision as soon as slab intersection becomes empty
     if (tmin > tmax)
       return false;

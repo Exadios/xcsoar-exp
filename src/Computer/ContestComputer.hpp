@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@ Copyright_License {
 
 #include "Engine/Contest/ContestManager.hpp"
 
-struct ComputerSettings;
-struct DerivedInfo;
+struct ContestSettings;
+struct ContestStatistics;
 class Trace;
 
 class ContestComputer {
@@ -47,11 +47,11 @@ public:
     contest_manager.SetPredicted(predicted);
   }
 
-  void Solve(const ComputerSettings &settings_computer,
-             DerivedInfo &calculated);
+  void Solve(const ContestSettings &settings_computer,
+             ContestStatistics &contest_stats);
 
-  bool SolveExhaustive(const ComputerSettings &settings_computer,
-                       DerivedInfo &calculated);
+  bool SolveExhaustive(const ContestSettings &settings_computer,
+                       ContestStatistics &contest_stats);
 };
 
 #endif

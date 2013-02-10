@@ -2,20 +2,17 @@
 #define GLIDE_COMPUTER_INTERFACE_HPP
 
 #include "Task/TaskEvents.hpp"
+#include "Compiler.h"
 
 class GlideComputer;
 
-class GlideComputerTaskEvents:
-  public TaskEvents
-{
+class GlideComputerTaskEvents final : public TaskEvents {
   GlideComputer* computer;
 
 public:
   void SetComputer(GlideComputer &_computer);
 
   void EnterTransition(const TaskWaypoint& tp);
-
-  void AlternateTransition();
 
   void ActiveAdvanced(const TaskWaypoint &tp, const int i);
 
@@ -24,8 +21,6 @@ public:
   void TaskStart();
 
   void TaskFinish();
-
-  void FlightModeTransition(const bool is_final);
 };
 
 #endif

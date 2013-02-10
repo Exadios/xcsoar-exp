@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,8 +25,9 @@ Copyright_License {
 #include "Android/Main.hpp"
 #include "Java/Global.hpp"
 #include "Java/Class.hpp"
-#include "../Timer.hpp"
-#include "Screen/Android/Event.hpp"
+#include "Event/Timer.hpp"
+#include "Event/Android/Event.hpp"
+#include "Event/Android/Queue.hpp"
 #include "org_xcsoar_Timer.h"
 #include "Compiler.h"
 

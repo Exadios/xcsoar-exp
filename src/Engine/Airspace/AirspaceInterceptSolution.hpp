@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@
 
 #include "Geo/GeoPoint.hpp"
 #include "Math/fixed.hpp"
-#include "Util/TypeTraits.hpp"
+
+#include <type_traits>
 
 /**
  *  Structure to hold data for intercepts between aircraft and airspace.
@@ -50,12 +51,12 @@ private:
 
 public:
   static AirspaceInterceptSolution Invalid() {
-    return AirspaceInterceptSolution(fixed_minus_one, fixed_minus_one);
+    return AirspaceInterceptSolution(fixed(-1), fixed(-1));
   }
 
   void SetInvalid() {
-    distance = fixed_minus_one;
-    elapsed_time = fixed_minus_one;
+    distance = fixed(-1);
+    elapsed_time = fixed(-1);
   }
 
   /**
@@ -68,7 +69,7 @@ public:
   };
 };
 
-static_assert(is_trivial<AirspaceInterceptSolution>::value,
+static_assert(std::is_trivial<AirspaceInterceptSolution>::value,
               "type is not trivial");
 
 #endif

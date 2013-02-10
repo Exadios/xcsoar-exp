@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
  */
 #include "ScoredTaskPoint.hpp"
 
-ScoredTaskPoint::ScoredTaskPoint(Type _type, const Waypoint & wp, bool b_scored):
-  SampledTaskPoint(_type, wp, b_scored)
+ScoredTaskPoint::ScoredTaskPoint(const GeoPoint &location, bool b_scored)
+  :SampledTaskPoint(location, b_scored)
 {
   Reset();
 }
@@ -67,22 +67,16 @@ ScoredTaskPoint::GetLocationTravelled() const
 const GeoPoint &
 ScoredTaskPoint::GetLocationScored() const
 {
-  if (boundary_scored || !HasEntered())
+  if (IsBoundaryScored() || !HasEntered())
     return GetLocationMin();
 
   return GetLocation();
-}
-
-const GeoPoint &
-ScoredTaskPoint::GetLocationRemaining() const
-{
-  return GetLocationMin();
 }
 
 void 
 ScoredTaskPoint::Reset()
 {
   SampledTaskPoint::Reset();
-  state_entered.time = fixed_minus_one;
+  state_entered.time = fixed(-1);
   has_exited = false;
 }

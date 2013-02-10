@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,20 +24,23 @@ Copyright_License {
 #ifndef XCSOAR_DEVICE_DRIVER_HPP
 #define XCSOAR_DEVICE_DRIVER_HPP
 
-#include "Device/Declaration.hpp"
-#include "RadioFrequency.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDate.hpp"
+#include "Time/BrokenTime.hpp"
 #include "Util/StaticArray.hpp"
+#include "Math/fixed.hpp"
 
 #include <tchar.h>
 #include <stdint.h>
 
 struct NMEAInfo;
+struct MoreData;
 struct DerivedInfo;
 struct DeviceConfig;
+struct Declaration;
 struct Waypoint;
 class Port;
 class AtmosphericPressure;
+class RadioFrequency;
 class OperationEnvironment;
 
 struct RecordedFlightInfo {
@@ -60,6 +63,12 @@ struct RecordedFlightInfo {
     uint32_t imi;
 
     struct {
+      /**
+       * File name.  Only used by the LXNAV Nano sub-driver.  If this
+       * is empty, then the "classic" Colibri protocol is used.
+       */
+      char nano_filename[16];
+
       uint8_t start_address[3];
       uint8_t end_address[3];
     } lx;
@@ -68,6 +77,11 @@ struct RecordedFlightInfo {
      * Flight number, used by the FLARM driver.
      */
     uint8_t flarm;
+
+    /**
+     * Flight number, used by Volkslogger driver
+     */
+    uint8_t volkslogger;
 
     /**
      * Flight number, used by the Flytec driver.
@@ -152,10 +166,10 @@ public:
   /**
    * Set the radio volume.
    *
-   * @param volume the new volume (XXX define this)
+   * @param volume the new volume (0 - 100%)
    * @return true on success
    */
-  virtual bool PutVolume(int volume, OperationEnvironment &env) = 0;
+  virtual bool PutVolume(unsigned volume, OperationEnvironment &env) = 0;
 
   /**
    * Set a new radio frequency.
@@ -219,7 +233,7 @@ public:
    *
    * @param calculated the current set of calculation results
    */
-  virtual void OnSysTicker(const DerivedInfo &calculated) = 0;
+  virtual void OnSysTicker() = 0;
 
   /**
    * Called when data is received and the device is configured to
@@ -230,6 +244,36 @@ public:
    */
   virtual bool DataReceived(const void *data, size_t length,
                             struct NMEAInfo &info) = 0;
+
+  /**
+   * This method is invoked by #MergeThread after each merge,
+   * i.e. each time any device updates its #NMEAInfo object.  If there
+   * are many devices or if there is a device with a high output rate,
+   * this method may be called very often.  If no device is connected,
+   * it may not be called at all.
+   *
+   * It is meant to be implemented by drivers that forward data
+   * quickly to the device, for example an analog vario needle.
+   *
+   * Note that this method will be invoked on sensor changes on any
+   * device, including this one.
+   *
+   * Caution!  This method will be called with the DeviceBlackboard
+   * mutex locked.  Therefore it must not block and must be very
+   * careful with obtaining more mutexes, as this may block the whole
+   * XCSoar process.
+   *
+   * @param basic the merged sensor data
+   */
+  virtual void OnSensorUpdate(const MoreData &basic) = 0;
+
+  /**
+   * This method is invoked by the main thread after each
+   * CalculationThread run.  It is meant for drivers which want to
+   * send calculation results to the device.
+   */
+  virtual void OnCalculatedUpdate(const MoreData &basic,
+                                  const DerivedInfo &calculated) = 0;
 };
 
 /**
@@ -238,45 +282,44 @@ public:
  */
 class AbstractDevice : public Device {
 public:
-  virtual void LinkTimeout();
-  virtual bool EnableNMEA(OperationEnvironment &env);
+  virtual void LinkTimeout() override;
+  virtual bool EnableNMEA(OperationEnvironment &env) override;
 
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 
-  virtual bool PutMacCready(fixed MacCready, OperationEnvironment &env);
-  virtual bool PutBugs(fixed bugs, OperationEnvironment &env);
+  virtual bool PutMacCready(fixed MacCready, OperationEnvironment &env) override;
+  virtual bool PutBugs(fixed bugs, OperationEnvironment &env) override;
   virtual bool PutBallast(fixed fraction, fixed overload,
-                          OperationEnvironment &env);
+                          OperationEnvironment &env) override;
   virtual bool PutQNH(const AtmosphericPressure &pres,
-                      OperationEnvironment &env);
-  virtual bool PutVolume(int volume, OperationEnvironment &env);
+                      OperationEnvironment &env) override;
+  virtual bool PutVolume(unsigned volume, OperationEnvironment &env) override;
   virtual bool PutActiveFrequency(RadioFrequency frequency,
-                                  OperationEnvironment &env);
+                                  OperationEnvironment &env) override;
   virtual bool PutStandbyFrequency(RadioFrequency frequency,
-                                   OperationEnvironment &env);
+                                   OperationEnvironment &env) override;
 
-  virtual bool EnablePassThrough(OperationEnvironment &env);
+  virtual bool EnablePassThrough(OperationEnvironment &env) override;
 
   virtual bool Declare(const Declaration &declaration, const Waypoint *home,
-                       OperationEnvironment &env);
+                       OperationEnvironment &env) override;
 
   virtual bool ReadFlightList(RecordedFlightList &flight_list,
-                              OperationEnvironment &env) {
-    return false;
-  }
+                              OperationEnvironment &env) override;
 
   virtual bool DownloadFlight(const RecordedFlightInfo &flight,
                               const TCHAR *path,
-                              OperationEnvironment &env) {
-    return false;
-  }
+                              OperationEnvironment &env) override;
 
-  virtual void OnSysTicker(const DerivedInfo &calculated);
+  virtual void OnSysTicker() override;
 
   virtual bool DataReceived(const void *data, size_t length,
-                            struct NMEAInfo &info) {
-    return false;
-  }
+                            struct NMEAInfo &info) override;
+
+  virtual void OnSensorUpdate(const MoreData &basic) override {}
+
+  virtual void OnCalculatedUpdate(const MoreData &basic,
+                                  const DerivedInfo &calculated) override {}
 };
 
 /**

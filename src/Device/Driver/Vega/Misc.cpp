@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,11 +37,14 @@ VegaDevice::LinkTimeout()
 }
 
 void
-VegaDevice::OnSysTicker(const DerivedInfo &calculated)
+VegaDevice::OnCalculatedUpdate(const MoreData &basic,
+                               const DerivedInfo &calculated)
 {
+  volatile_data.CopyFrom(calculated);
+
   if (detected) {
     NullOperationEnvironment env;
-    VarioWriteSettings(calculated, env);
+    volatile_data.SendTo(port, env);
   }
 
 #ifdef UAV_APPLICATION
@@ -51,8 +54,8 @@ VegaDevice::OnSysTicker(const DerivedInfo &calculated)
           (int)(t.estimate_valid),
           (double)t.estimate_location.Longitude.Degrees(),
           (double)t.estimate_location.Latitude.Degrees(),
-          (double)fixed_zero,
-          (double)fixed_zero);
+          (double)fixed(0),
+          (double)fixed(0));
 
   PortWriteNMEA(port, tbuf);
 #endif

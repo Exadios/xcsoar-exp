@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@ Copyright_License {
 #ifndef CHART_LOOK_HPP
 #define CHART_LOOK_HPP
 
+#include "Screen/Font.hpp"
 #include "Screen/Pen.hpp"
+#include "Screen/Brush.hpp"
 
 #include <assert.h>
-
-class Font;
 
 struct ChartLook {
   enum Style {
@@ -42,23 +42,24 @@ struct ChartLook {
 
   Pen pens[STYLE_COUNT];
 
+  Brush bar_brush;
+
   /**
    * Font for miscellaneous labels in the chart.
    */
-  const Font *label_font;
+  Font label_font;
 
   /**
    * Font for the two axis labels.
    */
-  const Font *axis_label_font;
+  Font axis_label_font;
 
   /**
    * Font for tick values along the axis.
    */
-  const Font *axis_value_font;
+  Font axis_value_font;
 
-  void Initialise(const Font &label_font,
-                  const Font &axis_label_font, const Font &axis_value_font);
+  void Initialise();
 
   const Pen &GetPen(Style style) const {
     unsigned i = (unsigned)style;

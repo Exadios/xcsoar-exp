@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,68 +28,45 @@ Copyright_License {
 #include "Util/StaticString.hpp"
 #include "Units/Units.hpp"
 
-tstring
-AirspaceFormatter::GetAltitudeShort(const AirspaceAltitude &altitude)
+void
+AirspaceFormatter::FormatAltitudeShort(TCHAR *buffer,
+                                       const AirspaceAltitude &altitude)
 {
-  StaticString<64> buffer;
-
-  switch (altitude.type) {
-  case AirspaceAltitude::Type::AGL:
+  switch (altitude.reference) {
+  case AltitudeReference::AGL:
     if (!positive(altitude.altitude_above_terrain))
-      buffer = _T("GND");
+      _tcscpy(buffer, _T("GND"));
     else
-      buffer.Format(_T("%d %s AGL"),
-                    iround(Units::ToUserAltitude(altitude.altitude_above_terrain)),
-                    Units::GetAltitudeName());
+      _stprintf(buffer, _T("%d %s AGL"),
+                iround(Units::ToUserAltitude(altitude.altitude_above_terrain)),
+                Units::GetAltitudeName());
     break;
-  case AirspaceAltitude::Type::FL:
-    buffer.Format(_T("FL%d"), (int)altitude.flight_level);
+
+  case AltitudeReference::STD:
+    _stprintf(buffer, _T("FL%d"), (int)altitude.flight_level);
     break;
-  case AirspaceAltitude::Type::MSL:
-    buffer.Format(_T("%d %s"), iround(Units::ToUserAltitude(altitude.altitude)),
-                  Units::GetAltitudeName());
+
+  case AltitudeReference::MSL:
+    _stprintf(buffer, _T("%d %s"),
+              iround(Units::ToUserAltitude(altitude.altitude)),
+              Units::GetAltitudeName());
     break;
-  case AirspaceAltitude::Type::UNDEFINED:
-    buffer.clear();
+
+  case AltitudeReference::NONE:
+    *buffer = _T('\0');
     break;
   }
-
-  return tstring(buffer);
 }
 
-tstring
-AirspaceFormatter::GetAltitude(const AirspaceAltitude &altitude)
+void
+AirspaceFormatter::FormatAltitude(TCHAR *buffer,
+                                  const AirspaceAltitude &altitude)
 {
-  StaticString<64> buffer;
-  if (altitude.type != AirspaceAltitude::Type::MSL && positive(altitude.altitude))
-    buffer.Format(_T(" %d %s"), iround(Units::ToUserAltitude(altitude.altitude)),
-                        Units::GetAltitudeName());
-  else
-    buffer.clear();
+  FormatAltitudeShort(buffer, altitude);
 
-  return GetAltitudeShort(altitude) + buffer.c_str();
-}
-
-tstring
-AirspaceFormatter::GetBase(const AbstractAirspace &airspace)
-{
-  return GetAltitude(airspace.GetBase());
-}
-
-tstring
-AirspaceFormatter::GetBaseShort(const AbstractAirspace &airspace)
-{
-  return GetAltitudeShort(airspace.GetBase());
-}
-
-tstring
-AirspaceFormatter::GetTop(const AbstractAirspace &airspace)
-{
-  return GetAltitude(airspace.GetTop());
-}
-
-tstring
-AirspaceFormatter::GetTopShort(const AbstractAirspace &airspace)
-{
-  return GetAltitudeShort(airspace.GetTop());
+  if (altitude.reference != AltitudeReference::MSL &&
+      positive(altitude.altitude))
+    _stprintf(buffer + _tcslen(buffer), _T(" %d %s"),
+              iround(Units::ToUserAltitude(altitude.altitude)),
+              Units::GetAltitudeName());
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,21 +22,13 @@ Copyright_License {
 */
 
 #include "WindSetup.hpp"
-#include "Dialogs/dlgInfoBoxAccess.hpp"
-#include "Form/Util.hpp"
-#include "Form/TabBar.hpp"
 #include "Form/DataField/Enum.hpp"
 #include "Form/DataField/Boolean.hpp"
-#include "InfoBoxes/InfoBoxManager.hpp"
-#include "Profile/ProfileKeys.hpp"
 #include "Interface.hpp"
-#include "Units/Group.hpp"
-#include "Form/RowFormWidget.hpp"
+#include "Widget/RowFormWidget.hpp"
 #include "Form/DataField/Listener.hpp"
 #include "UIGlobals.hpp"
 #include "Language/Language.hpp"
-#include "Screen/Layout.hpp"
-#include "Look/DialogLook.hpp"
 
 enum ControlIndex {
   AutoWind,
@@ -52,11 +44,12 @@ public:
   WindSetupPanel(unsigned _id)
     :RowFormWidget(UIGlobals::GetDialogLook()), id(_id) {}
 
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
+  virtual void Prepare(ContainerWindow &parent,
+                       const PixelRect &rc) override;
 
 protected:
   /* methods from DataFieldListener */
-  virtual void OnModified(DataField &df);
+  virtual void OnModified(DataField &df) override;
 
 private:
   void OnAutoWind(DataFieldEnum &Sender);
@@ -66,7 +59,7 @@ private:
 void
 WindSetupPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 {
-  const NMEAInfo &basic = XCSoarInterface::Basic();
+  const NMEAInfo &basic = CommonInterface::Basic();
   const WindSettings &settings = CommonInterface::GetComputerSettings().wind;
   const bool external_wind = basic.external_wind_available &&
     settings.use_external_wind;
@@ -98,7 +91,7 @@ WindSetupPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
 
   AddBoolean(_("Trail drift"),
              _("Determines whether the snail trail is drifted with the wind when displayed in circling mode."),
-             XCSoarInterface::GetMapSettings().trail.wind_drift_enabled, this);
+             CommonInterface::GetMapSettings().trail.wind_drift_enabled, this);
 }
 
 
@@ -122,7 +115,7 @@ WindSetupPanel::OnAutoWind(DataFieldEnum &Sender)
 void
 WindSetupPanel::OnTrailDrift(DataFieldBoolean &Sender)
 {
-  XCSoarInterface::SetMapSettings().trail.wind_drift_enabled = Sender.GetAsBoolean();
+  CommonInterface::SetMapSettings().trail.wind_drift_enabled = Sender.GetAsBoolean();
 }
 
 Widget *

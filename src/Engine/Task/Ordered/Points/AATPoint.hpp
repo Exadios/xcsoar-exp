@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,24 @@
 #define AATPOINT_HPP
 
 #include "IntermediatePoint.hpp"
+#include "Math/Angle.hpp"
+
+struct RangeAndRadial {
+  /**
+   * Thesigned range [-1,1] from near point on perimeter through
+   * center to far side of the oz perimeter.
+   */
+  fixed range;
+
+  /**
+   * The bearing of the target.
+   */
+  Angle radial;
+
+  static constexpr RangeAndRadial Zero() {
+    return RangeAndRadial{fixed(0), Angle::Zero()};
+  }
+};
 
 /**
  * An AATPoint is an abstract IntermediatePoint,
@@ -34,14 +52,10 @@
  * \todo
  * - Elevation may vary with target shift
  */
-class AATPoint: public IntermediateTaskPoint
+class AATPoint final : public IntermediateTaskPoint
 {
-  friend class PrintHelper;
-
   /** Location of target within OZ */
   GeoPoint target_location;
-  /** Saved location of target within OZ */
-  GeoPoint target_save;
   /** Whether target can float */
   bool target_locked;
 
@@ -53,18 +67,15 @@ public:
    * @param _oz Observation zone for this task point
    * @param wp Waypoint origin of turnpoint
    * @param tb Task Behaviour defining options (esp safety heights)
-   * @param to OrderedTask Behaviour defining options
    *
    * @return Partially-initialised object
    */
-  AATPoint(ObservationZonePoint* _oz,
-           const Waypoint & wp,
-           const TaskBehaviour &tb,
-           const OrderedTaskBehaviour& to) : 
-    IntermediateTaskPoint(AAT, _oz, wp, tb, to, true),
-    target_location(wp.location),
-    target_save(wp.location),
-    target_locked(false)
+  AATPoint(ObservationZonePoint *_oz,
+           const Waypoint &wp,
+           const TaskBehaviour &tb)
+    :IntermediateTaskPoint(TaskPointType::AAT, _oz, wp, tb, true),
+     target_location(wp.location),
+     target_locked(false)
   {
   }
 
@@ -75,6 +86,10 @@ public:
    */
   void LockTarget(bool do_lock) {
     target_locked = do_lock;
+  }
+
+  const GeoPoint &GetTarget() const {
+    return target_location;
   }
 
   /**
@@ -89,14 +104,8 @@ public:
    * Set target location from a signed range & radial as bearing
    * referenced from the previous target
    * used by dlgTarget
-   *
-   * @param range the signed range [-1,1] from near point on
-   * perimeter through center to far side of the oz perimeter
-   *
-   * @param radial the bearing in degrees of the target
    */
-  void SetTarget(const fixed range, const fixed radial,
-                 const TaskProjection &projection);
+  void SetTarget(RangeAndRadial rar, const TaskProjection &projection);
 
   /**
    * returns position of the target in signed range & radial as
@@ -109,7 +118,8 @@ public:
    * @param &radial returns the bearing in degrees of
    * the target
    */
-  void GetTargetRangeRadial(fixed &range, fixed &radial) const;
+  gcc_pure
+  RangeAndRadial GetTargetRangeRadial(fixed old_range=fixed(0)) const;
 
   /**
    * Accessor to get target location
@@ -130,7 +140,32 @@ public:
    */
   gcc_pure
   bool IsCloseToTarget(const AircraftState& state,
-                       const fixed threshold=fixed_zero) const;
+                       const fixed threshold=fixed(0)) const;
+
+  /**
+   * Set target to parametric value between min and max locations.
+   * Targets are only moved for current or after taskpoints, unless
+   * force_if_current is true.
+   *
+   * @param p Parametric range (0:1) to set target
+   * @param force_if_current If current active, force range move (otherwise ignored)
+   *
+   * @return True if target was moved
+   */
+  bool SetRange(const fixed p, bool force_if_current);
+
+  /**
+   * If this TaskPoint has the capability to adjust the
+   * target/range, this indicates whether it is locked from
+   * being updated by the optimizer
+   * Only valid for TaskPoints where has_target() returns true
+   *
+   * @return True if target is locked
+   *    or False if target is unlocked or tp has no target
+   */
+  bool IsTargetLocked() const {
+    return target_locked;
+  }
 
 private:
   /**
@@ -170,36 +205,19 @@ private:
 public:
 
   /* virtual methods from class TaskPoint */
-  const GeoPoint& GetLocationRemaining() const;
-  virtual bool SetRange(const fixed p, const bool force_if_current);
-
-  virtual bool IsTargetLocked() const {
-    return target_locked;
-  }
-
-  virtual void SaveTarget() {
-    target_save = target_location;
-  }
-
-  virtual void RestoreTarget() {
-    target_location = target_save;
-  }
-
-  /* virtual methods from class SampledTaskPoint */
-  virtual bool UpdateSampleNear(const AircraftState &state,
-                                TaskEvents *task_events,
-                                const TaskProjection &projection);
-  virtual bool UpdateSampleFar(const AircraftState &state,
-                               TaskEvents *task_events,
-                               const TaskProjection &projection);
+  const GeoPoint& GetLocationRemaining() const override;
 
   /* virtual methods from class ObservationZoneClient */
-  virtual fixed ScoreAdjustment() const {
-    return fixed_zero;
+  virtual fixed ScoreAdjustment() const override {
+    return fixed(0);
   }
 
-private:
   /* virtual methods from class OrderedTaskPoint */
-  virtual bool Equals(const OrderedTaskPoint &other) const;
+  virtual bool Equals(const OrderedTaskPoint &other) const override;
+  virtual bool UpdateSampleNear(const AircraftState &state,
+                                const TaskProjection &projection) override;
+  virtual bool UpdateSampleFar(const AircraftState &state,
+                               const TaskProjection &projection) override;
 };
+
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ Copyright_License {
 #define XCSOAR_AIRSPACE_FORMATTER_HPP
 
 #include "Engine/Airspace/AirspaceClass.hpp"
-#include "Util/tstring.hpp"
+#include "Compiler.h"
 
 #include <tchar.h>
 
@@ -35,36 +35,26 @@ struct AirspaceAltitude;
 namespace AirspaceFormatter {
 
 /** Returns the airspace class as text. */
+gcc_const
 const TCHAR *GetClass(AirspaceClass airspace_class);
+
 /** Returns the airspace class as short text. */
+gcc_const
 const TCHAR *GetClassShort(AirspaceClass airspace_class);
 
 /** Returns the class of the airspace as text. */
+gcc_pure
 const TCHAR *GetClass(const AbstractAirspace &airspace);
+
 /** Returns the class of the airspace as short text. */
+gcc_pure
 const TCHAR *GetClassShort(const AbstractAirspace &airspace);
 
-/** Returns the airspace name and class as text. */
-tstring GetNameAndClass(const AbstractAirspace &airspace);
+  /** Returns the airspace altitude limit as text with unit. */
+  void FormatAltitude(TCHAR *buffer, const AirspaceAltitude &altitude);
 
-/** Returns the airspace altitude limit as text with unit. */
-tstring GetAltitude(const AirspaceAltitude &altitude);
-/** Returns the airspace altitude limit as short text with unit. */
-tstring GetAltitudeShort(const AirspaceAltitude &altitude);
-
-/** Returns the base and top altitudes as text without units */
-tstring GetVerticalText(const AbstractAirspace &airspace);
-
-/** Returns the base altitude as text with unit. */
-tstring GetBase(const AbstractAirspace &airspace);
-/** Returns the base altitude as short text with unit. */
-tstring GetBaseShort(const AbstractAirspace &airspace);
-
-/** Returns the top altitude as text with unit. */
-tstring GetTop(const AbstractAirspace &airspace);
-/** Returns the top altitude as short text with unit. */
-tstring GetTopShort(const AbstractAirspace &airspace);
-
+  /** Returns the airspace altitude limit as short text with unit. */
+  void FormatAltitudeShort(TCHAR *buffer, const AirspaceAltitude &altitude);
 }
 
 #endif

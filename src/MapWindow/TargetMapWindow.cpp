@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -98,14 +98,12 @@ TargetMapWindow::~TargetMapWindow()
 }
 
 void
-TargetMapWindow::set(ContainerWindow &parent,
-                     PixelScalar left, PixelScalar top,
-                     UPixelScalar width, UPixelScalar height,
-                     WindowStyle style)
+TargetMapWindow::Create(ContainerWindow &parent, PixelRect rc,
+                        WindowStyle style)
 {
   projection.SetScale(fixed(0.01));
 
-  BufferWindow::set(parent, left, top, width, height, style);
+  BufferWindow::Create(parent, rc, style);
 }
 
 void
@@ -188,7 +186,7 @@ TargetMapWindow::RenderTrail(Canvas &canvas)
   if (glide_computer == NULL)
     return;
 
-  unsigned min_time = max(0, (int)Basic().time - 600);
+  unsigned min_time = std::max(0, (int)Basic().time - 600);
   trail_renderer.Draw(canvas, glide_computer->GetTraceComputer(),
                       projection, min_time);
 }
@@ -232,7 +230,7 @@ TargetMapWindow::OnPaintBuffer(Canvas &canvas)
   // Finally, draw you!
   if (Basic().alive)
     AircraftRenderer::Draw(canvas, GetMapSettings(), aircraft_look,
-                           Calculated().heading - projection.GetScreenAngle(),
+                           Basic().attitude.heading - projection.GetScreenAngle(),
                            aircraft_pos);
 }
 
@@ -263,7 +261,7 @@ TargetMapWindow::SetTopograpgy(TopographyStore *topography)
 static fixed
 GetRadius(const ObservationZonePoint &oz)
 {
-  switch (oz.shape) {
+  switch (oz.GetShape()) {
   case ObservationZonePoint::LINE:
   case ObservationZonePoint::CYLINDER:
   case ObservationZonePoint::SECTOR:
@@ -277,7 +275,7 @@ GetRadius(const ObservationZonePoint &oz)
     return cz.GetRadius();
   }
 
-  return fixed_one;
+  return fixed(1);
 }
 
 static fixed
@@ -314,19 +312,19 @@ TargetMapWindow::SetTarget(unsigned index)
 }
 
 void
-TargetMapWindow::OnResize(UPixelScalar width, UPixelScalar height)
+TargetMapWindow::OnResize(PixelSize new_size)
 {
-  BufferWindow::OnResize(width, height);
+  BufferWindow::OnResize(new_size);
 
 #ifndef ENABLE_OPENGL
-  buffer_canvas.grow(width, height);
+  buffer_canvas.Grow(new_size);
 
   if (!IsAncientHardware())
-    stencil_canvas.grow(width, height);
+    stencil_canvas.Grow(new_size);
 #endif
 
-  projection.SetScreenSize(width, height);
-  projection.SetScreenOrigin(width / 2, height / 2);
+  projection.SetScreenSize(new_size);
+  projection.SetScreenOrigin(new_size.cx / 2, new_size.cy / 2);
   projection.UpdateScreenBounds();
 }
 
@@ -339,10 +337,10 @@ TargetMapWindow::OnCreate()
 
 #ifndef ENABLE_OPENGL
   WindowCanvas canvas(*this);
-  buffer_canvas.set(canvas);
+  buffer_canvas.Create(canvas);
 
   if (!IsAncientHardware())
-    stencil_canvas.set(canvas);
+    stencil_canvas.Create(canvas);
 #endif
 }
 
@@ -355,10 +353,10 @@ TargetMapWindow::OnDestroy()
   SetWaypoints(NULL);
 
 #ifndef ENABLE_OPENGL
-  buffer_canvas.reset();
+  buffer_canvas.Destroy();
 
   if (!IsAncientHardware())
-    stencil_canvas.reset();
+    stencil_canvas.Destroy();
 #endif
 
   BufferWindow::OnDestroy();

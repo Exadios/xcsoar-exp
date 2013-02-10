@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ RoutePolars::Initialise(const GlideSettings &settings, const GlidePolar &polar,
   if (positive(imc))
     inv_mc = fixed(MC_CEILING_PENALTY_FACTOR) * imc;
   else
-    inv_mc = fixed_zero;
+    inv_mc = fixed(0);
 }
 
 unsigned
@@ -73,11 +73,11 @@ RoutePolars::CalcTime(const RouteLink& link) const
 
   // dh/d = gradient
   const fixed rho = dh.IsPositive() ?
-    std::min(fixed_one, (dh * link.inv_d *
+    std::min(fixed(1), (dh * link.inv_d *
                          polar_glide.GetPoint(link.polar_index).inv_gradient)) :
-    fixed_zero;
+    fixed(0);
 
-  if ((rho < fixed_one) && !polar_cruise.GetPoint(link.polar_index).valid)
+  if ((rho < fixed(1)) && !polar_cruise.GetPoint(link.polar_index).valid)
     // impossible, can't cruise
     return UINT_MAX;
 
@@ -87,7 +87,7 @@ RoutePolars::CalcTime(const RouteLink& link) const
 
   const int t_cruise = (int)(
     link.d * (rho * polar_glide.GetPoint(link.polar_index).slowness +
-    (fixed_one - rho) * polar_cruise.GetPoint(link.polar_index).slowness));
+    (fixed(1) - rho) * polar_cruise.GetPoint(link.polar_index).slowness));
 
   if (link.second.altitude > cruise_altitude) {
     // penalise any climbs required above cruise altitude
@@ -218,7 +218,7 @@ RoutePolars::Intersection(const AGeoPoint& origin, const AGeoPoint& destination,
                           const RasterMap* map, const TaskProjection& proj,
                           GeoPoint& intx) const
 {
-  if (!map || !map->isMapLoaded())
+  if (map == nullptr || !map->IsDefined())
     return false;
 
   RouteLink e(RoutePoint(proj.ProjectInteger(destination),
@@ -247,7 +247,7 @@ RoutePolars::ReachIntercept(const int index, const AGeoPoint& origin,
                              const RasterMap* map,
                              const TaskProjection& proj) const
 {
-  const bool valid = map && map->isMapLoaded();
+  const bool valid = map && map->IsDefined();
   const RoughAltitude altitude = origin.altitude - GetSafetyHeight();
   const AGeoPoint m_origin((GeoPoint)origin, altitude);
   const GeoPoint dest = MSLIntercept(index, m_origin, proj);

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -39,12 +39,6 @@ GlideComputerTaskEvents::EnterTransition(const TaskWaypoint &tp)
 }
 
 void
-GlideComputerTaskEvents::AlternateTransition()
-{
-  InputEvents::processGlideComputer(GCE_ALTERNATE_CHANGED);
-}
-
-void
 GlideComputerTaskEvents::RequestArm(const TaskWaypoint &tp)
 {
   InputEvents::processGlideComputer(GCE_ARM_READY);
@@ -68,13 +62,4 @@ GlideComputerTaskEvents::TaskFinish()
 {
   InputEvents::processGlideComputer(GCE_TASK_FINISH);
   computer->OnFinishTask();
-}
-
-void
-GlideComputerTaskEvents::FlightModeTransition(const bool is_final)
-{
-  if (is_final)
-    InputEvents::processGlideComputer(GCE_FLIGHTMODE_FINALGLIDE);
-  else
-    InputEvents::processGlideComputer(GCE_FLIGHTMODE_CRUISE);
 }

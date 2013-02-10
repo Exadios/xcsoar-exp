@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,35 +24,20 @@ Copyright_License {
 #ifndef XCSOAR_MARKS_HPP
 #define XCSOAR_MARKS_HPP
 
-#include "Geo/GeoPoint.hpp"
-#include "DateTime.hpp"
+#include "Marker.hpp"
 
 #include <vector>
-
-class WindowProjection;
-class Canvas;
-struct MarkerLook;
 
 class Markers
 {
 public:
-  struct Marker {
-    GeoPoint location;
-    BrokenDateTime time;
-  };
-
   typedef std::vector<Marker>::const_iterator const_iterator;
 
 private:
   std::vector<Marker> marker_store;
 
 public:
-  Markers();
-  ~Markers();
-
   void Reset();
-  void Draw(Canvas &canvas, const WindowProjection &projection,
-            const MarkerLook &look) const;
   void MarkLocation(const GeoPoint &loc, const BrokenDateTime &time);
 
   const_iterator begin() const {

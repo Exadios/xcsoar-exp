@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ Copyright_License {
 #include "NMEA/ClimbHistory.hpp"
 #include "TeamCode.hpp"
 #include "Engine/Navigation/TraceHistory.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDateTime.hpp"
 #include "Engine/GlideSolvers/GlidePolar.hpp"
 #include "Atmosphere/Pressure.hpp"
 #include "Engine/Route/Route.hpp"
@@ -84,16 +84,13 @@ struct TerrainInfo
   }
 };
 
-static_assert(is_trivial<TerrainInfo>::value, "type is not trivial");
+static_assert(std::is_trivial<TerrainInfo>::value, "type is not trivial");
 
 /** Derived team code information */
 struct TeamInfo
 {
   /** Are #teammate_vector and #TeammateLocation available? */
   bool teammate_available;
-
-  /** Is #flarm_teammate_code available? */
-  bool flarm_teammate_code_available;
 
   /** is #flarm_teammate_code current or did we lose him? */
   bool flarm_teammate_code_current;
@@ -107,13 +104,16 @@ struct TeamInfo
   /** Position of the chosen team mate */
   GeoPoint teammate_location;
 
-  /** The team code of the FLARM teammate. */
+  /**
+   * The team code of the FLARM teammate.  Check TeamCode::IsDefined()
+   * before using this attribute.
+   */
   TeamCode flarm_teammate_code;
 
   void Clear();
 };
 
-static_assert(is_trivial<TeamInfo>::value, "type is not trivial");
+static_assert(std::is_trivial<TeamInfo>::value, "type is not trivial");
 
 struct AirspaceWarningsInfo {
   /**
@@ -125,7 +125,7 @@ struct AirspaceWarningsInfo {
   void Clear();
 };
 
-static_assert(is_trivial<AirspaceWarningsInfo>::value, "type is not trivial");
+static_assert(std::is_trivial<AirspaceWarningsInfo>::value, "type is not trivial");
 
 /**
  * A struct that holds all the calculated values derived from the data in the
@@ -143,9 +143,6 @@ struct DerivedInfo:
 
   /** Speed to fly block/dolphin (m/s) */
   fixed V_stf;
-
-  /** Bearing including wind factor */
-  Angle heading;
 
   /** Auto QNH calculation result. */
   AtmosphericPressure pressure;
@@ -180,6 +177,10 @@ struct DerivedInfo:
 
   /** Copy of task statistics data for active task */
   TaskStats task_stats;
+
+  /** Copy of task statistics data for ordered task */
+  TaskStats ordered_task_stats;
+
   /** Copy of common task statistics data */
   CommonStats common_stats;
   /** Copy of contest statistics data */

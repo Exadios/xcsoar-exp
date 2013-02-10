@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,9 +25,11 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 
 void
-WindArrowLook::Initialise()
+WindArrowLook::Initialise(const Font &_font, bool inverse)
 {
-  arrow_pen.Set(Layout::Scale(1), DarkColor(COLOR_GRAY));
-  tail_pen.Set(Pen::DASH, 1, COLOR_BLACK);
+  arrow_pen.Set(Layout::Scale(1), inverse ? LightColor(COLOR_GRAY) : DarkColor(COLOR_GRAY));
+  tail_pen.Set(Pen::DASH, 1, inverse ? COLOR_WHITE : COLOR_BLACK);
   arrow_brush.Set(COLOR_GRAY);
+
+  font = &_font;
 }

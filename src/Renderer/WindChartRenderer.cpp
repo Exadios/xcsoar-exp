@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,6 +28,23 @@ Copyright_License {
 #include "NMEA/Info.hpp"
 #include "Math/LeastSquares.hpp"
 #include "Units/Units.hpp"
+#include "Math/FastRotation.hpp"
+#include "Screen/Canvas.hpp"
+
+static void
+DrawArrow(Canvas &canvas, RasterPoint point, const fixed mag, const Angle angle)
+{
+  const FastRotation r(angle);
+
+  FastRotation::Pair p = r.Rotate(mag, fixed(0));
+  canvas.DrawLine(point, point + RasterPoint((int)p.first, (int)p.second));
+
+  p = r.Rotate(mag - fixed(5), fixed(-3));
+  canvas.DrawLine(point, point + RasterPoint((int)p.first, (int)p.second));
+
+  p = r.Rotate(mag - fixed(5), fixed(3));
+  canvas.DrawLine(point, point + RasterPoint((int)p.first, (int)p.second));
+}
 
 void
 RenderWindChart(Canvas &canvas, const PixelRect rc,
@@ -36,41 +53,36 @@ RenderWindChart(Canvas &canvas, const PixelRect rc,
                 const NMEAInfo &nmea_info,
                 const WindStore &wind_store)
 {
-  int numsteps = 10;
-  int i;
-  fixed h;
-  Vector wind;
+  unsigned numsteps = 10;
   bool found = true;
-  fixed mag;
 
   LeastSquares windstats_mag;
   ChartRenderer chart(chart_look, canvas, rc);
 
-  if (fs.altitude_ceiling.y_max - fs.altitude_ceiling.y_min <= fixed_ten) {
+  if (fs.altitude_ceiling.y_max - fs.altitude_ceiling.y_min <= fixed(10)) {
     chart.DrawNoData();
     return;
   }
 
-  for (i = 0; i < numsteps; i++) {
-    h = fixed(fs.altitude_ceiling.y_max - fs.altitude_base.y_min) * i /
-        (numsteps - 1) + fixed(fs.altitude_base.y_min);
+  for (unsigned i = 0; i < numsteps; i++) {
+    fixed h = fixed(fs.altitude_ceiling.y_max - fs.altitude_base.y_min) * i /
+              (numsteps - 1) + fixed(fs.altitude_base.y_min);
 
-    wind = wind_store.GetWind(nmea_info.time, h, found);
-    mag = wind.Magnitude();
+    Vector wind = wind_store.GetWind(nmea_info.time, h, found);
+    fixed mag = wind.Magnitude();
 
     windstats_mag.LeastSquaresUpdate(mag, h);
   }
 
   chart.ScaleXFromData(windstats_mag);
-  chart.ScaleXFromValue(fixed_zero);
-  chart.ScaleXFromValue(fixed_ten);
+  chart.ScaleXFromValue(fixed(0));
+  chart.ScaleXFromValue(fixed(10));
 
   chart.ScaleYFromData(windstats_mag);
 
-  chart.DrawXGrid(Units::ToSysSpeed(fixed(5)), fixed_zero,
+  chart.DrawXGrid(Units::ToSysSpeed(fixed(5)),
                   ChartLook::STYLE_THINDASHPAPER, fixed(5), true);
   chart.DrawYGrid(Units::ToSysAltitude(fixed(1000)),
-                  fixed_zero,
                   ChartLook::STYLE_THINDASHPAPER, fixed(1000), true);
   chart.DrawLineGraph(windstats_mag, ChartLook::STYLE_MEDIUMBLACK);
 
@@ -78,26 +90,29 @@ RenderWindChart(Canvas &canvas, const PixelRect rc,
 
   numsteps = (int)((rc.bottom - rc.top) / WINDVECTORMAG) - 1;
 
+  canvas.Select(chart_look.GetPen(ChartLook::STYLE_MEDIUMBLACK));
+
   // draw direction vectors
   fixed hfact;
-  for (i = 0; i < numsteps; i++) {
+  for (unsigned i = 0; i < numsteps; i++) {
     hfact = fixed(i + 1) / (numsteps + 1);
-    h = fixed(fs.altitude_ceiling.y_max - fs.altitude_base.y_min) * hfact +
-        fixed(fs.altitude_base.y_min);
+    fixed h = fixed(fs.altitude_ceiling.y_max - fs.altitude_base.y_min) * hfact +
+              fixed(fs.altitude_base.y_min);
 
-    wind = wind_store.GetWind(nmea_info.time, h, found);
-    if (windstats_mag.x_max == fixed_zero)
-      windstats_mag.x_max = fixed_one; // prevent /0 problems
+    Vector wind = wind_store.GetWind(nmea_info.time, h, found);
+    if (windstats_mag.x_max == fixed(0))
+      windstats_mag.x_max = fixed(1); // prevent /0 problems
     wind.x /= fixed(windstats_mag.x_max);
     wind.y /= fixed(windstats_mag.x_max);
-    mag = wind.Magnitude();
+    fixed mag = wind.Magnitude();
     if (negative(mag))
       continue;
 
-    Angle angle = Angle::Radians(atan2(-wind.x, wind.y));
+    Angle angle = Angle::FromXY(wind.y, -wind.x);
 
-    chart.DrawArrow((chart.GetXMin() + chart.GetXMax()) / 2, h,
-                    mag * WINDVECTORMAG, angle, ChartLook::STYLE_MEDIUMBLACK);
+    RasterPoint point = chart.ToScreen((chart.GetXMin() + chart.GetXMax()) / 2, h);
+
+    DrawArrow(canvas, point, mag * WINDVECTORMAG, angle);
   }
 
   chart.DrawXLabel(_T("w"), Units::GetSpeedName());

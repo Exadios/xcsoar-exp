@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,38 +22,44 @@
 
 #include "StartPoint.hpp"
 #include "Task/Ordered/OrderedTaskBehaviour.hpp"
+#include "Task/ObservationZones/Boundary.hpp"
 #include "Task/TaskBehaviour.hpp"
-#include "Task/TaskEvents.hpp"
-#include "Math/ZeroFinder.hpp"
 #include "Geo/Math.hpp"
 
 #include <assert.h>
 
-StartPoint::StartPoint(ObservationZonePoint* _oz,
-                       const Waypoint & wp,
-                       const TaskBehaviour& tb,
-                       const OrderedTaskBehaviour& to): 
-  OrderedTaskPoint(START, _oz, wp, to),
-  safety_height_terrain(tb.route_planner.safety_height_terrain),
-  margins(tb)
+StartPoint::StartPoint(ObservationZonePoint *_oz,
+                       const Waypoint &wp,
+                       const TaskBehaviour &tb,
+                       const StartConstraints &_constraints)
+  :OrderedTaskPoint(TaskPointType::START, _oz, wp, false),
+   safety_height(tb.safety_height_arrival),
+   margins(tb.start_margins),
+   constraints(_constraints)
 {
 }
 
 void
 StartPoint::SetTaskBehaviour(const TaskBehaviour &tb)
 {
-  safety_height_terrain = tb.route_planner.safety_height_terrain;
-  margins = tb;
+  safety_height = tb.safety_height_arrival;
+  margins = tb.start_margins;
 }
 
 fixed
 StartPoint::GetElevation() const
 {
-  return GetBaseElevation() + safety_height_terrain;
+  return GetBaseElevation() + safety_height;
 }
 
+void
+StartPoint::SetOrderedTaskBehaviour(const OrderedTaskBehaviour &otb)
+{
+  OrderedTaskPoint::SetOrderedTaskBehaviour(otb);
+  constraints = otb.start_constraints;
+}
 
-void 
+void
 StartPoint::SetNeighbours(OrderedTaskPoint *_prev, OrderedTaskPoint *_next)
 {
   assert(_prev==NULL);
@@ -62,94 +68,64 @@ StartPoint::SetNeighbours(OrderedTaskPoint *_prev, OrderedTaskPoint *_next)
 }
 
 
-bool 
+bool
 StartPoint::UpdateSampleNear(const AircraftState& state,
-                             TaskEvents *task_events,
-                               const TaskProjection &projection)
+                             const TaskProjection &projection)
 {
-  if (task_events != NULL && IsInSector(state) &&
-      !ordered_task_behaviour.CheckStartSpeed(state, margins))
-    task_events->StartSpeedWarning();
+  /* TODO:
+  if (IsInSector(state) && !constraints.CheckSpeed(state, margins))
+    TO_BE_IMPLEMENTED;
+  */
 
-  return OrderedTaskPoint::UpdateSampleNear(state, task_events, projection);
+  return OrderedTaskPoint::UpdateSampleNear(state, projection);
 }
 
-void 
+void
 StartPoint::find_best_start(const AircraftState &state,
                             const OrderedTaskPoint &next,
                             const TaskProjection &projection)
 {
-  class StartPointBestStart: public ZeroFinder {
-    const StartPoint &start;
-    const GeoPoint loc_from;
-    const GeoPoint loc_to;
-    fixed p_offset;
+  /* check which boundary point results in the smallest distance to
+     fly */
 
-  public:
-    StartPointBestStart(const StartPoint& ts,
-                        const GeoPoint &_loc_from,
-                        const GeoPoint &_loc_to):
-      ZeroFinder(-fixed_half, fixed_half, fixed(0.01)),
-      start(ts),
-      loc_from(_loc_from),
-      loc_to(_loc_to) {};
+  const OZBoundary boundary = next.GetBoundary();
+  assert(!boundary.empty());
 
-    virtual fixed f(const fixed p) {
-      return ::DoubleDistance(loc_from, parametric(p), loc_to);
+  const auto end = boundary.end();
+  auto i = boundary.begin();
+  assert(i != end);
+
+  const GeoPoint &next_location = next.GetLocationRemaining();
+
+  GeoPoint best_location = *i;
+  fixed best_distance = ::DoubleDistance(state.location, *i, next_location);
+
+  for (++i; i != end; ++i) {
+    fixed distance = ::DoubleDistance(state.location, *i, next_location);
+    if (distance < best_distance) {
+      best_location = *i;
+      best_distance = distance;
     }
+  }
 
-    GeoPoint solve() {
-      // find approx solution first, being the offset for the local function
-      // minimiser search
-      p_offset = fixed_zero;
-      fixed f_best= f(fixed_zero);
-      for (; p_offset < fixed_one; p_offset += fixed(0.25)) {
-        fixed ff = f(fixed_zero);
-        if (ff< f_best) {
-          f_best = ff;
-        }
-      }
-      // now detailed search, returning result
-      return parametric(find_min(fixed_zero));
-    }
-  private:
-    GeoPoint parametric(const fixed p) {
-      // ensure parametric input is between 0 and 1
-      fixed pp = p+p_offset;
-      if (negative(pp)) {
-        pp+= fixed_one;
-      }
-      pp = fmod(pp,fixed_one);
-      return start.GetBoundaryParametric(pp);
-    }
-  };
-
-  StartPointBestStart solver(*this, state.location,
-                             next.GetLocationRemaining());
-  SetSearchMin(solver.solve(), projection);
+  SetSearchMin(SearchPoint(best_location, projection));
 }
 
-
-bool 
+bool
 StartPoint::IsInSector(const AircraftState &state) const
 {
-  if (!OrderedTaskPoint::IsInSector(state))
-    return false;
-
-  return ordered_task_behaviour.CheckStartHeight(state, margins,
-                                                 GetBaseElevation());
+  return OrderedTaskPoint::IsInSector(state) &&
+    constraints.CheckHeight(state, margins, GetBaseElevation());
 }
 
-bool 
-StartPoint::CheckExitTransition(const AircraftState & ref_now, 
-                                  const AircraftState & ref_last) const
+bool
+StartPoint::CheckExitTransition(const AircraftState &ref_now,
+                                const AircraftState &ref_last) const
 {
-  const bool now_in_height = 
-    ordered_task_behaviour.CheckStartHeight(ref_now, margins,
-                                            GetBaseElevation());
-  const bool last_in_height = 
-    ordered_task_behaviour.CheckStartHeight(ref_last, margins,
-                                            GetBaseElevation());
+  const bool now_in_height =
+    constraints.CheckHeight(ref_now, margins, GetBaseElevation());
+  const bool last_in_height =
+    constraints.CheckHeight(ref_last, margins, GetBaseElevation());
 
   if (now_in_height && last_in_height) {
     // both within height limit, so use normal location checks
@@ -160,8 +136,8 @@ StartPoint::CheckExitTransition(const AircraftState & ref_now,
     return false;
   }
 
-  // transition inside sector to above 
-  return !now_in_height && last_in_height 
+  // transition inside sector to above
+  return !now_in_height && last_in_height
     && OrderedTaskPoint::IsInSector(ref_last)
     && CanStartThroughTop();
 }

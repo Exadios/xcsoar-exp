@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@ Copyright_License {
 #ifndef XCSOAR_SYSTEM_SETTINGS_HPP
 #define XCSOAR_SYSTEM_SETTINGS_HPP
 
-#include "Util/TypeTraits.hpp"
 #include "Device/List.hpp"
 #include "Profile/DeviceConfig.hpp"
 #include "Hardware/ModelType.hpp"
 
+#include <type_traits>
 #include <array>
 
 struct SystemSettings {
@@ -41,6 +41,6 @@ struct SystemSettings {
   void SetDefaults();
 };
 
-static_assert(is_trivial<SystemSettings>::value, "type is not trivial");
+static_assert(std::is_trivial<SystemSettings>::value, "type is not trivial");
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -41,85 +41,6 @@ Copyright_License {
  *        -1 if a^2 + b^2 < c^2,
  */
 gcc_const int compare_squared(int a, int b, int c);
-
-gcc_const static inline int
-iround(fixed x)
-{
-  return (int)floor(x + fixed_half);
-}
-
-#ifdef FIXED_MATH
-extern const int COSTABLE[4096];
-extern const int SINETABLE[4096];
-extern const fixed::value_t INVCOSINETABLE[4096];
-#else
-extern const fixed COSTABLE[4096];
-extern const fixed SINETABLE[4096];
-extern const fixed INVCOSINETABLE[4096];
-#endif
-
-extern const short ISINETABLE[4096];
-extern const short ICOSTABLE[4096];
-
-#ifdef RADIANS
-#define INT_ANGLE_MULT fixed_constant(4096.0 / M_2PI, 0x28be60db93LL)
-#else
-#define INT_ANGLE_MULT fixed_constant(4096.0 / 360, 0xb60b60b6LL)
-#endif
-
-gcc_const
-static inline int
-NATIVE_TO_INT(fixed x)
-{
-  return iround(fast_mult(INT_ANGLE_MULT, 8, x, 2)) & 0xfff;
-}
-
-gcc_const
-static inline fixed
-invfastcosine(fixed x)
-{
-#ifdef FIXED_MATH
-  return fixed(fixed::internal(), INVCOSINETABLE[NATIVE_TO_INT(x)]);
-#else
-  return INVCOSINETABLE[NATIVE_TO_INT(x)];
-#endif
-}
-
-gcc_const
-static inline int
-ifastsine(fixed x)
-{
-  return ISINETABLE[NATIVE_TO_INT(x)];
-}
-
-gcc_const
-static inline int
-ifastcosine(fixed x)
-{
-  return ICOSTABLE[NATIVE_TO_INT(x)];
-}
-
-gcc_const
-static inline fixed
-fastsine(fixed x)
-{
-#ifdef FIXED_MATH
-  return fixed(fixed::internal(), SINETABLE[NATIVE_TO_INT(x)]);
-#else
-  return SINETABLE[NATIVE_TO_INT(x)];
-#endif
-}
-
-gcc_const
-static inline fixed
-fastcosine(fixed x)
-{
-#ifdef FIXED_MATH
-  return fixed(fixed::internal(), COSTABLE[NATIVE_TO_INT(x)]);
-#else
-  return COSTABLE[NATIVE_TO_INT(x)];
-#endif
-}
 
 #define NORMALISE_BITS 7
 
@@ -193,7 +114,8 @@ extern "C"
 #endif
 
 gcc_const
-unsigned int isqrt4(unsigned long val);
+unsigned
+isqrt4(unsigned val);
 
 #ifdef __cplusplus
 }
@@ -203,20 +125,16 @@ gcc_const
 static inline unsigned
 ihypot(int x, int y)
 {
-  const long lx = x, ly = y;
-  return isqrt4(lx * lx + ly * ly);
+  return isqrt4(x * x + y * y);
 }
 
+/**
+ * Calculates the hypotenuse, and shifts the result by the number of
+ * bits to the left.  Unlike ihypot(), this is mostly safe against
+ * integer overflow without the overhead for 64 bit math.
+ */
 gcc_const
-static inline unsigned long
-lhypot(long x, long y)
-{
-#if defined(__i386__) || defined(__x86_64__)
-  /* x86 FPUs are extremely fast */
-  return (unsigned long)hypot((double)x, (double)y);
-#else
-  return isqrt4(x * x + y * y);
-#endif
-}
+unsigned
+ShiftedIntegerHypot(int x, int y, unsigned bits);
 
 #endif

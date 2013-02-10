@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ Copyright_License {
 */
 
 #include "InfoBoxes/Content/Other.hpp"
-#include "InfoBoxes/InfoBoxWindow.hpp"
+#include "InfoBoxes/Data.hpp"
 #include "Interface.hpp"
 #include "Renderer/HorizonRenderer.hpp"
 #include "Hardware/Battery.hpp"
@@ -41,19 +41,19 @@ Copyright_License {
 #include <stdio.h>
 
 void
-InfoBoxContentGLoad::Update(InfoBoxData &data)
+UpdateInfoBoxGLoad(InfoBoxData &data)
 {
-  if (!XCSoarInterface::Basic().acceleration.available) {
+  if (!CommonInterface::Basic().acceleration.available) {
     data.SetInvalid();
     return;
   }
 
   // Set Value
-  data.SetValue(_T("%2.2f"), XCSoarInterface::Basic().acceleration.g_load);
+  data.SetValue(_T("%2.2f"), CommonInterface::Basic().acceleration.g_load);
 }
 
 void
-InfoBoxContentBattery::Update(InfoBoxData &data)
+UpdateInfoBoxBattery(InfoBoxData &data)
 {
 #ifdef HAVE_BATTERY
   bool DisplaySupplyVoltageAsValue=false;
@@ -62,12 +62,12 @@ InfoBoxContentBattery::Update(InfoBoxData &data)
       data.SetComment(_("AC Off"));
       break;
     case Power::External::ON:
-      if (!XCSoarInterface::Basic().voltage_available)
+      if (!CommonInterface::Basic().voltage_available)
         data.SetComment(_("AC ON"));
       else{
         DisplaySupplyVoltageAsValue = true;
         data.SetValue(_T("%2.1fV"),
-                          XCSoarInterface::Basic().voltage);
+                          CommonInterface::Basic().voltage);
       }
       break;
     case Power::External::UNKNOWN:
@@ -106,11 +106,11 @@ InfoBoxContentBattery::Update(InfoBoxData &data)
 
 #endif
 
-  if (XCSoarInterface::Basic().voltage_available) {
-    data.SetValue(_T("%2.1fV"), XCSoarInterface::Basic().voltage);
+  if (CommonInterface::Basic().voltage_available) {
+    data.SetValue(_T("%2.1fV"), CommonInterface::Basic().voltage);
     return;
-  } else if (XCSoarInterface::Basic().battery_level_available) {
-    data.SetValue(_T("%.0f%%"), XCSoarInterface::Basic().battery_level);
+  } else if (CommonInterface::Basic().battery_level_available) {
+    data.SetValue(_T("%.0f%%"), CommonInterface::Basic().battery_level);
     return;
   }
 
@@ -118,21 +118,21 @@ InfoBoxContentBattery::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentExperimental1::Update(InfoBoxData &data)
+UpdateInfoBoxExperimental1(InfoBoxData &data)
 {
   // Set Value
   data.SetInvalid();
 }
 
 void
-InfoBoxContentExperimental2::Update(InfoBoxData &data)
+UpdateInfoBoxExperimental2(InfoBoxData &data)
 {
   // Set Value
   data.SetInvalid();
 }
 
 void
-InfoBoxContentCPULoad::Update(InfoBoxData &data)
+UpdateInfoBoxCPULoad(InfoBoxData &data)
 {
   unsigned percent_load = SystemLoadCPU();
   if (percent_load <= 100) {
@@ -143,7 +143,7 @@ InfoBoxContentCPULoad::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentFreeRAM::Update(InfoBoxData &data)
+UpdateInfoBoxFreeRAM(InfoBoxData &data)
 {
 #ifdef HAVE_MEM_INFO
   FormatByteSize(data.value.buffer(), data.value.MAX_SIZE, SystemFreeRAM(), true);
@@ -153,12 +153,12 @@ InfoBoxContentFreeRAM::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentHorizon::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+InfoBoxContentHorizon::OnCustomPaint(Canvas &canvas, const PixelRect &rc)
 {
 #ifndef NO_HORIZON
   if (CommonInterface::Basic().acceleration.available) {
     const Look &look = UIGlobals::GetLook();
-    HorizonRenderer::Draw(canvas, infobox.GetValueAndCommentRect(),
+    HorizonRenderer::Draw(canvas, rc,
                           look.horizon, CommonInterface::Basic().attitude);
   }
 #endif

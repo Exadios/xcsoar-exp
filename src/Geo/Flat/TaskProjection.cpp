@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -58,10 +58,10 @@ TaskProjection::Scan(const GeoPoint &ref)
   if (!ref.IsValid())
     return;
 
-  location_min.longitude = min(ref.longitude, location_min.longitude);
-  location_max.longitude = max(ref.longitude, location_max.longitude);
-  location_min.latitude = min(ref.latitude, location_min.latitude);
-  location_max.latitude = max(ref.latitude, location_max.latitude);
+  location_min.longitude = std::min(ref.longitude, location_min.longitude);
+  location_max.longitude = std::max(ref.longitude, location_max.longitude);
+  location_min.latitude = std::min(ref.latitude, location_min.latitude);
+  location_max.latitude = std::max(ref.latitude, location_max.latitude);
 }
 
 bool
@@ -72,11 +72,11 @@ TaskProjection::Update()
   GeoPoint old_loc = location_mid;
 
   location_mid.longitude =
-    location_max.longitude.Fraction(location_min.longitude, fixed_half);
+    location_max.longitude.Fraction(location_min.longitude, fixed(0.5));
   location_mid.latitude =
-    location_max.latitude.Fraction(location_min.latitude, fixed_half);
+    location_max.latitude.Fraction(location_min.latitude, fixed(0.5));
   cos_midloc = location_mid.latitude.fastcosine() * fixed_scale;
-  r_cos_midloc = fixed_one/cos_midloc;
+  r_cos_midloc = fixed(1)/cos_midloc;
   approx_scale = Unproject(FlatGeoPoint(0,-1)).Distance(Unproject(FlatGeoPoint(0,1))) / 2;
 
   return !(old_loc == location_mid);
@@ -148,8 +148,8 @@ TaskProjection::ApproxRadius() const
 {
   assert(initialised);
 
-  return max(location_mid.Distance(location_max),
-             location_mid.Distance(location_min));
+  return std::max(location_mid.Distance(location_max),
+                  location_mid.Distance(location_min));
 }
 
 GeoBounds
@@ -168,8 +168,8 @@ TaskProjection::Project(const GeoBounds& bb) const
 {
   assert(initialised);
 
-  FlatBoundingBox fb(ProjectInteger(GeoPoint(bb.west, bb.south)),
-                     ProjectInteger(GeoPoint(bb.east, bb.north)));
+  FlatBoundingBox fb(ProjectInteger(bb.GetSouthWest()),
+                     ProjectInteger(bb.GetNorthEast()));
   fb.ExpandByOne(); // prevent rounding
   return fb;
 }

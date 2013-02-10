@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,10 +34,10 @@ Copyright_License {
  * K6Bt is a Bluetooth to RS-232 adapter from K6-Team.
  */
 class K6BtPort : public Port {
-  static const uint8_t NOP = 0x00;
-  static const uint8_t ESCAPE = 0xa5;
-  static const uint8_t CHANGE_BAUD_RATE = 0x30;
-  static const uint8_t FLUSH_BUFFERS = 0x40;
+  static constexpr uint8_t NOP = 0x00;
+  static constexpr uint8_t ESCAPE = 0xa5;
+  static constexpr uint8_t CHANGE_BAUD_RATE = 0x30;
+  static constexpr uint8_t FLUSH_BUFFERS = 0x40;
 
   Port *port;
 
@@ -53,16 +53,16 @@ protected:
 
 public:
   /* virtual methods from Port */
-  virtual bool IsValid() const;
-  virtual size_t Write(const void *data, size_t length);
-  virtual bool Drain();
-  virtual void Flush();
-  virtual bool SetBaudrate(unsigned baud_rate);
-  virtual unsigned GetBaudrate() const;
-  virtual bool StopRxThread();
-  virtual bool StartRxThread();
-  virtual int Read(void *Buffer, size_t Size);
-  virtual WaitResult WaitRead(unsigned timeout_ms);
+  virtual PortState GetState() const override;
+  virtual size_t Write(const void *data, size_t length) override;
+  virtual bool Drain() override;
+  virtual void Flush() override;
+  virtual bool SetBaudrate(unsigned baud_rate) override;
+  virtual unsigned GetBaudrate() const override;
+  virtual bool StopRxThread() override;
+  virtual bool StartRxThread() override;
+  virtual int Read(void *Buffer, size_t Size) override;
+  virtual WaitResult WaitRead(unsigned timeout_ms) override;
 };
 
 #endif

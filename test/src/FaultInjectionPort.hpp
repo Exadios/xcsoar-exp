@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -40,44 +40,43 @@ public:
   FaultInjectionPort(DataHandler &_handler)
     :Port(_handler), running(true), baud_rate(DEFAULT_BAUD_RATE) {}
 
-  virtual bool IsValid() const {
-    return inject_port_fault > 0;
+  /* virtual methods from class Port */
+  virtual PortState GetState() const override {
+    return inject_port_fault > 0
+      ? PortState::READY
+      : PortState::FAILED;
   }
 
-  bool Drain() {
-    return true;
-  }
-
-  void Flush() {}
-
-  size_t Write(const void *data, size_t length) {
+  virtual size_t Write(const void *data, size_t length) override {
     return length;
   }
 
-  bool StopRxThread() {
-    running = false;
+  virtual bool Drain() override {
     return true;
   }
 
-  bool StartRxThread() {
-    running = true;
-    return true;
-  }
+  virtual void Flush() override {}
 
-  int GetChar() {
-    return EOF;
-  }
-
-  unsigned GetBaudrate() const {
+  virtual unsigned GetBaudrate() const override {
     return baud_rate;
   }
 
-  bool SetBaudrate(unsigned _baud_rate) {
+  virtual bool SetBaudrate(unsigned _baud_rate) override {
     baud_rate = _baud_rate;
     return true;
   }
 
-  int Read(void *Buffer, size_t Size) {
+  virtual bool StopRxThread() override {
+    running = false;
+    return true;
+  }
+
+  virtual bool StartRxThread() override {
+    running = true;
+    return true;
+  }
+
+  virtual int Read(void *Buffer, size_t Size) override {
     if (inject_port_fault == 0)
       return -1;
 
@@ -87,7 +86,7 @@ public:
     return Size;
   }
 
-  virtual WaitResult WaitRead(unsigned timeout_ms) {
+  virtual WaitResult WaitRead(unsigned timeout_ms) override {
     return inject_port_fault > 0
       ? WaitResult::READY
       : WaitResult::FAILED;

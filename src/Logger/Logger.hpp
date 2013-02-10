@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -53,11 +53,11 @@ public:
   bool LoggerClearFreeSpace(unsigned current_year);
   void GUIStartLogger(const NMEAInfo& gps_info,
                       const ComputerSettings& settings,
-                      const ProtectedTaskManager &protected_task_manager,
+                      const ProtectedTaskManager *protected_task_manager,
                       bool noAsk = false);
   void GUIToggleLogger(const NMEAInfo& gps_info,
                        const ComputerSettings& settings,
-                       const ProtectedTaskManager &protected_task_manager,
+                       const ProtectedTaskManager *protected_task_manager,
                        bool noAsk = false);
   void GUIStopLogger(const NMEAInfo &gps_info,
                      bool noAsk = false);

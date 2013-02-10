@@ -1,11 +1,15 @@
 TASK_SRC_DIR = $(SRC)/Engine/Task
 
 TASK_SOURCES = \
+	$(TASK_SRC_DIR)/Shapes/FAITriangleRules.cpp \
+	$(TASK_SRC_DIR)/Shapes/FAITriangleArea.cpp \
+	$(TASK_SRC_DIR)/Shapes/FAITriangleTask.cpp \
+	$(TASK_SRC_DIR)/Shapes/FAITrianglePointValidator.cpp \
 	$(TASK_SRC_DIR)/TaskBehaviour.cpp \
 	$(TASK_SRC_DIR)/TaskManager.cpp \
 	$(TASK_SRC_DIR)/AbstractTask.cpp \
-	$(TASK_SRC_DIR)/FAITriangleValidator.cpp \
-	$(TASK_SRC_DIR)/FAITrianglePointValidator.cpp \
+	$(TASK_SRC_DIR)/Ordered/StartConstraints.cpp \
+	$(TASK_SRC_DIR)/Ordered/FinishConstraints.cpp \
 	$(TASK_SRC_DIR)/Ordered/OrderedTaskBehaviour.cpp \
 	$(TASK_SRC_DIR)/Ordered/OrderedTask.cpp \
 	$(TASK_SRC_DIR)/Ordered/TaskAdvance.cpp \
@@ -67,7 +71,6 @@ TASK_SOURCES = \
 	$(TASK_SRC_DIR)/Stats/CommonStats.cpp \
 	$(TASK_SRC_DIR)/Stats/ElementStat.cpp \
 	$(TASK_SRC_DIR)/Stats/TaskStats.cpp \
-	$(TASK_SRC_DIR)/Stats/TaskVario.cpp \
-	$(TASK_SRC_DIR)/Visitors/TaskPointVisitor.cpp
+	$(TASK_SRC_DIR)/Stats/TaskVario.cpp
 
 $(eval $(call link-library,libtask,TASK))

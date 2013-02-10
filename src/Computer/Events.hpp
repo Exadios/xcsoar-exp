@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
 
 #include "Blackboard/BlackboardListener.hpp"
 #include "NMEA/Validity.hpp"
+#include "Compiler.h"
 
 /**
  * This class listens for #LiveBlackboard changes and emits glide
@@ -33,11 +34,12 @@ Copyright_License {
  *
  * @see InputEvents::processGlideComputer()
  */
-class GlideComputerEvents : public NullBlackboardListener {
+class GlideComputerEvents final : public NullBlackboardListener {
   bool enable_team, last_teammate_in_sector;
 
   bool last_flying;
   bool last_circling;
+  bool last_final_glide;
 
   unsigned last_traffic;
   Validity last_new_traffic;

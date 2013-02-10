@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@ Copyright_License {
 #include "InfoBoxes/Content/Base.hpp"
 #include "Screen/PaintWindow.hpp"
 #include "Screen/Timer.hpp"
-#include "PeriodClock.hpp"
 #include "Data.hpp"
 
 struct InfoBoxSettings;
@@ -53,6 +52,13 @@ private:
 
   InfoBoxData data;
 
+  bool dragging;
+
+  /**
+   * Is the mouse currently pressed inside this InfoBox?
+   */
+  bool pressed;
+
   /**
    * draw the selector event if the InfoBox window is not the system focus
    */
@@ -61,12 +67,17 @@ private:
   /** a timer which returns keyboard focus back to the map window after a while */
   WindowTimer focus_timer;
 
+  /**
+   * This timer opens the dialog.  It is used to check for "long
+   * click" and to delay the dialog a bit (for double click
+   * detection).
+   */
+  WindowTimer dialog_timer;
+
   PixelRect title_rect;
   PixelRect value_rect;
   PixelRect comment_rect;
   PixelRect value_and_comment_rect;
-
-  PeriodClock click_clock;
 
   /**
    * Paints the InfoBox title to the given canvas
@@ -105,13 +116,8 @@ public:
   /**
    * Constructor of the InfoBoxWindow class
    * @param Parent The parent ContainerWindow (usually MainWindow)
-   * @param X x-Coordinate of the InfoBox
-   * @param Y y-Coordinate of the InfoBox
-   * @param Width Width of the InfoBox
-   * @param Height Height of the InfoBox
    */
-  InfoBoxWindow(ContainerWindow &parent, PixelScalar x, PixelScalar y,
-                UPixelScalar width, UPixelScalar height, unsigned border_flags,
+  InfoBoxWindow(ContainerWindow &parent, PixelRect rc, unsigned border_flags,
                 const InfoBoxSettings &settings, const InfoBoxLook &_look,
                 const UnitsLook &units_look,
                 unsigned id,
@@ -126,21 +132,23 @@ public:
   void SetContentProvider(InfoBoxContent *_content);
   void UpdateContent();
 
+private:
+  void SetPressed(bool _pressed) {
+    if (_pressed == pressed)
+      return;
+
+    pressed = _pressed;
+    Invalidate();
+  }
+
 protected:
   void ShowDialog();
 
   bool HandleKey(InfoBoxContent::InfoBoxKeyCodes keycode);
 
 public:
-  /**
-   * This passes a given value to the InfoBoxContent for further processing
-   * and updates the InfoBox.
-   * @param Value Value to handle
-   * @return True on success, Fales otherwise
-   */
-  bool HandleQuickAccess(const TCHAR *value);
-
-  const InfoBoxContent::DialogContent *GetDialogContent();
+  gcc_pure
+  const InfoBoxPanel *GetDialogContent() const;
 
   const PixelRect GetValueRect() const {
     return value_rect;
@@ -150,52 +158,22 @@ public:
   }
 
 protected:
-  virtual void OnDestroy();
+  virtual void OnDestroy() override;
+  virtual void OnResize(PixelSize new_size) override;
+  virtual void OnSetFocus() override;
+  virtual void OnKillFocus() override;
+  virtual void OnCancelMode() override;
+  virtual bool OnTimer(WindowTimer &timer) override;
 
-  /**
-   * This event handler is called when a key is pressed down while the InfoBox
-   * is focused
-   * @param key_code The code of the key that was pressed
-   * @return True if the event has been handled, False otherwise
-   */
-  virtual bool OnKeyDown(unsigned key_code);
-  /**
-   * This event handler is called when a mouse button is pressed down over
-   * the InfoBox
-   * @param x x-Coordinate where the mouse button was pressed
-   * @param y y-Coordinate where the mouse button was pressed
-   * @return True if the event has been handled, False otherwise
-   */
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
+  virtual bool OnKeyDown(unsigned key_code) override;
 
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseDouble(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y,
+                           unsigned keys) override;
 
-  /**
-   * This event handler is called when a mouse button is double clicked over
-   * the InfoBox
-   * @param x x-Coordinate where the mouse button was pressed
-   * @param y y-Coordinate where the mouse button was pressed
-   * @return True if the event has been handled, False otherwise
-   */
-  virtual bool OnMouseDouble(PixelScalar x, PixelScalar y);
-
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-
-  /**
-   * This event handler is called when the InfoBox needs to be repainted
-   * @param canvas The canvas to paint on
-   */
-  virtual void OnPaint(Canvas &canvas);
-
-  virtual bool OnCancelMode();
-  virtual void OnSetFocus();
-  virtual void OnKillFocus();
-
-  /**
-   * This event handler is called when a timer is triggered
-   * @param id Id of the timer that triggered the handler
-   */
-  virtual bool OnTimer(WindowTimer &timer);
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
 #endif

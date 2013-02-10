@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,11 +25,12 @@ Copyright_License {
 #define XCSOAR_FLARM_BINARY_PROTOCOL_HPP
 
 #include "Util/AllocatedArray.hpp"
-#include "Util/TypeTraits.hpp"
 #include "OS/ByteOrder.hpp"
 #include "Compiler.h"
 #include "tchar.h"
 #include "Device/Driver.hpp"
+
+#include <type_traits>
 
 #include <stdint.h>
 
@@ -40,10 +41,10 @@ class RecordedFlightList;
 struct RecordedFlightInfo;
 
 namespace FLARM {
-  static const uint8_t START_FRAME = 0x73;
-  static const uint8_t ESCAPE = 0x78;
-  static const uint8_t ESCAPE_ESCAPE = 0x55;
-  static const uint8_t ESCAPE_START = 0x31;
+  static constexpr uint8_t START_FRAME = 0x73;
+  static constexpr uint8_t ESCAPE = 0x78;
+  static constexpr uint8_t ESCAPE_ESCAPE = 0x55;
+  static constexpr uint8_t ESCAPE_START = 0x31;
 
   enum MessageType {
     MT_ERROR = 0x00,
@@ -121,7 +122,7 @@ namespace FLARM {
 
   static_assert(sizeof(FrameHeader) == 8,
                 "The FrameHeader struct needs to have a size of 8 bytes");
-  static_assert(is_trivial<FrameHeader>::value, "type is not trivial");
+  static_assert(std::is_trivial<FrameHeader>::value, "type is not trivial");
 
   /**
    * Convenience function. Returns a pre-populated FrameHeader instance that is

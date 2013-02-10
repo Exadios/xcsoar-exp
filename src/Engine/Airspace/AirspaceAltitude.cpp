@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,54 +23,22 @@
 #include "AirspaceAltitude.hpp"
 #include "Atmosphere/Pressure.hpp"
 #include "Navigation/Aircraft.hpp"
-#include "Math/FastMath.h"
-#include "Util/StaticString.hpp"
 
 #include <stdio.h>
 
 void
 AirspaceAltitude::SetFlightLevel(const AtmosphericPressure &press)
 {
-  static const fixed fl_feet_to_m(30.48);
-  if (type == Type::FL)
+  static constexpr fixed fl_feet_to_m(30.48);
+  if (reference == AltitudeReference::STD)
     altitude = press.PressureAltitudeToQNHAltitude(flight_level * fl_feet_to_m);
 }
 
 void
 AirspaceAltitude::SetGroundLevel(const fixed alt)
 {
-  if (type == Type::AGL)
+  if (reference == AltitudeReference::AGL)
     altitude = altitude_above_terrain + alt;
-}
-
-const tstring
-AirspaceAltitude::GetAsText(const bool concise) const
-{
-  StaticString<64> buffer;
-
-  switch (type) {
-  case Type::AGL:
-    if (!positive(altitude_above_terrain))
-      buffer = _T("GND");
-    else
-      buffer.Format(_T("%d AGL"), iround(altitude_above_terrain));
-
-    break;
-  case Type::FL:
-    buffer.Format(_T("FL%d"), iround(flight_level));
-    break;
-  case Type::MSL:
-    buffer.Format(_T("%d"), iround(altitude));
-    break;
-  case Type::UNDEFINED:
-    buffer.clear();
-    break;
-  }
-
-  if (!concise && type != Type::MSL && positive(altitude))
-    buffer.AppendFormat(_T(" %d"), iround(altitude));
-
-  return tstring(buffer);
 }
 
 bool
@@ -86,12 +54,13 @@ AirspaceAltitude::IsBelow(const AltitudeState &state, const fixed margin) const
     /* special case: GND is always "below" the aircraft, even if the
        aircraft's AGL altitude turns out to be negative due to terrain
        file inaccuracies */
-    (type == Type::AGL && !positive(altitude_above_terrain));
+    IsTerrain();
 }
 
 fixed
-AirspaceAltitude::GetAltitude(const AltitudeState& state) const
+AirspaceAltitude::GetAltitude(const AltitudeState &state) const
 {
-  return (type == Type::AGL) ?
-         altitude_above_terrain + (state.altitude - state.altitude_agl) : altitude;
+  return reference == AltitudeReference::AGL
+    ? altitude_above_terrain + (state.altitude - state.altitude_agl)
+    : altitude;
 }

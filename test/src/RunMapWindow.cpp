@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ Copyright_License {
 #include "MapWindow/MapWindow.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Init.hpp"
 #include "ResourceLoader.hpp"
 #include "Terrain/RasterWeather.hpp"
@@ -47,6 +46,7 @@ Copyright_License {
 #include "Operation/Operation.hpp"
 #include "Look/MapLook.hpp"
 #include "Look/TrafficLook.hpp"
+#include "Look/Fonts.hpp"
 #include "Thread/Debug.hpp"
 
 void
@@ -79,9 +79,9 @@ class DrawThread {
 public:
 #ifndef ENABLE_OPENGL
   static void Draw(MapWindow &map) {
-    map.repaint();
+    map.Repaint();
     map.UpdateAll();
-    map.repaint();
+    map.Repaint();
   }
 #else
   static void UpdateAll(MapWindow &map) {
@@ -114,33 +114,14 @@ public:
   {
   }
 
-#ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance) {
-    WNDCLASS wc;
-
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = Window::WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    wc.lpszMenuName = 0;
-    wc.lpszClassName = _T("RunMapWindow");
-
-    return RegisterClass(&wc);
-  }
-#endif /* USE_GDI */
-
-  void set(PixelRect _rc) {
+  void Create(PixelSize size) {
     TopWindowStyle style;
     style.Resizable();
 
-    SingleWindow::set(_T("RunMapWindow"), _T("RunMapWindow"), _rc, style);
+    SingleWindow::Create(_T("RunMapWindow"), size, style);
 
     PixelRect rc = GetClientRect();
-    map.set(*this, rc);
+    map.Create(*this, rc);
     map.SetWaypoints(&way_points);
     map.SetAirspaces(&airspace_database);
     map.SetTopography(topography);
@@ -152,13 +133,13 @@ public:
     rc.top = 5;
     rc.right = rc.left + 60;
     rc.bottom = rc.top + 20;
-    close_button.set(*this, _T("Close"), ID_CLOSE, rc);
+    close_button.Create(*this, _T("Close"), ID_CLOSE, rc);
     close_button.SetFont(Fonts::map);
     close_button.BringToTop();
   }
 
 protected:
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -168,9 +149,11 @@ protected:
     return TopWindow::OnCommand(id, code);
   }
 
-  virtual void OnResize(UPixelScalar width, UPixelScalar height) {
-    SingleWindow::OnResize(width, height);
-    map.Resize(width, height);
+  virtual void OnResize(PixelSize new_size) override {
+    SingleWindow::OnResize(new_size);
+
+    if (map.IsDefined())
+      map.Resize(new_size);
 
 #ifndef ENABLE_OPENGL
   if (initialised)
@@ -180,7 +163,8 @@ protected:
 };
 
 static void
-LoadFiles(ComputerSettings &settings)
+LoadFiles(PlacesOfInterestSettings &poi_settings,
+          TeamCodeSettings &team_code_settings)
 {
   NullOperationEnvironment operation;
 
@@ -190,7 +174,8 @@ LoadFiles(ComputerSettings &settings)
   terrain = RasterTerrain::OpenTerrain(NULL, operation);
 
   WaypointGlue::LoadWaypoints(way_points, terrain, operation);
-  WaypointGlue::SetHome(way_points, terrain, settings, NULL, false);
+  WaypointGlue::SetHome(way_points, terrain, poi_settings, team_code_settings,
+                        NULL, false);
 
   std::unique_ptr<TLineReader> reader(OpenConfiguredTextFile(ProfileKeys::AirspaceFile,
                                                              ConvertLineReader::AUTO));
@@ -209,19 +194,19 @@ GenerateBlackboard(MapWindow &map, const ComputerSettings &settings_computer,
   DerivedInfo derived_info;
 
   nmea_info.Reset();
-  nmea_info.clock = fixed_one;
+  nmea_info.clock = fixed(1);
   nmea_info.time = fixed(1297230000);
   nmea_info.alive.Update(nmea_info.clock);
 
   if (settings_computer.poi.home_location_available)
     nmea_info.location = settings_computer.poi.home_location;
   else {
-    nmea_info.location.latitude = Angle::Degrees(fixed(51.2));
-    nmea_info.location.longitude = Angle::Degrees(fixed(7.7));
+    nmea_info.location.latitude = Angle::Degrees(51.2);
+    nmea_info.location.longitude = Angle::Degrees(7.7);
   }
 
   nmea_info.location_available.Update(nmea_info.clock);
-  nmea_info.track = Angle::Degrees(fixed_90);
+  nmea_info.track = Angle::Degrees(90);
   nmea_info.track_available.Update(nmea_info.clock);
   nmea_info.ground_speed = fixed(50);
   nmea_info.ground_speed_available.Update(nmea_info.clock);
@@ -268,7 +253,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   settings_map.SetDefaults();
   Profile::Load(settings_map);
 
-  LoadFiles(settings_computer);
+  LoadFiles(settings_computer.poi, settings_computer.team_code);
 
   ScreenGlobalInit screen_init;
 
@@ -276,18 +261,14 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   ResourceLoader::Init(hInstance);
 #endif
 
-#ifdef USE_GDI
-  TestWindow::register_class(hInstance);
-#endif
-
   MapLook *map_look = new MapLook();
-  map_look->Initialise(settings_map);
+  map_look->Initialise(settings_map, Fonts::map, Fonts::map_bold);
 
   TrafficLook *traffic_look = new TrafficLook();
   traffic_look->Initialise();
 
   TestWindow window(*map_look, *traffic_look);
-  window.set(PixelRect{0, 0, 640, 480});
+  window.Create({640, 480});
 
   GenerateBlackboard(window.map, settings_computer, settings_map);
   Fonts::Initialize();
@@ -300,7 +281,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   window.Show();
 
   window.RunEventLoop();
-  window.reset();
+  window.Destroy();
 
   Fonts::Deinitialize();
 

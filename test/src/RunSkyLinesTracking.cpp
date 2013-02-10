@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,52 @@ Copyright_License {
 #include "OS/Args.hpp"
 #include "Util/NumberParser.hpp"
 #include "Util/StringUtil.hpp"
+#include "DebugReplay.hpp"
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+#include "IO/Async/GlobalIOThread.hpp"
+
+class Handler : public SkyLinesTracking::Handler {
+  Mutex mutex;
+  Cond cond;
+
+  bool done;
+
+public:
+  Handler():done(false) {}
+
+  bool Wait(unsigned timeout_ms=5000) {
+    const ScopeLock protect(mutex);
+    return done || (cond.Wait(mutex, timeout_ms) && done);
+  }
+
+protected:
+  void Done() {
+    const ScopeLock protect(mutex);
+    done = true;
+    cond.Broadcast();
+  }
+
+public:
+  virtual void OnAck(unsigned id) override {
+    printf("received ack %u\n", id);
+    Done();
+  }
+
+  virtual void OnTraffic(unsigned pilot_id, unsigned time_of_day_ms,
+                         const GeoPoint &location, int altitude) override {
+    BrokenTime time = BrokenTime::FromSecondOfDay(time_of_day_ms / 1000);
+
+    printf("received traffic pilot=%u time=%02u:%02u:%02u location=%f/%f altitude=%d\n",
+           pilot_id, time.hour, time.minute, time.second,
+           (double)location.longitude.Degrees(),
+           (double)location.latitude.Degrees(),
+           altitude);
+    Done();
+  }
+};
+
+#endif
 
 int
 main(int argc, char *argv[])
@@ -33,28 +79,61 @@ main(int argc, char *argv[])
   Args args(argc, argv, "HOST KEY");
   const char *host = args.ExpectNext();
   const char *key = args.ExpectNext();
-  const char *cmd = args.IsEmpty() ? "fix" : args.GetNext();
-  args.ExpectEnd();
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  InitialiseIOThread();
+#endif
 
   SkyLinesTracking::Client client;
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  client.SetIOThread(io_thread);
+
+  Handler handler;
+  client.SetHandler(&handler);
+#endif
+
   client.SetKey(ParseUint64(key, NULL, 16));
   if (!client.Open(host)) {
     fprintf(stderr, "Failed to create client\n");
     return EXIT_FAILURE;
   }
 
-  if (StringIsEqual(cmd, "fix")) {
+  if (args.IsEmpty() || StringIsEqual(args.PeekNext(), "fix")) {
     NMEAInfo basic;
     basic.Reset();
     basic.UpdateClock();
-    basic.time = fixed_one;
+    basic.time = fixed(1);
     basic.time_available.Update(basic.clock);
 
     return client.SendFix(basic) ? EXIT_SUCCESS : EXIT_FAILURE;
-  } else if (StringIsEqual(cmd, "ping")) {
+  } else if (StringIsEqual(args.PeekNext(), "ping")) {
     client.SendPing(1);
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    handler.Wait();
+#endif
+  } else if (StringIsEqual(args.PeekNext(), "traffic")) {
+    client.SendTrafficRequest(true, true);
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    handler.Wait();
+#endif
   } else {
-    fprintf(stderr, "Unknown command: %s\n", cmd);
-    return EXIT_FAILURE;
+    DebugReplay *replay = CreateDebugReplay(args);
+    if (replay == NULL)
+      return EXIT_FAILURE;
+
+    while (replay->Next()) {
+      client.SendFix(replay->Basic());
+      usleep(100000);
+    }
   }
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  client.Close();
+  DeinitialiseIOThread();
+#endif
+
+  return EXIT_SUCCESS;
 }

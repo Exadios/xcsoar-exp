@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ Copyright_License {
  * See http://msdn.microsoft.com/en-us/library/bb202042.aspx
  */
 static bool
-detect_gps(TCHAR *path, size_t path_max_size)
+DetectGPS(TCHAR *path, size_t path_max_size)
 {
 #ifdef _WIN32_WCE
   static const TCHAR *const gps_idm_key =
@@ -72,7 +72,7 @@ detect_gps(TCHAR *path, size_t path_max_size)
 
   RegistryKey key(HKEY_LOCAL_MACHINE, gps_idm_key, true);
   return !key.error() &&
-    key.get_value(gps_idm_value, path, path_max_size);
+    key.GetValue(gps_idm_value, path, path_max_size);
 #else
   return false;
 #endif
@@ -112,13 +112,13 @@ OpenPortInternal(const DeviceConfig &config, DataHandler &handler)
   case DeviceConfig::PortType::RFCOMM:
 #ifdef ANDROID
     if (config.bluetooth_mac.empty()) {
-      LogStartUp(_T("No Bluetooth MAC configured"));
+      LogFormat("No Bluetooth MAC configured");
       return NULL;
     }
 
     return OpenAndroidBluetoothPort(config.bluetooth_mac, handler);
 #else
-    LogStartUp(_T("Bluetooth not available on this platform"));
+    LogFormat("Bluetooth not available on this platform");
     return NULL;
 #endif
 
@@ -126,27 +126,27 @@ OpenPortInternal(const DeviceConfig &config, DataHandler &handler)
 #ifdef ANDROID
     return OpenAndroidBluetoothServerPort(handler);
 #else
-    LogStartUp(_T("Bluetooth not available on this platform"));
+    LogFormat("Bluetooth not available on this platform");
     return NULL;
 #endif
 
   case DeviceConfig::PortType::IOIOUART:
 #if defined(ANDROID) && defined(IOIOLIB)
     if (config.ioio_uart_id >= AndroidIOIOUartPort::getNumberUarts()) {
-      LogStartUp(_T("No IOIOUart configured in profile"));
+      LogFormat("No IOIOUart configured in profile");
       return NULL;
     }
 
     return OpenAndroidIOIOUartPort(config.ioio_uart_id, config.baud_rate,
                                    handler);
 #else
-    LogStartUp(_T("IOIO Uart not available on this platform or version"));
+    LogFormat("IOIO Uart not available on this platform or version");
     return NULL;
 #endif
 
   case DeviceConfig::PortType::AUTO:
-    if (!detect_gps(buffer, sizeof(buffer))) {
-      LogStartUp(_T("no GPS detected"));
+    if (!DetectGPS(buffer, sizeof(buffer))) {
+      LogFormat("no GPS detected");
       return NULL;
     }
 
@@ -156,6 +156,10 @@ OpenPortInternal(const DeviceConfig &config, DataHandler &handler)
     break;
 
   case DeviceConfig::PortType::INTERNAL:
+  case DeviceConfig::PortType::DROIDSOAR_V2:
+  case DeviceConfig::PortType::NUNCHUCK:
+  case DeviceConfig::PortType::I2CPRESSURESENSOR:
+  case DeviceConfig::PortType::IOIOVOLTAGE:
     break;
 
   case DeviceConfig::PortType::TCP_LISTENER: {

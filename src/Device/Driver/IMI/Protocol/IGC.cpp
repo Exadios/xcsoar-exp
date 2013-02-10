@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #include "IGC.hpp"
 #include "Conversion.hpp"
 #include "Checksum.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDateTime.hpp"
 #include "Util/Macros.hpp"
 
 #include <cstdio>
@@ -43,7 +43,7 @@ static IMI::FixB fixBLastFull = {0};
 static IMI::FixB fixB1 = {0};
 static IMI::FixB fixB2 = {0};
 
-static const IMI::IMICHAR snDigits[] = "0123456789ABCDEFHJKLMNPRSTUVWXYZ";
+static constexpr IMI::IMICHAR snDigits[] = "0123456789ABCDEFHJKLMNPRSTUVWXYZ";
 
 void
 IMI::WriteString(const char *buffer, size_t max_length, FILE *file)

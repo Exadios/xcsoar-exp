@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ ZipSource::~ZipSource()
 }
 
 long
-ZipSource::size() const
+ZipSource::GetSize() const
 {
   ZZIP_STAT st;
   return zzip_file_stat(file, &st) >= 0
@@ -70,7 +70,7 @@ ZipSource::size() const
 }
 
 unsigned
-ZipSource::read(char *p, unsigned n)
+ZipSource::Read(char *p, unsigned n)
 {
   zzip_ssize_t nbytes = zzip_read(file, p, n);
   return nbytes >= 0

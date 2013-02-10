@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ Copyright_License {
 
 class CondorDevice : public AbstractDevice {
 public:
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 };
 
 static bool
@@ -73,22 +73,18 @@ cLXWP0(NMEAInputLine &line, NMEAInfo &info)
   11 windspeed (kph)
   */
 
-  fixed value;
 
   line.Skip();
 
   fixed airspeed;
   bool tas_available = line.ReadChecked(airspeed);
 
-  fixed alt = line.Read(fixed_zero);
+  fixed value;
+  if (line.ReadChecked(value))
+    info.ProvideBaroAltitudeTrue(value);
 
   if (tas_available)
-    info.ProvideTrueAirspeedWithAltitude(Units::ToSysUnit(airspeed,
-                                                               Unit::KILOMETER_PER_HOUR),
-                                              alt);
-
-  // ToDo check if QNH correction is needed!
-  info.ProvideBaroAltitudeTrue(alt);
+    info.ProvideTrueAirspeed(Units::ToSysUnit(airspeed, Unit::KILOMETER_PER_HOUR));
 
   if (line.ReadChecked(value))
     info.ProvideTotalEnergyVario(value);
@@ -99,18 +95,6 @@ cLXWP0(NMEAInputLine &line, NMEAInfo &info)
   if (ReadSpeedVector(line, wind))
     info.ProvideExternalWind(wind);
 
-  return true;
-}
-
-static bool
-cLXWP1(gcc_unused NMEAInputLine &line, gcc_unused NMEAInfo &info)
-{
-  return true;
-}
-
-static bool
-cLXWP2(gcc_unused NMEAInputLine &line, gcc_unused NMEAInfo &info)
-{
   return true;
 }
 
@@ -127,12 +111,6 @@ CondorDevice::ParseNMEA(const char *String, NMEAInfo &info)
   if (StringIsEqual(type, "$LXWP0"))
     return cLXWP0(line, info);
 
-  if (StringIsEqual(type, "$LXWP1"))
-    return cLXWP1(line, info);
-
-  if (StringIsEqual(type, "$LXWP2"))
-    return cLXWP2(line, info);
-
   return false;
 }
 
@@ -142,7 +120,7 @@ CondorCreateOnPort(const DeviceConfig &config, gcc_unused Port &com_port)
   return new CondorDevice();
 }
 
-const struct DeviceRegister condorDevice = {
+const struct DeviceRegister condor_driver = {
   _T("Condor"),
   _T("Condor Soaring Simulator"),
   0,

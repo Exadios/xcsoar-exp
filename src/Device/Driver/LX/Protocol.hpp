@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -149,9 +149,9 @@ namespace LX {
   }
 
   static inline bool
-  ExpectACK(Port &port, OperationEnvironment &env)
+  ExpectACK(Port &port, OperationEnvironment &env, unsigned timeout_ms=2000)
   {
-    return port.WaitForChar(ACK, env, 2000) == Port::WaitResult::READY;
+    return port.WaitForChar(ACK, env, timeout_ms) == Port::WaitResult::READY;
   }
 
   /**
@@ -160,9 +160,9 @@ namespace LX {
    * @return true on success
    */
   static inline bool
-  Connect(Port &port, OperationEnvironment &env)
+  Connect(Port &port, OperationEnvironment &env, unsigned timeout_ms=500)
   {
-    return SendSYN(port) && ExpectACK(port, env);
+    return SendSYN(port) && ExpectACK(port, env, timeout_ms);
   }
 
   /**

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -53,12 +53,17 @@ ButtonLabel::Destroy()
   bar = NULL;
 }
 
+/**
+ * @return false if there is at least one ASCII letter in the string
+ */
+gcc_pure
 static bool
-OnlyDigitsAndPunctuation(const TCHAR *s)
+LacksAlphaASCII(const TCHAR *s)
 {
   while (*s) {
-    if (!(IsDigitASCII(*s) || _istpunct(*s)))
+    if (IsAlphaASCII(*s))
       return false;
+
     s++;
   }
   return true;
@@ -78,7 +83,7 @@ ButtonLabel::Expand(const TCHAR *text, TCHAR *buffer, size_t size)
     expanded.visible = true;
     expanded.enabled = true;
     const TCHAR *nl;
-    if (((nl = _tcschr(text, '\n')) != NULL) && OnlyDigitsAndPunctuation(nl+1)) {
+    if (((nl = _tcschr(text, '\n')) != NULL) && LacksAlphaASCII(nl + 1)) {
       /* Quick hack for skipping the translation for second line of a two line
          label with only digits and punctuation in the second line, e.g.
          for menu labels like "Config\n2/3" */

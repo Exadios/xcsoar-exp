@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,29 +26,30 @@ Copyright_License {
 #include "Atmosphere/Temperature.hpp"
 #include "Util/Macros.hpp"
 
+#include <stddef.h>
+
 //SI to Local Units
 
 const UnitDescriptor Units::unit_descriptors[] = {
-  { NULL, fixed_one, fixed_zero },
-  { _T("km"), fixed_constant(0.001, 0x41893LL), fixed_zero },
-  { _T("NM"), fixed_constant(0.000539956803, 0x2362fLL), fixed_zero },
-  { _T("mi"), fixed_constant(0.000621371192, 0x28b8eLL), fixed_zero },
-  { _T("km/h"), fixed_constant(3.6, 0x39999999LL), fixed_zero },
-  { _T("kt"), fixed_constant(1.94384449, 0x1f19fcaeLL), fixed_zero },
-  { _T("mph"), fixed_constant(2.23693629, 0x23ca7db5LL), fixed_zero },
-  { _T("m/s"), fixed_one, fixed_zero },
-  { _T("fpm"), fixed_constant(196.850394, 0xc4d9b36bdLL), fixed_zero },
-  { _T("m"), fixed_one, fixed_zero },
-  { _T("ft"), fixed_constant(3.2808399, 0x347e51faLL), fixed_zero },
-  { _T("FL"), fixed_constant(0.032808399, 0x866219LL), fixed_zero },
-  { _T("K"), fixed_one, fixed_zero },
-  { _T(DEG)_T("C"), fixed_one, -CELSIUS_OFFSET },
-  { _T(DEG)_T("F"), fixed_constant(1.8, 0x1cccccccLL),
-    fixed_constant(-459.67, -123391726059LL) },
-  { _T("hPa"), fixed_one, fixed_zero },
-  { _T("mb"), fixed_one, fixed_zero },
-  { _T("mmHg"), fixed(0.7500616827041698), fixed_zero },
-  { _T("inHg"), fixed(0.0295287441401431), fixed_zero },
+  { nullptr, fixed(1), fixed(0) },
+  { _T("km"), fixed(0.001), fixed(0) },
+  { _T("NM"), fixed(0.000539956803), fixed(0) },
+  { _T("mi"), fixed(0.000621371192), fixed(0) },
+  { _T("km/h"), fixed(3.6), fixed(0) },
+  { _T("kt"), fixed(1.94384449), fixed(0) },
+  { _T("mph"), fixed(2.23693629), fixed(0) },
+  { _T("m/s"), fixed(1), fixed(0) },
+  { _T("fpm"), fixed(196.850394), fixed(0) },
+  { _T("m"), fixed(1), fixed(0) },
+  { _T("ft"), fixed(3.2808399), fixed(0) },
+  { _T("FL"), fixed(0.032808399), fixed(0) },
+  { _T("K"), fixed(1), fixed(0) },
+  { _T(DEG)_T("C"), fixed(1), -CELSIUS_OFFSET },
+  { _T(DEG)_T("F"), fixed(1.8), fixed(-459.67) },
+  { _T("hPa"), fixed(1), fixed(0) },
+  { _T("mb"), fixed(1), fixed(0) },
+  { _T("mmHg"), fixed(0.7500616827041698), fixed(0) },
+  { _T("inHg"), fixed(0.0295287441401431), fixed(0) },
 };
 
 static_assert(ARRAY_SIZE(Units::unit_descriptors) == (size_t)Unit::COUNT,
@@ -59,7 +60,7 @@ Units::GetUnitName(Unit unit)
 {
   const unsigned i = (unsigned)unit;
   assert(i < ARRAY_SIZE(unit_descriptors));
-  assert(unit_descriptors[i].name != NULL);
+  assert(unit_descriptors[i].name != nullptr);
 
   return unit_descriptors[i].name;
 }

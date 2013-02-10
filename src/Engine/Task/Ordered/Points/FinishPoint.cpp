@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,28 +28,29 @@
 
 FinishPoint::FinishPoint(ObservationZonePoint* _oz, const Waypoint & wp,
                          const TaskBehaviour& tb,
-                         const OrderedTaskBehaviour &to,
+                         const FinishConstraints &_constraints,
                          bool boundary_scored)
-  :OrderedTaskPoint(FINISH, _oz, wp, to, boundary_scored),
-   safety_height_arrival(tb.safety_height_arrival),
-   fai_finish_height(fixed_zero)
-{ 
+  :OrderedTaskPoint(TaskPointType::FINISH, _oz, wp, boundary_scored),
+   safety_height(tb.safety_height_arrival),
+   constraints(_constraints),
+   fai_finish_height(fixed(0))
+{
 }
 
 void
 FinishPoint::SetTaskBehaviour(const TaskBehaviour &tb)
 {
-  safety_height_arrival = tb.safety_height_arrival;
+  safety_height = tb.safety_height_arrival;
 }
 
-void 
+void
 FinishPoint::Reset()
 {
   OrderedTaskPoint::Reset();
-  fai_finish_height = fixed_zero;
+  fai_finish_height = fixed(0);
 }
 
-bool 
+bool
 FinishPoint::EntryPrecondition() const
 {
   return GetPrevious() != NULL && GetPrevious()->HasEntered();
@@ -58,20 +59,26 @@ FinishPoint::EntryPrecondition() const
 fixed
 FinishPoint::GetElevation() const
 {
-  const fixed nominal_elevation = GetBaseElevation() + safety_height_arrival;
+  const fixed nominal_elevation = GetBaseElevation() + safety_height;
 
-  if (ordered_task_behaviour.fai_finish) {
-    return max(nominal_elevation, fai_finish_height);
+  if (constraints.fai_finish) {
+    return std::max(nominal_elevation, fai_finish_height);
   } else {
-    return max(nominal_elevation,
-               fixed(ordered_task_behaviour.finish_min_height) +
-               (ordered_task_behaviour.finish_min_height_ref == HeightReferenceType::AGL ?
-                 GetBaseElevation() : fixed_zero));
+    return std::max(nominal_elevation,
+                    fixed(constraints.min_height) +
+                    (constraints.min_height_ref == AltitudeReference::AGL
+                     ? GetBaseElevation() : fixed(0)));
   }
 }
 
+void
+FinishPoint::SetOrderedTaskBehaviour(const OrderedTaskBehaviour &otb)
+{
+  OrderedTaskPoint::SetOrderedTaskBehaviour(otb);
+  constraints = otb.finish_constraints;
+}
 
-void 
+void
 FinishPoint::SetNeighbours(OrderedTaskPoint *_prev, OrderedTaskPoint *_next)
 {
   assert(_next == NULL);
@@ -79,13 +86,13 @@ FinishPoint::SetNeighbours(OrderedTaskPoint *_prev, OrderedTaskPoint *_next)
   OrderedTaskPoint::SetNeighbours(_prev, _next);
 }
 
-void 
+void
 FinishPoint::set_fai_finish_height(const fixed height)
 {
-  fai_finish_height = max(fixed_zero, height);
+  fai_finish_height = std::max(fixed(0), height);
 }
 
-bool 
+bool
 FinishPoint::IsInSector(const AircraftState &state) const
 {
   if (!OrderedTaskPoint::IsInSector(state))
@@ -97,18 +104,18 @@ FinishPoint::IsInSector(const AircraftState &state) const
 bool
 FinishPoint::is_in_height_limit(const AircraftState &state) const
 {
-  if (!ordered_task_behaviour.CheckFinishHeight(state, GetBaseElevation()))
+  if (!constraints.CheckHeight(state, GetBaseElevation()))
     return false;
 
-  if (ordered_task_behaviour.fai_finish)
+  if (constraints.fai_finish)
     return state.altitude > fai_finish_height;
 
   return true;
 }
 
-bool 
-FinishPoint::CheckEnterTransition(const AircraftState & ref_now, 
-                                    const AircraftState & ref_last) const
+bool
+FinishPoint::CheckEnterTransition(const AircraftState &ref_now,
+                                  const AircraftState &ref_last) const
 {
   const bool now_in_height = is_in_height_limit(ref_now);
   const bool last_in_height = is_in_height_limit(ref_last);

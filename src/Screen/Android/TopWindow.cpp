@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,9 +25,22 @@ Copyright_License {
 #include "Screen/OpenGL/Cache.hpp"
 #include "Screen/OpenGL/Surface.hpp"
 #include "Screen/OpenGL/Shapes.hpp"
-#include "Screen/Android/Event.hpp"
+#include "Screen/Custom/TopCanvas.hpp"
+#include "Event/Android/Queue.hpp"
+#include "Event/Android/Loop.hpp"
 #include "Android/Main.hpp"
 #include "Android/NativeView.hpp"
+
+void
+TopWindow::Invalidate()
+{
+  if (invalidated.exchange(true, std::memory_order_relaxed))
+    /* already invalidated, don't send the event twice */
+    return;
+
+  /* wake up the event loop */
+  event_queue->Push(Event::NOP);
+}
 
 void
 TopWindow::AnnounceResize(UPixelScalar width, UPixelScalar height)
@@ -55,7 +68,7 @@ TopWindow::ResumeSurface()
   paused = false;
   resumed = false;
 
-  screen.Resume();
+  screen->Resume();
 
   ::SurfaceCreated();
 
@@ -89,14 +102,14 @@ TopWindow::RefreshSize()
 }
 
 void
-TopWindow::OnResize(UPixelScalar width, UPixelScalar height)
+TopWindow::OnResize(PixelSize new_size)
 {
   if (native_view != NULL) {
-    native_view->SetSize(width, height);
-    screen.OnResize(width, height);
+    native_view->SetSize(new_size.cx, new_size.cy);
+    screen->OnResize(new_size);
   }
 
-  ContainerWindow::OnResize(width, height);
+  ContainerWindow::OnResize(new_size);
 }
 
 void
@@ -167,7 +180,6 @@ TopWindow::OnEvent(const Event &event)
   case Event::QUIT:
   case Event::TIMER:
   case Event::USER:
-  case Event::NOTIFY:
   case Event::CALLBACK:
     break;
 
@@ -220,7 +232,7 @@ TopWindow::OnEvent(const Event &event)
        is ignored on Android (tested on a Dell Streak / Android
        2.2.2); let's do one dummy call before we really draw
        something */
-    screen.Flip();
+    screen->Flip();
 
     Resize(event.x, event.y);
     return true;

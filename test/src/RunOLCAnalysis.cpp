@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,21 +33,27 @@
 //#define BENCHMARK_LK8000
 
 #ifdef BENCHMARK_LK8000
-static Trace full_trace(60, Trace::null_time, 100);
+static Trace full_trace(0, Trace::null_time, 100);
 static Trace sprint_trace(0, 9000, 50);
 #else
-static Trace full_trace(60, Trace::null_time, 512);
+static Trace full_trace(0, Trace::null_time, 512);
 static Trace sprint_trace(0, 9000, 128);
 #endif
 
-static ContestManager olc_classic(OLC_Classic, full_trace, sprint_trace);
-static ContestManager olc_fai(OLC_FAI, full_trace, sprint_trace);
-static ContestManager olc_sprint(OLC_Sprint, full_trace, sprint_trace);
-static ContestManager olc_league(OLC_League, full_trace, sprint_trace);
-static ContestManager olc_plus(OLC_Plus, full_trace, sprint_trace);
-static ContestManager xcontest(OLC_XContest, full_trace, sprint_trace);
-static ContestManager sis_at(OLC_SISAT, full_trace, sprint_trace);
-static ContestManager olc_netcoupe(OLC_NetCoupe, full_trace, sprint_trace);
+static ContestManager olc_classic(Contest::OLC_CLASSIC,
+                                  full_trace, sprint_trace);
+static ContestManager olc_fai(Contest::OLC_FAI, full_trace, sprint_trace);
+static ContestManager olc_sprint(Contest::OLC_SPRINT,
+                                 full_trace, sprint_trace);
+static ContestManager olc_league(Contest::OLC_LEAGUE,
+                                 full_trace, sprint_trace);
+static ContestManager olc_plus(Contest::OLC_PLUS, full_trace, sprint_trace);
+static ContestManager dmst(Contest::DMST, full_trace, sprint_trace);
+static ContestManager xcontest(Contest::XCONTEST,
+                               full_trace, sprint_trace);
+static ContestManager sis_at(Contest::SIS_AT, full_trace, sprint_trace);
+static ContestManager olc_netcoupe(Contest::NET_COUPE,
+                                   full_trace, sprint_trace);
 
 static int
 TestOLC(DebugReplay &replay)
@@ -84,6 +90,7 @@ TestOLC(DebugReplay &replay)
   olc_fai.SolveExhaustive();
   olc_league.SolveExhaustive();
   olc_plus.SolveExhaustive();
+  dmst.SolveExhaustive();
   xcontest.SolveExhaustive();
   sis_at.SolveExhaustive();
   olc_netcoupe.SolveExhaustive();
@@ -109,6 +116,9 @@ TestOLC(DebugReplay &replay)
   std::cout << "# plus\n";
   PrintHelper::print(olc_plus.GetStats().GetResult(2));
 
+  std::cout << "dmst\n";
+  PrintHelper::print(dmst.GetStats().GetResult());
+
   std::cout << "xcontest\n";
   std::cout << "# free\n";
   PrintHelper::print(xcontest.GetStats().GetResult(0));
@@ -126,6 +136,7 @@ TestOLC(DebugReplay &replay)
   olc_sprint.Reset();
   olc_league.Reset();
   olc_plus.Reset();
+  dmst.Reset();
   olc_netcoupe.Reset();
   full_trace.clear();
   sprint_trace.clear();

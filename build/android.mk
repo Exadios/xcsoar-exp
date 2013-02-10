@@ -8,7 +8,7 @@ ifeq ($(TARGET),ANDROID)
 # Activity icon, to allow simultaneous installation of "stable" and
 # "testing".
 # In the stable branch, this should default to "n".
-TESTING = n
+TESTING = y
 
 ANT = ant
 JAVAH = javah
@@ -17,22 +17,23 @@ ANDROID_KEYSTORE = $(HOME)/.android/mk.keystore
 ANDROID_KEY_ALIAS = mk
 ANDROID_BUILD = $(TARGET_OUTPUT_DIR)/build
 ANDROID_BIN = $(TARGET_BIN_DIR)
-ANDROID_JNI = $(TARGET_OUTPUT_DIR)/jni
 
 ifeq ($(HOST_IS_DARWIN),y)
   ANDROID_SDK ?= $(HOME)/opt/android-sdk-macosx
 else
   ANDROID_SDK ?= $(HOME)/opt/android-sdk-linux_x86
 endif
-ANDROID_SDK_PLATFORM_DIR = $(ANDROID_SDK)/platforms/$(ANDROID_PLATFORM)
+ANDROID_SDK_PLATFORM_DIR = $(ANDROID_SDK)/platforms/$(ANDROID_SDK_PLATFORM)
 ANDROID_ABI_DIR = $(ANDROID_BUILD)/libs/$(ANDROID_ABI3)
 
 ANDROID_LIB_NAMES = xcsoar
 
 ifneq ($(V),2)
 ANT += -quiet
+ANDROID_TOOL_OPTIONS = --silent
 else
 JARSIGNER += -verbose
+ANDROID_TOOL_OPTIONS = --verbose
 endif
 
 JARSIGNER += -digestalg SHA1 -sigalg MD5withRSA
@@ -49,26 +50,47 @@ CLASS_NAME = $(JAVA_PACKAGE).NativeView
 CLASS_SOURCE = $(subst .,/,$(CLASS_NAME)).java
 CLASS_CLASS = $(patsubst %.java,%.class,$(CLASS_SOURCE))
 
-NATIVE_CLASSES = NativeView EventBridge Timer InternalGPS NonGPSSensors Settings NativeInputListener DownloadUtil
+NATIVE_CLASSES = NativeView EventBridge Timer InternalGPS NonGPSSensors NativeInputListener DownloadUtil
+ifneq ($(IOIOLIB_DIR),)
+NATIVE_CLASSES += NativeBMP085Listener
+NATIVE_CLASSES += NativeI2CbaroListener
+NATIVE_CLASSES += NativeNunchuckListener
+NATIVE_CLASSES += NativeVoltageListener
+endif
 NATIVE_SOURCES = $(patsubst %,android/src/%.java,$(NATIVE_CLASSES))
 NATIVE_PREFIX = $(TARGET_OUTPUT_DIR)/include/$(subst .,_,$(JAVA_PACKAGE))_
 NATIVE_HEADERS = $(patsubst %,$(NATIVE_PREFIX)%.h,$(NATIVE_CLASSES))
 
-ANDROID_JAVA_SOURCES = android/src/*.java
-ifneq ($(IOIOLIB_DIR),)
-ANDROID_JAVA_SOURCES += android/IOIOHelper/*.java
+ANDROID_JAVA_SOURCES := $(wildcard android/src/*.java)
+ifeq ($(IOIOLIB_DIR),)
+ANDROID_JAVA_SOURCES := $(filter-out $(wildcard android/src/*IOIO*.java),$(ANDROID_JAVA_SOURCES))
+ANDROID_JAVA_SOURCES := $(filter-out $(wildcard android/src/*BMP085*.java),$(ANDROID_JAVA_SOURCES))
+ANDROID_JAVA_SOURCES := $(filter-out $(wildcard android/src/*I2Cbaro*.java),$(ANDROID_JAVA_SOURCES))
+ANDROID_JAVA_SOURCES := $(filter-out $(wildcard android/src/*Nunchuck*.java),$(ANDROID_JAVA_SOURCES))
+ANDROID_JAVA_SOURCES := $(filter-out $(wildcard android/src/*Voltage*.java),$(ANDROID_JAVA_SOURCES))
 endif
 
 DRAWABLE_DIR = $(ANDROID_BUILD)/res/drawable
 RAW_DIR = $(ANDROID_BUILD)/res/raw
 
 ifeq ($(TESTING),y)
-$(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_red_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
-	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
+ICON_SVG = $(topdir)/Data/graphics/logo_red.svg
 else
 $(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_red_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
 	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
 endif  # TESTING
+
+$(ANDROID_BUILD)/res/drawable-ldpi/icon.png: $(ICON_SVG) | $(ANDROID_BUILD)/res/drawable-ldpi/dirstamp
+	$(Q)rsvg-convert --width=36 $< -o $@
+
+$(ANDROID_BUILD)/res/drawable/icon.png: $(ICON_SVG) | $(ANDROID_BUILD)/res/drawable/dirstamp
+	$(Q)rsvg-convert --width=48 $< -o $@
+
+$(ANDROID_BUILD)/res/drawable-hdpi/icon.png: $(ICON_SVG) | $(ANDROID_BUILD)/res/drawable-hdpi/dirstamp
+	$(Q)rsvg-convert --width=72 $< -o $@
+
+$(ANDROID_BUILD)/res/drawable-xhdpi/icon.png: $(ICON_SVG) | $(ANDROID_BUILD)/res/drawable-xhdpi/dirstamp
+	$(Q)rsvg-convert --width=96 $< -o $@
 
 OGGENC = oggenc --quiet --quality 1
 
@@ -79,7 +101,7 @@ $(SOUND_FILES): $(RAW_DIR)/%.ogg: Data/sound/%.wav | $(RAW_DIR)/dirstamp
 	@$(NQ)echo "  OGGENC  $@"
 	$(Q)$(OGGENC) -o $@ $<
 
-PNG1 := $(patsubst Data/bitmaps/%.bmp,$(DRAWABLE_DIR)/%.png,$(wildcard Data/bitmaps/*.bmp))
+PNG1 := $(patsubst Data/bitmaps/%.bmp,$(DRAWABLE_DIR)/%.png,$(BMP_BITMAPS))
 
 # workaround for an ImageMagick bug (observed with the Debian package
 # 8:6.7.7.10-2): it corrupts 4-bit gray-scale images when converting
@@ -92,7 +114,7 @@ $(DRAWABLE_DIR)/vario_scale_%.png: Data/bitmaps/vario_scale_%.bmp | $(DRAWABLE_D
 $(PNG1): $(DRAWABLE_DIR)/%.png: Data/bitmaps/%.bmp | $(DRAWABLE_DIR)/dirstamp
 	$(Q)$(IM_PREFIX)convert $< $@
 
-PNG2 := $(patsubst $(DATA)/graphics/%.bmp,$(DRAWABLE_DIR)/%.png,$(BMP_LAUNCH_FLY_224) $(BMP_LAUNCH_SIM_224))
+PNG2 := $(patsubst $(DATA)/graphics/%.bmp,$(DRAWABLE_DIR)/%.png,$(BMP_LAUNCH_ALL))
 $(PNG2): $(DRAWABLE_DIR)/%.png: $(DATA)/graphics/%.bmp | $(DRAWABLE_DIR)/dirstamp
 	$(Q)$(IM_PREFIX)convert $< $@
 
@@ -108,7 +130,11 @@ PNG5 := $(patsubst $(DATA)/graphics/%.bmp,$(DRAWABLE_DIR)/%.png,$(BMP_DIALOG_TIT
 $(PNG5): $(DRAWABLE_DIR)/%.png: $(DATA)/graphics/%.bmp | $(DRAWABLE_DIR)/dirstamp
 	$(Q)$(IM_PREFIX)convert $< $@
 
-PNG_FILES = $(DRAWABLE_DIR)/icon.png $(PNG1) $(PNG1b) $(PNG2) $(PNG3) $(PNG4) $(PNG5)
+PNG_FILES = $(PNG1) $(PNG1b) $(PNG2) $(PNG3) $(PNG4) $(PNG5) \
+	$(ANDROID_BUILD)/res/drawable-ldpi/icon.png \
+	$(ANDROID_BUILD)/res/drawable/icon.png \
+	$(ANDROID_BUILD)/res/drawable-hdpi/icon.png \
+	$(ANDROID_BUILD)/res/drawable-xhdpi/icon.png
 
 ifeq ($(TESTING),y)
 MANIFEST = android/testing/AndroidManifest.xml
@@ -118,49 +144,33 @@ endif    # TESTING
 
 # symlink some important files to $(ANDROID_BUILD) and let the Android
 # SDK generate build.xml
-$(ANDROID_BUILD)/build.xml: $(MANIFEST) $(PNG_FILES) build/r.sed build/r.testing.sed build/r.nohorizon.sed | $(TARGET_BIN_DIR)/dirstamp
+$(ANDROID_BUILD)/build.xml: $(MANIFEST) $(PNG_FILES) | $(TARGET_BIN_DIR)/dirstamp
 	@$(NQ)echo "  ANDROID $@"
-	$(Q)rm -r -f $@ $(@D)/AndroidManifest.xml $(@D)/src $(@D)/bin $(@D)/res/values
-	$(Q)mkdir -p $(ANDROID_BUILD)/res $(ANDROID_BUILD)/src
+	$(Q)rm -r -f $@ $(@D)/*_rules.xml $(@D)/AndroidManifest.xml $(@D)/src $(@D)/bin $(@D)/res/values
+	$(Q)mkdir -p $(ANDROID_BUILD)/res $(ANDROID_BUILD)/src/org/xcsoar
 	$(Q)ln -s ../../../$(MANIFEST) $(@D)/AndroidManifest.xml
 	$(Q)ln -s ../bin $(@D)/bin
-	$(Q)ln -s ../../../../android/src $(@D)/src/xcsoar
+	$(Q)ln -s $(addprefix ../../../../../../,$(ANDROID_JAVA_SOURCES)) $(@D)/src/org/xcsoar
 ifneq ($(IOIOLIB_DIR),)
-	$(Q)ln -s $(abspath $(IOIOLIB_DIR)/src/ioio/lib/api) $(ANDROID_BUILD)/src/ioio_api
-	$(Q)ln -s $(abspath $(IOIOLIB_DIR)/src/ioio/lib/spi) $(ANDROID_BUILD)/src/ioio_spi
-	$(Q)ln -s $(abspath $(IOIOLIB_DIR)/src/ioio/lib/util) $(ANDROID_BUILD)/src/ioio_util
-	$(Q)ln -s $(abspath $(IOIOLIB_DIR)/src/ioio/lib/impl) $(ANDROID_BUILD)/src/ioio_impl
-	$(Q)ln -s ../../../../android/IOIOHelper $(@D)/src/ioio_xcsoar
+	$(Q)mkdir -p $(ANDROID_BUILD)/src/ioio/lib
+	$(Q)ln -s $(abspath $(IOIOLIB_DIR)/src/ioio/lib/api) $(ANDROID_BUILD)/src/ioio/lib/api
+	$(Q)ln -s $(abspath $(IOIOLIB_DIR)/src/ioio/lib/spi) $(ANDROID_BUILD)/src/ioio/lib/spi
+	$(Q)ln -s $(abspath $(IOIOLIB_DIR)/src/ioio/lib/util) $(ANDROID_BUILD)/src/ioio/lib/util
+	$(Q)ln -s $(abspath $(IOIOLIB_DIR)/src/ioio/lib/impl) $(ANDROID_BUILD)/src/ioio/lib/impl
 endif
 	$(Q)ln -s ../../../../android/res/values $(@D)/res/values
 ifeq ($(WINHOST),y)
 	echo "now run your android build followed by exit.  For example:"
-	echo "c:\opt\android-sdk\tools\android.bat update project --path c:\xcsoar\output\android\build --target $(ANDROID_PLATFORM)"
+	echo "c:\opt\android-sdk\tools\android.bat update project --path c:\xcsoar\output\android\build --target $(ANDROID_SDK_PLATFORM)"
 	cmd
 else
-	$(Q)$(ANDROID_SDK)/tools/android update project --path $(@D) --target $(ANDROID_PLATFORM)
+	$(Q)$(ANDROID_SDK)/tools/android $(ANDROID_TOOL_OPTIONS) update project --path $(@D) --target $(ANDROID_SDK_PLATFORM)
+	$(Q)ln -s ../../../android/custom_rules.xml $(@D)/
 endif
 ifeq ($(TESTING),y)
-ifeq ($(HOST_IS_DARWIN),y)
-	$(Q)sed -i "" -f build/r.testing.sed $@
-else    # Darwin
-	$(Q)sed -i -f build/r.testing.sed $@
-endif   # Darwin
-else    # TESTING
-ifeq ($(NO_HORIZON),y)
-ifeq ($(HOST_IS_DARWIN),y)
-	$(Q)sed -i "" -f build/r.nohorizon.sed $@
-else    # Darwin
-	$(Q)sed -i -f build/r.nohorizon.sed $@
-endif   # Darwin
-else    # NO_HORIZON
-ifeq ($(HOST_IS_DARWIN),y)
-	$(Q)sed -i "" -f build/r.sed $@
-else    # Darwin
-	$(Q) sed -i -f build/r.sed $@
-endif   # Darwin
-endif   # NO_HORIZON
-endif   # TESTING
+	$(Q)ln -s ../../../../../../android/src/testing $(@D)/src/org/xcsoar
+	$(Q)ln -s ../../../android/testing/testing_rules.xml $(@D)/
+endif
 	@touch $@
 
 ifeq ($(FAT_BINARY),y)
@@ -202,22 +212,23 @@ $(call SRC_TO_OBJ,$(SRC)/Android/InternalSensors.cpp): $(NATIVE_HEADERS)
 $(call SRC_TO_OBJ,$(SRC)/Android/Battery.cpp): $(NATIVE_HEADERS)
 $(call SRC_TO_OBJ,$(SRC)/Android/NativeInputListener.cpp): $(NATIVE_HEADERS)
 $(call SRC_TO_OBJ,$(SRC)/Android/DownloadManager.cpp): $(NATIVE_HEADERS)
+$(call SRC_TO_OBJ,$(SRC)/Android/NativeBMP085Listener.cpp): $(NATIVE_HEADERS)
+$(call SRC_TO_OBJ,$(SRC)/Android/NativeI2CbaroListener.cpp): $(NATIVE_HEADERS)
+$(call SRC_TO_OBJ,$(SRC)/Android/NativeNunchuckListener.cpp): $(NATIVE_HEADERS)
+$(call SRC_TO_OBJ,$(SRC)/Android/NativeVoltageListener.cpp): $(NATIVE_HEADERS)
 
 ANDROID_LIB_BUILD = $(patsubst %,$(ANDROID_ABI_DIR)/lib%.so,$(ANDROID_LIB_NAMES))
 $(ANDROID_LIB_BUILD): $(ANDROID_ABI_DIR)/lib%.so: $(TARGET_BIN_DIR)/lib%.so $(ANDROID_ABI_DIR)/dirstamp
-	cp $< $@
+	$(Q)cp $< $@
 
-$(ANDROID_JNI)/build.xml $(ANDROID_JNI)/AndroidManifest.xml: | $(ANDROID_JNI)/dirstamp
-	@$(NQ)echo "  ANDROID $@"
-	$(Q)ln -s ../../../android/$(@F) $@
-
-$(ANDROID_JNI)/classes/$(CLASS_CLASS): $(NATIVE_SOURCES) $(ANDROID_JNI)/build.xml $(ANDROID_JNI)/AndroidManifest.xml $(ANDROID_BUILD)/build.xml
+$(ANDROID_BUILD)/bin/classes/$(CLASS_CLASS): $(NATIVE_SOURCES) $(ANDROID_BUILD)/build.xml $(ANDROID_BUILD)/res/drawable/icon.png $(SOUND_FILES)
 	@$(NQ)echo "  ANT     $@"
-	$(Q)cd $(ANDROID_JNI) && $(ANT) compile-jni-classes
+	$(Q)cd $(ANDROID_BUILD) && $(ANT) nodeps compile-jni-classes
+	@touch $@
 
-$(patsubst %,$(NATIVE_PREFIX)%.h,$(NATIVE_CLASSES)): $(NATIVE_PREFIX)%.h: $(ANDROID_JNI)/classes/$(CLASS_CLASS)
+$(patsubst %,$(NATIVE_PREFIX)%.h,$(NATIVE_CLASSES)): $(NATIVE_PREFIX)%.h: android/src/%.java $(ANDROID_BUILD)/bin/classes/$(CLASS_CLASS)
 	@$(NQ)echo "  JAVAH   $@"
-	$(Q)javah -classpath $(ANDROID_SDK_PLATFORM_DIR)/android.jar:$(ANDROID_JNI)/classes -d $(@D) $(subst _,.,$(patsubst $(patsubst ./%,%,$(TARGET_OUTPUT_DIR))/include/%.h,%,$@))
+	$(Q)javah -classpath $(ANDROID_SDK_PLATFORM_DIR)/android.jar:$(ANDROID_BUILD)/bin/classes -d $(@D) $(subst _,.,$(patsubst $(patsubst ./%,%,$(TARGET_OUTPUT_DIR))/include/%.h,%,$@))
 	@touch $@
 
 endif # !FAT_BINARY
@@ -225,12 +236,12 @@ endif # !FAT_BINARY
 $(ANDROID_BIN)/XCSoar-debug.apk: $(ANDROID_LIB_BUILD) $(ANDROID_BUILD)/build.xml $(ANDROID_BUILD)/res/drawable/icon.png $(SOUND_FILES) $(ANDROID_JAVA_SOURCES)
 	@$(NQ)echo "  ANT     $@"
 	@rm -f $@ $(patsubst %.apk,%-unaligned.apk,$@) $(@D)/classes.dex
-	$(Q)cd $(ANDROID_BUILD) && $(ANT) debug
+	$(Q)cd $(ANDROID_BUILD) && $(ANT) nodeps debug
 
 $(ANDROID_BIN)/XCSoar-release-unsigned.apk: $(ANDROID_LIB_BUILD) $(ANDROID_BUILD)/build.xml $(ANDROID_BUILD)/res/drawable/icon.png $(SOUND_FILES) $(ANDROID_JAVA_SOURCES)
 	@$(NQ)echo "  ANT     $@"
 	@rm -f $@ $(@D)/classes.dex
-	$(Q)cd $(ANDROID_BUILD) && $(ANT) release
+	$(Q)cd $(ANDROID_BUILD) && $(ANT) nodeps release
 
 $(ANDROID_BIN)/XCSoar-release-unaligned.apk: $(ANDROID_BIN)/XCSoar-release-unsigned.apk
 	@$(NQ)echo "  SIGN    $@"

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,19 +24,20 @@
 #include "Math/ZeroFinder.hpp"
 #include "GlideSolvers/GlideResult.hpp"
 
+#include <algorithm>
+
 #include <assert.h>
 
-#define fixed_big fixed_int_constant(1000000)
+#define fixed_big fixed(1000000)
 
 fixed 
-AirspaceAircraftPerformance::SolutionGeneral(const fixed &distance,
-                                              const fixed &dh) const
+AirspaceAircraftPerformance::SolutionGeneral(fixed distance, fixed dh) const
 {
   const fixed t_cruise =
-      positive(distance) ? distance / GetCruiseSpeed() : fixed_zero;
+      positive(distance) ? distance / GetCruiseSpeed() : fixed(0);
   const fixed h_descent = dh - t_cruise * GetCruiseDescent();
 
-  if (fabs(h_descent) < fixed_one)
+  if (fabs(h_descent) < fixed(1))
     return t_cruise;
 
   if (positive(h_descent)) {
@@ -48,7 +49,7 @@ AirspaceAircraftPerformance::SolutionGeneral(const fixed &distance,
       return fixed_big;
 
     const fixed t_descent = h_descent / mod_descent_rate;
-    return max(t_cruise, t_descent);
+    return std::max(t_cruise, t_descent);
 
   }
 
@@ -67,9 +68,7 @@ AirspaceAircraftPerformance::SolutionGeneral(const fixed &distance,
  * Utility class to scan for height difference that produces
  * minimum arrival time intercept with a vertical line
  */
-class AirspaceAircraftInterceptVertical: 
-  public ZeroFinder 
-{
+class AirspaceAircraftInterceptVertical final : public ZeroFinder {
 public:
   /**
    * Constructor
@@ -83,11 +82,9 @@ public:
    * @return Initialised object
    */
   AirspaceAircraftInterceptVertical(const AirspaceAircraftPerformance &aap,
-                                    const fixed &distance,
-                                    const fixed &alt,
-                                    const fixed &h_min,
-                                    const fixed &h_max)
-    :ZeroFinder(h_min, h_max, fixed_one),
+                                    fixed distance, fixed alt,
+                                    fixed h_min, fixed h_max)
+    :ZeroFinder(h_min, h_max, fixed(1)),
      m_perf(aap), m_distance(distance), m_alt(alt),
      m_h_min(h_min) {}
 
@@ -109,25 +106,23 @@ public:
       h = h_this;
       return t;
     }
-    return -fixed_one;
+    return fixed(-1);
   }
 
 private:
   const AirspaceAircraftPerformance &m_perf;
-  const fixed &m_distance;
-  const fixed &m_alt;
-  const fixed &m_h_min;
+  const fixed m_distance;
+  const fixed m_alt;
+  const fixed m_h_min;
 };
 
 fixed 
-AirspaceAircraftPerformance::SolutionVertical(const fixed &distance,
-                                               const fixed &altitude,
-                                               const fixed &base,
-                                               const fixed &top,
-                                               fixed &intercept_alt) const
+AirspaceAircraftPerformance::SolutionVertical(fixed distance, fixed altitude,
+                                              fixed base, fixed top,
+                                              fixed &intercept_alt) const
 {
   if (!SolutionExists(distance, altitude, base, top))
-    return -fixed_one;
+    return fixed(-1);
 
   if (top <= base) {
     // unique solution
@@ -136,7 +131,7 @@ AirspaceAircraftPerformance::SolutionVertical(const fixed &distance,
       intercept_alt = top;
       return t_this;
     }
-    return -fixed_one;
+    return fixed(-1);
   }
 
   AirspaceAircraftInterceptVertical aaiv(*this, distance, altitude, base, top);
@@ -147,9 +142,7 @@ AirspaceAircraftPerformance::SolutionVertical(const fixed &distance,
  * Utility class to scan for distance that produces
  * minimum arrival time intercept with a horizontal line
  */
-class AirspaceAircraftInterceptHorizontal: 
-  public ZeroFinder 
-{
+class AirspaceAircraftInterceptHorizontal final : public ZeroFinder {
 public:
   /**
    * Constructor
@@ -162,10 +155,9 @@ public:
    * @return Initialised object
    */
   AirspaceAircraftInterceptHorizontal(const AirspaceAircraftPerformance &aap,
-                                      const fixed &distance_min,
-                                      const fixed &distance_max,
-                                      const fixed &dh)
-    :ZeroFinder(distance_min, distance_max, fixed_one),
+                                      fixed distance_min, fixed distance_max,
+                                      fixed dh)
+    :ZeroFinder(distance_min, distance_max, fixed(1)),
      m_perf(aap), m_d_min(distance_min), m_dh(dh) {}
 
   fixed f(const fixed distance) {
@@ -186,24 +178,23 @@ public:
       distance = distance_this;
       return t;
     }
-    return -fixed_one;
+    return fixed(-1);
   }
 
 private:
   const AirspaceAircraftPerformance &m_perf;
-  const fixed &m_d_min;
-  const fixed &m_dh;
+  const fixed m_d_min;
+  const fixed m_dh;
 };
 
 fixed 
-AirspaceAircraftPerformance::SolutionHorizontal(const fixed &distance_min,
-                                                 const fixed &distance_max,
-                                                 const fixed &altitude,
-                                                 const fixed &h,
-                                                 fixed &intercept_distance) const
+AirspaceAircraftPerformance::SolutionHorizontal(fixed distance_min,
+                                                fixed distance_max,
+                                                fixed altitude, fixed h,
+                                                fixed &intercept_distance) const
 {
   if (!SolutionExists(distance_max, altitude, h, h))
-    return -fixed_one;
+    return fixed(-1);
 
   const fixed dh = altitude - h;
 
@@ -214,7 +205,7 @@ AirspaceAircraftPerformance::SolutionHorizontal(const fixed &distance_min,
       intercept_distance = distance_max;
       return t_this;
     }
-    return -fixed_one;
+    return fixed(-1);
   }
   AirspaceAircraftInterceptHorizontal aaih(*this, distance_min, distance_max, dh);
   return aaih.solve(intercept_distance);
@@ -226,76 +217,22 @@ TODO: write a sorter/visitor so that we can visit airspaces in increasing
  */
 
 bool 
-AirspaceAircraftPerformance::SolutionExists(const fixed &distance_max,
-                                             const fixed &altitude,
-                                             const fixed &h_min,
-                                             const fixed &h_max) const
+AirspaceAircraftPerformance::SolutionExists(fixed distance_max,
+                                            fixed altitude,
+                                            fixed h_min, fixed h_max) const
 {
   if (positive(altitude - h_max) &&
-      !positive(max(GetCruiseDescent(), GetDescentRate()) + vertical_tolerance))
+      !positive(std::max(GetCruiseDescent(), GetDescentRate())
+                + vertical_tolerance))
     return false;
 
   if (positive(h_min-altitude) &&
-      !positive(max(GetClimbRate(), -GetCruiseDescent()) + vertical_tolerance))
+      !positive(std::max(GetClimbRate(), -GetCruiseDescent())
+                + vertical_tolerance))
     return false;
 
   if (positive(distance_max) && !positive(GetCruiseSpeed()))
     return false;
 
   return true;
-}
-
-AirspaceAircraftPerformanceTask::AirspaceAircraftPerformanceTask(const GlidePolar &polar,
-                                                                 const GlideResult &solution)
-{
-  const fixed time_remaining = solution.time_elapsed;
-
-  if (solution.IsOk() && positive(time_remaining)) {
-    const fixed leg_distance = solution.vector.distance;
-    m_v = leg_distance / time_remaining;
-    if (positive(solution.height_climb)) {
-      m_cruise_descent = -solution.height_climb / time_remaining;
-      m_climb_rate = polar.GetMC();
-    } else {
-      m_cruise_descent = solution.height_glide / time_remaining;
-      m_climb_rate = fixed_zero;
-    }
-  } else {
-    m_v = fixed_one;
-    m_cruise_descent = fixed_zero;
-    m_climb_rate = fixed_zero;
-  }
-  m_max_descent = polar.GetSBestLD();
-
-  SetVerticalTolerance(fixed(0.001));
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetCruiseSpeed() const
-{
-  return m_v;
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetCruiseDescent() const
-{
-  return m_cruise_descent;
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetClimbRate() const
-{
-  return m_climb_rate;
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetDescentRate() const
-{
-  return m_max_descent;
-}
-
-fixed 
-AirspaceAircraftPerformanceTask::GetMaxSpeed() const
-{
-  return m_v;
 }

@@ -3,13 +3,12 @@
 
 #include "Geo/GeoPoint.hpp"
 #include "Predicate/AirspacePredicate.hpp"
-#include "Airspace.hpp"
 #include "AirspaceInterceptSolution.hpp"
 
 #include <queue>
 
-class AirspaceVisitor;
 class Airspaces;
+class TaskProjection;
 
 /**
  *  Class to sort nearest airspaces by distance to closest point.
@@ -17,7 +16,7 @@ class Airspaces;
  */
 class AirspaceNearestSort
 {
-  typedef std::pair<AirspaceInterceptSolution, Airspace> AirspaceSolutionItem;
+  typedef std::pair<AirspaceInterceptSolution, const AbstractAirspace *> AirspaceSolutionItem;
   typedef std::pair<fixed, AirspaceSolutionItem> Item;
 
   /**
@@ -38,8 +37,6 @@ protected:
 private:
   Queue m_q;
 
-  bool m_reverse;
-
 public:
 /** 
  * Constructor
@@ -52,8 +49,7 @@ public:
   AirspaceNearestSort(const GeoPoint _location,
                       const AirspacePredicate &condition=AirspacePredicate::always_true):
     m_location(_location),
-    m_condition(condition),
-    m_reverse(false) {};
+    m_condition(condition) {}
 
 /** 
  * Find nearest
@@ -65,18 +61,6 @@ public:
  */
   const AbstractAirspace* find_nearest(const Airspaces &airspaces,
                                        const fixed range);
-
-/** 
- * 
- * Visit all nearest in ascending order
- * 
- * @param airspaces Airspaces to search
- * @param visitor Visitor to apply to matches, in sorted order
- * @param range Maximum range of search
- */
-  void visit_sorted(const Airspaces &airspaces,
-                    AirspaceVisitor &visitor,
-                    const fixed range);
 
 /** 
  * Compute complete or partial solution as required to this sort strategy
@@ -96,15 +80,6 @@ public:
  * @return Positive value indicating rank (low best), negative indicates invalid
  */
   virtual fixed metric(const AirspaceInterceptSolution& ais) const;
-
-/** 
- * Set reversal of sorting order
- * 
- * @param set New value 
- */
-  void set_reverse(bool set) {
-    m_reverse = set;
-  }
 
 private:
 

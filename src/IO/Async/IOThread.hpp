@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,14 +32,13 @@ Copyright_License {
 #include "FileEventHandler.hpp"
 
 #include <map>
-#include <forward_list>
 
 class FileEventHandler;
 
 /**
  * A thread that is used for asynchronous (non-blocking) I/O.
  */
-class IOThread : protected Thread {
+class IOThread final : protected Thread {
   struct File {
     File *next_ready;
 
@@ -83,8 +82,8 @@ class IOThread : protected Thread {
   bool modified, quit, running;
 
 public:
-  static const unsigned READ = Poll::READ;
-  static const unsigned WRITE = Poll::WRITE;
+  static constexpr unsigned READ = Poll::READ;
+  static constexpr unsigned WRITE = Poll::WRITE;
 
   /**
    * Start the thread.  This method should be called after creating
@@ -161,7 +160,7 @@ protected:
   void HandleReady(File *ready);
 
   /* virtual methods from Thread */
-  virtual void Run();
+  virtual void Run() override;
 };
 
 #endif

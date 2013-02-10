@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,8 +25,9 @@ Copyright_License {
 #define XCSOAR_NMEA_THERMAL_LOCATOR_HPP
 
 #include "Geo/GeoPoint.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Util/TrivialArray.hpp"
+
+#include <type_traits>
 
 struct SpeedVector;
 
@@ -45,7 +46,7 @@ struct ThermalSource
 /** Structure for current thermal estimate from ThermalLocator */
 struct ThermalLocatorInfo
 {
-  static const unsigned MAX_SOURCES = 20;
+  static constexpr unsigned MAX_SOURCES = 20;
 
   /** Location of thermal at aircraft altitude */
   GeoPoint estimate_location;
@@ -64,7 +65,7 @@ struct ThermalLocatorInfo
   ThermalSource &AllocateSource();
 };
 
-static_assert(is_trivial<ThermalLocatorInfo>::value,
+static_assert(std::is_trivial<ThermalLocatorInfo>::value,
               "type is not trivial");
 
 #endif

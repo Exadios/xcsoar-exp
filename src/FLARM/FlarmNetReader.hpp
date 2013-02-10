@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Copyright_License {
 
 #include <tchar.h>
 
-class FlarmDatabase;
+class FlarmNetDatabase;
 class NLineReader;
 
 /**
@@ -40,7 +40,7 @@ namespace FlarmNetReader
    * @param reader A NLineReader instance to read from
    * @return the number of records read from the file
    */
-  unsigned LoadFile(NLineReader &reader, FlarmDatabase &database);
+  unsigned LoadFile(NLineReader &reader, FlarmNetDatabase &database);
 
   /**
    * Reads all records from the FlarmNet.org file
@@ -48,7 +48,7 @@ namespace FlarmNetReader
    * @param path the path of the file
    * @return the number of records read from the file
    */
-  unsigned LoadFile(const TCHAR *path, FlarmDatabase &database);
+  unsigned LoadFile(const TCHAR *path, FlarmNetDatabase &database);
 };
 
 #endif

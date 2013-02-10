@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,24 +24,22 @@ Copyright_License {
 #include "Screen/Window.hpp"
 #include "Screen/ContainerWindow.hpp"
 #include "Screen/Debug.hpp"
-#include "Screen/Blank.hpp"
 #include "Screen/GDI/PaintCanvas.hpp"
+#include "Event/Idle.hpp"
 #include "Asset.hpp"
 
 #include <assert.h>
 #include <windowsx.h>
 
 void
-Window::set(ContainerWindow *parent, const TCHAR *cls, const TCHAR *text,
-            PixelScalar left, PixelScalar top,
-            UPixelScalar width, UPixelScalar height,
-            const WindowStyle window_style)
+Window::Create(ContainerWindow *parent, const TCHAR *cls, const TCHAR *text,
+               PixelRect rc, const WindowStyle window_style)
 {
   assert(IsScreenInitialized());
-  assert(width > 0);
-  assert(width < 0x1000000);
-  assert(height > 0);
-  assert(height < 0x1000000);
+  assert(rc.left <= rc.right);
+  assert(rc.right - rc.left < 0x1000000);
+  assert(rc.top <= rc.bottom);
+  assert(rc.bottom - rc.top < 0x1000000);
 
   double_clicks = window_style.double_clicks;
 
@@ -51,7 +49,8 @@ Window::set(ContainerWindow *parent, const TCHAR *cls, const TCHAR *text,
     EnableCustomPainting();
 
   hWnd = ::CreateWindowEx(ex_style, cls, text, style,
-                          left, top, width, height,
+                          rc.left, rc.top,
+                          rc.right - rc.left, rc.bottom - rc.top,
                           parent != NULL ? parent->hWnd : NULL,
                           NULL, NULL, this);
 
@@ -72,6 +71,16 @@ Window::CreateMessageWindow()
 #endif
                           NULL, NULL, this);
   assert(hWnd != NULL);
+}
+
+bool
+Window::IsMaximised() const
+{
+  const PixelRect this_rc = GetPosition();
+  const PixelRect parent_rc = GetParentClientRect();
+
+  return (this_rc.right - this_rc.left) >= (parent_rc.right - parent_rc.left) &&
+    (this_rc.bottom - this_rc.top) >= (parent_rc.bottom - parent_rc.top);
 }
 
 void
@@ -111,6 +120,16 @@ Window::Created(HWND _hWnd)
   AssertThread();
 }
 
+void
+Window::SetFont(const Font &_font)
+{
+  AssertNoneLocked();
+  AssertThread();
+
+  ::SendMessage(hWnd, WM_SETFONT,
+                (WPARAM)_font.Native(), MAKELPARAM(TRUE, 0));
+}
+
 LRESULT
 Window::OnUnhandledMessage(HWND hWnd, UINT message,
                              WPARAM wParam, LPARAM lParam)
@@ -133,14 +152,8 @@ Window::OnMessage(HWND _hWnd, UINT message,
     OnDestroy();
     return 0;
 
-  case WM_CLOSE:
-    if (OnClose())
-      /* true returned: message was handled */
-      return 0;
-    break;
-
   case WM_SIZE:
-    OnResize(LOWORD(lParam), HIWORD(lParam));
+    OnResize({LOWORD(lParam), HIWORD(lParam)});
     return 0;
 
   case WM_MOUSEMOVE:
@@ -151,7 +164,7 @@ Window::OnMessage(HWND _hWnd, UINT message,
   case WM_LBUTTONDOWN:
     if (OnMouseDown(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam))) {
       /* true returned: message was handled */
-      ResetDisplayTimeOut();
+      ResetUserIdle();
       return 0;
     }
     break;
@@ -159,7 +172,7 @@ Window::OnMessage(HWND _hWnd, UINT message,
   case WM_LBUTTONUP:
     if (OnMouseUp(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam))) {
       /* true returned: message was handled */
-      ResetDisplayTimeOut();
+      ResetUserIdle();
       return 0;
     }
     break;
@@ -174,7 +187,7 @@ Window::OnMessage(HWND _hWnd, UINT message,
 
     if (OnMouseDouble(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam))) {
       /* true returned: message was handled */
-      ResetDisplayTimeOut();
+      ResetUserIdle();
       return 0;
     }
 
@@ -185,7 +198,7 @@ Window::OnMessage(HWND _hWnd, UINT message,
     if (OnMouseWheel(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam),
                        GET_WHEEL_DELTA_WPARAM(wParam))) {
       /* true returned: message was handled */
-      ResetDisplayTimeOut();
+      ResetUserIdle();
       return 0;
     }
     break;
@@ -194,7 +207,7 @@ Window::OnMessage(HWND _hWnd, UINT message,
   case WM_KEYDOWN:
     if (OnKeyDown(wParam)) {
       /* true returned: message was handled */
-      ResetDisplayTimeOut();
+      ResetUserIdle();
       return 0;
     }
     break;
@@ -202,22 +215,29 @@ Window::OnMessage(HWND _hWnd, UINT message,
   case WM_KEYUP:
     if (OnKeyUp(wParam)) {
       /* true returned: message was handled */
-      ResetDisplayTimeOut();
+      ResetUserIdle();
       return 0;
     }
+    break;
+
+  case WM_CHAR:
+    if (OnCharacter((TCHAR)wParam))
+      /* true returned: message was handled */
+      return 0;
+
     break;
 
   case WM_COMMAND:
     if (OnCommand(LOWORD(wParam), HIWORD(wParam))) {
       /* true returned: message was handled */
-      ResetDisplayTimeOut();
+      ResetUserIdle();
       return 0;
     }
     break;
 
   case WM_CANCELMODE:
-    if (OnCancelMode())
-      return 0;
+    OnCancelMode();
+    /* pass on to DefWindowProc(), there may be more to do */
     break;
 
   case WM_SETFOCUS:

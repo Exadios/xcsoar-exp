@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@ Copyright_License {
 #include "Screen/PaintWindow.hpp"
 #include "Util/StaticArray.hpp"
 #include "Util/StaticString.hpp"
+
+#include <tchar.h>
 
 struct DialogLook;
 class Bitmap;
@@ -68,28 +70,33 @@ protected:
 
   StaticArray<TabButton *, 32> buttons;
 
+  const bool vertical;
+
   bool dragging; // tracks that mouse is down and captured
-  int down_index; // index of tab where mouse down occurred
   bool drag_off_button; // set by mouse_move
-  bool flip_orientation;
+  unsigned down_index; // index of tab where mouse down occurred
+
+  const UPixelScalar tab_line_height;
 
 public:
   /**
    *
    * @param parent
    * @param _theTabBar. An existing TabBar object
-   * @param left. Left position of the tab bar box in the parent window
-   * @param top Top position of the tab bar box in the parent window
-   * @param width Width of tab bar box in the parent window
-   * @param height Height of tab bar box in the parent window
    */
   TabDisplay(TabBarControl& _theTabBar, const DialogLook &look,
-             ContainerWindow &parent,
-             PixelScalar left, PixelScalar top,
-             UPixelScalar width, UPixelScalar height,
-             bool _flipOrientation = false);
+             ContainerWindow &parent, PixelRect rc,
+             bool vertical);
 
   virtual ~TabDisplay();
+
+  const DialogLook &GetLook() const {
+    return look;
+  }
+
+  bool IsVertical() const {
+    return vertical;
+  }
 
   /**
    * Paints one button
@@ -115,15 +122,6 @@ public:
   gcc_pure
   int GetButtonIndexAt(RasterPoint p) const;
 
-public:
-  UPixelScalar GetTabHeight() const {
-    return this->GetHeight();
-  }
-
-  UPixelScalar GetTabWidth() const {
-    return this->GetWidth();
-  }
-
 private:
   /**
    * calculates the size and position of ith button
@@ -135,29 +133,19 @@ private:
   const PixelRect &GetButtonSize(unsigned i) const;
 
 protected:
-  /**
-   * paints the tab buttons
-   * @param canvas
-   */
-  virtual void OnPaint(Canvas &canvas);
-  //ToDo: support function buttons
+  virtual void OnPaint(Canvas &canvas) override;
 
-  /**
-   * track key presses to navigate without mouse
-   * @param key_code
-   * @return
-   */
-  virtual void OnKillFocus();
-  virtual void OnSetFocus();
-  virtual bool OnKeyCheck(unsigned key_code) const;
-  virtual bool OnKeyDown(unsigned key_code);
+  virtual void OnKillFocus() override;
+  virtual void OnSetFocus() override;
+  virtual void OnCancelMode() override;
 
-  /**
-   * track mouse clicks
-   */
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
+  virtual bool OnKeyCheck(unsigned key_code) const override;
+  virtual bool OnKeyDown(unsigned key_code) override;
+
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y,
+                           unsigned keys) override;
 
   void EndDrag();
 };

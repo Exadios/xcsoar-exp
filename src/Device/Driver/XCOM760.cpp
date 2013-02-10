@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@ Copyright_License {
 #include "Device/Driver/XCOM760.hpp"
 #include "Device/Driver.hpp"
 #include "Device/Port/Port.hpp"
+#include "RadioFrequency.hpp"
 
 #include <stdio.h>
 
@@ -35,18 +36,18 @@ public:
   XCOM760Device(Port &_port):port(_port) {}
 
 public:
-  virtual bool PutVolume(int volume, OperationEnvironment &env);
+  virtual bool PutVolume(unsigned volume, OperationEnvironment &env) override;
   virtual bool PutActiveFrequency(RadioFrequency frequency,
-                                  OperationEnvironment &env);
+                                  OperationEnvironment &env) override;
   virtual bool PutStandbyFrequency(RadioFrequency frequency,
-                                   OperationEnvironment &env);
+                                   OperationEnvironment &env) override;
 };
 
 bool
-XCOM760Device::PutVolume(int Volume, OperationEnvironment &env)
+XCOM760Device::PutVolume(unsigned volume, OperationEnvironment &env)
 {
   char szTmp[32];
-  sprintf(szTmp, "$RVOL=%d\r\n", Volume);
+  sprintf(szTmp, "$RVOL=%u\r\n", volume);
   port.Write(szTmp);
   return true;
 }
@@ -80,7 +81,7 @@ XCOM760CreateOnPort(const DeviceConfig &config, Port &com_port)
   return new XCOM760Device(com_port);
 }
 
-const struct DeviceRegister xcom760Device = {
+const struct DeviceRegister xcom760_driver = {
   _T("XCOM760"),
   _T("XCOM760"),
   DeviceRegister::NO_TIMEOUT | DeviceRegister::SEND_SETTINGS,

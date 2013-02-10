@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -61,18 +61,23 @@ class CheckBox : public PaintWindow {
 public:
   CheckBox():checked(false), dragging(false), pressed(false) {}
 
-  void set(ContainerWindow &parent, const TCHAR *text, unsigned id,
-           const PixelRect &rc,
-           const CheckBoxStyle style=CheckBoxStyle());
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              unsigned id,
+              const PixelRect &rc,
+              const CheckBoxStyle style=CheckBoxStyle());
 
-  void set(ContainerWindow &parent, const TCHAR *text,
-           const PixelRect &rc,
-           const CheckBoxStyle style=CheckBoxStyle()) {
-    set(parent, text, 0, rc, style);
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              const PixelRect &rc,
+              const CheckBoxStyle style=CheckBoxStyle()) {
+    Create(parent, text, 0, rc, style);
   }
 
   bool GetState() const {
     return checked;
+  }
+
+  unsigned GetID() const {
+    return id;
   }
 
   void SetState(bool value);
@@ -80,16 +85,19 @@ public:
 protected:
   void SetPressed(bool value);
 
-  virtual bool OnKeyDown(unsigned key_code);
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  virtual void OnSetFocus();
-  virtual void OnKillFocus();
-  virtual bool OnCancelMode();
-  virtual void OnPaint(Canvas &canvas);
-
   virtual bool OnClicked();
+
+  /* virtual methods from class Window */
+  virtual bool OnKeyDown(unsigned key_code) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys) override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual void OnSetFocus() override;
+  virtual void OnKillFocus() override;
+  virtual void OnCancelMode() override;
+
+  /* virtual methods from class PaintWindow */
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
 #else /* USE_GDI */
@@ -101,16 +109,17 @@ protected:
  */
 class CheckBox : public BaseButtonWindow {
 public:
-  void set(ContainerWindow &parent, const TCHAR *text, unsigned id,
-           const PixelRect &rc,
-           const CheckBoxStyle style=CheckBoxStyle()) {
-    BaseButtonWindow::set(parent, text, id, rc, style);
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              unsigned id,
+              const PixelRect &rc,
+              const CheckBoxStyle style=CheckBoxStyle()) {
+    BaseButtonWindow::Create(parent, text, id, rc, style);
   }
 
-  void set(ContainerWindow &parent, const TCHAR *text,
-           const PixelRect &rc,
-           const CheckBoxStyle style=CheckBoxStyle()) {
-    BaseButtonWindow::set(parent, text, rc, style);
+  void Create(ContainerWindow &parent, tstring::const_pointer text,
+              const PixelRect &rc,
+              const CheckBoxStyle style=CheckBoxStyle()) {
+    BaseButtonWindow::Create(parent, text, rc, style);
   }
 
   bool GetState() const {

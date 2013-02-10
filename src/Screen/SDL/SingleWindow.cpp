@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,55 +22,18 @@ Copyright_License {
 */
 
 #include "Screen/SingleWindow.hpp"
+#include "Event/SDL/Event.hpp"
+
+#include <SDL_events.h>
 
 #include <cassert>
 
-gcc_pure
-static const ContainerWindow *
-IsAncestor(const Window *maybe_ancestor, const Window *w)
-{
-  while (true) {
-    const ContainerWindow *parent = w->GetParent();
-    if (parent == NULL)
-      return NULL;
-
-    if (parent == maybe_ancestor)
-      return parent;
-
-    w = parent;
-  }
-}
-
 bool
-SingleWindow::FilterMouseEvent(PixelScalar x, PixelScalar y,
-                               Window *allowed) const
-{
-  const ContainerWindow *container = this;
-  while (true) {
-    const Window *child =
-      const_cast<ContainerWindow *>(container)->EventChildAt(x, y);
-    if (child == NULL)
-      /* no receiver for the event */
-      return false;
-
-    if (child == allowed)
-      /* the event reaches an allowed window: success */
-      return true;
-
-    const ContainerWindow *next = IsAncestor(allowed, child);
-    if (next == NULL)
-      return false;
-
-    container = next;
-  }
-}
-
-#ifndef ANDROID
-
-bool
-SingleWindow::FilterEvent(const SDL_Event &event, Window *allowed) const
+SingleWindow::FilterEvent(const Event &_event, Window *allowed) const
 {
   assert(allowed != NULL);
+
+  const SDL_Event &event = _event.event;
 
   switch (event.type) {
   case SDL_MOUSEMOTION:
@@ -82,5 +45,3 @@ SingleWindow::FilterEvent(const SDL_Event &event, Window *allowed) const
     return true;
   }
 }
-
-#endif /* !ANDROID */

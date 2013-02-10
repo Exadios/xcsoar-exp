@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ Copyright_License {
 #include "TestUtil.hpp"
 
 #include <tchar.h>
+#include <string.h>
 
 struct AirspaceClassTestCouple
 {
@@ -97,7 +98,7 @@ TestOpenAir()
       const AirspaceCircle &circle = (const AirspaceCircle &)airspace;
       ok1(equals(circle.GetRadius(), Units::ToSysUnit(fixed(5), Unit::NAUTICAL_MILES)));
       ok1(equals(circle.GetCenter(), 
-                 Angle::Degrees(fixed(1.091667)), Angle::Degrees(fixed(0.091667))));
+                 Angle::Degrees(1.091667), Angle::Degrees(0.091667)));
     } else if (_tcscmp(_T("Polygon-Test"), airspace.GetName()) == 0) {
       if (!ok1(airspace.GetShape() == AbstractAirspace::Shape::POLYGON))
         continue;
@@ -109,53 +110,53 @@ TestOpenAir()
         continue;
 
       ok1(equals(points[0].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped()));
+                 Angle::DMS(1, 30, 30),
+                 Angle::DMS(1, 30, 30).Flipped()));
       ok1(equals(points[1].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30))));
+                 Angle::DMS(1, 30, 30),
+                 Angle::DMS(1, 30, 30)));
       ok1(equals(points[2].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30))));
+                 Angle::DMS(1, 30, 30).Flipped(),
+                 Angle::DMS(1, 30, 30)));
       ok1(equals(points[3].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped()));
+                 Angle::DMS(1, 30, 30).Flipped(),
+                 Angle::DMS(1, 30, 30).Flipped()));
       ok1(equals(points[4].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped()));
+                 Angle::DMS(1, 30, 30),
+                 Angle::DMS(1, 30, 30).Flipped()));
     } else if (_tcscmp(_T("Radio-Test"), airspace.GetName()) == 0) {
       ok1(_tcscmp(_T("130.125 MHz"), airspace.GetRadioText().c_str()) == 0);
     } else if (_tcscmp(_T("Height-Test-1"), airspace.GetName()) == 0) {
       ok1(airspace.GetBase().IsTerrain());
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetTop().reference == AltitudeReference::MSL);
       ok1(equals(airspace.GetTop().altitude,
                  Units::ToSysUnit(fixed(2000), Unit::FEET)));
     } else if (_tcscmp(_T("Height-Test-2"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetBase().reference == AltitudeReference::MSL);
       ok1(equals(airspace.GetBase().altitude, 0));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::FL);
+      ok1(airspace.GetTop().reference == AltitudeReference::STD);
       ok1(equals(airspace.GetTop().flight_level, 65));
     } else if (_tcscmp(_T("Height-Test-3"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::AGL);
+      ok1(airspace.GetBase().reference == AltitudeReference::AGL);
       ok1(equals(airspace.GetBase().altitude_above_terrain,
                  Units::ToSysUnit(fixed(100), Unit::FEET)));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetTop().reference == AltitudeReference::MSL);
       ok1(airspace.GetTop().altitude > Units::ToSysUnit(fixed(30000), Unit::FEET));
     } else if (_tcscmp(_T("Height-Test-4"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetBase().reference == AltitudeReference::MSL);
       ok1(equals(airspace.GetBase().altitude, 100));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetTop().reference == AltitudeReference::MSL);
       ok1(airspace.GetTop().altitude > Units::ToSysUnit(fixed(30000), Unit::FEET));
     } else if (_tcscmp(_T("Height-Test-5"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::AGL);
+      ok1(airspace.GetBase().reference == AltitudeReference::AGL);
       ok1(equals(airspace.GetBase().altitude, 100));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetTop().reference == AltitudeReference::MSL);
       ok1(equals(airspace.GetTop().altitude, 450));
     } else if (_tcscmp(_T("Height-Test-6"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::AGL);
+      ok1(airspace.GetBase().reference == AltitudeReference::AGL);
       ok1(equals(airspace.GetBase().altitude_above_terrain,
                  Units::ToSysUnit(fixed(50), Unit::FEET)));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::FL);
+      ok1(airspace.GetTop().reference == AltitudeReference::STD);
       ok1(equals(airspace.GetTop().flight_level, 50));
     } else {
       for (unsigned i = 0; i < ARRAY_SIZE(classes); ++i) {
@@ -189,9 +190,11 @@ TestTNP()
     { _T("Class-F-Test"), CLASSF },
     { _T("Class-TMZ-Test"), TMZ },
     { _T("Class-G-Test"), CLASSG },
+    { _T("Class-CLASS-C-Test"), CLASSC },
+    { _T("Class-MATZ-Test"), MATZ },
   };
 
-  ok1(airspaces.size() == 22);
+  ok1(airspaces.size() == 24);
 
   for (auto it = airspaces.begin(); it != airspaces.end(); ++it) {
     const AbstractAirspace &airspace = *it->GetAirspace();
@@ -202,7 +205,7 @@ TestTNP()
       const AirspaceCircle &circle = (const AirspaceCircle &)airspace;
       ok1(equals(circle.GetRadius(), Units::ToSysUnit(fixed(5), Unit::NAUTICAL_MILES)));
       ok1(equals(circle.GetCenter(), 
-                 Angle::Degrees(fixed(1.091667)), Angle::Degrees(fixed(0.091667))));
+                 Angle::Degrees(1.091667), Angle::Degrees(0.091667)));
     } else if (_tcscmp(_T("Polygon-Test"), airspace.GetName()) == 0) {
       if (!ok1(airspace.GetShape() == AbstractAirspace::Shape::POLYGON))
         continue;
@@ -214,53 +217,53 @@ TestTNP()
         continue;
 
       ok1(equals(points[0].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped()));
+                 Angle::DMS(1, 30, 30),
+                 Angle::DMS(1, 30, 30).Flipped()));
       ok1(equals(points[1].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30))));
+                 Angle::DMS(1, 30, 30),
+                 Angle::DMS(1, 30, 30)));
       ok1(equals(points[2].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30))));
+                 Angle::DMS(1, 30, 30).Flipped(),
+                 Angle::DMS(1, 30, 30)));
       ok1(equals(points[3].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped()));
+                 Angle::DMS(1, 30, 30).Flipped(),
+                 Angle::DMS(1, 30, 30).Flipped()));
       ok1(equals(points[4].GetLocation(),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)),
-                 Angle::DMS(fixed(1), fixed(30), fixed(30)).Flipped()));
+                 Angle::DMS(1, 30, 30),
+                 Angle::DMS(1, 30, 30).Flipped()));
     } else if (_tcscmp(_T("Radio-Test"), airspace.GetName()) == 0) {
       ok1(_tcscmp(_T("130.125 MHz"), airspace.GetRadioText().c_str()) == 0);
     } else if (_tcscmp(_T("Height-Test-1"), airspace.GetName()) == 0) {
       ok1(airspace.GetBase().IsTerrain());
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetTop().reference == AltitudeReference::MSL);
       ok1(equals(airspace.GetTop().altitude,
                  Units::ToSysUnit(fixed(2000), Unit::FEET)));
     } else if (_tcscmp(_T("Height-Test-2"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetBase().reference == AltitudeReference::MSL);
       ok1(equals(airspace.GetBase().altitude, 0));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::FL);
+      ok1(airspace.GetTop().reference == AltitudeReference::STD);
       ok1(equals(airspace.GetTop().flight_level, 65));
     } else if (_tcscmp(_T("Height-Test-3"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::AGL);
+      ok1(airspace.GetBase().reference == AltitudeReference::AGL);
       ok1(equals(airspace.GetBase().altitude_above_terrain,
                  Units::ToSysUnit(fixed(100), Unit::FEET)));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetTop().reference == AltitudeReference::MSL);
       ok1(airspace.GetTop().altitude > Units::ToSysUnit(fixed(30000), Unit::FEET));
     } else if (_tcscmp(_T("Height-Test-4"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetBase().reference == AltitudeReference::MSL);
       ok1(equals(airspace.GetBase().altitude, 100));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetTop().reference == AltitudeReference::MSL);
       ok1(airspace.GetTop().altitude > Units::ToSysUnit(fixed(30000), Unit::FEET));
     } else if (_tcscmp(_T("Height-Test-5"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::AGL);
+      ok1(airspace.GetBase().reference == AltitudeReference::AGL);
       ok1(equals(airspace.GetBase().altitude, 100));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::MSL);
+      ok1(airspace.GetTop().reference == AltitudeReference::MSL);
       ok1(equals(airspace.GetTop().altitude, 450));
     } else if (_tcscmp(_T("Height-Test-6"), airspace.GetName()) == 0) {
-      ok1(airspace.GetBase().type == AirspaceAltitude::Type::AGL);
+      ok1(airspace.GetBase().reference == AltitudeReference::AGL);
       ok1(equals(airspace.GetBase().altitude_above_terrain,
                  Units::ToSysUnit(fixed(50), Unit::FEET)));
-      ok1(airspace.GetTop().type == AirspaceAltitude::Type::FL);
+      ok1(airspace.GetTop().reference == AltitudeReference::STD);
       ok1(equals(airspace.GetTop().flight_level, 50));
     } else {
       for (unsigned i = 0; i < ARRAY_SIZE(classes); ++i) {
@@ -273,7 +276,7 @@ TestTNP()
 
 int main(int argc, char **argv)
 {
-  plan_tests(101);
+  plan_tests(103);
 
   TestOpenAir();
   TestTNP();

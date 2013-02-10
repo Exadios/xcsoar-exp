@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ Copyright_License {
 
 #include <assert.h>
 
-static const unsigned sample_rate = 44100;
+static constexpr unsigned sample_rate = 44100;
 
 #ifdef ANDROID
 static bool have_sles;
@@ -67,11 +67,6 @@ AudioVarioGlue::Initialise()
   synthesiser = new VarioSynthesiser();
 }
 
-#if defined(__clang__) || GCC_VERSION >= 40700
-/* no, VarioSynthesiser really doesn't need a virtual destructor */
-#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
-
 void
 AudioVarioGlue::Deinitialise()
 {
@@ -96,6 +91,7 @@ AudioVarioGlue::Configure(const VarioSoundSettings &settings)
     synthesiser->SetFrequencies(settings.min_frequency, settings.zero_frequency,
                                 settings.max_frequency);
     synthesiser->SetPeriods(settings.min_period_ms, settings.max_period_ms);
+    synthesiser->SetDeadBandRange(settings.min_dead, settings.max_dead);
     player->Start(*synthesiser, sample_rate);
   } else
     player->Stop();

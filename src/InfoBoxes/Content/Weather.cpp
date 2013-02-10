@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,10 +22,10 @@ Copyright_License {
 */
 
 #include "InfoBoxes/Content/Weather.hpp"
+#include "InfoBoxes/Panel/Panel.hpp"
 #include "InfoBoxes/Panel/WindEdit.hpp"
 #include "InfoBoxes/Panel/WindSetup.hpp"
 #include "InfoBoxes/Data.hpp"
-#include "InfoBoxes/InfoBoxWindow.hpp"
 #include "Interface.hpp"
 #include "Dialogs/dlgInfoBoxAccess.hpp"
 #include "Util/Macros.hpp"
@@ -36,15 +36,15 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Renderer/WindArrowRenderer.hpp"
 #include "UIGlobals.hpp"
-#include "Look/MapLook.hpp"
+#include "Look/Look.hpp"
 
 #include <tchar.h>
 #include <stdio.h>
 
 void
-InfoBoxContentHumidity::Update(InfoBoxData &data)
+UpdateInfoBoxHumidity(InfoBoxData &data)
 {
-  const NMEAInfo &basic = XCSoarInterface::Basic();
+  const NMEAInfo &basic = CommonInterface::Basic();
   if (!basic.humidity_available) {
     data.SetInvalid();
     return;
@@ -55,9 +55,9 @@ InfoBoxContentHumidity::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentTemperature::Update(InfoBoxData &data)
+UpdateInfoBoxTemperature(InfoBoxData &data)
 {
-  const NMEAInfo &basic = XCSoarInterface::Basic();
+  const NMEAInfo &basic = CommonInterface::Basic();
   if (!basic.temperature_available) {
     data.SetInvalid();
     return;
@@ -85,11 +85,11 @@ InfoBoxContentTemperatureForecast::HandleKey(const InfoBoxKeyCodes keycode)
 {
   switch(keycode) {
   case ibkUp:
-    CommonInterface::SetComputerSettings().forecast_temperature += fixed_half;
+    CommonInterface::SetComputerSettings().forecast_temperature += fixed(0.5);
     return true;
 
   case ibkDown:
-    CommonInterface::SetComputerSettings().forecast_temperature -= fixed_half;
+    CommonInterface::SetComputerSettings().forecast_temperature -= fixed(0.5);
     return true;
 
   default:
@@ -103,28 +103,24 @@ InfoBoxContentTemperatureForecast::HandleKey(const InfoBoxKeyCodes keycode)
  * Subpart callback function pointers
  */
 
-static constexpr InfoBoxContentWind::PanelContent Panels[] = {
-InfoBoxContentWind::PanelContent (
-  N_("Edit"),
-  LoadWindEditPanel),
-
-InfoBoxContentWind::PanelContent (
-  N_("Setup"),
-  LoadWindSetupPanel),
+#ifdef __clang__
+/* gcc gives "redeclaration differs in 'constexpr'" */
+constexpr
+#endif
+const InfoBoxPanel wind_infobox_panels[] = {
+  { N_("Edit"), LoadWindEditPanel },
+  { N_("Setup"), LoadWindSetupPanel },
+  { nullptr, nullptr }
 };
 
-const InfoBoxContentWind::DialogContent InfoBoxContentWind::dlgContent = {
-  ARRAY_SIZE(Panels), &Panels[0],
-};
-
-const InfoBoxContentWind::DialogContent *
-InfoBoxContentWind::GetDialogContent() {
-  return &dlgContent;
+const InfoBoxPanel *
+InfoBoxContentWindArrow::GetDialogContent()
+{
+  return wind_infobox_panels;
 }
 
-
 void
-InfoBoxContentWindSpeed::Update(InfoBoxData &data)
+UpdateInfoBoxWindSpeed(InfoBoxData &data)
 {
   const DerivedInfo &info = CommonInterface::Calculated();
   if (!info.wind_available) {
@@ -144,7 +140,7 @@ InfoBoxContentWindSpeed::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentWindBearing::Update(InfoBoxData &data)
+UpdateInfoBoxWindBearing(InfoBoxData &data)
 {
   const DerivedInfo &info = CommonInterface::Calculated();
   if (!info.wind_available) {
@@ -160,7 +156,7 @@ InfoBoxContentWindBearing::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentHeadWind::Update(InfoBoxData &data)
+UpdateInfoBoxHeadWind(InfoBoxData &data)
 {
   const DerivedInfo &info = CommonInterface::Calculated();
   if (!info.head_wind_available) {
@@ -177,9 +173,9 @@ InfoBoxContentHeadWind::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentHeadWindSimplified::Update(InfoBoxData &data)
+UpdateInfoBoxHeadWindSimplified(InfoBoxData &data)
 {
-  const NMEAInfo &basic = XCSoarInterface::Basic();
+  const NMEAInfo &basic = CommonInterface::Basic();
   if (!basic.ground_speed_available || !basic.airspeed_available) {
     data.SetInvalid();
     return;
@@ -215,29 +211,32 @@ InfoBoxContentWindArrow::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentWindArrow::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+InfoBoxContentWindArrow::OnCustomPaint(Canvas &canvas, const PixelRect &rc)
 {
   const auto &info = CommonInterface::Calculated();
 
-  auto rc = infobox.GetValueRect();
-  RasterPoint pt = {
-    PixelScalar((rc.left + rc.right) / 2),
-    PixelScalar((rc.top + rc.bottom) / 2),
-  };
+  const RasterPoint pt((rc.left + rc.right) / 2,
+                       (rc.top + rc.bottom) / 2);
 
-  UPixelScalar padding = Layout::FastScale(5);
+  UPixelScalar padding = Layout::FastScale(10);
   UPixelScalar size = std::min(rc.right - rc.left, rc.bottom - rc.top);
 
   if (size > padding)
     size -= padding;
 
-  auto angle = info.wind.bearing - info.heading;
-  auto length = std::min(size, (UPixelScalar)std::max(10, iround(info.wind.norm * 4)));
+  // Normalize the size because the Layout::Scale is applied
+  // by the DrawArrow() function again
+  size = size * 100 / Layout::Scale(100);
 
-  auto offset = -length / 2;
+  auto angle = info.wind.bearing - CommonInterface::Basic().attitude.heading;
+
+  PixelScalar length =
+      std::min(size, (UPixelScalar)std::max(10, iround(info.wind.norm * 4)));
+
+  PixelScalar offset = -length / 2;
 
   auto style = CommonInterface::GetMapSettings().wind_arrow_style;
 
-  WindArrowRenderer renderer(UIGlobals::GetMapLook().wind);
+  WindArrowRenderer renderer(UIGlobals::GetLook().wind_arrow_info_box);
   renderer.DrawArrow(canvas, pt, angle, length, style, offset);
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "OS/PathName.hpp"
 #include "IGC/IGCWriter.hpp"
+#include "Computer/GPSClock.hpp"
 #include "DebugReplay.hpp"
 #include "OS/Args.hpp"
 
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
   const TCHAR *driver_name = _T("Unknown");
 
   PathName igc_path(output_file);
-  IGCWriter writer(igc_path, true);
+  IGCWriter writer(igc_path);
   writer.WriteHeader(replay->Basic().date_time_utc, _T("Manfred Mustermann"),
                      _T("Ventus"), _T("D-1234"),
                      _T("MM"), "FOO", driver_name, true);
@@ -56,6 +57,8 @@ int main(int argc, char **argv)
       writer.LogPoint(replay->Basic());
 
   writer.Flush();
+
+  delete replay;
 
   return EXIT_SUCCESS;
 }

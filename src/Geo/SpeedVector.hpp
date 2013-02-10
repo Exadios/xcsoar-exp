@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ Copyright_License {
  */
 struct SpeedVector {
   /**
-   * The direction of the vector in degrees true (0..360).
+   * The direction of the vector.
    */
   Angle bearing;
 
@@ -50,7 +50,7 @@ struct SpeedVector {
   /** 
    * Constructor given bearing and magnitude
    * 
-   * @param _bearing Bearing of vector (degrees true)
+   * @param _bearing the direction of vector
    * @param _norm Magnitude of vector (m/s)
    * @return Initialised object
    */
@@ -71,20 +71,20 @@ struct SpeedVector {
    * Returns the null vector.
    */
   static constexpr SpeedVector Zero() {
-    return SpeedVector(Angle::Zero(), fixed_zero);
+    return SpeedVector(Angle::Zero(), fixed(0));
   }
 
   /**
    * Returns true if the norm of the vector is zero.
    */
-  bool IsZero() const {
+  constexpr bool IsZero() const {
     return !IsNonZero();
   }
 
   /**
    * Returns true if the norm of the vector is non-zero.
    */
-  bool IsNonZero() const {
+  constexpr bool IsNonZero() const {
     return positive(norm);
   }
 
@@ -97,6 +97,6 @@ struct SpeedVector {
   }
 };
 
-static_assert(is_trivial<SpeedVector>::value, "type is not trivial");
+static_assert(std::is_trivial<SpeedVector>::value, "type is not trivial");
 
 #endif

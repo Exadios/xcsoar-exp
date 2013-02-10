@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_CONFIG_REGISTRY_HPP
 #define XCSOAR_CONFIG_REGISTRY_HPP
 
-#include "Util/NonCopyable.hpp"
+#include <utility>
 
 #include <windows.h>
 #include <tchar.h>
@@ -33,7 +33,7 @@ Copyright_License {
 /**
  * OO wrapper for a HKEY.
  */
-class RegistryKey : private NonCopyable {
+class RegistryKey {
 protected:
   HKEY hKey;
 
@@ -54,6 +54,18 @@ public:
       ::RegCloseKey(hKey);
   }
 
+  RegistryKey(const RegistryKey &) = delete;
+  RegistryKey &operator=(const RegistryKey &) = delete;
+
+  RegistryKey(RegistryKey &&other):hKey(other.hKey) {
+    other.hKey = 0;
+  }
+
+  RegistryKey &operator=(RegistryKey &&other) {
+    std::swap(hKey, other.hKey);
+    return *this;
+  }
+
   bool error() const {
     return hKey == 0;
   }
@@ -62,7 +74,7 @@ public:
     return hKey;
   }
 
-  bool get_value(const TCHAR *name, LPDWORD type_r,
+  bool GetValue(const TCHAR *name, LPDWORD type_r,
                  LPBYTE data, LPDWORD length_r) const {
     LONG result = ::RegQueryValueEx(hKey, name, NULL, type_r, data, length_r);
     return result == ERROR_SUCCESS;
@@ -74,9 +86,9 @@ public:
    *
    * @return true on success
    */
-  bool get_value(const TCHAR *name, TCHAR *value, unsigned max_length) const {
+  bool GetValue(const TCHAR *name, TCHAR *value, unsigned max_length) const {
     DWORD type, length = max_length * sizeof(value[0]);
-    return get_value(name, &type, (LPBYTE)value, &length) && type == REG_SZ;
+    return GetValue(name, &type, (LPBYTE)value, &length) && type == REG_SZ;
   }
 
   /**
@@ -85,9 +97,9 @@ public:
    *
    * @return true on success
    */
-  bool get_value(const TCHAR *name, DWORD &value_r) const {
+  bool GetValue(const TCHAR *name, DWORD &value_r) const {
     DWORD type, value, length = sizeof(value);
-    if (!get_value(name, &type, (LPBYTE)&value, &length) ||
+    if (!GetValue(name, &type, (LPBYTE)&value, &length) ||
         type != REG_DWORD || length != sizeof(value))
       return false;
 
@@ -95,27 +107,27 @@ public:
     return true;
   }
 
-  bool set_value(const TCHAR *name, DWORD type,
+  bool SetValue(const TCHAR *name, DWORD type,
                  const BYTE *data, DWORD length) {
     LONG result = ::RegSetValueEx(hKey, name, 0, type, data, length);
     return result == ERROR_SUCCESS;
   }
 
-  bool set_value(const TCHAR *name, const TCHAR *value) {
-    return set_value(name, REG_SZ, (const BYTE *)value,
+  bool SetValue(const TCHAR *name, const TCHAR *value) {
+    return SetValue(name, REG_SZ, (const BYTE *)value,
                      (_tcslen(value) + 1) * sizeof(value[0]));
   }
 
-  bool set_value(const TCHAR *name, DWORD value) {
-    return set_value(name, REG_DWORD,
+  bool SetValue(const TCHAR *name, DWORD value) {
+    return SetValue(name, REG_DWORD,
                      (const BYTE *)&value, sizeof(value));
   }
 
-  bool delete_value(const TCHAR *name) {
+  bool DeleteValue(const TCHAR *name) {
     return ::RegDeleteValue(hKey, name) == ERROR_SUCCESS;
   }
 
-  bool enum_key(DWORD idx, TCHAR *name, size_t _name_max_length) const {
+  bool EnumKey(DWORD idx, TCHAR *name, size_t _name_max_length) const {
     DWORD name_max_length = (DWORD)_name_max_length;
     return ::RegEnumKeyEx(hKey, idx, name, &name_max_length,
                           NULL, NULL, NULL, NULL) == ERROR_SUCCESS;

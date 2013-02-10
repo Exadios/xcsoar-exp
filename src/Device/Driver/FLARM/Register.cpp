@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ FlarmCreateOnPort(const DeviceConfig &config, Port &com_port)
   return new FlarmDevice(com_port);
 }
 
-const struct DeviceRegister flarm_device = {
+const struct DeviceRegister flarm_driver = {
   _T("FLARM"), _T("FLARM"),
   DeviceRegister::DECLARE | DeviceRegister::LOGGER | DeviceRegister::MANAGE,
   FlarmCreateOnPort,

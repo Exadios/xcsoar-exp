@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -60,8 +60,8 @@ NOAAListRenderer::Draw(Canvas &canvas, const PixelRect rc,
       station.parsed_metar.name_available)
     title.AppendFormat(_T(": %s"), station.parsed_metar.name.c_str());
 
-  canvas.text_clipped(rc.left + Layout::FastScale(2) + padding_left,
-                      rc.top + Layout::FastScale(2), rc, title);
+  canvas.DrawClippedText(rc.left + Layout::FastScale(2) + padding_left,
+                         rc.top + Layout::FastScale(2), rc, title);
 
   canvas.Select(details_font);
 
@@ -71,9 +71,9 @@ NOAAListRenderer::Draw(Canvas &canvas, const PixelRect rc,
   else
     tmp = station.metar.content.c_str();
 
-  canvas.text_clipped(rc.left + Layout::FastScale(2) + padding_left,
-                      rc.top + code_font.GetHeight() + Layout::FastScale(4),
-                      rc, tmp);
+  canvas.DrawClippedText(rc.left + Layout::FastScale(2) + padding_left,
+                         rc.top + code_font.GetHeight() + Layout::FastScale(4),
+                         rc, tmp);
 }
 
 void
@@ -94,7 +94,7 @@ NOAAListRenderer::Draw(Canvas &canvas, const PixelRect rc,
 
   Draw(canvas, rc, line_height, station, dialog_look);
 
-  RasterPoint pt = { PixelScalar(rc.left + line_height / 2),
-                     PixelScalar(rc.top + line_height / 2) };
+  const RasterPoint pt(rc.left + line_height / 2,
+                       rc.top + line_height / 2);
   look.icon.Draw(canvas, pt);
 }

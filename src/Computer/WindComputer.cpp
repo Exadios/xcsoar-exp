@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -90,7 +90,8 @@ WindComputer::ComputeHeadWind(const NMEAInfo &basic, DerivedInfo &info)
     // .. calculate headwind from given wind information
 
     info.head_wind =
-        (info.wind.bearing - info.heading).fastcosine() * info.wind.norm;
+      (info.wind.bearing - basic.attitude.heading).fastcosine()
+      * info.wind.norm;
     info.head_wind_available.Update(basic.clock);
   } else {
     // No information available that let us calculate the head wind

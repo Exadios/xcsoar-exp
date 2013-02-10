@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 #include "Look/DialogLook.hpp"
 #include "Screen/ContainerWindow.hpp"
 #include "Screen/Layout.hpp"
+#include "Screen/Font.hpp"
 
 ButtonPanel::ButtonPanel(ContainerWindow &_parent, const DialogLook &_look)
   :parent(_parent), look(_look) {
@@ -58,18 +59,7 @@ ButtonPanel::UpdateLayout()
 static constexpr PixelRect dummy_rc = { 0, 0, 100, 40 };
 
 WndButton *
-ButtonPanel::Add(const TCHAR *caption,
-                 WndButton::ClickNotifyCallback callback)
-{
-  WndButton *button = new WndButton(parent, look, caption,
-                                    dummy_rc, style, callback);
-  buttons.append(button);
-
-  return button;
-}
-
-WndButton *
-ButtonPanel::Add(const TCHAR *caption, ActionListener *listener, int id)
+ButtonPanel::Add(const TCHAR *caption, ActionListener &listener, int id)
 {
   WndButton *button = new WndButton(parent, look, caption,
                                     dummy_rc, style, listener, id);
@@ -81,7 +71,7 @@ ButtonPanel::Add(const TCHAR *caption, ActionListener *listener, int id)
 UPixelScalar
 ButtonPanel::Width(unsigned i) const
 {
-  return look.button.font->TextSize(buttons[i]->get_text().c_str()).cx +
+  return look.button.font->TextSize(buttons[i]->GetText().c_str()).cx +
     Layout::SmallScale(8);
 }
 
@@ -109,10 +99,7 @@ ButtonPanel::VerticalRange(PixelRect rc, unsigned start, unsigned end)
   const UPixelScalar max_height = n * Layout::GetMaximumControlHeight();
   const UPixelScalar row_height = std::min(total_height, max_height) / n;
 
-  PixelRect button_rc = {
-    rc.left, rc.top, PixelScalar(rc.left + width),
-    PixelScalar(rc.top + row_height),
-  };
+  PixelRect button_rc(rc.left, rc.top, rc.left + width, rc.top + row_height);
   rc.left += width;
 
   for (unsigned i = start; i < end; ++i) {
@@ -134,11 +121,10 @@ ButtonPanel::HorizontalRange(PixelRect rc, unsigned start, unsigned end)
   const UPixelScalar total_width = rc.right - rc.left;
   const UPixelScalar row_height = Layout::GetMaximumControlHeight();
   const UPixelScalar width = total_width / n;
+  assert(width > 0);
 
-  PixelRect button_rc = {
-    rc.left, PixelScalar(rc.bottom - row_height),
-    PixelScalar(rc.left + width), rc.bottom,
-  };
+  PixelRect button_rc(rc.left, rc.bottom - row_height,
+                      rc.left + width, rc.bottom);
   rc.bottom -= row_height;
 
   for (unsigned i = start; i < end; ++i) {
@@ -199,4 +185,18 @@ PixelRect
 ButtonPanel::BottomLayout()
 {
   return BottomLayout(parent.GetClientRect());
+}
+
+void
+ButtonPanel::ShowAll()
+{
+  for (auto i : buttons)
+    i->Show();
+}
+
+void
+ButtonPanel::HideAll()
+{
+  for (auto i : buttons)
+    i->Hide();
 }

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <assert.h>
 
 class OrderedTask;
+class SearchPointVector;
 
 /**
  * Class used to scan an OrderedTask for maximum/minimum distance
@@ -50,11 +51,10 @@ class OrderedTask;
 class TaskDijkstra : protected NavDijkstra
 {
 protected:
-  OrderedTask &task;
   unsigned active_stage;
 
 private:
-  unsigned sp_sizes[MAX_STAGES];
+  const SearchPointVector *boundaries[MAX_STAGES];
 
   const bool is_min;
 
@@ -62,10 +62,9 @@ public:
   /**
    * Constructor
    *
-   * @param _task The task to find max/min distances for
    * @param is_min Whether this will be used to minimise or maximise distances
    */
-  TaskDijkstra(OrderedTask& _task, const bool is_min);
+  TaskDijkstra(const bool is_min);
 
   /**
    * Returns the solution point for the specified task point.  Call
@@ -85,8 +84,10 @@ protected:
 
   /**
    * Update internal details required from the task
+   *
+   * @param _task The task to find max/min distances for
    */
-  bool RefreshTask();
+  bool RefreshTask(const OrderedTask &task);
 
   bool Link(const ScanTaskPoint node, const ScanTaskPoint parent,
             unsigned value) {
@@ -109,7 +110,10 @@ protected:
   gcc_pure
   unsigned CalcDistance(const ScanTaskPoint curNode,
                         const SearchPoint &currentLocation) const {
-    return GetPoint(curNode).FlatDistanceTo(currentLocation);
+    const FlatGeoPoint &a = GetPoint(curNode).GetFlatLocation();
+    const FlatGeoPoint &b = currentLocation.GetFlatLocation();
+
+    return a.ShiftedDistance(b, 8);
   }
 
   /** 
@@ -122,20 +126,16 @@ protected:
    */
   gcc_pure
   unsigned CalcDistance(const ScanTaskPoint s1, const ScanTaskPoint s2) const {
-    return GetPoint(s1).FlatDistanceTo(GetPoint(s2));
+    return CalcDistance(s1, GetPoint(s2));
   }
 
 private:
   gcc_pure
-  unsigned GetStageSize(const unsigned stage) const {
-    assert(stage < num_stages);
-
-    return sp_sizes[stage];
-  }
+  unsigned GetStageSize(const unsigned stage) const;
 
 protected:
   /* methods from NavDijkstra */
-  virtual void AddEdges(ScanTaskPoint curNode);
+  virtual void AddEdges(ScanTaskPoint curNode) final;
 };
 
 #endif

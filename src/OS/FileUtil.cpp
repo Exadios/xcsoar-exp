@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -92,28 +92,7 @@ checkFilter(const TCHAR *filename, const TCHAR *filter)
   if (!filter || StringIsEmpty(filter + 1))
     return true;
 
-  // Copy filter without first char into upfilter
-  // *.igc         ->  .igc
-  // config/*.prf  ->  onfig/*.prf
-  TCHAR upfilter[MAX_PATH];
-  _tcscpy(upfilter, filter + 1);
-
-  // Search for upfilter in filename (e.g. ".igc" in "934CFAE1.igc") and
-  //   save the position of the first occurence in ptr
-  const TCHAR *ptr = _tcsstr(filename, upfilter);
-  if (ptr != NULL && _tcslen(ptr) == _tcslen(upfilter))
-    // If upfilter was found at the very end of filename
-    // -> filename matches filter
-    return true;
-
-  // Convert upfilter to uppercase
-  _tcsupr(upfilter);
-
-  // And do it all again
-  ptr = _tcsstr(filename, upfilter);
-
-  // If still no match found -> filename does not match the filter
-  return (ptr != NULL && _tcslen(ptr) == _tcslen(upfilter));
+  return StringEndsWithIgnoreCase(filename, filter + 1);
 }
 
 static bool
@@ -325,6 +304,18 @@ File::Exists(const TCHAR* path)
     (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
 #endif
 }
+
+#if defined(WIN32) && defined(UNICODE) && !defined(_WIN32_WCE)
+
+bool
+File::Exists(const char *path)
+{
+  DWORD attributes = GetFileAttributesA(path);
+  return attributes != INVALID_FILE_ATTRIBUTES &&
+    (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+#endif
 
 uint64_t
 File::GetSize(const TCHAR *path)

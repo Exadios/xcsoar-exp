@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,11 +23,6 @@
 #include "LineSectorZone.hpp"
 #include "Boundary.hpp"
 
-GeoPoint LineSectorZone::GetBoundaryParametric(fixed t) const
-{ 
-  return GetSectorStart().Interpolate(GetSectorEnd(), t);
-}
-
 OZBoundary
 LineSectorZone::GetBoundary() const
 {
@@ -41,5 +36,5 @@ LineSectorZone::GetBoundary() const
 fixed
 LineSectorZone::ScoreAdjustment() const
 {
-  return fixed_zero;
+  return fixed(0);
 }

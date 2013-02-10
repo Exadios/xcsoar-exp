@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -45,18 +45,22 @@ public:
             OperationEnvironment &operation);
   ~RasterMap();
 
-  bool isMapLoaded() const {
+  bool IsDefined() const {
     return raster_tile_cache.GetInitialised();
   }
 
+  const GeoBounds &GetBounds() const {
+    return raster_tile_cache.GetBounds();
+  }
+
   gcc_pure
-  bool inside(const GeoPoint &pt) const {
-    return raster_tile_cache.GetBounds().IsInside(pt);
+  bool IsInside(const GeoPoint &pt) const {
+    return GetBounds().IsInside(pt);
   }
 
   gcc_pure
   GeoPoint GetMapCenter() const {
-    return raster_tile_cache.GetBounds().GetCenter();
+    return GetBounds().GetCenter();
   }
 
   void SetViewCenter(const GeoPoint &location, fixed radius);
@@ -75,13 +79,13 @@ public:
   }
 
   /**
-   * @see RasterProjection::pixel_distance()
+   * @see RasterProjection::CoarsePixelDistance()
    */
   gcc_pure fixed
-  pixel_distance(const GeoPoint &location, unsigned pixels) const {
+  PixelDistance(const GeoPoint &location, unsigned pixels) const {
     /* factor 256 because the caller should pass a physical pixel
        number, not interpolated */
-    return projection.pixel_distance(location, 256 * pixels);
+    return projection.CoarsePixelDistance(location, pixels);
   }
 
   /**

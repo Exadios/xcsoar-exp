@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,8 +25,9 @@ Copyright_License {
 #define XCSOAR_ROUGH_ALTITUDE_HPP
 
 #include "Math/fixed.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Compiler.h"
+
+#include <type_traits>
 
 #include <limits.h>
 
@@ -170,6 +171,6 @@ fixed operator*(const fixed a, const RoughAltitude b) {
   return b * a;
 }
 
-static_assert(is_trivial<RoughAltitude>::value, "type is not trivial");
+static_assert(std::is_trivial<RoughAltitude>::value, "type is not trivial");
 
 #endif

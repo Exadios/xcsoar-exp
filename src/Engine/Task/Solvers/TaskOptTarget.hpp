@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,8 +37,7 @@ class StartPoint;
  * - Merge with TaskMinTarget?
  * - Refactor, since passing in AATPoint is a hack
  */
-class TaskOptTarget: 
-  public ZeroFinder
+class TaskOptTarget final : public ZeroFinder
 {
   /** Object to calculate remaining task statistics */
   TaskMacCreadyRemaining tm;

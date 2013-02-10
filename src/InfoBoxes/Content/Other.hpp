@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,47 +26,29 @@ Copyright_License {
 
 #include "InfoBoxes/Content/Base.hpp"
 
-class InfoBoxContentGLoad : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxGLoad(InfoBoxData &data);
 
-class InfoBoxContentBattery : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxBattery(InfoBoxData &data);
 
-class InfoBoxContentExperimental1 : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxExperimental1(InfoBoxData &data);
 
-class InfoBoxContentExperimental2 : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxExperimental2(InfoBoxData &data);
 
-class InfoBoxContentCPULoad : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxCPULoad(InfoBoxData &data);
 
-class InfoBoxContentFreeRAM : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxFreeRAM(InfoBoxData &data);
 
 class InfoBoxContentHorizon : public InfoBoxContent
 {
 public:
-  virtual void Update(InfoBoxData &data);
-  virtual void OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas);
+  virtual void Update(InfoBoxData &data) override;
+  virtual void OnCustomPaint(Canvas &canvas, const PixelRect &rc) override;
 };
 
 #endif

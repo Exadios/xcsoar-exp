@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,9 +29,7 @@
 class MD5
 {
 public:
-  enum {
-    DIGEST_LENGTH = 16,
-  };
+  static constexpr size_t DIGEST_LENGTH = 32;
 
 private:
   uint8_t buff512bits[64];
@@ -56,8 +54,11 @@ public:
   void AppendString(const unsigned char *in, bool skip_invalid_igc_chars); // must be NULL-terminated string!
 
   void Finalize();
-  void GetDigest(char *buffer);
-  static bool IsValidIGCChar(char c);
+
+  /**
+   * @param buffer a buffer of at least #DIGEST_LENGTH+1 bytes
+   */
+  void GetDigest(char *buffer) const;
 };
 
 #endif

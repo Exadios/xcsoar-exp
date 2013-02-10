@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,10 +26,13 @@ Copyright_License {
 #include "Screen/Debug.hpp"
 
 #ifdef ANDROID
-#include "Screen/Android/Event.hpp"
+#include "Event/Android/Queue.hpp"
 #include "Android/Main.hpp"
 #elif defined(ENABLE_SDL)
-#include "Screen/SDL/Event.hpp"
+#include "Event/SDL/Queue.hpp"
+#elif defined(USE_EGL)
+#include "Event/EGL/Queue.hpp"
+#include "Event/EGL/Globals.hpp"
 #endif /* ENABLE_SDL */
 
 #ifdef ENABLE_OPENGL
@@ -40,7 +43,7 @@ Copyright_License {
 
 Window::~Window()
 {
-  reset();
+  Destroy();
 }
 
 #ifndef NDEBUG
@@ -48,6 +51,8 @@ Window::~Window()
 void
 Window::AssertThread() const
 {
+  assert(IsDefined());
+
 #ifdef ENABLE_OPENGL
   assert(pthread_equal(pthread_self(), OpenGL::thread));
 #elif defined(USE_GDI)
@@ -71,7 +76,7 @@ Window::AssertThreadOrUndefined() const
 #endif /* !NDEBUG */
 
 void
-Window::reset()
+Window::Destroy()
 {
   if (!IsDefined())
     return;
@@ -82,8 +87,7 @@ Window::reset()
 #ifndef USE_GDI
   OnDestroy();
 
-  width = 0;
-  height = 0;
+  size = {0, 0};
 #else /* USE_GDI */
   ::DestroyWindow(hWnd);
 
@@ -99,6 +103,8 @@ Window::reset()
 ContainerWindow *
 Window::GetRootOwner()
 {
+  assert(IsDefined());
+
 #ifndef USE_GDI
   if (parent == NULL)
     /* no parent?  We must be a ContainerWindow instance */
@@ -149,7 +155,7 @@ Window::OnDestroy()
     parent = NULL;
   }
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(USE_EGL)
   event_queue->Purge(*this);
 #else
   EventQueue::Purge(*this);
@@ -161,14 +167,8 @@ Window::OnDestroy()
 #endif /* USE_GDI */
 }
 
-bool
-Window::OnClose()
-{
-  return false;
-}
-
 void
-Window::OnResize(UPixelScalar width, UPixelScalar height)
+Window::OnResize(PixelSize new_size)
 {
 }
 
@@ -243,19 +243,23 @@ Window::OnKeyUp(unsigned key_code)
 }
 
 bool
-Window::OnCommand(unsigned id, unsigned code)
+Window::OnCharacter(unsigned ch)
 {
   return false;
 }
 
 bool
+Window::OnCommand(unsigned id, unsigned code)
+{
+  return false;
+}
+
+void
 Window::OnCancelMode()
 {
 #ifndef USE_GDI
   ReleaseCapture();
 #endif
-
-  return false;
 }
 
 void

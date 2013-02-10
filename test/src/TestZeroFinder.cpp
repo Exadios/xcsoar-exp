@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ class ZeroFinderTest: public ZeroFinder
   unsigned func;
 
 public:
-  ZeroFinderTest(const fixed &x_min, const fixed &x_max, unsigned _func = 0) :
+  ZeroFinderTest(fixed x_min, fixed x_max, unsigned _func = 0) :
     ZeroFinder(x_min, x_max, fixed(0.0001)), func(_func) {}
 
   fixed f(const fixed x);
@@ -46,8 +46,9 @@ ZeroFinderTest::f(const fixed x)
   if (func == 2)
     return cos(x);
 
-  assert(true);
-  return fixed_zero;
+  gcc_unreachable();
+  assert(false);
+  return fixed(0);
 }
 
 int main(int argc, char **argv)
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
   ok1(equals(zf3.find_zero(fixed(1)), fixed(1.584963)));
   ok1(equals(zf3.find_zero(fixed(140)), fixed(1.584963)));
 
-  ZeroFinderTest zf4(fixed(0), fixed_pi + fixed_one, 2);
+  ZeroFinderTest zf4(fixed(0), fixed_pi + fixed(1), 2);
   ok1(equals(zf4.find_zero(fixed(-150)), fixed_half_pi));
   ok1(equals(zf4.find_zero(fixed(1)), fixed_half_pi));
   ok1(equals(zf4.find_zero(fixed(140)), fixed_half_pi));

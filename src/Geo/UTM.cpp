@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,65 +23,23 @@ Copyright_License {
 
 #include "Geo/UTM.hpp"
 #include "Geo/GeoPoint.hpp"
+#include "Util/Macros.hpp"
 
-static const double k0 = 0.9996;
+static constexpr double k0 = 0.9996;
 
-static const double e = 0.00669438;
-static const double e2 = e * e;
-static const double e3 = e * e;
-static const double e_p2 = e / (1.0 - e);
+static constexpr double e = 0.00669438;
+static constexpr double e2 = e * e;
+static constexpr double e3 = e * e;
+static constexpr double e_p2 = e / (1.0 - e);
 
-static const double r = 6378137;
+static constexpr double r = 6378137;
 
 char
 UTM::CalculateZoneLetter(const Angle latitude)
 {
-  fixed degrees = latitude.Degrees();
-
-  if (degrees >= fixed(84))
-    return '\0';
-  if (degrees >= fixed(72))
-    return 'X';
-  if (degrees >= fixed(64))
-    return 'W';
-  if (degrees >= fixed(56))
-    return 'V';
-  if (degrees >= fixed(48))
-    return 'U';
-  if (degrees >= fixed(40))
-    return 'T';
-  if (degrees >= fixed(32))
-    return 'S';
-  if (degrees >= fixed(24))
-    return 'R';
-  if (degrees >= fixed(16))
-    return 'Q';
-  if (degrees >= fixed(8))
-    return 'P';
-  if (degrees >= fixed(0))
-    return 'N';
-  if (degrees >= fixed(-8))
-    return 'M';
-  if (degrees >= fixed(-16))
-    return 'L';
-  if (degrees >= fixed(-24))
-    return 'K';
-  if (degrees >= fixed(-32))
-    return 'J';
-  if (degrees >= fixed(-40))
-    return 'H';
-  if (degrees >= fixed(-48))
-    return 'G';
-  if (degrees >= fixed(-56))
-    return 'F';
-  if (degrees >= fixed(-64))
-    return 'E';
-  if (degrees >= fixed(-72))
-    return 'D';
-  if (degrees >= fixed(-80))
-    return 'C';
-
-  return '\0';
+  static constexpr char letters[] = "CDEFGHJKLMNPQRSTUVWXX";
+  unsigned index = (unsigned)((latitude.Degrees() + fixed(80)) / 8);
+  return (index < ARRAY_SIZE(letters)) ? letters[index] : '\0';
 }
 
 unsigned char
@@ -95,7 +53,7 @@ UTM::CalculateZoneNumber(const GeoPoint &p)
 
   if (p.latitude.Degrees() <= fixed(84) &&
       p.latitude.Degrees() >= fixed(72) &&
-      p.longitude.Degrees() >= fixed_zero) {
+      p.longitude.Degrees() >= fixed(0)) {
     if (p.longitude.Degrees() <= fixed(9))
       return 31;
     if (p.longitude.Degrees() <= fixed(21))
@@ -106,7 +64,7 @@ UTM::CalculateZoneNumber(const GeoPoint &p)
       return 37;
   }
 
-  return (int)floor((p.longitude.Degrees() + fixed_180) / 6) + 1;
+  return (int)floor((p.longitude.Degrees() + fixed(180)) / 6) + 1;
 }
 
 Angle
@@ -169,7 +127,8 @@ UTM::ToGeoPoint() const
 
   double m  = y / k0;
   double mu = m / (r * (1 - e / 4 - 3 * e2 / 64 - 5 * e3 / 256));
-  double _e = (1 - sqrt(1 - e)) / (1 + sqrt(1 - e));
+  double _e_sqrt = sqrt(1 - e);
+  double _e = (1 - _e_sqrt) / (1 + _e_sqrt);
   double _e2 = _e * _e;
   double _e3 = _e * _e2;
   double _e4 = _e * _e3;
@@ -186,10 +145,12 @@ UTM::ToGeoPoint() const
   double tan2 = _tan * _tan;
   double tan4 = tan2 * tan2;
 
-  double n = r / sqrt(1 - e * sin2);
+  double _e_sin2_sqrt = sqrt(1 - e * sin2);
+  double _e_sin2_sqrt3 = _e_sin2_sqrt * _e_sin2_sqrt * _e_sin2_sqrt;
+  double n = r / _e_sin2_sqrt;
   double c = e * _cos * _cos;
   double c2 = c * c;
-  double _r = r * (1 - e) / pow(1 - e * sin2, 1.5);
+  double _r = r * (1 - e) / _e_sin2_sqrt3;
 
   double d = x / (n * k0);
   double d2 = d * d;

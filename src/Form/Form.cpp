@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,33 +22,45 @@ Copyright_License {
 */
 
 #include "Form/Form.hpp"
-#include "PeriodClock.hpp"
+#include "Time/PeriodClock.hpp"
 #include "Asset.hpp"
 #include "Interface.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
-#include "Screen/Event.hpp"
 #include "Util/StringUtil.hpp"
+#include "Util/Macros.hpp"
 #include "Look/DialogLook.hpp"
 
 #ifndef USE_GDI
-#include "Screen/SDL/Reference.hpp"
+#include "Screen/Custom/Reference.hpp"
+#endif
+
+#ifdef ENABLE_OPENGL
+#include "Screen/OpenGL/Scope.hpp"
 #endif
 
 #ifdef ANDROID
 #include "Android/Main.hpp"
+#include "Event/Android/Event.hpp"
+#include "Event/Android/Loop.hpp"
+#elif defined(ENABLE_SDL)
+#include "Event/SDL/Event.hpp"
+#include "Event/SDL/Loop.hpp"
+#elif defined(USE_EGL)
+#include "Event/EGL/Globals.hpp"
+#include "Event/EGL/Event.hpp"
+#include "Event/EGL/Loop.hpp"
+#elif defined(USE_GDI)
+#include "Event/GDI/Event.hpp"
+#include "Event/GDI/Loop.hpp"
 #endif
 
-bool
-WndForm::ClientAreaWindow::OnCommand(unsigned id, unsigned code)
-{
-  return (command_callback != NULL && command_callback(id))
-    || ContainerWindow::OnCommand(id, code);
-}
+#ifdef USE_GDI
 
 const Brush *
-WndForm::ClientAreaWindow::on_color(Window &window, Canvas &canvas)
+WndForm::ClientAreaWindow::OnChildColor(Window &window, Canvas &canvas)
 {
 #ifdef _WIN32_WCE
   if ((window.GetStyle() & 0xf) == BS_PUSHBUTTON)
@@ -56,13 +68,15 @@ WndForm::ClientAreaWindow::on_color(Window &window, Canvas &canvas)
        while desktop Windows does not; to make push buttons retain
        their normal background color, we're implementing this
        exception */
-    return ContainerWindow::on_color(window, canvas);
+    return ContainerWindow::OnChildColor(window, canvas);
 #endif
 
   canvas.SetTextColor(COLOR_BLACK);
   canvas.SetBackgroundColor(look.background_color);
   return &look.background_brush;
 }
+
+#endif
 
 void
 WndForm::ClientAreaWindow::OnPaint(Canvas &canvas)
@@ -73,35 +87,46 @@ WndForm::ClientAreaWindow::OnPaint(Canvas &canvas)
 }
 
 static WindowStyle
-add_border(WindowStyle style)
+AddBorder(WindowStyle style)
 {
   style.Border();
   return style;
 }
 
-WndForm::WndForm(SingleWindow &_main_window, const DialogLook &_look,
+WndForm::WndForm(const DialogLook &_look)
+  :look(_look),
+   modal_result(0), force(false),
+   modeless(false),
+   dragging(false),
+   client_area(_look),
+   default_focus(nullptr)
+{
+}
+
+WndForm::WndForm(SingleWindow &main_window, const DialogLook &_look,
                  const PixelRect &rc,
                  const TCHAR *Caption,
                  const WindowStyle style)
-  :main_window(_main_window), look(_look),
+  :look(_look),
    modal_result(0), force(false),
    modeless(false),
+   dragging(false),
    client_area(_look),
-   timer_notify_callback(NULL), key_down_notify_callback(NULL),
-   default_focus(NULL),
-   timer(*this)
+   default_focus(NULL)
 {
-  caption = Caption;
+  Create(main_window, rc, Caption, AddBorder(style));
+}
 
-  set(main_window, rc, add_border(style));
+void
+WndForm::Create(SingleWindow &main_window, const PixelRect &rc,
+                const TCHAR *_caption, const WindowStyle style)
+{
+  if (_caption != nullptr)
+    caption = _caption;
+  else
+    caption.clear();
 
-  // Create ClientWindow
-
-  WindowStyle client_style;
-  client_style.ControlParent();
-  client_area.set(*this, client_rect.left, client_rect.top,
-                  client_rect.right - client_rect.left,
-                  client_rect.bottom - client_rect.top, client_style);
+  ContainerWindow::Create(main_window, rc, AddBorder(style));
 
 #if defined(USE_GDI) && !defined(NDEBUG)
   ::SetWindowText(hWnd, caption.c_str());
@@ -109,14 +134,10 @@ WndForm::WndForm(SingleWindow &_main_window, const DialogLook &_look,
 }
 
 void
-WndForm::SetTimerNotify(TimerNotifyCallback OnTimerNotify, unsigned ms)
+WndForm::Create(SingleWindow &main_window,
+                const TCHAR *_caption, const WindowStyle style)
 {
-  if (timer_notify_callback != NULL && OnTimerNotify == NULL)
-    timer.Cancel();
-  else if (timer_notify_callback == NULL && OnTimerNotify != NULL)
-    timer.Schedule(ms);
-
-  timer_notify_callback = OnTimerNotify;
+  Create(main_window, main_window.GetClientRect(), _caption, style);
 }
 
 WndForm::~WndForm()
@@ -124,8 +145,14 @@ WndForm::~WndForm()
   /* we must override the ~Window() reset call, because in ~Window(),
      our own OnDestroy() method won't be called (during object
      destruction, this object loses its identity) */
-  reset();
+  Destroy();
   SubForm::Clear();
+}
+
+SingleWindow &
+WndForm::GetMainWindow()
+{
+  return *(SingleWindow *)GetRootOwner();
 }
 
 void
@@ -139,22 +166,26 @@ WndForm::UpdateLayout()
 
   client_rect = rc;
   client_rect.top = title_rect.bottom;
-
-  if (client_area.IsDefined())
-    client_area.Move(client_rect);
-}
-
-ContainerWindow &
-WndForm::GetClientAreaWindow()
-{
-  return client_area;
 }
 
 void
-WndForm::OnResize(UPixelScalar width, UPixelScalar height)
+WndForm::OnCreate()
 {
-  ContainerWindow::OnResize(width, height);
+  ContainerWindow::OnCreate();
+
   UpdateLayout();
+
+  WindowStyle client_style;
+  client_style.ControlParent();
+  client_area.Create(*this, client_rect, client_style);
+}
+
+void
+WndForm::OnResize(PixelSize new_size)
+{
+  ContainerWindow::OnResize(new_size);
+  UpdateLayout();
+  client_area.Move(client_rect);
 }
 
 void
@@ -163,20 +194,94 @@ WndForm::OnDestroy()
   if (modal_result == 0)
     modal_result = mrCancel;
 
-  timer.Cancel();
-
   ContainerWindow::OnDestroy();
 }
 
 bool
-WndForm::OnTimer(WindowTimer &_timer)
+WndForm::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
 {
-  if (_timer == timer) {
-    if (timer_notify_callback)
-      timer_notify_callback(*this);
+  if (ContainerWindow::OnMouseMove(x, y, keys))
     return true;
-  } else
-    return ContainerWindow::OnTimer(_timer);
+
+  if (dragging) {
+    const PixelRect position = GetPosition();
+    const int dx = position.left + x - last_drag.x;
+    const int dy = position.top + y - last_drag.y;
+    last_drag.x = position.left + x;
+    last_drag.y = position.top + y;
+
+    PixelRect parent = GetParentClientRect();
+    parent.Grow(-client_rect.top);
+
+    PixelRect new_position = position;
+    new_position.Offset(dx, dy);
+
+    if (new_position.right < parent.left)
+      new_position.Offset(parent.left - new_position.right, 0);
+
+    if (new_position.left > parent.right)
+      new_position.Offset(parent.right - new_position.left, 0);
+
+    if (new_position.top > parent.bottom)
+      new_position.Offset(0, parent.bottom - new_position.top);
+
+    if (new_position.top < 0)
+      new_position.Offset(0, -new_position.top);
+
+    Move(new_position.left, new_position.top);
+
+    return true;
+  }
+
+  return false;
+}
+
+bool
+WndForm::OnMouseDown(PixelScalar x, PixelScalar y)
+{
+  if (ContainerWindow::OnMouseDown(x, y))
+    return true;
+
+  if (!dragging && !IsMaximised()) {
+    dragging = true;
+    Invalidate();
+
+    const PixelRect position = GetPosition();
+    last_drag.x = position.left + x;
+    last_drag.y = position.top + y;
+    SetCapture();
+    return true;
+  }
+
+  return false;
+}
+
+bool
+WndForm::OnMouseUp(PixelScalar x, PixelScalar y)
+{
+  if (ContainerWindow::OnMouseUp(x, y))
+    return true;
+
+  if (dragging) {
+    dragging = false;
+    Invalidate();
+    ReleaseCapture();
+    return true;
+  }
+
+  return false;
+}
+
+void
+WndForm::OnCancelMode()
+{
+  ContainerWindow::OnCancelMode();
+
+  if (dragging) {
+    dragging = false;
+    Invalidate();
+    ReleaseCapture();
+  }
 }
 
 #ifdef WIN32
@@ -198,113 +303,11 @@ WndForm::OnCommand(unsigned id, unsigned code)
 #endif
 
 static bool
-is_special_key(unsigned key_code)
+IsSpecialKey(unsigned key_code)
 {
-  return key_code == VK_LEFT || key_code == VK_RIGHT ||
-    key_code == VK_UP || key_code == VK_DOWN ||
-    key_code == VK_TAB || key_code == VK_RETURN || key_code == VK_ESCAPE;
-}
-
-#ifdef ANDROID
-
-static bool
-is_key_down(const Event &event)
-{
-  return event.type == Event::KEY_DOWN;
-}
-
-static unsigned
-get_key_code(const Event &event)
-{
-  assert(event.type == Event::KEY_DOWN || event.type == Event::KEY_UP);
-
-  return event.param;
-}
-
-static bool
-is_mouse_down(const Event &event)
-{
-  return event.type == Event::MOUSE_DOWN;
-}
-
-gcc_pure
-static bool
-check_key(ContainerWindow *container, const Event &event)
-{
-  Window *focused = container->GetFocusedWindow();
-  if (focused == NULL)
-    return false;
-
-  return focused->OnKeyCheck(get_key_code(event));
-}
-
-gcc_pure
-static bool
-check_special_key(ContainerWindow *container, const Event &event)
-{
-  return is_special_key(get_key_code(event)) && check_key(container, event);
-}
-
-#elif defined(ENABLE_SDL)
-
-static bool
-is_key_down(const SDL_Event &event)
-{
-  return event.type == SDL_KEYDOWN;
-}
-
-static unsigned
-get_key_code(const SDL_Event &event)
-{
-  assert(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP);
-
-  return event.key.keysym.sym;
-}
-
-static bool
-is_mouse_down(const SDL_Event &event)
-{
-  return event.type == SDL_MOUSEBUTTONDOWN;
-}
-
-gcc_pure
-static bool
-check_key(ContainerWindow *container, const SDL_Event &event)
-{
-  Window *focused = container->GetFocusedWindow();
-  if (focused == NULL)
-    return false;
-
-  return focused->OnKeyCheck(get_key_code(event));
-}
-
-gcc_pure
-static bool
-check_special_key(ContainerWindow *container, const SDL_Event &event)
-{
-  return is_special_key(get_key_code(event)) && check_key(container, event);
-}
-
-#else /* GDI follows: */
-
-static bool
-is_key_down(const MSG &msg)
-{
-  return msg.message == WM_KEYDOWN;
-}
-
-static unsigned
-get_key_code(const MSG &msg)
-{
-  assert(msg.message == WM_KEYDOWN || msg.message == WM_KEYUP);
-
-  return msg.wParam;
-}
-
-static bool
-is_mouse_down(const MSG &msg)
-{
-  return msg.message == WM_LBUTTONDOWN;
+  return key_code == KEY_LEFT || key_code == KEY_RIGHT ||
+    key_code == KEY_UP || key_code == KEY_DOWN ||
+    key_code == KEY_TAB || key_code == KEY_RETURN || key_code == KEY_ESCAPE;
 }
 
 /**
@@ -313,11 +316,20 @@ is_mouse_down(const MSG &msg)
  */
 gcc_pure
 static bool
-check_key(ContainerWindow *container, const MSG &msg)
+CheckKey(ContainerWindow *container, const Event &event)
 {
+#ifdef USE_GDI
+  const MSG &msg = event.msg;
   LRESULT r = ::SendMessage(msg.hwnd, WM_GETDLGCODE, msg.wParam,
                             (LPARAM)&msg);
   return (r & DLGC_WANTMESSAGE) != 0;
+#else
+  Window *focused = container->GetFocusedWindow();
+  if (focused == NULL)
+    return false;
+
+  return focused->OnKeyCheck(event.GetKeyCode());
+#endif
 }
 
 /**
@@ -326,12 +338,10 @@ check_key(ContainerWindow *container, const MSG &msg)
  */
 gcc_pure
 static bool
-check_special_key(ContainerWindow *container, const MSG &msg)
+CheckSpecialKey(ContainerWindow *container, const Event &event)
 {
-  return is_special_key(msg.wParam) && check_key(container, msg);
+  return IsSpecialKey(event.GetKeyCode()) && CheckKey(container, event);
 }
-
-#endif /* !ENABLE_SDL */
 
 int WndForm::ShowModeless()
 {
@@ -360,6 +370,7 @@ WndForm::ShowModal()
 
   modal_result = 0;
 
+  SingleWindow &main_window = GetMainWindow();
   main_window.CancelMode();
 
 #ifdef USE_GDI
@@ -379,27 +390,18 @@ WndForm::ShowModal()
   main_window.Refresh();
 #endif
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(USE_EGL)
   EventLoop loop(*event_queue, main_window);
-  Event event;
 #elif defined(ENABLE_SDL)
   EventLoop loop(main_window);
-  SDL_Event event;
 #else
   DialogEventLoop loop(*this);
-  MSG event;
 #endif
+  Event event;
 
   while ((modal_result == 0 || force) && loop.Get(event)) {
-#if defined(ENABLE_SDL) && !defined(ANDROID)
-    if (event.type == SDL_QUIT) {
-      modal_result = mrCancel;
-      continue;
-    }
-#endif
-
     if (!main_window.FilterEvent(event, this)) {
-      if (modeless && is_mouse_down(event))
+      if (modeless && event.IsMouseDown())
         break;
       else
         continue;
@@ -407,7 +409,7 @@ WndForm::ShowModal()
 
     // hack to stop exiting immediately
     if (IsEmbedded() && !IsAltair() && !hastimed &&
-        IsUserInput(event)) {
+        event.IsUserInput()) {
       if (!enter_clock.Check(200))
         /* ignore user input in the first 200ms */
         continue;
@@ -415,57 +417,62 @@ WndForm::ShowModal()
         hastimed = true;
     }
 
-    if (key_down_notify_callback != NULL && is_key_down(event) &&
+    if (event.IsKeyDown()) {
+      if (key_down_function &&
 #ifdef USE_GDI
-        IdentifyDescendant(event.hwnd) &&
+          IdentifyDescendant(event.msg.hwnd) &&
 #endif
-        !check_special_key(this, event) &&
-        key_down_notify_callback(*this, get_key_code(event)))
-      continue;
-
-#if defined(ENABLE_SDL) && !defined(ANDROID)
-    if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_TAB) {
-      /* the Tab key moves the keyboard focus */
-      const Uint8 *keystate = ::SDL_GetKeyState(NULL);
-      event.key.keysym.sym = keystate[SDLK_LSHIFT] || keystate[SDLK_RSHIFT]
-        ? SDLK_UP : SDLK_DOWN;
-    }
-#endif
-
-    if (is_key_down(event) &&
-#ifdef USE_GDI
-        IdentifyDescendant(event.hwnd) &&
-#endif
-        (get_key_code(event) == VK_UP || get_key_code(event) == VK_DOWN)) {
-      /* VK_UP and VK_DOWN move the focus only within the current
-         control group - but we want it to behave like Shift-Tab and
-         Tab */
-
-      if (!check_key(this, event)) {
-        /* this window doesn't handle VK_UP/VK_DOWN */
-        if (get_key_code(event) == VK_DOWN)
-          FocusNextControl();
-        else
-          FocusPreviousControl();
+          !CheckSpecialKey(this, event) &&
+          key_down_function(event.GetKeyCode()))
         continue;
+
+#ifdef ENABLE_SDL
+      if (event.GetKeyCode() == SDLK_TAB) {
+        /* the Tab key moves the keyboard focus */
+        const Uint8 *keystate = ::SDL_GetKeyState(NULL);
+        event.event.key.keysym.sym =
+          keystate[SDLK_LSHIFT] || keystate[SDLK_RSHIFT]
+          ? SDLK_UP : SDLK_DOWN;
       }
-    }
+#endif
+
+      if (
+#ifdef USE_GDI
+          IdentifyDescendant(event.msg.hwnd) &&
+#endif
+          (event.GetKeyCode() == KEY_UP || event.GetKeyCode() == KEY_DOWN)) {
+        /* KEY_UP and KEY_DOWN move the focus only within the current
+           control group - but we want it to behave like Shift-Tab and
+           Tab */
+
+        if (!CheckKey(this, event)) {
+          /* this window doesn't handle KEY_UP/KEY_DOWN */
+          if (event.GetKeyCode() == KEY_DOWN)
+            FocusNextControl();
+          else
+            FocusPreviousControl();
+          continue;
+        }
+      }
 
 #if !defined USE_GDI || defined _WIN32_WCE
-    // The Windows CE dialog manager does not handle VK_ESCAPE and so we have
-    // to do it by ourself.
-    if (is_key_down(event) && get_key_code(event) == VK_ESCAPE) {
-      modal_result = mrCancel;
-      continue;
-    }
+      /* The Windows CE dialog manager does not handle KEY_ESCAPE and
+         so we have to do it by ourself */
+      if (event.GetKeyCode() == KEY_ESCAPE) {
+        if (IsAltair())
+          /* map VK_ESCAPE to mrOK on Altair, because the Escape key is
+             expected to be the one that saves and closes a dialog */
+          modal_result = mrOK;
+        else
+          modal_result = mrCancel;
+        continue;
+      }
 #endif
-
-    /* map VK_ESCAPE to mrOK on Altair, because the Escape key is expected to 
-       be the one that saves and closes a dialog */
-    if (IsAltair() && is_key_down(event) && get_key_code(event) == VK_ESCAPE) {
-      modal_result = mrOK;
-      continue;
     }
+
+    if (event.IsCharacter() && character_function &&
+        character_function(event.GetCharacter()))
+      continue;
 
     loop.Dispatch(event);
   } // End Modal Loop
@@ -488,6 +495,64 @@ WndForm::ShowModal()
 void
 WndForm::OnPaint(Canvas &canvas)
 {
+  const SingleWindow &main_window = GetMainWindow();
+  gcc_unused const bool is_active = main_window.IsTopDialog(*this);
+
+#ifdef ENABLE_OPENGL
+  if (!IsMaximised() && is_active) {
+    /* draw a shade around the current dialog to emphasise it */
+    GLEnable blend(GL_BLEND);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    const PixelRect rc = GetClientRect();
+    const PixelScalar size = Layout::SmallScale(4);
+
+    const RasterPoint vertices[8] = {
+      { rc.left, rc.top },
+      { rc.right, rc.top },
+      { rc.right, rc.bottom },
+      { rc.left, rc.bottom },
+      { rc.left - size, rc.top - size },
+      { rc.right + size, rc.top - size },
+      { rc.right + size, rc.bottom + size },
+      { rc.left - size, rc.bottom + size },
+    };
+
+    glVertexPointer(2, GL_VALUE, 0, vertices);
+
+    static constexpr Color inner_color = COLOR_BLACK.WithAlpha(192);
+    static constexpr Color outer_color = COLOR_BLACK.WithAlpha(16);
+    static constexpr Color colors[8] = {
+      inner_color,
+      inner_color,
+      inner_color,
+      inner_color,
+      outer_color,
+      outer_color,
+      outer_color,
+      outer_color,
+    };
+
+#ifdef HAVE_GLES
+    glColorPointer(4, GL_FIXED, 0, colors);
+#else
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+#endif
+
+    static constexpr GLubyte indices[] = {
+      0, 4, 1, 4, 5, 1,
+      1, 5, 2, 5, 6, 2,
+      2, 6, 3, 6, 7, 3,
+      3, 7, 0, 7, 4, 0,
+    };
+
+    glDrawElements(GL_TRIANGLES, ARRAY_SIZE(indices),
+                   GL_UNSIGNED_BYTE, indices);
+
+    glDisableClientState(GL_COLOR_ARRAY);
+  }
+#endif
+
   ContainerWindow::OnPaint(canvas);
 
   // Get window coordinates
@@ -513,14 +578,25 @@ WndForm::OnPaint(Canvas &canvas)
                    look.caption.background_bitmap);
 
     // Draw titlebar text
-    canvas.text(title_rect.left + Layout::FastScale(2), title_rect.top,
-                caption.c_str());
+    canvas.DrawText(title_rect.left + Layout::FastScale(2), title_rect.top,
+                    caption.c_str());
 #else
-    canvas.SetBackgroundColor(main_window.IsTopDialog(*this)
+    canvas.SetBackgroundColor(is_active
                               ? look.caption.background_color
                               : look.caption.inactive_background_color);
-    canvas.text_opaque(title_rect.left + Layout::FastScale(2),
-                       title_rect.top, title_rect, caption.c_str());
+    canvas.DrawOpaqueText(title_rect.left + Layout::FastScale(2),
+                          title_rect.top, title_rect, caption.c_str());
+#endif
+  }
+
+  if (dragging) {
+#ifdef ENABLE_OPENGL
+    GLEnable blend(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    canvas.DrawFilledRectangle(0, 0, canvas.GetWidth(), canvas.GetHeight(),
+                               COLOR_YELLOW.WithAlpha(80));
+#elif defined(USE_GDI)
+    ::InvertRect(canvas, &title_rect);
 #endif
   }
 }
@@ -534,6 +610,7 @@ WndForm::SetCaption(const TCHAR *_caption)
   if (!caption.equals(_caption)) {
     caption = _caption;
     UpdateLayout();
+    client_area.Move(client_rect);
     Invalidate(title_rect);
   }
 }
@@ -542,6 +619,8 @@ WndForm::SetCaption(const TCHAR *_caption)
 void
 WndForm::ReinitialiseLayout()
 {
+  const SingleWindow &main_window = GetMainWindow();
+
   if (main_window.GetWidth() < GetWidth() ||
       main_window.GetHeight() < GetHeight()) {
     // close dialog, it's creator may want to create a new layout

@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ public:
    * @return Initialised object
    */
   LineSectorZone(const GeoPoint loc, const fixed length = fixed(1000.0))
-    :SymmetricSectorZone(LINE, loc, half(length), Angle::HalfCircle())
+    :SymmetricSectorZone(LINE, loc, Half(length), Angle::HalfCircle())
   {
     UpdateSector();
   }
@@ -59,7 +59,7 @@ public:
    * @param new_length Length (m) of line
    */
   void SetLength(const fixed new_length) {
-    SetRadius(half(new_length));
+    SetRadius(Half(new_length));
   }
   
   /**
@@ -72,22 +72,21 @@ public:
   }
 
   /* virtual methods from class ObservationZone */
-  virtual bool CanStartThroughTop() const {
+  virtual bool CanStartThroughTop() const override {
     return false;
   }
 
   virtual bool TransitionConstraint(const GeoPoint &location,
-                                    const GeoPoint &last_location) const {
+                                    const GeoPoint &last_location) const override {
     return CylinderZone::IsInSector(location) &&
       CylinderZone::IsInSector(last_location);
   }
 
-  virtual GeoPoint GetBoundaryParametric(fixed t) const;
-  virtual OZBoundary GetBoundary() const;
-  virtual fixed ScoreAdjustment() const;
+  virtual OZBoundary GetBoundary() const override;
+  virtual fixed ScoreAdjustment() const override;
 
   /* virtual methods from class ObservationZonePoint */
-  virtual ObservationZonePoint *Clone(const GeoPoint &_reference) const {
+  virtual ObservationZonePoint *Clone(const GeoPoint &_reference) const override {
     return new LineSectorZone(*this, _reference);
   }
 };

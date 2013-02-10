@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,11 +30,66 @@ Copyright_License {
 
 #ifndef _WIN32_WCE
 #include "Screen/Timer.hpp"
-#include "KineticManager.hpp"
+#include "UIUtil/KineticManager.hpp"
 #endif
 
 struct DialogLook;
 class ContainerWindow;
+
+typedef void (*ListItemRendererFunction)(Canvas &canvas, const PixelRect rc,
+                                         unsigned idx);
+
+class ListItemRenderer {
+public:
+  virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
+                           unsigned idx) = 0;
+};
+
+template<typename C>
+class LambdaListItemRenderer : public ListItemRenderer, private C {
+public:
+  LambdaListItemRenderer(C &&c):C(std::move(c)) {}
+
+  virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
+                           unsigned idx) override {
+    C::operator()(canvas, rc, idx);
+  }
+};
+
+/**
+ * Convert a lambda expression (a closure object) to ListItemRenderer.
+ */
+template<typename C>
+LambdaListItemRenderer<C>
+MakeListItemRenderer(C &&c)
+{
+  return LambdaListItemRenderer<C>(std::move(c));
+}
+
+class FunctionListItemRenderer : public ListItemRenderer {
+  const ListItemRendererFunction function;
+
+public:
+  FunctionListItemRenderer(ListItemRendererFunction _function)
+    :function(_function) {}
+
+  virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
+                           unsigned idx) override {
+    function(canvas, rc, idx);
+  }
+};
+
+class ListCursorHandler {
+public:
+  virtual void OnCursorMoved(unsigned index) {}
+
+  gcc_pure
+  virtual bool CanActivateItem(unsigned index) const {
+    return false;
+  }
+
+  virtual void OnActivateItem(unsigned index) {}
+};
 
 /**
  * A ListControl implements a scrollable list control based on the
@@ -42,23 +97,7 @@ class ContainerWindow;
  */
 class ListControl : public PaintWindow {
 public:
-  typedef void (*ActivateCallback)(unsigned idx);
-  typedef void (*CursorCallback)(unsigned idx);
-  typedef void (*PaintItemCallback)(Canvas &canvas, const PixelRect rc,
-                                      unsigned idx);
-
-  struct Handler {
-    virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
-                             unsigned idx) = 0;
-
-    virtual void OnCursorMoved(unsigned index) {}
-
-    gcc_pure
-    virtual bool CanActivateItem(unsigned index) const {
-      return false;
-    }
-
-    virtual void OnActivateItem(unsigned index) {}
+  struct Handler : public ListItemRenderer, ListCursorHandler {
   };
 
 protected:
@@ -120,11 +159,8 @@ protected:
    */
   int drag_y_window;
 
-  Handler *handler;
-
-  ActivateCallback activate_callback;
-  CursorCallback cursor_callback;
-  PaintItemCallback paint_item_callback;
+  ListItemRenderer *item_renderer;
+  ListCursorHandler *cursor_handler;
 
 #ifndef _WIN32_WCE
   KineticManager kinetic;
@@ -140,35 +176,23 @@ public:
               PixelRect rc, const WindowStyle style,
               UPixelScalar _item_height);
 
+  void SetItemRenderer(ListItemRenderer *_item_renderer) {
+    assert(_item_renderer != nullptr);
+    assert(item_renderer == nullptr);
+
+    item_renderer = _item_renderer;
+  }
+
+  void SetCursorHandler(ListCursorHandler *_cursor_handler) {
+    assert(_cursor_handler != nullptr);
+    assert(cursor_handler == nullptr);
+
+    cursor_handler = _cursor_handler;
+  }
+
   void SetHandler(Handler *_handler) {
-    assert(handler == NULL);
-    assert(_handler != NULL);
-    assert(activate_callback == NULL);
-    assert(cursor_callback == NULL);
-    assert(paint_item_callback == NULL);
-
-    handler = _handler;
-  }
-
-  /** Sets the function to call when a ListItem is chosen */
-  void SetActivateCallback(ActivateCallback cb) {
-    assert(handler == NULL);
-
-    activate_callback = cb;
-  }
-
-  /** Sets the function to call when cursor has changed */
-  void SetCursorCallback(CursorCallback cb) {
-    assert(handler == NULL);
-
-    cursor_callback = cb;
-  }
-
-  /** Sets the function to call when painting an item */
-  void SetPaintItemCallback(PaintItemCallback cb) {
-    assert(handler == NULL);
-
-    paint_item_callback = cb;
+    SetItemRenderer(_handler);
+    SetCursorHandler(_handler);
   }
 
   /**
@@ -304,58 +328,29 @@ protected:
   /** Draws the ScrollBar */
   void DrawScrollBar(Canvas &canvas);
 
-  /**
-   * The OnResize event is called when the Control is resized
-   * (derived from Window)
-   */
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-
-  virtual void OnSetFocus();
-  virtual void OnKillFocus();
-
-  /**
-   * The OnMouseDown event is called when the mouse is pressed over the button
-   * (derived from Window)
-   */
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  /**
-   * The OnMouseUp event is called when the mouse is released over the button
-   * (derived from Window)
-   */
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  /**
-   * The OnMouseMove event is called when the mouse is moved over the button
-   * (derived from Window)
-   */
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
-  /**
-   * The OnMouseWheel event is called when the mouse wheel is turned
-   * (derived from Window)
-   */
-  virtual bool OnMouseWheel(PixelScalar x, PixelScalar y, int delta);
-
-  virtual bool OnKeyCheck(unsigned key_code) const;
-
-  /**
-   * The OnKeyDown event is called when a key is pressed while the
-   * button is focused
-   * (derived from Window)
-   */
-  virtual bool OnKeyDown(unsigned key_code);
-
-  virtual bool OnCancelMode();
-
-  /**
-   * The OnPaint event is called when the button needs to be drawn
-   * (derived from PaintWindow)
-   */
-  virtual void OnPaint(Canvas &canvas);
-  virtual void OnPaint(Canvas &canvas, const PixelRect &dirty);
-
 #ifndef _WIN32_WCE
-  virtual bool OnTimer(WindowTimer &timer);
-  virtual void OnDestroy();
+  virtual bool OnTimer(WindowTimer &timer) override;
+  virtual void OnDestroy() override;
 #endif
+
+  virtual void OnResize(PixelSize new_size) override;
+
+  virtual void OnSetFocus() override;
+  virtual void OnKillFocus() override;
+
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y,
+                           unsigned keys) override;
+  virtual bool OnMouseWheel(PixelScalar x, PixelScalar y, int delta) override;
+
+  virtual bool OnKeyCheck(unsigned key_code) const override;
+  virtual bool OnKeyDown(unsigned key_code) override;
+
+  virtual void OnCancelMode() override;
+
+  virtual void OnPaint(Canvas &canvas) override;
+  virtual void OnPaint(Canvas &canvas, const PixelRect &dirty) override;
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,35 +27,6 @@ Copyright_License {
 #include <assert.h>
 #include <sys/select.h>
 
-Net::Session::Session()
-  :multi(curl_multi_init())
-{
-}
-
-Net::Session::~Session()
-{
-  assert(results.empty());
-
-  if (multi != NULL)
-    curl_multi_cleanup(multi);
-}
-
-bool
-Net::Session::Error() const
-{
-  return multi == NULL;
-}
-
-void
-Net::Session::Remove(CURL *easy)
-{
-  ResultMap::iterator i = results.find(easy);
-  if (i != results.end())
-    results.erase(i);
-
-  curl_multi_remove_handle(multi, easy);
-}
-
 bool
 Net::Session::Select(int timeout_ms)
 {
@@ -65,15 +36,13 @@ Net::Session::Select(int timeout_ms)
   FD_ZERO(&efds);
 
   int max_fd;
-  CURLMcode mcode = curl_multi_fdset(multi, &rfds, &wfds,
-                                     &efds, &max_fd);
-  if (mcode != CURLM_OK)
+
+  if (!multi.FdSet(&rfds, &wfds, &efds, &max_fd))
     return false;
 
   bool using_curl_timeout = false;
-  long curl_timeout;
-  mcode = curl_multi_timeout(multi, &curl_timeout);
-  if (mcode == CURLM_OK && curl_timeout >= 0) {
+  long curl_timeout = multi.GetTimeout();
+  if (curl_timeout >= 0) {
     if (curl_timeout < 50)
       curl_timeout = 50;
 
@@ -93,33 +62,4 @@ Net::Session::Select(int timeout_ms)
 
   int ret = select(max_fd + 1, &rfds, &wfds, &efds, timeout_p);
   return ret > 0 || (using_curl_timeout && ret == 0);
-}
-
-CURLMcode
-Net::Session::Perform()
-{
-  int running_handles;
-  CURLMcode mcode = curl_multi_perform(multi, &running_handles);
-  return mcode;
-}
-
-CURLcode
-Net::Session::InfoRead(const CURL *easy)
-{
-  ResultMap::iterator i = results.find(easy);
-  if (i != results.end())
-    return i->second;
-
-  const CURLMsg *msg;
-  int msgs_in_queue;
-  while ((msg = curl_multi_info_read(multi, &msgs_in_queue)) != NULL) {
-    if (msg->msg == CURLMSG_DONE) {
-      if (msg->easy_handle == easy)
-        return msg->data.result;
-
-      results.insert(std::make_pair(easy, msg->data.result));
-    }
-  }
-
-  return CURLE_AGAIN;
 }

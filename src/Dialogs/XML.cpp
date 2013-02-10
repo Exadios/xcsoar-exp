@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ Copyright_License {
 #include "Form/DataField/Time.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/SingleWindow.hpp"
-#include "Interface.hpp"
+#include "Screen/LargeTextWindow.hpp"
 #include "Form/Form.hpp"
 #include "Form/Frame.hpp"
 #include "Form/Edit.hpp"
@@ -49,17 +49,14 @@ Copyright_License {
 #include "Form/TabBar.hpp"
 #include "Form/TabMenu.hpp"
 #include "Form/Panel.hpp"
-#include "Form/Keyboard.hpp"
 #include "Form/CheckBox.hpp"
-#include "Form/DockWindow.hpp"
+#include "Widget/DockWindow.hpp"
 #include "Util/StringUtil.hpp"
 #include "Util/ConvertString.hpp"
 #include "Util/NumberParser.hpp"
 #include "ResourceLoader.hpp"
 #include "Look/DialogLook.hpp"
 #include "Inflate.hpp"
-
-#include <zlib/zlib.h>
 
 #include <stdio.h>    // for _stprintf
 #include <assert.h>
@@ -91,9 +88,7 @@ struct ControlPosition: public RasterPoint
  * Callback type for the "Custom" element, attribute "OnCreate".
  */
 typedef Window *(*CreateWindowCallback_t)(ContainerWindow &parent,
-                                          PixelScalar left, PixelScalar top,
-                                          UPixelScalar width,
-                                          UPixelScalar height,
+                                          PixelRect rc,
                                           const WindowStyle style);
 
 static Window *
@@ -114,8 +109,8 @@ LoadChildrenFromXML(SubForm &form, ContainerWindow &parent,
  * @param Default The default return value
  * @return The parsed Integer value
  */
-static long
-StringToIntDflt(const TCHAR *string, long _default)
+static int
+StringToIntDflt(const TCHAR *string, int _default)
 {
   if (string == NULL || StringIsEmpty(string))
     return _default;
@@ -160,7 +155,7 @@ StringToStringDflt(const TCHAR *string, const TCHAR *_default)
 static bool
 StringToColor(const TCHAR *string, Color &color)
 {
-  long value = StringToIntDflt(string, -1);
+  int value = StringToIntDflt(string, -1);
   if (value & ~0xffffff)
     return false;
 
@@ -305,6 +300,7 @@ LoadXMLFromResource(const TCHAR* resource, XML::Results *xml_results)
   assert(data.first != NULL);
 
   char *buffer = InflateToString(data.first, data.second);
+  assert(buffer != nullptr);
 
   UTF8ToWideConverter buffer2(buffer);
   assert(buffer2.IsValid());
@@ -324,17 +320,8 @@ LoadXMLFromResource(const TCHAR* resource, XML::Results *xml_results)
 static XMLNode *
 LoadXMLFromResource(const TCHAR *resource)
 {
-  XML::Results xml_results;
-
-  // Reset errors
-  xml_results.error = XML::eXMLErrorNone;
-  XML::global_error = false;
-
-  // Load and parse the resource
-  XMLNode *node = LoadXMLFromResource(resource, &xml_results);
-
-  // Show errors if they exist
-  assert(xml_results.error == XML::eXMLErrorNone);
+  XMLNode *node = LoadXMLFromResource(resource, nullptr);
+  assert(node != nullptr);
 
   return node;
 }
@@ -367,8 +354,6 @@ LoadWindow(const CallBackTableEntry *lookup_table, SubForm *form,
   // load only one top-level control.
   Window *window = LoadChild(*form, parent, rc, lookup_table, *node, 0, style);
   delete node;
-
-  assert(!XML::global_error);
 
   return window;
 }
@@ -446,9 +431,6 @@ LoadDialog(const CallBackTableEntry *lookup_table, SingleWindow &parent,
                       lookup_table, node);
   delete node;
 
-  // If XML error occurred -> Error messagebox + cancel
-  assert(!XML::global_error);
-
   // Return the created form
   return form;
 }
@@ -460,7 +442,6 @@ LoadDataField(const XMLNode &node, const CallBackTableEntry *LookUpTable)
   TCHAR display_format[32];
   TCHAR edit_format[32];
   double step;
-  bool fine;
 
   _tcscpy(data_type,
           StringToStringDflt(node.GetAttribute(_T("DataType")), _T("")));
@@ -472,7 +453,7 @@ LoadDataField(const XMLNode &node, const CallBackTableEntry *LookUpTable)
   fixed min = fixed(StringToFloatDflt(node.GetAttribute(_T("Min")), INT_MIN));
   fixed max = fixed(StringToFloatDflt(node.GetAttribute(_T("Max")), INT_MAX));
   step = StringToFloatDflt(node.GetAttribute(_T("Step")), 1);
-  fine = StringToIntDflt(node.GetAttribute(_T("Fine")), false);
+  const bool fine = false;
 
   DataField::DataAccessCallback callback = (DataField::DataAccessCallback)
     GetCallBack(LookUpTable, node, _T("OnDataAccess"));
@@ -494,7 +475,7 @@ LoadDataField(const XMLNode &node, const CallBackTableEntry *LookUpTable)
 
   if (StringIsEqualIgnoreCase(data_type, _T("double")))
     return new DataFieldFloat(edit_format, display_format, min, max,
-                              fixed_zero, fixed(step), fine, callback);
+                              fixed(0), fixed(step), fine, callback);
 
   if (StringIsEqualIgnoreCase(data_type, _T("time"))) {
     DataFieldTime *df = new DataFieldTime((int)min, (int)max, 0,
@@ -503,10 +484,6 @@ LoadDataField(const XMLNode &node, const CallBackTableEntry *LookUpTable)
     df->SetMaxTokenNumber(max_token);
     return df;
   }
-
-  if (StringIsEqualIgnoreCase(data_type, _T("integer")))
-    return new DataFieldInteger(edit_format, display_format, (int)min, (int)max,
-                                0, (int)step, callback);
 
   if (StringIsEqualIgnoreCase(data_type, _T("string")))
     return new DataFieldString(_T(""), callback);
@@ -567,47 +544,16 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
     caption_width = ScaleWidth(caption_width);
 
     // Determine whether the control is multiline or readonly
-    bool multi_line = StringToIntDflt(node.GetAttribute(_T("MultiLine")), 0);
     bool read_only = StringToIntDflt(node.GetAttribute(_T("ReadOnly")), 0);
 
-    // Load the event callback properties
-    WndProperty::DataChangeCallback_t data_notify_callback =
-      (WndProperty::DataChangeCallback_t)
-      GetCallBack(lookup_table, node, _T("OnDataNotify"));
-
-    WindowControl::HelpCallback help_callback =
-      (WindowControl::HelpCallback)
-      GetCallBack(lookup_table, node, _T("OnHelp"));
-
     // Create the Property Control
-    style.ControlParent();
-
-    EditWindowStyle edit_style;
-    edit_style.SetVerticalCenter();
-    if (read_only)
-      edit_style.SetReadOnly();
-    else
-      edit_style.TabStop();
-
-    if (IsEmbedded() || Layout::scale_1024 < 2048)
-      /* sunken edge doesn't fit well on the tiny screen of an
-         embedded device */
-      edit_style.Border();
-    else
-      edit_style.SunkenEdge();
-
-    if (multi_line) {
-      edit_style.SetMultiLine();
-      edit_style.VerticalScroll();
-    }
+    if (!read_only)
+      style.TabStop();
 
     WndProperty *property;
     window = property = new WndProperty(parent, *xml_dialog_look, caption, rc,
-                                        caption_width, style, edit_style,
-                                        data_notify_callback);
-
-    // Set the help function event callback
-    property->SetOnHelpCallback(help_callback);
+                                        caption_width, style);
+    property->SetReadOnly(read_only);
 
     // Load the help text
     property->SetHelpText(StringToStringDflt(node.GetAttribute(_T("Help")),
@@ -624,35 +570,6 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
         // Tell the Property control about the DataField control
         property->SetDataField(data_field);
     }
-
-  } else if (StringIsEqual(node.GetName(), _T("TextEdit"))) {
-    // Determine whether the control is multiline or readonly
-    bool multi_line = StringToIntDflt(node.GetAttribute(_T("MultiLine")), 0);
-    bool read_only = StringToIntDflt(node.GetAttribute(_T("ReadOnly")), 0);
-
-    EditWindowStyle edit_style(style);
-    if (read_only)
-      edit_style.SetReadOnly();
-    else
-      edit_style.TabStop();
-
-    if (IsEmbedded() || Layout::scale_1024 < 2048)
-      /* sunken edge doesn't fit well on the tiny screen of an
-         embedded device */
-      edit_style.Border();
-    else
-      edit_style.SunkenEdge();
-
-    if (multi_line) {
-      edit_style.SetMultiLine();
-      edit_style.VerticalScroll();
-    }
-
-    EditWindow *edit;
-    window = edit = new EditWindow();
-    edit->set(parent, pos.x, pos.y, size.cx, size.cy, edit_style);
-    edit->InstallWndProc();
-    edit->SetFont(*xml_dialog_look->text_font);
 
   // ButtonControl (WndButton)
   } else if (StringIsEqual(node.GetName(), _T("Button"))) {
@@ -671,6 +588,13 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
                            rc,
                            button_style, click_callback);
 
+  } else if (StringIsEqual(node.GetName(), _T("CloseButton"))) {
+    ButtonWindowStyle button_style(style);
+    button_style.TabStop();
+
+    window = new WndButton(parent, *xml_dialog_look, _("Close"),
+                           rc,
+                           button_style, (WndForm &)form, mrOK);
   } else if (StringIsEqual(node.GetName(), _T("CheckBox"))) {
     // Determine click_callback function
     CheckBoxControl::ClickNotifyCallback click_callback =
@@ -719,19 +643,6 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
     LoadChildrenFromXML(form, *frame,
                         lookup_table, &node);
 
-  // KeyboardControl
-  } else if (StringIsEqual(node.GetName(), _T("Keyboard"))) {
-    KeyboardControl::OnCharacterCallback_t character_callback =
-      (KeyboardControl::OnCharacterCallback_t)
-      GetCallBack(lookup_table, node, _T("OnCharacter"));
-
-    // Create the KeyboardControl
-    KeyboardControl *kb =
-      new KeyboardControl(parent, *xml_dialog_look,
-                          pos.x, pos.y, size.cx, size.cy,
-                          character_callback, style);
-
-    window = kb;
   // DrawControl (WndOwnerDrawFrame)
   } else if (StringIsEqual(node.GetName(), _T("Canvas"))) {
     // Determine DrawCallback function
@@ -748,9 +659,7 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
   // FrameControl (WndFrame)
   } else if (StringIsEqual(node.GetName(), _T("Label"))){
     // Create the FrameControl
-    WndFrame* frame = new WndFrame(parent, *xml_dialog_look,
-                                   pos.x, pos.y, size.cx, size.cy,
-                                   style);
+    WndFrame* frame = new WndFrame(parent, *xml_dialog_look, rc, style);
 
     // Set the caption
     frame->SetCaption(caption);
@@ -760,6 +669,20 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
       frame->SetCaptionColor(color);
 
     window = frame;
+
+  } else if (StringIsEqual(node.GetName(), _T("LargeText"))){
+    if (IsEmbedded() || Layout::scale_1024 < 2048)
+      /* sunken edge doesn't fit well on the tiny screen of an
+         embedded device */
+      style.Border();
+    else
+      style.SunkenEdge();
+
+    LargeTextWindow *ltw = new LargeTextWindow();
+    ltw->Create(parent, rc, style);
+    ltw->SetFont(*xml_dialog_look->text_font);
+
+    window = ltw;
 
   // ListBoxControl (ListControl)
   } else if (StringIsEqual(node.GetName(), _T("List"))){
@@ -778,11 +701,7 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
     else
       style.SunkenEdge();
 
-    const PixelRect rc = {
-      pos.x, pos.y,
-      PixelScalar(pos.x + size.cx),
-      PixelScalar(pos.y + size.cy),
-    };
+    const PixelRect rc(pos.x, pos.y, pos.x + size.cx, pos.y + size.cy);
 
     window = new ListControl(parent, *xml_dialog_look,
                              rc, style, item_height);
@@ -793,9 +712,7 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
 
     style.ControlParent();
 
-    TabbedControl *tabbed = new TabbedControl(parent,
-                                              pos.x, pos.y, size.cx, size.cy,
-                                              style);
+    TabbedControl *tabbed = new TabbedControl(parent, rc, style);
 
     window = tabbed;
 
@@ -811,15 +728,9 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
   } else if (StringIsEqual(node.GetName(), _T("TabBar"))) {
     // Create the TabBarControl
 
-    bool flip_orientation = false;
-    if ( (Layout::landscape && StringToIntDflt(node.GetAttribute(_T("Horizontal")), 0)) ||
-         (!Layout::landscape && StringToIntDflt(node.GetAttribute(_T("Vertical")), 0) ) )
-      flip_orientation = true;
-
     style.ControlParent();
-    TabBarControl *tabbar = new TabBarControl(parent, *xml_dialog_look,
-                                              pos.x, pos.y, size.cx, size.cy,
-                                              style, flip_orientation);
+    TabBarControl *tabbar = new TabBarControl(parent, *xml_dialog_look, rc,
+                                              style, Layout::landscape);
     window = tabbar;
 
     // TabMenuControl (TabMenu)
@@ -833,8 +744,7 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
                                                     Please rewrite: */
                                                  (WndForm &)form,
                                                  *xml_dialog_look, caption,
-                                                 pos.x, pos.y, size.cx, size.cy,
-                                                 style);
+                                                 rc, style);
     window = tabmenu;
 
   } else if (StringIsEqual(node.GetName(), _T("Custom"))) {
@@ -844,11 +754,11 @@ LoadChild(SubForm &form, ContainerWindow &parent, const PixelRect &parent_rc,
     if (create_callback == NULL)
       return NULL;
 
-    window = create_callback(parent, pos.x, pos.y, size.cx, size.cy, style);
+    window = create_callback(parent, rc, style);
   } else if (StringIsEqual(node.GetName(), _T("Widget"))) {
     style.ControlParent();
     DockWindow *dock = new DockWindow();
-    dock->set(parent, rc, style);
+    dock->Create(parent, rc, style);
     window = dock;
   }
 

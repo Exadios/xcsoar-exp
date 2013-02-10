@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,10 +21,12 @@ Copyright_License {
 }
 */
 
+#define ENABLE_SCREEN
+
+#include "Main.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
 #include "Screen/BufferCanvas.hpp"
-#include "Screen/Init.hpp"
 
 #ifndef ENABLE_OPENGL
 #include "Screen/WindowCanvas.hpp"
@@ -61,27 +63,8 @@ public:
 #endif
   {}
 
-#ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance) {
-    WNDCLASS wc;
-
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = Window::WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-    wc.lpszMenuName = 0;
-    wc.lpszClassName = _T("RunCanvas");
-
-    return RegisterClass(&wc);
-  }
-#endif /* USE_GDI */
-
-  void set(PixelRect _rc) {
-    SingleWindow::set(_T("RunCanvas"), _T("RunCanvas"), _rc);
+  void Create(PixelSize size) {
+    SingleWindow::Create(_T("RunCanvas"), size);
 
     PixelRect rc = GetClientRect();
 
@@ -93,13 +76,15 @@ public:
     button_rc.left += 5;
     button_rc.right = button_rc.left + 65;
 
-    buffer_button.set(*this, _T("Buffer"), ID_BUFFER, button_rc);
+    buffer_button.Create(*this, _T("Buffer"), ID_BUFFER, button_rc);
+    buffer_button.SetFont(normal_font);
 #endif
 
     button_rc.right = rc.right - 5;
     button_rc.left = button_rc.right - 65;
 
-    close_button.set(*this, _T("Close"), ID_CLOSE, button_rc);
+    close_button.Create(*this, _T("Close"), ID_CLOSE, button_rc);
+    close_button.SetFont(normal_font);
   }
 
 private:
@@ -110,21 +95,21 @@ private:
     Brush red_brush(COLOR_RED);
 
     const PixelRect rc = GetClientRect();
-    const UPixelScalar width = rc.right - rc.left;
-    const UPixelScalar height = rc.bottom - rc.top;
-    const UPixelScalar hmiddle = (rc.left + rc.right) / 2;
-    const UPixelScalar vmiddle = (rc.top + rc.bottom) / 2;
+    const int width = rc.right - rc.left;
+    const int height = rc.bottom - rc.top;
+    const int hmiddle = (rc.left + rc.right) / 2;
+    const int vmiddle = (rc.top + rc.bottom) / 2;
 
     RasterPoint p1[3] = {
-      { -100, PixelScalar(vmiddle) },
-      { PixelScalar((width * 2) / 3), -100 },
-      { PixelScalar(hmiddle), PixelScalar(height * 2) },
+      { -100, vmiddle },
+      { (width * 2) / 3, -100 },
+      { hmiddle, height * 2 },
     };
 
     RasterPoint p2[3] = {
-      { -2000, PixelScalar(vmiddle) },
-      { PixelScalar(width * 10), -3000 },
-      { PixelScalar(width * 5), 3000 },
+      { -2000, vmiddle },
+      { width * 10, -3000 },
+      { width * 5, 3000 },
     };
 
     const TCHAR *label;
@@ -132,7 +117,7 @@ private:
     case 0:
       canvas.DrawSegment(hmiddle, vmiddle,
                      min(width, height) / 3,
-                     Angle::Degrees(fixed_zero), Angle::Degrees(fixed(90)),
+                     Angle::Zero(), Angle::Degrees(90),
                      false);
       label = _T("segment 0-90 horizon=false");
       break;
@@ -140,7 +125,7 @@ private:
     case 1:
       canvas.DrawSegment(hmiddle, vmiddle,
                      min(width, height) / 3,
-                     Angle::Degrees(fixed(45)), Angle::Degrees(fixed_180),
+                     Angle::Degrees(45), Angle::Degrees(180),
                      true);
       label = _T("segment 45-180 horizon=true");
       break;
@@ -177,10 +162,12 @@ private:
     }
 
     canvas.SetTextColor(Color(0, 0, 128));
-    canvas.text(5, 5, label);
+    canvas.SetBackgroundTransparent();
+    canvas.Select(normal_font);
+    canvas.DrawText(5, 5, label);
 #ifndef ENABLE_OPENGL
-    canvas.text(5, 25,
-                buffered ? _T("buffered") : _T("not buffered"));
+    canvas.DrawText(5, 25,
+                    buffered ? _T("buffered") : _T("not buffered"));
 #endif
   }
 
@@ -197,7 +184,7 @@ private:
   }
 
 protected:
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) {
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override {
     if (SingleWindow::OnMouseDown(x, y))
       return true;
 
@@ -206,7 +193,7 @@ protected:
     return true;
   }
 
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -217,9 +204,9 @@ protected:
       buffered = !buffered;
       if (buffered) {
         WindowCanvas canvas(*this);
-        buffer.set(canvas, canvas.get_width(), canvas.get_height());
+        buffer.Create(canvas, canvas.GetSize());
       } else
-        buffer.reset();
+        buffer.Destroy();
       update();
       return true;
 #endif
@@ -228,7 +215,7 @@ protected:
     return SingleWindow::OnCommand(id, code);
   }
 
-  virtual void OnPaint(Canvas &canvas) {
+  virtual void OnPaint(Canvas &canvas) override {
 #ifndef ENABLE_OPENGL
     if (!buffered) {
 #endif
@@ -237,37 +224,19 @@ protected:
       paint(canvas);
 #ifndef ENABLE_OPENGL
     } else
-      canvas.copy(buffer);
+      canvas.Copy(buffer);
 #endif
 
     SingleWindow::OnPaint(canvas);
   }
 };
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
+static void
+Main()
 {
-  ScreenGlobalInit screen_init;
-
-#ifdef USE_GDI
-  TestWindow::register_class(hInstance);
-#endif
-
   TestWindow window;
-  window.set(PixelRect{0, 0, 250, 250});
+  window.Create({250, 250});
   window.Show();
 
   window.RunEventLoop();
-
-  return 0;
 }

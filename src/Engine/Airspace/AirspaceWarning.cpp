@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@ Copyright_License {
 */
 
 #include "AirspaceWarning.hpp"
+
+#include <algorithm>
 
 #include <assert.h>
 
@@ -71,7 +73,7 @@ AirspaceWarning::WarningLive(const unsigned ack_time, const unsigned dt)
       && (state < state_last) 
       && (state_last == WARNING_INSIDE))
     // if inside was acknowledged, consider warning to be acknowledged
-    acktime_warning = max(acktime_warning, acktime_inside);
+    acktime_warning = std::max(acktime_warning, acktime_inside);
 
   if (acktime_warning > dt)
     acktime_warning-= dt;

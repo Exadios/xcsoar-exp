@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,10 +31,10 @@ Copyright_License {
 #include <assert.h>
 
 bool
-Font::Set(const LOGFONT &log)
+Font::Load(const LOGFONT &log)
 {
-  return Set(log.lfFaceName, (int) log.lfHeight,
-             log.lfWeight > 600, log.lfItalic != 0);
+  return Load(log.lfFaceName, (int) log.lfHeight,
+              log.lfWeight > 600, log.lfItalic != 0);
 }
 
 /*
@@ -42,7 +42,7 @@ Font::Set(const LOGFONT &log)
  * reference in text_util_object member.
  */
 bool
-Font::Set(const TCHAR *facename, UPixelScalar height, bool bold, bool italic)
+Font::Load(const TCHAR *facename, UPixelScalar height, bool bold, bool italic)
 {
   assert(IsScreenInitialized());
 
@@ -52,7 +52,6 @@ Font::Set(const TCHAR *facename, UPixelScalar height, bool bold, bool italic)
     return false;
 
   this->height = text_util_object->get_height();
-  style = text_util_object->get_style();
   ascent_height = text_util_object->get_ascent_height();
   capital_height = text_util_object->get_capital_height();
   line_spacing = text_util_object->GetLineSpacing();
@@ -61,7 +60,7 @@ Font::Set(const TCHAR *facename, UPixelScalar height, bool bold, bool italic)
 }
 
 void
-Font::Reset()
+Font::Destroy()
 {
   assert(!IsDefined() || IsScreenInitialized());
 

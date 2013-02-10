@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@ Copyright_License {
 #include "Polar/PolarGlue.hpp"
 #include "Components.hpp"
 #include "Interface.hpp"
+#include "ActionInterface.hpp"
 #include "Language/Language.hpp"
 #include "LogFile.hpp"
 #include "Simulator.hpp"
@@ -45,6 +46,7 @@ Copyright_License {
 #include "Airspace/AirspaceGlue.hpp"
 #include "Airspace/ProtectedAirspaceWarningManager.hpp"
 #include "Engine/Airspace/Airspaces.hpp"
+#include "Engine/Waypoint/Waypoints.hpp"
 #include "Operation/VerboseOperationEnvironment.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Engine/Task/TaskEvents.hpp"
@@ -52,6 +54,7 @@ Copyright_License {
 #include "Computer/GlideComputer.hpp"
 #include "Language/LanguageGlue.hpp"
 #include "Units/Units.hpp"
+#include "Formatter/UserGeoPointFormatter.hpp"
 #include "InfoBoxes/InfoBoxManager.hpp"
 #include "Audio/VarioGlue.hpp"
 
@@ -64,9 +67,6 @@ bool MapFileChanged = false;
 bool AirspaceFileChanged = false;
 bool AirfieldFileChanged = false;
 bool WaypointFileChanged = false;
-bool PolarFileChanged = false;
-bool LanguageFileChanged = false;
-bool StatusFileChanged = false;
 bool InputFileChanged = false;
 bool LanguageChanged = false;
 
@@ -82,9 +82,6 @@ SettingsEnter()
   AirspaceFileChanged = false;
   AirfieldFileChanged = false;
   WaypointFileChanged = false;
-  PolarFileChanged = false;
-  LanguageFileChanged = false;
-  StatusFileChanged = false;
   InputFileChanged = false;
   DevicePortChanged = false;
   LanguageChanged = false;
@@ -93,7 +90,7 @@ SettingsEnter()
 static void
 SettingsLeave(const UISettings &old_ui_settings)
 {
-  if (!globalRunningEvent.Test())
+  if (!global_running)
     return;
 
   SuspendAllThreads();
@@ -138,7 +135,7 @@ SettingsLeave(const UISettings &old_ui_settings)
 
   if (WaypointFileChanged && protected_task_manager != NULL) {
     ProtectedTaskManager::ExclusiveLease lease(*protected_task_manager);
-    OrderedTask *task = lease->Clone(XCSoarInterface::GetComputerSettings().task);
+    OrderedTask *task = lease->Clone(CommonInterface::GetComputerSettings().task);
     if (task) {
       // this must be done in thread lock because it potentially changes the
       // waypoints database
@@ -154,9 +151,11 @@ SettingsLeave(const UISettings &old_ui_settings)
   if (WaypointFileChanged || TerrainFileChanged) {
     // re-set home
     WaypointGlue::SetHome(way_points, terrain,
-                          XCSoarInterface::SetComputerSettings(),
+                          CommonInterface::SetComputerSettings().poi,
+                          CommonInterface::SetComputerSettings().team_code,
                           device_blackboard, WaypointFileChanged);
-    WaypointGlue::SaveHome(CommonInterface::GetComputerSettings());
+    WaypointGlue::SaveHome(CommonInterface::GetComputerSettings().poi,
+                           CommonInterface::GetComputerSettings().team_code);
   }
 
   if (TopographyFileChanged) {
@@ -185,6 +184,7 @@ SettingsLeave(const UISettings &old_ui_settings)
   const UISettings &ui_settings = CommonInterface::GetUISettings();
 
   Units::SetConfig(ui_settings.units);
+  SetUserCoordinateFormat(ui_settings.coordinate_format);
 
   const MapSettings &old_settings_map = old_ui_settings.map;
   const MapSettings &settings_map = ui_settings.map;

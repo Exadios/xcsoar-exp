@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include "OS/FileUtil.hpp"
 #include "OS/PathName.hpp"
 #include "UtilsSystem.hpp"
-#include "LogFile.hpp"
 
 #include <tchar.h>
 #include <time.h>
@@ -165,7 +164,6 @@ IGCFileCleanup(unsigned current_year)
     unsigned long kbfree = FindFreeSpace(pathname);
     if (kbfree >= LOGGER_MINFREESTORAGE) {
       // if enough space is available we return happily
-      LogStartUp(_T("LoggerFreeSpace returned: true"));
       return true;
     }
 
@@ -179,6 +177,5 @@ IGCFileCleanup(unsigned current_year)
 
   // if we get to this point we don't have any IGC files left or deleted
   // 100 old IGC files already
-  LogStartUp(_T("LoggerFreeSpace returned: false"));
   return false;
 }

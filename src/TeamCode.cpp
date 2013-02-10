@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,82 +26,80 @@ Copyright_License {
 #include "Geo/GeoPoint.hpp"
 #include "Math/Angle.hpp"
 #include "Util/StringUtil.hpp"
+#include "Util/Macros.hpp"
 
-#include <math.h>
-#include <string.h>
+static constexpr unsigned BASE = 36;
+static constexpr unsigned TEAMCODE_COMBINATIONS = BASE * BASE;
 
-#define TEAMCODE_COMBINATIONS 1296
+static constexpr Angle ANGLE_FACTOR =
+  Angle::FullCircle() / TEAMCODE_COMBINATIONS;
 
 /**
  * Decodes the TeamCode
  * @param code The teamcode (or part of it)
- * @param maxCount Maximum chars to decode
+ * @param length Maximum chars to decode
  * @return The decoded value
  */
-static int
-GetValueFromTeamCode(const TCHAR *code, int maxCount)
+static unsigned
+GetValueFromTeamCode(const TCHAR *code, unsigned length)
 {
-  int val = 0;
-  int charPos = 0;
+  unsigned val = 0;
+  unsigned position = 0;
 
-  while (code[charPos] != 0 && charPos < maxCount) {
-    int cifferVal = 0;
+  while (code[position] != 0 && position < length) {
+    unsigned cifferVal = 0;
 
-    if (code[charPos] >= '0' && code[charPos] <= '9') {
-      cifferVal = (int)(code[charPos] - '0');
-    } else if (code[charPos] >= 'A' && code[charPos] <= 'Z') {
-      cifferVal = (int)(code[charPos] + -'A') + 10;
+    if (code[position] >= '0' && code[position] <= '9') {
+      cifferVal = code[position] - '0';
+    } else if (code[position] >= 'A' && code[position] <= 'Z') {
+      cifferVal = 10 + code[position] - 'A';
     }
 
-    val = val * 36;
-    val += (int)cifferVal;
+    val = val * BASE;
+    val += cifferVal;
 
-    charPos++;
+    ++position;
   }
 
   return val;
+}
+
+gcc_const
+static unsigned
+CountDigits(unsigned value)
+{
+  unsigned n = 1;
+  while (value >= BASE) {
+    value /= BASE;
+    ++n;
+  }
+
+  return n;
 }
 
 /**
  * Encodes a value to teamcode
  * @param value The value to encode
  * @param code The teamcode (pointer)
- * @param minCiffers Number of chars for the teamcode
+ * @param n_digits Number of chars for the teamcode
  */
 static void
-NumberToTeamCode(fixed value, TCHAR *code, int minCiffers)
+NumberToTeamCode(unsigned value, TCHAR *code, unsigned n_digits)
 {
-  int maxCif = 0;
-  int curCif = 0;
+  if (n_digits == 0)
+    n_digits = CountDigits(value);
 
-  if (minCiffers > 0)	{
-    maxCif = minCiffers - 1;
-    curCif = maxCif;
-  }
+  TCHAR *p = code + n_digits;
+  *p-- = _T('\0');
 
-  fixed rest = value;
-  while (positive(rest) || curCif >= 0) {
-    int cifVal = (int)pow(36.0, curCif);
-    int partSize = (int)(rest / cifVal);
-    fixed partVal(partSize * cifVal);
-    int txtPos = maxCif - curCif;
+  do {
+    unsigned digit_value = value % BASE;
+    value /= BASE;
 
-    if (partSize < 10) {
-      rest -= partVal;
-      code[txtPos] = (unsigned char)('0' + partSize);
-      curCif--;
-    } else if (partSize < 36) {
-      rest -= partVal;
-      code[txtPos] = (unsigned char)('A' + partSize - 10);
-      curCif--;
-    } else {
-      curCif++;
-      maxCif = curCif;
-    }
-
-    if (rest < fixed_one)
-      rest = fixed_zero;
-  }
+    *p = digit_value < 10
+      ? TCHAR('0' + digit_value)
+      : TCHAR('A' + digit_value - 10);
+  } while (--p >= code);
 }
 
 /**
@@ -112,38 +110,36 @@ NumberToTeamCode(fixed value, TCHAR *code, int minCiffers)
 static void
 ConvertBearingToTeamCode(const Angle bearing, TCHAR *code)
 {
-  const fixed bamValue = bearing.AsBearing().Degrees() / 360
-                          * TEAMCODE_COMBINATIONS;
-  NumberToTeamCode(bamValue, code, 2);
+  const unsigned value = uround(bearing.AsBearing().Native()
+                                / ANGLE_FACTOR.Native());
+  NumberToTeamCode(value, code, 2);
 }
 
 Angle
 TeamCode::GetBearing() const
 {
   // Get the first two values from teamcode (1-2)
-  int val = GetValueFromTeamCode(code, 2);
+  unsigned value = GetValueFromTeamCode(code, 2);
 
   // Calculate bearing
-  return Angle::Degrees(fixed(val * 360.0 / TEAMCODE_COMBINATIONS)).AsBearing();
+  return (ANGLE_FACTOR * value).AsBearing();
 }
 
 fixed
 TeamCode::GetRange() const
 {
   // Get last three values from teamcode (3-5)
-  int val = GetValueFromTeamCode(code.begin() + 2, 3);
-  return fixed(val * 100);
+  unsigned value = GetValueFromTeamCode(code.begin() + 2, 3);
+  return fixed(value * 100);
 }
 
 void
 TeamCode::Update(Angle bearing, fixed range)
 {
-  // Clear teamcode
-  std::fill(code.buffer(), code.buffer() + code.MAX_SIZE, _T('\0'));
   // Calculate bearing part of the teamcode
   ConvertBearingToTeamCode(bearing, code.buffer());
   // Calculate distance part of the teamcode
-  NumberToTeamCode(range / 100, code.buffer() + 2, 0);
+  NumberToTeamCode(uround(range / 100), code.buffer() + 2, 0);
 }
 
 void

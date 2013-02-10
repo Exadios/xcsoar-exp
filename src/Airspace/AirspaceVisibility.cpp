@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,13 +28,17 @@ Copyright_License {
 #include "Renderer/AirspaceRendererSettings.hpp"
 
 bool
-AirspaceVisiblePredicate::IsTypeVisible(const AbstractAirspace& airspace) const
+IsAirspaceTypeVisible(const AbstractAirspace &airspace,
+                      const AirspaceRendererSettings &renderer_settings)
 {
   return renderer_settings.classes[airspace.GetType()].display;
 }
 
 bool
-AirspaceVisiblePredicate::IsAltitudeVisible(const AbstractAirspace& airspace) const
+IsAirspaceAltitudeVisible(const AbstractAirspace &airspace,
+                          const AltitudeState &state,
+                          const AirspaceComputerSettings &computer_settings,
+                          const AirspaceRendererSettings &renderer_settings)
 {
   /// @todo airspace visibility did use ToMSL(..., map.Calculated().TerrainAlt); 
 
@@ -59,4 +63,18 @@ AirspaceVisiblePredicate::IsAltitudeVisible(const AbstractAirspace& airspace) co
     return false;
   }
   return true;
+}
+
+bool
+AirspaceVisibility::operator()(const AbstractAirspace &airspace) const
+{
+  return IsAirspaceTypeVisible(airspace, renderer_settings) &&
+    IsAirspaceAltitudeVisible(airspace, state,
+                              computer_settings, renderer_settings);
+}
+
+bool
+AirspaceVisiblePredicate::operator()(const AbstractAirspace &airspace) const
+{
+  return AirspaceVisibility::operator()(airspace);
 }

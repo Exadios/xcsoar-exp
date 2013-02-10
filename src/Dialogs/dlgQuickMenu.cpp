@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -39,7 +39,13 @@ static WndForm *wf;
 static GridView *grid_view;
 
 static TrivialArray<Window *, GridView::MAX_ITEMS> buttons;
-static TrivialArray<unsigned, GridView::MAX_ITEMS> events;
+
+class QuickMenu : public ActionListener {
+public:
+  unsigned clicked_event;
+
+  virtual void OnAction(int id) override;
+};
 
 static void
 SetFormCaption()
@@ -79,26 +85,26 @@ SetFormDefaultFocus()
 }
 
 static bool
-FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
+FormKeyDown(unsigned key_code)
 {
   switch (key_code) {
-  case VK_LEFT:
+  case KEY_LEFT:
     grid_view->MoveFocus(GridView::Direction::LEFT);
     break;
 
-  case VK_RIGHT:
+  case KEY_RIGHT:
     grid_view->MoveFocus(GridView::Direction::RIGHT);
     break;
 
-  case VK_UP:
+  case KEY_UP:
     grid_view->MoveFocus(GridView::Direction::UP);
     break;
 
-  case VK_DOWN:
+  case KEY_DOWN:
     grid_view->MoveFocus(GridView::Direction::DOWN);
     break;
 
-  case VK_MENU:
+  case KEY_MENU:
     grid_view->ShowNextPage();
     SetFormDefaultFocus();
     break;
@@ -111,19 +117,11 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
   return true;
 }
 
-static void
-OnButtonClicked(gcc_unused WndButton &sender)
+void
+QuickMenu::OnAction(int id)
 {
-  signed focusPos = grid_view->GetIndexOfItemInFocus();
-
+  clicked_event = id;
   wf->SetModalResult(mrOK);
-
-  if (focusPos != -1) {
-    wf->Hide();
-    unsigned event = events[focusPos];
-    if (event > 0)
-      InputEvents::ProcessEvent(event);
-  }
 }
 
 void
@@ -132,6 +130,8 @@ dlgQuickMenuShowModal(SingleWindow &parent)
   const Menu *menu = InputEvents::GetMenu(_T("RemoteStick"));
   if (menu == NULL)
     return;
+
+  QuickMenu quick_menu;
 
   const DialogLook &dialog_look = UIGlobals::GetDialogLook();
 
@@ -149,9 +149,7 @@ dlgQuickMenuShowModal(SingleWindow &parent)
   WindowStyle grid_view_style;
   grid_view_style.ControlParent();
 
-  grid_view = new GridView(client_area,
-                           r.left, r.top,
-                           r.right - r.left, r.bottom - r.top,
+  grid_view = new GridView(client_area, r,
                            dialog_look, grid_view_style);
 
   WindowStyle buttonStyle;
@@ -178,27 +176,29 @@ dlgQuickMenuShowModal(SingleWindow &parent)
     button_rc.bottom = 30;
     WndButton *button =
       new WndCustomButton(*grid_view, dialog_look, expanded.text,
-                          button_rc, buttonStyle, OnButtonClicked);
+                          button_rc, buttonStyle,
+                          quick_menu, menuItem.event);
     button->SetEnabled(expanded.enabled);
 
     buttons.append(button);
-    events.append(menuItem.event);
   }
 
   grid_view->SetItems(buttons);
   SetFormDefaultFocus();
   SetFormCaption();
 
-  wf->SetKeyDownNotify(FormKeyDown);
+  wf->SetKeyDownFunction(FormKeyDown);
 
-  wf->ShowModal();
+  int result = wf->ShowModal();
 
   for (auto it = buttons.begin(), end = buttons.end(); it != end; ++it)
     delete *it;
 
   buttons.clear();
-  events.clear();
 
   delete wf;
   delete grid_view;
+
+  if (result == mrOK)
+    InputEvents::ProcessEvent(quick_menu.clicked_event);
 }

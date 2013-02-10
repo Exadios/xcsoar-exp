@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 }
 */
 
-#include "Logger/LoggerGRecord.hpp"
+#include "Logger/GRecord.hpp"
 #include "OS/Args.hpp"
 
 #include <stdio.h>
@@ -34,16 +34,15 @@ main(int argc, char **argv)
 
   GRecord g;
   g.Initialize();
-  g.SetFileName(path.c_str());
 
-  if (!g.LoadFileToBuffer()) {
+  if (!g.LoadFileToBuffer(path.c_str())) {
     fprintf(stderr, "Failed to read file\n");
     return 2;
   }
 
   g.FinalizeBuffer();
 
-  if (!g.AppendGRecordToFile(true)) {
+  if (!g.AppendGRecordToFile(path.c_str())) {
     fprintf(stderr, "Failed to write file\n");
     return 2;
   }

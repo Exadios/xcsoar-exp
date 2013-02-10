@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -40,13 +40,21 @@ class Filter
 
 public:
   /**
+   * Non-initialising default constructor.  To initialise this
+   * instance, call Design().
+   */
+  Filter() = default;
+
+  /**
    * Constructor, designs low-pass FIR filter
    *
    * @param cutoff_wavelength 3dB cutoff wavelength (in cycles) of filter design
    * @param bessel If true, generates Bessel filter, otherwise
    * critically damped filter
    */
-  Filter(const fixed cutoff_wavelength, const bool bessel = true);
+  Filter(const fixed cutoff_wavelength, const bool bessel = true) {
+    Design(cutoff_wavelength, bessel);
+  }
 
   /**
    * Designs low-pass FIR filter

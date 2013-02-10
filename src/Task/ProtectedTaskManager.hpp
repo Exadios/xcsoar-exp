@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 class GlidePolar;
 class RoutePlannerGlue;
+struct RangeAndRadial;
 
 class ReachIntersectionTest: public AbortIntersectionTest {
   const RoutePlannerGlue *route;
@@ -113,29 +114,6 @@ public:
 
   /** Reset the tasks (as if never flown) */
   void Reset();
-
-  /**
-   * Check whether observer is within OZ of specified tp
-   *
-   * @param index index of tp in task
-   * @param ref state of aircraft to be checked
-   *
-   * @return True if reference point is inside sector
-   */
-  gcc_pure
-  bool IsInSector(const unsigned index, const AircraftState &ref) const;
-
-  /**
-   * Set target location from a range and radial
-   * referenced on the bearing from the previous target
-   * used by dlgTarget
-   *
-   * @param range the range [0,1] from center to perimeter
-   * of the oz
-   *
-   * @param radial the angle in degrees of the target
-   */
-  bool SetTarget(const unsigned index, const fixed range, const fixed radial);
 
   /**
    * Lock/unlock the target from automatic shifts of specified tp

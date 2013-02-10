@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ namespace EGM96
   /**
    * Clear the EGM96 from the memory
    */
-  void Close();
+  static inline void Close() {}
 
   /**
    * Returns the geoid separation between the EGS96
@@ -46,7 +46,8 @@ namespace EGM96
    * @param lon Longitude
    * @return The geoid separation
    */
-  fixed LookupSeparation(const GeoPoint pt);
+  gcc_pure
+  fixed LookupSeparation(const GeoPoint &pt);
 }
 
 #endif

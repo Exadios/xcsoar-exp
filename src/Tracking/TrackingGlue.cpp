@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ Copyright_License {
 static LiveTrack24::VehicleType
 MapVehicleTypeToLifetrack24(TrackingSettings::VehicleType vt)
 {
-  static const LiveTrack24::VehicleType vehicleTypeMap[] = {
+  static constexpr LiveTrack24::VehicleType vehicleTypeMap[] = {
     LiveTrack24::VehicleType::GLIDER,
     LiveTrack24::VehicleType::PARAGLIDER,
     LiveTrack24::VehicleType::POWERED_AIRCRAFT,
@@ -51,6 +51,10 @@ TrackingGlue::TrackingGlue()
 {
   settings.SetDefaults();
   LiveTrack24::SetServer(settings.livetrack24.server);
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  skylines.SetHandler(this);
+#endif
 }
 
 void
@@ -93,7 +97,7 @@ TrackingGlue::SetSettings(const TrackingSettings &_settings)
 void
 TrackingGlue::OnTimer(const MoreData &basic, const DerivedInfo &calculated)
 {
-  skylines.SendFix(basic);
+  skylines.Tick(basic);
 
   if (!settings.livetrack24.enabled)
     /* disabled by configuration */
@@ -118,7 +122,7 @@ TrackingGlue::OnTimer(const MoreData &basic, const DerivedInfo &calculated)
   date_time = basic.date_time_utc;
   if (!basic.date_available)
     /* use "today" if the GPS didn't provide a date */
-    (BrokenDate &)date_time = (BrokenDate)BrokenDateTime::NowUTC();
+    (BrokenDate &)date_time = BrokenDate::TodayUTC();
 
   location = basic.location;
   /* XXX use nav_altitude? */
@@ -203,3 +207,14 @@ TrackingGlue::Tick()
 
   mutex.Lock();
 }
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+void
+TrackingGlue::OnTraffic(unsigned pilot_id, unsigned time_of_day_ms,
+                        const GeoPoint &location, int altitude)
+{
+  const ScopeLock protect(skylines_data.mutex);
+  const SkyLinesTracking::Data::Traffic traffic(location, altitude);
+  skylines_data.traffic[pilot_id] = traffic;
+}
+#endif

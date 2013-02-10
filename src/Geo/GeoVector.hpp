@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,9 @@
 #define GEO_VECTOR_HPP
 
 #include "Math/Angle.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Compiler.h"
+
+#include <type_traits>
 
 struct GeoPoint;
 
@@ -47,15 +48,8 @@ struct GeoVector {
 
   /** Constructor given supplied distance/bearing */
   constexpr
-  GeoVector(const fixed _distance, const Angle &_bearing)
+  GeoVector(fixed _distance, Angle _bearing)
     :distance(_distance), bearing(_bearing) {}
-
-  /**
-   * Dummy constructor given distance, 
-   * used to allow GeoVector x=0 calls. 
-   */
-  GeoVector(const fixed _distance)
-    :distance(_distance), bearing(Angle::Zero()) {}
 
   /**
    * Constructor given start and end location.  
@@ -64,11 +58,18 @@ struct GeoVector {
   GeoVector(const GeoPoint &source, const GeoPoint &target);
 
   /**
+   * Create the zero vector: zero distance, undefined bearing.
+   */
+  constexpr static GeoVector Zero() {
+    return GeoVector(fixed(0), Angle::Zero());
+  }
+
+  /**
    * Create an invalid instance.
    */
-  gcc_const
+  constexpr
   static GeoVector Invalid() {
-    return GeoVector(fixed_minus_one);
+    return GeoVector(fixed(-1), Angle::Zero());
   }
 
   /**
@@ -104,10 +105,10 @@ struct GeoVector {
   }
 
   void SetInvalid() {
-    distance = fixed_minus_one;
+    distance = fixed(-1);
   }
 };
 
-static_assert(is_trivial<GeoVector>::value, "type is not trivial");
+static_assert(std::is_trivial<GeoVector>::value, "type is not trivial");
 
 #endif

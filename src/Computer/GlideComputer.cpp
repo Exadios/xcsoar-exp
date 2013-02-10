@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ Copyright_License {
 #include "NMEA/Derived.hpp"
 #include "ConditionMonitor/ConditionMonitors.hpp"
 #include "TeamCode.hpp"
-#include "PeriodClock.hpp"
 #include "GlideComputerInterface.hpp"
 #include "ComputerSettings.hpp"
 #include "Logger/Logger.hpp"
@@ -61,12 +60,13 @@ void
 GlideComputer::ResetFlight(const bool full)
 {
   GlideComputerBlackboard::ResetFlight(full);
-  air_data_computer.ResetFlight(SetCalculated(), GetComputerSettings(), full);
+  air_data_computer.ResetFlight(SetCalculated(), full);
   task_computer.ResetFlight(full);
   stats_computer.ResetFlight(full);
+  log_computer.Reset();
 
   cu_computer.Reset();
-  warning_computer.Reset(Basic(), Calculated());
+  warning_computer.Reset();
 }
 
 /**
@@ -88,6 +88,8 @@ GlideComputer::ProcessGPS(bool force)
   DerivedInfo &calculated = SetCalculated();
   const ComputerSettings &settings = GetComputerSettings();
 
+  const bool last_flying = calculated.flight.flying;
+
   calculated.date_time_local = basic.date_time_utc + settings.utc_offset;
 
   calculated.Expire(basic.clock);
@@ -98,29 +100,28 @@ GlideComputer::ProcessGPS(bool force)
 
   // Process basic task information
   task_computer.ProcessBasicTask(basic, LastBasic(),
-                                 calculated, LastCalculated(),
+                                 calculated,
                                  GetComputerSettings(),
                                  force);
-  task_computer.ProcessMoreTask(basic, calculated, LastCalculated(),
-                                GetComputerSettings());
+  task_computer.ProcessMoreTask(basic, calculated, GetComputerSettings());
 
   // Check if everything is okay with the gps time and process it
   if (!air_data_computer.FlightTimes(Basic(), LastBasic(), SetCalculated(),
                                      GetComputerSettings()))
     return false;
 
-  TakeoffLanding();
+  TakeoffLanding(last_flying);
 
   if (!time_retreated())
     task_computer.ProcessAutoTask(basic, calculated);
 
   // Process extended information
   air_data_computer.ProcessVertical(Basic(), LastBasic(),
-                                    SetCalculated(), LastCalculated(),
+                                    SetCalculated(),
                                     GetComputerSettings());
 
   if (!time_retreated())
-    stats_computer.ProcessClimbEvents(calculated, LastCalculated());
+    stats_computer.ProcessClimbEvents(calculated);
 
   // Calculate the team code
   CalculateOwnTeamCode();
@@ -148,8 +149,8 @@ GlideComputer::ProcessIdle(bool exhaustive)
 {
   // Log GPS fixes for internal usage
   // (snail trail, stats, olc, ...)
-  stats_computer.DoLogging(Basic(), LastBasic(), Calculated(),
-                           GetComputerSettings().logger);
+  stats_computer.DoLogging(Basic(), Calculated());
+  log_computer.Run(Basic(), Calculated(), GetComputerSettings().logger);
 
   task_computer.ProcessIdle(Basic(), SetCalculated(), GetComputerSettings(),
                             exhaustive);
@@ -182,7 +183,7 @@ GlideComputer::DetermineTeamCodeRefLocation()
 /**
  * Calculates the own TeamCode and saves it to Calculated
  */
-void
+inline void
 GlideComputer::CalculateOwnTeamCode()
 {
   // No reference waypoint for teamcode calculation chosen -> cancel
@@ -222,7 +223,6 @@ ComputeFlarmTeam(const GeoPoint &location, const GeoPoint &reference_location,
 
   // Calculate TeamCode and save it in Calculated
   teamcode_info.flarm_teammate_code.Update(v.bearing, v.distance);
-  teamcode_info.flarm_teammate_code_available = true;
   teamcode_info.flarm_teammate_code_current = true;
 }
 
@@ -249,48 +249,48 @@ GlideComputer::CalculateTeammateBearingRange()
   if (!DetermineTeamCodeRefLocation())
     return;
 
-  if (settings.team_flarm_tracking) {
+  if (settings.team_flarm_id.IsDefined()) {
     ComputeFlarmTeam(basic.location, team_code_ref_location,
                      basic.flarm.traffic, settings.team_flarm_id,
                      teamcode_info);
-  } else if (settings.team_code_valid) {
-    teamcode_info.flarm_teammate_code_available = false;
+  } else if (settings.team_code.IsDefined()) {
+    teamcode_info.flarm_teammate_code.Clear();
 
     ComputeTeamCode(basic.location, team_code_ref_location,
                     settings.team_code,
                     teamcode_info);
   } else {
     teamcode_info.teammate_available = false;
-    teamcode_info.flarm_teammate_code_available = false;
+    teamcode_info.flarm_teammate_code.Clear();
   }
 }
 
-void
+inline void
 GlideComputer::OnTakeoff()
 {
   // reset stats on takeoff
-  air_data_computer.ResetFlight(SetCalculated(), GetComputerSettings(), false);
+  air_data_computer.ResetFlight(SetCalculated(), false);
 
   // save stats in case we never finish
   SaveFinish();
 }
 
-void
+inline void
 GlideComputer::OnLanding()
 {
   // JMWX  restore data calculated at finish so
   // user can review flight as at finish line
 
-  if (Calculated().common_stats.task_finished)
+  if (Calculated().ordered_task_stats.task_finished)
     RestoreFinish();
 }
 
-void
-GlideComputer::TakeoffLanding()
+inline void
+GlideComputer::TakeoffLanding(bool last_flying)
 {
-  if (Calculated().flight.flying && !LastCalculated().flight.flying)
+  if (Calculated().flight.flying && !last_flying)
     OnTakeoff();
-  else if (!Calculated().flight.flying && LastCalculated().flight.flying)
+  else if (!Calculated().flight.flying && last_flying)
     OnLanding();
 }
 
@@ -298,7 +298,9 @@ void
 GlideComputer::OnStartTask()
 {
   GlideComputerBlackboard::StartTask();
+  air_data_computer.ResetStats();
   stats_computer.StartTask(Basic());
+  log_computer.StartTask(Basic());
 }
 
 void 
@@ -310,7 +312,7 @@ GlideComputer::OnFinishTask()
 void
 GlideComputer::OnTransitionEnter()
 {
-  stats_computer.SetFastLogging();
+  log_computer.SetFastLogging();
 }
 
 

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,28 +24,19 @@
 #include "Task/ObservationZones/Boundary.hpp"
 #include "Navigation/Aircraft.hpp"
 
-SampledTaskPoint::SampledTaskPoint(Type _type, const Waypoint & wp,
+SampledTaskPoint::SampledTaskPoint(const GeoPoint &location,
                                    const bool b_scored)
-  :TaskWaypoint(_type, wp),
-   boundary_scored(b_scored),
-   search_max(GetLocation()),
-   search_min(GetLocation()),
-   search_reference(GetLocation())
+  :boundary_scored(b_scored), past(false)
 {
-  nominal_points.push_back(search_reference);
+  nominal_points.push_back(location);
 }
 
 // SAMPLES
 
 bool 
-SampledTaskPoint::UpdateSampleNear(const AircraftState& state,
-                                   TaskEvents *task_events,
-                                     const TaskProjection &projection)
+SampledTaskPoint::AddInsideSample(const AircraftState& state,
+                                  const TaskProjection &projection)
 {
-  if (!IsInSector(state))
-    // return false (no update required)
-    return false;
-
   // if sample is inside sample polygon
   if (sampled_points.IsInside(state.location))
     // return false (no update required)
@@ -79,23 +70,15 @@ SampledTaskPoint::ClearSampleAllButLast(const AircraftState& ref_last,
 
 // BOUNDARY
 
-#define fixed_steps fixed(0.05)
-
 void 
-SampledTaskPoint::UpdateOZ(const TaskProjection &projection)
+SampledTaskPoint::UpdateOZ(const TaskProjection &projection,
+                           const OZBoundary &_boundary)
 { 
-  search_max = search_reference;
-  search_min = search_reference;
+  search_max = search_min = nominal_points.front();
   boundary_points.clear();
 
-  if (boundary_scored) {
-    for (const SearchPoint sp : GetBoundary())
-      boundary_points.push_back(sp);
-
-    boundary_points.PruneInterior();
-  } else {
-    boundary_points.push_back(search_reference);
-  }
+  for (const SearchPoint sp : _boundary)
+    boundary_points.push_back(sp);
 
   UpdateProjection(projection);
 }
@@ -107,7 +90,6 @@ SampledTaskPoint::UpdateProjection(const TaskProjection &projection)
 {
   search_max.Project(projection);
   search_min.Project(projection);
-  search_reference.Project(projection);
   nominal_points.Project(projection);
   sampled_points.Project(projection);
   boundary_points.Project(projection);
@@ -122,25 +104,14 @@ SampledTaskPoint::Reset()
 const SearchPointVector& 
 SampledTaskPoint::GetSearchPoints() const
 {
-  if (SearchBoundaryPoints())
-    return boundary_points;
-
   if (HasSampled())
     return sampled_points;
 
-  if (SearchNominalIfUnsampled())
+  if (past)
     // this adds a point in case the waypoint was skipped
     // this is a crude way of handling the situation --- may be best
     // to de-rate the score in some way
     return nominal_points;
 
   return boundary_points;
-}
-
-void 
-SampledTaskPoint::SetSearchMin(const GeoPoint &location,
-                                 const TaskProjection &projection)
-{
-  SearchPoint sp(location, projection);
-  SetSearchMin(sp);
 }

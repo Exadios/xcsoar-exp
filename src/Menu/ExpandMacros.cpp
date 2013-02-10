@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,9 +27,9 @@ Copyright_License {
 #include "Logger/Logger.hpp"
 #include "MainWindow.hpp"
 #include "Interface.hpp"
+#include "Gauge/BigTrafficWidget.hpp"
 #include "ComputerSettings.hpp"
 #include "Components.hpp"
-#include "Compatibility/string.h"
 #include "MapSettings.hpp"
 #include "Simulator.hpp"
 #include "Waypoint/Waypoints.hpp"
@@ -91,30 +91,35 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
                  const DerivedInfo &calculated,
                  const ComputerSettings &settings_computer)
 {
-  if (protected_task_manager == NULL)
-    return true;
+  const TaskStats &task_stats = calculated.task_stats;
+  const TaskStats &ordered_task_stats = calculated.ordered_task_stats;
+  const CommonStats &common_stats = calculated.common_stats;
 
   bool invalid = false;
-  ProtectedTaskManager::Lease task_manager(*protected_task_manager);
 
   if (_tcsstr(OutBuffer, _T("$(CheckTaskResumed)"))) {
     // TODO code: check, does this need to be set with temporary task?
-    if (task_manager->IsMode(TaskManager::MODE_ABORT) ||
-        task_manager->IsMode(TaskManager::MODE_GOTO))
+    if (common_stats.task_type == TaskType::ABORT ||
+        common_stats.task_type == TaskType::GOTO)
       invalid = true;
     ReplaceInString(OutBuffer, _T("$(CheckTaskResumed)"), _T(""), Size);
   }
 
   if (_tcsstr(OutBuffer, _T("$(CheckTask)"))) {
-    if (!calculated.task_stats.task_valid)
+    if (!task_stats.task_valid)
       invalid = true;
 
     ReplaceInString(OutBuffer, _T("$(CheckTask)"), _T(""), Size);
   }
 
+  if (protected_task_manager == NULL)
+    return true;
+
+  ProtectedTaskManager::Lease task_manager(*protected_task_manager);
+
   const AbstractTask *task = task_manager->GetActiveTask();
-  if (task == NULL || !task->CheckTask() ||
-      task_manager->IsMode(TaskManager::MODE_GOTO)) {
+  if (task == NULL || !task_stats.task_valid ||
+      common_stats.task_type == TaskType::GOTO) {
 
     if (_tcsstr(OutBuffer, _T("$(WaypointNext)"))) {
       invalid = true;
@@ -137,43 +142,43 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
           _("Previous Turnpoint"), Size);
     }
 
-  } else if (task_manager->IsMode(TaskManager::MODE_ABORT)) {
+  } else if (common_stats.task_type == TaskType::ABORT) {
 
     if (_tcsstr(OutBuffer, _T("$(WaypointNext)"))) {
-      if (!task->IsValidTaskPoint(1))
+      if (!common_stats.active_has_next)
         invalid = true;
 
-      CondReplaceInString(task->IsValidTaskPoint(1) && !task->IsValidTaskPoint(2),
+      CondReplaceInString(common_stats.next_is_last,
                           OutBuffer,
                           _T("$(WaypointNext)"),
                           _("Furthest Landpoint"),
                           _("Next Landpoint"), Size);
 
     } else if (_tcsstr(OutBuffer, _T("$(WaypointPrevious)"))) {
-      if (!task->IsValidTaskPoint(-1))
+      if (!common_stats.active_has_previous)
         invalid = true;
 
-      CondReplaceInString(task->IsValidTaskPoint(-1) && !task->IsValidTaskPoint(-2),
+      CondReplaceInString(common_stats.previous_is_first,
                           OutBuffer,
                           _T("$(WaypointPrevious)"),
                           _("Closest Landpoint"),
                           _("Previous Landpoint"), Size);
 
     } else if (_tcsstr(OutBuffer, _T("$(WaypointNextArm)"))) {
-      if (!task->IsValidTaskPoint(1))
+      if (!common_stats.active_has_next)
         invalid = true;
 
-      CondReplaceInString(task->IsValidTaskPoint(1) && !task->IsValidTaskPoint(2),
+      CondReplaceInString(common_stats.next_is_last,
                           OutBuffer,
                           _T("$(WaypointNextArm)"),
                           _("Furthest Landpoint"),
                           _("Next Landpoint"), Size);
 
     } else if (_tcsstr(OutBuffer, _T("$(WaypointPreviousArm)"))) {
-      if (!task->IsValidTaskPoint(-1))
+      if (!common_stats.active_has_previous)
         invalid = true;
 
-      CondReplaceInString(task->IsValidTaskPoint(-1) && !task->IsValidTaskPoint(-2),
+      CondReplaceInString(common_stats.previous_is_first,
                           OutBuffer,
                           _T("$(WaypointPreviousArm)"),
                           _("Closest Landpoint"),
@@ -182,13 +187,13 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
 
   } else { // ordered task mode
 
-    const bool next_is_final = task->IsValidTaskPoint(1) && !task->IsValidTaskPoint(2);
-    const bool previous_is_start = task->IsValidTaskPoint(-1) && !task->IsValidTaskPoint(-2);
+    const bool next_is_final = common_stats.next_is_last;
+    const bool previous_is_start = common_stats.previous_is_first;
     const bool has_optional_starts = calculated.common_stats.ordered_has_optional_starts;
 
     if (_tcsstr(OutBuffer, _T("$(WaypointNext)"))) {
       // Waypoint\nNext
-      if (!task->IsValidTaskPoint(1))
+      if (!common_stats.active_has_next)
         invalid = true;
 
       CondReplaceInString(next_is_final,
@@ -199,7 +204,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
       
     } else if (_tcsstr(OutBuffer, _T("$(WaypointPrevious)"))) {
 
-      if (has_optional_starts && !task->IsValidTaskPoint(-1)) {
+      if (has_optional_starts && !common_stats.active_has_previous) {
         ReplaceInString(OutBuffer, _T("$(WaypointPrevious)"), _("Next Startpoint"), Size);
       } else {
 
@@ -209,7 +214,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
                             _("Start Turnpoint"),
                             _("Previous Turnpoint"), Size);
 
-        if (!task->IsValidTaskPoint(-1))
+        if (!common_stats.active_has_previous)
           invalid = true;
       }
 
@@ -226,7 +231,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
                             _T("$(WaypointNextArm)"),
                             _("Finish Turnpoint"),
                             _("Next Turnpoint"), Size);
-        if (!task->IsValidTaskPoint(1))
+        if (!common_stats.active_has_next)
           invalid = true;
         break;
       case TaskAdvance::START_DISARMED:
@@ -245,7 +250,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
       case TaskAdvance::START_DISARMED:
       case TaskAdvance::TURN_DISARMED:
 
-        if (has_optional_starts && !task->IsValidTaskPoint(-1)) {
+        if (has_optional_starts && !common_stats.active_has_previous) {
           ReplaceInString(OutBuffer, _T("$(WaypointPreviousArm)"), _("Next Startpoint"), Size);
         } else {
 
@@ -255,7 +260,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
                               _("Start Turnpoint"),
                               _("Previous Turnpoint"), Size);
 
-          if (!task->IsValidTaskPoint(-1))
+          if (!common_stats.active_has_previous)
             invalid = true;
         }
 
@@ -306,7 +311,7 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
   }
 
   if (_tcsstr(OutBuffer, _T("$(CheckAutoMc)"))) {
-    if (!calculated.task_stats.task_valid
+    if (!task_stats.task_valid
         && settings_computer.task.IsAutoMCFinalGlideEnabled())
       invalid = true;
 
@@ -314,17 +319,33 @@ ExpandTaskMacros(TCHAR *OutBuffer, size_t Size,
   }
 
   if (_tcsstr(OutBuffer, _T("$(TaskAbortToggleActionName)"))) {
-    if (task_manager->IsMode(TaskManager::MODE_GOTO)) {
-      CondReplaceInString(task_manager->GetOrderedTask().CheckTask(),
+    if (common_stats.task_type == TaskType::GOTO) {
+      CondReplaceInString(ordered_task_stats.task_valid,
                           OutBuffer, _T("$(TaskAbortToggleActionName)"),
                           _("Resume"), _("Abort"), Size);
     } else 
-      CondReplaceInString(task_manager->IsMode(TaskManager::MODE_ABORT),
+      CondReplaceInString(common_stats.task_type == TaskType::ABORT,
                           OutBuffer, _T("$(TaskAbortToggleActionName)"),
                           _("Resume"), _("Abort"), Size);
   }
 
   return invalid;
+}
+
+static void
+ExpandTrafficMacros(TCHAR *buffer, size_t size)
+{
+  TrafficWidget *widget = (TrafficWidget *)
+    CommonInterface::main_window->GetFlavourWidget(_T("Traffic"));
+  if (widget == nullptr)
+    return;
+
+  CondReplaceInString(widget->GetAutoZoom(), buffer,
+                      _T("$(TrafficZoomAutoToggleActionName)"),
+                      _("Manual"), _("Auto"), size);
+  CondReplaceInString(widget->GetNorthUp(), buffer,
+                      _T("$(TrafficNorthUpToggleActionName)"),
+                      _("Track up"), _("North up"), size);
 }
 
 static const NMEAInfo &
@@ -377,6 +398,7 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
   invalid |= ExpandTaskMacros(OutBuffer, Size,
                               Calculated(), GetComputerSettings());
 
+  ExpandTrafficMacros(OutBuffer, Size);
 
   if (_tcsstr(OutBuffer, _T("$(CheckFLARM)"))) {
     if (!Basic().flarm.status.available)
@@ -427,7 +449,7 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
     ReplaceInString(OutBuffer, _T("$(CheckTerrain)"), _T(""), Size);
   }
 
-  CondReplaceInString(logger.IsLoggerActive(), OutBuffer,
+  CondReplaceInString(logger != nullptr && logger->IsLoggerActive(), OutBuffer,
                       _T("$(LoggerActive)"), _("Stop"),
                       _("Start"), Size);
 
@@ -598,6 +620,10 @@ ButtonLabel::ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size)
   CondReplaceInString(CommonInterface::GetUISettings().traffic.enable_gauge,
                       OutBuffer, _T("$(FlarmDispToggleActionName)"),
                       _("Off"), _("On"), Size);
+
+  CondReplaceInString(GetMapSettings().auto_zoom_enabled, OutBuffer,
+                      _T("$(ZoomAutoToggleActionName)"),
+                      _("Manual"), _("Auto"), Size);
 
   if (_tcsstr(OutBuffer, _T("$(NextPageName)"))) {
     TCHAR label[30];

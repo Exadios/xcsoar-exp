@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,21 +21,53 @@ Copyright_License {
 }
 */
 
-#ifdef ANDROID
-#include "Screen/Android/Bitmap.cpp"
-#else
-#include "Screen/SDL/Bitmap.cpp"
-#endif
+#include "Screen/Bitmap.hpp"
+#include "Screen/Debug.hpp"
+#include "Texture.hpp"
+#include "Debug.hpp"
+
+#ifndef ANDROID
+
+bool
+Bitmap::Reload()
+{
+  assert(id != 0);
+  assert(texture == NULL);
+
+  /* XXX this is no real implementation; we currently support OpenGL
+     surface reinitialisation only on Android */
+  return Load(id);
+}
 
 void
-Bitmap::surface_created()
+Bitmap::Reset()
+{
+  assert(!IsDefined() || IsScreenInitialized());
+  assert(!IsDefined() || pthread_equal(pthread_self(), OpenGL::thread));
+
+  delete texture;
+  texture = NULL;
+}
+
+#endif /* !ANDROID */
+
+void
+Bitmap::SurfaceCreated()
 {
   Reload();
 }
 
 void
-Bitmap::surface_destroyed()
+Bitmap::SurfaceDestroyed()
 {
   delete texture;
   texture = NULL;
+}
+
+const PixelSize
+Bitmap::GetSize() const
+{
+  assert(IsDefined());
+
+  return size;
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,10 +25,17 @@ Copyright_License {
 #include "Terrain/RasterTerrain.hpp"
 #include "Screen/Ramp.hpp"
 #include "Projection/WindowProjection.hpp"
+#include "Util/Macros.hpp"
+
+#ifdef ENABLE_OPENGL
+#include "Screen/OpenGL/Texture.hpp"
+#include "Screen/OpenGL/Scope.hpp"
+#include "Screen/OpenGL/Compatibility.hpp"
+#endif
 
 #include <assert.h>
 
-const ColorRamp terrain_colors[8][NUM_COLOR_RAMP_LEVELS] = {
+static constexpr ColorRamp terrain_colors[9][NUM_COLOR_RAMP_LEVELS] = {
   {
     {0,           0x70, 0xc0, 0xa7},
     {250,         0xca, 0xe7, 0xb9},
@@ -148,8 +155,25 @@ const ColorRamp terrain_colors[8][NUM_COLOR_RAMP_LEVELS] = {
     {2000,        220, 220, 220},
     {2250,        220, 220, 220},
     {2500,        220, 220, 220}
+  },
+  { // White
+    {0,           255, 255, 255},
+    {100,         255, 255, 255},
+    {200,         255, 255, 255},
+    {300,         255, 255, 255},
+    {500,         255, 255, 255},
+    {700,         255, 255, 255},
+    {1000,        255, 255, 255},
+    {1250,        255, 255, 255},
+    {1500,        255, 255, 255},
+    {1750,        255, 255, 255},
+    {2000,        255, 255, 255},
+    {2250,        255, 255, 255},
+    {2500,        255, 255, 255}
   }
 };
+static_assert(ARRAY_SIZE(terrain_colors) == TerrainRendererSettings::NUM_RAMPS,
+              "mismatched size");
 
 // map scale is approximately 2 points on the grid
 // therefore, want one to one mapping if mapscale is 0.5
@@ -172,45 +196,6 @@ TerrainRenderer::TerrainRenderer(const RasterTerrain *_terrain)
 }
 
 void
-TerrainRenderer::ScanSpotHeights()
-{
-  spot_max_pt.x = -1;
-  spot_max_pt.y = -1;
-  spot_min_pt.x = -1;
-  spot_min_pt.y = -1;
-  spot_max_val = -1;
-  spot_min_val = 32767;
-
-  const HeightMatrix &height_matrix = raster_renderer.GetHeightMatrix();
-  const short *h_buf = height_matrix.GetData();
-  const unsigned quantisation_pixels = raster_renderer.GetQuantisation();
-
-  for (unsigned y = 0; y < height_matrix.GetHeight(); ++y) {
-    for (unsigned x = 0; x < height_matrix.GetWidth(); ++x) {
-      short val = *h_buf++;
-      if (RasterBuffer::IsSpecial(val))
-        continue;
-
-      if (val > spot_max_val) {
-        spot_max_val = val;
-        spot_max_pt.x = x;
-        spot_max_pt.y = y;
-      }
-      if (val < spot_min_val) {
-        spot_min_val = val;
-        spot_min_pt.x = x;
-        spot_min_pt.y = y;
-      }
-    }
-  }
-
-  spot_max_pt.x *= quantisation_pixels;
-  spot_max_pt.y *= quantisation_pixels;
-  spot_min_pt.x *= quantisation_pixels;
-  spot_min_pt.y *= quantisation_pixels;
-}
-
-void
 TerrainRenderer::CopyTo(Canvas &canvas, unsigned width, unsigned height) const
 {
   raster_renderer.GetImage().StretchTo(raster_renderer.GetWidth(),
@@ -225,18 +210,57 @@ TerrainRenderer::SetSettings(const TerrainRendererSettings &_settings)
     return;
 
   settings = _settings;
+
+#ifdef ENABLE_OPENGL
+  raster_renderer.Invalidate();
+#else
   compare_projection.Clear();
+#endif
 }
+
+#ifdef ENABLE_OPENGL
+/**
+ * Checks if the size difference of any dimension is more than a
+ * factor of two.  This is used to check whether the terrain has to be
+ * redrawn after zooming in.
+ */
+static bool
+IsLargeSizeDifference(const GeoBounds &a, const GeoBounds &b)
+{
+  assert(a.IsValid());
+  assert(b.IsValid());
+
+  return a.GetWidth().Native() > Double(b.GetWidth().Native()) ||
+    a.GetHeight().Native() > Double(b.GetHeight().Native());
+}
+#endif
 
 void
 TerrainRenderer::Generate(const WindowProjection &map_projection,
                           const Angle sunazimuth)
 {
-  if (compare_projection.CompareAndUpdate(map_projection) &&
+#ifdef ENABLE_OPENGL
+  const GeoBounds &old_bounds = raster_renderer.GetBounds();
+  const GeoBounds &new_bounds = map_projection.GetScreenBounds();
+  assert(new_bounds.IsValid());
+
+  if (old_bounds.IsValid() && old_bounds.IsInside(new_bounds) &&
+      !IsLargeSizeDifference(old_bounds, new_bounds) &&
       terrain_serial == terrain->GetSerial() &&
-      last_sun_azimuth == sunazimuth)
+      sunazimuth.CompareRoughly(last_sun_azimuth) &&
+      !raster_renderer.UpdateQuantisation())
     /* no change since previous frame */
     return;
+
+#else
+  if (compare_projection.Compare(map_projection) &&
+      terrain_serial == terrain->GetSerial() &&
+      sunazimuth.CompareRoughly(last_sun_azimuth))
+    /* no change since previous frame */
+    return;
+
+  compare_projection = CompareProjection(map_projection);
+#endif
 
   terrain_serial = terrain->GetSerial();
 
@@ -276,6 +300,46 @@ void
 TerrainRenderer::Draw(Canvas &canvas,
                       const WindowProjection &map_projection) const
 {
+#ifdef ENABLE_OPENGL
+  const GeoBounds &bounds = raster_renderer.GetBounds();
+  assert(bounds.IsValid());
+
+  const RasterPoint vertices[] = {
+    map_projection.GeoToScreen(bounds.GetNorthWest()),
+    map_projection.GeoToScreen(bounds.GetNorthEast()),
+    map_projection.GeoToScreen(bounds.GetSouthWest()),
+    map_projection.GeoToScreen(bounds.GetSouthEast()),
+  };
+
+  glVertexPointer(2, GL_VALUE, 0, vertices);
+
+  const GLTexture &texture = raster_renderer.BindAndGetTexture();
+  const PixelSize allocated = texture.GetAllocatedSize();
+
+  const int src_x = 0, src_y = 0, src_width = raster_renderer.GetWidth(),
+    src_height = raster_renderer.GetHeight();
+
+  GLfloat x0 = (GLfloat)src_x / allocated.cx;
+  GLfloat y0 = (GLfloat)src_y / allocated.cy;
+  GLfloat x1 = (GLfloat)(src_x + src_width) / allocated.cx;
+  GLfloat y1 = (GLfloat)(src_y + src_height) / allocated.cy;
+
+  const GLfloat coord[] = {
+    x0, y0,
+    x1, y0,
+    x0, y1,
+    x1, y1,
+  };
+
+  OpenGL::glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+  GLEnable scope(GL_TEXTURE_2D);
+  glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+  glTexCoordPointer(2, GL_FLOAT, 0, coord);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#else
   CopyTo(canvas, map_projection.GetScreenWidth(),
          map_projection.GetScreenHeight());
+#endif
 }

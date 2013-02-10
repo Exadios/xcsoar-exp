@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,10 +23,11 @@ Copyright_License {
 #ifndef ANGLE_HPP
 #define ANGLE_HPP
 
-#include "Util/TypeTraits.hpp"
 #include "Math/fixed.hpp"
-#include "Math/FastMath.h"
+#include "FastTrig.hpp"
 #include "Compiler.h"
+
+#include <type_traits>
 
 #ifdef DO_PRINT
 #include <iostream>
@@ -37,7 +38,7 @@ class Angle
   fixed value;
 
   constexpr
-  explicit Angle(const fixed &_value): value(_value) {};
+  explicit Angle(const fixed _value):value(_value) {};
 
 public:
   /**
@@ -48,7 +49,7 @@ public:
 
   constexpr
   static Angle Zero() {
-    return Native(fixed_zero);
+    return Native(fixed(0));
   }
 
   constexpr
@@ -65,7 +66,7 @@ public:
 #ifdef RADIANS
     return Native(fixed_two_pi);
 #else
-    return Native(fixed_360);
+    return Native(fixed(360));
 #endif
   }
 
@@ -78,7 +79,7 @@ public:
 #ifdef RADIANS
     return Native(fixed_pi);
 #else
-    return Native(fixed_180);
+    return Native(fixed(180));
 #endif
   }
 
@@ -91,7 +92,7 @@ public:
 #ifdef RADIANS
     return Native(fixed_half_pi);
 #else
-    return Native(fixed_90);
+    return Native(fixed(90));
 #endif
   }
 
@@ -101,19 +102,36 @@ public:
   }
 
 #ifdef RADIANS
-  gcc_const
-  static Angle Degrees(const fixed _value) {
-    return Angle(_value * fixed_deg_to_rad);
+  constexpr
+  static Angle Degrees(int value) {
+    return Angle(fixed(value * DEG_TO_RAD));
   }
+
+  constexpr
+  static Angle Degrees(unsigned value) {
+    return Degrees(int(value));
+  }
+
+  constexpr
+  static Angle Degrees(double value) {
+    return Angle(fixed(value * DEG_TO_RAD));
+  }
+
+#ifdef FIXED_MATH
+  constexpr
+  static Angle Degrees(const fixed _value) {
+    return Angle(fast_mult(fixed(DEG_TO_RAD), _value, 4));
+  }
+#endif
 
   constexpr
   static Angle Radians(const fixed _value) {
     return Angle(_value);
   }
 
-  gcc_pure
+  constexpr
   fixed Degrees() const {
-    return value * fixed_rad_to_deg;
+    return fast_mult(value, fixed(RAD_TO_DEG), 4);
   }
 
   constexpr
@@ -121,9 +139,9 @@ public:
     return value;
   }
 
-  gcc_pure
+  constexpr
   fixed Hours() const {
-    return value * fixed(24) / fixed_two_pi;
+    return fast_mult(value, fixed(24 / M_2PI), 4);
   }
 #else
   constexpr
@@ -131,19 +149,36 @@ public:
     return Angle(_value);
   }
 
-  gcc_const
-  static Angle Radians(const fixed _value) {
-    return Angle(_value * fixed_rad_to_deg);
+  constexpr
+  static Angle Degrees(int value) {
+    return Angle(fixed(value));
   }
+
+  constexpr
+  static Angle Degrees(unsigned value) {
+    return Degrees(int(value));
+  }
+
+  constexpr
+  static Angle Radians(double value) {
+    return Angle(fixed(value * RAD_TO_DEG));
+  }
+
+#ifdef FIXED_MATH
+  constexpr
+  static Angle Radians(const fixed _value) {
+    return Angle(fast_mult(_value, fixed(RAD_TO_DEG), 4));
+  }
+#endif
 
   constexpr
   fixed Degrees() const {
     return value;
   }
 
-  gcc_pure
+  constexpr
   fixed Radians() const {
-    return value * fixed_deg_to_rad;
+    return fast_mult(fixed(DEG_TO_RAD), value, 4);
   }
 
   gcc_pure
@@ -152,9 +187,9 @@ public:
   }
 #endif
 
-  gcc_const
-  static Angle DMS(const fixed d, const fixed m, const fixed s) {
-    return Angle::Degrees(d + m / 60 + s / 3600);
+  constexpr
+  static Angle DMS(unsigned d, unsigned m, unsigned s) {
+    return Angle::Degrees(fixed(d) + fixed(m) / 60 + fixed(s) / 3600);
   }
 
   /**
@@ -166,7 +201,13 @@ public:
    * @param ss Seconds (pointer)
    * @param east True if East, False if West (pointer)
    */
-  void ToDMS(int &dd, int &mm, int &ss, bool &is_positive) const;
+  void ToDMS(unsigned &dd, unsigned &mm, unsigned &ss,
+             bool &is_positive) const;
+
+  gcc_pure
+  Angle Absolute() const {
+    return Angle(fabs(Native()));
+  }
 
   /**
    * Calculates the tangent of the Angle.
@@ -240,7 +281,7 @@ public:
   int Sign() const;
 
   gcc_pure
-  int Sign(const fixed &tolerance) const;
+  int Sign(const fixed tolerance) const;
 
   gcc_pure
   std::pair<fixed, fixed> SinCos() const {
@@ -253,10 +294,14 @@ public:
   gcc_pure
   fixed AbsoluteRadians() const;
 
-  void Flip();
+  void Flip() {
+    value = -value;
+  }
 
-  gcc_pure
-  Angle Flipped() const;
+  constexpr
+  Angle Flipped() const {
+    return Angle(-value);
+  }
 
   /**
    * Limits the angle (theta) to -180 - +180 degrees
@@ -278,7 +323,7 @@ public:
    */
   constexpr
   Angle Half() const {
-    return Angle(::half(value));
+    return Angle(::Half(value));
   }
 
   /**
@@ -294,28 +339,26 @@ public:
   gcc_pure
   Angle Fraction(const Angle end, const fixed fraction) const;
 
-  gcc_pure
-  Angle
+  constexpr Angle
   operator*(const Angle x) const
   {
-    return Angle(value * x.value);
+    return Angle(fast_mult(value, 6, x.value, 6));
   }
 
-  gcc_pure
-  Angle
+  gcc_pure Angle
   operator*(const fixed x) const
   {
     return Angle(value * x);
   }
 
-  gcc_pure
+  constexpr
   Angle
   operator*(const int x) const
   {
     return Angle(value * x);
   }
 
-  gcc_pure
+  constexpr
   Angle
   operator*(const unsigned x) const
   {
@@ -329,14 +372,14 @@ public:
     return Angle(value / x);
   }
 
-  gcc_pure
+  constexpr
   Angle
   operator/(const int x) const
   {
     return Angle(value / x);
   }
 
-  gcc_pure
+  constexpr
   Angle
   operator/(const unsigned x) const
   {
@@ -372,14 +415,14 @@ public:
   }
 
   const Angle&
-  operator+=(const Angle& x)
+  operator+=(Angle x)
   {
     value += x.value;
     return *this;
   }
 
   const Angle&
-  operator-=(const Angle& x)
+  operator-=(Angle x)
   {
     value -= x.value;
     return *this;
@@ -429,8 +472,18 @@ public:
   bool Between(const Angle start, const Angle end) const;
 
 #ifdef DO_PRINT
-  friend std::ostream& operator<< (std::ostream& o, const Angle& a);
+  friend std::ostream& operator<< (std::ostream& o, Angle a);
 #endif
+
+  gcc_const
+  static Angle asin(fixed x) {
+    return Radians(::asin(x));
+  }
+
+  gcc_const
+  static Angle acos(fixed x) {
+    return Radians(::acos(x));
+  }
 
   /**
    * Returns the angle based on the input of both a x- and y-coordinate.
@@ -440,11 +493,18 @@ public:
    * @param y y-coordinate
    * @return Counter-clockwise angle between the x-axis and the given coordinate
    */
-  static Angle FromXY(const fixed& x, const fixed& y) {
+  gcc_const
+  static Angle FromXY(const fixed x, const fixed y) {
     return Angle::Radians(atan2(y,x));
   }
+
+  /**
+   * Check whether the two angles are roughly equal.
+   */
+  gcc_const
+  bool CompareRoughly(Angle other, Angle threshold = Angle::Degrees(10)) const;
 };
 
-static_assert(is_trivial<Angle>::value, "type is not trivial");
+static_assert(std::is_trivial<Angle>::value, "type is not trivial");
 
 #endif

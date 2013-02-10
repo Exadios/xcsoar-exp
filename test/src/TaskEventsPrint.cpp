@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,24 +33,10 @@ TaskEventsPrint::EnterTransition(const TaskWaypoint& tp)
 }
 
 void
-TaskEventsPrint::AlternateTransition()
-{
-  if (verbose)
-    printf("#- alternate changed\n");
-}
-
-void
 TaskEventsPrint::ExitTransition(const TaskWaypoint &tp)
 {
   if (verbose)
     printf("#- exited sector\n");
-}
-
-void
-TaskEventsPrint::ActiveChanged(const TaskWaypoint &tp)
-{
-  if (verbose)
-    printf("#- active changed to wp %d\n", tp.GetWaypoint().id);
 }
 
 void
@@ -61,13 +47,6 @@ TaskEventsPrint::ConstructionError(const char* error)
     printf("#%s", error);
     printf("\n");
   }
-}
-
-void
-TaskEventsPrint::StartSpeedWarning()
-{
-  if (verbose)
-    printf("#- warning speed excessive\n");
 }
 
 void
@@ -96,15 +75,4 @@ TaskEventsPrint::ActiveAdvanced(const TaskWaypoint &tp, const int i)
 {
   if (verbose)
     printf("#- advance to sector %d\n", i);
-}
-
-void
-TaskEventsPrint::FlightModeTransition(const bool is_final)
-{
-  if (verbose) {
-    if (is_final)
-      printf("#- flight mode final glide \n");
-    else
-      printf("#- flight mode cruise \n");
-  }
 }

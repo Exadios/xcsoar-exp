@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,6 +28,9 @@
 #include "Replay/TaskAutoPilot.hpp"
 #include "Replay/AircraftSim.hpp"
 #include "Replay/TaskAccessor.hpp"
+#include "Engine/Waypoint/Waypoints.hpp"
+#include "Engine/Airspace/AirspaceAircraftPerformance.hpp"
+#include "OS/FileUtil.hpp"
 
 #include <fstream>
 
@@ -102,7 +105,7 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
   PrintTaskAutoPilot autopilot(parms);
   AircraftSim aircraft;
 
-  autopilot.SetDefaultLocation(GeoPoint(Angle::Degrees(fixed(1.0)), Angle::Degrees(fixed(0.0))));
+  autopilot.SetDefaultLocation(GeoPoint(Angle::Degrees(1), Angle::Degrees(0)));
 
   unsigned print_counter=0;
   if (n_wind)
@@ -110,15 +113,16 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
 
   autopilot.SetSpeedFactor(fixed(speed_factor));
 
-  std::ofstream f4("results/res-sample.txt");
-  std::ofstream f5("results/res-sample-filtered.txt");
+  Directory::Create(_T("output/results"));
+  std::ofstream f4("output/results/res-sample.txt");
+  std::ofstream f5("output/results/res-sample-filtered.txt");
 
   bool do_print = verbose;
   bool first = true;
 
   static const fixed fixed_10(10);
 
-  AirspaceAircraftPerformanceGlide perf(task_manager.GetGlidePolar());
+  const AirspaceAircraftPerformance perf(task_manager.GetGlidePolar());
 
   if (aircraft_filter)
     aircraft_filter->Reset(aircraft.GetState());
@@ -203,7 +207,7 @@ run_flight(TestFlightComponents components, TaskManager &task_manager,
       const AircraftState state_last = aircraft.GetLastState();
       task_manager.Update(state, state_last);
       task_manager.UpdateIdle(state);
-      task_manager.UpdateAutoMC(state, fixed_zero);
+      task_manager.UpdateAutoMC(state, fixed(0));
     }
 
   } while (autopilot.UpdateAutopilot(ta, aircraft.GetState(), aircraft.GetLastState()));
@@ -251,7 +255,7 @@ test_flight(TestFlightComponents components, int test_num, int n_wind,
 {
   // multipurpose flight test
 
-  GlidePolar glide_polar(fixed_two);
+  GlidePolar glide_polar(fixed(2));
   Waypoints waypoints;
   SetupWaypoints(waypoints);
 
@@ -272,7 +276,9 @@ test_flight(TestFlightComponents components, int test_num, int n_wind,
   task_manager.SetTaskEvents(default_events);
   task_manager.SetGlidePolar(glide_polar);
 
-  task_manager.GetOrderedTaskBehaviour().aat_min_time = aat_min_time(test_num);
+  OrderedTaskBehaviour otb = task_manager.GetOrderedTaskBehaviour();
+  otb.aat_min_time = aat_min_time(test_num);
+  task_manager.SetOrderedTaskBehaviour(otb);
 
   bool goto_target = false;
 

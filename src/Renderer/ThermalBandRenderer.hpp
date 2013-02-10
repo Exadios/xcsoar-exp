@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,9 +24,7 @@ Copyright_License {
 #ifndef THERMAL_BAND_RENDERER_HPP
 #define THERMAL_BAND_RENDERER_HPP
 
-#include "Screen/Point.hpp"
-#include "Math/fixed.hpp"
-
+struct PixelRect;
 struct ThermalBandLook;
 struct ChartLook;
 class ChartRenderer;
@@ -53,7 +51,7 @@ public:
                        const PixelRect &rc,
                        const TaskBehaviour& task_props,
                        const bool is_map,
-                       const OrderedTaskBehaviour* ordered_props=NULL) const;
+                       const OrderedTaskBehaviour *ordered_props=nullptr) const;
 
   void DrawThermalBandSpark(const MoreData &basic,
                             const DerivedInfo& calculated,
@@ -71,7 +69,7 @@ protected:
                         const bool is_infobox,
                         const OrderedTaskBehaviour* ordered_props) const;
 
-  void scale_chart(const DerivedInfo &calculated,
+  void ScaleChart(const DerivedInfo &calculated,
                    const ComputerSettings &settings_computer,
                    ChartRenderer &chart) const;
 };

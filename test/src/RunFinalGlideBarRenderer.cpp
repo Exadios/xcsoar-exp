@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,13 +21,14 @@ Copyright_License {
 }
 */
 
+#define ENABLE_SCREEN
+
+#include "Main.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
-#include "Screen/Init.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Timer.hpp"
+#include "Screen/Canvas.hpp"
 #include "Fonts.hpp"
-#include "Look/DialogLook.hpp"
 #include "Look/TaskLook.hpp"
 #include "Look/FinalGlideBarLook.hpp"
 #include "Renderer/FinalGlideBarRenderer.hpp"
@@ -56,9 +57,9 @@ public:
     :renderer(look, task_look),
      state(GeoVector(fixed(100), Angle::Zero()),
            fixed(1000), fixed(1000),
-           SpeedVector(Angle::Zero(), fixed_zero))
+           SpeedVector(Angle::Zero(), fixed(0)))
   {
-    glide_polar = GlidePolar(fixed_zero);
+    glide_polar = GlidePolar(fixed(0));
 
     calculated.task_stats.total.solution_remaining =
       MacCready::Solve(glide_settings, glide_polar, state);
@@ -92,14 +93,9 @@ public:
   }
 
 protected:
-  void OnPaint(Canvas &canvas) {
+  virtual void OnPaint(Canvas &canvas) override {
     canvas.ClearWhite();
-    
-    PixelRect rc = {
-      0, 0, (PixelScalar)canvas.get_width(), (PixelScalar)canvas.get_height()
-    };
-
-    renderer.Draw(canvas, rc, calculated, glide_settings, true);
+    renderer.Draw(canvas, canvas.GetRect(), calculated, glide_settings, true);
   }
 };
 
@@ -129,43 +125,24 @@ public:
   }
 
 
-#ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance) {
-    WNDCLASS wc;
-
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = Window::WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = NULL;
-    wc.lpszMenuName = 0;
-    wc.lpszClassName = _T("RunFinalGlideBarRenderer");
-
-    return RegisterClass(&wc);
-  }
-#endif /* USE_GDI */
-
-  void Set(PixelRect _rc) {
-    SingleWindow::set(_T("RunFinalGlideBarRenderer"), _T("RunFinalGlideBarRenderer"),
-                      _rc);
+  void Create(PixelSize size) {
+    SingleWindow::Create(_T("RunFinalGlideBarRenderer"),
+                         size);
 
     const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();
 
-    final_glide.set(*this, rc.left, rc.top, rc.right, rc.bottom, with_border);
+    final_glide.Create(*this, rc, with_border);
 
     PixelRect button_rc = rc;
     button_rc.top = button_rc.bottom - 30;
-    close_button.set(*this, _T("Close"), ID_CLOSE, button_rc);
+    close_button.Create(*this, _T("Close"), ID_CLOSE, button_rc);
   }
 
 protected:
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -175,7 +152,7 @@ protected:
     return SingleWindow::OnCommand(id, code);
   }
 
-  virtual bool OnTimer(WindowTimer &_timer) {
+  virtual bool OnTimer(WindowTimer &_timer) override {
     if (_timer == timer) {
       fixed altitude_difference = final_glide.GetAltitudeDifference();
       fixed altitude_difference0 = final_glide.GetAltitudeDifference0();
@@ -209,41 +186,18 @@ protected:
   }
 };
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
+static void
+Main()
 {
-  ScreenGlobalInit screen_init;
-
-#ifdef USE_GDI
-  ResourceLoader::Init(hInstance);
-  TestWindow::register_class(hInstance);
-#endif
-
-  Fonts::Initialize();
-
   FinalGlideBarLook final_glide_look;
-  final_glide_look.Initialise();
+  final_glide_look.Initialise(normal_font);
 
   TaskLook task_look;
   task_look.Initialise();
 
   TestWindow window(final_glide_look, task_look);
-  window.Set(PixelRect{0, 0, 60, 320});
+  window.Create({60, 320});
 
   window.Show();
   window.RunEventLoop();
-
-  Fonts::Deinitialize();
-
-  return 0;
 }

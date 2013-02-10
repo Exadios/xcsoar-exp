@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -135,6 +135,8 @@ RunCommand(CAI302Device &device, const char *command,
     return device.StartLogging(env);
   else if (strcmp(command, "stoplogger") == 0)
     return device.StopLogging(env);
+  else if (strcmp(command, "clearlog") == 0)
+    return device.ClearLog(env);
   else if (strcmp(command, "pilots") == 0)
     return ListPilots(device, env);
   else if (strcmp(command, "navpoints") == 0)

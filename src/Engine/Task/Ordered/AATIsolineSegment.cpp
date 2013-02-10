@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,15 +28,15 @@ AATIsolineSegment::AATIsolineSegment(const AATPoint &ap,
                                      const TaskProjection &projection)
   :AATIsoline(ap, projection)
 {
-  IsolineCrossingFinder icf_up(ap, ell, fixed_zero, fixed_half);
-  IsolineCrossingFinder icf_down(ap, ell, -fixed_half, fixed_zero);
+  IsolineCrossingFinder icf_up(ap, ell, fixed(0), fixed(0.5));
+  IsolineCrossingFinder icf_down(ap, ell, -fixed(0.5), fixed(0));
 
   t_up = icf_up.solve();
   t_down = icf_down.solve();
 
-  if ((t_up < -fixed_half) || (t_down < -fixed_half)) {
-    t_up = fixed_zero;
-    t_down = fixed_zero;
+  if ((t_up < -fixed(0.5)) || (t_down < -fixed(0.5))) {
+    t_up = fixed(0);
+    t_down = fixed(0);
     // single solution only
   }
 }

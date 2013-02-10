@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 }
 */
 
+#include "AirspacePrinting.hpp"
 #include "Printing.hpp"
 #include "Geo/Math.hpp"
 #include "Airspace/AirspaceCircle.hpp"
@@ -27,17 +28,44 @@
 #include <fstream>
 #include "Airspace/AirspaceCircle.hpp"
 
+std::ostream &
+operator<<(std::ostream &os, const AirspaceAltitude &aa)
+{
+  switch (aa.reference) {
+  case AltitudeReference::NONE:
+    os << "unknown";
+    break;
+
+  case AltitudeReference::AGL:
+    if (!positive(aa.altitude_above_terrain))
+      os << "GND";
+    else
+      os << iround(aa.altitude_above_terrain) << " AGL";
+    break;
+
+  case AltitudeReference::MSL:
+    os << iround(aa.altitude);
+    break;
+
+  case AltitudeReference::STD:
+    os << "FL" << iround(aa.flight_level);
+    break;
+  }
+
+  return os;
+}
+
 std::ostream& operator<< (std::ostream& f, 
                           const AirspaceCircle& as)
 {
   f << "# circle\n";
   for (double t=0; t<=360; t+= 30) {
-    GeoPoint l = FindLatitudeLongitude(as.m_center, Angle::Degrees(fixed(t)), as.m_radius);
+    GeoPoint l = FindLatitudeLongitude(as.m_center, Angle::Degrees(t), as.m_radius);
     f << l.longitude << " " << l.latitude << " " << as.GetBase().altitude << "\n";
   }
   f << "\n";
   for (double t=0; t<=360; t+= 30) {
-    GeoPoint l = FindLatitudeLongitude(as.m_center, Angle::Degrees(fixed(t)), as.m_radius);
+    GeoPoint l = FindLatitudeLongitude(as.m_center, Angle::Degrees(t), as.m_radius);
     f << l.longitude << " " << l.latitude << " " << as.GetTop().altitude << "\n";
   }
   f << "\n";

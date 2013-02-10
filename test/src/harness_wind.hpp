@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,9 +30,9 @@ static inline fixed
 wind_to_mag(int n_wind)
 {
   if (n_wind)
-    return (fixed(n_wind - 1) / 4 + fixed_one) * 5;
+    return (fixed(n_wind - 1) / 4 + fixed(1)) * 5;
 
-  return fixed_zero;
+  return fixed(0);
 }
 
 static inline Angle

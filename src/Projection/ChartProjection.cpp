@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,19 +22,8 @@ Copyright_License {
 */
 
 #include "ChartProjection.hpp"
-#include "Engine/Task/TaskManager.hpp"
+#include "Engine/Task/Ordered/OrderedTask.hpp"
 #include "Engine/Task/Ordered/Points/OrderedTaskPoint.hpp"
-
-void
-ChartProjection::Set(const PixelRect &rc, const TaskManager &task_manager,
-                     const GeoPoint &fallback_loc)
-{
-  const AbstractTask *task = task_manager.GetActiveTask();
-  if (task != NULL)
-    Set(rc, *task, fallback_loc);
-  else
-    Set(rc, fallback_loc, fixed_zero);
-}
 
 void
 ChartProjection::Set(const PixelRect &rc,
@@ -42,17 +31,20 @@ ChartProjection::Set(const PixelRect &rc,
                      fixed radius_factor)
 {
   const GeoPoint center = task_projection.GetCenter();
-  const fixed radius = max(fixed(10000),
-                           task_projection.ApproxRadius() * radius_factor);
+  const fixed radius = std::max(fixed(10000),
+                                task_projection.ApproxRadius() * radius_factor);
   Set(rc, center, radius);
 }
 
 void
-ChartProjection::Set(const PixelRect &rc, const AbstractTask &task,
+ChartProjection::Set(const PixelRect &rc, const OrderedTask &task,
                      const GeoPoint &fallback_loc)
 {
-  const GeoPoint center = task.GetTaskCenter(fallback_loc);
-  const fixed radius = max(fixed(10000), task.GetTaskRadius(fallback_loc));
+  GeoPoint center = task.GetTaskCenter();
+  if (!center.IsValid())
+    center = fallback_loc;
+
+  const fixed radius = std::max(fixed(10000), task.GetTaskRadius());
   Set(rc, center, radius);
 }
 

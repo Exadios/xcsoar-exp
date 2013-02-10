@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #define FlatGeoPoint_HPP
 
 #include "Math/fixed.hpp"
-#include "Math/FastMath.h"
 #include "Rough/RoughAltitude.hpp"
 #include "Compiler.h"
 
@@ -64,6 +63,14 @@ struct FlatGeoPoint {
    */
   gcc_pure
   unsigned Distance(const FlatGeoPoint &sp) const;
+
+  /**
+   * Like Distance(), but shift the distance left by the specified
+   * number of bits.  This method can be used to avoid integer
+   * truncation errors.  Use only when you know what you're doing!
+   */
+  gcc_pure
+  unsigned ShiftedDistance(const FlatGeoPoint &sp, unsigned bits) const;
 
   /**
    * Find squared distance from one point to another
@@ -121,8 +128,7 @@ struct FlatGeoPoint {
    *
    * @return Cross product
    */
-  gcc_pure
-  int CrossProduct(const FlatGeoPoint &other) const {
+  constexpr int CrossProduct(FlatGeoPoint other) const {
     return longitude * other.latitude - latitude * other.longitude;
   }
 
@@ -133,8 +139,7 @@ struct FlatGeoPoint {
    *
    * @return Dot product
    */
-  gcc_pure
-  int DotProduct(const FlatGeoPoint &other) const {
+  constexpr int DotProduct(FlatGeoPoint other) const {
     return longitude * other.longitude + latitude * other.latitude;
   }
 

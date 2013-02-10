@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -59,11 +59,35 @@ gcc_const
 static inline PixelSize
 ValidateTextureSize(PixelSize size)
 {
-  return { PixelScalar(ValidateTextureSize(size.cx)),
-      PixelScalar(ValidateTextureSize(size.cy)) };
+  return { ValidateTextureSize(size.cx), ValidateTextureSize(size.cy) };
 }
 
-#ifndef ANDROID
+/**
+ * Load data into the current texture.  Fixes alignment to the next
+ * power of two if needed.
+ */
+static void
+LoadTextureAutoAlign(GLint internal_format,
+                     GLsizei width, GLsizei height,
+                     GLenum format, GLenum type, const GLvoid *pixels)
+{
+  assert(pixels != nullptr);
+
+  GLsizei width2 = ValidateTextureSize(width);
+  GLsizei height2 = ValidateTextureSize(height);
+
+  if (width2 == width && height2 == height)
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0,
+                 format, type, pixels);
+  else {
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width2, height2, 0,
+                 format, type, nullptr);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
+                    format, type, pixels);
+  }
+}
+
+#ifdef ENABLE_SDL
 
 /**
  * Checks if the specified palette consists of gray shades 0x00..0xff.
@@ -91,34 +115,11 @@ gcc_pure
 static bool
 IsLuminanceFormat(const SDL_PixelFormat *format)
 {
-  return format->palette != NULL && format->BitsPerPixel == 8 &&
+  return format->palette != nullptr && format->BitsPerPixel == 8 &&
     format->Rloss == 8 && format->Gloss == 8 && format->Bloss == 8 &&
     format->Rshift == 0 && format->Gshift == 0 && format->Bshift == 0 &&
     format->Rmask == 0 && format->Gmask == 0 && format->Bmask == 0 &&
     IsLuminancePalette(format->palette);
-}
-
-/**
- * Load data into the current texture.  Fixes alignment to the next
- * power of two if needed.
- */
-static void
-LoadTextureAutoAlign(GLint internal_format,
-                     GLsizei width, GLsizei height,
-                     GLenum format, GLenum type, const GLvoid *pixels)
-{
-  GLsizei width2 = ValidateTextureSize(width);
-  GLsizei height2 = ValidateTextureSize(height);
-
-  if (width2 == width && height2 == height)
-    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0,
-                 format, type, pixels);
-  else {
-    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width2, height2, 0,
-                 format, type, NULL);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
-                    format, type, pixels);
-  }
 }
 
 static bool
@@ -145,14 +146,14 @@ static bool
 LoadSurfaceIntoTexture(const SDL_Surface *surface)
 {
 
-  assert(surface != NULL);
-  assert(surface->format != NULL);
+  assert(surface != nullptr);
+  assert(surface->format != nullptr);
 
   const SDL_PixelFormat *fmt = surface->format;
   if (IsLuminanceFormat(fmt))
     return LoadLuminanceTexture(surface);
 
-  if (fmt->palette != NULL)
+  if (fmt->palette != nullptr)
     /* OpenGL does not support a hardware palette */
     return false;
 
@@ -195,18 +196,26 @@ LoadSurfaceIntoTexture(const SDL_Surface *surface)
 #endif
 
 GLTexture::GLTexture(UPixelScalar _width, UPixelScalar _height)
-  :width(_width), height(_height)
-#ifndef HAVE_OES_DRAW_TEXTURE
-  , allocated_width(ValidateTextureSize(_width)),
+  :width(_width), height(_height),
+   allocated_width(ValidateTextureSize(_width)),
    allocated_height(ValidateTextureSize(_height))
-#endif
 {
   /* enable linear filtering for the terrain texture */
   Initialise(true);
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
                ValidateTextureSize(width), ValidateTextureSize(height),
-               0, GL_RGB, GetType(), NULL);
+               0, GL_RGB, GetType(), nullptr);
+}
+
+GLTexture::GLTexture(GLint internal_format, GLsizei _width, GLsizei _height,
+                     GLenum format, GLenum type, const GLvoid *data)
+  :width(_width), height(_height),
+   allocated_width(ValidateTextureSize(_width)),
+   allocated_height(ValidateTextureSize(_height))
+{
+  Initialise();
+  LoadTextureAutoAlign(internal_format, _width, _height, format, type, data);
 }
 
 void
@@ -221,20 +230,18 @@ GLTexture::ResizeDiscard(PixelSize new_size)
   if (validated_size == old_size)
     return;
 
-#ifndef HAVE_OES_DRAW_TEXTURE
   allocated_width = validated_size.cx;
   allocated_height = validated_size.cy;
-#endif
 
   Bind();
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
                validated_size.cx, validated_size.cy,
-               0, GL_RGB, GetType(), NULL);
+               0, GL_RGB, GetType(), nullptr);
 
 }
 
-#ifndef ANDROID
+#ifdef ENABLE_SDL
 
 void
 GLTexture::Load(SDL_Surface *src)
@@ -242,15 +249,13 @@ GLTexture::Load(SDL_Surface *src)
   width = src->w;
   height = src->h;
 
-#ifndef HAVE_OES_DRAW_TEXTURE
   allocated_width = ValidateTextureSize(width);
   allocated_height = ValidateTextureSize(src->h);
-#endif
 
   if (!LoadSurfaceIntoTexture(src)) {
     /* try again after conversion */
     SDL_PixelFormat format;
-    format.palette = NULL;
+    format.palette = nullptr;
 #ifdef ANDROID
     format.BitsPerPixel = 16;
     format.BytesPerPixel = 2;
@@ -281,7 +286,7 @@ GLTexture::Load(SDL_Surface *src)
     format.alpha = 0xff;
 
     SDL_Surface *surface = ::SDL_ConvertSurface(src, &format, SDL_SWSURFACE);
-    assert(surface != NULL);
+    assert(surface != nullptr);
 
     LoadSurfaceIntoTexture(surface);
     SDL_FreeSurface(surface);
@@ -304,15 +309,15 @@ GLTexture::Draw(PixelScalar dest_x, PixelScalar dest_y,
 
   /* glDrawTexiOES() circumvents the projection settings, thus we must
      roll our own translation */
-  glDrawTexiOES(OpenGL::translate_x + dest_x,
-                OpenGL::screen_height - OpenGL::translate_y - dest_y - dest_height,
+  glDrawTexiOES(OpenGL::translate.x + dest_x,
+                OpenGL::screen_height - OpenGL::translate.y - dest_y - dest_height,
                 0, dest_width, dest_height);
 #else
-  const PixelScalar vertices[] = {
-    dest_x, dest_y,
-    PixelScalar(dest_x + dest_width), dest_y,
-    dest_x, PixelScalar(dest_y + dest_height),
-    PixelScalar(dest_x + dest_width), PixelScalar(dest_y + dest_height),
+  const RasterPoint vertices[] = {
+    { dest_x, dest_y },
+    { dest_x + int(dest_width), dest_y },
+    { dest_x, dest_y + int(dest_height) },
+    { dest_x + int(dest_width), dest_y + int(dest_height) },
   };
 
   glVertexPointer(2, GL_VALUE, 0, vertices);
@@ -347,15 +352,15 @@ GLTexture::DrawFlipped(PixelRect dest, PixelRect src) const
 
   /* glDrawTexiOES() circumvents the projection settings, thus we must
      roll our own translation */
-  glDrawTexiOES(OpenGL::translate_x + dest.left,
-                OpenGL::screen_height - OpenGL::translate_y - dest.bottom,
+  glDrawTexiOES(OpenGL::translate.x + dest.left,
+                OpenGL::screen_height - OpenGL::translate.y - dest.bottom,
                 0, dest.right - dest.left, dest.bottom - dest.top);
 #else
-  const PixelScalar vertices[] = {
-    dest.left, dest.top,
-    dest.right, dest.top,
-    dest.left, dest.bottom,
-    dest.right, dest.bottom,
+  const RasterPoint vertices[] = {
+    dest.GetTopLeft(),
+    dest.GetTopRight(),
+    dest.GetBottomLeft(),
+    dest.GetBottomRight(),
   };
 
   glVertexPointer(2, GL_VALUE, 0, vertices);

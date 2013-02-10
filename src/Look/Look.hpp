@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@ Copyright_License {
 #include "ThermalAssistantLook.hpp"
 
 struct UISettings;
+class Font;
 
 struct Look {
   DialogLook dialog;
@@ -60,13 +61,25 @@ struct Look {
   FlarmTrafficLook flarm_gauge;
   FlarmTrafficLook flarm_dialog;
   InfoBoxLook info_box;
+  WindArrowLook wind_arrow_info_box;
   FinalGlideBarLook final_glide_bar;
   IconLook icon;
   ThermalAssistantLook thermal_assistant_gauge;
   ThermalAssistantLook thermal_assistant_dialog;
 
-  void Initialise();
-  void InitialiseConfigured(const UISettings &settings);
+  void Initialise(const Font &map_font, const Font &map_bold_font,
+                  const Font &map_label_font);
+  void InitialiseConfigured(const UISettings &settings,
+                            const Font &map_font, const Font &map_bold_font,
+                            const Font &map_label_font,
+                            const Font &cdi_font,
+                            const Font &monospace_font,
+                            const Font &infobox_value_font,
+                            const Font &infobox_small_font,
+#ifndef GNAV
+                            const Font &infobox_unit_font,
+#endif
+                            const Font &infobox_title_font);
 };
 
 #endif

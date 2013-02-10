@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 {
   plan_tests(5);
 
-  GeoPoint p(Angle::Degrees(fixed(7)), Angle::Degrees(fixed(50)));
+  GeoPoint p(Angle::Degrees(7), Angle::Degrees(50));
   UTM u = UTM::FromGeoPoint(p);
 
   ok1(u.zone_number == 32);

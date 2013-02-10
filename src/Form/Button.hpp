@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -39,8 +39,7 @@ class ActionListener;
  */
 class WndButton : public ButtonWindow {
 public:
-  typedef void (*ClickNotifyCallback)(WndButton &button);
-  typedef void (*LeftRightNotifyCallback)(WndButton &button);
+  typedef void (*ClickNotifyCallback)();
 
 protected:
   const DialogLook &look;
@@ -59,44 +58,35 @@ private:
    */
   ClickNotifyCallback click_callback;
 
-  /**
-   * The callback-functions that should be called when the Left and Right
-   * keys are pressed
-   * @see SetOnLeftNotify() and SetOnRightNotify()
-   */
-  LeftRightNotifyCallback left_callback;
-  LeftRightNotifyCallback right_callback;
-
 public:
   /**
    * Constructor of the WndButton class
    * @param Parent Parent window/ContainerControl
    * @param Caption Text on the button
-   * @param X x-Coordinate relative to the parent
-   * @param Y y-Coordinate relative to the parent
-   * @param Width Width of the button
-   * @param Height Height of the button
    * @param Function The function that should be called
    * when the button is clicked
    */
   WndButton(ContainerWindow &parent, const DialogLook &look,
-            const TCHAR *caption, const PixelRect &rc,
+            tstring::const_pointer caption, const PixelRect &rc,
             ButtonWindowStyle style,
-            ClickNotifyCallback click_callback = NULL,
-            LeftRightNotifyCallback left_callback = NULL,
-            LeftRightNotifyCallback right_callback = NULL);
+            ClickNotifyCallback click_callback = NULL);
 
   WndButton(ContainerWindow &parent, const DialogLook &look,
-            const TCHAR *caption, const PixelRect &rc,
+            tstring::const_pointer caption, const PixelRect &rc,
             ButtonWindowStyle style,
-            ActionListener *listener, int id);
+            ActionListener &listener, int id);
 
   /**
    * Set the object that will receive click events.
    */
-  void SetListener(ActionListener *_listener) {
+  void SetListener(ActionListener *_listener, int _id) {
     assert(click_callback == NULL);
 
+#ifdef USE_GDI
+    id = _id;
+#else
+    SetID(_id);
+#endif
     listener = _listener;
   }
 
@@ -113,31 +103,12 @@ public:
   }
 
   /**
-   * Sets the function that should be called when the Left key is pressed
-   * @param Function Pointer to the function to be called
-   */
-  void
-  SetOnLeftNotify(LeftRightNotifyCallback _left_callback)
-  {
-    left_callback = _left_callback;
-  }
-
-  /**
-   * Sets the function that should be called when the Right key is pressed
-   * @param Function Pointer to the function to be called
-   */
-  void
-  SetOnRightNotify(LeftRightNotifyCallback _right_callback)
-  {
-    right_callback = _right_callback;
-  }
-  /**
    * Sets the Caption/Text of the Control and resets the cached text height
    * (derived from WindowControl)
    * @param Value The new Caption/Text of the Control
    */
-  void SetCaption(const TCHAR *caption) {
-    set_text(caption);
+  void SetCaption(tstring::const_pointer caption) {
+    SetText(caption);
   }
 
   /**
@@ -145,25 +116,15 @@ public:
    * keyboard).  The default implementation invokes the OnClick
    * callback.
    */
-  virtual bool OnClicked();
-
-private:
-  /**
-   * Called when the Left (Right) key is pressed
-   * Only called if callback have been explicitly set
-   */
-  bool on_left();
-  bool on_right();
+  virtual bool OnClicked() override;
 
 protected:
 #ifdef USE_GDI
-  virtual void OnSetFocus();
-  virtual void OnKillFocus();
+  virtual void OnSetFocus() override;
+  virtual void OnKillFocus() override;
 #endif
 
-  virtual bool OnKeyCheck(unsigned key_code) const;
-  virtual bool OnKeyDown(unsigned key_code);
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
 #endif

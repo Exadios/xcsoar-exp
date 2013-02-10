@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,9 +27,11 @@ Copyright_License {
 void
 AircraftLook::Initialise()
 {
+  // Note: No scaling needed. Pens are used with CanvasRotateShift, which
+  //       applies Layout::scale.
   aircraft_pen.Set(1, COLOR_DARK_GRAY);
-  aircraft_simple1_pen.Set(Layout::ScalePenWidth(1), COLOR_BLACK);
-  aircraft_simple2_pen.Set(Layout::ScalePenWidth(3), COLOR_WHITE);
+  aircraft_simple1_pen.Set(1, COLOR_BLACK);
+  aircraft_simple2_pen.Set(3, COLOR_WHITE);
 
   canopy_pen.Set(1, DarkColor(COLOR_CYAN));
   canopy_brush.Set(COLOR_CYAN);

@@ -50,7 +50,7 @@ struct has_trivial_copy_and_destructor
                                   std::is_trivially_copy_assignable<T>::value &&
                                   std::is_trivially_destructible<T>::value>
 #else
-#if GCC_VERSION >= 40600 || (defined(__clang__) && !defined(ANDROID))
+#if GCC_VERSION >= 40600 || defined(__clang__)
                                   std::has_trivial_copy_assign<T>::value &&
 #else
                                   std::has_trivial_assign<T>::value &&
@@ -61,17 +61,6 @@ struct has_trivial_copy_and_destructor
 };
 
 /**
- * Wrapper for std::is_trivial with a fallback for GCC 4.4.
- */
-#if GCC_VERSION >= 40500 || (defined(__clang__) && !defined(ANDROID))
-template<typename T>
-struct is_trivial : public std::is_trivial<T> {};
-#else
-template<typename T>
-struct is_trivial : public has_trivial_copy_and_destructor<T> {};
-#endif
-
-/**
  * Check if the specified type is "trivial" in the non-debug build,
  * but allow a non-trivial default constructor in the debug build.
  * This is needed for types that use #DebugFlag.
@@ -79,7 +68,7 @@ struct is_trivial : public has_trivial_copy_and_destructor<T> {};
 #ifdef NDEBUG
 template<typename T>
 struct is_trivial_ndebug
-  : public std::integral_constant<bool, is_trivial<T>::value>
+  : public std::integral_constant<bool, std::is_trivial<T>::value>
 {
 };
 #else

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 #define AIRSPACE_ALTITUDE_HPP
 
 #include "Math/fixed.hpp"
-#include "Util/tstring.hpp"
+#include "Geo/AltitudeReference.hpp"
 
 #include <stdint.h>
 
@@ -47,18 +47,20 @@ struct AirspaceAltitude
   fixed flight_level;
   /** Height above terrain (m) for ground-referenced boundary */
   fixed altitude_above_terrain;
+
   /** Type of airspace boundary */
-  Type type;
+  AltitudeReference reference;
 
   /** 
    * Constructor.  Initialises to zero.
    * 
    * @return Initialised blank object
    */
-  AirspaceAltitude():altitude(fixed_zero),
-                 flight_level(fixed_zero),
-                 altitude_above_terrain(fixed_zero),
-                 type(Type::UNDEFINED) {};
+  AirspaceAltitude()
+    :altitude(fixed(0)),
+     flight_level(fixed(0)),
+     altitude_above_terrain(fixed(0)),
+     reference(AltitudeReference::NONE) {}
 
   /**
    * Get Altitude AMSL (m) resolved from type.
@@ -68,10 +70,10 @@ struct AirspaceAltitude
   fixed GetAltitude(const AltitudeState &state) const;
 
   /** Is this altitude reference at or above the aircraft state? */
-  bool IsAbove(const AltitudeState &state, const fixed margin = fixed_zero) const;
+  bool IsAbove(const AltitudeState &state, const fixed margin = fixed(0)) const;
 
   /** Is this altitude reference at or below the aircraft state? */
-  bool IsBelow(const AltitudeState &state, const fixed margin = fixed_zero) const;
+  bool IsBelow(const AltitudeState &state, const fixed margin = fixed(0)) const;
 
   /**
    * Test whether airspace boundary is the terrain
@@ -79,7 +81,8 @@ struct AirspaceAltitude
    * @return True if this altitude limit is the terrain
    */
   bool IsTerrain() const {
-    return !positive(altitude_above_terrain) && type == Type::AGL;
+    return !positive(altitude_above_terrain) &&
+      reference == AltitudeReference::AGL;
   }
 
   /**
@@ -95,7 +98,7 @@ struct AirspaceAltitude
    * Is it necessary to call SetGroundLevel() for this AirspaceAltitude?
    */
   bool NeedGroundLevel() const {
-    return type == Type::AGL;
+    return reference == AltitudeReference::AGL;
   }
 
   /**
@@ -106,15 +109,6 @@ struct AirspaceAltitude
    * @param press Atmospheric pressure model (to obtain QNH)
    */
   void SetFlightLevel(const AtmosphericPressure &press);
-
-  /**
-   * Generate text form of airspace altitude boundary
-   *
-   * @param concise Whether to produce short-form
-   *
-   * @return String version of altitude reference
-   */
-  const tstring GetAsText(const bool concise = false) const;
 
   static bool SortHighest(const AirspaceAltitude &a, const AirspaceAltitude &b) {
     return a.altitude > b.altitude;

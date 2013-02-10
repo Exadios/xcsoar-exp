@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 #define XCSOAR_PROFILE_DEVICE_CONFIG_HPP
 
 #include "Util/StaticString.hpp"
+#include "Math/fixed.hpp"
 
 #include <tchar.h>
 #include <stdint.h>
@@ -58,6 +59,14 @@ struct DeviceConfig {
      * Android IOIO UArt device
      */
     IOIOUART,
+
+    /**
+     * Android IOIO Misc. devices
+     */
+    DROIDSOAR_V2,
+    NUNCHUCK,
+    I2CPRESSURESENSOR,
+    IOIOVOLTAGE,
 
     /**
      * Attempt to auto-discover the GPS source.
@@ -123,6 +132,39 @@ struct DeviceConfig {
    * The IOIO UART ID.
    */
   unsigned ioio_uart_id;
+
+
+  /**
+   * The IOIO I2C bus.
+   */
+  /* For some devices (e.g DroidSoar) this may hold the i2c address # in bits 15-8
+   * and other device specific data in 31-16.
+   * In these cases i2c_addr is not used. */
+  unsigned i2c_bus;
+  unsigned i2c_addr;
+
+  /**
+   * What is the purpose of this pressure sensor.
+   */
+  enum class PressureUse : unsigned {
+    NONE = 0,
+    /** ProvidePressureAltitude() and ProvideNoncompVario() */
+    STATIC_WITH_VARIO,
+    /** ProvidePressureAltitude() */
+    STATIC_ONLY,
+    /** ProvideNettoVario() */
+    TEK_PRESSURE,
+    /** ProvideIndicatedAirspeedWithAltitude() */
+    PITOT,
+    /** Determine and then save the offset between static and pitot sensor */
+    PITOT_ZERO,
+  } press_use;
+
+  /**
+   * sensor calibration data
+   */
+  fixed sensor_offset;
+  fixed sensor_factor;
 
   /**
    * Name of the driver.
@@ -288,11 +330,40 @@ struct DeviceConfig {
     return UsesPort(port_type);
   }
 
+  static bool IsPressureSensor(PortType port_type) {
+    return port_type == PortType::I2CPRESSURESENSOR;
+  }
+
+  bool IsPressureSensor() const {
+    return IsPressureSensor(port_type);
+  }
+
+  static bool UsesI2C(PortType port_type) {
+    return port_type == PortType::NUNCHUCK ||
+           port_type == PortType::I2CPRESSURESENSOR;
+  }
+
+  bool UsesI2C() const {
+    return UsesI2C(port_type);
+  }
+
+  static bool UsesCalibration(PortType port_type) {
+    return port_type == PortType::I2CPRESSURESENSOR ||
+           port_type == PortType::DROIDSOAR_V2;
+  }
+
+  bool UsesCalibration() const {
+    return UsesCalibration(port_type);
+  }
+
   void Clear() {
     port_type = PortType::DISABLED;
     baud_rate = 4800u;
     bulk_baud_rate = 0u;
     tcp_port = 4353u;
+    i2c_bus = 2u;
+    i2c_addr = 0;
+    press_use = PressureUse::STATIC_ONLY;
     path.clear();
     bluetooth_mac.clear();
     driver_name.clear();

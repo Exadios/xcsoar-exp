@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #include "Async.hpp"
 #include "Job.hpp"
 #include "Operation/ThreadedOperationEnvironment.hpp"
-#include "Thread/Notify.hpp"
+#include "Event/Notify.hpp"
 
 void
 AsyncJobRunner::Start(Job *_job, OperationEnvironment &_env, Notify *_notify)
@@ -36,7 +36,7 @@ AsyncJobRunner::Start(Job *_job, OperationEnvironment &_env, Notify *_notify)
   env = new ThreadedOperationEnvironment(_env);
   notify = _notify;
 
-  running.Set();
+  running.store(true, std::memory_order_relaxed);
   Thread::Start();
 }
 
@@ -46,6 +46,11 @@ AsyncJobRunner::Cancel()
   assert(IsBusy());
 
   env->Cancel();
+
+  if (notify != NULL)
+    /* make sure the notification doesn't get delivered, even if
+       this method was invoked too late */
+    notify->ClearNotification();
 }
 
 #if defined(__clang__) || GCC_VERSION >= 40700
@@ -75,12 +80,12 @@ void
 AsyncJobRunner::Run()
 {
   assert(IsInside());
-  assert(running.Get());
+  assert(running.load(std::memory_order_relaxed));
 
   job->Run(*env);
 
-  if (notify != NULL)
+  if (notify != NULL && !env->IsCancelled())
     notify->SendNotification();
 
-  running.Reset();
+  running.store(false, std::memory_order_relaxed);
 }

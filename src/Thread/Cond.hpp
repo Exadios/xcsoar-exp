@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_THREAD_COND_HPP
 #define XCSOAR_THREAD_COND_HPP
 
-#include "Util/NonCopyable.hpp"
 #include "Thread/Mutex.hpp"
 
 #include <pthread.h>
@@ -33,17 +32,14 @@ Copyright_License {
 /**
  * This class wraps a POSIX pthread_cond_t.
  */
-class Cond : private NonCopyable {
+class Cond {
   pthread_cond_t cond;
 
 public:
-  Cond() {
-    pthread_cond_init(&cond, NULL);
-  }
+  constexpr Cond():cond(PTHREAD_COND_INITIALIZER) {}
 
-  ~Cond() {
-    pthread_cond_destroy(&cond);
-  }
+  Cond(const Cond &other) = delete;
+  Cond &operator=(const Cond &other) = delete;
 
 public:
   /**

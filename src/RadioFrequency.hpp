@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,19 +35,29 @@ Copyright_License {
  * This class tores a VHF radio frequency.
  */
 class RadioFrequency {
-  static const unsigned BASE_KHZ = 100000;
-  static const unsigned MAX_KHZ = BASE_KHZ + 50000;
+  static constexpr unsigned BASE_KHZ = 100000;
+  static constexpr unsigned MAX_KHZ = BASE_KHZ + 50000;
 
   /**
    * The radio frequency in kilohertz minus 100 MHz.
    */
   uint16_t value;
 
+  constexpr RadioFrequency(unsigned _value):value(_value) {}
+
 public:
   /**
    * Uninitialized.
    */
   RadioFrequency() = default;
+
+  /**
+   * Construct an empty instance.  Its IsDefined() method will return
+   * false.
+   */
+  static constexpr RadioFrequency Null() {
+    return { 0 };
+  }
 
   bool IsDefined() const {
     return value != 0;

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,20 +21,16 @@ Copyright_License {
 }
 */
 
+#define ENABLE_SCREEN
+
+#include "Main.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
-#include "Screen/Init.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Timer.hpp"
-#include "Fonts.hpp"
-#include "Look/DialogLook.hpp"
+#include "Screen/Canvas.hpp"
 #include "Look/WindArrowLook.hpp"
 #include "Renderer/WindArrowRenderer.hpp"
 #include "Geo/SpeedVector.hpp"
-
-#ifdef USE_GDI
-#include "ResourceLoader.hpp"
-#endif
 
 class WindWindow : public PaintWindow
 {
@@ -43,7 +39,7 @@ class WindWindow : public PaintWindow
 
 public:
   WindWindow(const WindArrowLook &look)
-    :renderer(look), wind(fixed(10), fixed_zero) {}
+    :renderer(look), wind(fixed(10), fixed(0)) {}
 
   SpeedVector GetWind() const {
     return wind;
@@ -55,12 +51,10 @@ public:
   }
 
 protected:
-  void OnPaint(Canvas &canvas) {
+  virtual void OnPaint(Canvas &canvas) override {
     canvas.ClearWhite();
 
-    PixelRect rc = {
-      0, 0, (PixelScalar)canvas.get_width(), (PixelScalar)canvas.get_height()
-    };
+    const PixelRect rc = canvas.GetRect();
 
     RasterPoint pt = {
       (PixelScalar)(rc.right / 2), (PixelScalar)(rc.bottom / 2)
@@ -96,47 +90,26 @@ public:
     timer.Cancel();
   }
 
-
-#ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance) {
-    WNDCLASS wc;
-
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = Window::WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = NULL;
-    wc.lpszMenuName = 0;
-    wc.lpszClassName = _T("RunWindArrowRenderer");
-
-    return RegisterClass(&wc);
-  }
-#endif /* USE_GDI */
-
-  void Set(PixelRect _rc) {
+  void Create(PixelSize size) {
     TopWindowStyle style;
     style.Resizable();
 
-    SingleWindow::set(_T("RunWindArrowRenderer"), _T("RunWindArrowRenderer"),
-                      _rc, style);
+    SingleWindow::Create(_T("RunWindArrowRenderer"), size, style);
 
     const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();
 
-    wind.set(*this, rc.left, rc.top, rc.right, rc.bottom, with_border);
+    wind.Create(*this, rc, with_border);
 
     PixelRect button_rc = rc;
     button_rc.top = button_rc.bottom - 30;
-    close_button.set(*this, _T("Close"), ID_CLOSE, button_rc);
+    close_button.Create(*this, _T("Close"), ID_CLOSE, button_rc);
   }
 
 protected:
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -146,14 +119,14 @@ protected:
     return SingleWindow::OnCommand(id, code);
   }
 
-  virtual bool OnTimer(WindowTimer &_timer) {
+  virtual bool OnTimer(WindowTimer &_timer) override {
     if (_timer == timer) {
       SpeedVector _wind = wind.GetWind();
 
-      _wind.bearing = (_wind.bearing + Angle::Degrees(fixed(5))).AsBearing();
-      _wind.norm += fixed_one;
+      _wind.bearing = (_wind.bearing + Angle::Degrees(5)).AsBearing();
+      _wind.norm += fixed(1);
       if (_wind.norm > fixed(15))
-        _wind.norm = fixed_zero;
+        _wind.norm = fixed(0);
 
       wind.SetWind(_wind);
       return true;
@@ -162,44 +135,22 @@ protected:
     return SingleWindow::OnTimer(_timer);
   }
 
-  virtual void OnResize(UPixelScalar width, UPixelScalar height) {
-    SingleWindow::OnResize(width, height);
-    wind.Resize(width, height);
+  virtual void OnResize(PixelSize new_size) override {
+    SingleWindow::OnResize(new_size);
+    if (wind.IsDefined())
+      wind.Resize(new_size);
   }
 };
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
+static void
+Main()
 {
-  ScreenGlobalInit screen_init;
-
-#ifdef USE_GDI
-  ResourceLoader::Init(hInstance);
-  TestWindow::register_class(hInstance);
-#endif
-
-  Fonts::Initialize();
-
   WindArrowLook wind_look;
-  wind_look.Initialise();
+  wind_look.Initialise(bold_font);
 
   TestWindow window(wind_look);
-  window.Set(PixelRect{0, 0, 160, 160});
+  window.Create({160, 160});
 
   window.Show();
   window.RunEventLoop();
-
-  Fonts::Deinitialize();
-
-  return 0;
 }

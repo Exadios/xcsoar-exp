@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "Form/List.hpp"
 #include "Look/DialogLook.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/ContainerWindow.hpp"
 #include "Screen/Key.h"
 #include "Screen/Point.hpp"
@@ -39,9 +40,6 @@ Copyright_License {
 
 #include <algorithm>
 
-using std::min;
-using std::max;
-
 ListControl::ListControl(ContainerWindow &parent, const DialogLook &_look,
                          PixelRect rc, const WindowStyle style,
                          UPixelScalar _item_height)
@@ -51,15 +49,12 @@ ListControl::ListControl(ContainerWindow &parent, const DialogLook &_look,
    origin(0), pixel_pan(0),
    cursor(0),
    drag_mode(DragMode::NONE),
-   handler(NULL),
-   activate_callback(NULL),
-   cursor_callback(NULL),
-   paint_item_callback(NULL)
+   item_renderer(nullptr), cursor_handler(nullptr)
 #ifndef _WIN32_WCE
    , kinetic_timer(*this)
 #endif
 {
-  set(parent, rc, style);
+  Create(parent, rc, style);
 }
 
 bool
@@ -68,9 +63,8 @@ ListControl::CanActivateItem() const
   if (IsEmpty())
     return false;
 
-  return handler != NULL
-    ? handler->CanActivateItem(GetCursorIndex())
-    : activate_callback != NULL;
+  return cursor_handler != NULL &&
+    cursor_handler->CanActivateItem(GetCursorIndex());
 }
 
 void
@@ -80,10 +74,8 @@ ListControl::ActivateItem()
 
   unsigned index = GetCursorIndex();
   assert(index < GetLength());
-  if (handler != NULL)
-    handler->OnActivateItem(index);
-  else if (activate_callback != NULL)
-    activate_callback(index);
+  if (cursor_handler != NULL)
+    cursor_handler->OnActivateItem(index);
 }
 
 void
@@ -101,13 +93,13 @@ ListControl::show_or_hide_scroll_bar()
 }
 
 void
-ListControl::OnResize(UPixelScalar width, UPixelScalar height)
+ListControl::OnResize(PixelSize new_size)
 {
-  PaintWindow::OnResize(width, height);
+  PaintWindow::OnResize(new_size);
 
-  items_visible = height / item_height;
+  items_visible = new_size.cy / item_height;
 
-  if (height >= length * item_height) {
+  if (unsigned(new_size.cy) >= length * item_height) {
     /* after the resize, there is enough room for all list items -
        scroll back to the top */
     origin = pixel_pan = 0;
@@ -145,12 +137,12 @@ ListControl::DrawItems(Canvas &canvas, unsigned start, unsigned end) const
 
 #ifdef ENABLE_OPENGL
   /* enable clipping */
-  GLScissor scissor(OpenGL::translate_x,
-                    OpenGL::screen_height - OpenGL::translate_y - canvas.get_height() - 1,
-                    scroll_bar.GetLeft(GetSize()), canvas.get_height());
+  GLScissor scissor(OpenGL::translate.x,
+                    OpenGL::screen_height - OpenGL::translate.y - canvas.GetHeight() - 1,
+                    scroll_bar.GetLeft(GetSize()), canvas.GetHeight());
 #endif
 
-  unsigned last_item = min(length, end);
+  unsigned last_item = std::min(length, end);
 
   const bool focused = HasFocus();
 
@@ -165,19 +157,17 @@ ListControl::DrawItems(Canvas &canvas, unsigned start, unsigned end) const
 
     canvas.SetTextColor(look.list.GetTextColor(selected, focused, pressed));
 
-    if (handler != NULL)
-      handler->OnPaintItem(canvas, rc, i);
-    else
-      paint_item_callback(canvas, rc, i);
+    if (item_renderer != nullptr)
+      item_renderer->OnPaintItem(canvas, rc, i);
 
     if (focused && selected)
       canvas.DrawFocusRectangle(rc);
 
-    ::OffsetRect(&rc, 0, rc.bottom - rc.top);
+    rc.Offset(0, rc.bottom - rc.top);
   }
 
   /* paint the bottom part below the last item */
-  rc.bottom = canvas.get_height();
+  rc.bottom = canvas.GetHeight();
   if (rc.bottom > rc.top)
     canvas.DrawFilledRectangle(rc, look.list.background_color);
 }
@@ -185,7 +175,7 @@ ListControl::DrawItems(Canvas &canvas, unsigned start, unsigned end) const
 void
 ListControl::OnPaint(Canvas &canvas)
 {
-  if (handler != NULL || paint_item_callback != NULL)
+  if (item_renderer != nullptr)
     DrawItems(canvas, origin, origin + items_visible + 2);
 
   DrawScrollBar(canvas);
@@ -194,7 +184,7 @@ ListControl::OnPaint(Canvas &canvas)
 void
 ListControl::OnPaint(Canvas &canvas, const PixelRect &dirty)
 {
-  if (handler != NULL || paint_item_callback != NULL)
+  if (item_renderer != nullptr)
     DrawItems(canvas, origin + (dirty.top + pixel_pan) / item_height,
               origin + (dirty.bottom + pixel_pan + item_height - 1) / item_height);
 
@@ -281,10 +271,8 @@ ListControl::SetCursorIndex(unsigned i)
   cursor = i;
   Invalidate_item(cursor);
 
-  if (handler != NULL)
-    handler->OnCursorMoved(i);
-  else if (cursor_callback != NULL)
-    cursor_callback(i);
+  if (cursor_handler != nullptr)
+    cursor_handler->OnCursorMoved(i);
   return true;
 }
 
@@ -362,18 +350,18 @@ bool
 ListControl::OnKeyCheck(unsigned key_code) const
 {
   switch (key_code) {
-  case VK_RETURN:
+  case KEY_RETURN:
     return CanActivateItem();
 
-  case VK_LEFT:
+  case KEY_LEFT:
     if (!HasPointer())
-      /* no wrap-around on Altair, as VK_LEFT is usually used to
+      /* no wrap-around on Altair, as KEY_LEFT is usually used to
          switch to the previous dialog page */
       return true;
 
     return GetCursorIndex() > 0;
 
-  case VK_UP:
+  case KEY_UP:
     if (!HasPointer() && IsShort())
       /* no page up/down behaviour in short lists on Altair; this
          rotation knob should move focus */
@@ -381,15 +369,15 @@ ListControl::OnKeyCheck(unsigned key_code) const
 
     return GetCursorIndex() > 0;
 
-  case VK_RIGHT:
+  case KEY_RIGHT:
     if (!HasPointer())
-      /* no wrap-around on Altair, as VK_RIGHT is usually used to
+      /* no wrap-around on Altair, as KEY_RIGHT is usually used to
          switch to the next dialog page */
       return true;
 
     return GetCursorIndex() + 1 < length;
 
-  case VK_DOWN:
+  case KEY_DOWN:
     if (!HasPointer() && IsShort())
       /* no page up/down behaviour in short lists on Altair; this
          rotation knob should move focus */
@@ -414,16 +402,16 @@ ListControl::OnKeyDown(unsigned key_code)
   switch (key_code) {
 #ifdef GNAV
   // JMW added this to make data entry easier
-  case VK_APP4:
+  case KEY_APP4:
 #endif
-  case VK_RETURN:
+  case KEY_RETURN:
     if (CanActivateItem())
       ActivateItem();
     return true;
 
-  case VK_UP:
-  case VK_LEFT:
-    if (!HasPointer() ^ (key_code == VK_LEFT)) {
+  case KEY_UP:
+  case KEY_LEFT:
+    if (!HasPointer() ^ (key_code == KEY_LEFT)) {
       // page up
       MoveCursor(-(int)items_visible);
       return true;
@@ -436,9 +424,9 @@ ListControl::OnKeyDown(unsigned key_code)
       return true;
     }
 
-  case VK_DOWN:
-  case VK_RIGHT:
-    if (!HasPointer() ^ (key_code == VK_RIGHT)) {
+  case KEY_DOWN:
+  case KEY_RIGHT:
+    if (!HasPointer() ^ (key_code == KEY_RIGHT)) {
       // page down
       MoveCursor(items_visible);
       return true;
@@ -451,21 +439,21 @@ ListControl::OnKeyDown(unsigned key_code)
       return true;
     }
 
-  case VK_HOME:
+  case KEY_HOME:
     SetCursorIndex(0);
     return true;
 
-  case VK_END:
+  case KEY_END:
     if (length > 0) {
       SetCursorIndex(length - 1);
     }
     return true;
 
-  case VK_PRIOR:
+  case KEY_PRIOR:
     MoveCursor(-(int)items_visible);
     return true;
 
-  case VK_NEXT:
+  case KEY_NEXT:
     MoveCursor(items_visible);
     return true;
   }
@@ -632,7 +620,7 @@ ListControl::OnMouseWheel(PixelScalar x, PixelScalar y, int delta)
   return true;
 }
 
-bool
+void
 ListControl::OnCancelMode()
 {
   PaintWindow::OnCancelMode();
@@ -643,8 +631,6 @@ ListControl::OnCancelMode()
 #ifndef _WIN32_WCE
   kinetic_timer.Cancel();
 #endif
-
-  return false;
 }
 
 #ifndef _WIN32_WCE

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,8 +29,6 @@ Copyright_License {
 #include "Engine/Airspace/AbstractAirspace.hpp"
 #include "Engine/Airspace/Predicate/AirspacePredicate.hpp"
 #include "Engine/Airspace/AirspaceVisitor.hpp"
-#include "Engine/Airspace/AirspaceCircle.hpp"
-#include "Engine/Airspace/AirspacePolygon.hpp"
 #include "Computer/GlideComputer.hpp"
 #include "Util/Macros.hpp"
 
@@ -87,7 +85,7 @@ public:
     }
   }
 
-  virtual bool operator()(const AbstractAirspace &airspace) const {
+  virtual bool operator()(const AbstractAirspace &airspace) const override {
     return CheckAirspace(airspace) &&
       /* skip airspaces that we already entered */
       !airspace.Inside(location) &&
@@ -122,7 +120,7 @@ FindNearestHorizontalAirspace()
 }
 
 void
-InfoBoxContentNearestAirspaceHorizontal::Update(InfoBoxData &data)
+UpdateInfoBoxNearestAirspaceHorizontal(InfoBoxData &data)
 {
   NearestAirspace nearest = FindNearestHorizontalAirspace();
   if (!nearest.IsDefined()) {
@@ -135,7 +133,6 @@ InfoBoxContentNearestAirspaceHorizontal::Update(InfoBoxData &data)
 }
 
 class VerticalAirspaceVisitor : public AirspaceVisitor {
-  GeoPoint location;
   AltitudeState altitude;
 
   const AbstractAirspace *nearest;
@@ -144,8 +141,7 @@ class VerticalAirspaceVisitor : public AirspaceVisitor {
 public:
   VerticalAirspaceVisitor(const MoreData &basic,
                           const DerivedInfo &calculated)
-    :location(basic.location),
-     nearest(NULL), nearest_delta(100000) {
+    :nearest(NULL), nearest_delta(100000) {
     assert(basic.baro_altitude_available || basic.gps_altitude_available);
     altitude.altitude = basic.nav_altitude;
     altitude.altitude_agl = calculated.altitude_agl;
@@ -173,11 +169,7 @@ protected:
     }
   }
 
-  virtual void Visit(const AirspaceCircle &as) {
-    Check(as);
-  }
-
-  virtual void Visit(const AirspacePolygon &as) {
+  virtual void Visit(const AbstractAirspace &as) override {
     Check(as);
   }
 
@@ -212,7 +204,7 @@ FindNearestVerticalAirspace()
 }
 
 void
-InfoBoxContentNearestAirspaceVertical::Update(InfoBoxData &data)
+UpdateInfoBoxNearestAirspaceVertical(InfoBoxData &data)
 {
   NearestAirspace nearest = FindNearestVerticalAirspace();
   if (!nearest.IsDefined()) {

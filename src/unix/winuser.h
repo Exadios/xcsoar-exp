@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,60 +37,5 @@ enum {
   DT_RIGHT = 0x100,
   DT_CALCRECT = 0x400,
 };
-
-static inline void
-SetRect(PixelRect *rc, PixelScalar left, PixelScalar top,
-        PixelScalar right, PixelScalar bottom)
-{
-  rc->left = left;
-  rc->top = top;
-  rc->right = right;
-  rc->bottom = bottom;
-}
-
-static inline void
-SetRectEmpty(PixelRect *rc)
-{
-  rc->left = 0;
-  rc->top = 0;
-  rc->right = 0;
-  rc->bottom = 0;
-}
-
-static inline void
-InflateRect(PixelRect *rc, PixelScalar dx, PixelScalar dy)
-{
-  rc->left -= dx;
-  rc->top -= dy;
-  rc->right += dx;
-  rc->bottom += dy;
-}
-
-static inline void
-OffsetRect(PixelRect *rc, PixelScalar dx, PixelScalar dy)
-{
-  rc->left += dx;
-  rc->top += dy;
-  rc->right += dx;
-  rc->bottom += dy;
-}
-
-static inline bool
-PtInRect(const PixelRect *rc, const RasterPoint &pt)
-{
-  return pt.x >= rc->left && pt.x < rc->right &&
-    pt.y >= rc->top && pt.y < rc->bottom;
-}
-
-static inline bool
-IntersectRect(PixelRect *dest, const PixelRect *a, const PixelRect *b)
-{
-  dest->left = a->left < b->left ? a->left : b->left;
-  dest->top = a->top < b->top ? a->top : b->top;
-  dest->right = a->right > b->right ? a->right : b->right;
-  dest->bottom = a->bottom > b->bottom ? a->bottom : b->bottom;
-
-  return dest->left < dest->right && dest->top < dest->bottom;
-}
 
 #endif

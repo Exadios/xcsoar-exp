@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -73,10 +73,6 @@ abstract class AbstractAndroidPort implements AndroidPort {
   }
 
   public void close() {
-    /* clear the listener to allow reusing this object (e.g. by
-       IOIOHelper) */
-    listener = null;
-
     InputThread i = stealInput();
     if (i != null)
       i.close();
@@ -86,9 +82,11 @@ abstract class AbstractAndroidPort implements AndroidPort {
       o.close();
   }
 
-  @Override public final boolean isValid() {
+  @Override public int getState() {
     InputThread i = input;
-    return i != null && i.isValid();
+    return i != null && i.isValid()
+      ? STATE_READY
+      : STATE_FAILED;
   }
 
   public final boolean drain() {

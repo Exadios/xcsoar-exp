@@ -1,5 +1,8 @@
 LINK = $(CXX)
 
+ld-flags = $(ALL_LDFLAGS) $(TARGET_ARCH)
+ld-libs = $(ALL_LDLIBS)
+
 # Generates a program linking rule.
 #
 # Example: $(eval $(call link-program,Foo,FOO))
@@ -69,23 +72,28 @@ $$($(2)_NOSTRIP).bc: $$($(2)_OBJS) $$($(2)_LDADD) | $$(TARGET_BIN_DIR)/dirstamp
 # Optimise the large bitcode file
 $$($(2)_NOSTRIP)-opt.bc: $$($(2)_NOSTRIP).bc
 	@$$(NQ)echo "  OPT     $$@"
-	$$(Q)opt -o $$@ $$^ -std-compile-opts -std-link-opts -O2
+	$$(Q)opt -o $$@ $$^ -std-compile-opts -std-link-opts -O2 $(TARGET_LLVM_FLAGS)
 
 # Compile to native CPU assembly
 $$($(2)_NOSTRIP).s: $$($(2)_NOSTRIP)-opt.bc
 	@$$(NQ)echo "  LLC     $$@"
-	$$(Q)llc -o $$@ $$^ -O2
+	$$(Q)llc -o $$@ $$^ -O2 $(TARGET_LLVM_FLAGS)
+
+# Assemble to native CPU object
+$$($(2)_NOSTRIP).o: $$($(2)_NOSTRIP).s
+	@$$(NQ)echo "  AS      $$@"
+	$$(Q)$(AS) -o $$@ $$^
 
 # Link the unstripped binary
-$$($(2)_NOSTRIP): $$($(2)_NOSTRIP).s $$(TARGET_LDADD)
+$$($(2)_NOSTRIP): $$($(2)_NOSTRIP).o $$(TARGET_LDADD)
 	@$$(NQ)echo "  CLANG   $$@"
-	$$(Q)$$(LINK) $$(LDFLAGS) -o $$@ $$^ $$(LDLIBS) $$($(2)_LDLIBS)
+	$$(Q)$$(LINK) $$(ld-flags) -o $$@ $$^ $$(ld-libs) $$($(2)_LDLIBS)
 else
 
 # Link the unstripped binary
 $$($(2)_NOSTRIP): $$($(2)_OBJS) $$($(2)_LDADD) $$(TARGET_LDADD) | $$(TARGET_BIN_DIR)/dirstamp
 	@$$(NQ)echo "  LINK    $$@"
-	$$(Q)$$(LINK) $$(LDFLAGS) $$(TARGET_ARCH) -o $$@ $$^ $$(LDLIBS) $$($(2)_LDLIBS)
+	$$(Q)$$(LINK) $$(ld-flags) -o $$@ $$^ $$(ld-libs) $$($(2)_LDLIBS)
 
 endif
 
@@ -151,7 +159,7 @@ $$($(2)_NOSTRIP): LDFLAGS += -nostdlib
 endif
 $$($(2)_NOSTRIP): $$($(2)_OBJS) $$($(2)_LDADD) $$(TARGET_LDADD) | $$(TARGET_BIN_DIR)/dirstamp
 	@$$(NQ)echo "  LINK    $$@"
-	$$(Q)$$(LINK) $$(LDFLAGS) $$(TARGET_ARCH) -o $$@ $$^ $$(LDLIBS) $$($(2)_LDLIBS)
+	$$(Q)$$(LINK) $$(ld-flags) -o $$@ $$^ $$(ld-libs) $$($(2)_LDLIBS)
 
 # Strip the binary (optional)
 ifeq ($$($(2)_STRIP),y)
@@ -178,8 +186,8 @@ endif
 
 # Compile
 $(2)_OBJS = $$(call SRC_TO_OBJ,$$($(2)_SOURCES))
-$$($(2)_OBJS): CFLAGS += $$($(2)_CFLAGS)
-$$($(2)_OBJS): CXXFLAGS += $$($(2)_CXXFLAGS)
+$$($(2)_OBJS): CFLAGS += $$($(2)_CFLAGS) $$($(2)_CFLAGS_INTERNAL)
+$$($(2)_OBJS): CXXFLAGS += $$($(2)_CXXFLAGS) $$($(2)_CXXFLAGS_INTERNAL)
 $$($(2)_OBJS): CPPFLAGS += $$($(2)_CPPFLAGS) $$($(2)_CPPFLAGS_INTERNAL)
 $$($(2)_OBJS): CPPFLAGS += $(patsubst %,$$(%_CPPFLAGS),$($(2)_DEPENDS))
 

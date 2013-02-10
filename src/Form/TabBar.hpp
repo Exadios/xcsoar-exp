@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,11 @@ Copyright_License {
 #define XCSOAR_FORM_TABBAR_HPP
 
 #include "Screen/ContainerWindow.hpp"
-#include "PagerWidget.hpp"
+#include "Widget/PagerWidget.hpp"
+
+#include <functional>
+
+#include <tchar.h>
 
 struct DialogLook;
 class Bitmap;
@@ -41,13 +45,11 @@ class TabButton;
  * ToDo: support lazy loading
  */
 class TabBarControl : public ContainerWindow {
-  typedef void (*PageFlippedCallback)();
+  typedef std::function<void()> PageFlippedCallback;
 
   PagerWidget pager;
 
   TabDisplay * tab_display;
-  const UPixelScalar tab_line_height;
-  bool flip_orientation;
 
   PageFlippedCallback page_flipped_callback;
 
@@ -55,33 +57,33 @@ public:
   /**
    * Constructor used for stand-alone TabBarControl
    * @param parent
-   * @param x, y Location of the tab bar (unused)
-   * @param width, height.  Size of the tab bar
    * @param style
    * @return
    */
   TabBarControl(ContainerWindow &parent, const DialogLook &look,
-                PixelScalar x, PixelScalar y,
-                UPixelScalar width, UPixelScalar height,
-                const WindowStyle style = WindowStyle(),
-                bool _flipOrientation = false);
+                PixelRect tab_rc,
+                const WindowStyle style,
+                bool vertical);
 
   ~TabBarControl();
 
   void SetPageFlippedCallback(PageFlippedCallback _page_flipped_callback) {
-    assert(page_flipped_callback == NULL);
-    assert(_page_flipped_callback != NULL);
+    assert(!page_flipped_callback);
+    assert(_page_flipped_callback);
 
     page_flipped_callback = _page_flipped_callback;
   }
-
-private:
-  static constexpr unsigned TabLineHeightInitUnscaled = 5;
 
 public:
   unsigned AddTab(Widget *widget, const TCHAR *caption, const Bitmap *bmp = NULL);
 
 public:
+  gcc_pure
+  PixelSize GetMinimumSize() const;
+
+  gcc_pure
+  PixelSize GetMaximumSize() const;
+
   gcc_pure
   unsigned GetTabCount() const {
     return pager.GetSize();
@@ -107,22 +109,21 @@ public:
     return pager.Save(changed, require_restart);
   }
 
-  gcc_pure
-  UPixelScalar GetTabHeight() const;
-
-  gcc_pure
-  UPixelScalar GetTabWidth() const;
+  const PixelRect &GetPagerPosition() const {
+    return pager.GetPosition();
+  }
 
   gcc_pure
   const TCHAR *GetButtonCaption(unsigned i) const;
 
-  UPixelScalar GetTabLineHeight() const {
-    return tab_line_height;
-  }
-
 protected:
-  virtual void OnCreate();
-  virtual void OnDestroy();
+  virtual void OnCreate() override;
+  virtual void OnDestroy() override;
+  virtual void OnResize(PixelSize new_size) override;
+
+#ifdef HAVE_CLIPPING
+  virtual void OnPaint(Canvas &canvas) override;
+#endif
 };
 
 #endif

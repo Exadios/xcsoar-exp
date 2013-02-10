@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,8 @@ Copyright_License {
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Protection.hpp"
 #include "NMEA/MoreData.hpp"
+#include "Audio/VarioGlue.hpp"
+#include "Device/All.hpp"
 
 MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
   :WorkerThread(150, 50, 20),
@@ -47,7 +49,7 @@ MergeThread::Process()
 
   computer.Fill(device_blackboard.SetMoreData(), settings_computer);
   computer.Compute(device_blackboard.SetMoreData(), last_any, last_fix,
-                   device_blackboard.Calculated(), settings_computer);
+                   device_blackboard.Calculated());
 
   flarm_computer.Process(device_blackboard.SetBasic().flarm,
                          last_fix.flarm, basic);
@@ -56,30 +58,59 @@ MergeThread::Process()
 void
 MergeThread::Tick()
 {
-  ScopeLock protect(device_blackboard.mutex);
+  bool gps_updated, calculated_updated;
 
-  Process();
+#ifdef HAVE_PCM_PLAYER
+  bool vario_available;
+  fixed vario;
+#endif
 
-  const MoreData &basic = device_blackboard.Basic();
-  if (last_any.location_available != basic.location_available)
-    // trigger update if gps has become available or dropped out
-    TriggerGPSUpdate();
+  {
+    ScopeLock protect(device_blackboard.mutex);
 
-  if ((bool)last_any.alive != (bool)basic.alive ||
-      (bool)last_any.location_available != (bool)basic.location_available)
+    Process();
+
+    const MoreData &basic = device_blackboard.Basic();
+
+    /* call Driver::OnSensorUpdate() on all devices */
+    AllDevicesNotifySensorUpdate(basic);
+
+    /* trigger update if gps has become available or dropped out */
+    gps_updated = last_any.location_available != basic.location_available;
+
     /* trigger a redraw when the connection was just lost, to show the
        new state; when no GPS is connected, no other entity triggers
        the redraw, so we have to do it */
+    calculated_updated = (bool)last_any.alive != (bool)basic.alive ||
+      (bool)last_any.location_available != (bool)basic.location_available;
+
+#ifdef HAVE_PCM_PLAYER
+    vario_available = basic.brutto_vario_available;
+    vario = vario_available ? basic.brutto_vario : fixed(0);
+#endif
+
+    /* update last_any in every iteration */
+    last_any = basic;
+
+    /* update last_fix only when a new GPS fix was received */
+    if ((basic.time_available &&
+         (!last_fix.time_available || basic.time != last_fix.time)) ||
+        basic.location_available != last_fix.location_available)
+      last_fix = basic;
+  }
+
+#ifdef HAVE_PCM_PLAYER
+  if (vario_available)
+    AudioVarioGlue::SetValue(vario);
+  else
+    AudioVarioGlue::NoValue();
+#endif
+
+  if (gps_updated)
+    TriggerGPSUpdate();
+
+  if (calculated_updated)
     TriggerCalculatedUpdate();
 
   TriggerVarioUpdate();
-
-  /* update last_any in every iteration */
-  last_any = basic;
-
-  /* update last_fix only when a new GPS fix was received */
-  if ((basic.time_available &&
-       (!last_fix.time_available || basic.time != last_fix.time)) ||
-      basic.location_available != last_fix.location_available)
-    last_fix = basic;
 }

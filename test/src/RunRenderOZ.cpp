@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,12 +27,12 @@ Copyright_License {
  *
  */
 
+#define ENABLE_DIALOG_LOOK
+
+#include "Main.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
 #include "Screen/BufferCanvas.hpp"
-#include "Screen/Init.hpp"
-#include "Fonts.hpp"
-#include "Look/DialogLook.hpp"
 #include "Look/AirspaceLook.hpp"
 #include "Look/TaskLook.hpp"
 #include "Form/List.hpp"
@@ -48,7 +48,6 @@ Copyright_License {
 #include "Engine/Task/ObservationZones/Boundary.hpp"
 #include "Projection/Projection.hpp"
 #include "Renderer/AirspaceRendererSettings.hpp"
-#include "ResourceLoader.hpp"
 
 enum {
   NUM_OZ_TYPES = 9,
@@ -66,14 +65,14 @@ static const TCHAR *const oz_type_names[NUM_OZ_TYPES] = {
   _T("Annular sector"),
 };
 
-static GeoPoint location(Angle::Degrees(fixed(7.7061111111111114)),
-                         Angle::Degrees(fixed(51.051944444444445)));
+static GeoPoint location(Angle::Degrees(7.7061111111111114),
+                         Angle::Degrees(51.051944444444445));
 
-static GeoPoint previous(Angle::Degrees(fixed(10.6)),
-                         Angle::Degrees(fixed(49)));
+static GeoPoint previous(Angle::Degrees(10.6),
+                         Angle::Degrees(49));
 
-static GeoPoint next(Angle::Degrees(fixed(10.2)),
-                     Angle::Degrees(fixed(51.4)));
+static GeoPoint next(Angle::Degrees(10.2),
+                     Angle::Degrees(51.4));
 
 static AirspaceRendererSettings airspace_renderer_settings;
 
@@ -94,7 +93,7 @@ public:
   }
 
   void set_shape(ObservationZonePoint::Shape shape) {
-    if (oz != NULL && shape == oz->shape)
+    if (oz != NULL && shape == oz->GetShape())
       return;
 
     delete oz;
@@ -113,15 +112,13 @@ public:
 
     case ObservationZonePoint::SECTOR:
       oz = new SectorZone(location, radius,
-                          Angle::Degrees(fixed(0)),
-                          Angle::Degrees(fixed(70)));
+                          Angle::Degrees(0), Angle::Degrees(70));
       break;
 
     case ObservationZonePoint::ANNULAR_SECTOR:
       oz = new AnnularSectorZone(location, radius,
-                                 Angle::Degrees(fixed(0)),
-                                 Angle::Degrees(fixed(70)),
-                                 radius*fixed_half);
+                                 Angle::Degrees(0), Angle::Degrees(70),
+                                 Half(radius));
       break;
 
     case ObservationZonePoint::FAI_SECTOR:
@@ -146,18 +143,19 @@ public:
     }
 
     if (oz != NULL)
-      oz->SetLegs(&previous, &location, &next);
+      oz->SetLegs(&previous, &next);
 
-    Invalidate();
+    if (IsDefined())
+      Invalidate();
   }
 
 protected:
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnPaint(Canvas &canvas) override;
 
-  virtual void OnResize(UPixelScalar width, UPixelScalar height) {
-    PaintWindow::OnResize(width, height);
-    projection.SetScale(fixed(width) / 21000);
-    projection.SetScreenOrigin(width / 2, height / 2);
+  virtual void OnResize(PixelSize new_size) override {
+    PaintWindow::OnResize(new_size);
+    projection.SetScale(fixed(new_size.cx) / 21000);
+    projection.SetScreenOrigin(new_size.cx / 2, new_size.cy / 2);
   }
 };
 
@@ -185,25 +183,8 @@ OZWindow::OnPaint(Canvas &canvas)
   }
 }
 
-static void
-paint_oz_type_name(Canvas &canvas, const PixelRect rc, unsigned idx)
-{
-  assert(idx < NUM_OZ_TYPES);
-
-  canvas.text(rc.left + 2, rc.top + 2, oz_type_names[idx]);
-}
-
-static OZWindow *oz_window;
-
-static void
-oz_type_cursor_callback(unsigned idx)
-{
-  assert(idx < NUM_OZ_TYPES);
-
-  oz_window->set_shape((ObservationZonePoint::Shape)idx);
-}
-
-class TestWindow : public SingleWindow {
+class TestWindow : public SingleWindow,
+                   ListItemRenderer, ListCursorHandler {
   ButtonWindow close_button;
   ListControl *type_list;
   OZWindow oz;
@@ -220,51 +201,31 @@ public:
     delete type_list;
   }
 
-#ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance) {
-    WNDCLASS wc;
-
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = Window::WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = NULL;
-    wc.lpszMenuName = 0;
-    wc.lpszClassName = _T("RunRenderOZ");
-
-    return RegisterClass(&wc);
-  }
-#endif /* USE_GDI */
-
-  void set(const DialogLook &look, PixelRect _rc) {
-    SingleWindow::set(_T("RunRenderOZ"), _T("RunRenderOZ"), _rc);
+  void Create(const DialogLook &look, PixelSize size) {
+    SingleWindow::Create(_T("RunRenderOZ"), size);
 
     const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();
 
-    oz.set(*this, rc.right / 2, 0, rc.right - (rc.right / 2), rc.bottom,
-           with_border);
-    oz_window = &oz;
+    PixelRect oz_rc = rc;
+    oz_rc.left = oz_rc.right / 2;
+    oz.Create(*this, oz_rc, with_border);
 
-    const PixelRect list_rc = {
-      0, 0, PixelScalar(rc.right / 2), PixelScalar(rc.bottom - 30),
-    };
+    const PixelRect list_rc(0, 0, rc.right / 2, rc.bottom - 30);
 
     type_list = new ListControl(*this, look, list_rc,
                                 with_border, 25);
-    type_list->SetPaintItemCallback(paint_oz_type_name);
-    type_list->SetCursorCallback(oz_type_cursor_callback);
+
+    type_list->SetItemRenderer(this);
+    type_list->SetCursorHandler(this);
     type_list->SetLength(NUM_OZ_TYPES);
 
     PixelRect button_rc = rc;
     button_rc.right = (rc.left + rc.right) / 2;
     button_rc.top = button_rc.bottom - 30;
-    close_button.set(*this, _T("Close"), ID_CLOSE, button_rc);
+    close_button.Create(*this, _T("Close"), ID_CLOSE, button_rc);
 
     oz.set_shape(ObservationZonePoint::LINE);
 
@@ -272,7 +233,7 @@ public:
   }
 
 protected:
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -281,33 +242,25 @@ protected:
 
     return SingleWindow::OnCommand(id, code);
   }
+
+  /* virtual methods from ListItemRenderer */
+  virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
+                           unsigned idx) override {
+    canvas.DrawText(rc.left + 2, rc.top + 2, oz_type_names[idx]);
+  }
+
+  /* virtual methods from ListCursorHandler */
+  virtual void OnCursorMoved(unsigned idx) override {
+    assert(idx < NUM_OZ_TYPES);
+
+    oz.set_shape((ObservationZonePoint::Shape)idx);
+  }
 };
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
+static void
+Main()
 {
-  ScreenGlobalInit screen_init;
-
   airspace_renderer_settings.SetDefaults();
-
-#ifdef USE_GDI
-  ResourceLoader::Init(hInstance);
-  TestWindow::register_class(hInstance);
-#endif
-
-  InitialiseFonts();
-  DialogLook *look = new DialogLook();
-  look->Initialise(bold_font, normal_font, small_font, bold_font, bold_font);
 
   TaskLook *task_look = new TaskLook();
   task_look->Initialise();
@@ -316,15 +269,11 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   airspace_look->Initialise(airspace_renderer_settings);
 
   TestWindow window(*task_look, *airspace_look);
-  window.set(*look, PixelRect{0, 0, 480, 480});
+  window.Create(*dialog_look, {480, 480});
 
   window.Show();
   window.RunEventLoop();
 
   delete airspace_look;
   delete task_look;
-  delete look;
-  DeinitialiseFonts();
-
-  return 0;
 }

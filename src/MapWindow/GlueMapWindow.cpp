@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,13 +27,20 @@ Copyright_License {
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Look/Look.hpp"
 #include "Interface.hpp"
+#include "Time/PeriodClock.hpp"
+#include "Event/Idle.hpp"
 
 GlueMapWindow::GlueMapWindow(const Look &look)
   :MapWindow(look.map, look.traffic),
    logger(NULL),
-   idle_robin(2),
+   idle_robin(-1),
    drag_mode(DRAG_NONE),
    ignore_single_click(false),
+#ifdef ENABLE_OPENGL
+   kinetic_x(700),
+   kinetic_y(700),
+   kinetic_timer(*this),
+#endif
    arm_mapitem_list(false),
    last_display_mode(DisplayMode::NONE),
    thermal_band_renderer(look.thermal_band, look.chart),
@@ -44,9 +51,9 @@ GlueMapWindow::GlueMapWindow(const Look &look)
 }
 
 void
-GlueMapWindow::set(ContainerWindow &parent, const PixelRect &rc)
+GlueMapWindow::Create(ContainerWindow &parent, const PixelRect &rc)
 {
-  MapWindow::set(parent, rc);
+  MapWindow::Create(parent, rc);
 
   visible_projection.SetScale(CommonInterface::GetMapSettings().cruise_scale);
 }
@@ -173,12 +180,24 @@ GlueMapWindow::QuickRedraw()
 bool
 GlueMapWindow::Idle()
 {
+  if (idle_robin == unsigned(-1)) {
+    /* draw the first frame as quickly as possible, so the user can
+       start interacting with XCSoar immediately */
+    idle_robin = 2;
+    return true;
+  }
+
+  if (!IsUserIdle(2500))
+    /* don't hold back the UI thread while the user is interacting */
+    return true;
+
+  PeriodClock clock;
+  clock.Update();
+
   bool still_dirty;
   bool topography_dirty = true; /* scan topography in every Idle() call */
   bool terrain_dirty = true;
   bool weather_dirty = true;
-
-  // StartTimer();
 
   do {
     idle_robin = (idle_robin + 1) % 3;
@@ -197,10 +216,11 @@ GlueMapWindow::Idle()
     }
 
     still_dirty = terrain_dirty || topography_dirty || weather_dirty;
-  } while (RenderTimeAvailable() &&
+  } while (!clock.Check(700) && /* stop after 700ms */
 #ifndef ENABLE_OPENGL
            !draw_thread->IsTriggered() &&
 #endif
+           IsUserIdle(2500) &&
            still_dirty);
 
   return still_dirty;

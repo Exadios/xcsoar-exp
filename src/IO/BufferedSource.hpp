@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,13 +37,13 @@ public:
   BufferedSource():position(0) {}
 
 protected:
-  virtual unsigned read(T *p, unsigned n) = 0;
+  virtual unsigned Read(T *p, unsigned n) = 0;
 
 public:
-  virtual typename Source<T>::Range read() {
+  virtual typename Source<T>::Range Read() override {
     auto r = buffer.Write();
     if (!r.IsEmpty()) {
-      unsigned n = read(r.data, r.length);
+      unsigned n = Read(r.data, r.length);
       buffer.Append(n);
     }
 
@@ -51,12 +51,12 @@ public:
     return typename Source<T>::Range(r.data, r.length);
   }
 
-  virtual void consume(unsigned n) {
+  virtual void Consume(unsigned n) override {
     buffer.Consume(n);
     position += n;
   }
 
-  virtual long tell() const {
+  virtual long Tell() const override {
     return position;
   }
 };

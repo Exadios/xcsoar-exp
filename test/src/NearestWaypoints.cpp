@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -62,14 +62,14 @@ ParseGeopoint(const char *line, GeoPoint &location)
   if (line == endptr)
     return false;
 
-  location.latitude = Angle::Degrees(fixed(value));
+  location.latitude = Angle::Degrees(value);
   line = endptr;
 
   value = strtod(line, &endptr);
   if (line == endptr)
     return false;
 
-  location.longitude = Angle::Degrees(fixed(value));
+  location.longitude = Angle::Degrees(value);
 
   return true;
 }
@@ -102,7 +102,7 @@ static const Waypoint *
 GetNearestWaypoint(const GeoPoint &location, const Waypoints &waypoints,
                    fixed range, WaypointType type)
 {
-  std::function<bool(const Waypoint &)> predicate;
+  bool (*predicate)(const Waypoint &);
   switch (type) {
   case WaypointType::AIRPORT:
     predicate = IsAirport;
@@ -134,7 +134,7 @@ PrintWaypoint(const Waypoint *waypoint)
 int main(int argc, char **argv)
 {
   WaypointType type = WaypointType::ALL;
-  fixed range = fixed_int_constant(100000);
+  fixed range = fixed(100000);
 
   Args args(argc, argv,
             "PATH\n\nPATH is expected to be any compatible waypoint file.\n"

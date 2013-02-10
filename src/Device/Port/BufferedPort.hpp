@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -78,15 +78,15 @@ protected:
 
 public:
   /* virtual methods from class Port */
-  virtual void Flush();
-  virtual int Read(void *Buffer, size_t Size);
-  virtual WaitResult WaitRead(unsigned timeout_ms);
-  virtual bool StopRxThread();
-  virtual bool StartRxThread();
+  virtual void Flush() override;
+  virtual int Read(void *Buffer, size_t Size) override;
+  virtual WaitResult WaitRead(unsigned timeout_ms) override;
+  virtual bool StopRxThread() override;
+  virtual bool StartRxThread() override;
 
 protected:
   /* virtual methods from class DataHandler */
-  virtual void DataReceived(const void *data, size_t length);
+  virtual void DataReceived(const void *data, size_t length) override;
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -65,12 +65,19 @@ DeviceConfigOverlaps(const DeviceConfig &a, const DeviceConfig &b)
     return (b.port_type == DeviceConfig::PortType::IOIOUART) &&
       a.ioio_uart_id == b.ioio_uart_id;
 
+  case DeviceConfig::PortType::I2CPRESSURESENSOR:
+    return b.port_type == DeviceConfig::PortType::I2CPRESSURESENSOR &&
+      a.i2c_bus == b.i2c_bus && a.i2c_addr == b.i2c_addr;
+
   case DeviceConfig::PortType::DISABLED:
   case DeviceConfig::PortType::AUTO:
   case DeviceConfig::PortType::INTERNAL:
+  case DeviceConfig::PortType::DROIDSOAR_V2:
   case DeviceConfig::PortType::TCP_LISTENER:
   case DeviceConfig::PortType::UDP_LISTENER:
   case DeviceConfig::PortType::RFCOMM_SERVER:
+  case DeviceConfig::PortType::NUNCHUCK: // Who wants 2 nunchucks ??
+  case DeviceConfig::PortType::IOIOVOLTAGE:
     break;
   }
 
@@ -80,7 +87,7 @@ DeviceConfigOverlaps(const DeviceConfig &a, const DeviceConfig &b)
 void
 devStartup()
 {
-  LogStartUp(_T("Register serial devices"));
+  LogFormat("Register serial devices");
 
   const SystemSettings &settings = CommonInterface::GetSystemSettings();
 
@@ -113,7 +120,7 @@ devStartup()
 #ifdef ANDROID
     /* fall back to built-in GPS when no configured device is
        available on this platform */
-    LogStartUp(_T("Falling back to built-in GPS"));
+    LogFormat("Falling back to built-in GPS");
 
     DeviceConfig config;
     config.Clear();
@@ -139,7 +146,7 @@ HaveCondorDevice()
 void
 VarioWriteNMEA(const TCHAR *text, OperationEnvironment &env)
 {
-  for (int i = 0; i < NUMDEV; i++)
+  for (unsigned i = 0; i < NUMDEV; i++)
     if (device_list[i]->IsVega())
       device_list[i]->WriteNMEA(text, env);
 }
@@ -147,7 +154,7 @@ VarioWriteNMEA(const TCHAR *text, OperationEnvironment &env)
 DeviceDescriptor *
 devVarioFindVega()
 {
-  for (int i = 0; i < NUMDEV; i++)
+  for (unsigned i = 0; i < NUMDEV; i++)
     if (device_list[i]->IsVega())
       return device_list[i];
 
@@ -157,12 +164,10 @@ devVarioFindVega()
 void
 devShutdown()
 {
-  int i;
-
   // Stop COM devices
-  LogStartUp(_T("Stop COM devices"));
+  LogFormat("Stop COM devices");
 
-  for (i = 0; i < NUMDEV; i++) {
+  for (unsigned i = 0; i < NUMDEV; i++) {
     device_list[i]->Close();
   }
 }
@@ -170,7 +175,7 @@ devShutdown()
 void
 devRestart()
 {
-  LogStartUp(_T("RestartCommPorts"));
+  LogFormat("RestartCommPorts");
 
   devShutdown();
 

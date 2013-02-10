@@ -1,12 +1,12 @@
 /******************************************************************************
- * $Id: mapstring.c 11396 2011-03-30 19:57:35Z sdlime $
+ * $Id$
  *
  * Project:  MapServer
  * Purpose:  Various string handling functions.
  * Author:   Steve Lime and the MapServer team.
  *
  * Notes: A couple of string handling functions (strrstr, strlcat) were taken from
- * other sources. Copyright notices accompany those functions below. 
+ * other sources. Copyright notices accompany those functions below.
  *
  ******************************************************************************
  * Copyright (c) 1996-2005 Regents of the University of Minnesota.
@@ -19,7 +19,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -33,10 +33,9 @@
 
 #include "mapserver.h"
 
+MS_CVSID("$Id$")
+
 #include <stdio.h>
-
-MS_CVSID("$Id: mapstring.c 11396 2011-03-30 19:57:35Z sdlime $")
-
 #include <ctype.h>
 #include <string.h>
 
@@ -66,7 +65,7 @@ MS_CVSID("$Id: mapstring.c 11396 2011-03-30 19:57:35Z sdlime $")
 #endif /* SHAPELIB_DISABLED */
 
 #ifdef NEED_STRRSTR
-/* 
+/*
 ** Copyright (c) 2000-2004  University of Illinois Board of Trustees
 ** Copyright (c) 2000-2005  Mark D. Roth
 ** All rights reserved.
@@ -81,14 +80,14 @@ MS_CVSID("$Id: mapstring.c 11396 2011-03-30 19:57:35Z sdlime $")
 ** distribute, sublicense, and/or sell copies of the Software, and to
 ** permit persons to whom the Software is furnished to do so, subject to
 ** the following conditions:
-** 
+**
 ** * Redistributions of source code must retain the above copyright
 **   notice, this list of conditions and the following disclaimers.
 **
 ** * Redistributions in binary form must reproduce the above copyright
 **   notice, this list of conditions and the following disclaimers in the
 **   documentation and/or other materials provided with the distribution.
-** 
+**
 ** * Neither the names of Campus Information Technologies and Educational
 **   Services, University of Illinois at Urbana-Champaign, nor the names
 **   of its contributors may be used to endorse or promote products derived
@@ -311,7 +310,7 @@ int strncasecmp(const char *s1, const char *s2, int len)
   if ((!*cp1) || (!*cp2 )) {
     return (0);
   }
-  while(*cp1 && *cp2 && len) 
+  while(*cp1 && *cp2 && len)
   {
       if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
         return(cmp);
@@ -319,7 +318,7 @@ int strncasecmp(const char *s1, const char *s2, int len)
       cp2++;
       len--;
   }
-  
+
   if(len == 0) {
     return(0);
   }
@@ -345,7 +344,7 @@ int strcasecmp(const char *s1, const char *s2)
   if ((!cp1) || (!cp2 )) {
     return (0);
   }
-  while(*cp1 && *cp2) 
+  while(*cp1 && *cp2)
   {
      if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
         return(cmp);
@@ -415,7 +414,7 @@ void msStringToLower(char *string) {
   }
 }
 
-char *msStringChop(char *string) {  
+char *msStringChop(char *string) {
   int n;
 
   n = strlen(string);
@@ -446,9 +445,9 @@ void msStringTrim(char *str)
     }
     /* Null-terminate end of non-white string. */
     for(i=strlen(str)-1; i>=0; i--) { /* step backwards from end */
-        if(str[i] != ' ') { 
-	        str[i+1] = '\0'; 
-	        return; 
+        if(str[i] != ' ') {
+	        str[i+1] = '\0';
+	        return;
         }
     }
     return;
@@ -489,7 +488,7 @@ char *msStringTrimLeft(char *string)
     }
     return string;
 }
-    
+
 /* ------------------------------------------------------------------------------- */
 /*       Trims trailing blanks from a string                                        */
 /* ------------------------------------------------------------------------------- */
@@ -499,9 +498,9 @@ void msStringTrimBlanks(char *string)
 
    n = strlen(string);
    for(i=n-1;i>=0;i--) { /* step backwards through the string */
-      if(string[i] != ' ') { 
-	string[i+1] = '\0'; 
-	return; 
+      if(string[i] != ' ') {
+	string[i+1] = '\0';
+	return;
       }
    }
 }
@@ -598,7 +597,7 @@ void msReplaceChar(char *str, char old, char new) {
 /*
 ** how many times does ch occur in str
 */
-int msCountChars(char *str, char ch) 
+int msCountChars(char *str, char ch)
 {
   int i, l, n=0;
 
@@ -630,14 +629,14 @@ char *msGetPath(char *fn)
 {
   char *str;
   int i, length;
-  
+
   length = strlen(fn);
   if((str = msStrdup(fn)) == NULL)
     return(NULL);
-  
+
   for(i=length-1; i>=0; i--) { /* step backwards through the string */
-    if((str[i] == '/') || (str[i] == '\\')) { 
-      str[i+1] = '\0'; 
+    if((str[i] == '/') || (str[i] == '\\')) {
+      str[i+1] = '\0';
       break;
     }
   }
@@ -645,11 +644,11 @@ char *msGetPath(char *fn)
   if(strcmp(str, fn) == 0)
   {
     msFree(str);
-#if defined(_WIN32) && !defined(__CYGWIN__)  
+#if defined(_WIN32) && !defined(__CYGWIN__)
     str = msStrdup(".\\");
 #else
     str= msStrdup("./");
-#endif  
+#endif
   }
 
   return(str);
@@ -684,8 +683,8 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
   }
 
   /* Check if path is absolute */
-  if((abs_path == NULL) || (abslen == 0) || 
-       (path[0] == '\\') || (path[0] == '/') || 
+  if((abs_path == NULL) || (abslen == 0) ||
+       (path[0] == '\\') || (path[0] == '/') ||
          (pathlen > 1 && (path[1] == ':')))
   {
       strlcpy(pszReturnPath, path, MS_MAXPATHLEN);
@@ -715,7 +714,7 @@ char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1,
 {
   char szPath[MS_MAXPATHLEN];
 
-  return msBuildPath(pszReturnPath, abs_path, 
+  return msBuildPath(pszReturnPath, abs_path,
                      msBuildPath(szPath, path1, path2));
 }
 
@@ -776,7 +775,7 @@ char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path
 /*
 ** Splits a string into multiple strings based on ch. Consecutive ch's are ignored.
 */
-char **msStringSplit(const char *string, char ch, int *num_tokens) 
+char **msStringSplit(const char *string, char ch, int *num_tokens)
 {
   int i,j,k;
   int length,n;
@@ -793,7 +792,7 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
 
   token = (char **) msSmallMalloc(sizeof(char *)*n);
   if(!token) return(NULL);
-  
+
   k = 0;
   token[k] = (char *)msSmallMalloc(sizeof(char)*(length+1));
   if(!token[k]) return(NULL);
@@ -802,23 +801,23 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
   last_ch='\0';
   for(i=0; i<length; i++) {
     if(string[i] == ch) {
-      
+
       if(last_ch == ch)
 	continue;
-      
-      token[k][j] = '\0'; /* terminate current token */      
-      
+
+      token[k][j] = '\0'; /* terminate current token */
+
       k++;
       token[k] = (char *)msSmallMalloc(sizeof(char)*(length+1));
       if(!token[k]) return(NULL);
-      
-      j = 0;      
-    } else {      
+
+      j = 0;
+    } else {
       token[k][j] = string[i];
       j++;
     }
-    
-    last_ch = string[i]; 
+
+    last_ch = string[i];
   }
 
   token[k][j] = '\0'; /* terminate last token */
@@ -832,18 +831,18 @@ char **msStringSplit(const char *string, char ch, int *num_tokens)
  This function is a copy of CSLTokenizeString2() function of the CPL component.
  See the port/cpl_string.cpp file in gdal source for the complete documentation.
  Available Flags:
- * - MS_ALLOWEMPTYTOKENS: allow the return of empty tokens when two 
- * delimiters in a row occur with no other text between them.  If not set, 
+ * - MS_ALLOWEMPTYTOKENS: allow the return of empty tokens when two
+ * delimiters in a row occur with no other text between them.  If not set,
  * empty tokens will be discarded;
  * - MS_STRIPLEADSPACES: strip leading space characters from the token (as
  * reported by isspace());
  * - MS_STRIPENDSPACES: strip ending space characters from the token (as
  * reported by isspace());
- * - MS_HONOURSTRINGS: double quotes can be used to hold values that should 
- * not be broken into multiple tokens; 
+ * - MS_HONOURSTRINGS: double quotes can be used to hold values that should
+ * not be broken into multiple tokens;
  * - MS_PRESERVEQUOTES: string quotes are carried into the tokens when this
  * is set, otherwise they are removed;
- * - MS_PRESERVEESCAPES: if set backslash escapes (for backslash itself, 
+ * - MS_PRESERVEESCAPES: if set backslash escapes (for backslash itself,
  * and for literal double quotes) will be preserved in the tokens, otherwise
  * the backslashes will be removed in processing.
  */
@@ -864,14 +863,14 @@ char ** msStringSplitComplex( const char * pszString,
 
     pszToken = (char *) msSmallMalloc(sizeof(char*)*10);;
     nTokenMax = 10;
-    
+
     while( pszString != NULL && *pszString != '\0' )
     {
         int     bInString = MS_FALSE;
         int     bStartString = MS_TRUE;
 
         nTokenLen = 0;
-        
+
         /* Try to find the next delimeter, marking end of token */
         for( ; *pszString != '\0'; pszString++ )
         {
@@ -882,7 +881,7 @@ char ** msStringSplitComplex( const char * pszString,
                 pszString++;
                 break;
             }
-            
+
             /* If this is a quote, and we are honouring constant
                strings, then process the constant strings, with out delim
                but don't copy over the quotes */
@@ -978,7 +977,7 @@ char ** msStringSplitComplex( const char * pszString,
      * If the last token was empty, then we need to capture
      * it now, as the loop would skip it.
      */
-    if( *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0 
+    if( *pszString == '\0' && bAllowEmptyTokens && nRetLen > 0
         && strchr(pszDelimiters,*(pszString-1)) != NULL )
     {
         if( nRetLen >= nRetMax - 1 )
@@ -1000,9 +999,9 @@ char ** msStringSplitComplex( const char * pszString,
     return papszRetList;
 }
 
-/* This method is similar to msStringSplit but support quoted strings. 
+/* This method is similar to msStringSplit but support quoted strings.
    It also support multi-characters delimiter and allows to preserve quotes */
-char **msStringTokenize( const char *pszLine, const char *pszDelim, 
+char **msStringTokenize( const char *pszLine, const char *pszDelim,
                          int *num_tokens, int preserve_quote )
 {
     char **papszResult = NULL;
@@ -1062,7 +1061,7 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
 
     pszToken[iTokenChar++] = '\0';
     papszResult[n] = pszToken;
-    
+
     *num_tokens = n+1;
 
     return papszResult;
@@ -1072,14 +1071,14 @@ char **msStringTokenize( const char *pszLine, const char *pszDelim,
  *                       msEncodeChar()
  *
  * Return 1 if the character argument should be encoded for safety
- * in URL use and 0 otherwise. Specific character map taken from 
+ * in URL use and 0 otherwise. Specific character map taken from
  * http://www.ietf.org/rfc/rfc2396.txt
  *
  **********************************************************************/
 
 int msEncodeChar(const char c)
 {
-  if ( 
+  if (
        (c >= 0x61 && c <= 0x7A ) ||   /* Letters a-z */
        (c >= 0x41 && c <= 0x5A ) ||   /* Letters A-Z */
        (c >= 0x30 && c <= 0x39 ) ||   /* Numbers 0-9 */
@@ -1091,7 +1090,7 @@ int msEncodeChar(const char c)
   {
     return(0);
   }
-  else 
+  else
   {
     return(1);
   }
@@ -1102,19 +1101,19 @@ char *msEncodeUrl(const char *data)
        /*
         * Delegate to msEncodeUrlExcept, with a null second argument
         * to render the except handling moot.
-        */ 
+        */
 	return(msEncodeUrlExcept(data, '\0'));
 }
 
 /**********************************************************************
  *                       msEncodeCharExcept()
  *
- * URL encoding, applies RFP2396 encoding to all characters 
+ * URL encoding, applies RFP2396 encoding to all characters
  * except the one exception character. An exception character
  * of '\0' implies no exception handling.
  *
  **********************************************************************/
- 
+
 char *msEncodeUrlExcept(const char *data, const char except)
 {
   char *hex = "0123456789ABCDEF";
@@ -1126,9 +1125,9 @@ char *msEncodeUrlExcept(const char *data, const char except)
   for (inc=0, i=data; *i!='\0'; i++)
     if (msEncodeChar(*i))
       inc += 2;
-  
+
   code = (char*)msSmallMalloc(strlen(data)+inc+1);
-  
+
   for (j=code, i=data; *i!='\0'; i++, j++)
     {
       if (*i == ' ')
@@ -1138,19 +1137,19 @@ char *msEncodeUrlExcept(const char *data, const char except)
         {
 	  *j = except;
         }
-      else 
+      else
       if (msEncodeChar(*i))
 	{
 	  ch = *i;
-	  *j++ = '%'; 
-	  *j++ = hex[ch/16]; 
+	  *j++ = '%';
+	  *j++ = hex[ch/16];
 	  *j   = hex[ch%16];
 	}
       else
 	*j = *i;
     }
   *j = '\0';
-  
+
   return code;
 }
 
@@ -1162,7 +1161,7 @@ char *msEncodeUrlExcept(const char *data, const char except)
 ** The replacements performed are:
 **  '&' -> "&amp;", '"' -> "&quot;", '<' -> "&lt;" and '>' -> "&gt;"
 **/
-char *msEncodeHTMLEntities(const char *string) 
+char *msEncodeHTMLEntities(const char *string)
 {
     int buflen, i;
     char *newstring;
@@ -1229,7 +1228,7 @@ char *msEncodeHTMLEntities(const char *string)
 ** The replacements performed are:
 **  "&amp;" -> '&', "&quot;" -> '"', "&lt;" -> '<' and "&gt;" -> '>'
 **/
-void msDecodeHTMLEntities(const char *string) 
+void msDecodeHTMLEntities(const char *string)
 {
     char *pszAmp=NULL, *pszSemiColon=NULL, *pszReplace=NULL, *pszEnd=NULL;
     char *pszBuffer=NULL;
@@ -1315,10 +1314,10 @@ int msIsXMLTagValid(const char *string)
 
     for(i=0; i<nLen; i++)
     {
-        if( !( string[i] >= 'A' && string[i] <= 'Z' ) && 
-            !( string[i] >= 'a' && string[i] <= 'z' ) && 
-            !( string[i] >= '0' && string[i] <= '9' ) && 
-            string[i] != '-' && string[i] != '.' && 
+        if( !( string[i] >= 'A' && string[i] <= 'Z' ) &&
+            !( string[i] >= 'a' && string[i] <= 'z' ) &&
+            !( string[i] >= '0' && string[i] <= '9' ) &&
+            string[i] != '-' && string[i] != '.' &&
             string[i] != ':' && string[i] != '_' )
             return MS_FALSE;
     }
@@ -1333,7 +1332,7 @@ int msIsXMLTagValid(const char *string)
 char *msStringConcatenate(char *pszDest, const char *pszSrc)
 {
    int nLen;
-   
+
    if (pszSrc == NULL)
       return pszDest;
 
@@ -1355,13 +1354,13 @@ char *msStringConcatenate(char *pszDest, const char *pszSrc)
       else {
          msSetError(MS_MEMERR, "Error while reallocating memory.", "msStringConcatenate()");
          return NULL;
-      }        
+      }
    }
-   
+
    return pszDest;
 }
 
-char *msJoinStrings(char **array, int arrayLength, const char *delimeter) 
+char *msJoinStrings(char **array, int arrayLength, const char *delimeter)
 {
   char *string;
   int stringLength=0;
@@ -1529,7 +1528,7 @@ char *msCaseReplaceSubstring(char *str, const char *old, const char *new)
       return(str);
 }
 
-/* 
+/*
 ** Converts a 2 character hexidecimal string to an integer.
 */
 int msHexToInt(char *hex) {
@@ -1538,7 +1537,7 @@ int msHexToInt(char *hex) {
   number = (hex[0] >= 'A' ? ((hex[0] & 0xdf) - 'A')+10 : (hex[0] - '0'));
   number *= 16;
   number += (hex[1] >= 'A' ? ((hex[1] & 0xdf) - 'A')+10 : (hex[1] - '0'));
-   
+
   return(number);
 }
 
@@ -1553,7 +1552,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
   FriBidiChar logical[MAX_STR_LEN];
   FriBidiCharType base = FRIBIDI_TYPE_ON;
   size_t len;
-  
+
 #ifdef FRIBIDI_NO_CHARSETS
   iconv_t to_ucs4, from_ucs4;
 #else
@@ -1577,7 +1576,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
   if (!to_char_set_num || !from_char_set_num)
 #endif
   {
-    msSetError(MS_IDENTERR, "Encoding not supported (%s).", 
+    msSetError(MS_IDENTERR, "Encoding not supported (%s).",
                "msGetFriBidiEncodedString()", encoding);
     return NULL;
   }
@@ -1614,7 +1613,7 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
        visual, ltov, vtol, levels);
 
     if (!log2vis) {
-      msSetError(MS_IDENTERR, "Failed to create bidi string.", 
+      msSetError(MS_IDENTERR, "Failed to create bidi string.",
              "msGetFriBidiEncodedString()");
       return NULL;
     }
@@ -1652,6 +1651,8 @@ char *msGetFriBidiEncodedString(const char *string, const char *encoding)
     outstring[j] = '\0';
 
 #endif
+
+     free(visual);
      return msStrdup(outstring);
   }
 }
@@ -1672,7 +1673,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
 #ifdef USE_FRIBIDI
   if(fribidi_parse_charset ((char*)encoding))
     return msGetFriBidiEncodedString(string, encoding);
-#endif 
+#endif
   len = strlen(string);
 
   if (len == 0 || (encoding && strcasecmp(encoding, "UTF-8")==0))
@@ -1680,7 +1681,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
 
   cd = iconv_open("UTF-8", encoding);
   if(cd == (iconv_t)-1) {
-    msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).", 
+    msSetError(MS_IDENTERR, "Encoding not supported by libiconv (%s).",
                "msGetEncodedString()", encoding);
     return NULL;
   }
@@ -1708,7 +1709,7 @@ char *msGetEncodedString(const char *string, const char *encoding)
     }
   }
   out[bufsize - bufleft] = '\0';
-  
+
   iconv_close(cd);
 
   return out;
@@ -1738,7 +1739,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
     const wchar_t* pwszWide = NULL;
 
     if (string != NULL)
-    {   
+    {
         nStr = wcslen (string);
         nBufferSize = ((nStr * 6) + 1);
         output = (char*) msSmallMalloc (nBufferSize);
@@ -1750,10 +1751,10 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
         }
 
         cd = iconv_open("UTF-8", encoding);
-        
+
         nOutSize = nBufferSize;
         if ((iconv_t)-1 != cd)
-        {  
+        {
             nInSize = sizeof (wchar_t)*nStr;
             pszUTF8 = output;
             pwszWide = string;
@@ -1782,18 +1783,18 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
             }
             iconv_close(cd);
         } else {
-            msSetError(MS_MISCERR, "Encoding not supported by libiconv (%s).", 
-                                   "msConvertWideStringToUTF8()", 
+            msSetError(MS_MISCERR, "Encoding not supported by libiconv (%s).",
+                                   "msConvertWideStringToUTF8()",
                                    encoding);
             msFree(output);
             return NULL;
         }
-   
+
     } else {
         /* we were given a NULL wide string, nothing we can do here */
         return NULL;
     }
-    
+
     /* NULL-terminate the output string */
     output[nBufferSize - nOutSize] = '\0';
     return output;
@@ -1807,7 +1808,7 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
 ** Returns the next glyph in string and advances *in_ptr to the next
 ** character.
 **
-** If out_string is not NULL then the character (bytes) is copied to this 
+** If out_string is not NULL then the character (bytes) is copied to this
 ** buffer and null-terminated. out_string must be a pre-allocated buffer of
 ** at least 11 bytes.
 **
@@ -1817,12 +1818,12 @@ char* msConvertWideStringToUTF8 (const wchar_t* string, const char* encoding) {
 *   - as an html entity, for example &#123; , &#x1af; , or &eacute;
 *   - as an utf8 encoded character
 *   - if utf8 decoding fails, as a raw character
-* 
-** This function mimics the character decoding function used in gdft.c of 
+*
+** This function mimics the character decoding function used in gdft.c of
 * libGD. It is necessary to have the same behaviour, as input strings must be
 * split into the same glyphs as what gd does.
 **
-** In UTF-8, the number of leading 1 bits in the first byte specifies the 
+** In UTF-8, the number of leading 1 bits in the first byte specifies the
 ** number of bytes in the entire sequence.
 ** Source: http://www.cl.cam.ac.uk/~mgk25/unicode.html#utf-8
 **
@@ -1889,7 +1890,7 @@ int msGetNextGlyph(const char **in_ptr, char *out_string)
     }
     else if (in < 0xF8)
     {
-        if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80 
+        if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80
                 && ((*in_ptr)[3]& 0xC0) == 0x80) {
             if(out_string) {
                 out_string[0]=in;
@@ -1904,7 +1905,7 @@ int msGetNextGlyph(const char **in_ptr, char *out_string)
     }
     else if (in < 0xFC)
     {
-        if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80 
+        if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80
                 && ((*in_ptr)[3]& 0xC0) == 0x80 && ((*in_ptr)[4]& 0xC0) == 0x80) {
             if(out_string) {
                 out_string[0]=in;
@@ -1920,7 +1921,7 @@ int msGetNextGlyph(const char **in_ptr, char *out_string)
     }
     else if (in < 0xFE)
     {
-        if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80 
+        if (((*in_ptr)[1]& 0xC0) == 0x80 && ((*in_ptr)[2]& 0xC0) == 0x80
                 && ((*in_ptr)[3]& 0xC0) == 0x80 && ((*in_ptr)[4]& 0xC0) == 0x80
                 && ((*in_ptr)[5]& 0xC0) == 0x80) {
             if(out_string) {
@@ -1936,7 +1937,7 @@ int msGetNextGlyph(const char **in_ptr, char *out_string)
             return 6;   /* 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
         }
     }
-    
+
     if (out_string) {
         out_string[0]=in;
         out_string[1] = '\0';   /* 0xxxxxxx */
@@ -1965,15 +1966,15 @@ static int cmp_entities(const void *e1, const void *e2) {
 }
 /*
  * this function tests if the string pointed by inptr represents
- * an HTML entity, in decimal form ( e.g. &#197;), in hexadecimal 
+ * an HTML entity, in decimal form ( e.g. &#197;), in hexadecimal
  * form ( e.g. &#x6C34; ), or from html 4.0 spec ( e.g. &eacute; )
- * - returns returns 0 if the string doesn't represent such an entity. 
- * - if the string does start with such entity,it returns the number of 
+ * - returns returns 0 if the string doesn't represent such an entity.
+ * - if the string does start with such entity,it returns the number of
  * bytes occupied by said entity, and stores the unicode value in *unicode
  */
 int msGetUnicodeEntity(const char *inptr, int *unicode) {
     unsigned char *in = (unsigned char*)inptr;
-    int l,val=0;   
+    int l,val=0;
     if(*in=='&') {
         in++;
         if(*in=='#') {
@@ -1997,7 +1998,7 @@ int msGetUnicodeEntity(const char *inptr, int *unicode) {
                     *unicode=val;
                     return ++l;
                 }
-            } 
+            }
             else
             {
                 for(l=2;l<8;l++) {
@@ -2074,10 +2075,10 @@ int msStringIsInteger(const char *string) {
  * msGetFirstLine()
  *
  * returns the first line of a given string.
- * called by getLabelSize functions for calculating 
+ * called by getLabelSize functions for calculating
  * the baseline offsets of labels
  *
- * this function was implemented to avoid using the 
+ * this function was implemented to avoid using the
  * msSplitString function and its multiple mallocs, as
  * only one malloc is used here.
  *
@@ -2094,7 +2095,7 @@ char* msGetFirstLine(char* text) {
     while((glyphLength=msGetNextGlyph(&textptr,glyph))) {
         if(glyphLength==1 && *glyph=='\n') { /*we've hit the first \n char*/
             firstLineCur = firstLine = msSmallMalloc(firstLineLength+1);
-            
+
             /*copy the first line into the return array*/
             while(firstLineLength--) {
                 *firstLineCur++ = *text++;
@@ -2149,7 +2150,7 @@ char* msStringEscape( const char * pszString )
 {
     char *string_tmp, *string_ptr;
     int i;
-    
+
     if (pszString ==  NULL || strlen(pszString) == 0)
         return msStrdup("");
 

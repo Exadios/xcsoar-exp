@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,11 +35,11 @@ Copyright_License {
 void
 InfoBoxContentTrack::Update(InfoBoxData &data)
 {
-  if (!XCSoarInterface::Basic().track_available) {
+  if (!CommonInterface::Basic().track_available) {
     data.SetInvalid();
     return;
   }
-  data.SetValue(XCSoarInterface::Basic().track);
+  data.SetValue(CommonInterface::Basic().track);
 }
 
 bool
@@ -47,21 +47,21 @@ InfoBoxContentTrack::HandleKey(const InfoBoxKeyCodes keycode)
 {
   if (!is_simulator())
     return false;
-  if (!XCSoarInterface::Basic().gps.simulator)
+  if (!CommonInterface::Basic().gps.simulator)
     return false;
 
-  const Angle a5 = Angle::Degrees(fixed(5));
+  const Angle a5 = Angle::Degrees(5);
   switch (keycode) {
   case ibkUp:
   case ibkRight:
     device_blackboard->SetTrack(
-        XCSoarInterface::Basic().track + a5);
+        CommonInterface::Basic().track + a5);
     return true;
 
   case ibkDown:
   case ibkLeft:
     device_blackboard->SetTrack(
-        XCSoarInterface::Basic().track - a5);
+        CommonInterface::Basic().track - a5);
     return true;
 
   case ibkEnter:

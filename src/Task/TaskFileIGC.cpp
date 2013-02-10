@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ Copyright_License {
 #include "IGC/IGCParser.hpp"
 #include "IGC/IGCDeclaration.hpp"
 #include "IO/FileLineReader.hpp"
-#include "DateTime.hpp"
 #include "Engine/Task/Factory/AbstractTaskFactory.hpp"
 #include "Engine/Task/Ordered/OrderedTask.hpp"
 #include "Engine/Task/Ordered/Points/StartPoint.hpp"
@@ -49,7 +48,7 @@ ReadIGCDeclaration(const TCHAR *path, IGCDeclarationHeader &header,
   // Read IGC file
   char *line;
   bool header_found = false;
-  while ((line = reader.read()) != NULL) {
+  while ((line = reader.ReadLine()) != NULL) {
     // Skip lines which are not declaration records
     if (*line != _T('C'))
       continue;
@@ -64,7 +63,7 @@ ReadIGCDeclaration(const TCHAR *path, IGCDeclarationHeader &header,
 
     IGCDeclarationTurnpoint tp;
     if (IGCParseDeclarationTurnpoint(line, tp))
-      turnpoints.push_back(tp);
+      turnpoints.emplace_back(tp);
   }
 
   return header_found;
@@ -115,7 +114,7 @@ TaskFileIGC::GetTask(const TaskBehaviour &task_behaviour,
 
     /* we don't know the elevation, so we just set it to zero; this is
        not correct, but better than leaving it uninitialised */
-    wp.elevation = fixed_zero;
+    wp.elevation = fixed(0);
 
     OrderedTaskPoint *tp;
 
@@ -149,7 +148,7 @@ TaskFileIGC::Count()
 
   // Search for declaration
   char *line;
-  while ((line = reader.read()) != NULL) {
+  while ((line = reader.ReadLine()) != NULL) {
     if (*line != 'C')
       continue;
 

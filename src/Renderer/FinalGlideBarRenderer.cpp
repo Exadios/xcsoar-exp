@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,15 +22,18 @@ Copyright_License {
 */
 
 #include "FinalGlideBarRenderer.hpp"
+#include "TextInBox.hpp"
 #include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
-#include "Screen/TextInBox.hpp"
 #include "NMEA/Derived.hpp"
 #include "Look/FinalGlideBarLook.hpp"
 #include "Look/TaskLook.hpp"
 #include "Formatter/UserUnits.hpp"
 #include "Util/Macros.hpp"
-#include "Screen/Fonts.hpp"
+
+#ifdef ENABLE_OPENGL
+#include "Screen/OpenGL/Scope.hpp"
+#endif
 
 void
 FinalGlideBarRenderer::Draw(Canvas &canvas, const PixelRect &rc,
@@ -38,6 +41,10 @@ FinalGlideBarRenderer::Draw(Canvas &canvas, const PixelRect &rc,
                             const GlideSettings &glide_settings,
                             const bool final_glide_bar_mc0_enabled) const
 {
+#ifdef ENABLE_OPENGL
+  const GLEnable blend(GL_BLEND);
+#endif
+
   RasterPoint GlideBar[6] = {
       { 0, 0 }, { 9, -9 }, { 18, 0 }, { 18, 0 }, { 9, 0 }, { 0, 0 }
   };
@@ -68,7 +75,7 @@ FinalGlideBarRenderer::Draw(Canvas &canvas, const PixelRect &rc,
 
   FormatUserAltitude(solution.SelectAltitudeDifference(glide_settings),
                             Value, false);
-  canvas.Select(Fonts::map_bold);
+  canvas.Select(*look.font);
   const PixelSize text_size = canvas.CalcTextSize(Value);
 
   PixelScalar clipping_arrow_offset = Layout::Scale(4);
@@ -225,12 +232,11 @@ FinalGlideBarRenderer::Draw(Canvas &canvas, const PixelRect &rc,
   canvas.SetBackgroundColor(COLOR_WHITE);
 
   TextInBoxMode style;
-  style.mode = RM_ROUNDED_BLACK;
-  style.bold = true;
+  style.shape = LabelShape::ROUNDED_BLACK;
   style.move_in_view = true;
 
   if (text_size.cx < Layout::Scale(18)) {
-    style.align = A_RIGHT;
+    style.align = TextInBoxMode::Alignment::RIGHT;
     TextInBox(canvas, Value, Layout::Scale(18), y0, style, rc);
   } else
     TextInBox(canvas, Value, 0, y0, style, rc);

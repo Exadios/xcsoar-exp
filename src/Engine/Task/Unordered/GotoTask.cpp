@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,10 +24,11 @@
 #include "UnorderedTaskPoint.hpp"
 #include "Task/Visitors/TaskPointVisitor.hpp"
 #include "Task/TaskBehaviour.hpp"
+#include "Waypoint/Waypoints.hpp"
 
 GotoTask::GotoTask(const TaskBehaviour &tb,
                    const Waypoints &wps)
-  :UnorderedTask(GOTO, tb),
+  :UnorderedTask(TaskType::GOTO, tb),
    tp(NULL),
    waypoints(wps)
 {
@@ -107,14 +108,6 @@ GotoTask::TaskSize() const
 {
   return tp ? 1 : 0;
 }
-
-void
-GotoTask::Reset()
-{
-  delete tp;
-  UnorderedTask::Reset();
-}
-
 
 bool 
 GotoTask::TakeoffAutotask(const GeoPoint& location, const fixed terrain_alt)

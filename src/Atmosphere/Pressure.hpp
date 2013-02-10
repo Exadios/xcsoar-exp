@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,14 +33,14 @@ Copyright_License {
  */
 class AtmosphericPressure 
 {
-  /** Pressure at sea level, hPa */
-  fixed qnh;
+  /** Pressure in hPa */
+  fixed value;
 
   /**
-   * @param qnh the QNH in hPa
+   * @param value the pressure in hPa
    */
   explicit constexpr
-  AtmosphericPressure(fixed _qnh):qnh(_qnh) {}
+  AtmosphericPressure(fixed _value):value(_value) {}
 
 public:
   /**
@@ -56,7 +56,7 @@ public:
    */
   static constexpr
   AtmosphericPressure Zero() {
-    return AtmosphericPressure(fixed_zero);
+    return AtmosphericPressure(fixed(0));
   }
 
   /**
@@ -83,7 +83,7 @@ public:
    */
   constexpr
   bool IsPlausible() const {
-    return qnh > fixed(100) && qnh < fixed(1200);
+    return value > fixed(100) && value < fixed(1200);
   }
 
   fixed GetPascal() const {
@@ -96,7 +96,7 @@ public:
    * @return QNH value (hPa)
    */
   fixed GetHectoPascal() const {
-    return qnh;
+    return value;
   }
 
   /**
@@ -125,22 +125,6 @@ public:
    */
   gcc_pure
   fixed QNHAltitudeToPressureAltitude(const fixed alt) const;
-
-  /**
-   * Calculates the air density from a given QNH-based altitude
-   * @param altitude QNH-based altitude (m)
-   * @return Air density (kg/m^3)
-   */
-  gcc_pure
-  static fixed AirDensity(const fixed altitude);
-
-  /**
-   * Divide TAS by this number to get IAS
-   * @param altitude QNH-based altitude (m)
-   * @return Ratio of TAS to IAS
-   */
-  gcc_pure
-  static fixed AirDensityRatio(const fixed altitude);
 
   /**
    * Converts a pressure value to the corresponding QNH-based altitude

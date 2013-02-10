@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,17 +37,23 @@ namespace Layout
   unsigned scale_1024 = 1024;
   unsigned small_scale = 1024;
   unsigned pen_width_scale = 1024;
+  UPixelScalar text_padding = 2;
   UPixelScalar minimum_control_height = 22, maximum_control_height = 44;
   UPixelScalar hit_radius = 10;
 }
 
 void
-Layout::Initialize(unsigned width, unsigned height)
+Layout::Initialize(PixelSize new_size)
 {
-  const unsigned x_dpi = Display::GetXDPI();
+  const unsigned width = new_size.cx, height = new_size.cy;
 
   landscape = width > height;
   square = width == height;
+
+  if (!ScaleSupported())
+    return;
+
+  const unsigned x_dpi = Display::GetXDPI();
 
   unsigned minsize = min(width, height);
   // always start w/ shortest dimension
@@ -58,6 +64,8 @@ Layout::Initialize(unsigned width, unsigned height)
   small_scale = (scale_1024 - 1024) / 2 + 1024;
 
   pen_width_scale = std::max(1024u, x_dpi * 1024u / 80u);
+
+  text_padding = Scale(2);
 
   minimum_control_height = Scale(22);
 

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "Engine/Task/Ordered/Points/StartPoint.hpp"
 #include "Engine/Task/Ordered/Points/FinishPoint.hpp"
 #include "Engine/Task/Ordered/Points/ASTPoint.hpp"
-#include "Engine/Task/ObservationZones/CylinderZone.hpp"
+#include "Engine/Task/ObservationZones/LineSectorZone.hpp"
 
 #ifdef FIXED_MATH
 #define ACCURACY 100
@@ -39,13 +39,13 @@
 
 static TaskBehaviour task_behaviour;
 static OrderedTaskBehaviour ordered_task_behaviour;
-static GlidePolar glide_polar(fixed_zero);
+static GlidePolar glide_polar(fixed(0));
 
 static GeoPoint
 MakeGeoPoint(double longitude, double latitude)
 {
-  return GeoPoint(Angle::Degrees(fixed(longitude)),
-                  Angle::Degrees(fixed(latitude)));
+  return GeoPoint(Angle::Degrees(longitude),
+                  Angle::Degrees(latitude));
 }
 
 static Waypoint
@@ -70,13 +70,7 @@ static const Waypoint wp5 = MakeWaypoint(0.3, 46, 50);
 static fixed
 GetSafetyHeight(const TaskPoint &tp)
 {
-  switch (tp.GetType()) {
-  case TaskPoint::FINISH:
-    return task_behaviour.safety_height_arrival;
-
-  default:
-    return task_behaviour.route_planner.safety_height_terrain;
-  }
+  return task_behaviour.safety_height_arrival;
 }
 
 static void
@@ -126,8 +120,9 @@ CheckTotal(const AircraftState &aircraft, const TaskStats &stats,
            const TaskWaypoint &finish)
 {
   const fixed min_arrival_alt1 = tp1.GetWaypoint().elevation +
-    task_behaviour.route_planner.safety_height_terrain;
-  const fixed min_arrival_alt2 = finish.GetWaypoint().elevation + task_behaviour.safety_height_arrival;
+    task_behaviour.safety_height_arrival;
+  const fixed min_arrival_alt2 = finish.GetWaypoint().elevation +
+    task_behaviour.safety_height_arrival;
   const GeoVector vector0 =
     start.GetWaypoint().location.DistanceBearing(tp1.GetWaypoint().location);
   const GeoVector vector1 =
@@ -145,10 +140,8 @@ CheckTotal(const AircraftState &aircraft, const TaskStats &stats,
   const fixed distance_ahead = vector1.distance + vector2.distance;
 
   ok1(equals(stats.distance_nominal, distance_nominal));
-  ok1(between(stats.distance_min,
-              distance_nominal - fixed(30), distance_nominal));
-  ok1(between(stats.distance_max,
-              distance_nominal, distance_nominal + fixed(30)));
+  ok1(equals(stats.distance_min, distance_nominal));
+  ok1(equals(stats.distance_max, distance_nominal));
 
   ok1(!total.vector_remaining.IsValid());
   ok1(solution_remaining.IsOk());
@@ -166,7 +159,7 @@ CheckTotal(const AircraftState &aircraft, const TaskStats &stats,
   ok1(equals(solution_remaining.height_climb,
              positive(glide_polar.GetMC())
              ? alt_required_at_aircraft - aircraft.altitude
-             : fixed_zero));
+             : fixed(0)));
 }
 
 static void
@@ -183,11 +176,13 @@ static void
 TestFlightToFinish(fixed aircraft_altitude)
 {
   OrderedTask task(task_behaviour);
-  const StartPoint tp1(new CylinderZone(wp1.location),
-                       wp1, task_behaviour, ordered_task_behaviour);
+  const StartPoint tp1(new LineSectorZone(wp1.location),
+                       wp1, task_behaviour,
+                       ordered_task_behaviour.start_constraints);
   task.Append(tp1);
-  const FinishPoint tp2(new CylinderZone(wp2.location),
-                        wp2, task_behaviour, ordered_task_behaviour, false);
+  const FinishPoint tp2(new LineSectorZone(wp2.location),
+                        wp2, task_behaviour,
+                        ordered_task_behaviour.finish_constraints, false);
   task.Append(tp2);
   task.SetActiveTaskPoint(1);
 
@@ -205,13 +200,10 @@ TestFlightToFinish(fixed aircraft_altitude)
   ok1(stats.task_valid);
   ok1(!stats.task_started);
   ok1(!stats.task_finished);
-  ok1(!stats.has_targets);
   ok1(stats.flight_mode_final_glide == !negative(stats.total.solution_remaining.altitude_difference));
   ok1(equals(stats.distance_nominal, vector.distance));
-  ok1(between(stats.distance_min,
-              vector.distance - fixed(20), vector.distance));
-  ok1(between(stats.distance_max,
-              vector.distance, vector.distance + fixed(20)));
+  ok1(equals(stats.distance_min, vector.distance));
+  ok1(equals(stats.distance_max, vector.distance));
 
   CheckLeg(tp2, aircraft, stats);
 
@@ -224,11 +216,13 @@ static void
 TestSimpleTask()
 {
   OrderedTask task(task_behaviour);
-  const StartPoint tp1(new CylinderZone(wp1.location),
-                       wp1, task_behaviour, ordered_task_behaviour);
+  const StartPoint tp1(new LineSectorZone(wp1.location),
+                       wp1, task_behaviour,
+                       ordered_task_behaviour.start_constraints);
   task.Append(tp1);
-  const FinishPoint tp2(new CylinderZone(wp3.location),
-                        wp3, task_behaviour, ordered_task_behaviour, false);
+  const FinishPoint tp2(new LineSectorZone(wp3.location),
+                        wp3, task_behaviour,
+                        ordered_task_behaviour.finish_constraints, false);
   task.Append(tp2);
 
   ok1(task.CheckTask());
@@ -245,13 +239,10 @@ TestSimpleTask()
   ok1(stats.task_valid);
   ok1(!stats.task_started);
   ok1(!stats.task_finished);
-  ok1(!stats.has_targets);
   ok1(!stats.flight_mode_final_glide);
   ok1(equals(stats.distance_nominal, tp1_to_tp2.distance));
-  ok1(between(stats.distance_min,
-              tp1_to_tp2.distance - fixed(20), tp1_to_tp2.distance));
-  ok1(between(stats.distance_max,
-              tp1_to_tp2.distance, tp1_to_tp2.distance + fixed(20)));
+  ok1(equals(stats.distance_min, tp1_to_tp2.distance));
+  ok1(equals(stats.distance_max, tp1_to_tp2.distance));
 
   CheckLeg(tp1, aircraft, stats);
   CheckTotal(aircraft, stats, tp1, tp1, tp2);
@@ -261,13 +252,15 @@ static void
 TestHighFinish()
 {
   OrderedTask task(task_behaviour);
-  const StartPoint tp1(new CylinderZone(wp1.location),
-                       wp1, task_behaviour, ordered_task_behaviour);
+  const StartPoint tp1(new LineSectorZone(wp1.location),
+                       wp1, task_behaviour,
+                       ordered_task_behaviour.start_constraints);
   task.Append(tp1);
   Waypoint wp2b(wp2);
   wp2b.elevation = fixed(1000);
-  const FinishPoint tp2(new CylinderZone(wp2b.location),
-                        wp2b, task_behaviour, ordered_task_behaviour, false);
+  const FinishPoint tp2(new LineSectorZone(wp2b.location),
+                        wp2b, task_behaviour,
+                        ordered_task_behaviour.finish_constraints, false);
   task.Append(tp2);
   task.SetActiveTaskPoint(1);
 
@@ -285,13 +278,10 @@ TestHighFinish()
   ok1(stats.task_valid);
   ok1(!stats.task_started);
   ok1(!stats.task_finished);
-  ok1(!stats.has_targets);
   ok1(!stats.flight_mode_final_glide);
   ok1(equals(stats.distance_nominal, vector.distance));
-  ok1(between(stats.distance_min,
-              vector.distance - fixed(20), vector.distance));
-  ok1(between(stats.distance_max,
-              vector.distance, vector.distance + fixed(20)));
+  ok1(equals(stats.distance_min, vector.distance));
+  ok1(equals(stats.distance_max, vector.distance));
 
   CheckLeg(tp2, aircraft, stats);
 
@@ -303,17 +293,20 @@ TestHighFinish()
 static void
 TestHighTP()
 {
+  const fixed width(1);
   OrderedTask task(task_behaviour);
-  const StartPoint tp1(new CylinderZone(wp1.location),
-                       wp1, task_behaviour, ordered_task_behaviour);
+  const StartPoint tp1(new LineSectorZone(wp1.location, width),
+                       wp1, task_behaviour,
+                       ordered_task_behaviour.start_constraints);
   task.Append(tp1);
   const Waypoint wp3b = MakeWaypoint(wp3, 1500);
-  const ASTPoint tp2(new CylinderZone(wp3b.location),
-                     wp3b, task_behaviour, ordered_task_behaviour);
+  const ASTPoint tp2(new LineSectorZone(wp3b.location, width),
+                     wp3b, task_behaviour);
   task.Append(tp2);
   const Waypoint wp4b = MakeWaypoint(wp4, 100);
-  const FinishPoint tp3(new CylinderZone(wp4b.location),
-                        wp4b, task_behaviour, ordered_task_behaviour, false);
+  const FinishPoint tp3(new LineSectorZone(wp4b.location, width),
+                        wp4b, task_behaviour,
+                        ordered_task_behaviour.finish_constraints, false);
   task.Append(tp3);
   task.SetActiveTaskPoint(1);
 
@@ -329,7 +322,6 @@ TestHighTP()
   ok1(stats.task_valid);
   ok1(!stats.task_started);
   ok1(!stats.task_finished);
-  ok1(!stats.has_targets);
   ok1(!stats.flight_mode_final_glide);
 
   CheckLeg(tp2, aircraft, stats);
@@ -339,17 +331,20 @@ TestHighTP()
 static void
 TestHighTPFinal()
 {
+  const fixed width(1);
   OrderedTask task(task_behaviour);
-  const StartPoint tp1(new CylinderZone(wp1.location),
-                       wp1, task_behaviour, ordered_task_behaviour);
+  const StartPoint tp1(new LineSectorZone(wp1.location, width),
+                       wp1, task_behaviour,
+                       ordered_task_behaviour.start_constraints);
   task.Append(tp1);
   const Waypoint wp3b = MakeWaypoint(wp3, 1500);
-  const ASTPoint tp2(new CylinderZone(wp3b.location),
-                     wp3b, task_behaviour, ordered_task_behaviour);
+  const ASTPoint tp2(new LineSectorZone(wp3b.location, width),
+                     wp3b, task_behaviour);
   task.Append(tp2);
   const Waypoint wp5b = MakeWaypoint(wp5, 200);
-  const FinishPoint tp3(new CylinderZone(wp5b.location),
-                        wp5b, task_behaviour, ordered_task_behaviour, false);
+  const FinishPoint tp3(new LineSectorZone(wp5b.location, width),
+                        wp5b, task_behaviour,
+                        ordered_task_behaviour.finish_constraints, false);
   task.Append(tp3);
   task.SetActiveTaskPoint(1);
 
@@ -365,7 +360,6 @@ TestHighTPFinal()
   ok1(stats.task_valid);
   ok1(!stats.task_started);
   ok1(!stats.task_finished);
-  ok1(!stats.has_targets);
   ok1(!stats.flight_mode_final_glide);
 
   CheckLeg(tp2, aircraft, stats);
@@ -375,16 +369,19 @@ TestHighTPFinal()
 static void
 TestLowTPFinal()
 {
+  const fixed width(1);
   OrderedTask task(task_behaviour);
   const Waypoint wp1b = MakeWaypoint(wp1, 1500);
-  const StartPoint tp1(new CylinderZone(wp1b.location),
-                       wp1b, task_behaviour, ordered_task_behaviour);
+  const StartPoint tp1(new LineSectorZone(wp1b.location, width),
+                       wp1b, task_behaviour,
+                       ordered_task_behaviour.start_constraints);
   task.Append(tp1);
-  const ASTPoint tp2(new CylinderZone(wp2.location),
-                     wp2, task_behaviour, ordered_task_behaviour);
+  const ASTPoint tp2(new LineSectorZone(wp2.location, width),
+                     wp2, task_behaviour);
   task.Append(tp2);
-  const FinishPoint tp3(new CylinderZone(wp3.location),
-                        wp3, task_behaviour, ordered_task_behaviour, false);
+  const FinishPoint tp3(new LineSectorZone(wp3.location, width),
+                        wp3, task_behaviour,
+                        ordered_task_behaviour.finish_constraints, false);
   task.Append(tp3);
   task.SetActiveTaskPoint(1);
 
@@ -400,7 +397,6 @@ TestLowTPFinal()
   ok1(stats.task_valid);
   ok1(!stats.task_started);
   ok1(!stats.task_finished);
-  ok1(!stats.has_targets);
   ok1(!stats.flight_mode_final_glide);
 
   CheckLeg(tp2, aircraft, stats);
@@ -421,19 +417,19 @@ TestAll()
 
 int main(int argc, char **argv)
 {
-  plan_tests(756);
+  plan_tests(728);
 
   task_behaviour.SetDefaults();
 
   TestAll();
 
-  glide_polar.SetMC(fixed_one);
+  glide_polar.SetMC(fixed(1));
   TestAll();
 
-  glide_polar.SetMC(fixed_two);
+  glide_polar.SetMC(fixed(2));
   TestAll();
 
-  glide_polar.SetMC(fixed_four);
+  glide_polar.SetMC(fixed(4));
   TestAll();
 
   return exit_status();

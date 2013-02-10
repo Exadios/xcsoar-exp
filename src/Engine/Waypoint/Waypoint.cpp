@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,36 +23,11 @@
 #include "Waypoint.hpp"
 #include "Geo/Flat/TaskProjection.hpp"
 
-void
-Waypoint::Flags::SetDefaults()
+Waypoint::Waypoint(const GeoPoint &_location)
+  :location(_location),
+   runway(Runway::Null()), radio_frequency(RadioFrequency::Null()),
+   type(Type::NORMAL), flags(Flags::Defaults()), file_num(-1)
 {
-  turn_point = false;
-  home = false;
-  start_point = false;
-  finish_point = false;
-  watched = false;
-}
-
-Waypoint::Waypoint()
-{
-  SetDefaults();
-}
-
-Waypoint::Waypoint(const GeoPoint &_location):
-  location(_location)
-{
-  SetDefaults();
-}
-
-void
-Waypoint::SetDefaults()
-{
-  type = Type::NORMAL;
-  file_num = -1;
-
-  flags.SetDefaults();
-  runway.Clear();
-  radio_frequency.Clear();
 }
 
 bool

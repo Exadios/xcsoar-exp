@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@ Copyright_License {
 #include "Projection/WindowProjection.hpp"
 #include "Geo/Math.hpp"
 #include "Engine/Contest/ContestTrace.hpp"
+#include "Util/Clamp.hpp"
 
 #include <algorithm>
 
@@ -66,21 +67,33 @@ TrailRenderer::GetBounds(const GeoPoint fallback_location) const
 /**
  * This function returns the corresponding SnailTrail
  * color array index to the input
- * @param cv Input value between -1.0 and 1.0
+ * @param vario Input value between min_vario and max_vario
  * @return SnailTrail color array index
  */
 gcc_const
-static int
-GetSnailColorIndex(fixed cv)
+static unsigned
+GetSnailColorIndex(fixed vario, fixed min_vario, fixed max_vario)
 {
-  return max((short)0, min((short)(TrailLook::NUMSNAILCOLORS - 1),
-                           (short)((cv + fixed_one) / 2 * TrailLook::NUMSNAILCOLORS)));
+  fixed cv = negative(vario) ? -vario / min_vario : vario / max_vario;
+
+  return Clamp((int)((cv + fixed(1)) / 2 * TrailLook::NUMSNAILCOLORS),
+               0, (int)(TrailLook::NUMSNAILCOLORS - 1));
 }
 
-static void
-GetMinMax(fixed &value_min, fixed &value_max, TrailSettings::Type type,
-          const TracePointVector &trace)
+gcc_const
+static unsigned
+GetAltitudeColorIndex(fixed alt, fixed min_alt, fixed max_alt)
 {
+  fixed relative_altitude = (alt - min_alt) / (max_alt - min_alt);
+  int _max = TrailLook::NUMSNAILCOLORS - 1;
+  return Clamp((int)(relative_altitude * _max), 0, _max);
+}
+
+static std::pair<fixed, fixed>
+GetMinMax(TrailSettings::Type type, const TracePointVector &trace)
+{
+  fixed value_min, value_max;
+
   if (type == TrailSettings::Type::ALTITUDE) {
     value_max = fixed(1000);
     value_min = fixed(500);
@@ -98,6 +111,8 @@ GetMinMax(fixed &value_min, fixed &value_max, TrailSettings::Type type,
     value_max = min(fixed(7.5), value_max);
     value_min = max(fixed(-5.0), value_min);
   }
+
+  return std::make_pair(value_min, value_max);
 }
 
 void
@@ -124,13 +139,14 @@ TrailRenderer::Draw(Canvas &canvas, const TraceComputer &trace_computer,
     traildrift = basic.location - tp1;
   }
 
-  fixed value_max, value_min;
-  GetMinMax(value_min, value_max, settings.type, trace);
+  auto minmax = GetMinMax(settings.type, trace);
+  fixed value_min = minmax.first;
+  fixed value_max = minmax.second;
 
   bool scaled_trail = settings.scaling_enabled &&
-                      projection.GetMapScale() <= fixed_int_constant(6000);
+                      projection.GetMapScale() <= fixed(6000);
 
-  const GeoBounds bounds = projection.GetScreenBounds().Scale(fixed_four);
+  const GeoBounds bounds = projection.GetScreenBounds().Scale(fixed(4));
 
   RasterPoint last_point;
   bool last_valid = false;
@@ -149,17 +165,13 @@ TrailRenderer::Draw(Canvas &canvas, const TraceComputer &trace_computer,
 
     if (last_valid) {
       if (settings.type == TrailSettings::Type::ALTITUDE) {
-        unsigned index((it->GetAltitude() - value_min) / (value_max - value_min)
-                       * (TrailLook::NUMSNAILCOLORS - 1));
-        index = max(0u, min(TrailLook::NUMSNAILCOLORS - 1, index));
+        unsigned index = GetAltitudeColorIndex(it->GetAltitude(),
+                                               value_min, value_max);
         canvas.Select(look.trail_pens[index]);
         canvas.DrawLinePiece(last_point, pt);
       } else {
-        const fixed colour_vario = negative(it->GetVario())
-          ? - it->GetVario() / value_min
-          : it->GetVario() / value_max ;
-
-        unsigned color_index = GetSnailColorIndex(colour_vario);
+        unsigned color_index = GetSnailColorIndex(it->GetVario(),
+                                                  value_min, value_max);
         if (negative(it->GetVario()) &&
             (settings.type == TrailSettings::Type::VARIO_1_DOTS ||
              settings.type == TrailSettings::Type::VARIO_2_DOTS)) {

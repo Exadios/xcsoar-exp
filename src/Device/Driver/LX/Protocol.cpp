@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,12 +28,17 @@ bool
 LX::CommandMode(Port &port, OperationEnvironment &env)
 {
   /* switch to command mode, first attempt */
-  SendSYN(port);
+
+  if (!SendSYN(port) || !port.FullFlush(env, 10, 20))
+    return false;
 
   /* the port is clean now; try the SYN/ACK procedure up to three
      times */
-  return port.FullFlush(env, 10, 20) &&
-    (Connect(port, env) || Connect(port, env) || Connect(port, env));
+  for (unsigned i = 0; i < 100 && !env.IsCancelled(); ++i)
+    if (Connect(port, env))
+      return true;
+
+  return false;
 }
 
 void

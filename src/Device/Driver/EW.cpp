@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ Copyright_License {
 #include "Device/Driver/EW.hpp"
 #include "Device/Driver.hpp"
 #include "Device/Port/Port.hpp"
+#include "Device/Declaration.hpp"
 #include "NMEA/Checksum.hpp"
 #include "Operation/Operation.hpp"
 #include "Util/StringUtil.hpp"
@@ -64,9 +65,9 @@ protected:
                     OperationEnvironment &env);
 
 public:
-  virtual void LinkTimeout();
+  virtual void LinkTimeout() override;
   virtual bool Declare(const Declaration &declaration, const Waypoint *home,
-                       OperationEnvironment &env);
+                       OperationEnvironment &env) override;
 };
 
 static void
@@ -200,7 +201,7 @@ EWDevice::Declare(const struct Declaration &declaration,
   unsigned old_baud_rate = port.GetBaudrate();
   if (old_baud_rate == 9600)
     old_baud_rate = 0;
-  else if (!port.SetBaudrate(9600))
+  else if (old_baud_rate != 0 && !port.SetBaudrate(9600))
     return false;
 
   bool success = DeclareInner(declaration, env);
@@ -298,7 +299,7 @@ EWCreateOnPort(const DeviceConfig &config, Port &com_port)
   return new EWDevice(com_port);
 }
 
-const struct DeviceRegister ewDevice = {
+const struct DeviceRegister ew_driver = {
   _T("EW Logger"),
   _T("EW Logger"),
   DeviceRegister::DECLARE,

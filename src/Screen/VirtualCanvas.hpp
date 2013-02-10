@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,30 +34,29 @@ Copyright_License {
 class VirtualCanvas : public Canvas {
 public:
   VirtualCanvas() = default;
-  VirtualCanvas(UPixelScalar _width, UPixelScalar _height);
-  VirtualCanvas(const Canvas &canvas,
-                UPixelScalar _width, UPixelScalar _height);
+  VirtualCanvas(PixelSize new_size);
+  VirtualCanvas(const Canvas &canvas, PixelSize new_size);
 
 #ifndef ENABLE_OPENGL
   ~VirtualCanvas();
 #endif
 
-  void set(UPixelScalar _width, UPixelScalar _height);
+  void Create(PixelSize new_size);
 
-  void set(const Canvas &canvas, UPixelScalar _width, UPixelScalar _height);
-  void set(const Canvas &canvas);
+  void Create(const Canvas &canvas, PixelSize new_size);
+  void Create(const Canvas &canvas);
 
 #ifndef ENABLE_SDL
-  void reset();
+  void Destroy();
 #endif
 
 #ifdef ENABLE_SDL
-  void resize(UPixelScalar _width, UPixelScalar _height) {
-    if (_width != get_width() || _height != get_height())
-      set(*this, _width, _height);
+  void Resize(PixelSize new_size) {
+    if (new_size != size)
+      Create(*this, new_size);
   }
 
-  void grow(UPixelScalar _width, UPixelScalar _height);
+  void Grow(PixelSize new_size);
 #endif
 };
 

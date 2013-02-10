@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -39,13 +39,14 @@ Copyright_License {
 #include "LogFile.hpp"
 #include "Version.hpp"
 #include "Screen/Debug.hpp"
-#include "Screen/Fonts.hpp"
-#include "Screen/Android/Event.hpp"
+#include "Look/Fonts.hpp"
+#include "Event/Android/Queue.hpp"
 #include "Screen/OpenGL/Init.hpp"
 #include "Dialogs/Message.hpp"
 #include "Simulator.hpp"
 #include "Profile/Profile.hpp"
 #include "MainWindow.hpp"
+#include "Startup.hpp"
 #include "Interface.hpp"
 #include "Java/Global.hpp"
 #include "Java/File.hpp"
@@ -58,6 +59,14 @@ Copyright_License {
 
 #ifdef IOIOLIB
 #include "Android/IOIOHelper.hpp"
+#include "NativeBMP085Listener.hpp"
+#include "BMP085Device.hpp"
+#include "NativeI2CbaroListener.hpp"
+#include "I2CbaroDevice.hpp"
+#include "NativeNunchuckListener.hpp"
+#include "NunchuckDevice.hpp"
+#include "NativeVoltageListener.hpp"
+#include "VoltageDevice.hpp"
 #endif
 
 #ifndef NDEBUG
@@ -113,6 +122,14 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
   BluetoothHelper::Initialise(env);
 #ifdef IOIOLIB
   IOIOHelper::Initialise(env);
+  NativeBMP085Listener::Initialise(env);
+  BMP085Device::Initialise(env);
+  NativeI2CbaroListener::Initialise(env);
+  I2CbaroDevice::Initialise(env);
+  NativeNunchuckListener::Initialise(env);
+  NunchuckDevice::Initialise(env);
+  NativeVoltageListener::Initialise(env);
+  VoltageDevice::Initialise(env);
 #endif
 
   context = new Context(env, _context);
@@ -140,7 +157,7 @@ Java_org_xcsoar_NativeView_initializeNative(JNIEnv *env, jobject obj,
 
   ScreenInitialized();
   AllowLanguage();
-  return XCSoarInterface::Startup();
+  return Startup();
 }
 
 gcc_visibility_default
@@ -195,6 +212,14 @@ Java_org_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
   delete context;
 
 #ifdef IOIOLIB
+  BMP085Device::Deinitialise(env);
+  NativeBMP085Listener::Deinitialise(env);
+  I2CbaroDevice::Deinitialise(env);
+  NativeI2CbaroListener::Deinitialise(env);
+  NunchuckDevice::Deinitialise(env);
+  NativeNunchuckListener::Deinitialise(env);
+  VoltageDevice::Deinitialise(env);
+  NativeVoltageListener::Deinitialise(env);
   IOIOHelper::Deinitialise(env);
 #endif
   BluetoothHelper::Deinitialise(env);
@@ -215,7 +240,8 @@ Java_org_xcsoar_NativeView_resizedNative(JNIEnv *env, jobject obj,
   if (event_queue == NULL)
     return;
 
-  CommonInterface::main_window->AnnounceResize(width, height);
+  if (CommonInterface::main_window != nullptr)
+    CommonInterface::main_window->AnnounceResize(width, height);
 
   event_queue->Purge(Event::RESIZE);
 
@@ -227,7 +253,7 @@ gcc_visibility_default
 JNIEXPORT void JNICALL
 Java_org_xcsoar_NativeView_pauseNative(JNIEnv *env, jobject obj)
 {
-  if (event_queue == NULL)
+  if (event_queue == nullptr || CommonInterface::main_window == nullptr)
     /* pause before we have initialized the event subsystem does not
        work - let's bail out, nothing is lost anyway */
     exit(0);
@@ -242,7 +268,7 @@ gcc_visibility_default
 JNIEXPORT void JNICALL
 Java_org_xcsoar_NativeView_resumeNative(JNIEnv *env, jobject obj)
 {
-  if (event_queue == NULL)
+  if (event_queue == nullptr || CommonInterface::main_window == nullptr)
     /* there is nothing here yet which can be resumed */
     exit(0);
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,8 +38,10 @@ struct InputConfig {
   enum {
     MAX_MODE = 32,
     MAX_MODE_STRING = 24,
-#if defined(ENABLE_SDL) && !defined(ANDROID)
+#ifdef ENABLE_SDL
     MAX_KEY = 400,
+#elif defined(USE_EGL)
+    MAX_KEY = 0600,
 #else
     MAX_KEY = 255,
 #endif

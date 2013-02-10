@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include "Util/NonCopyable.hpp"
 #include "AirspaceWarning.hpp"
 #include "AirspaceWarningConfig.hpp"
-#include "AirspaceAircraftPerformance.hpp"
+#include "Util/AircraftStateFilter.hpp"
 #include "Compiler.h"
 
 #include <list>
@@ -34,6 +34,7 @@ class TaskStats;
 class GlidePolar;
 class Airspaces;
 class TaskProjection;
+class AirspaceAircraftPerformance;
 
 /**
  * Class to detect and track airspace warnings
@@ -58,8 +59,6 @@ class AirspaceWarningManager:
 
   AircraftStateFilter cruise_filter;
   AircraftStateFilter circling_filter;
-  AirspaceAircraftPerformanceStateFilter perf_cruise;  
-  AirspaceAircraftPerformanceStateFilter perf_circling;  
 
   typedef std::list<AirspaceWarning> AirspaceWarningList;
 
@@ -72,15 +71,10 @@ public:
    * Default constructor
    * 
    * @param airspaces Store of airspaces
-   * @param task_manager Task manager holding task
-   * @param prediction_time_glide Time (s) of glide predictor (default 15 s)
-   * @param prediction_time_filter Time (s) of state filter predictor (default 60 s)
    *
    * @return Initialised object
    */
-  AirspaceWarningManager(const Airspaces &_airspaces,
-                         const fixed _prediction_time_glide = fixed(15.0),
-                         const fixed _prediction_time_filter = fixed(60.0));
+  AirspaceWarningManager(const Airspaces &_airspaces);
 
   gcc_pure
   const TaskProjection &GetProjection() const;
@@ -177,7 +171,7 @@ public:
    *
    * @return Number of items in warning list
    */
-  size_t size() const {
+  AirspaceWarningList::size_type size() const {
     return warnings.size();
   }
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,11 +29,7 @@ Copyright_License {
 
 #ifdef ENABLE_OPENGL
 #include "Screen/OpenGL/Globals.hpp"
-#ifdef HAVE_GLES
-#include <GLES/gl.h>
-#else
-#include <SDL/SDL_opengl.h>
-#endif
+#include "Screen/OpenGL/System.hpp"
 #endif
 
 /**
@@ -42,37 +38,32 @@ Copyright_License {
  */
 class SubCanvas : public Canvas {
 #ifdef ENABLE_OPENGL
-  GLvalue relative_x, relative_y;
+  RasterPoint relative;
 #endif
 
 public:
-  SubCanvas(Canvas &canvas, PixelScalar _x, PixelScalar _y,
-            UPixelScalar _width, UPixelScalar _height)
+  SubCanvas(Canvas &canvas, RasterPoint _offset, PixelSize _size)
 #ifdef ENABLE_OPENGL
-    :relative_x(_x), relative_y(_y)
+    :relative(_offset)
 #endif
   {
 #ifdef ENABLE_OPENGL
-    assert(canvas.x_offset == OpenGL::translate_x);
-    assert(canvas.y_offset == OpenGL::translate_y);
+    assert(canvas.offset == OpenGL::translate);
 #else
     surface = canvas.surface;
 #endif
-    x_offset = canvas.x_offset + _x;
-    y_offset = canvas.y_offset + _y;
-    width = _width;
-    height = _height;
+    offset = canvas.offset + _offset;
+    size = _size;
 
 #ifdef ENABLE_OPENGL
-    if (relative_x != 0 || relative_y != 0) {
-      OpenGL::translate_x += _x;
-      OpenGL::translate_y += _y;
+    if (relative.x != 0 || relative.y != 0) {
+      OpenGL::translate += _offset;
 
       glPushMatrix();
 #ifdef HAVE_GLES
-      glTranslatex((GLfixed)relative_x << 16, (GLfixed)relative_y << 16, 0);
+      glTranslatex((GLfixed)relative.x << 16, (GLfixed)relative.y << 16, 0);
 #else
-      glTranslatef(relative_x, relative_y, 0);
+      glTranslatef(relative.x, relative.y, 0);
 #endif
     }
 #endif
@@ -80,12 +71,10 @@ public:
 
   ~SubCanvas() {
 #ifdef ENABLE_OPENGL
-    assert(x_offset == OpenGL::translate_x);
-    assert(y_offset == OpenGL::translate_y);
+    assert(offset == OpenGL::translate);
 
-    if (relative_x != 0 || relative_y != 0) {
-      OpenGL::translate_x -= relative_x;
-      OpenGL::translate_y -= relative_y;
+    if (relative.x != 0 || relative.y != 0) {
+      OpenGL::translate -= relative;
 
       glPopMatrix();
     }

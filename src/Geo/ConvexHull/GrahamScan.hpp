@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -59,8 +59,11 @@ public:
    * Constructor.  Note that this class should be used temporarily only
    *
    * @param sps Input vector of points (may be unordered)
+   *
+   * @param sign_tolerance the tolerance for the direction sign; -1
+   * for automatic tolerance
    */
-  GrahamScan(SearchPointVector& sps, const fixed sign_tolerance = fixed(1.0e-8));
+  GrahamScan(SearchPointVector& sps, const fixed sign_tolerance = fixed(-1));
 
   /**
    * Perform convex hull transformation

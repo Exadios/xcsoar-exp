@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -42,12 +42,12 @@ GenerateNMEA(TextWriter &writer,
   time -= minute * 60;
   unsigned second = time;
 
-  int lat_d, lat_m, lat_s;
+  unsigned lat_d, lat_m, lat_s;
   bool lat_sign;
   loc.latitude.ToDMS(lat_d, lat_m, lat_s, lat_sign);
   double lat_ms = lat_m + lat_s / 60.;
 
-  int lon_d, lon_m, lon_s;
+  unsigned lon_d, lon_m, lon_s;
   bool lon_sign;
   loc.longitude.ToDMS(lon_d, lon_m, lon_s, lon_sign);
   double lon_ms = lon_m + lon_s / 60.;

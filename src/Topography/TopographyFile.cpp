@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -42,7 +42,8 @@ TopographyFile::TopographyFile(struct zzip_dir *_dir, const char *filename,
    pen_width(_pen_width),
    color(thecolor), scale_threshold(_threshold),
    label_threshold(_label_threshold),
-   important_label_threshold(_important_label_threshold)
+   important_label_threshold(_important_label_threshold),
+   cache_bounds(GeoBounds::Invalid())
 {
   if (msShapefileOpen(&file, "rb", dir, filename, 0) == -1)
     return;
@@ -57,9 +58,6 @@ TopographyFile::TopographyFile(struct zzip_dir *_dir, const char *filename,
 
   if (dir != NULL)
     ++dir->refcount;
-
-  cache_bounds.west = cache_bounds.east =
-    cache_bounds.south = cache_bounds.north = Angle::Zero();
 
   ++serial;
 }
@@ -94,10 +92,10 @@ static rectObj
 ConvertRect(const GeoBounds &br)
 {
   rectObj dest;
-  dest.minx = (double)br.west.Degrees();
-  dest.maxx = (double)br.east.Degrees();
-  dest.miny = (double)br.south.Degrees();
-  dest.maxy = (double)br.north.Degrees();
+  dest.minx = (double)br.GetWest().Degrees();
+  dest.maxx = (double)br.GetEast().Degrees();
+  dest.miny = (double)br.GetSouth().Degrees();
+  dest.maxy = (double)br.GetNorth().Degrees();
   return dest;
 }
 
@@ -113,11 +111,11 @@ TopographyFile::Update(const WindowProjection &map_projection)
 
   const GeoBounds screenRect =
     map_projection.GetScreenBounds();
-  if (cache_bounds.IsInside(screenRect))
+  if (cache_bounds.IsValid() && cache_bounds.IsInside(screenRect))
     /* the cache is still fresh */
     return false;
 
-  cache_bounds = map_projection.GetScreenBounds().Scale(fixed_two);
+  cache_bounds = map_projection.GetScreenBounds().Scale(fixed(2));
 
   rectObj deg_bounds = ConvertRect(cache_bounds);
 

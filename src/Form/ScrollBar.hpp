@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,12 +28,6 @@ Copyright_License {
 
 #include <algorithm>
 
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <winuser.h>
-#endif
-
 class Window;
 class Canvas;
 
@@ -52,33 +46,31 @@ public:
   ScrollBar();
 
   /** Returns the width of the ScrollBar */
-  PixelScalar GetWidth() const {
+  int GetWidth() const {
     return rc.right - rc.left;
   }
 
   /** Returns the height of the ScrollBar */
-  PixelScalar GetHeight() const {
+  int GetHeight() const {
     return rc.bottom - rc.top;
   }
 
   /** Returns the height of the slider */
-  PixelScalar GetSliderHeight() const {
+  int GetSliderHeight() const {
     return rc_slider.bottom - rc_slider.top;
   }
 
   /** Returns the height of the scrollable area of the ScrollBar */
-  PixelScalar GetNettoHeight() const {
-    return std::max(PixelScalar(GetHeight() - 2 * GetWidth() - 1),
-                    PixelScalar(0));
+  int GetNettoHeight() const {
+    return std::max(GetHeight() - 2 * GetWidth() - 1, 0);
   }
 
   /**
    * Returns the height of the visible scroll area of the ScrollBar
    * (the area thats not covered with the slider)
    */
-  PixelScalar GetScrollHeight() const {
-    return std::max(PixelScalar(GetNettoHeight() - GetSliderHeight()),
-                    PixelScalar(1));
+  int GetScrollHeight() const {
+    return std::max(GetNettoHeight() - GetSliderHeight(), 1);
   }
 
   /**
@@ -107,7 +99,7 @@ public:
    * False otherwise
    */
   bool IsInside(const RasterPoint &pt) const {
-    return ::PtInRect(&rc, pt);
+    return rc.IsInside(pt);
   }
 
   /**
@@ -117,7 +109,7 @@ public:
    * False otherwise
    */
   bool IsInsideSlider(const RasterPoint &pt) const {
-    return ::PtInRect(&rc_slider, pt);
+    return rc_slider.IsInside(pt);
   }
 
   /**

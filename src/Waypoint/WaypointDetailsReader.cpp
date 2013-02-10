@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@ Copyright_License {
 #include "WaypointDetailsReader.hpp"
 #include "Language/Language.hpp"
 #include "Profile/ProfileKeys.hpp"
-#include "LogFile.hpp"
 #include "Interface.hpp"
 #include "Util/StringUtil.hpp"
 #include "Engine/Waypoint/Waypoint.hpp"
@@ -96,11 +95,11 @@ ParseAirfieldDetails(Waypoints &way_points, TLineReader &reader,
   bool in_details = false;
   int i;
 
-  long filesize = std::max(reader.size(), 1l);
+  const long filesize = std::max(reader.GetSize(), 1l);
   operation.SetProgressRange(100);
 
   TCHAR *line;
-  while ((line = reader.read()) != NULL) {
+  while ((line = reader.ReadLine()) != NULL) {
     if (line[0] == _T('[')) { // Look for start
       if (in_details)
         SetAirfieldDetails(way_points, name, details, files_external,
@@ -121,14 +120,14 @@ ParseAirfieldDetails(Waypoints &way_points, TLineReader &reader,
 
       in_details = true;
 
-      operation.SetProgressPosition(reader.tell() * 100 / filesize);
+      operation.SetProgressPosition(reader.Tell() * 100 / filesize);
     } else if ((filename =
                 StringAfterPrefixCI(line, _T("image="))) != NULL) {
-      files_embed.push_back(filename);
+      files_embed.emplace_back(filename);
     } else if ((filename =
                 StringAfterPrefixCI(line, _T("file="))) != NULL) {
 #ifdef ANDROID
-      files_external.push_back(filename);
+      files_external.emplace_back(filename);
 #endif
     } else {
       // append text to details string
@@ -150,7 +149,6 @@ void
 WaypointDetails::ReadFile(TLineReader &reader, Waypoints &way_points,
                           OperationEnvironment &operation)
 {
-  LogStartUp(_T("WaypointDetails::ReadFile"));
   operation.SetText(_("Loading Airfield Details File..."));
   ParseAirfieldDetails(way_points, reader, operation);
 }
@@ -159,8 +157,6 @@ void
 WaypointDetails::ReadFileFromProfile(Waypoints &way_points,
                                      OperationEnvironment &operation)
 {
-  LogStartUp(_T("WaypointDetails::ReadFileFromProfile"));
-
   std::unique_ptr<TLineReader>
   reader(OpenConfiguredTextFile(ProfileKeys::AirfieldFile, _T("airfields.txt"),
                                 ConvertLineReader::AUTO));

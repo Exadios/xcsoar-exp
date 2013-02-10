@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,13 +25,20 @@ Copyright_License {
 #define XCSOAR_AUDIO_VARIO_SYNTHESISER_HPP
 
 #include "ToneSynthesiser.hpp"
+#include "Thread/Mutex.hpp"
 #include "Math/fixed.hpp"
 #include "Compiler.h"
 
 /**
  * This class generates vario sound.
  */
-class VarioSynthesiser : public ToneSynthesiser {
+class VarioSynthesiser final : public ToneSynthesiser {
+  /**
+   * This mutex protects all atttributes below.  It is locked
+   * automatically by all public methods.
+   */
+  Mutex mutex;
+
   /**
    * The number of audible samples in each period.
    */
@@ -77,13 +84,20 @@ class VarioSynthesiser : public ToneSynthesiser {
    */
   unsigned max_period_ms;
 
+  /**
+   * The vario range of the "dead band" during which no sound is emitted
+   * [cm/s].
+   */
+  int min_dead, max_dead;
+
 public:
   VarioSynthesiser()
     :audible_count(0), silence_count(1),
      audible_remaining(0), silence_remaining(0),
      dead_band_enabled(false),
      min_frequency(200), zero_frequency(500), max_frequency(1500),
-     min_period_ms(150), max_period_ms(600) {}
+     min_period_ms(150), max_period_ms(600),
+     min_dead(-30), max_dead(10) {}
 
   /**
    * Update the vario value.  This calculates a new tone frequency and
@@ -122,10 +136,23 @@ public:
     max_period_ms = max;
   }
 
+  /**
+   * Set the vario range of the "dead band" during which no sound is emitted
+   */
+  void SetDeadBandRange(fixed min, fixed max) {
+    min_dead = (int)(min * 100);
+    max_dead = (int)(max * 100);
+  }
+
   /* methods from class PCMSynthesiser */
   virtual void Synthesise(int16_t *buffer, size_t n);
 
 private:
+  /**
+   * Same as SetSilence(), but doesn't lock the mutex.
+   */
+  void UnsafeSetSilence();
+
   /**
    * Convert a vario value to a tone frequency.
    *
@@ -133,6 +160,10 @@ private:
    */
   gcc_const
   unsigned VarioToFrequency(int ivario);
+
+  bool InDeadBand(int ivario) {
+    return ivario >= min_dead && ivario <= max_dead;
+  }
 };
 
 #endif

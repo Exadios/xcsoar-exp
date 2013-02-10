@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,14 +24,20 @@ Copyright_License {
 #include "AndroidPort.hpp"
 #include "Android/PortBridge.hpp"
 
+#include <assert.h>
+
 AndroidPort::AndroidPort(DataHandler &_handler, PortBridge *_bridge)
   :BufferedPort(_handler), bridge(_bridge)
 {
+  assert(bridge != nullptr);
+
   bridge->setListener(Java::GetEnv(), this);
 }
 
 AndroidPort::~AndroidPort()
 {
+  assert(bridge != nullptr);
+
   BeginClose();
 
   delete bridge;
@@ -39,38 +45,42 @@ AndroidPort::~AndroidPort()
   EndClose();
 }
 
-bool
-AndroidPort::IsValid() const
+PortState
+AndroidPort::GetState() const
 {
-  return bridge != NULL && bridge->isValid(Java::GetEnv());
+  assert(bridge != nullptr);
+
+  return (PortState)bridge->getState(Java::GetEnv());
 }
 
 bool
 AndroidPort::Drain()
 {
-  return bridge != NULL && bridge->drain(Java::GetEnv());
+  assert(bridge != nullptr);
+
+  return bridge->drain(Java::GetEnv());
 }
 
 unsigned
 AndroidPort::GetBaudrate() const
 {
-  return bridge != NULL
-    ? bridge->getBaudRate(Java::GetEnv())
-    : 0;
+  assert(bridge != nullptr);
+
+  return bridge->getBaudRate(Java::GetEnv());
 }
 
 bool
 AndroidPort::SetBaudrate(unsigned baud_rate)
 {
-  return bridge != NULL &&
-    bridge->setBaudRate(Java::GetEnv(), baud_rate);
+  assert(bridge != nullptr);
+
+  return bridge->setBaudRate(Java::GetEnv(), baud_rate);
 }
 
 size_t
 AndroidPort::Write(const void *data, size_t length)
 {
-  if (bridge == NULL)
-    return 0;
+  assert(bridge != nullptr);
 
   JNIEnv *env = Java::GetEnv();
   int nbytes = bridge->write(env, data, length);

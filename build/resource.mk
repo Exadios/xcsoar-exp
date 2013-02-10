@@ -3,11 +3,19 @@ include build/imagemagick.mk
 
 ####### market icons
 
-SVG_MARKET_ICONS = Data/graphics/xcsoarswiftsplash.svg Data/graphics/xcsoarswiftsplash_red.svg Data/graphics/xcsoarswiftsplash_no_horizon.svg
+SVG_MARKET_ICONS = Data/graphics/logo.svg Data/graphics/logo_red.svg
 PNG_MARKET_ICONS = $(patsubst Data/graphics/%.svg,$(DATA)/graphics/%_market.png,$(SVG_MARKET_ICONS))
 
 market-icons: $(PNG_MARKET_ICONS)
 $(eval $(call rsvg-convert,$(PNG_MARKET_ICONS),$(DATA)/graphics/%_market.png,Data/graphics/%.svg,--width=512))
+
+####### bitmaps
+
+BMP_BITMAPS = $(wildcard Data/bitmaps/*.bmp)
+PNG_BITMAPS = $(patsubst Data/bitmaps/%.bmp,$(DATA)/bitmaps/%.png,$(BMP_BITMAPS))
+
+$(PNG_BITMAPS): $(DATA)/bitmaps/%.png: Data/bitmaps/%.bmp | $(DATA)/bitmaps/dirstamp
+	$(Q)$(IM_PREFIX)convert $< $@
 
 ####### icons
 
@@ -35,7 +43,7 @@ $(eval $(call convert-to-bmp,$(BMP_ICONS) $(BMP_ICONS_160),%.bmp,%_tile.png))
 
 ####### splash logo
 
-SVG_SPLASH = Data/graphics/xcsoarswiftsplash.svg Data/graphics/xcsoarswiftsplash_red.svg Data/graphics/xcsoarswiftsplash_no_horizon.svg
+SVG_SPLASH = Data/graphics/logo.svg Data/graphics/logo_red.svg
 PNG_SPLASH_160 = $(patsubst Data/graphics/%.svg,$(DATA)/graphics/%_160.png,$(SVG_SPLASH))
 BMP_SPLASH_160 = $(PNG_SPLASH_160:.png=.bmp)
 PNG_SPLASH_80 = $(patsubst Data/graphics/%.svg,$(DATA)/graphics/%_80.png,$(SVG_SPLASH))
@@ -104,6 +112,11 @@ BMP_LAUNCH_SIM_224 = $(PNG_LAUNCH_224:.png=_2.bmp)
 BMP_LAUNCH_DLL_FLY_224 = $(PNG_LAUNCH_224:.png=_dll_1.bmp)
 BMP_LAUNCH_DLL_SIM_224 = $(PNG_LAUNCH_224:.png=_dll_2.bmp)
 
+BMP_LAUNCH_ALL = $(BMP_LAUNCH_FLY_224) $(BMP_LAUNCH_SIM_224)
+ifeq ($(HAVE_WIN32),y)
+BMP_LAUNCH_ALL += $(BMP_LAUNCH_DLL_FLY_224) $(BMP_LAUNCH_DLL_SIM_224)
+endif
+
 # render from SVG to PNG
 $(eval $(call rsvg-convert,$(PNG_LAUNCH_224),$(DATA)/graphics/%_224.png,Data/graphics/%.svg,--width=224))
 
@@ -114,6 +127,12 @@ $(eval $(call convert-to-bmp-half,$(BMP_LAUNCH_SIM_224),%_2.bmp,%.png,-backgroun
 # split into two uncompressed 8-bit BMPs (single 'convert' operation)
 $(eval $(call convert-to-bmp-half,$(BMP_LAUNCH_DLL_FLY_224),%_dll_1.bmp,%.png,-background blue))
 $(eval $(call convert-to-bmp-half,$(BMP_LAUNCH_DLL_SIM_224),%_dll_2.bmp,%.png,-background blue))
+
+# back to PNG
+
+PNG_LAUNCH_ALL = $(patsubst %.bmp,%.png,$(BMP_LAUNCH_ALL))
+$(PNG_LAUNCH_ALL): %.png: %.bmp
+	$(Q)$(IM_PREFIX)convert $< $@
 
 #######
 
@@ -141,13 +160,32 @@ RESOURCE_FILES = $(DIALOG_COMPRESSED) $(TEXT_COMPRESSED)
 ifeq ($(TARGET),ANDROID)
 RESOURCE_FILES += $(patsubst po/%.po,$(OUT)/po/%.mo,$(wildcard po/*.po))
 else
-RESOURCE_FILES += $(wildcard Data/bitmaps/*.bmp)
+
+ifeq ($(HAVE_WIN32),y)
+RESOURCE_FILES += $(BMP_BITMAPS)
+else
+RESOURCE_FILES += $(PNG_BITMAPS)
+endif
+
 RESOURCE_FILES += $(BMP_ICONS) $(BMP_ICONS_160) 
 RESOURCE_FILES += $(BMP_SPLASH_160) $(BMP_SPLASH_80)
 RESOURCE_FILES += $(BMP_DIALOG_TITLE) $(BMP_PROGRESS_BORDER)
 RESOURCE_FILES += $(BMP_TITLE_320) $(BMP_TITLE_110)
-RESOURCE_FILES += $(BMP_LAUNCH_FLY_224) $(BMP_LAUNCH_SIM_224)
-RESOURCE_FILES += $(BMP_LAUNCH_DLL_FLY_224) $(BMP_LAUNCH_DLL_SIM_224)
+RESOURCE_FILES += $(BMP_LAUNCH_ALL)
+
+ifeq ($(HAVE_WIN32),n)
+
+$(patsubst $(DATA)/icons/%.bmp,$(DATA)/icons2/%.png,$(filter $(DATA)/icons/%.bmp,$(RESOURCE_FILES))): $(DATA)/icons2/%.png: $(DATA)/icons/%.bmp | $(DATA)/icons2/dirstamp
+	$(Q)$(IM_PREFIX)convert $< $@
+
+$(patsubst $(DATA)/graphics/%.bmp,$(DATA)/graphics2/%.png,$(filter $(DATA)/graphics/%.bmp,$(RESOURCE_FILES))): $(DATA)/graphics2/%.png: $(DATA)/graphics/%.bmp | $(DATA)/graphics2/dirstamp
+	$(Q)$(IM_PREFIX)convert $< $@
+
+RESOURCE_FILES := $(patsubst $(DATA)/graphics/%.bmp,$(DATA)/graphics2/%.png,$(RESOURCE_FILES))
+RESOURCE_FILES := $(patsubst $(DATA)/icons/%.bmp,$(DATA)/icons2/%.png,$(RESOURCE_FILES))
+RESOURCE_FILES := $(patsubst %.bmp,%.png,$(RESOURCE_FILES))
+endif
+
 endif
 
 ifeq ($(HAVE_WIN32),y)

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,45 +24,67 @@ Copyright_License {
 #ifndef XCSOAR_IGC_WRITER_HPP
 #define XCSOAR_IGC_WRITER_HPP
 
-#include "Logger/LoggerFRecord.hpp"
-#include "Logger/LoggerGRecord.hpp"
-#include "Util/BatchBuffer.hpp"
+#include "Logger/GRecord.hpp"
 #include "Math/fixed.hpp"
 #include "IGCFix.hpp"
+#include "IO/TextWriter.hpp"
 
 #include <tchar.h>
-#include <windef.h> /* for MAX_PATH */
 
+struct GPSState;
 struct BrokenDateTime;
 struct NMEAInfo;
-struct Declaration;
 struct GeoPoint;
 
 class IGCWriter {
   enum {
-    /** Number of records in disk buffer */
-    LOGGER_DISK_BUFFER_NUM_RECS = 10,
     MAX_IGC_BUFF = 255,
   };
 
-  TCHAR path[MAX_PATH];
-  BatchBuffer<char[MAX_IGC_BUFF],LOGGER_DISK_BUFFER_NUM_RECS> buffer;
+  TextWriter file;
 
   GRecord grecord;
 
-  IGCFix last_valid_point;
-  bool last_valid_point_initialized;
+  IGCFix fix;
+
+  char buffer[MAX_IGC_BUFF];
 
 public:
-  IGCWriter(const TCHAR *_path, bool simulator);
+  /**
+   * Create a new IGC file.  The caller must check IsOpen().
+   */
+  IGCWriter(const TCHAR *path);
 
-  bool Flush();
-  void Finish();
+  bool IsOpen() const {
+    return file.IsOpen();
+  }
+
+  bool Flush() {
+    return file.Flush();
+  }
+
   void Sign();
 
-  bool WriteLine(const char *line);
-
 private:
+  /**
+   * Begin writing a new line.  The returned buffer has #MAX_IGC_BUFF
+   * bytes.  Call CommitLine() when you are done writing to the buffer.
+   *
+   * @return nullptr on error
+   */
+  char *BeginLine() {
+    return buffer;
+  }
+
+  /**
+   * Finish writing the line.
+   *
+   * @param line the buffer obtained with BeginLine()
+   * @return true on success
+   */
+  bool CommitLine(char *line);
+
+  bool WriteLine(const char *line);
   bool WriteLine(const char *a, const TCHAR *b);
 
   static const char *GetHFFXARecord();

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,8 @@ Copyright_License {
 
 #include "Thread/Thread.hpp"
 #include "Operation/ThreadedOperationEnvironment.hpp"
-#include "Thread/Flag.hpp"
+
+#include <atomic>
 
 class Job;
 
@@ -42,7 +43,7 @@ class JobThread : protected Thread, protected ThreadedOperationEnvironment {
   /**
    * Is the thread currently running?
    */
-  Flag running;
+  std::atomic<bool> running;
 
   /**
    * Was the thread running when we last checked?  This is used in
@@ -53,7 +54,7 @@ class JobThread : protected Thread, protected ThreadedOperationEnvironment {
 public:
   JobThread(OperationEnvironment &_env, Job &_job)
     :ThreadedOperationEnvironment(_env), job(_job),
-     was_running(false) {}
+     running(false), was_running(false) {}
 
   bool Start();
 

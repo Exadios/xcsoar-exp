@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -55,16 +55,10 @@ public:
  */
 class AbortTask: public UnorderedTask
 {
-public:
-  friend class PrintHelper;
-
   /** max number of items in list */
-  static const unsigned max_abort;
-  /** min search range in m */
-  static const fixed min_search_range;
-  /** max search range in m */
-  static const fixed max_search_range;
+  static constexpr unsigned max_abort = 10;
 
+public:
   struct Alternate {
     Waypoint waypoint;
 
@@ -84,13 +78,13 @@ public:
   typedef std::vector <Alternate> AlternateVector;
 
 protected:
-  struct AlternateTaskPoint: public UnorderedTaskPoint
-  {
+  struct AlternateTaskPoint {
+    UnorderedTaskPoint point;
     GlideResult solution;
 
     AlternateTaskPoint(const Waypoint &waypoint, const TaskBehaviour &tb,
                        const GlideResult &_solution)
-      :UnorderedTaskPoint(waypoint, tb), solution(_solution) {}
+      :point(waypoint, tb), solution(_solution) {}
   };
 
   typedef std::vector<AlternateTaskPoint> AlternateTaskVector;
@@ -120,12 +114,13 @@ public:
    */
   AbortTask(const TaskBehaviour &tb,
             const Waypoints &wps);
-  virtual ~AbortTask();
+
+  void SetTaskBehaviour(const TaskBehaviour &tb);
 
   const UnorderedTaskPoint &GetAlternate(unsigned i) const {
     assert(i < task_points.size());
 
-    return task_points[i];
+    return task_points[i].point;
   }
 
   /**
@@ -232,26 +227,24 @@ public:
    * @param visitor Visitor to accept
    * @param reverse Visit task points in reverse order
    */
-  void AcceptTaskPointVisitor(TaskPointConstVisitor &visitor) const gcc_override;
+  void AcceptTaskPointVisitor(TaskPointConstVisitor &visitor) const override;
 
 public:
   /* virtual methods from class TaskInterface */
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb);
-  virtual unsigned TaskSize() const;
-  virtual void SetActiveTaskPoint(unsigned index);
-  virtual TaskWaypoint *GetActiveTaskPoint() const;
-  virtual bool IsValidTaskPoint(int index_offset) const;
+  virtual unsigned TaskSize() const override;
+  virtual void SetActiveTaskPoint(unsigned index) override;
+  virtual TaskWaypoint *GetActiveTaskPoint() const override;
+  virtual bool IsValidTaskPoint(int index_offset) const override;
 
   /* virtual methods from class AbstractTask */
-  virtual void Reset();
-  virtual GeoPoint GetTaskCenter(const GeoPoint &fallback_location) const;
-  virtual fixed GetTaskRadius(const GeoPoint &fallback_location) const;
+  virtual void Reset() override;
+
 protected:
   virtual bool UpdateSample(const AircraftState &state_now,
                             const GlidePolar &glide_polar,
-                            bool full_update);
+                            bool full_update) override;
   virtual bool CheckTransitions(const AircraftState &state_now,
-                                const AircraftState &state_last);
+                                const AircraftState &state_last) override;
 };
 
 #endif

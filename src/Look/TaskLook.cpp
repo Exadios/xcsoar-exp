@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -47,6 +47,8 @@ TaskLook::Initialise()
   bearing_pen.Set(Layout::ScalePenWidth(2), bearing_color);
   best_cruise_track_brush.Set(bearing_color);
   best_cruise_track_pen.Set(Layout::ScalePenWidth(1), DarkColor(bearing_color));
+
+  highlight_pen.Set(Layout::ScalePenWidth(4), COLOR_BLACK);
 
   target_icon.Load(IDB_TARGET, IDB_TARGET_HD);
 

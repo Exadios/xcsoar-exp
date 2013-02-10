@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -65,13 +65,12 @@ public:
   }
 
   /* virtual methods from class ObservationZone */
-  virtual bool IsInSector(const GeoPoint &location) const;
-  virtual GeoPoint GetBoundaryParametric(fixed t) const;
-  virtual OZBoundary GetBoundary() const gcc_override;
-  virtual fixed ScoreAdjustment() const;
+  virtual bool IsInSector(const GeoPoint &location) const override;
+  virtual OZBoundary GetBoundary() const override;
+  virtual fixed ScoreAdjustment() const override;
 
   /* virtual methods from class ObservationZonePoint */
-  virtual ObservationZonePoint *Clone(const GeoPoint &_reference) const {
+  virtual ObservationZonePoint *Clone(const GeoPoint &_reference) const override {
     return new KeyholeZone(*this, _reference);
   }
 };

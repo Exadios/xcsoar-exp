@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,18 +24,16 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_OPENGL_TEXTURE_HPP
 #define XCSOAR_SCREEN_OPENGL_TEXTURE_HPP
 
-#include "Screen/OpenGL/Features.hpp"
+#include "Features.hpp"
+#include "System.hpp"
 #include "Screen/OpenGL/Point.hpp"
 #include "FBO.hpp"
 #include "Asset.hpp"
 
 #include <assert.h>
 
-#ifdef HAVE_GLES
-#include <GLES/gl.h>
-#else
-#include <SDL.h>
-#include <SDL_opengl.h>
+#ifdef ENABLE_SDL
+#include <SDL_video.h>
 #endif
 
 #ifndef NDEBUG
@@ -50,13 +48,11 @@ protected:
   GLuint id;
   UPixelScalar width, height;
 
-#ifndef HAVE_OES_DRAW_TEXTURE
   /**
    * The real dimensions of the texture.  This may differ when
    * ARB_texture_non_power_of_two is not available.
    */
   GLsizei allocated_width, allocated_height;
-#endif
 
 public:
 #ifdef ANDROID
@@ -73,7 +69,10 @@ public:
    */
   GLTexture(UPixelScalar _width, UPixelScalar _height);
 
-#ifndef ANDROID
+  GLTexture(GLint internal_format, GLsizei width, GLsizei height,
+            GLenum format, GLenum type, const GLvoid *data);
+
+#ifdef ENABLE_SDL
   GLTexture(SDL_Surface *surface) {
     Initialise();
     Load(surface);
@@ -94,7 +93,7 @@ public:
    */
   constexpr
   static GLenum GetType() {
-    return have_gles()
+    return HaveGLES()
       ? GL_UNSIGNED_SHORT_5_6_5
       : GL_UNSIGNED_BYTE;
   }
@@ -109,8 +108,7 @@ public:
 
   gcc_pure
   PixelSize GetSize() const {
-    const PixelSize size{ PixelScalar(width), PixelScalar(height) };
-    return size;
+    return { width, height };
   }
 
   /**
@@ -118,11 +116,7 @@ public:
    */
   gcc_pure
   PixelSize GetAllocatedSize() const {
-#ifdef HAVE_OES_DRAW_TEXTURE
-    return GetSize();
-#else
-    return { PixelScalar(allocated_width), PixelScalar(allocated_height) };
-#endif
+    return { allocated_width, allocated_height };
   }
 
   /**
@@ -155,7 +149,7 @@ protected:
                     !IsEmbedded() || mag_linear ? GL_LINEAR : GL_NEAREST);
   }
 
-#ifndef ANDROID
+#ifdef ENABLE_SDL
   void Load(SDL_Surface *surface);
 #endif
 

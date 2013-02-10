@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,6 +27,75 @@
 
 #include <stdio.h>
 
+static constexpr struct {
+  double input;
+  int floor, ceil;
+} floor_ceil_tests[] = {
+  { 0, 0, 0 },
+
+  { 1.00001, 1, 2 },
+  { 1.4, 1, 2 },
+  { 1.5, 1, 2 },
+  { 1.99999, 1, 2 },
+
+  { -1.00001, -2, -1 },
+  { -1.4, -2, -1 },
+  { -1.5, -2, -1 },
+  { -1.99999, -2, -1 },
+};
+
+static void
+TestFloorCeil()
+{
+  for (const auto &i : floor_ceil_tests) {
+    ok1(floor(fixed(i.input)) == fixed(i.floor));
+    ok1(ceil(fixed(i.input)) == fixed(i.ceil));
+  }
+}
+
+static constexpr struct {
+  double in;
+  unsigned out;
+} uround_test_values[] = {
+  { 0, 0 },
+  { 0.1, 0 },
+  { 0.49, 0 },
+  { 0.5, 1 },
+  { 0.51, 1 },
+  { 0.99999, 1 },
+  { 1, 1 },
+  { 4294967295.0, 4294967295u },
+  { 4294967295.49, 4294967295u },
+  { 4294967294.51, 4294967295u },
+};
+
+static constexpr struct {
+  double in;
+  int out;
+} iround_test_values[] = {
+  { 0, 0 },
+  { 0.1, 0 },
+  { 0.49, 0 },
+  { 0.51, 1 },
+  { 0.99999, 1 },
+  { 1, 1 },
+  { 2147483647, 2147483647 },
+  { 2147483647.49, 2147483647 },
+  { 2147483646.51, 2147483647 },
+};
+
+static void
+TestRound()
+{
+  for (unsigned i = 0; i < ARRAY_SIZE(uround_test_values); ++i)
+    ok1(uround(fixed(uround_test_values[i].in)) == uround_test_values[i].out);
+
+  for (unsigned i = 0; i < ARRAY_SIZE(iround_test_values); ++i) {
+    ok1(iround(fixed(iround_test_values[i].in)) == iround_test_values[i].out);
+    ok1(iround(fixed(-iround_test_values[i].in)) == -iround_test_values[i].out);
+  }
+}
+
 // tolerance is 0.3%
 
 static void test_mag_rmag(double mag) {
@@ -39,15 +108,15 @@ static void test_mag_rmag(double mag) {
   fixed d; fixed inv_d;
   mag_rmag(px, py, d, inv_d);
   fixed ed = fabs(d-fixed(10.0*mag))/fixed(0.03*mag);
-  if (ed>= fixed_one) {
+  if (ed>= fixed(1)) {
     printf("# d %g %g %g\n", (double)d, (double)ed, mag);
   }
-  ok(ed< fixed_one, "mag_rmag d", 0);
+  ok(ed< fixed(1), "mag_rmag d", 0);
   fixed inv_ed = fabs(inv_d-fixed(0.1/mag))/fixed(3.0e-4/mag);
-  if (inv_ed>= fixed_one) {
+  if (inv_ed>= fixed(1)) {
     printf("# inv %g %g %g\n", (double)inv_d, (double)inv_ed, mag);
   }
-  ok(inv_ed< fixed_one, "mag_rmag inv_d", 0);
+  ok(inv_ed< fixed(1), "mag_rmag inv_d", 0);
 }
 
 static double Hypot_test_values[][2]={
@@ -104,29 +173,32 @@ TestTinyHypot()
 
 int main(int argc, char** argv) {
   plan_tests(43 + ARRAY_SIZE(Hypot_test_values)
+             + ARRAY_SIZE(floor_ceil_tests) * 2
+             + ARRAY_SIZE(uround_test_values)
+             + 2 * ARRAY_SIZE(iround_test_values)
              + ARRAY_SIZE(tiny_hypot_test_values));
 
   /* check the division operator */
-  ok((fixed_one / fixed_one) * fixed(1000) == fixed(1000), "1/1", 0);
-  ok((fixed_two / fixed_two) * fixed(1000) == fixed(1000), "2/2", 0);
-  ok((fixed_one / fixed_two) * fixed(1000) == fixed(500), "1/2", 0);
+  ok((fixed(1) / fixed(1)) * fixed(1000) == fixed(1000), "1/1", 0);
+  ok((fixed(2) / fixed(2)) * fixed(1000) == fixed(1000), "2/2", 0);
+  ok((fixed(1) / fixed(2)) * fixed(1000) == fixed(500), "1/2", 0);
   ok((fixed(1000) / fixed(100)) * fixed(1000) == fixed(10000), "1000/100", 0);
   ok((fixed(100) / fixed(20)) * fixed(1000) == fixed(5000), "100/20", 0);
   ok((fixed(1000000) / fixed(2)) * fixed(1000) == fixed(500000000), "1M/2", 0);
-  ok((fixed_minus_one / fixed_one) * fixed(1000) == -fixed(1000), "-1/1", 0);
-  ok((fixed_one / fixed_minus_one) * fixed(1000) == -fixed(1000), "1/-1", 0);
-  ok((fixed_minus_one / fixed_minus_one) * fixed(1000) == fixed(1000), "-1/-1", 0);
+  ok((fixed(-1) / fixed(1)) * fixed(1000) == -fixed(1000), "-1/1", 0);
+  ok((fixed(1) / fixed(-1)) * fixed(1000) == -fixed(1000), "1/-1", 0);
+  ok((fixed(-1) / fixed(-1)) * fixed(1000) == fixed(1000), "-1/-1", 0);
   ok((fixed(-1000000) / fixed(2)) * fixed(1000) == -fixed(500000000), "-1M/2", 0);
-  ok((long)((fixed_one / (fixed_one / fixed(10))) * fixed(1000)) == (10000), "1/0.1", 0);
-  ok((long)((fixed_one / (fixed_one / fixed(-10))) * fixed(1000)) == -(10000) ||
-     (long)((fixed_one / (fixed_one / fixed(-10))) * fixed(1000)) == -(10001), "1/-0.1", 0);
+  ok((long)((fixed(1) / (fixed(1) / fixed(10))) * fixed(1000)) == (10000), "1/0.1", 0);
+  ok((long)((fixed(1) / (fixed(1) / fixed(-10))) * fixed(1000)) == -(10000) ||
+     (long)((fixed(1) / (fixed(1) / fixed(-10))) * fixed(1000)) == -(10001), "1/-0.1", 0);
 
-  ok(equals(fixed_one / fixed_half, 2), "1/0.5", 0);
-  ok(equals(fixed(1000) / fixed_half, 2000), "1/0.5", 0);
-  ok(equals(fixed(1000) / (fixed_one / 5), 5000), "1/0.5", 0);
+  ok(equals(fixed(1) / fixed(0.5), 2), "1/0.5", 0);
+  ok(equals(fixed(1000) / fixed(0.5), 2000), "1/0.5", 0);
+  ok(equals(fixed(1000) / (fixed(1) / 5), 5000), "1/0.5", 0);
 
-  ok(equals(fixed(1000000) / (fixed_one / 5), 5000000), "1/0.5", 0);
-  ok(equals(fixed(10000000) / (fixed_one / 5), 50000000), "1/0.5", 0);
+  ok(equals(fixed(1000000) / (fixed(1) / 5), 5000000), "1/0.5", 0);
+  ok(equals(fixed(10000000) / (fixed(1) / 5), 50000000), "1/0.5", 0);
 
   double da = 20.0;
   double dsina = sin(da);
@@ -159,6 +231,8 @@ int main(int argc, char** argv) {
     }
   }
 
+  TestFloorCeil();
+  TestRound();
   test_hypot();
   TestTinyHypot();
 

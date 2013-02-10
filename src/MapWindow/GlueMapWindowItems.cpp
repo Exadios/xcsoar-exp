@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ GlueMapWindow::ShowMapItems(const GeoPoint &location,
                                 computer_settings.task.safety_height_arrival);
 
   if (basic.location_available)
-    builder.AddSelfIfNear(basic.location, calculated.heading);
+    builder.AddSelfIfNear(basic.location, basic.attitude.heading);
 
   if (task)
     builder.AddTaskOZs(*task);
@@ -72,10 +72,10 @@ GlueMapWindow::ShowMapItems(const GeoPoint &location,
                                settings.airspace, basic,
                                calculated);
 
-  if (marks && visible_projection.GetMapScale() <= fixed_int_constant(30000))
+  if (marks && visible_projection.GetMapScale() <= fixed(30000))
     builder.AddMarkers(*marks);
 
-  if (visible_projection.GetMapScale() <= fixed_int_constant(4000))
+  if (visible_projection.GetMapScale() <= fixed(4000))
     builder.AddThermals(calculated.thermal_locator, basic, calculated);
 
   if (waypoints)
@@ -86,7 +86,7 @@ GlueMapWindow::ShowMapItems(const GeoPoint &location,
     builder.AddWeatherStations(*noaa_store);
 #endif
 
-  builder.AddTraffic(basic.flarm.traffic, computer_settings.team_code);
+  builder.AddTraffic(basic.flarm.traffic);
 
   // Sort the list of map items
   list.Sort();

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ ParsePFLAE(NMEAInputLine &line, FlarmError &error, fixed clock)
     return;
 
   error.severity = (FlarmError::Severity)
-    line.ReadHex((long)FlarmError::Severity::NO_ERROR);
+    line.Read((int)FlarmError::Severity::NO_ERROR);
   error.code = (FlarmError::Code)line.ReadHex(0);
 
   error.available.Update(clock);
@@ -147,7 +147,7 @@ ParsePFLAA(NMEAInputLine &line, TrafficList &flarm, fixed clock)
   traffic.turn_rate_received = line.ReadChecked(value);
   if (!traffic.turn_rate_received) {
     // Field is empty in stealth mode
-    traffic.turn_rate = fixed_zero;
+    traffic.turn_rate = fixed(0);
   } else
     traffic.turn_rate = value;
 
@@ -155,7 +155,7 @@ ParsePFLAA(NMEAInputLine &line, TrafficList &flarm, fixed clock)
   if (!traffic.speed_received) {
     // Field is empty in stealth mode
     stealth = true;
-    traffic.speed = fixed_zero;
+    traffic.speed = fixed(0);
   } else
     traffic.speed = value;
 
@@ -163,7 +163,7 @@ ParsePFLAA(NMEAInputLine &line, TrafficList &flarm, fixed clock)
   if (!traffic.climb_rate_received) {
     // Field is empty in stealth mode
     stealth = true;
-    traffic.climb_rate = fixed_zero;
+    traffic.climb_rate = fixed(0);
   } else
     traffic.climb_rate = value;
 

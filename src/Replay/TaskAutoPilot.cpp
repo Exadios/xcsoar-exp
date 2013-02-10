@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,11 +24,12 @@
 #include "TaskAccessor.hpp"
 #include "Task/Stats/ElementStat.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
+#include "Util/Clamp.hpp"
 
 void
 AutopilotParameters::SetIdeal()
 {
-  bearing_noise = fixed_zero;
+  bearing_noise = fixed(0);
   turn_speed = fixed(90.0);
 }
 
@@ -80,7 +81,7 @@ TaskAutoPilot::Start(const TaskAccessor& task)
 
   // reset the heading
   heading = Angle::Zero();
-  heading_filter.Reset(fixed_zero);
+  heading_filter.Reset(fixed(0));
 
   acstate = Cruise;
 }
@@ -120,9 +121,9 @@ Angle
 TaskAutoPilot::GetHeadingDeviation()
 {
   fixed noise_mag = acstate == Climb
-    ? half(parms.bearing_noise)
+    ? Half(parms.bearing_noise)
     : parms.bearing_noise;
-  fixed r = (fixed_two * rand() / RAND_MAX) - fixed_one;
+  fixed r = (fixed(2) * rand() / RAND_MAX) - fixed(1);
   fixed deviation = fixed(heading_filter.Update(noise_mag * r));
   return Angle::Degrees(deviation).AsDelta();
 }
@@ -190,13 +191,13 @@ TaskAutoPilot::UpdateCruiseBearing(const TaskAccessor& task,
     const fixed sintheta = (state.wind.bearing - bearing).sin();
     if (fabs(sintheta) > fixed(0.0001))
       bearing +=
-        Angle::Radians(asin(sintheta * state.wind.norm / state.true_airspeed));
+        Angle::asin(sintheta * state.wind.norm / state.true_airspeed);
   }
 
   Angle diff = (bearing - heading).AsDelta();
   fixed d = diff.Degrees();
   fixed max_turn = parms.turn_speed * timestep;
-  heading += Angle::Degrees(max(-max_turn, min(max_turn, d)));
+  heading += Angle::Degrees(Clamp(d, -max_turn, max_turn));
   if (positive(parms.bearing_noise))
     heading += GetHeadingDeviation() * timestep;
 
@@ -226,7 +227,7 @@ TaskAutoPilot::UpdateState(const TaskAccessor& task, AircraftState& state,
   case Climb: {
     state.true_airspeed = glide_polar.GetVMin();
     fixed d = parms.turn_speed * timestep;
-    if (d < fixed_360)
+    if (d < fixed(360))
       heading += Angle::Degrees(d);
 
     if (positive(parms.bearing_noise))

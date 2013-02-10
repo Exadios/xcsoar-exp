@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ CompareRegistryValue(const RegistryKey &registry,
                      const TCHAR *name, const TCHAR *value)
 {
   TCHAR real_value[64];
-  return registry.get_value(name, real_value, 64) &&
+  return registry.GetValue(name, real_value, 64) &&
     StringIsEqualIgnoreCase(value, real_value);
 }
 
@@ -65,12 +65,16 @@ GetDeviceFriendlyName(const TCHAR *key, TCHAR *buffer, size_t max_size)
 {
   RegistryKey registry(HKEY_LOCAL_MACHINE, key, true);
   return !registry.error() &&
-    registry.get_value(_T("FriendlyName"), buffer, max_size);
+    registry.GetValue(_T("FriendlyName"), buffer, max_size);
 }
 
 PortEnumerator::PortEnumerator()
   :drivers_active(HKEY_LOCAL_MACHINE, _T("Drivers\\Active"), true),
-   i(0)
+   bluetooth_ports(HKEY_LOCAL_MACHINE,
+                   _T("SOFTWARE\\Microsoft\\Bluetooth\\Serial\\Ports"), true),
+   bluetooth_device(HKEY_LOCAL_MACHINE,
+                    _T("SOFTWARE\\Microsoft\\Bluetooth\\Device"), true),
+   i(0), j(0)
 {
 }
 
@@ -80,15 +84,18 @@ PortEnumerator::Next()
   assert(!drivers_active.error());
 
   TCHAR key_name[64];
-  while (drivers_active.enum_key(i++, key_name, 64)) {
+
+  /* enumerate regular serial ports first */
+
+  while (drivers_active.EnumKey(i++, key_name, 64)) {
     RegistryKey device(drivers_active, key_name, true);
     if (device.error())
       continue;
 
     TCHAR device_key[64];
-    if (device.get_value(_T("Key"), device_key, 64) &&
+    if (device.GetValue(_T("Key"), device_key, 64) &&
         IsSerialPort(device_key) &&
-        device.get_value(_T("Name"), name.buffer(), name.MAX_SIZE)) {
+        device.GetValue(_T("Name"), name.buffer(), name.MAX_SIZE)) {
       display_name = name;
       const size_t length = display_name.length();
       TCHAR *const tail = display_name.buffer() + length;
@@ -103,6 +110,49 @@ PortEnumerator::Next()
 
       return true;
     }
+  }
+
+  /* virtual Bluetooth serial ports will not be found by the above;
+     the following is necessary to enumerate those */
+
+  while (bluetooth_ports.EnumKey(j++, key_name, 64)) {
+    RegistryKey port(bluetooth_ports, key_name, true);
+    if (port.error())
+      continue;
+
+    if (!port.GetValue(_T("Port"), name.buffer(), name.MAX_SIZE - 1))
+      continue;
+
+    /* the trailing colon is missing in this part of the registry */
+    name.Append(_T(':'));
+
+    display_name = name;
+
+    /* see if we can find a human-readable name */
+    const TCHAR *kn = key_name;
+    RegistryKey device(bluetooth_device, kn, true);
+    while (device.error() && *kn == _T('0')) {
+      /* turns out Windows CE strips four leading zeroes for the
+         Bluetooth\Device\* key (12 digits instead of 16); this is an
+         attempt to kludge around this weirdness */
+      ++kn;
+      device = RegistryKey(bluetooth_device, kn, true);
+    }
+
+    if (!device.error()) {
+      const size_t length = display_name.length();
+      TCHAR *const tail = display_name.buffer() + length;
+      const size_t remaining = display_name.MAX_SIZE - length - 3;
+
+      if (device.GetValue(_T("name"), tail + 2, remaining)) {
+        /* build a string in the form: "COM1: (Friendly Name)" */
+        tail[0] = _T(' ');
+        tail[1] = _T('(');
+        _tcscat(tail, _T(")"));
+      }
+    }
+
+    return true;
   }
 
   return false;

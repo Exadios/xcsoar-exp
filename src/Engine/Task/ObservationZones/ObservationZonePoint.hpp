@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,41 +25,19 @@
 #define OBSERVATIONZONEPOINT_HPP
 
 #include "ObservationZone.hpp"
-#include "Util/NonCopyable.hpp"
 #include "Geo/GeoPoint.hpp"
 
 /**
  * \todo 
  * - add arc type for future use
  */
-class ObservationZonePoint:
-  public ObservationZone,
-  public NonCopyable
-{
-public:
-  friend class Serialiser;
-
-  enum Shape {
-    LINE,
-    CYLINDER,
-    SECTOR,
-    FAI_SECTOR,
-    KEYHOLE,
-    BGAFIXEDCOURSE,
-    BGAENHANCEDOPTION,
-    BGA_START,
-    ANNULAR_SECTOR,
-  };
-
-  const Shape shape;
-
-private:
+class ObservationZonePoint : public ObservationZone {
   GeoPoint reference;
 
 protected:
   ObservationZonePoint(const ObservationZonePoint &other,
                        const GeoPoint &_reference)
-    :shape(other.shape), reference(_reference) {}
+    :ObservationZone(other.GetShape()), reference(_reference) {}
 
 public:
   /**
@@ -70,17 +48,15 @@ public:
    * @return Initialised object
    */
   ObservationZonePoint(Shape _shape, const GeoPoint & _location)
-    :shape(_shape), reference(_location) {}
+    :ObservationZone(_shape), reference(_location) {}
 
   /**
    * Update geometry when previous/next legs are modified.
    *
    * @param previous Previous task point (origin of inbound leg)
-   * @param current Taskpoint this is located at
    * @param next Following task point (destination of outbound leg)
    */
-  virtual void SetLegs(const GeoPoint *previous, const GeoPoint *current,
-                       const GeoPoint *next) {};
+  virtual void SetLegs(const GeoPoint *previous, const GeoPoint *next) {}
 
   /**
    * Test whether an OZ is equivalent to this one

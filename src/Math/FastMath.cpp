@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,9 @@ Copyright_License {
 #include "Math/Constants.h"
 
 #include "MathTables.h"
+
+#include <algorithm>
+
 #include <assert.h>
 
 int
@@ -39,9 +42,6 @@ compare_squared(int a, int b, int c)
   return 0;
 }
 
-extern "C"
-{
-
 /**
  * Calculates the square root of val
  *
@@ -49,8 +49,8 @@ extern "C"
  * @param val Value
  * @return Rounded square root of val
  */
-unsigned int
-isqrt4(unsigned long val)
+unsigned
+isqrt4(unsigned val)
 {
 #if defined(__i386__) || defined(__x86_64__)
   /* x86 FPUs are extremely fast */
@@ -95,8 +95,6 @@ isqrt4(unsigned long val)
 #endif
 }
 
-}
-
 fixed
 thermal_recency_fn(unsigned x)
 {
@@ -106,7 +104,7 @@ thermal_recency_fn(unsigned x)
 #else
     ? THERMALRECENCY[x]
 #endif
-    : fixed_zero;
+    : fixed(0);
 }
 
 // find inverse sqrt of x scaled to NORMALISE_BITS^2 by using
@@ -237,7 +235,7 @@ void i_normalise(int &x,
   const unsigned m_max = std::max(abs(x), abs(y));
   if (!m_max)
     return;
-  const int mag = lhypot(x, y);
+  const int mag = ihypot(x, y);
   x= (x<<NORMALISE_BITS)/mag;
   y= (y<<NORMALISE_BITS)/mag;
 }
@@ -250,15 +248,15 @@ void mag_rmag(fixed x,
   x = fabs(x);
   y = fabs(y);
   if (!positive(x) && !positive(y)) {
-    dist = fixed_zero;
-    inv_dist = fixed_zero;
+    dist = fixed(0);
+    inv_dist = fixed(0);
     return;
   }
 #ifdef FIXED_MATH
   unsigned d_shift = 1;
   while (std::max(x,y) > fixed(1000)) {
-    x = half(x);
-    y = half(y);
+    x = Half(x);
+    y = Half(y);
     d_shift = (d_shift << 1);
   }
 #endif
@@ -272,4 +270,37 @@ void mag_rmag(fixed x,
     dist *= d_shift;
   }
 #endif
+}
+
+static inline unsigned
+SquareUnsigned(unsigned x)
+{
+  return x * x;
+}
+
+unsigned
+ShiftedIntegerHypot(int _x, int _y, unsigned bits)
+{
+  const unsigned x = abs(_x), y = abs(_y);
+  const unsigned a = std::min(x, y), b = std::max(x, y);
+  if (a == 0)
+    /* guard against division by zero */
+    return b << bits;
+
+  /* avoid integer overflow in (b/a)^2 by moving part of the bit shift
+     out of the square; this can happen if one parameter is very small
+     (e.g. 1) and the other is very large */
+  const unsigned q = b / a;
+  unsigned remaining_bits = 0;
+  while (bits > 0 && q > unsigned(0x8000 >> bits)) {
+    --bits;
+    ++remaining_bits;
+  }
+
+  /* this is the classic hypotenuse formula, with the smaller
+     parameter moved out of the square root call; this avoids squaring
+     the raw parameters, and therefore reduces the risk of overflowing
+     32 bit integers */
+  return (a * isqrt4((1u << (bits << 1u)) + SquareUnsigned((b << bits) / a)))
+    << remaining_bits;
 }

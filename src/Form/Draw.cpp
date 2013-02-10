@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,15 +22,13 @@ Copyright_License {
 */
 
 #include "Form/Draw.hpp"
-#include "Screen/ContainerWindow.hpp"
 
 WndOwnerDrawFrame::WndOwnerDrawFrame(ContainerWindow &parent,
                                      PixelRect rc, const WindowStyle style,
                                      OnPaintCallback_t OnPaintCallback)
-  :mOnPaintCallback(OnPaintCallback),
-   mOnMouseDownCallback(NULL)
+  :mOnPaintCallback(OnPaintCallback)
 {
-  set(parent, rc, style);
+  Create(parent, rc, style);
 }
 
 void
@@ -40,13 +38,4 @@ WndOwnerDrawFrame::OnPaint(Canvas &canvas)
     return;
 
   mOnPaintCallback(this, canvas);
-}
-
-bool
-WndOwnerDrawFrame::OnMouseDown(PixelScalar x, PixelScalar y)
-{
-  if (mOnMouseDownCallback)
-    return mOnMouseDownCallback(this, x, y);
-
-  return PaintWindow::OnMouseDown(x, y);
 }

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -36,15 +36,13 @@ SectorDefaults::SetDefaults()
 void
 TaskStartMargins::SetDefaults()
 {
-  start_max_speed_margin = fixed_zero;
-  start_max_height_margin = 0u;
+  max_speed_margin = fixed(0);
+  max_height_margin = 0u;
 }
 
 void
 TaskBehaviour::SetDefaults()
 {
-  TaskStartMargins::SetDefaults();
-
   glide.SetDefaults();
 
   optimise_targets_range = true;
@@ -56,14 +54,11 @@ TaskBehaviour::SetDefaults()
   calc_effective_mc = true;
   calc_glide_required = true;
   goto_nonlandable = true;
-  risk_gamma = fixed_zero;
-  enable_olc = true;
-  predict_contest = false;
-  contest = OLC_Plus;
-  contest_handicap = 100;
-  safety_mc = fixed_half;
+  risk_gamma = fixed(0);
+  safety_mc = fixed(0.5);
   safety_height_arrival = fixed(300);
   task_type_default = TaskFactoryType::RACING;
+  start_margins.SetDefaults();
   sector_defaults.SetDefaults();
   ordered_defaults.SetDefaults();
   route_planner.SetDefaults();
@@ -79,6 +74,5 @@ TaskBehaviour::DisableAll()
   auto_mc = false;
   calc_cruise_efficiency = false;
   calc_glide_required = false;
-  enable_olc = false;
   route_planner.mode = RoutePlannerConfig::Mode::NONE;
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,25 +22,24 @@ Copyright_License {
 */
 
 #include "Form/GridView.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Screen/Window.hpp"
 
 #include <assert.h>
 
-GridView::GridView(ContainerWindow &parent,
-                   PixelScalar x, PixelScalar y,
-                   UPixelScalar width, UPixelScalar height,
+GridView::GridView(ContainerWindow &parent, PixelRect rc,
                    const DialogLook &_look,
                    const WindowStyle style)
  :look(_look)
 {
-  set(parent, x, y, width, height, style);
+  Create(parent, rc, style);
+
   column_width = Layout::Scale(78);
   row_height = Layout::Scale(42);
   horizontal_spacing = Layout::Scale(0);
   vertical_spacing = Layout::Scale(0);
-  const PixelRect rc = GetClientRect();
   num_columns = (rc.right - rc.left + horizontal_spacing)
     / (column_width + horizontal_spacing);
   if (num_columns == 0)
@@ -57,36 +56,6 @@ GridView::SetItems(const TrivialArray<Window *, MAX_ITEMS> &items)
 {
   (TrivialArray<Window *, MAX_ITEMS> &)this->items = items;
   RefreshLayout();
-}
-
-UPixelScalar
-GridView::GetColumnWidth() const
-{
-  return column_width;
-}
-
-UPixelScalar
-GridView::GetRowHeight() const
-{
-  return row_height;
-}
-
-unsigned
-GridView::GetCurrentPage() const
-{
-  return current_page;
-}
-
-unsigned
-GridView::GetNumColumns() const
-{
-  return num_columns;
-}
-
-unsigned
-GridView::GetNumRows() const
-{
-  return num_rows;
 }
 
 void

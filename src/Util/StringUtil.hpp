@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -71,13 +71,31 @@ StringStartsWith(const char *haystack, const char *needle)
   return memcmp(haystack, needle, StringLength(needle) * sizeof(needle[0])) == 0;
 }
 
+gcc_pure
+bool
+StringEndsWith(const char *haystack, const char *needle);
+
+gcc_pure
+bool
+StringEndsWithIgnoreCase(const char *haystack, const char *needle);
+
 #ifdef _UNICODE
+
 gcc_pure
 static inline bool
 StringStartsWith(const TCHAR *haystack, const TCHAR *needle)
 {
   return memcmp(haystack, needle, StringLength(needle) * sizeof(needle[0])) == 0;
 }
+
+gcc_pure
+bool
+StringEndsWith(const TCHAR *haystack, const TCHAR *needle);
+
+gcc_pure
+bool
+StringEndsWithIgnoreCase(const TCHAR *haystack, const TCHAR *needle);
+
 #endif
 
 gcc_pure
@@ -251,6 +269,21 @@ CopyASCII(TCHAR *dest, size_t dest_size, const char *src, const char *src_end);
 gcc_nonnull_all
 char *
 CopyASCII(char *dest, size_t dest_size, const TCHAR *src, const TCHAR *src_end);
+
+#endif
+
+/**
+ * Like CopyUpper(), but convert all letters to upper-case.
+ */
+gcc_nonnull_all
+void
+CopyASCIIUppper(char *dest, const char *src);
+
+#ifdef _UNICODE
+
+gcc_nonnull_all
+void
+CopyASCIIUppper(char *dest, const TCHAR *src);
 
 #endif
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,21 +23,21 @@ Copyright_License {
 
 #include "Form/Frame.hpp"
 #include "Screen/AnyCanvas.hpp"
+#include "Screen/Layout.hpp"
 #include "Look/DialogLook.hpp"
 
 #include <winuser.h>
 
 WndFrame::WndFrame(ContainerWindow &parent, const DialogLook &_look,
-                   int X, int Y, int Width, int Height,
+                   PixelRect rc,
                    const WindowStyle style)
   :look(_look),
    caption_color(look.text_color),
-   font(look.text_font),
    mCaptionStyle(DT_EXPANDTABS | DT_LEFT | DT_NOCLIP | DT_WORDBREAK)
 {
   text.clear();
 
-  set(parent, X, Y, Width, Height, style);
+  Create(parent, rc, style);
 }
 
 void
@@ -63,14 +63,14 @@ WndFrame::SetText(const TCHAR *_text)
 }
 
 unsigned
-WndFrame::GetTextHeight()
+WndFrame::GetTextHeight() const
 {
   PixelRect rc = GetClientRect();
-  ::InflateRect(&rc, -2, -2); // todo border width
+  rc.Grow(-2); // todo border width
 
   AnyCanvas canvas;
-  canvas.Select(*font);
-  canvas.formatted_text(&rc, text.c_str(), mCaptionStyle | DT_CALCRECT);
+  canvas.Select(*look.text_font);
+  canvas.DrawFormattedText(&rc, text.c_str(), mCaptionStyle | DT_CALCRECT);
 
   return rc.bottom - rc.top;
 }
@@ -85,10 +85,11 @@ WndFrame::OnPaint(Canvas &canvas)
   canvas.SetTextColor(caption_color);
   canvas.SetBackgroundTransparent();
 
-  canvas.Select(*font);
+  canvas.Select(*look.text_font);
 
   PixelRect rc = GetClientRect();
-  InflateRect(&rc, -2, -2); // todo border width
+  const int padding = Layout::GetTextPadding();
+  rc.Grow(-padding);
 
-  canvas.formatted_text(&rc, text.c_str(), mCaptionStyle);
+  canvas.DrawFormattedText(&rc, text.c_str(), mCaptionStyle);
 }

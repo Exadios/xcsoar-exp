@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -82,13 +82,15 @@ Logger::LoggerClearFreeSpace(unsigned current_year)
 void
 Logger::GUIStartLogger(const NMEAInfo& gps_info,
                     const ComputerSettings& settings,
-                       const ProtectedTaskManager &protected_task_manager,
+                       const ProtectedTaskManager *protected_task_manager,
                     bool noAsk)
 {
   if (IsLoggerActive() || gps_info.gps.replay)
     return;
 
-  OrderedTask* task = protected_task_manager.TaskClone();
+  OrderedTask* task = protected_task_manager != nullptr
+    ? protected_task_manager->TaskClone()
+    : nullptr;
   const Declaration decl(settings.logger, settings.plane, task);
 
   if (task) {
@@ -116,7 +118,7 @@ Logger::GUIStartLogger(const NMEAInfo& gps_info,
   if (!LoggerClearFreeSpace(gps_info.date_time_utc.year)) {
     ShowMessageBox(_("Logger inactive, insufficient storage!"),
                 _("Logger Error"), MB_OK| MB_ICONERROR);
-    LogStartUp(_T("Logger not started: Insufficient Storage"));
+    LogFormat("Logger not started: Insufficient Storage");
     return;
   }
 
@@ -127,7 +129,7 @@ Logger::GUIStartLogger(const NMEAInfo& gps_info,
 void
 Logger::GUIToggleLogger(const NMEAInfo& gps_info,
                      const ComputerSettings& settings,
-                      const ProtectedTaskManager &protected_task_manager,
+                      const ProtectedTaskManager *protected_task_manager,
                      bool noAsk)
 {
   if (IsLoggerActive())

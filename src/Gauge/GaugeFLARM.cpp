@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,16 +23,24 @@ Copyright_License {
 */
 
 #include "Gauge/GaugeFLARM.hpp"
+#include "Screen/Canvas.hpp"
 #include "FlarmTrafficWindow.hpp"
 #include "Blackboard/LiveBlackboard.hpp"
 #include "NMEA/MoreData.hpp"
 #include "ComputerSettings.hpp"
-#include "Dialogs/Traffic.hpp"
+#include "UIActions.hpp"
 
-/**
- * Widget to display a FLARM gauge
- */
+#ifdef USE_GDI
+#include "Screen/Canvas.hpp"
+#endif
+
+#ifdef ENABLE_OPENGL
+#include "Screen/OpenGL/Scope.hpp"
+#endif
+
 class SmallTrafficWindow : public FlarmTrafficWindow {
+  bool dragging, pressed;
+
 public:
   SmallTrafficWindow(ContainerWindow &parent, const PixelRect &rc,
                      const FlarmTrafficLook &look,
@@ -40,25 +48,32 @@ public:
 
   void Update(const NMEAInfo &gps_info, const TeamCodeSettings &settings);
 
+private:
+  void SetPressed(bool _pressed) {
+    if (_pressed == pressed)
+      return;
+
+    pressed = _pressed;
+    Invalidate();
+  }
+
 protected:
-  bool OnMouseDown(PixelScalar x, PixelScalar y);
+  virtual void OnCancelMode() override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y,
+                           unsigned keys) override;
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
-/**
- * Constructor of the SmallTrafficWindow class
- * @param parent Parent window
- * @param left Left edge of window pixel location
- * @param top Top edge of window pixel location
- * @param width Width of window (pixels)
- * @param height Height of window (pixels)
- */
 SmallTrafficWindow::SmallTrafficWindow(ContainerWindow &parent,
                                        const PixelRect &rc,
                                        const FlarmTrafficLook &look,
                                        const WindowStyle style)
-  :FlarmTrafficWindow(look, 1, true)
+  :FlarmTrafficWindow(look, 1, 1, true),
+   dragging(false), pressed(false)
 {
-  set(parent, rc, style);
+  Create(parent, rc, style);
 }
 
 void
@@ -68,17 +83,81 @@ SmallTrafficWindow::Update(const NMEAInfo &gps_info,
   FlarmTrafficWindow::Update(gps_info.track, gps_info.flarm.traffic, settings);
 }
 
-/**
- * This function is called when the mouse is pressed on the FLARM gauge and
- * opens the FLARM Traffic dialog
- * @param x x-Coordinate of the click
- * @param y y-Coordinate of the click
- */
+void
+SmallTrafficWindow::OnCancelMode()
+{
+  if (dragging) {
+    dragging = false;
+    pressed = false;
+    Invalidate();
+    ReleaseCapture();
+  }
+
+  FlarmTrafficWindow::OnCancelMode();
+}
+
 bool
 SmallTrafficWindow::OnMouseDown(PixelScalar x, PixelScalar y)
 {
-  dlgFlarmTrafficShowModal();
+  if (!dragging) {
+    dragging = true;
+    SetCapture();
+
+    pressed = true;
+    Invalidate();
+  }
+
   return true;
+}
+
+bool
+SmallTrafficWindow::OnMouseUp(PixelScalar x, PixelScalar y)
+{
+  if (dragging) {
+    const bool was_pressed = pressed;
+
+    dragging = false;
+    pressed = false;
+    Invalidate();
+
+    ReleaseCapture();
+
+    if (was_pressed)
+      UIActions::ShowTrafficRadar();
+
+    return true;
+  }
+
+  return false;
+}
+
+bool
+SmallTrafficWindow::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
+{
+  if (dragging) {
+    SetPressed(IsInside(x, y));
+    return true;
+  }
+
+  return false;
+}
+
+void
+SmallTrafficWindow::OnPaint(Canvas &canvas)
+{
+  FlarmTrafficWindow::OnPaint(canvas);
+
+  if (pressed) {
+#ifdef ENABLE_OPENGL
+    GLEnable blend(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    canvas.DrawFilledRectangle(0, 0, canvas.GetWidth(), canvas.GetHeight(),
+                               COLOR_YELLOW.WithAlpha(80));
+#elif defined(USE_GDI)
+    const PixelRect rc = GetClientRect();
+    ::InvertRect(canvas, &rc);
+#endif
+  }
 }
 
 void

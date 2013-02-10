@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,29 +25,29 @@ Copyright_License {
 #include "Form/TabBar.hpp"
 #include "Look/DialogLook.hpp"
 #include "Screen/Key.h"
-#include "Screen/Icon.hpp"
+#include "Screen/Bitmap.hpp"
 #include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
-#include "Asset.hpp"
 
 #include <assert.h>
 #include <winuser.h>
 
+static constexpr unsigned TabLineHeightInitUnscaled = 5;
+
 TabDisplay::TabDisplay(TabBarControl& _theTabBar, const DialogLook &_look,
-                       ContainerWindow &parent,
-                       PixelScalar left, PixelScalar top,
-                       UPixelScalar width, UPixelScalar height,
-                       bool _flipOrientation)
+                       ContainerWindow &parent, PixelRect rc,
+                       bool _vertical)
   :tab_bar(_theTabBar),
    look(_look),
+   vertical(_vertical),
    dragging(false),
-   down_index(-1),
-   drag_off_button(false),
-   flip_orientation(_flipOrientation)
+   tab_line_height(vertical
+                   ? (Layout::Scale(TabLineHeightInitUnscaled) * 0.75)
+                   : Layout::Scale(TabLineHeightInitUnscaled))
 {
   WindowStyle mystyle;
   mystyle.TabStop();
-  set(parent, left, top, width, height, mystyle);
+  Create(parent, rc, mystyle);
 }
 
 TabDisplay::~TabDisplay()
@@ -67,10 +67,9 @@ TabDisplay::GetButtonSize(unsigned i) const
   const UPixelScalar margin = 1;
 
   /*
-  bool partialTab = false;
-  if ( ((Layout::landscape ^ flip_orientation) && tab_display->GetTabHeight() < get_height()) ||
-      ((!Layout::landscape ^ flip_orientation) && tab_display->GetTabWidth() < get_width()) )
-    partialTab = true;
+  const bool partialTab = vertial
+    ? tab_display->GetTabHeight() < GetHeight()
+    : tab_display->GetTabWidth() < GetWidth();
   */
 
   const UPixelScalar finalmargin = 1; //partialTab ? tab_line_height - 1 * margin : margin;
@@ -79,12 +78,12 @@ TabDisplay::GetButtonSize(unsigned i) const
 
   PixelRect rc;
 
-  if (Layout::landscape ^ flip_orientation) {
+  if (vertical) {
     const UPixelScalar but_height =
-       (GetTabHeight() - finalmargin) / GetSize() - margin;
+       (GetHeight() - finalmargin) / GetSize() - margin;
 
     rc.left = 0;
-    rc.right = GetTabWidth() - tab_bar.GetTabLineHeight();
+    rc.right = GetWidth() - tab_line_height;
 
     rc.top = finalmargin + (margin + but_height) * i;
     rc.bottom = rc.top + but_height;
@@ -99,11 +98,11 @@ TabDisplay::GetButtonSize(unsigned i) const
 
     const unsigned row = (i > (portraitColumnsRow0 - 1)) ? 1 : 0;
 
-    const UPixelScalar rowheight = (GetTabHeight() - tab_bar.GetTabLineHeight())
+    const UPixelScalar rowheight = (GetHeight() - tab_line_height)
         / portraitRows - margin;
 
     const UPixelScalar but_width =
-          (GetTabWidth() - finalmargin) /
+          (GetWidth() - finalmargin) /
           ((row == 0) ? portraitColumnsRow0 : portraitColumnsRow1) - margin;
 
     rc.top = row * (rowheight + margin);
@@ -130,9 +129,9 @@ TabDisplay::PaintButton(Canvas &canvas, const unsigned CaptionStyle,
   UPixelScalar textheightoffset = 0;
 
   if (textwidth > (rc.right - rc.left)) // assume 2 lines
-    textheightoffset = max(0, (int)(buttonheight - textheight * 2) / 2);
+    textheightoffset = std::max(0, (int)(buttonheight - textheight * 2) / 2);
   else
-    textheightoffset = max(0, (int)(buttonheight - textheight) / 2);
+    textheightoffset = std::max(0, (int)(buttonheight - textheight) / 2);
 
   rcTextFinal.top += textheightoffset;
 
@@ -160,8 +159,7 @@ TabDisplay::PaintButton(Canvas &canvas, const unsigned CaptionStyle,
                       bitmap_size.cx / 2, 0);
 
   } else {
-    canvas.formatted_text(&rcTextFinal, caption,
-        CaptionStyle);
+    canvas.DrawFormattedText(&rcTextFinal, caption, CaptionStyle);
   }
 }
 
@@ -177,7 +175,7 @@ TabDisplay::GetButtonIndexAt(RasterPoint p) const
 {
   for (unsigned i = 0; i < GetSize(); i++) {
     const PixelRect &rc = GetButtonSize(i);
-    if (PtInRect(&rc, p))
+    if (rc.IsInside(p))
       return i;
   }
 
@@ -197,7 +195,7 @@ TabDisplay::OnPaint(Canvas &canvas)
   for (unsigned i = 0; i < buttons.size(); i++) {
     const TabButton &button = *buttons[i];
 
-    const bool is_down = (int)i == down_index && !drag_off_button;
+    const bool is_down = dragging && i == down_index && !drag_off_button;
     const bool is_selected = i == tab_bar.GetCurrentPage();
 
     canvas.SetTextColor(look.list.GetTextColor(is_selected, is_focused,
@@ -226,30 +224,37 @@ TabDisplay::OnSetFocus()
   PaintWindow::OnSetFocus();
 }
 
+void
+TabDisplay::OnCancelMode()
+{
+  PaintWindow::OnCancelMode();
+  EndDrag();
+}
+
 bool
 TabDisplay::OnKeyCheck(unsigned key_code) const
 {
   switch (key_code) {
 
-  case VK_APP1:
-  case VK_APP2:
-  case VK_APP3:
-  case VK_APP4:
+  case KEY_APP1:
+  case KEY_APP2:
+  case KEY_APP3:
+  case KEY_APP4:
     return true;
 
-  case VK_RETURN:
+  case KEY_RETURN:
     return true;
 
-  case VK_LEFT:
+  case KEY_LEFT:
     return (tab_bar.GetCurrentPage() > 0);
 
-  case VK_RIGHT:
+  case KEY_RIGHT:
     return tab_bar.GetCurrentPage() < GetSize() - 1;
 
-  case VK_DOWN:
+  case KEY_DOWN:
     return false;
 
-  case VK_UP:
+  case KEY_UP:
     return false;
 
   default:
@@ -263,41 +268,41 @@ TabDisplay::OnKeyDown(unsigned key_code)
 {
   switch (key_code) {
 
-  case VK_APP1:
+  case KEY_APP1:
     if (GetSize() > 0)
       tab_bar.ClickPage(0);
     return true;
 
-  case VK_APP2:
+  case KEY_APP2:
     if (GetSize() > 1)
       tab_bar.ClickPage(1);
     return true;
 
-  case VK_APP3:
+  case KEY_APP3:
     if (GetSize() > 2)
       tab_bar.ClickPage(2);
     return true;
 
-  case VK_APP4:
+  case KEY_APP4:
     if (GetSize() > 3)
       tab_bar.ClickPage(3);
     return true;
 
-  case VK_RETURN:
+  case KEY_RETURN:
     tab_bar.ClickPage(tab_bar.GetCurrentPage());
     return true;
 
-  case VK_DOWN:
+  case KEY_DOWN:
     break;
 
-  case VK_RIGHT:
+  case KEY_RIGHT:
     tab_bar.NextPage();
     return true;
 
-  case VK_UP:
+  case KEY_UP:
     break;
 
-  case VK_LEFT:
+  case KEY_LEFT:
     tab_bar.PreviousPage();
     return true;
   }
@@ -315,6 +320,7 @@ TabDisplay::OnMouseDown(PixelScalar x, PixelScalar y)
   int i = GetButtonIndexAt({ x, y });
   if (i >= 0) {
     dragging = true;
+    drag_off_button = false;
     down_index = i;
     SetCapture();
     Invalidate();
@@ -330,13 +336,9 @@ TabDisplay::OnMouseUp(PixelScalar x, PixelScalar y)
   if (dragging) {
     EndDrag();
 
-    int i = GetButtonIndexAt({ x, y });
-    if (i == down_index)
-      tab_bar.ClickPage(i);
+    if (!drag_off_button)
+      tab_bar.ClickPage(down_index);
 
-    if (down_index > -1)
-      Invalidate();
-    down_index = -1;
     return true;
   } else {
     return PaintWindow::OnMouseUp(x, y);
@@ -346,12 +348,12 @@ TabDisplay::OnMouseUp(PixelScalar x, PixelScalar y)
 bool
 TabDisplay::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
 {
-  if (down_index == -1)
+  if (!dragging)
     return false;
 
   const PixelRect rc = GetButtonSize(down_index);
 
-  bool not_on_button = !PtInRect(&rc, { x, y });
+  bool not_on_button = !rc.IsInside({ x, y });
   if (drag_off_button != not_on_button) {
     drag_off_button = not_on_button;
     Invalidate(rc);
@@ -364,7 +366,7 @@ TabDisplay::EndDrag()
 {
   if (dragging) {
     dragging = false;
-    drag_off_button = false;
     ReleaseCapture();
+    Invalidate();
   }
 }

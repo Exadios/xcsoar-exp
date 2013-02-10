@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -66,10 +66,10 @@ MacCready::SolveVertical(const GlideState &task) const
 
   if (!negative(task.altitude_difference)) {
     // immediate solution
-    result.pure_glide_height = fixed_zero;
-    result.height_climb = fixed_zero;
-    result.height_glide = fixed_zero;
-    result.time_elapsed = fixed_zero;
+    result.pure_glide_height = fixed(0);
+    result.height_climb = fixed(0);
+    result.height_glide = fixed(0);
+    result.time_elapsed = fixed(0);
     result.validity = GlideResult::Validity::OK;
     return result;
   }
@@ -92,11 +92,11 @@ MacCready::SolveVertical(const GlideState &task) const
   // from (1)
   const fixed time_cruise = task.wind.norm * time_climb / denom1; 
 
-  result.pure_glide_height = fixed_zero;
+  result.pure_glide_height = fixed(0);
   result.time_elapsed = time_cruise + time_climb;
-  result.time_virtual = fixed_zero;
+  result.time_virtual = fixed(0);
   result.height_climb = -task.altitude_difference;
-  result.height_glide = fixed_zero;
+  result.height_glide = fixed(0);
   result.validity = GlideResult::Validity::OK;
 
   return result;
@@ -161,20 +161,20 @@ MacCready::SolveCruise(const GlideState &task) const
   const fixed rho = mc_sink_rate * inv_mc;
 
   // quotient of cruise speed over resulting speed (> 1.0)
-  const fixed rho_plus_one = fixed_one + rho;
+  const fixed rho_plus_one = fixed(1) + rho;
 
   // quotient of resulting speed over cruise speed (0 .. 1)
-  const fixed inv_rho_plus_one = fixed_one / rho_plus_one;
+  const fixed inv_rho_plus_one = fixed(1) / rho_plus_one;
 
   const fixed estimated_speed =
       task.CalcAverageSpeed(mc_speed * cruise_efficiency * inv_rho_plus_one);
   if (!positive(estimated_speed)) {
     result.validity = GlideResult::Validity::WIND_EXCESSIVE;
-    result.vector.distance = fixed_zero;
+    result.vector.distance = fixed(0);
     return result;
   }
 
-  fixed time_climb_drift = fixed_zero;
+  fixed time_climb_drift = fixed(0);
   fixed distance_with_climb_drift = task.vector.distance;
 
   // Calculate additional distance_with_climb_drift/time due to wind drift while circling
@@ -193,7 +193,7 @@ MacCready::SolveCruise(const GlideState &task) const
   const fixed sink_glide = time_cruise * mc_sink_rate;
 
   result.time_elapsed = estimated_time + time_climb_drift;
-  result.time_virtual = fixed_zero;
+  result.time_virtual = fixed(0);
   result.height_climb = time_climb * mc;
   result.height_glide = sink_glide;
   result.altitude_difference -= sink_glide;
@@ -222,7 +222,7 @@ MacCready::SolveGlide(const GlideState &task, const fixed v_set,
   const fixed estimated_speed = task.CalcAverageSpeed(v_set * cruise_efficiency);
   if (!positive(estimated_speed)) {
     result.validity = GlideResult::Validity::WIND_EXCESSIVE;
-    result.vector.distance = fixed_zero;
+    result.vector.distance = fixed(0);
     return result;
   }
 
@@ -235,7 +235,7 @@ MacCready::SolveGlide(const GlideState &task, const fixed v_set,
     if (sink_rate * task.vector.distance > Vndh) {
       if (negative(task.altitude_difference))
         // insufficient height, and can't climb
-        result.vector.distance = fixed_zero;
+        result.vector.distance = fixed(0);
       else
         // frac*task.Distance;
         result.vector.distance = Vndh / sink_rate;
@@ -244,7 +244,7 @@ MacCready::SolveGlide(const GlideState &task, const fixed v_set,
 
   const fixed time_cruise = result.vector.distance / estimated_speed;
   result.time_elapsed = time_cruise;
-  result.height_climb = fixed_zero;
+  result.height_climb = fixed(0);
   result.height_glide = time_cruise * sink_rate;
   result.pure_glide_height = result.height_glide;
   result.altitude_difference -= result.height_glide;
@@ -255,7 +255,7 @@ MacCready::SolveGlide(const GlideState &task, const fixed v_set,
     // equivalent time to gain the height that was used
     result.time_virtual = result.height_glide * inv_mc;
   else
-    result.time_virtual = fixed_zero;
+    result.time_virtual = fixed(0);
 
   return result;
 }
@@ -360,7 +360,7 @@ public:
    * @return Initialised object (not yet searched)
    */
   MacCreadyVopt(const GlideState &_task, const MacCready &_mac,
-                const fixed & vmin, const fixed & vmax,
+                fixed vmin, fixed vmax,
                 const bool _allow_partial) :
     ZeroFinder(vmin, vmax, fixed(TOLERANCE_MC_OPT_GLIDE)),
     task(_task),
@@ -382,7 +382,12 @@ public:
   f(const fixed v)
   {
     res = mac.SolveGlide(task, v, allow_partial);
-    return res.height_glide / res.vector.distance * fixed_360;
+    if (!res.IsOk() || !positive(res.vector.distance))
+      /* the solver failed: return a large value that will be
+         discarded by ZeroFinder */
+      return fixed(1000000);
+
+    return res.height_glide * 1024 / res.vector.distance;
   }
   
   /**
@@ -390,7 +395,7 @@ public:
    * @return Glide solution (optimum)
    */
   GlideResult
-  Result(const fixed &v_init)
+  Result(const fixed v_init)
   {
     fixed v = find_min(v_init);
     return mac.SolveGlide(task, v, allow_partial);

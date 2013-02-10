@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ struct InfoBoxLook {
   bool inverse;
 
   Pen border_pen, selector_pen;
-  Color background_color, focused_background_color;
+  Color background_color, focused_background_color, pressed_background_color;
 
   struct {
     Color fg_color;
@@ -51,7 +51,13 @@ struct InfoBoxLook {
 
   Color colors[6];
 
-  void Initialise(bool inverse, bool use_colors);
+  void Initialise(bool inverse, bool use_colors,
+                  const Font &value_font,
+                  const Font &small_font,
+#ifndef GNAV
+                  const Font &unit_font,
+#endif
+                  const Font &title_font);
 
   Color GetColor(int i, Color default_color) const {
     if (i < 0)

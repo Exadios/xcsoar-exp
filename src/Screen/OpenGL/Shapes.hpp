@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Compute5r - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@ Copyright_License {
 class GLArrayBuffer;
 
 namespace OpenGL {
-  static const unsigned CIRCLE_SIZE = 32;
-  static const unsigned SMALL_CIRCLE_SIZE = 8;
+  static constexpr unsigned CIRCLE_SIZE = 32;
+  static constexpr unsigned SMALL_CIRCLE_SIZE = 8;
 
   extern GLArrayBuffer *circle_buffer, *small_circle_buffer;
 

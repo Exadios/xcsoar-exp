@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,21 +21,19 @@ Copyright_License {
 }
 */
 
-#include "Dialogs/DialogSettings.hpp"
-#include "Dialogs/XML.hpp"
+#define ENABLE_XML_DIALOG
+#define ENABLE_CMDLINE
+#define USAGE "XMLFILE [-portrait]"
+
+#include "Main.hpp"
 #include "Form/Form.hpp"
-#include "UIGlobals.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/Layout.hpp"
-#include "Screen/Fonts.hpp"
-#include "Screen/Init.hpp"
-#include "ResourceLoader.hpp"
 #include "StatusMessage.hpp"
 #include "Asset.hpp"
 #include "LocalPath.hpp"
 #include "OS/PathName.hpp"
 #include "OS/FileUtil.hpp"
-#include "Look/DialogLook.hpp"
 
 #include <tchar.h>
 #include <stdio.h>
@@ -46,92 +44,42 @@ Copyright_License {
 
 void VisitDataFiles(const TCHAR* filter, File::Visitor &visitor) {}
 
-static DialogSettings dialog_settings;
-static DialogLook dialog_look;
+static tstring xmlfile;
+static bool portrait;
 
-const DialogSettings &
-UIGlobals::GetDialogSettings()
+static void
+ParseCommandLine(Args &args)
 {
-  return dialog_settings;
+  xmlfile = args.ExpectNextT();
+
+  const char *p = args.PeekNext();
+  if (p != NULL) {
+    if (strcmp(p, "-portrait") == 0) {
+      args.Skip();
+      portrait = true;
+    }
+  }
 }
 
-const DialogLook &
-UIGlobals::GetDialogLook()
+static void
+Main()
 {
-  return dialog_look;
-}
+  PixelSize screen_size(320, 240);
+  if (portrait)
+    std::swap(screen_size.cx, screen_size.cy);
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
-{
-#ifdef WIN32
-#ifndef _WIN32_WCE
-  /* on Windows (non-CE), the lpCmdLine argument is narrow, and we
-     have to use GetCommandLine() to get the UNICODE string */
-  LPCTSTR lpCmdLine = GetCommandLine();
-#endif
-
-#ifdef _WIN32_WCE
-  int argc = 2;
-
-  WCHAR arg0[] = _T("");
-  LPWSTR argv[] = { arg0, lpCmdLine, NULL };
-#else
-  int argc;
-  LPWSTR* argv = CommandLineToArgvW(lpCmdLine, &argc);
-#endif
-
-  ResourceLoader::Init(hInstance);
-#endif
-
-  if (argc < 2) {
-    fprintf(stderr, "Usage: RunDialog XMLFILE [-portrait]\n");
-    return 1;
-  }
-
-  PixelRect screen_rc{0, 0, 320, 240};
-  if (argc > 2 && _tcscmp(argv[2], _T("-portrait")) == 0) {
-    screen_rc.right = 240;
-    screen_rc.bottom = 320;
-  }
-
-  ScreenGlobalInit screen_init;
-
-  Layout::Initialize(screen_rc.right - screen_rc.left,
-                     screen_rc.bottom - screen_rc.top);
+  Layout::Initialize(screen_size);
   SingleWindow main_window;
-  main_window.set(_T("STATIC"), _T("RunDialog"), screen_rc);
+  main_window.Create(_T("RunDialog"), screen_size);
   main_window.Show();
 
-  Fonts::Initialize();
-
-  dialog_settings.SetDefaults();
-
-  dialog_look.Initialise(Fonts::map_bold, Fonts::map, Fonts::map_label,
-                         Fonts::map_bold, Fonts::map_bold);
-  SetXMLDialogLook(dialog_look);
-
-  WndForm *form = LoadDialog(NULL, main_window, argv[1]);
+  WndForm *form = LoadDialog(NULL, main_window, xmlfile.c_str());
   if (form == NULL) {
     fprintf(stderr, "Failed to load resource '%s'\n",
-            (const char *)NarrowPathName(argv[1]));
-    return 1;
+            (const char *)NarrowPathName(xmlfile.c_str()));
+    return;
   }
 
   form->ShowModal();
   delete form;
-
-  Fonts::Deinitialize();
-
-  return 0;
 }

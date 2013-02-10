@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ OZRenderer::Draw(Canvas &canvas, Layer layer, const Projection &projection,
 
   Prepare(canvas, layer, offset);
 
-  switch (_oz.shape) {
+  switch (_oz.GetShape()) {
   case ObservationZonePoint::LINE:
   case ObservationZonePoint::FAI_SECTOR: {
     const SectorZone &oz = (const SectorZone &)_oz;

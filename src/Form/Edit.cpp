@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,12 +26,16 @@ Copyright_License {
 #include "Look/DialogLook.hpp"
 #include "DataField/Base.hpp"
 #include "DataField/String.hpp"
+#include "DataField/Prefix.hpp"
+#include "DataField/RoughTime.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/Bitmap.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Screen/Features.hpp"
 #include "Dialogs/ComboPicker.hpp"
 #include "Dialogs/TextEntry.hpp"
+#include "Dialogs/TimeEntry.hpp"
 #include "resource.h"
 
 #include <assert.h>
@@ -45,121 +49,100 @@ CanEditInPlace()
 }
 
 bool
-WndProperty::Editor::OnMouseDown(PixelScalar x, PixelScalar y)
-{
-  if (parent->OnMouseDown(x, y))
-    return true;
-
-#ifdef USE_GDI
-
-  // If the Control is read-only -> drop this event,
-  // so the default handler doesn't obtain the focus
-  if (IsReadOnly())
-    return true;
-
-#endif
-
-  return EditWindow::OnMouseDown(x, y);
-}
-
-bool
-WndProperty::Editor::OnKeyCheck(unsigned key_code) const
+WndProperty::OnKeyCheck(unsigned key_code) const
 {
   switch (key_code) {
-  case VK_RETURN:
+  case KEY_RETURN:
     return IsReadOnly() ||
-      (parent->mDataField != NULL && parent->mDataField->supports_combolist) ||
-      !CanEditInPlace() || parent->HasHelp();
+      (mDataField != NULL && mDataField->supports_combolist) ||
+      !CanEditInPlace() || HasHelp();
 
-  case VK_LEFT:
-  case VK_RIGHT:
+  case KEY_LEFT:
+  case KEY_RIGHT:
     return !IsReadOnly();
 
   default:
-    return EditWindow::OnKeyCheck(key_code);
+    return WindowControl::OnKeyCheck(key_code);
   }
 }
 
 bool
-WndProperty::Editor::OnKeyDown(unsigned key_code)
+WndProperty::OnKeyDown(unsigned key_code)
 {
   // If return key pressed (Compaq uses VKF23)
-  if (key_code == VK_RETURN && parent->OnMouseDown(0, 0))
+  if (key_code == KEY_RETURN && BeginEditing())
     return true;
 
   switch (key_code) {
-  case VK_RIGHT:
+  case KEY_RIGHT:
     if (IsReadOnly())
       break;
 
-    parent->IncValue();
+    IncValue();
     return true;
-  case VK_LEFT:
+  case KEY_LEFT:
     if (IsReadOnly())
       break;
 
-    parent->DecValue();
+    DecValue();
     return true;
   }
 
   KeyTimer(true, key_code);
-  return EditWindow::OnKeyDown(key_code);
+  return WindowControl::OnKeyDown(key_code);
 }
 
 bool
-WndProperty::Editor::OnKeyUp(unsigned key_code)
+WndProperty::OnKeyUp(unsigned key_code)
 {
   if (KeyTimer(false, key_code)) {
     // activate tool tips if hit return for long time
-    if (key_code == VK_RETURN) {
-      if (parent->OnHelp())
+    if (key_code == KEY_RETURN) {
+      if (OnHelp())
         return true;
     }
-  } else if (key_code == VK_RETURN) {
-    if (parent->CallSpecial())
+  } else if (key_code == KEY_RETURN) {
+    if (CallSpecial())
       return true;
   }
 
-  return EditWindow::OnKeyUp(key_code);
+  return WindowControl::OnKeyUp(key_code);
 }
 
 void
-WndProperty::Editor::OnSetFocus()
+WndProperty::OnSetFocus()
 {
+  WindowControl::OnSetFocus();
+
   KeyTimer(true, 0);
-  EditWindow::OnSetFocus();
-  parent->on_editor_setfocus();
-  SelectAll();
+
+  Invalidate();
 }
 
 void
-WndProperty::Editor::OnKillFocus()
+WndProperty::OnKillFocus()
 {
+  WindowControl::OnKillFocus();
+
   KeyTimer(true, 0);
-  parent->on_editor_killfocus();
-  EditWindow::OnKillFocus();
+
+  Invalidate();
 }
 
 WndProperty::WndProperty(ContainerWindow &parent, const DialogLook &_look,
                          const TCHAR *Caption,
                          const PixelRect &rc,
                          int CaptionWidth,
-                         const WindowStyle style,
-                         const EditWindowStyle edit_style,
-                         DataChangeCallback_t DataChangeNotify)
-  :look(_look), edit(this),
+                         const WindowStyle style)
+  :look(_look),
    caption_width(CaptionWidth),
-   mOnDataChangeNotify(DataChangeNotify),
-   mDataField(NULL)
+   mDataField(NULL),
+   read_only(false),
+   dragging(false), pressed(false)
 {
   caption = Caption;
 
-  set(parent, rc, style);
-
-  edit.set(*this, edit_rc, edit_style);
-  edit.InstallWndProc();
-
-  edit.SetFont(*look.text_font);
+  Create(parent, rc, style);
 
 #if defined(USE_GDI) && !defined(NDEBUG)
   ::SetWindowText(hWnd, Caption);
@@ -190,21 +173,27 @@ WndProperty::SetCaptionWidth(PixelScalar _caption_width)
 bool
 WndProperty::BeginEditing()
 {
-  if (edit.IsReadOnly()) {
+  if (IsReadOnly()) {
     /* this would display xml file help on a read-only wndproperty if
        it exists */
     return OnHelp();
   } else if (mDataField != NULL && mDataField->supports_combolist) {
-    SingleWindow *root = (SingleWindow *)GetRootOwner();
-
     /* if this asserton fails, then there no valid root window could
        be found - maybe it didn't register its wndproc? */
-    assert(root != NULL);
+    dlgComboPicker(this);
+    return true;
+  } else if (mDataField != NULL &&
+             mDataField->GetType() == DataField::Type::ROUGH_TIME) {
+    RoughTimeDataField &df = *(RoughTimeDataField *)mDataField;
+    RoughTime value = df.GetValue();
+    if (!TimeEntryDialog(GetCaption(), value, true))
+      return true;
 
-    dlgComboPicker(*root, this);
+    df.ModifyValue(value);
+    RefreshDisplay();
     return true;
   } else if (CanEditInPlace()) {
-    edit.SetFocus();
+    // TODO: implement
     return true;
   } else if (mDataField != NULL) {
     const TCHAR *value = mDataField->GetAsString();
@@ -212,8 +201,12 @@ WndProperty::BeginEditing()
       return false;
 
     StaticString<EDITSTRINGSIZE> buffer(value);
-    if (!TextEntryDialog(*(SingleWindow *)GetRootOwner(), buffer,
-                         GetCaption()))
+
+    PrefixDataField::AllowedCharactersFunction acf;
+    if (mDataField->GetType() == DataField::Type::PREFIX)
+      acf = ((PrefixDataField *)mDataField)->GetAllowedCharactersFunction();
+
+    if (!TextEntryDialog(buffer, GetCaption(), acf))
       return true;
 
     mDataField->SetAsString(buffer);
@@ -243,52 +236,76 @@ WndProperty::UpdateLayout()
     edit_rc.bottom -= (DEFAULTBORDERPENWIDTH + 1);
   }
 
-  if (edit.IsDefined())
-    edit.Move(edit_rc);
-
   Invalidate();
 }
 
 void
-WndProperty::on_editor_setfocus()
+WndProperty::OnResize(PixelSize new_size)
 {
-  if (mDataField != NULL && CanEditInPlace()) {
-    edit.SetText(mDataField->GetAsString());
-  }
-
-  Invalidate();
-}
-
-void
-WndProperty::on_editor_killfocus()
-{
-  if (mDataField != NULL && CanEditInPlace()) {
-    TCHAR sTmp[128];
-    edit.GetText(sTmp, (sizeof(sTmp) / sizeof(TCHAR)) - 1);
-    mDataField->SetAsString(sTmp);
-    edit.SetText(mDataField->GetAsDisplayString());
-  }
-
-  Invalidate();
-}
-
-void
-WndProperty::OnResize(UPixelScalar width, UPixelScalar height)
-{
-  WindowControl::OnResize(width, height);
+  WindowControl::OnResize(new_size);
   UpdateLayout();
 }
 
 bool
 WndProperty::OnMouseDown(PixelScalar x, PixelScalar y)
 {
-  return BeginEditing();
+  if (!IsReadOnly() || HasHelp()) {
+    dragging = true;
+    pressed = true;
+    Invalidate();
+    SetCapture();
+    return true;
+  }
+
+  return false;
 }
 
 bool
 WndProperty::OnMouseUp(PixelScalar x, PixelScalar y)
 {
-  return true;
+  if (dragging) {
+    dragging = false;
+    ReleaseCapture();
+
+    if (pressed) {
+      pressed = false;
+      Invalidate();
+      BeginEditing();
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+bool
+WndProperty::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
+{
+  if (dragging) {
+    const bool inside = IsInside(x, y);
+    if (inside != pressed) {
+      pressed = inside;
+      Invalidate();
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+void
+WndProperty::OnCancelMode()
+{
+  if (dragging) {
+    dragging = false;
+    pressed = false;
+    Invalidate();
+    ReleaseCapture();
+  }
+
+  WindowControl::OnCancelMode();
 }
 
 int
@@ -324,10 +341,12 @@ WndProperty::DecValue()
 void
 WndProperty::OnPaint(Canvas &canvas)
 {
-  const bool focused = edit.HasFocus();
+  const bool focused = HasFocus();
 
   /* background and selector */
-  if (focused) {
+  if (pressed) {
+    canvas.Clear(look.list.pressed.background_color);
+  } else if (focused) {
     canvas.Clear(look.focused.background_color);
   } else {
     /* don't need to erase the background when it has been done by the
@@ -336,12 +355,10 @@ WndProperty::OnPaint(Canvas &canvas)
       canvas.Clear(look.background_color);
   }
 
-  WindowControl::OnPaint(canvas);
-
   /* kludge: don't draw caption if width is too small (but not 0),
      used by the polar configuration panel.  This concept needs to be
      redesigned. */
-  if (caption_width != 0 && !caption.empty()) {
+  if (!caption.empty()) {
     canvas.SetTextColor(focused
                           ? look.focused.text_color
                           : look.text_color);
@@ -363,11 +380,58 @@ WndProperty::OnPaint(Canvas &canvas)
       org.x = 1;
 
     if (HaveClipping())
-      canvas.text(org.x, org.y, caption.c_str());
+      canvas.DrawText(org.x, org.y, caption.c_str());
     else
-      canvas.text_clipped(org.x, org.y, caption_width - org.x,
-                          caption.c_str());
+      canvas.DrawClippedText(org.x, org.y, caption_width - org.x,
+                             caption.c_str());
   }
+
+  Color background_color, text_color;
+  if (pressed) {
+    background_color = COLOR_BLACK;
+    text_color = COLOR_WHITE;
+  } else if (IsEnabled()) {
+    if (IsReadOnly())
+      background_color = Color(0xf0, 0xf0, 0xf0);
+    else
+      background_color = COLOR_WHITE;
+    text_color = COLOR_BLACK;
+  } else {
+    background_color = COLOR_LIGHT_GRAY;
+    text_color = COLOR_DARK_GRAY;
+  }
+
+  canvas.DrawFilledRectangle(edit_rc, background_color);
+
+  canvas.SelectHollowBrush();
+  canvas.SelectBlackPen();
+  canvas.Rectangle(edit_rc.left, edit_rc.top,
+                   edit_rc.right, edit_rc.bottom);
+
+  if (!value.empty()) {
+    canvas.SetTextColor(text_color);
+    canvas.SetBackgroundTransparent();
+    canvas.Select(*look.text_font);
+
+    const PixelScalar x = edit_rc.left + Layout::GetTextPadding();
+    const PixelScalar canvas_height = edit_rc.bottom - edit_rc.top;
+    const PixelScalar text_height = canvas.GetFontHeight();
+    const PixelScalar y = edit_rc.top + (canvas_height - text_height) / 2;
+
+    canvas.TextAutoClipped(x, y, value.c_str());
+  }
+}
+
+void
+WndProperty::SetText(const TCHAR *_value)
+{
+  assert(_value != nullptr);
+
+  if (value.compare(_value) == 0)
+    return;
+
+  value = _value;
+  Invalidate();
 }
 
 void
@@ -376,10 +440,9 @@ WndProperty::RefreshDisplay()
   if (!mDataField)
     return;
 
-  if (edit.HasFocus() && CanEditInPlace())
-    edit.SetText(mDataField->GetAsString());
-  else
-    edit.SetText(mDataField->GetAsDisplayString());
+  SetText(HasFocus() && CanEditInPlace()
+          ? mDataField->GetAsString()
+          : mDataField->GetAsDisplayString());
 }
 
 void

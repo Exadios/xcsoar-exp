@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ Copyright_License {
 #include "LocalPath.hpp"
 #include "OS/FileUtil.hpp"
 #include "Util/ConvertString.hpp"
+#include "Util/Clamp.hpp"
 #include "Operation/Operation.hpp"
 #include "zzip/zzip.h"
 
@@ -163,7 +164,7 @@ RasterWeather::isWeatherAvailable(unsigned t) const
 {
   Poco::ScopedRWLock protect(lock, false);
   assert(t < MAX_WEATHER_TIMES);
-  return weather_available[min((unsigned)MAX_WEATHER_TIMES, t)];
+  return weather_available[std::min((unsigned)MAX_WEATHER_TIMES, t)];
 }
 
 void
@@ -192,7 +193,7 @@ RasterWeather::LoadItem(const TCHAR* name, unsigned time_index,
   TCHAR rasp_filename[MAX_PATH];
   GetFilename(rasp_filename, name, time_index);
   RasterMap *map = new RasterMap(rasp_filename, NULL, NULL, operation);
-  if (!map->isMapLoaded()) {
+  if (!map->IsDefined()) {
     delete map;
     return false;
   }
@@ -255,12 +256,12 @@ RasterWeather::Reload(int day_time_local, OperationEnvironment &operation)
   if (_weather_time == 0) {
     // "Now" time, so find time in half hours
     unsigned half_hours = (day_time_local / 1800) % 48;
-    _weather_time = max(_weather_time, half_hours);
+    _weather_time = std::max(_weather_time, half_hours);
     now = true;
   }
 
   // limit values, for safety
-  _weather_time = min(MAX_WEATHER_TIMES - 1, _weather_time);
+  _weather_time = std::min(MAX_WEATHER_TIMES - 1, _weather_time);
   if (_weather_time != last_weather_time)
     reload = true;
 
@@ -396,7 +397,7 @@ RasterWeather::ValueToText(TCHAR* Buffer, short val) const
               Units::GetAltitudeName());
     return;
   case 5: // blcloudpct
-    _stprintf(Buffer, _T("%d%%"), (int)max(0, min(100, (int)val)));
+    _stprintf(Buffer, _T("%d%%"), Clamp(int(val), 0, 100));
     return;
   case 6: // sfctemp
     _stprintf(Buffer, _T("%d")_T(DEG), val / 2 - 20);

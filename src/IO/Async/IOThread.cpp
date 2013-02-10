@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -143,18 +143,25 @@ IOThread::LockRemove(int fd)
 void
 IOThread::Update()
 {
-  for (auto i = files.begin(), end = files.end(); i != end; ++i) {
+  for (auto i = files.begin(), end = files.end(); i != end;) {
     File &file = i->second;
     assert(file.fd == i->first);
 
-    if (!file.modified)
+    if (!file.modified) {
+      ++i;
       continue;
+    }
 
     file.modified = false;
 
     poll.SetMask(file.fd, file.mask);
     if (file.mask == 0)
-      files.erase(i--);
+      /* the iterator must be incremented before calling map::erase()
+         (with its old value), because map::erase() invalidates the
+         iterator */
+      files.erase(i++);
+    else
+      ++i;
   }
 }
 

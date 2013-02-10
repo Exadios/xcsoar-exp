@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ Copyright_License {
 
 package org.xcsoar;
 
+import java.io.File;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.BroadcastReceiver;
@@ -87,10 +88,21 @@ class DownloadUtil extends BroadcastReceiver {
     } while (c.moveToNext());
   }
 
+  /**
+   * @param path the absolute destination path
+   */
   static long enqueue(DownloadManager dm, String uri, String path) {
     DownloadManager.Request request =
       new DownloadManager.Request(Uri.parse(uri));
-    request.setDestinationInExternalPublicDir("XCSoarData", path);
+
+    /* Unfortunately, we cannot use the simpler "ExternalPublicDir"
+       Android feature, because on some Samsung products, we need to
+       explicitly use the "external_sd" mount instead of the built-in
+       storage.  Here, we must use whatever was returned by
+       FindDataPath() in LocalPath.cpp. */
+    //request.setDestinationInExternalPublicDir("XCSoarData", path);
+    request.setDestinationUri(Uri.fromFile(new File(path)));
+
     request.setAllowedOverRoaming(false);
     request.setShowRunningNotification(true);
     return dm.enqueue(request);

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@ DialogLook::Initialise(const Font &caption_font,
                        const Font &_text_font,
                        const Font &_small_font,
                        const Font &button_font,
-                       const Font &list_font)
+                       const Font &list_font,
+                       const Font &list_font_bold)
 {
   caption.text_color = COLOR_BLACK;
   caption.font = &caption_font;
@@ -65,6 +66,7 @@ DialogLook::Initialise(const Font &caption_font,
   list.pressed.background_color = COLOR_YELLOW;
   list.pressed.text_color = COLOR_BLACK;
   list.font = &list_font;
+  list.font_bold = &list_font_bold;
 }
 
 void

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "Task/Points/TaskWaypoint.hpp"
 #include "Navigation/Aircraft.hpp"
 
-UnorderedTask::UnorderedTask(const enum Type _type,
+UnorderedTask::UnorderedTask(const TaskType _type,
                              const TaskBehaviour &tb):
   AbstractTask(_type, tb)
 {
@@ -60,10 +60,10 @@ UnorderedTask::CalcRequiredGlide(const AircraftState &aircraft,
 {
   TaskPoint *tp = GetActiveTaskPoint();
   if (!tp) {
-    return fixed_zero;
+    return fixed(0);
   }
   TaskGlideRequired bgr(tp, aircraft, task_behaviour.glide, glide_polar);
-  return bgr.search(fixed_zero);
+  return bgr.search(fixed(0));
 }
 
 void
@@ -143,7 +143,7 @@ UnorderedTask::ScanDistanceMinMax(const GeoPoint &location, bool full,
 {
   *dmin = *dmax = stats.total.remaining.IsDefined()
     ? stats.total.remaining.GetDistance()
-    : fixed_zero;
+    : fixed(0);
 }
 
 fixed 
@@ -151,7 +151,7 @@ UnorderedTask::ScanDistanceNominal()
 {
   return stats.total.remaining.IsDefined()
     ? stats.total.remaining.GetDistance()
-    : fixed_zero;
+    : fixed(0);
 }
 
 fixed
@@ -159,19 +159,19 @@ UnorderedTask::ScanDistancePlanned()
 {
   return stats.total.remaining.IsDefined()
     ? stats.total.remaining.GetDistance()
-    : fixed_zero;
+    : fixed(0);
 }
 
 fixed 
 UnorderedTask::ScanDistanceScored(const GeoPoint &location)
 {
-  return fixed_zero;
+  return fixed(0);
 }
 
 fixed 
 UnorderedTask::ScanDistanceTravelled(const GeoPoint &location)
 {
-  return fixed_zero;
+  return fixed(0);
 }
 
 fixed 
@@ -179,7 +179,7 @@ UnorderedTask::ScanDistanceRemaining(const GeoPoint &location)
 {
   TaskPoint *tp = GetActiveTaskPoint();
   if (!tp) {
-    return fixed_zero;
+    return fixed(0);
   }
   return tp->Distance(location);
 }
@@ -195,35 +195,7 @@ UnorderedTask::GetFinishHeight() const
 {
   TaskPoint *tp = GetActiveTaskPoint();
   if (!tp) {
-    return fixed_zero;
+    return fixed(0);
   }
   return tp->GetElevation();
-}
-
-GeoPoint 
-UnorderedTask::GetTaskCenter(const GeoPoint& fallback_location) const
-{
-  TaskPoint *tp = GetActiveTaskPoint();
-  if (!tp) {
-    return fallback_location;
-  } else {
-    return tp->GetLocation().Interpolate(fallback_location, fixed_half);
-  }
-}
-
-fixed 
-UnorderedTask::GetTaskRadius(const GeoPoint& fallback_location) const
-{
-  TaskPoint *tp = GetActiveTaskPoint();
-  if (!tp) {
-    return fixed_zero;
-  } else {
-    return half(tp->GetLocation().Distance(fallback_location));
-  }
-}
-
-void 
-UnorderedTask::AcceptStartPointVisitor(TaskPointConstVisitor &visitor) const
-{
-  // do nothing!
 }

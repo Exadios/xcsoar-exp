@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,12 +33,14 @@ AirspaceCircle::AirspaceCircle(const GeoPoint &loc, const fixed _radius)
   m_is_convex = true;
 
   // @todo: find better enclosing radius as fn of NUM_SEGMENTS
-  #define NUM_SEGMENTS 12
+
+  static constexpr unsigned NUM_SEGMENTS = 12;
   m_border.reserve(NUM_SEGMENTS);
-  for (unsigned i = 0; i <= 12; ++i) {
-    const Angle angle = Angle::Degrees(fixed(i * 360 / NUM_SEGMENTS));
+  Angle angle = Angle::Zero();
+  static constexpr Angle delta = Angle::FullCircle() / NUM_SEGMENTS;
+  for (unsigned i = 0; i <= NUM_SEGMENTS; ++i, angle += delta) {
     const GeoPoint p = GeoVector(m_radius * fixed(1.1), angle).EndPoint(m_center);
-    m_border.push_back(SearchPoint(p));
+    m_border.emplace_back(p);
   }
 }
 
@@ -66,19 +68,19 @@ AirspaceCircle::Intersects(const GeoPoint &start, const GeoPoint &end,
   if (!positive(mag))
     return AirspaceIntersectionVector();
 
-  const fixed inv_mag = fixed_one / mag;
+  const fixed inv_mag = fixed(1) / mag;
   const fixed t1 = FlatLine(f_start, f_p1).dot(line);
   const fixed t2 = (f_p1 == f_p2) ?
-    -fixed_one : FlatLine(f_start, f_p2).dot(line);
+    fixed(-1) : FlatLine(f_start, f_p2).dot(line);
 
   const bool in_range = (t1 < mag) || (t2 < mag);
   // if at least one point is within range, capture both points
 
   AirspaceIntersectSort sorter(start, *this);
-  if ((t1 >= fixed_zero) && in_range)
+  if ((t1 >= fixed(0)) && in_range)
     sorter.add(t1 * inv_mag, projection.Unproject(f_p1));
 
-  if ((t2 >= fixed_zero) && in_range)
+  if ((t2 >= fixed(0)) && in_range)
     sorter.add(t2 * inv_mag, projection.Unproject(f_p2));
 
   return sorter.all();

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,8 +22,10 @@ Copyright_License {
 */
 
 #include "org_xcsoar_EventBridge.h"
-#include "Screen/Android/Event.hpp"
+#include "Event/Android/Queue.hpp"
+#include "Event/Idle.hpp"
 #include "Android/Main.hpp"
+#include "OS/Clock.hpp"
 #include "Compiler.h"
 
 /**
@@ -44,7 +46,7 @@ TranslateKeyCode(unsigned key_code)
 
   if (key_code >= KEYCODE_A && key_code <= KEYCODE_Z)
     /* return upper-case character, because InputEvents::findKey()
-       calls _totupper() */
+       calls ToUpperASCII() */
     return 'A' + (key_code - KEYCODE_A);
 
   return key_code;
@@ -59,6 +61,7 @@ Java_org_xcsoar_EventBridge_onKeyDown(JNIEnv *env, jclass cls, jint key_code)
     return;
 
   event_queue->Push(Event(Event::KEY_DOWN, TranslateKeyCode(key_code)));
+  ResetUserIdle();
 }
 
 gcc_visibility_default
@@ -70,6 +73,7 @@ Java_org_xcsoar_EventBridge_onKeyUp(JNIEnv *env, jclass cls, jint key_code)
     return;
 
   event_queue->Push(Event(Event::KEY_UP, TranslateKeyCode(key_code)));
+  ResetUserIdle();
 }
 
 gcc_visibility_default
@@ -82,6 +86,7 @@ Java_org_xcsoar_EventBridge_onMouseDown(JNIEnv *env, jclass cls,
     return;
 
   event_queue->Push(Event(Event::MOUSE_DOWN, x, y));
+  ResetUserIdle();
 }
 
 gcc_visibility_default
@@ -94,6 +99,7 @@ Java_org_xcsoar_EventBridge_onMouseUp(JNIEnv *env, jclass cls,
     return;
 
   event_queue->Push(Event(Event::MOUSE_UP, x, y));
+  ResetUserIdle();
 }
 
 gcc_visibility_default
@@ -107,6 +113,7 @@ Java_org_xcsoar_EventBridge_onMouseMove(JNIEnv *env, jclass cls,
 
   event_queue->Purge(Event::MOUSE_MOTION);
   event_queue->Push(Event(Event::MOUSE_MOTION, x, y));
+  ResetUserIdle();
 }
 
 gcc_visibility_default
@@ -118,6 +125,7 @@ Java_org_xcsoar_EventBridge_onPointerDown(JNIEnv *env, jclass cls)
     return;
 
   event_queue->Push(Event(Event::POINTER_DOWN));
+  ResetUserIdle();
 }
 
 gcc_visibility_default
@@ -129,4 +137,5 @@ Java_org_xcsoar_EventBridge_onPointerUp(JNIEnv *env, jclass cls)
     return;
 
   event_queue->Push(Event(Event::POINTER_UP));
+  ResetUserIdle();
 }

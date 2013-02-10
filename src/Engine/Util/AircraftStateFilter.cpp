@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,30 +26,30 @@
 #include <assert.h>
 
 AircraftStateFilter::AircraftStateFilter(const fixed cutoff_wavelength)
-  :x_diff_filter(fixed_zero), y_diff_filter(fixed_zero),
-   alt_diff_filter(fixed_zero),
+  :x_diff_filter(fixed(0)), y_diff_filter(fixed(0)),
+   alt_diff_filter(fixed(0)),
    x_low_pass(cutoff_wavelength), y_low_pass(cutoff_wavelength),
    alt_low_pass(cutoff_wavelength),
-   x(fixed_zero), y(fixed_zero) {}
+   x(fixed(0)), y(fixed(0)) {}
 
 void
 AircraftStateFilter::Reset(const AircraftState &state)
 {
   last_state = state;
 
-  x = fixed_zero;
-  y = fixed_zero;
+  x = fixed(0);
+  y = fixed(0);
 
-  v_x = fixed_zero;
-  v_y = fixed_zero;
-  v_alt = fixed_zero;
+  v_x = fixed(0);
+  v_y = fixed(0);
+  v_alt = fixed(0);
 
-  x_low_pass.Reset(fixed_zero);
-  y_low_pass.Reset(fixed_zero);
-  alt_low_pass.Reset(fixed_zero);
-  x_diff_filter.Reset(x, fixed_zero);
-  y_diff_filter.Reset(y, fixed_zero);
-  alt_diff_filter.Reset(state.altitude, fixed_zero);
+  x_low_pass.Reset(fixed(0));
+  y_low_pass.Reset(fixed(0));
+  alt_low_pass.Reset(fixed(0));
+  x_diff_filter.Reset(x, fixed(0));
+  y_diff_filter.Reset(y, fixed(0));
+  alt_diff_filter.Reset(state.altitude, fixed(0));
 }
 
 void
@@ -67,7 +67,7 @@ AircraftStateFilter::Update(const AircraftState &state)
 
   GeoVector vec(last_state.location, state.location);
 
-  const fixed MACH_1 = fixed_int_constant(343);
+  const fixed MACH_1 = fixed(343);
   if (vec.distance > fixed(1000) || vec.distance / dt > MACH_1) {
     Reset(state);
     return;
@@ -107,7 +107,7 @@ AircraftStateFilter::Design(const fixed cutoff_wavelength)
 }
 
 AircraftState
-AircraftStateFilter::GetPredictedState(const fixed &in_time) const
+AircraftStateFilter::GetPredictedState(const fixed in_time) const
 {
   AircraftState state_next = last_state;
   state_next.ground_speed = GetSpeed();

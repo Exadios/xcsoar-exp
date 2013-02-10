@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,17 +22,37 @@ Copyright_License {
 */
 
 #include "Screen/SingleWindow.hpp"
-#include "Screen/GDI/Event.hpp"
+#include "Event/GDI/Event.hpp"
+#include "resource.h"
 
 #include <cassert>
 
 bool
-SingleWindow::FilterEvent(const MSG &msg, Window *allowed) const
+SingleWindow::RegisterClass(HINSTANCE hInstance)
+{
+  WNDCLASS wc;
+
+  wc.hInstance = hInstance;
+  wc.style = CS_VREDRAW | CS_HREDRAW;
+  wc.lpfnWndProc = Window::WndProc;
+  wc.cbClsExtra = 0;
+  wc.cbWndExtra = 0;
+  wc.hIcon = ::LoadIcon(hInstance, MAKEINTRESOURCE(IDI_XCSOAR));
+  wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+  wc.hbrBackground = nullptr;
+  wc.lpszMenuName = 0;
+  wc.lpszClassName = class_name;
+
+  return ::RegisterClass(&wc) != 0;
+}
+
+bool
+SingleWindow::FilterEvent(const Event &event, Window *allowed) const
 {
   assert(allowed != NULL);
 
-  if (IsUserInput(msg.message)) {
-    if (allowed->IdentifyDescendant(msg.hwnd))
+  if (event.IsUserInput()) {
+    if (allowed->IdentifyDescendant(event.msg.hwnd))
       /* events to the current modal dialog are allowed */
       return true;
 

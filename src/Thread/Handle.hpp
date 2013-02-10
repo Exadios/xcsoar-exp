@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -51,9 +51,9 @@ public:
   ThreadHandle() = default;
 
 #ifdef HAVE_POSIX
-  ThreadHandle(pthread_t _handle):handle(_handle) {}
+  constexpr ThreadHandle(pthread_t _handle):handle(_handle) {}
 #else
-  ThreadHandle(DWORD _handle):handle(_handle) {}
+  constexpr ThreadHandle(DWORD _handle):handle(_handle) {}
 #endif
 
   static const ThreadHandle GetCurrent() {

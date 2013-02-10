@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,13 +24,14 @@ Copyright_License {
 #ifndef FLIGHT_STATISTICS_RENDERER_HPP
 #define FLIGHT_STATISTICS_RENDERER_HPP
 
-#include "Screen/Point.hpp"
 #include "Renderer/TrailRenderer.hpp"
 
 #include <tchar.h>
 
+struct PixelRect;
 struct NMEAInfo;
 struct DerivedInfo;
+struct ContestSettings;
 struct TaskBehaviour;
 struct ComputerSettings;
 struct MapSettings;
@@ -56,7 +57,6 @@ public:
 public:
   void RenderOLC(Canvas &canvas, const PixelRect rc,
                  const NMEAInfo &nmea_info,
-                 const DerivedInfo &calculated,
                  const ComputerSettings &settings_computer,
                  const MapSettings &settings_map,
                  const ContestStatistics &contest,
@@ -64,14 +64,13 @@ public:
 
   void RenderTask(Canvas &canvas, const PixelRect rc,
                   const NMEAInfo &nmea_info,
-                  const DerivedInfo &derived_info,
                   const ComputerSettings &settings_computer,
                   const MapSettings &settings_map,
                   const ProtectedTaskManager &task,
                   const TraceComputer *trace_computer) const;
 
   static void CaptionTask(TCHAR *sTmp, const DerivedInfo &derived);
-  static void CaptionOLC(TCHAR *sTmp, const TaskBehaviour &task_behaviour,
+  static void CaptionOLC(TCHAR *sTmp, const ContestSettings &settings,
                          const DerivedInfo &derived);
 };
 

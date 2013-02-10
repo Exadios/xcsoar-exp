@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -52,10 +52,10 @@ private:
   void Advance();
 
 protected:
-  virtual void OnCreate();
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-  virtual void OnPaint(Canvas &canvas);
-  virtual void OnPaint(Canvas &canvas, const PixelRect &dirty);
+  virtual void OnCreate() override;
+  virtual void OnResize(PixelSize new_size) override;
+  virtual void OnPaint(Canvas &canvas) override;
+  virtual void OnPaint(Canvas &canvas, const PixelRect &dirty) override;
 };
 
 #endif

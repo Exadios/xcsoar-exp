@@ -1,60 +1,26 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
 <Form Caption="Waypoint">
-  <SymbolButton Name="butPrevious" Caption="&lt;" X="2" Y="-111" Width="75" Height="35" OnClick="OnPreviousClicked"/>
-  <SymbolButton Name="butNext" Caption="&gt;" X="2" Y="-74" Width="75" Height="35" OnClick="OnNextClicked"/>
-  <Button Caption="Close" X="2" Y="-37" Width="75" Height="35" OnClick="OnCloseClicked"/>
+  <SymbolButton Name="butPrevious" Caption="&lt;" X="2" Y="-74" Width="75" Height="35" OnClick="OnPreviousClicked"/>
+  <SymbolButton Name="butNext" Caption="&gt;" X="2" Y="-111" Width="75" Height="35" OnClick="OnNextClicked"/>
+  <CloseButton X="2" Y="-37" Width="75" Height="35"/>
 
-  <Panel Name="frmLandscape" X="80" Y="2" Width="238" Height="251">
-
-    <Panel Name="frmLocation" X="0" Y="0" Width="242" Height="68" Border="1">
-    <Label Name="lblLocation" Caption="Location" X="2" Y="2" Width="230" Height="25"/>
-      <Button Name="butDetails" Caption="Details" X="2" Y="28" Width="73" Height="35" OnClick="OnDetailsClicked"/>
-      <Button Name="butRemove" Caption="Remove" X="77" Y="28" Width="73" Height="35" OnClick="OnRemoveClicked"/>
-      <Button Name="butRelocate" Caption="Relocate" X="152" Y="28" Width="81" Height="35" OnClick="OnRelocateClicked"/>
-    </Panel>
-
-    <Panel Name="frmType" X="0" Y="67" Width="242" Height="200" Border="1">
-      <Label Name="lblType" Caption="Type" X="2" Y="3" Width="144" Height="36"/>
-      <Button Name="butType" Caption="Change Type" X="152" Y="3" Width="81" Height="35" OnClick="OnTypeClicked"/>
-      <Canvas Name="frmTaskView" X="2" Y="42" Width="92" Height="82" Border="1" OnPaint="OnTaskPaint" />
-
-      <Panel Name="frmOZLine" X="107" Y="41" Width="126" Height="80">
-        <Edit Name="prpOZLineLength" Caption="Gate Width" Height="25" CaptionWidth="60" Help="Width of the start/finish gate.">
-         <DataField DataType="double" DisplayFormat="%.1f %s" EditFormat="%.1f" Min="0.1" Max="100" Step="1.0" Fine="1" OnDataAccess="OnOZData"/>
-        </Edit>
-     </Panel>
-
-      <Panel Name="frmOZCylinder" X="107" Y="41" Width="126" Height="80">
-        <Edit Name="prpOZCylinderRadius" Caption="Radius" Height="25" CaptionWidth="60" Help="Radius of the OZ cylinder.">
-          <DataField DataType="double" DisplayFormat="%.1f %s" EditFormat="%.1f" Min="0.1" Max="100" Step="1.0" Fine="1" OnDataAccess="OnOZData"/>
-        </Edit>
-      </Panel>
-
-      <Panel Name="frmOZSector" X="97" Y="41" Width="136" Height="100">
-        <Edit Name="prpOZSectorRadius" Caption="Radius" Height="25" CaptionWidth="80" Help="Radius of the OZ sector.">
-          <DataField DataType="double" DisplayFormat="%.1f %s" EditFormat="%.1f" Min="0.1" Max="100" Step="1.0" Fine="1" OnDataAccess="OnOZData"/>
-        </Edit>
-
-        <Edit Name="prpOZSectorStartRadial" Caption="Start radial" Height="25" CaptionWidth="80" Help="Start radial of the OZ area">
-          <DataField DataType="double" DisplayFormat="%.0f°" EditFormat="%.0f" Min="0" Max="360" Step="10" Fine="1" OnDataAccess="OnOZData"/>
-        </Edit>
-
-        <Edit Name="prpOZSectorFinishRadial" Caption="Finish radial" Height="25" CaptionWidth="80" Help="Finish radial of the OZ area">
-          <DataField DataType="double" DisplayFormat="%.0f°" EditFormat="%.0f" Min="0" Max="360" Step="10" Fine="1" OnDataAccess="OnOZData"/>
-        </Edit>
-
-        <Edit Name="prpOZSectorInnerRadius" Caption="Inner radius" Height="25" CaptionWidth="80" Help="Inner radius of the OZ sector.">
-          <DataField DataType="double" DisplayFormat="%.1f %s" EditFormat="%.1f" Min="0.0" Max="100" Step="1.0" Fine="1"
-           OnDataAccess="OnOZData"/>
-        </Edit>
-      </Panel>
-        <Button Name="cmdOptionalStarts" Caption="Details" X="2" Y="125" Width="180" Height="25"
-  	OnClick="OnOptionalStartsClicked"/>
-      
-    </Panel>
-
+  <Panel X="79" Y="2" Width="-2" Height="66" Border="1">
+    <Label Name="lblLocation" Caption="Location" X="2" Y="2" Height="25"/>
+    <Button Name="butDetails" Caption="Details" X="2" Y="-37" Width="73" Height="-2" OnClick="OnDetailsClicked"/>
+    <Button Name="butRemove" Caption="Remove" X="77" Y="-37" Width="73" Height="-2" OnClick="OnRemoveClicked"/>
+    <Button Name="butRelocate" Caption="Relocate" X="152" Y="-37" Width="81" Height="-2" OnClick="OnRelocateClicked"/>
   </Panel>
 
-  
+  <Panel X="79" Y="70" Width="-2" Height="-2" Border="1">
+    <Label Name="lblType" Caption="Type" X="2" Y="2" Width="-84" Height="38"/>
+    <Button Name="butType" Caption="Change Type" X="-83" Y="2" Width="-2" Height="35" OnClick="OnTypeClicked"/>
+
+    <Canvas Name="frmTaskView" X="2" Y="42" Width="90" Height="82" Border="1" OnPaint="OnTaskPaint"/>
+
+    <Widget Name="properties" X="107" Y="41" Height="-29"/>
+
+    <Button Name="cmdOptionalStarts" Caption="Details" X="2" Y="-27" Width="180" Height="25"
+            OnClick="OnOptionalStartsClicked"/>
+  </Panel>
 </Form>

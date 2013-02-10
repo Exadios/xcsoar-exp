@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,28 +28,54 @@ Copyright_License {
 
 struct DialogLook;
 class ContainerWindow;
+class ActionListener;
 
 /**
  * This class is used for creating buttons.
- * It is based on the WindowControl class.
  */
 class CheckBoxControl : public CheckBox {
 public:
   typedef void (*ClickNotifyCallback)(CheckBoxControl &button);
 
+private:
+  ActionListener *listener;
+#ifdef USE_GDI
+  int id;
+#endif
+
+  /**
+   * The callback-function that should be called when the button is pressed
+   * @see SetOnClickNotify()
+   */
+  ClickNotifyCallback click_notify_callback;
+
 public:
   /**
-   * Constructor of the WndButton class
-   * @param Parent Parent window/ContainerControl
-   * @param Caption Text on the button
-   * @param Function The function that should be called
+   * @param parent Parent window/ContainerControl
+   * @param caption Text on the button
+   * @param click_notify_callback The function that should be called
    * when the button is clicked
    */
   CheckBoxControl(ContainerWindow &parent, const DialogLook &look,
-                  const TCHAR *caption,
+                  tstring::const_pointer caption,
                   const PixelRect &rc,
                   const CheckBoxStyle style,
                   ClickNotifyCallback click_notify_callback = NULL);
+
+  CheckBoxControl(ContainerWindow &parent, const DialogLook &look,
+                  tstring::const_pointer caption,
+                  const PixelRect &rc,
+                  const CheckBoxStyle style,
+                  ActionListener *listener, int id);
+
+  /**
+   * Set the object that will receive click events.
+   */
+  void SetListener(ActionListener *_listener) {
+    assert(listener == nullptr);
+
+    listener = _listener;
+  }
 
   /**
    * Sets the function that should be called when the button is pressed
@@ -58,28 +84,18 @@ public:
   void
   SetOnClickNotify(ClickNotifyCallback _click_notify_callback)
   {
+    assert(listener == nullptr);
+
     click_notify_callback = _click_notify_callback;
   }
 
-  /**
-   * Called when the button is clicked (either by mouse or by
-   * keyboard).  The default implementation invokes the OnClick
-   * callback.
-   */
-  virtual bool OnClicked();
+  virtual bool OnClicked() override;
 
 #ifdef _WIN32_WCE
 protected:
-  virtual bool OnKeyCheck(unsigned key_code) const;
-  virtual bool OnKeyDown(unsigned key_code);
+  virtual bool OnKeyCheck(unsigned key_code) const override;
+  virtual bool OnKeyDown(unsigned key_code) override;
 #endif
-
-private:
-  /**
-   * The callback-function that should be called when the button is pressed
-   * @see SetOnClickNotify()
-   */
-  ClickNotifyCallback click_notify_callback;
 };
 
 #endif

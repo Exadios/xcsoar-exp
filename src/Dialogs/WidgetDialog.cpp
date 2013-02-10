@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,8 +25,7 @@ Copyright_License {
 #include "Look/DialogLook.hpp"
 #include "Form/Form.hpp"
 #include "Form/ButtonPanel.hpp"
-#include "Form/Widget.hpp"
-#include "UIGlobals.hpp"
+#include "Widget/Widget.hpp"
 #include "Language/Language.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/Layout.hpp"
@@ -41,46 +40,84 @@ GetDialogStyle()
   return style;
 }
 
-WidgetDialog::WidgetDialog(const TCHAR *caption, const PixelRect &rc,
-                           Widget *_widget)
-  :WndForm(UIGlobals::GetMainWindow(), UIGlobals::GetDialogLook(),
-           rc, caption, GetDialogStyle()),
-   buttons(GetClientAreaWindow(), UIGlobals::GetDialogLook()),
-   widget(GetClientAreaWindow(), _widget),
-   auto_size(false),
+WidgetDialog::WidgetDialog(const DialogLook &look)
+  :WndForm(look),
+   buttons(GetClientAreaWindow(), look),
+   widget(GetClientAreaWindow()),
    changed(false)
 {
+}
+
+void
+WidgetDialog::Create(SingleWindow &parent,
+                     const TCHAR *caption, const PixelRect &rc,
+                     Widget *_widget)
+{
+  auto_size = false;
+  WndForm::Create(parent, rc, caption, GetDialogStyle());
+  widget.Set(_widget);
   widget.Move(buttons.UpdateLayout());
 }
 
-WidgetDialog::WidgetDialog(const TCHAR *caption, Widget *_widget)
-  :WndForm(UIGlobals::GetMainWindow(), UIGlobals::GetDialogLook(),
-           UIGlobals::GetMainWindow().GetClientRect(),
-           caption, GetDialogStyle()),
-   buttons(GetClientAreaWindow(), UIGlobals::GetDialogLook()),
-   widget(GetClientAreaWindow(), _widget),
-   auto_size(true),
-   changed(false)
+void
+WidgetDialog::CreateFull(SingleWindow &parent, const TCHAR *caption,
+                         Widget *widget)
 {
+  Create(parent, caption, parent.GetClientRect(), widget);
+}
+
+void
+WidgetDialog::CreateAuto(SingleWindow &parent, const TCHAR *caption,
+                         Widget *_widget)
+{
+  auto_size = true;
+  WndForm::Create(parent, caption, GetDialogStyle());
+  widget.Set(_widget);
   widget.Move(buttons.UpdateLayout());
+}
+
+void
+WidgetDialog::CreatePreliminary(SingleWindow &parent, const TCHAR *caption)
+{
+  auto_size = true;
+  WndForm::Create(parent, parent.GetClientRect(), caption, GetDialogStyle());
+}
+
+void
+WidgetDialog::FinishPreliminary(Widget *_widget)
+{
+  assert(IsDefined());
+  assert(!widget.IsDefined());
+  assert(_widget != nullptr);
+
+  widget.Set(_widget);
+  widget.Move(buttons.UpdateLayout());
+
+  AutoSize();
 }
 
 void
 WidgetDialog::AutoSize()
 {
   const PixelRect parent_rc = GetParentClientRect();
-  const PixelSize parent_size = GetPixelRectSize(parent_rc);
+  const PixelSize parent_size = parent_rc.GetSize();
 
   widget.Prepare();
+
+  // Calculate the minimum size of the dialog
   PixelSize min_size = widget.Get()->GetMinimumSize();
   min_size.cy += GetTitleHeight();
+
+  // Calculate the maximum size of the dialog
   PixelSize max_size = widget.Get()->GetMaximumSize();
   max_size.cy += GetTitleHeight();
 
+  // Calculate sizes with one button row at the bottom
   const PixelScalar min_height_with_buttons =
     min_size.cy + Layout::GetMaximumControlHeight();
   const PixelScalar max_height_with_buttons =
     max_size.cy + Layout::GetMaximumControlHeight();
+
   if (/* need full dialog height even for minimum widget height? */
       min_height_with_buttons >= parent_size.cy ||
       /* try to avoid putting buttons left on portrait screens; try to
@@ -94,12 +131,14 @@ WidgetDialog::AutoSize()
       rc.bottom = rc.top + max_size.cy;
 
     PixelRect remaining = buttons.LeftLayout(rc);
-    PixelSize remaining_size = GetPixelRectSize(remaining);
+    PixelSize remaining_size = remaining.GetSize();
     if (remaining_size.cx > max_size.cx)
       rc.right -= remaining_size.cx - max_size.cx;
 
-    Move(rc);
+    Resize(rc.GetSize());
     widget.Move(buttons.LeftLayout());
+
+    MoveToCenter();
     return;
   }
 
@@ -110,13 +149,15 @@ WidgetDialog::AutoSize()
     rc.right = rc.left + max_size.cx;
 
   PixelRect remaining = buttons.BottomLayout(rc);
-  PixelSize remaining_size = GetPixelRectSize(remaining);
+  PixelSize remaining_size = remaining.GetSize();
 
   if (remaining_size.cy > max_size.cy)
     rc.bottom -= remaining_size.cy - max_size.cy;
 
-  Move(rc);
+  Resize(rc.GetSize());
   widget.Move(buttons.BottomLayout());
+
+  MoveToCenter();
 }
 
 int
@@ -124,6 +165,8 @@ WidgetDialog::ShowModal()
 {
   if (auto_size)
     AutoSize();
+  else
+    widget.Move(buttons.UpdateLayout());
 
   widget.Show();
   return WndForm::ShowModal();
@@ -145,12 +188,14 @@ void
 WidgetDialog::OnDestroy()
 {
   widget.Unprepare();
+
+  WndForm::OnDestroy();
 }
 
 void
-WidgetDialog::OnResize(UPixelScalar width, UPixelScalar height)
+WidgetDialog::OnResize(PixelSize new_size)
 {
-  WndForm::OnResize(width, height);
+  WndForm::OnResize(new_size);
 
   if (auto_size)
     return;
@@ -159,9 +204,11 @@ WidgetDialog::OnResize(UPixelScalar width, UPixelScalar height)
 }
 
 bool
-DefaultWidgetDialog(const TCHAR *caption, const PixelRect &rc, Widget &widget)
+DefaultWidgetDialog(SingleWindow &parent, const DialogLook &look,
+                    const TCHAR *caption, const PixelRect &rc, Widget &widget)
 {
-  WidgetDialog dialog(caption, rc, &widget);
+  WidgetDialog dialog(look);
+  dialog.Create(parent, caption, rc, &widget);
   dialog.AddButton(_("OK"), mrOK);
   dialog.AddButton(_("Cancel"), mrCancel);
 
@@ -174,9 +221,11 @@ DefaultWidgetDialog(const TCHAR *caption, const PixelRect &rc, Widget &widget)
 }
 
 bool
-DefaultWidgetDialog(const TCHAR *caption, Widget &widget)
+DefaultWidgetDialog(SingleWindow &parent, const DialogLook &look,
+                    const TCHAR *caption, Widget &widget)
 {
-  WidgetDialog dialog(caption, &widget);
+  WidgetDialog dialog(look);
+  dialog.CreateAuto(parent, caption, &widget);
   dialog.AddButton(_("OK"), mrOK);
   dialog.AddButton(_("Cancel"), mrCancel);
 

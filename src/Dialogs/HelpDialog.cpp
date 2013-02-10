@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,51 +22,30 @@ Copyright_License {
 */
 
 #include "HelpDialog.hpp"
-#include "Dialogs/XML.hpp"
-#include "Dialogs/CallBackTable.hpp"
-#include "Form/Form.hpp"
-#include "Form/Util.hpp"
-#include "Screen/Layout.hpp"
-#include "Units/Units.hpp"
+#include "WidgetDialog.hpp"
+#include "Widget/LargeTextWidget.hpp"
 #include "Language/Language.hpp"
+#include "UIGlobals.hpp"
 
-class WndButton;
-
-#include <stdio.h>
-
-static WndForm *wf = NULL;
-
-static void
-OnCloseClicked(gcc_unused WndButton &Sender)
-{
-  wf->SetModalResult(mrOK);
-}
-
-static constexpr CallBackTableEntry CallBackTable[] = {
-  DeclareCallBackEntry(OnCloseClicked),
-  DeclareCallBackEntry(NULL)
-};
+#include <assert.h>
 
 void
 dlgHelpShowModal(SingleWindow &parent,
                  const TCHAR* Caption, const TCHAR* HelpText)
 {
-  if (!Caption || !HelpText)
-    return;
+  assert(HelpText != nullptr);
 
-  wf = LoadDialog(CallBackTable, parent,
-                  Layout::landscape ? _T("IDR_XML_HELP_L"): _T("IDR_XML_HELP"));
-
-  if (wf == NULL)
-    return;
+  const TCHAR *prefix = _("Help");
 
   StaticString<100> full_caption;
-  full_caption.Format(_T("%s: %s"), _("Help"), Caption);
-  wf->SetCaption(full_caption);
+  if (Caption != nullptr) {
+    full_caption.Format(_T("%s: %s"), prefix, Caption);
+    Caption = full_caption.c_str();
+  } else
+    Caption = prefix;
 
-  SetFormValue(*wf, _T("prpHelpText"), HelpText);
-
-  wf->ShowModal();
-
-  delete wf;
+  WidgetDialog dialog(UIGlobals::GetDialogLook());
+  dialog.CreateFull(parent, Caption, new LargeTextWidget(HelpText));
+  dialog.AddButton(_("Close"), mrCancel);
+  dialog.ShowModal();
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,71 +32,91 @@ Copyright_License {
 unsigned count_distbearing = 0;
 #endif
 
-#define fixed_double_earth_r fixed(REARTH * 2)
-
-static inline fixed
-earth_asin(const fixed a)
+static inline Angle
+EarthASin(const fixed a)
 {
-  return asin(a);
+  return Angle::asin(a);
 }
 
-static inline fixed
-earth_distance_function(const fixed a)
+static inline Angle
+EarthDistance(const fixed a)
 {
   if (!positive(a))
-    return fixed_zero;
+    return Angle::Zero();
 
 #ifdef FIXED_MATH
-  // static const fixed fixed_shrink(fixed_two/(1<<(EXPAND_BITS*2)));
   // acos(1-x) = 2*asin(sqrt(x/2))
   // acos(1-2*x) = 2*asin(sqrt(x))
-  //    = 2*atan2(sqrt(x), sqrt(fixed_one-x));
-  return Double(earth_asin(sqrt(a) / (1 << fixed::accurate_cordic_shift)));
+  //    = 2*atan2(sqrt(x), sqrt(fixed(1)-x));
+  return EarthASin(sqrt(a) >> fixed::accurate_cordic_shift) * 2;
 #else
-  return acos(fixed_one - Double(a));
+  return Angle::acos(fixed(1) - Double(a));
 #endif
 }
 
+/**
+ * Multiply two very small values (less than 4).  This is an optimised
+ * fast path for fixed-point.
+ */
+constexpr
+static inline fixed
+SmallMult(fixed a, fixed b)
+{
+  return fast_mult(a, b, 0);
+}
+
+/**
+ * Multiply three very small values (less than 2).  This is an
+ * optimised fast path for fixed-point.
+ */
+constexpr
+static inline fixed
+SmallMult(fixed a, fixed b, fixed c)
+{
+  return SmallMult(SmallMult(a, b), c);
+}
+
+gcc_pure
 static GeoPoint
-IntermediatePoint(const GeoPoint loc1, const GeoPoint loc2, fixed dthis,
-                  fixed dtotal)
+IntermediatePoint(const GeoPoint &loc1, const GeoPoint &loc2,
+                  Angle dthis, Angle dtotal)
 {
   if (loc1.longitude == loc2.longitude &&
       loc1.latitude == loc2.latitude)
     return loc1;
 
-  if (!positive(dtotal))
+  if (!positive(dtotal.Native()))
     return loc1;
 
-  assert(dthis <= dtotal && dthis >= fixed_zero);
+  assert(dthis <= dtotal && !negative(dthis.Native()));
 
-  // const fixed inv_sind = fixed_one / sin(dtotal);
-  // JMW remove inv_sind?
-
-  const fixed A = sin(dtotal - dthis);// * inv_sind;
-  const fixed B = sin(dthis);// * inv_sind;
+  const fixed A = (dtotal - dthis).sin();
+  const fixed B = dthis.sin();
 
   const auto sc1 = loc1.latitude.SinCos();
-  const fixed sinLoc1Latitude = sc1.first, cosLoc1Latitude = sc1.second;
+  const fixed sin_loc1_lat = sc1.first, cos_loc1_lat = sc1.second;
 
   const auto sc2 = loc2.latitude.SinCos();
-  const fixed sinLoc2Latitude = sc2.first, cosLoc2Latitude = sc2.second;
+  const fixed sin_loc2_lat = sc2.first, cos_loc2_lat = sc2.second;
 
   const auto sc3 = loc1.longitude.SinCos();
-  const fixed sinLoc1Longitude = sc3.first, cosLoc1Longitude = sc3.second;
+  const fixed sin_loc1_lon = sc3.first, cos_loc1_lon = sc3.second;
 
   const auto sc4 = loc2.longitude.SinCos();
-  const fixed sinLoc2Longitude = sc4.first, cosLoc2Longitude = sc4.second;
+  const fixed sin_loc2_lon = sc4.first, cos_loc2_lon = sc4.second;
 
-  const fixed x = A * cosLoc1Latitude * cosLoc1Longitude +
-                  B * cosLoc2Latitude * cosLoc2Longitude;
-  const fixed y = A * cosLoc1Latitude * sinLoc1Longitude +
-                  B * cosLoc2Latitude * sinLoc2Longitude;
-  const fixed z = A * sinLoc1Latitude + B * sinLoc2Latitude;
+  const fixed a_cos_loc1_lat = SmallMult(A, cos_loc1_lat);
+  const fixed b_cos_loc2_lat = SmallMult(B, cos_loc2_lat);
+
+  const fixed x = SmallMult(a_cos_loc1_lat, cos_loc1_lon)
+    + SmallMult(b_cos_loc2_lat, cos_loc2_lon);
+  const fixed y = SmallMult(a_cos_loc1_lat, sin_loc1_lon)
+    + SmallMult(b_cos_loc2_lat, sin_loc2_lon);
+  const fixed z = SmallMult(A, sin_loc1_lat) + SmallMult(B, sin_loc2_lat);
 
   GeoPoint loc3;
-  loc3.latitude = Angle::Radians(atan2(z, TinyHypot(x, y)));
-  loc3.longitude = Angle::Radians(atan2(y, x));
+  loc3.latitude = Angle::FromXY(TinyHypot(x, y), z);
+  loc3.longitude = Angle::FromXY(x, y);
   loc3.Normalize(); // ensure longitude is within -180:180
 
 #ifdef INSTRUMENT_TASK
@@ -107,23 +127,25 @@ IntermediatePoint(const GeoPoint loc1, const GeoPoint loc2, fixed dthis,
 }
 
 GeoPoint
-IntermediatePoint(const GeoPoint loc1, const GeoPoint loc2, const fixed dthis)
+IntermediatePoint(const GeoPoint &loc1, const GeoPoint &loc2,
+                  const fixed dthis)
 {
   const fixed dtotal = ::Distance(loc1, loc2);
 
   if (dthis >= dtotal)
     return loc2;
 
-  return IntermediatePoint(loc1, loc2, dthis * fixed_inv_earth_r,
-                           dtotal * fixed_inv_earth_r);
+  return IntermediatePoint(loc1, loc2,
+                           EarthDistanceToAngle(dthis),
+                           EarthDistanceToAngle(dtotal));
 }
 
 GeoPoint
-Middle(GeoPoint a, GeoPoint b)
+Middle(const GeoPoint &a, const GeoPoint &b)
 {
   // TODO: optimize this naive approach
   const fixed distance = Distance(a, b);
-  return IntermediatePoint(a, b, half(distance));
+  return IntermediatePoint(a, b, Half(distance));
 }
 
 /**
@@ -134,7 +156,7 @@ Middle(GeoPoint a, GeoPoint b)
  * @param Bearing Pointer to the bearing variable
  */
 static void
-DistanceBearingS(const GeoPoint loc1, const GeoPoint loc2,
+DistanceBearingS(const GeoPoint &loc1, const GeoPoint &loc2,
                  Angle *distance, Angle *bearing)
 {
   const auto sc1 = loc1.latitude.SinCos();
@@ -142,29 +164,30 @@ DistanceBearingS(const GeoPoint loc1, const GeoPoint loc2,
   const auto sc2 = loc2.latitude.SinCos();
   fixed sin_lat2 = sc2.first, cos_lat2 = sc2.second;
 
-  const fixed dlon = (loc2.longitude - loc1.longitude).Radians();
+  const Angle dlon = loc2.longitude - loc1.longitude;
 
   if (distance) {
     const fixed s1 = (loc2.latitude - loc1.latitude).accurate_half_sin();
-    const fixed s2 = accurate_half_sin(dlon);
-    const fixed a = sqr(s1) + cos_lat1 * cos_lat2 * sqr(s2);
+    const fixed s2 = dlon.accurate_half_sin();
+    const fixed a = sqr(s1) + SmallMult(cos_lat1, cos_lat2) * sqr(s2);
 
-    fixed distance2 = earth_distance_function(a);
-    assert(!negative(distance2));
-    *distance = Angle::Radians(distance2);
+    Angle distance2 = EarthDistance(a);
+    assert(!negative(distance2.Native()));
+    *distance = distance2;
   }
 
   if (bearing) {
     // speedup for fixed since this is one call
-    const auto sc = sin_cos(dlon);
+    const auto sc = dlon.SinCos();
     const fixed sin_dlon = sc.first, cos_dlon = sc.second;
 
-    const fixed y = sin_dlon * cos_lat2;
-    const fixed x = cos_lat1 * sin_lat2 - sin_lat1 * cos_lat2 * cos_dlon;
+    const fixed y = SmallMult(sin_dlon, cos_lat2);
+    const fixed x = SmallMult(cos_lat1, sin_lat2)
+      - SmallMult(sin_lat1, cos_lat2, cos_dlon);
 
-    *bearing = (x == fixed_zero && y == fixed_zero)
+    *bearing = (x == fixed(0) && y == fixed(0))
       ? Angle::Zero()
-      : Angle::Radians(atan2(y, x)).AsBearing();
+      : Angle::FromXY(x, y).AsBearing();
   }
 
 #ifdef INSTRUMENT_TASK
@@ -173,20 +196,20 @@ DistanceBearingS(const GeoPoint loc1, const GeoPoint loc2,
 }
 
 void
-DistanceBearing(const GeoPoint loc1, const GeoPoint loc2,
+DistanceBearing(const GeoPoint &loc1, const GeoPoint &loc2,
                 fixed *distance, Angle *bearing)
 {
-  if (distance != NULL) {
+  if (distance != nullptr) {
     Angle distance_angle;
     DistanceBearingS(loc1, loc2, &distance_angle, bearing);
-    *distance = distance_angle.Radians() * fixed_earth_r;
+    *distance = AngleToEarthDistance(distance_angle);
   } else
-    DistanceBearingS(loc1, loc2, NULL, bearing);
+    DistanceBearingS(loc1, loc2, nullptr, bearing);
 }
 
 fixed
-CrossTrackError(const GeoPoint loc1, const GeoPoint loc2,
-                const GeoPoint loc3, GeoPoint *loc4)
+CrossTrackError(const GeoPoint &loc1, const GeoPoint &loc2,
+                const GeoPoint &loc3, GeoPoint *loc4)
 {
   Angle dist_AD, crs_AD;
   DistanceBearingS(loc1, loc3, &dist_AD, &crs_AD);
@@ -200,90 +223,94 @@ CrossTrackError(const GeoPoint loc1, const GeoPoint loc2,
   const fixed sindist_AD = dist_AD.sin();
 
   // cross track distance
-  const fixed cross_track_distance =
-    earth_asin(sindist_AD * (crs_AD - crs_AB).sin());
+  const Angle cross_track_distance =
+    EarthASin(SmallMult(sindist_AD, (crs_AD - crs_AB).sin()));
 
   if (loc4) {
-    const auto sc = sin_cos(cross_track_distance);
+    const auto sc = cross_track_distance.SinCos();
     const fixed sinXTD = sc.first, cosXTD = sc.second;
 
-    const fixed along_track_distance =
-      earth_asin(sqrt(sqr(sindist_AD) - sqr(sinXTD)) / cosXTD);
+    const Angle along_track_distance =
+      EarthASin(sqrt(sqr(sindist_AD) - sqr(sinXTD)) / cosXTD);
 
-    *loc4 = IntermediatePoint(loc1, loc2, along_track_distance, dist_AB.Radians());
+    *loc4 = IntermediatePoint(loc1, loc2, along_track_distance, dist_AB);
   }
 
 #ifdef INSTRUMENT_TASK
   count_distbearing++;
 #endif
 
-  return cross_track_distance * fixed_earth_r;
+  return AngleToEarthDistance(cross_track_distance);
 }
 
 fixed
-ProjectedDistance(const GeoPoint loc1, const GeoPoint loc2, const GeoPoint loc3)
+ProjectedDistance(const GeoPoint &loc1, const GeoPoint &loc2,
+                  const GeoPoint &loc3)
 {
   Angle dist_AD, crs_AD;
   DistanceBearingS(loc1, loc3, &dist_AD, &crs_AD);
   if (!positive(dist_AD.Native()))
     /* workaround: new sine implementation may return small non-zero
        values for sin(0) */
-    return fixed_zero;
+    return fixed(0);
 
   Angle dist_AB, crs_AB;
   DistanceBearingS(loc1, loc2, &dist_AB, &crs_AB);
   if (!positive(dist_AB.Native()))
     /* workaround: new sine implementation may return small non-zero
        values for sin(0) */
-    return fixed_zero;
+    return fixed(0);
 
   // The "along track distance", along_track_distance, the distance from A along the
   // course towards B to the point abeam D
 
   const fixed sindist_AD = dist_AD.sin();
-  const fixed cross_track_distance =
-      earth_asin(sindist_AD * (crs_AD - crs_AB).sin());
+  const Angle cross_track_distance =
+    EarthASin(SmallMult(sindist_AD, (crs_AD - crs_AB).sin()));
 
-  const auto sc = sin_cos(cross_track_distance);
+  const auto sc = cross_track_distance.SinCos();
   const fixed sinXTD = sc.first, cosXTD = sc.second;
 
   // along track distance
-  const fixed along_track_distance =
-    earth_asin(sqrt(sqr(sindist_AD) - sqr(sinXTD)) / cosXTD);
+  const Angle along_track_distance =
+    EarthASin(sqrt(sqr(sindist_AD) - sqr(sinXTD)) / cosXTD);
 
 #ifdef INSTRUMENT_TASK
   count_distbearing++;
 #endif
 
-  return along_track_distance * fixed_earth_r;
+  return AngleToEarthDistance(along_track_distance);
 }
 
 
 fixed
-DoubleDistance(const GeoPoint loc1, const GeoPoint loc2, const GeoPoint loc3)
+DoubleDistance(const GeoPoint &loc1, const GeoPoint &loc2,
+               const GeoPoint &loc3)
 {
-  const fixed cloc1Latitude = loc1.latitude.cos();
-  const fixed cloc2Latitude = loc2.latitude.cos();
-  const fixed cloc3Latitude = loc3.latitude.cos();
+  const fixed cos_loc1_lat = loc1.latitude.cos();
+  const fixed cos_loc2_lat = loc2.latitude.cos();
+  const fixed cos_loc3_lat = loc3.latitude.cos();
 
   const fixed s21 = (loc2.latitude - loc1.latitude).accurate_half_sin();
   const fixed sl21 = (loc2.longitude - loc1.longitude).accurate_half_sin();
   const fixed s32 = (loc3.latitude - loc2.latitude).accurate_half_sin();
   const fixed sl32 = (loc3.longitude - loc2.longitude).accurate_half_sin();
 
-  const fixed a12 = sqr(s21) + cloc1Latitude * cloc2Latitude * sqr(sl21);
-  const fixed a23 = sqr(s32) + cloc2Latitude * cloc3Latitude * sqr(sl32);
+  const fixed a12 = sqr(s21)
+    + SmallMult(cos_loc1_lat, cos_loc2_lat) * sqr(sl21);
+  const fixed a23 = sqr(s32)
+    + SmallMult(cos_loc2_lat, cos_loc3_lat) * sqr(sl32);
 
 #ifdef INSTRUMENT_TASK
   count_distbearing++;
 #endif
 
-  return fixed_double_earth_r * 
-    (earth_distance_function(a12) + earth_distance_function(a23));
+  return (2 * REARTH) *
+    (EarthDistance(a12) + EarthDistance(a23)).Radians();
 }
 
 GeoPoint
-FindLatitudeLongitude(const GeoPoint loc, const Angle bearing,
+FindLatitudeLongitude(const GeoPoint &loc, const Angle bearing,
                       fixed distance)
 {
   assert(!negative(distance));
@@ -291,9 +318,10 @@ FindLatitudeLongitude(const GeoPoint loc, const Angle bearing,
     return loc;
 
   GeoPoint loc_out;
-  distance *= fixed_inv_earth_r;
 
-  const auto scd = sin_cos(distance);
+  const Angle distance_angle = EarthDistanceToAngle(distance);
+
+  const auto scd = distance_angle.SinCos();
   const fixed sin_distance = scd.first, cos_distance = scd.second;
 
   const auto scb = bearing.SinCos();
@@ -302,19 +330,15 @@ FindLatitudeLongitude(const GeoPoint loc, const Angle bearing,
   const auto scl = loc.latitude.SinCos();
   const fixed sin_latitude = scl.first, cos_latitude = scl.second;
 
-  loc_out.latitude = Angle::Radians(earth_asin(
-      sin_latitude * cos_distance + cos_latitude * sin_distance * cos_bearing));
+  loc_out.latitude = EarthASin(SmallMult(sin_latitude, cos_distance)
+                               + SmallMult(cos_latitude, sin_distance,
+                                           cos_bearing));
 
-  fixed result = loc.longitude.Radians();
-  if (cos_latitude != fixed_zero) {
-    fixed s = sin_bearing * sin_distance / cos_latitude;
-    assert(s >= fixed_minus_one);
-    assert(s <= fixed_one);
+  loc_out.longitude = loc.longitude +
+    Angle::FromXY(cos_distance - SmallMult(sin_latitude,
+                                           loc_out.latitude.sin()),
+                  SmallMult(sin_bearing, sin_distance, cos_latitude));
 
-    result += earth_asin(s);
-  }
-
-  loc_out.longitude = Angle::Radians(result);
   loc_out.Normalize(); // ensure longitude is within -180:180
 
 #ifdef INSTRUMENT_TASK
@@ -325,17 +349,17 @@ FindLatitudeLongitude(const GeoPoint loc, const Angle bearing,
 }
 
 fixed
-Distance(const GeoPoint loc1, const GeoPoint loc2)
+Distance(const GeoPoint &loc1, const GeoPoint &loc2)
 {
   fixed distance;
-  DistanceBearing(loc1, loc2, &distance, NULL);
+  DistanceBearing(loc1, loc2, &distance, nullptr);
   return distance;
 }
 
 Angle
-Bearing(const GeoPoint loc1, const GeoPoint loc2)
+Bearing(const GeoPoint &loc1, const GeoPoint &loc2)
 {
   Angle bearing;
-  DistanceBearing(loc1, loc2, NULL, &bearing);
+  DistanceBearing(loc1, loc2, nullptr, &bearing);
   return bearing;
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,11 +25,14 @@ Copyright_License {
 #include "MapItemListSettingsPanel.hpp"
 #include "WidgetDialog.hpp"
 #include "Language/Language.hpp"
+#include "UIGlobals.hpp"
 
 void
 ShowMapItemListSettingsDialog()
 {
-  WidgetDialog dialog(_("Map Item List Settings"), new MapItemListSettingsPanel());
+  WidgetDialog dialog(UIGlobals::GetDialogLook());
+  dialog.CreateAuto(UIGlobals::GetMainWindow(), _("Map Item List Settings"),
+                    new MapItemListSettingsPanel());
   dialog.AddButton(_("OK"), mrOK);
   dialog.AddButton(_("Cancel"), mrCancel);
   dialog.ShowModal();

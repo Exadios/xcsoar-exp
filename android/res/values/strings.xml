@@ -3,6 +3,4 @@
   <string name="app_name">XCSoar</string>
   <string name="app_name_exp">XC-Exp</string>
   <string name="app_name_testing">XCS-test</string>
-  <string name="app_name_nohorizon">XCS-No Horizon</string>
-  <string name="app_name_restricted">XCS-restricted</string>
 </resources>

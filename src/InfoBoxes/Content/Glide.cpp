@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,9 +31,9 @@ Copyright_License {
 #include <stdio.h>
 
 void
-InfoBoxContentGRInstant::Update(InfoBoxData &data)
+UpdateInfoBoxGRInstant(InfoBoxData &data)
 {
-  const fixed gr = XCSoarInterface::Calculated().gr;
+  const fixed gr = CommonInterface::Calculated().gr;
 
   if (!::GradientValid(gr)) {
     data.SetInvalid();
@@ -45,9 +45,9 @@ InfoBoxContentGRInstant::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentGRCruise::Update(InfoBoxData &data)
+UpdateInfoBoxGRCruise(InfoBoxData &data)
 {
-  const fixed cruise_gr = XCSoarInterface::Calculated().cruise_gr;
+  const fixed cruise_gr = CommonInterface::Calculated().cruise_gr;
 
   if (!::GradientValid(cruise_gr)) {
     data.SetInvalid();
@@ -59,17 +59,17 @@ InfoBoxContentGRCruise::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentGRAvg::Update(InfoBoxData &data)
+UpdateInfoBoxGRAvg(InfoBoxData &data)
 {
-  const fixed average_gr = XCSoarInterface::Calculated().average_gr;
+  const fixed average_gr = CommonInterface::Calculated().average_gr;
 
-  if (average_gr == fixed_zero) {
+  if (average_gr == fixed(0)) {
     data.SetInvalid();
     return;
   }
 
   // Set Value
-  if (average_gr < fixed_zero)
+  if (average_gr < fixed(0))
     data.SetValue(_T("^^^"));
   else if (!::GradientValid(average_gr))
     data.SetValue(_T("+++"));
@@ -78,13 +78,13 @@ InfoBoxContentGRAvg::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentLDVario::Update(InfoBoxData &data)
+UpdateInfoBoxLDVario(InfoBoxData &data)
 {
-  const fixed ld_vario = XCSoarInterface::Calculated().ld_vario;
+  const fixed ld_vario = CommonInterface::Calculated().ld_vario;
 
   if (!::GradientValid(ld_vario) ||
-      !XCSoarInterface::Basic().total_energy_vario_available ||
-      !XCSoarInterface::Basic().airspeed_available) {
+      !CommonInterface::Basic().total_energy_vario_available ||
+      !CommonInterface::Basic().airspeed_available) {
     data.SetInvalid();
     return;
   }

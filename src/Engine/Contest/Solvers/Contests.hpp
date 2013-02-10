@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,21 +25,13 @@ Copyright_License {
 #define OLC_RULES_HPP
 
 #include "Compiler.h"
-#include "tchar.h"
 
-enum Contests {
-  OLC_Sprint = 0,
-  OLC_FAI,
-  OLC_Classic,
-  OLC_League,
-  OLC_Plus,
-  OLC_XContest,
-  OLC_DHVXC,
-  OLC_SISAT,
-  OLC_NetCoupe,
-};
+#include <stdint.h>
+#include <tchar.h>
+
+enum class Contest : uint8_t;
 
 gcc_const
-const TCHAR* ContestToString(Contests contest);
+const TCHAR* ContestToString(Contest contest);
 
 #endif

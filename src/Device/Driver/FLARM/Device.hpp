@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -101,12 +101,12 @@ protected:
   bool ParsePFLAC(NMEAInputLine &line);
 
 public:
-  void LinkTimeout();
-  bool EnableNMEA(OperationEnvironment &env);
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  void LinkTimeout() override;
+  bool EnableNMEA(OperationEnvironment &env) override;
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 
   bool Declare(const Declaration &declaration, const Waypoint *home,
-               OperationEnvironment &env);
+               OperationEnvironment &env) override;
 
   bool GetPilot(TCHAR *buffer, size_t length, OperationEnvironment &env);
   bool SetPilot(const TCHAR *pilot_name, OperationEnvironment &env);
@@ -298,7 +298,7 @@ public:
    * @return True if received and parsed successfully, otherwise False
    */
   bool ReadFlightList(RecordedFlightList &flight_list,
-                      OperationEnvironment &env);
+                      OperationEnvironment &env) override;
 
   /**
    * Downloads a flight from the Flarm into an IGC file
@@ -307,7 +307,7 @@ public:
    * @return True if received and written successfully, otherwise False
    */
   bool DownloadFlight(const RecordedFlightInfo &flight, const TCHAR *path,
-                      OperationEnvironment &env);
+                      OperationEnvironment &env) override;
 };
 
 #endif

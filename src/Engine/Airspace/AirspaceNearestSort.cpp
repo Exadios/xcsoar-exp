@@ -1,6 +1,5 @@
 #include "AirspaceNearestSort.hpp"
 #include "Airspaces.hpp"
-#include "AirspaceVisitor.hpp"
 #include "AbstractAirspace.hpp"
 
 void 
@@ -19,8 +18,8 @@ AirspaceNearestSort::populate_queue(const Airspaces &airspaces,
         solve_intercept(*as, airspaces.GetProjection());
       const fixed value = metric(ais);
       if (!negative(value)) {
-        m_q.push(std::make_pair(m_reverse? -value:value,
-                                std::make_pair(ais, airspace)));
+        m_q.push(std::make_pair(value,
+                                std::make_pair(ais, as)));
       }
     }
   }
@@ -55,22 +54,8 @@ AirspaceNearestSort::find_nearest(const Airspaces &airspaces,
   populate_queue(airspaces, range);
 
   if (!m_q.empty()) {
-    return m_q.top().second.second.GetAirspace();
+    return m_q.top().second.second;
   } else {
     return NULL;
   }
-}
-
-
-void
-AirspaceNearestSort::visit_sorted(const Airspaces &airspaces,
-                                  AirspaceVisitor &visitor,
-                                  const fixed range) 
-{
-  populate_queue(airspaces, range);
-
-  while (!m_q.empty()) {
-    visitor.Visit(*m_q.top().second.second.GetAirspace());
-    m_q.pop();
-  } 
 }

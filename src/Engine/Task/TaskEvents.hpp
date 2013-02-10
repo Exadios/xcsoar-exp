@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -49,11 +49,6 @@ public:
   virtual void ExitTransition(const TaskWaypoint &tp) {}
 
   /**
-   * Called when the aircraft alternate changes
-   */
-  virtual void AlternateTransition() {}
-
-  /**
    * Called when auto-advance has changed the active
    * task point in an ordered task
    *
@@ -61,23 +56,6 @@ public:
    * @param i The task sequence number after auto-advance
    */
   virtual void ActiveAdvanced(const TaskWaypoint &tp, const int i) {}
-
-  /**
-   * Called when a taskpoint was altered internally.
-   * This can happen when an AbortTask determines a better task
-   * point is available, or (not yet impelemented) the glider
-   * enters a different start point for multiple start points.
-   *
-   * @param tp The new active taskpoint
-   */
-  virtual void ActiveChanged(const TaskWaypoint &tp) {}
-
-  /**
-   * Called when aircraft speed is higher than set limit
-   * according to task rules
-   *
-   */
-  virtual void StartSpeedWarning() {}
   
   /**
    * Called when a task is invalid due to improper construction
@@ -104,11 +82,6 @@ public:
    * Called when orderd task has finished
    */
   virtual void TaskFinish() {}
-
-  /**
-   * Called when flight mode changes
-   */
-  virtual void FlightModeTransition(const bool is_final) {}
 };
 
 #endif

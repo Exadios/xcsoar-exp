@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,21 +29,18 @@ Copyright_License {
 #include "Device/Driver/EWMicroRecorder.hpp"
 #include "Device/Driver.hpp"
 #include "Device/Port/Port.hpp"
+#include "Device/Declaration.hpp"
 #include "NMEA/Info.hpp"
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Checksum.hpp"
 #include "Waypoint/Waypoint.hpp"
 #include "Units/System.hpp"
-#include "TimeoutClock.hpp"
+#include "Time/TimeoutClock.hpp"
 #include "Operation/Operation.hpp"
-#include "Util/StringUtil.hpp"
+#include "Util/StaticString.hpp"
 
 #include <assert.h>
 #include <stdio.h>
-
-#ifdef _UNICODE
-#include <windows.h>
-#endif
 
 // Additional sentance for EW support
 
@@ -56,9 +53,9 @@ public:
     :port(_port) {}
 
 public:
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
   virtual bool Declare(const Declaration &declaration, const Waypoint *home,
-                       OperationEnvironment &env);
+                       OperationEnvironment &env) override;
 };
 
 static bool
@@ -201,17 +198,10 @@ static bool
 WriteCleanString(Port &port, const TCHAR *p,
                  OperationEnvironment &env, unsigned timeout_ms)
 {
-  char buffer[256];
+  NarrowString<256> buffer;
+  buffer.SetASCII(p);
 
-#ifdef _UNICODE
-  if (::WideCharToMultiByte(CP_ACP, 0, p, -1, buffer, sizeof(buffer),
-                            NULL, NULL) <= 0)
-    return false;
-#else
-  CopyString(buffer, p, sizeof(buffer));
-#endif
-
-  CleanString(buffer);
+  CleanString(buffer.buffer());
 
   return port.FullWriteString(buffer, env, timeout_ms);
 }
@@ -378,7 +368,7 @@ EWMicroRecorderCreateOnPort(const DeviceConfig &config, Port &com_port)
   return new EWMicroRecorderDevice(com_port);
 }
 
-const struct DeviceRegister ewMicroRecorderDevice = {
+const struct DeviceRegister ew_microrecorder_driver = {
   _T("EW MicroRecorder"),
   _T("EW microRecorder"),
   DeviceRegister::DECLARE,

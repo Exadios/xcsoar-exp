@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -154,7 +154,7 @@ void VegaVoiceMessage::Initialise(int the_id) {
   last_messageText[0]=0;
   id_active = -1;
 
-  lastTime = fixed_zero;
+  lastTime = fixed(0);
   id = the_id;
   active = false;
   alarmlevel = 0;

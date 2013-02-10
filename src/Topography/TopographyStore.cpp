@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ TopographyStore::Load(OperationEnvironment &operation, NLineReader &reader,
   char *shape_filename_end = shape_filename + strlen(shape_filename);
 
   // Read file size to have a rough progress estimate for the progress bar
-  long filesize = std::max(reader.size(), 1l);
+  const long filesize = std::max(reader.GetSize(), 1l);
 
   // Set progress bar to 100 steps
   operation.SetProgressRange(100);
@@ -103,7 +103,7 @@ TopographyStore::Load(OperationEnvironment &operation, NLineReader &reader,
   // Iterate through shape files in the "topology.tpl" file until
   // end or max. file number reached
   char *line;
-  while (!files.full() && (line = reader.read()) != NULL) {
+  while (!files.full() && (line = reader.ReadLine()) != NULL) {
     // Line format: filename,range,icon,field,r,g,b,pen_width,label_range,important_range
 
     // Ignore comments (lines starting with *) and empty lines
@@ -178,7 +178,7 @@ TopographyStore::Load(OperationEnvironment &operation, NLineReader &reader,
       label_range = fixed(strtod(p + 1, &p)) * 1000;
 
     // Parse range for displaying labels with "important" rendering style
-    fixed labelImportantRange = fixed_zero;
+    fixed labelImportantRange = fixed(0);
     if (*p == _T(','))
       labelImportantRange = fixed(strtod(p + 1, &p)) * 1000;
 
@@ -197,7 +197,7 @@ TopographyStore::Load(OperationEnvironment &operation, NLineReader &reader,
       files.append(file);
 
     // Update progress bar
-    operation.SetProgressPosition((reader.tell() * 100) / filesize);
+    operation.SetProgressPosition((reader.Tell() * 100) / filesize);
   }
 }
 

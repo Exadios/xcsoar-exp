@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "AbstractReplay.hpp"
 #include "Replay/DemoReplay.hpp"
-#include "PeriodClock.hpp"
+#include "Time/PeriodClock.hpp"
 
 class ProtectedTaskManager;
 
@@ -39,7 +39,7 @@ class DemoReplayGlue
 public:
   DemoReplayGlue(ProtectedTaskManager &_task_manager);
 
-  virtual bool Update(NMEAInfo &data, fixed time_scale) gcc_override;
+  virtual bool Update(NMEAInfo &data, fixed time_scale) override;
 
 protected:
   bool UpdateTime();

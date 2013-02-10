@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,19 +26,23 @@ Copyright_License {
 
 #include "IO/DataHandler.hpp"
 #include "Port/LineSplitter.hpp"
+#include "Port/State.hpp"
 #include "Device/Parser.hpp"
 #include "Profile/DeviceConfig.hpp"
 #include "RadioFrequency.hpp"
 #include "NMEA/ExternalSettings.hpp"
-#include "PeriodClock.hpp"
+#include "Time/PeriodClock.hpp"
 #include "Job/Async.hpp"
-#include "Thread/Notify.hpp"
+#include "Event/Notify.hpp"
+#include "Thread/Mutex.hpp"
+#include "Thread/Debug.hpp"
 
 #include <assert.h>
 #include <tchar.h>
 #include <stdio.h>
 
 struct NMEAInfo;
+struct MoreData;
 struct DerivedInfo;
 struct Declaration;
 struct Waypoint;
@@ -47,12 +51,23 @@ class Device;
 class AtmosphericPressure;
 struct DeviceRegister;
 class InternalSensors;
+class BMP085Device;
+class I2CbaroDevice;
+class NunchuckDevice;
+class VoltageDevice;
 class RecordedFlightList;
 struct RecordedFlightInfo;
 class OperationEnvironment;
 class OpenDeviceJob;
 
-class DeviceDescriptor : private Notify, private PortLineSplitter {
+class DeviceDescriptor final : private Notify, private PortLineSplitter {
+  /**
+   * This mutex protects modifications of the attribute "device".  If
+   * you use the attribute "device" from a thread other than the main
+   * thread, you must hold this mutex.
+   */
+  Mutex mutex;
+
   /** the index of this device in the global list */
   const unsigned index;
 
@@ -100,6 +115,12 @@ class DeviceDescriptor : private Notify, private PortLineSplitter {
 
   /**
    * An instance of the driver.
+   *
+   * Modifications (from the main thread) must be protected by the
+   * attribute "mutex".  Read access and any use of this object
+   * outside of the main thread must also be protected, unless the
+   * device was borrowed with the method Borrow().  The latter,
+   * however, is only possible from the main thread.
    */
   Device *device;
 
@@ -109,6 +130,13 @@ class DeviceDescriptor : private Notify, private PortLineSplitter {
    * baro sensor and others).
    */
   InternalSensors *internal_sensors;
+
+#ifdef IOIOLIB
+  BMP085Device *droidsoar_v2;
+  I2CbaroDevice *i2cbaro[3]; // static, pitot, tek; in any order
+  NunchuckDevice *nunchuck;
+  VoltageDevice *voltage;
+#endif
 #endif
 
   /**
@@ -184,13 +212,8 @@ public:
     return config.port_type != DeviceConfig::PortType::DISABLED;
   }
 
-  bool IsOpen() const {
-    return port != NULL
-#ifdef ANDROID
-      || internal_sensors != NULL;
-#endif
-    ;
-  }
+  gcc_pure
+  PortState GetState() const;
 
   /**
    * Was there a failure on the #Port object?
@@ -245,6 +268,13 @@ private:
 
   bool OpenInternalSensors();
 
+  bool OpenDroidSoarV2();
+
+  bool OpenI2Cbaro();
+
+  bool OpenNunchuck();
+
+  bool OpenVoltage();
 public:
   /**
    * To be used by OpenDeviceJob, don't call directly.
@@ -316,6 +346,8 @@ public:
    * May only be called from the main thread.
    */
   bool IsOccupied() const {
+    assert(InMainThread());
+
     return IsBorrowed() || async.IsBusy();
   }
 
@@ -327,7 +359,9 @@ public:
    * @see Borrow()
    */
   bool CanBorrow() const {
-    return device != NULL && port != NULL && !IsOccupied();
+    assert(InMainThread());
+
+    return device != NULL && GetState() == PortState::READY && !IsOccupied();
   }
 
   /**
@@ -382,7 +416,7 @@ public:
   bool PutBugs(fixed bugs, OperationEnvironment &env);
   bool PutBallast(fixed fraction, fixed overload,
                   OperationEnvironment &env);
-  bool PutVolume(int volume, OperationEnvironment &env);
+  bool PutVolume(unsigned volume, OperationEnvironment &env);
   bool PutActiveFrequency(RadioFrequency frequency,
                           OperationEnvironment &env);
   bool PutStandbyFrequency(RadioFrequency frequency,
@@ -407,19 +441,30 @@ public:
   bool DownloadFlight(const RecordedFlightInfo &flight, const TCHAR *path,
                       OperationEnvironment &env);
 
-  void OnSysTicker(const DerivedInfo &calculated);
+  void OnSysTicker();
+
+  /**
+   * Wrapper for Driver::OnSensorUpdate().
+   */
+  void OnSensorUpdate(const MoreData &basic);
+
+  /**
+   * Wrapper for Driver::OnCalculatedUpdate().
+   */
+  void OnCalculatedUpdate(const MoreData &basic,
+                          const DerivedInfo &calculated);
 
 private:
   bool ParseLine(const char *line);
 
   /* virtual methods from class Notify */
-  virtual void OnNotification() gcc_override;
+  virtual void OnNotification() override;
 
   /* virtual methods from DataHandler  */
-  virtual void DataReceived(const void *data, size_t length) gcc_override;
+  virtual void DataReceived(const void *data, size_t length) override;
 
   /* virtual methods from PortLineHandler */
-  virtual void LineReceived(const char *line) gcc_override;
+  virtual void LineReceived(const char *line) override;
 };
 
 #endif

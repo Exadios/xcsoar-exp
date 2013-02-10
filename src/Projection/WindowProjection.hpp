@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,6 +28,8 @@ Copyright_License {
 #include "Projection.hpp"
 #include "Geo/GeoBounds.hpp"
 #include "Util/DebugFlag.hpp"
+
+#include <algorithm>
 
 #include <assert.h>
 
@@ -72,19 +74,17 @@ public:
   gcc_pure
   bool ScreenVisible(const RasterPoint &P) const;
 
-  void SetScreenSize(unsigned width, unsigned height) {
-#ifndef NDEBUG
-    assert(width > 0);
-    assert(height > 0);
-#endif
+  void SetScreenSize(PixelSize new_size) {
+    assert(new_size.cx > 0);
+    assert(new_size.cy > 0);
 
-    screen_width = width;
-    screen_height = height;
+    screen_width = new_size.cx;
+    screen_height = new_size.cy;
     screen_size_initialised = true;
   }
 
   void SetMapRect(const PixelRect &rc) {
-    SetScreenSize(rc.right - rc.left, rc.bottom - rc.top);
+    SetScreenSize(rc.GetSize());
   }
 
   gcc_pure

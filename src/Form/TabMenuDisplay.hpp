@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -79,20 +79,22 @@ protected:
    */
   const PixelRect& GetDownButtonRC() const;
 
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  virtual bool OnKeyCheck(unsigned key_code) const;
-  virtual bool OnKeyDown(unsigned key_code);
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y,
+                           unsigned keys) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnKeyCheck(unsigned key_code) const override;
+  virtual bool OnKeyDown(unsigned key_code) override;
+
   /**
    * canvas is the tabmenu which is the full content window, no content
    * @param canvas
    * Todo: support icons and "ButtonOnly" style
    */
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnPaint(Canvas &canvas) override;
 
-  virtual void OnKillFocus();
-  virtual void OnSetFocus();
+  virtual void OnKillFocus() override;
+  virtual void OnSetFocus() override;
 
   /**
    * draw border around main menu

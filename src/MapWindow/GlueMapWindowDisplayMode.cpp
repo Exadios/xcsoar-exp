@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 #include "Interface.hpp"
 #include "Profile/Profile.hpp"
 #include "Screen/Layout.hpp"
+#include "Util/Clamp.hpp"
 
 void
 OffsetHistory::Reset()
@@ -182,19 +183,24 @@ GlueMapWindow::UpdateScreenAngle()
     ? settings.circling_orientation
     : settings.cruise_orientation;
 
-  if (orientation == TARGETUP &&
+  if (orientation == DisplayOrientation::TARGET_UP &&
       calculated.task_stats.current_leg.vector_remaining.IsValid())
     visible_projection.SetScreenAngle(calculated.task_stats.current_leg.
                                       vector_remaining.bearing);
-  else if (orientation == HEADINGUP)
-    visible_projection.SetScreenAngle(calculated.heading);
-  else if (orientation == NORTHUP || !basic.track_available)
+  else if (orientation == DisplayOrientation::HEADING_UP)
+    visible_projection.SetScreenAngle(basic.attitude.heading);
+  else if (orientation == DisplayOrientation::NORTH_UP ||
+           !basic.track_available)
     visible_projection.SetScreenAngle(Angle::Zero());
+  else if (orientation == DisplayOrientation::WIND_UP &&
+           calculated.wind_available &&
+           calculated.wind.norm >= fixed(0.5))
+    visible_projection.SetScreenAngle(calculated.wind.bearing);
   else
     // normal, glider forward
     visible_projection.SetScreenAngle(basic.track);
 
-  compass_visible = orientation != NORTHUP;
+  compass_visible = orientation != DisplayOrientation::NORTH_UP;
 }
 
 void
@@ -229,8 +235,8 @@ GlueMapWindow::UpdateMapScale()
     distance /= fixed(auto_zoom_factor) / 100;
 
     // Clip map auto zoom range to reasonable values
-    distance = max(fixed_int_constant(525),
-                   min(settings.max_auto_zoom_distance / 10, distance));
+    distance = Clamp(distance, fixed(525),
+                     settings.max_auto_zoom_distance / 10);
 
     visible_projection.SetFreeMapScale(distance);
   }
@@ -243,7 +249,7 @@ GlueMapWindow::SetLocationLazy(const GeoPoint location)
     visible_projection.GetGeoLocation().Distance(location);
   const fixed distance_pixels =
     visible_projection.DistanceMetersToPixels(distance_meters);
-  if (distance_pixels > fixed_half)
+  if (distance_pixels > fixed(0.5))
     SetLocation(location);
 }
 
@@ -266,25 +272,30 @@ GlueMapWindow::UpdateProjection()
 
   if (circling || !IsNearSelf())
     visible_projection.SetScreenOrigin(center.x, center.y);
-  else if (settings_map.cruise_orientation == NORTHUP) {
+  else if (settings_map.cruise_orientation == DisplayOrientation::NORTH_UP ||
+           settings_map.cruise_orientation == DisplayOrientation::WIND_UP) {
     RasterPoint offset{0, 0};
     if (settings_map.glider_screen_position != 50 &&
-        settings_map.map_shift_bias != MAP_SHIFT_BIAS_NONE) {
-      fixed x = fixed_zero;
-      fixed y = fixed_zero;
-      if (settings_map.map_shift_bias == MAP_SHIFT_BIAS_TRACK) {
+        settings_map.map_shift_bias != MapShiftBias::NONE) {
+      fixed x = fixed(0);
+      fixed y = fixed(0);
+      if (settings_map.map_shift_bias == MapShiftBias::TRACK) {
         if (basic.track_available &&
             basic.ground_speed_available &&
              /* 8 m/s ~ 30 km/h */
-            basic.ground_speed > fixed_int_constant(8)) {
-          const auto sc = basic.track.Reciprocal().SinCos();
+            basic.ground_speed > fixed(8)) {
+          auto angle = basic.track.Reciprocal() - visible_projection.GetScreenAngle();
+
+          const auto sc = angle.SinCos();
           x = sc.first;
           y = sc.second;
         }
-      } else if (settings_map.map_shift_bias == MAP_SHIFT_BIAS_TARGET) {
+      } else if (settings_map.map_shift_bias == MapShiftBias::TARGET) {
         if (calculated.task_stats.current_leg.solution_remaining.IsDefined()) {
-          const auto sc =calculated.task_stats.current_leg.solution_remaining
-            .vector.bearing.Reciprocal().SinCos();
+          auto angle = calculated.task_stats.current_leg.solution_remaining
+              .vector.bearing.Reciprocal() - visible_projection.GetScreenAngle();
+
+          const auto sc = angle.SinCos();
           x = sc.first;
           y = sc.second;
         }

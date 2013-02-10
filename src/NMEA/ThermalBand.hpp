@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,14 +25,15 @@ Copyright_License {
 #define XCSOAR_NMEA_THERMAL_BAND_H
 
 #include "Math/fixed.hpp"
-#include "Util/TypeTraits.hpp"
+
+#include <type_traits>
 
 /**
  * Derived thermal climb rate histogram by altitude (time averaged)
  */
 struct ThermalBandInfo
 {
-  static const unsigned NUMTHERMALBUCKETS = 10;
+  static constexpr unsigned NUMTHERMALBUCKETS = 10;
 
   /** Height above working band/safety (m) */
   fixed working_band_height;
@@ -68,6 +69,6 @@ private:
   void Expand(const fixed height);
 };
 
-static_assert(is_trivial<ThermalBandInfo>::value, "type is not trivial");
+static_assert(std::is_trivial<ThermalBandInfo>::value, "type is not trivial");
 
 #endif

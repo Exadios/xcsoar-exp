@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ Copyright_License {
 */
 
 #include "InfoBoxes/Content/Trace.hpp"
-#include "InfoBoxes/InfoBoxWindow.hpp"
+#include "InfoBoxes/Data.hpp"
 #include "Renderer/BarographRenderer.hpp"
 #include "Renderer/TraceHistoryRenderer.hpp"
 #include "Renderer/ThermalBandRenderer.hpp"
@@ -41,10 +41,10 @@ Copyright_License {
 #include "Dialogs/dlgAnalysis.hpp"
 #include "Util/Macros.hpp"
 
+gcc_const
 static PixelRect
-get_spark_rect(const InfoBoxWindow &infobox)
+GetSparkRect(PixelRect rc)
 {
-  PixelRect rc = infobox.GetValueRect();
   rc.top += Layout::FastScale(2);
   rc.right -= Layout::FastScale(2);
   rc.left += Layout::FastScale(2);
@@ -52,41 +52,43 @@ get_spark_rect(const InfoBoxWindow &infobox)
 }
 
 void
-InfoBoxContentSpark::do_paint(InfoBoxWindow &infobox, Canvas &canvas,
-                              const TraceVariableHistory& var,
-                              const bool center)
+InfoBoxContentSpark::Paint(Canvas &canvas, const PixelRect &rc,
+                           const TraceVariableHistory &var, const bool center)
 {
   if (var.empty())
     return;
 
   const Look &look = UIGlobals::GetLook();
   TraceHistoryRenderer renderer(look.trace_history, look.vario, look.chart);
-  renderer.RenderVario(canvas, get_spark_rect(infobox), var, center,
+  renderer.RenderVario(canvas, GetSparkRect(rc), var, center,
                        CommonInterface::GetComputerSettings().polar.glide_polar_task.GetMC());
 }
 
 void
-InfoBoxContentVarioSpark::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+InfoBoxContentVarioSpark::OnCustomPaint(Canvas &canvas, const PixelRect &rc)
 {
-  do_paint(infobox, canvas, CommonInterface::Calculated().trace_history.BruttoVario);
+  Paint(canvas, rc, CommonInterface::Calculated().trace_history.BruttoVario);
 }
 
 void
-InfoBoxContentNettoVarioSpark::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+InfoBoxContentNettoVarioSpark::OnCustomPaint(Canvas &canvas,
+                                             const PixelRect &rc)
 {
-  do_paint(infobox, canvas, CommonInterface::Calculated().trace_history.NettoVario);
+  Paint(canvas, rc, CommonInterface::Calculated().trace_history.NettoVario);
 }
 
 void
-InfoBoxContentCirclingAverageSpark::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+InfoBoxContentCirclingAverageSpark::OnCustomPaint(Canvas &canvas,
+                                                  const PixelRect &rc)
 {
-  do_paint(infobox, canvas, CommonInterface::Calculated().trace_history.CirclingAverage,
+  Paint(canvas, rc,
+        CommonInterface::Calculated().trace_history.CirclingAverage,
     false);
 }
 
 void
-InfoBoxContentSpark::label_vspeed(InfoBoxData &data,
-                                  const TraceVariableHistory& var)
+InfoBoxContentSpark::SetVSpeedComment(InfoBoxData &data,
+                                      const TraceVariableHistory &var)
 {
   if (var.empty())
     return;
@@ -102,21 +104,20 @@ InfoBoxContentSpark::label_vspeed(InfoBoxData &data,
 void
 InfoBoxContentVarioSpark::Update(InfoBoxData &data)
 {
-  label_vspeed(data, CommonInterface::Calculated().trace_history.BruttoVario);
+  SetVSpeedComment(data, CommonInterface::Calculated().trace_history.BruttoVario);
 }
 
 void
 InfoBoxContentNettoVarioSpark::Update(InfoBoxData &data)
 {
-  label_vspeed(data, CommonInterface::Calculated().trace_history.NettoVario);
+  SetVSpeedComment(data, CommonInterface::Calculated().trace_history.NettoVario);
 }
 
 void
 InfoBoxContentCirclingAverageSpark::Update(InfoBoxData &data)
 {
-  label_vspeed(data, CommonInterface::Calculated().trace_history.CirclingAverage);
+  SetVSpeedComment(data, CommonInterface::Calculated().trace_history.CirclingAverage);
 }
-
 
 void
 InfoBoxContentBarogram::Update(InfoBoxData &data)
@@ -135,15 +136,15 @@ InfoBoxContentBarogram::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentBarogram::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+InfoBoxContentBarogram::OnCustomPaint(Canvas &canvas, const PixelRect &rc)
 {
   const Look &look = UIGlobals::GetLook();
-  RenderBarographSpark(canvas, get_spark_rect(infobox),
+  RenderBarographSpark(canvas, GetSparkRect(rc),
                        look.chart, look.cross_section,
-                       infobox.GetLook().inverse,
+                       look.info_box.inverse,
                        glide_computer->GetFlightStats(),
-                       XCSoarInterface::Basic(),
-                       XCSoarInterface::Calculated(), protected_task_manager);
+                       CommonInterface::Basic(),
+                       CommonInterface::Calculated(), protected_task_manager);
 }
 
 bool
@@ -168,18 +169,16 @@ InfoBoxContentBarogram::HandleKey(const InfoBoxKeyCodes keycode)
   return false;
 }
 
-
 void
-InfoBoxContentThermalBand::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+InfoBoxContentThermalBand::OnCustomPaint(Canvas &canvas, const PixelRect &rc)
 {
   const Look &look = UIGlobals::GetLook();
   ThermalBandRenderer renderer(look.thermal_band, look.chart);
   renderer.DrawThermalBandSpark(CommonInterface::Basic(),
                                 CommonInterface::Calculated(),
                                 CommonInterface::GetComputerSettings(),
-                                canvas,
-                                infobox.GetValueAndCommentRect(),
-                                XCSoarInterface::GetComputerSettings().task);
+                                canvas, rc,
+                                CommonInterface::GetComputerSettings().task);
 }
 
 void
@@ -188,16 +187,15 @@ InfoBoxContentThermalBand::Update(InfoBoxData &data)
   data.SetCustom();
 }
 
-
 void
-InfoBoxContentTaskProgress::OnCustomPaint(InfoBoxWindow &infobox, Canvas &canvas)
+InfoBoxContentTaskProgress::OnCustomPaint(Canvas &canvas, const PixelRect &rc)
 {
   const Look &look = UIGlobals::GetLook();
   TaskProgressRenderer renderer(look.map.task);
   renderer.Draw(CommonInterface::Calculated().
                 common_stats.ordered_summary,
-                canvas, infobox.GetValueAndCommentRect(),
-                infobox.GetLook().inverse);
+                canvas, rc,
+                look.info_box.inverse);
 }
 
 void

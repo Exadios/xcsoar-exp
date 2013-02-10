@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,57 +27,10 @@ Copyright_License {
 #include <windowsx.h>
 
 void
-EditWindow::set(ContainerWindow &parent,
-                PixelScalar left, PixelScalar top,
-                UPixelScalar width, UPixelScalar height,
-                const EditWindowStyle style) {
-  Window::set(&parent, WC_EDIT, NULL,
-              left, top, width, height, style);
-}
+EditWindow::Create(ContainerWindow &parent, PixelRect rc,
+                   const EditWindowStyle style, size_t max_length) {
+  Window::Create(&parent, WC_EDIT, NULL, rc, style);
 
-void
-EditWindow::set(ContainerWindow &parent, const PixelRect rc,
-                const EditWindowStyle style)
-{
-  Window::set(&parent, WC_EDIT, NULL, rc, style);
-}
-
-void
-EditWindow::SetText(const TCHAR *text)
-{
-  AssertNoneLocked();
-
-  if (!IsMultiLine()) {
-    ::SetWindowText(hWnd, text);
-    return;
-  }
-
-  // Replace \n by \r\r\n to enable usage of line-breaks in edit control
-  unsigned size = _tcslen(text);
-  TCHAR buffer[size * sizeof(TCHAR) * 3];
-  const TCHAR* p2 = text;
-  TCHAR* p3 = buffer;
-  for (; *p2 != _T('\0'); p2++) {
-    if (*p2 == _T('\n')) {
-      *p3 = _T('\r');
-      p3++;
-      *p3 = _T('\r');
-      p3++;
-      *p3 = _T('\n');
-    } else if (*p2 == _T('\r')) {
-      continue;
-    } else {
-      *p3 = *p2;
-    }
-    p3++;
-  }
-  *p3 = _T('\0');
-
-  ::SetWindowText(hWnd, buffer);
-}
-
-void
-EditWindow::ScrollVertically(int delta_lines)
-{
-  Edit_Scroll(*this, delta_lines, 0);
+  if (max_length > 0)
+    ::SendMessage(hWnd, EM_LIMITTEXT, (WPARAM)(max_length - 1), (LPARAM)0);
 }

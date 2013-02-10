@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,46 +21,19 @@ Copyright_License {
 }
 */
 
-#include "Screen/SingleWindow.hpp"
-#include "Screen/ProgressWindow.hpp"
-#include "Screen/Layout.hpp"
-#include "Screen/Init.hpp"
-#include "ResourceLoader.hpp"
+#define ENABLE_SCREEN
+#define ENABLE_MAIN_WINDOW
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
+#include "Main.hpp"
+#include "ProgressWindow.hpp"
+
+static void
+Main()
 {
-  PixelRect screen_rc{0, 0, 640, 480};
-
-  ScreenGlobalInit screen_init;
-
-#ifdef WIN32
-  ResourceLoader::Init(hInstance);
-#endif
-
-  Layout::Initialize(screen_rc.right - screen_rc.left,
-                     screen_rc.bottom - screen_rc.top);
-
-  SingleWindow main_window;
-  main_window.set(_T("STATIC"), _T("RunProgressWindow"), screen_rc);
-  main_window.Show();
-
   ProgressWindow progress(main_window);
   progress.SetMessage(_T("Testing..."));
   progress.SetRange(0, 1024);
   progress.SetValue(768);
 
   main_window.RunEventLoop();
-
-  return 0;
 }

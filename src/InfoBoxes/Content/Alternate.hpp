@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@ class InfoBoxContentAlternateName : public InfoBoxContent
 public:
   InfoBoxContentAlternateName(const unsigned _index):
     InfoBoxContent(), index(_index) {}
-  virtual void Update(InfoBoxData &data);
-  virtual bool HandleKey(const InfoBoxKeyCodes keycode);
+  virtual void Update(InfoBoxData &data) override;
+  virtual bool HandleKey(const InfoBoxKeyCodes keycode) override;
 
 private:
   unsigned index;
@@ -43,8 +43,8 @@ class InfoBoxContentAlternateGR : public InfoBoxContent
 public:
   InfoBoxContentAlternateGR(const unsigned _index):
     InfoBoxContent(), index(_index) {}
-  virtual void Update(InfoBoxData &data);
-  virtual bool HandleKey(const InfoBoxKeyCodes keycode);
+  virtual void Update(InfoBoxData &data) override;
+  virtual bool HandleKey(const InfoBoxKeyCodes keycode) override;
 
 private:
   unsigned index;

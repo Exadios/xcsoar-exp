@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 #include "RoutePlanner.hpp"
 #include "Terrain/RasterMap.hpp"
 #include "Geo/Flat/TaskProjection.hpp"
-#include "Math/FastMath.h"
 
 RoutePlanner::RoutePlanner()
   :terrain(NULL), planner(0), reach_polar_mode(RoutePlannerConfig::Polar::TASK)
@@ -103,7 +102,7 @@ RoutePlanner::Solve(const AGeoPoint &origin, const AGeoPoint &destination,
     return false; // trivial
 
   search_hull.clear();
-  search_hull.push_back(SearchPoint(origin_last, task_projection));
+  search_hull.emplace_back(origin_last, task_projection);
 
   RoutePoint start = origin_last;
   astar_goal = destination_last;
@@ -189,11 +188,12 @@ RoutePlanner::Solve(const AGeoPoint &origin, const AGeoPoint &destination,
 }
 
 unsigned
-RoutePlanner::FindSolution(const RoutePoint &final, Route &this_route) const
+RoutePlanner::FindSolution(const RoutePoint &final_point,
+                           Route &this_route) const
 {
   // we are iterating from goal (aircraft) backwards to start (target)
 
-  RoutePoint p(final);
+  RoutePoint p(final_point);
   RoutePoint p_last(p);
   bool finished = false;
 
@@ -235,7 +235,7 @@ RoutePlanner::FindSolution(const RoutePoint &final, Route &this_route) const
     // @todo: assert check_clearance
   } while (!finished);
 
-  return planner.GetNodeValue(final).h;
+  return planner.GetNodeValue(final_point).h;
 }
 
 bool
@@ -390,7 +390,7 @@ RoutePlanner::UpdatePolar(const GlideSettings &settings,
 bool
 RoutePlanner::CheckClearanceTerrain(const RouteLink &e, RoutePoint& inp) const
 {
-  if (!terrain || !terrain->isMapLoaded())
+  if (!terrain || !terrain->IsDefined())
     return true;
 
   count_terrain++;
@@ -481,8 +481,7 @@ RoutePlanner::IsHullExtended(const RoutePoint &p)
   if (search_hull.IsInside(p))
     return false;
 
-  SearchPoint ps(p, task_projection);
-  search_hull.push_back(ps);
+  search_hull.emplace_back(p, task_projection);
   search_hull.PruneInterior();
   return true;
 }

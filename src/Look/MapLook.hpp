@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -87,7 +87,8 @@ struct MapLook {
   MaskedIcon cruise_mode_icon, climb_mode_icon, final_glide_mode_icon, abort_mode_icon;
   MaskedIcon waiting_for_fix_icon, no_gps_icon;
 
-  void Initialise(const MapSettings &settings);
+  void Initialise(const MapSettings &settings,
+                  const Font &font, const Font &bold_font);
 };
 
 #endif

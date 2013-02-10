@@ -5,7 +5,6 @@ SCREEN_SRC_DIR = $(SRC)/Screen
 SCREEN_SOURCES = \
 	$(SCREEN_SRC_DIR)/Debug.cpp \
 	$(SCREEN_SRC_DIR)/ProgressBar.cpp \
-	$(SCREEN_SRC_DIR)/RawBitmap.cpp \
 	$(SCREEN_SRC_DIR)/Util.cpp \
 	$(SCREEN_SRC_DIR)/Icon.cpp \
 	$(SCREEN_SRC_DIR)/Brush.cpp \
@@ -16,36 +15,50 @@ SCREEN_SOURCES = \
 	$(SCREEN_SRC_DIR)/Window.cpp \
 	$(SCREEN_SRC_DIR)/BufferWindow.cpp \
 	$(SCREEN_SRC_DIR)/DoubleBufferWindow.cpp \
-	$(SCREEN_SRC_DIR)/ContainerWindow.cpp \
-	$(SCREEN_SRC_DIR)/TextWindow.cpp \
 	$(SCREEN_SRC_DIR)/SingleWindow.cpp
 
-ifeq ($(ENABLE_SDL),y)
-SCREEN_SOURCES += \
-	$(SCREEN_SRC_DIR)/SDL/Window.cpp \
-	$(SCREEN_SRC_DIR)/SDL/ContainerWindow.cpp \
-	$(SCREEN_SRC_DIR)/SDL/ButtonWindow.cpp \
-	$(SCREEN_SRC_DIR)/SDL/CheckBox.cpp \
-	$(SCREEN_SRC_DIR)/SDL/EditWindow.cpp \
-	$(SCREEN_SRC_DIR)/SDL/TopCanvas.cpp \
-	$(SCREEN_SRC_DIR)/SDL/TopWindow.cpp \
-	$(SCREEN_SRC_DIR)/SDL/SingleWindow.cpp \
-	$(SCREEN_SRC_DIR)/SDL/Canvas.cpp
+SCREEN_CUSTOM_SOURCES = \
+	$(SCREEN_SRC_DIR)/Custom/Timer.cpp \
+	$(SCREEN_SRC_DIR)/Custom/TextWindow.cpp \
+	$(SCREEN_SRC_DIR)/Custom/LargeTextWindow.cpp \
+	$(SCREEN_SRC_DIR)/Custom/ButtonWindow.cpp \
+	$(SCREEN_SRC_DIR)/Custom/Window.cpp \
+	$(SCREEN_SRC_DIR)/Custom/WList.cpp \
+	$(SCREEN_SRC_DIR)/Custom/ContainerWindow.cpp \
+	$(SCREEN_SRC_DIR)/Custom/CheckBox.cpp \
+	$(SCREEN_SRC_DIR)/Custom/EditWindow.cpp \
+	$(SCREEN_SRC_DIR)/Custom/TopWindow.cpp \
+	$(SCREEN_SRC_DIR)/Custom/SingleWindow.cpp \
+	$(SCREEN_SRC_DIR)/Custom/Canvas.cpp
+
 ifeq ($(TARGET),ANDROID)
 SCREEN_SOURCES += \
+	$(SCREEN_CUSTOM_SOURCES) \
 	$(SCREEN_SRC_DIR)/OpenGL/EGL.cpp \
-	$(SCREEN_SRC_DIR)/Android/Timer.cpp \
+	$(SCREEN_SRC_DIR)/Android/Window.cpp \
 	$(SCREEN_SRC_DIR)/Android/TopWindow.cpp \
 	$(SCREEN_SRC_DIR)/Android/SingleWindow.cpp \
-	$(SCREEN_SRC_DIR)/Android/Font.cpp \
-	$(SCREEN_SRC_DIR)/Android/Event.cpp
-else
-SCREEN_SOURCES += \
-	$(SCREEN_SRC_DIR)/SDL/Init.cpp \
-	$(SCREEN_SRC_DIR)/SDL/Font.cpp \
-	$(SCREEN_SRC_DIR)/SDL/Event.cpp \
-	$(SCREEN_SRC_DIR)/SDL/Timer.cpp
+	$(SCREEN_SRC_DIR)/Android/TopCanvas.cpp \
+	$(SCREEN_SRC_DIR)/Android/Bitmap.cpp \
+	$(SCREEN_SRC_DIR)/Android/Font.cpp
 endif
+
+ifeq ($(FREETYPE),y)
+SCREEN_SOURCES += \
+	$(SCREEN_SRC_DIR)/FreeType/Font.cpp \
+	$(SCREEN_SRC_DIR)/FreeType/Init.cpp
+endif
+
+ifeq ($(LIBPNG),y)
+SCREEN_SOURCES += \
+	$(SCREEN_SRC_DIR)/OpenGL/LibPNG.cpp
+endif
+
+ifeq ($(LIBJPEG),y)
+SCREEN_SOURCES += \
+	$(SCREEN_SRC_DIR)/OpenGL/LibJPEG.cpp
+endif
+
 ifeq ($(OPENGL),y)
 SCREEN_SOURCES += \
 	$(SCREEN_SRC_DIR)/OpenGL/Init.cpp \
@@ -54,21 +67,50 @@ SCREEN_SOURCES += \
 	$(SCREEN_SRC_DIR)/OpenGL/FBO.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/VertexArray.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/Bitmap.cpp \
+	$(SCREEN_SRC_DIR)/OpenGL/RawBitmap.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/Cache.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/Canvas.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/BufferCanvas.cpp \
+	$(SCREEN_SRC_DIR)/OpenGL/TopCanvas.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/Texture.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/Buffer.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/Shapes.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/Surface.cpp \
 	$(SCREEN_SRC_DIR)/OpenGL/Triangulate.cpp
-else
+endif
+
+ifeq ($(ENABLE_SDL),y)
+SCREEN_SOURCES += $(SCREEN_CUSTOM_SOURCES)
 SCREEN_SOURCES += \
+	$(SCREEN_SRC_DIR)/Custom/Files.cpp \
+	$(SCREEN_SRC_DIR)/SDL/Window.cpp \
+	$(SCREEN_SRC_DIR)/SDL/TopWindow.cpp \
+	$(SCREEN_SRC_DIR)/SDL/SingleWindow.cpp \
+	$(SCREEN_SRC_DIR)/SDL/TopCanvas.cpp \
 	$(SCREEN_SRC_DIR)/SDL/Bitmap.cpp \
+	$(SCREEN_SRC_DIR)/SDL/Init.cpp
+ifeq ($(FREETYPE),n)
+SCREEN_SOURCES += \
+	$(SCREEN_SRC_DIR)/SDL/Font.cpp
+endif
+ifeq ($(OPENGL),n)
+SCREEN_SOURCES += \
+	$(SCREEN_SRC_DIR)/SDL/Canvas.cpp \
+	$(SCREEN_SRC_DIR)/SDL/Bitmap.cpp \
+	$(SCREEN_SRC_DIR)/SDL/RawBitmap.cpp \
 	$(SCREEN_SRC_DIR)/VirtualCanvas.cpp \
 	$(SCREEN_SRC_DIR)/WindowCanvas.cpp
 endif
-else
+else ifeq ($(EGL),y)
+SCREEN_SOURCES += \
+	$(SCREEN_CUSTOM_SOURCES) \
+	$(SCREEN_SRC_DIR)/Custom/Files.cpp \
+	$(SCREEN_SRC_DIR)/EGL/Init.cpp \
+	$(SCREEN_SRC_DIR)/EGL/TopCanvas.cpp \
+	$(SCREEN_SRC_DIR)/EGL/Window.cpp \
+	$(SCREEN_SRC_DIR)/EGL/TopWindow.cpp \
+	$(SCREEN_SRC_DIR)/EGL/SingleWindow.cpp
+else ifeq ($(HAVE_WIN32),y)
 SCREEN_SOURCES += \
 	$(SCREEN_SRC_DIR)/VirtualCanvas.cpp \
 	$(SCREEN_SRC_DIR)/WindowCanvas.cpp \
@@ -79,13 +121,14 @@ SCREEN_SOURCES += \
 	$(SCREEN_SRC_DIR)/GDI/Window.cpp \
 	$(SCREEN_SRC_DIR)/GDI/PaintWindow.cpp \
 	$(SCREEN_SRC_DIR)/GDI/ContainerWindow.cpp \
+	$(SCREEN_SRC_DIR)/GDI/TextWindow.cpp \
+	$(SCREEN_SRC_DIR)/GDI/LargeTextWindow.cpp \
 	$(SCREEN_SRC_DIR)/GDI/ButtonWindow.cpp \
 	$(SCREEN_SRC_DIR)/GDI/EditWindow.cpp \
 	$(SCREEN_SRC_DIR)/GDI/SingleWindow.cpp \
 	$(SCREEN_SRC_DIR)/GDI/TopWindow.cpp \
 	$(SCREEN_SRC_DIR)/GDI/Bitmap.cpp \
-	$(SCREEN_SRC_DIR)/GDI/Event.cpp \
-	$(SCREEN_SRC_DIR)/GDI/Transcode.cpp \
+	$(SCREEN_SRC_DIR)/GDI/RawBitmap.cpp \
 	$(SCREEN_SRC_DIR)/GDI/Canvas.cpp \
 	$(SCREEN_SRC_DIR)/GDI/BufferCanvas.cpp \
 	$(SCREEN_SRC_DIR)/GDI/PaintCanvas.cpp
@@ -102,21 +145,8 @@ GDI_LDLIBS += -Wl,-subsystem,windows
 endif
 endif
 
-ifeq ($(OPENGL),y)
-# Needed for native VBO support
-OPENGL_CPPFLAGS = -DGL_GLEXT_PROTOTYPES
-endif
-
-SCREEN_CPPFLAGS = $(SDL_CPPFLAGS) $(GDI_CPPFLAGS) $(OPENGL_CPPFLAGS)
-SCREEN_LDLIBS = $(SDL_LDLIBS) $(GDI_LDLIBS)
-
-ifeq ($(TARGET),ANDROID)
-SCREEN_LDLIBS += -lGLESv1_CM -ldl
-
-# for dynamic EGL detection
-SCREEN_LDLIBS += -ldl
-$(call SRC_TO_OBJ,$(SCREEN_SRC_DIR)/OpenGL/EGL.cpp): ANDROID_PLATFORM = android-9
-endif
+SCREEN_CPPFLAGS = $(SDL_CPPFLAGS) $(GDI_CPPFLAGS) $(OPENGL_CPPFLAGS) $(FREETYPE_CPPFLAGS) $(LIBPNG_CPPFLAGS) $(LIBJPEG_CPPFLAGS) $(EGL_CPPFLAGS)
+SCREEN_LDLIBS = $(SDL_LDLIBS) $(GDI_LDLIBS) $(OPENGL_LDLIBS) $(FREETYPE_LDLIBS) $(LIBPNG_LDLIBS) $(LIBJPEG_LDLIBS) $(EGL_LDLIBS)
 
 $(eval $(call link-library,screen,SCREEN))
 

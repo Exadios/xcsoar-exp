@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ CheckLogCat()
 
   /* run logcat, save to a temporary file */
 
-  LogStartUp(_T("Launching logcat"));
+  LogFormat("Launching logcat");
 
   pid_t pid = fork();
   if (pid == 0) {
@@ -60,7 +60,7 @@ CheckLogCat()
   }
 
   if (pid < 0) {
-    LogStartUp(_T("Launching logcat has failed: %s"), strerror(errno));
+    LogFormat("Launching logcat has failed: %s", strerror(errno));
     unlink(path);
     return false;
   }
@@ -73,13 +73,13 @@ CheckLogCat()
   }
 
   if (WIFSIGNALED(status)) {
-    LogStartUp(_T("logcat was killed by signal %d"), WTERMSIG(status));
+    LogFormat("logcat was killed by signal %d", WTERMSIG(status));
     unlink(path);
     return false;
   }
 
   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    LogStartUp(_T("logcat has failed"));
+    LogFormat("logcat has failed");
     unlink(path);
     return false;
   }
@@ -92,7 +92,7 @@ CheckLogCat()
 
   FileLineReaderA reader(path);
   char *line;
-  while ((line = reader.read()) != NULL) {
+  while ((line = reader.ReadLine()) != NULL) {
     if (strstr(line, ">>> org.xcsoar") != NULL) {
       const char *p = strstr(line, "pid:");
       if (p != NULL)

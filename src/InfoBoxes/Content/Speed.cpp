@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -51,29 +51,28 @@ InfoBoxContentSpeedGround::HandleKey(const InfoBoxKeyCodes keycode)
 {
   if (!is_simulator())
     return false;
-  if (!XCSoarInterface::Basic().gps.simulator)
+  if (!CommonInterface::Basic().gps.simulator)
     return false;
 
-  fixed fixed_step = (fixed)Units::ToSysSpeed(fixed_ten);
-  const Angle a5 = Angle::Degrees(fixed(5));
+  fixed fixed_step = (fixed)Units::ToSysSpeed(fixed(10));
+  const Angle a5 = Angle::Degrees(5);
 
   switch (keycode) {
   case ibkUp:
     device_blackboard->SetSpeed(
-        XCSoarInterface::Basic().ground_speed + fixed_step);
+        CommonInterface::Basic().ground_speed + fixed_step);
     return true;
 
   case ibkDown:
-    device_blackboard->SetSpeed(
-        max(fixed_zero, XCSoarInterface::Basic().ground_speed - fixed_step));
+    device_blackboard->SetSpeed(std::max(fixed(0), CommonInterface::Basic().ground_speed - fixed_step));
     return true;
 
   case ibkLeft:
-    device_blackboard->SetTrack(XCSoarInterface::Basic().track - a5);
+    device_blackboard->SetTrack(CommonInterface::Basic().track - a5);
     return true;
 
   case ibkRight:
-    device_blackboard->SetTrack(XCSoarInterface::Basic().track + a5);
+    device_blackboard->SetTrack(CommonInterface::Basic().track + a5);
     return true;
 
   case ibkEnter:
@@ -84,7 +83,7 @@ InfoBoxContentSpeedGround::HandleKey(const InfoBoxKeyCodes keycode)
 }
 
 void
-InfoBoxContentSpeedIndicated::Update(InfoBoxData &data)
+UpdateInfoBoxSpeedIndicated(InfoBoxData &data)
 {
   const NMEAInfo &basic = CommonInterface::Basic();
   if (!basic.airspeed_available) {
@@ -96,7 +95,7 @@ InfoBoxContentSpeedIndicated::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentSpeed::Update(InfoBoxData &data)
+UpdateInfoBoxSpeed(InfoBoxData &data)
 {
   const NMEAInfo &basic = CommonInterface::Basic();
   if (!basic.airspeed_available) {
@@ -108,24 +107,23 @@ InfoBoxContentSpeed::Update(InfoBoxData &data)
 }
 
 void
-InfoBoxContentSpeedMacCready::Update(InfoBoxData &data)
+UpdateInfoBoxSpeedMacCready(InfoBoxData &data)
 {
   const CommonStats &common_stats = CommonInterface::Calculated().common_stats;
   data.SetValueFromSpeed(common_stats.V_block, false);
 }
 
 void
-InfoBoxContentSpeedDolphin::Update(InfoBoxData &data)
+UpdateInfoBoxSpeedDolphin(InfoBoxData &data)
 {
   // Set Value
   const DerivedInfo &calculated = CommonInterface::Calculated();
   data.SetValueFromSpeed(calculated.V_stf, false);
 
   // Set Comment
-  if (XCSoarInterface::GetComputerSettings().features.block_stf_enabled)
+  if (CommonInterface::GetComputerSettings().features.block_stf_enabled)
     data.SetComment(_("BLOCK"));
   else
     data.SetComment(_("DOLPHIN"));
 
 }
-

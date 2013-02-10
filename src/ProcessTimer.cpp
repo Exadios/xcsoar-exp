@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,17 +23,17 @@ Copyright_License {
 
 #include "ProcessTimer.hpp"
 #include "Interface.hpp"
+#include "ActionInterface.hpp"
 #include "Protection.hpp"
 #include "Input/InputQueue.hpp"
 #include "Input/InputEvents.hpp"
 #include "Device/device.hpp"
 #include "Device/All.hpp"
-#include "Dialogs/AirspaceWarningDialog.hpp"
 #include "Screen/Blank.hpp"
 #include "UtilsSystem.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Components.hpp"
-#include "PeriodClock.hpp"
+#include "Time/PeriodClock.hpp"
 #include "MainWindow.hpp"
 #include "Asset.hpp"
 #include "Simulator.hpp"
@@ -44,6 +44,7 @@ Copyright_License {
 #include "Operation/Operation.hpp"
 #include "Tracking/TrackingGlue.hpp"
 #include "Operation/MessageOperationEnvironment.hpp"
+#include "Event/Idle.hpp"
 
 #ifdef _WIN32_WCE
 static void
@@ -63,10 +64,9 @@ static void
 MessageProcessTimer()
 {
   // don't display messages if airspace warning dialog is active
-  if (!dlgAirspaceWarningVisible())
-    if (CommonInterface::main_window->popup.Render())
-      // turn screen on if blanked and receive a new message
-      ResetDisplayTimeOut();
+  if (CommonInterface::main_window->popup.Render())
+    // turn screen on if blanked and receive a new message
+    ResetUserIdle();
 }
 
 /**
@@ -144,91 +144,6 @@ BlackboardProcessTimer()
   XCSoarInterface::ExchangeBlackboard();
 }
 
-/**
- * Collect QNH, MacCready, Ballast and Bugs updates from external devices
- */
-static void
-BallastProcessTimer()
-{
-  static ExternalSettings last_external_settings;
-  const NMEAInfo &basic = CommonInterface::Basic();
-
-  if (basic.settings.ballast_fraction_available.Modified(
-        last_external_settings.ballast_fraction_available))
-    ActionInterface::SetBallast(basic.settings.ballast_fraction, false);
-
-  if (basic.settings.ballast_overload_available.Modified(
-        last_external_settings.ballast_overload_available)) {
-
-    const Plane &plane = device_blackboard->GetComputerSettings().plane;
-
-    if (plane.max_ballast > fixed_zero) {
-      fixed fraction = ((basic.settings.ballast_overload - fixed_one) *
-                        plane.dry_mass) / plane.max_ballast;
-      ActionInterface::SetBallast(fraction, false);
-    }
-  }
-
-  last_external_settings = basic.settings;
-}
-
-static void
-BugsProcessTimer()
-{
-  static ExternalSettings last_external_settings;
-  const NMEAInfo &basic = CommonInterface::Basic();
-
-  if (basic.settings.bugs_available.Modified(last_external_settings.bugs_available))
-    ActionInterface::SetBugs(basic.settings.bugs, false);
-
-  last_external_settings = basic.settings;
-}
-
-static void
-QNHProcessTimer()
-{
-  ComputerSettings &settings_computer =
-    CommonInterface::SetComputerSettings();
-  const NMEAInfo &basic = CommonInterface::Basic();
-  const DerivedInfo &calculated = CommonInterface::Calculated();
-
-  if (basic.settings.qnh_available.Modified(settings_computer.pressure_available)) {
-    settings_computer.pressure = basic.settings.qnh;
-    settings_computer.pressure_available = basic.settings.qnh_available;
-  }
-
-  if (calculated.pressure_available.Modified(settings_computer.pressure_available)) {
-    settings_computer.pressure = calculated.pressure;
-    settings_computer.pressure_available = calculated.pressure_available;
-
-    MessageOperationEnvironment env;
-    AllDevicesPutQNH(settings_computer.pressure, env);
-  }
-}
-
-static void
-MacCreadyProcessTimer()
-{
-  static ExternalSettings last_external_settings;
-  static Validity last_auto_mac_cready;
-
-  const NMEAInfo &basic = CommonInterface::Basic();
-  const DerivedInfo &calculated = CommonInterface::Calculated();
-
-  if (last_auto_mac_cready.Modified(calculated.auto_mac_cready_available))
-    /* time warp, reset */
-    last_auto_mac_cready.Clear();
-
-  if (basic.settings.mac_cready_available.Modified(last_external_settings.mac_cready_available)) {
-    ActionInterface::SetMacCready(basic.settings.mac_cready, false);
-  } else if (calculated.auto_mac_cready_available.Modified(last_auto_mac_cready)) {
-    last_auto_mac_cready = calculated.auto_mac_cready_available;
-    ActionInterface::SetMacCready(calculated.auto_mac_cready);
-  }
-
-  last_external_settings = basic.settings;
-}
-
 static void
 BallastDumpProcessTimer()
 {
@@ -269,10 +184,6 @@ ManualWindProcessTimer()
 static void
 SettingsProcessTimer()
 {
-  BallastProcessTimer();
-  BugsProcessTimer();
-  QNHProcessTimer();
-  MacCreadyProcessTimer();
   BallastDumpProcessTimer();
   ManualWindProcessTimer();
 }
@@ -333,7 +244,7 @@ ProcessTimer()
 
   if (!is_simulator()) {
     // now check GPS status
-    devTick(CommonInterface::Calculated());
+    devTick();
 
     // also service replay logger
     if (replay && replay->Update()) {

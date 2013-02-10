@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,8 +32,6 @@
 class TaskWaypoint :
   public TaskPoint
 {
-  friend class PrintHelper;
-
   /** local copy of waypoint */
   Waypoint waypoint;
 
@@ -48,8 +46,8 @@ public:
    *
    * @return Initialised object
    */
-  TaskWaypoint(Type _type, const Waypoint & wp)
-    :TaskPoint(_type, wp.location, wp.elevation),
+  TaskWaypoint(TaskPointType _type, const Waypoint & wp)
+    :TaskPoint(_type, wp.location),
      waypoint(wp) {}
 
   /**
@@ -62,6 +60,14 @@ public:
   gcc_pure
   const Waypoint &GetWaypoint() const {
     return waypoint;
+  }
+
+protected:
+  /**
+   * Altitude (AMSL, m) of task point terrain.
+   */
+  fixed GetBaseElevation() const {
+    return waypoint.elevation;
   }
 };
 

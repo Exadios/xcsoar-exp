@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,9 +23,9 @@ Copyright_License {
 
 #include "InputKeys.hpp"
 #include "Screen/Key.h"
+#include "Util/CharUtil.hpp"
 
 #include <string.h>
-#include <ctype.h>
 
 struct string_to_key {
   const TCHAR *name;
@@ -33,31 +33,31 @@ struct string_to_key {
 };
 
 static constexpr struct string_to_key string_to_key[] = {
-  { _T("APP1"), VK_APP1 },
-  { _T("APP2"), VK_APP2 },
-  { _T("APP3"), VK_APP3 },
-  { _T("APP4"), VK_APP4 },
-  { _T("APP5"), VK_APP5 },
-  { _T("APP6"), VK_APP6 },
-  { _T("F1"), VK_F1 },
-  { _T("F2"), VK_F2 },
-  { _T("F3"), VK_F3 },
-  { _T("F4"), VK_F4 },
-  { _T("F5"), VK_F5 },
-  { _T("F6"), VK_F6 },
-  { _T("F7"), VK_F7 },
-  { _T("F8"), VK_F8 },
-  { _T("F9"), VK_F9 },
-  { _T("F10"), VK_F10 },
-  { _T("F11"), VK_F11 },
-  { _T("F12"), VK_F12 },
-  { _T("LEFT"), VK_LEFT },
-  { _T("RIGHT"), VK_RIGHT },
-  { _T("UP"), VK_UP },
-  { _T("DOWN"), VK_DOWN },
-  { _T("RETURN"), VK_RETURN },
-  { _T("ESCAPE"), VK_ESCAPE },
-  { _T("MENU"), VK_MENU },
+  { _T("APP1"), KEY_APP1 },
+  { _T("APP2"), KEY_APP2 },
+  { _T("APP3"), KEY_APP3 },
+  { _T("APP4"), KEY_APP4 },
+  { _T("APP5"), KEY_APP5 },
+  { _T("APP6"), KEY_APP6 },
+  { _T("F1"), KEY_F1 },
+  { _T("F2"), KEY_F2 },
+  { _T("F3"), KEY_F3 },
+  { _T("F4"), KEY_F4 },
+  { _T("F5"), KEY_F5 },
+  { _T("F6"), KEY_F6 },
+  { _T("F7"), KEY_F7 },
+  { _T("F8"), KEY_F8 },
+  { _T("F9"), KEY_F9 },
+  { _T("F10"), KEY_F10 },
+  { _T("F11"), KEY_F11 },
+  { _T("F12"), KEY_F12 },
+  { _T("LEFT"), KEY_LEFT },
+  { _T("RIGHT"), KEY_RIGHT },
+  { _T("UP"), KEY_UP },
+  { _T("DOWN"), KEY_DOWN },
+  { _T("RETURN"), KEY_RETURN },
+  { _T("ESCAPE"), KEY_ESCAPE },
+  { _T("MENU"), KEY_MENU },
   { NULL }
 };
 
@@ -69,7 +69,7 @@ ParseKeyCode(const TCHAR *data)
       return p->key;
 
   if (_tcslen(data) == 1)
-    return _totupper(data[0]);
+    return ToUpperASCII(data[0]);
 
   else
     return 0;

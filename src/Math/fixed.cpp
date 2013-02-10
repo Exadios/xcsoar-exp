@@ -12,13 +12,13 @@ static fixed::value_t const internal_two_pi=0x6487ed51;
 static fixed::value_t const internal_half_pi=0x1921fb54;
 static fixed::value_t const internal_quarter_pi=0xc90fdaa;
 
-fixed& fixed::operator%=(fixed const& other)
+fixed& fixed::operator%=(const fixed other)
 {
   m_nVal = m_nVal%other.m_nVal;
   return *this;
 }
 
-fixed& fixed::operator*=(fixed const& val)
+fixed& fixed::operator*=(const fixed val)
 {
   bool const val_negative=val.m_nVal<0;
   bool const this_negative=m_nVal<0;
@@ -231,7 +231,7 @@ fixed fixed::log() const
       return -fixed_max;
 
   if (m_nVal == resolution)
-      return fixed_zero;
+      return fixed(0);
 
   uvalue_t temp=m_nVal;
   int left_shift=0;
@@ -263,38 +263,38 @@ fixed fixed::log() const
 
 namespace
 {
-  const long arctantab[32] = {
+  static constexpr int arctantab[32] = {
     297197971, 210828714, 124459457, 65760959, 33381290, 16755422, 8385879,
     4193963, 2097109, 1048571, 524287, 262144, 131072, 65536, 32768, 16384,
     8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0, 0,
   };
 
+  static constexpr fixed::value_t cordic_scale_factor = 0x22C2DD1C; /* 0.271572 * 2^31*/
 
-  long scale_cordic_result(long a)
+  constexpr int_least32_t scale_cordic_result(fixed::value_t a)
   {
-    long const cordic_scale_factor=0x22C2DD1C; /* 0.271572 * 2^31*/
-    return (long)((((fixed::value_t)a)*cordic_scale_factor)>>31);
+    return (int_least32_t)((a * cordic_scale_factor) >> 31);
   }
 
-  fixed::value_t scale_cordic_result_accurate(long a)
+  constexpr fixed::value_t scale_cordic_result_accurate(fixed::value_t a)
   {
-    fixed::value_t const cordic_scale_factor=0x22C2DD1C; /* 0.271572 * 2^31*/
-    return (fixed::value_t)((((fixed::value_t)a)*cordic_scale_factor)>>
-                            (31-fixed::accurate_cordic_shift));
+    return (fixed::value_t)((a * cordic_scale_factor)
+                            >> (31 - fixed::accurate_cordic_shift));
   }
 
-  long right_shift(long val,int shift)
+  constexpr int_least32_t right_shift(int_least32_t val, int shift)
   {
     return (shift<0)?(val<<-shift):(val>>shift);
   }
 
-  void perform_cordic_rotation_unscaled(long&x, long&y, long theta)
+  void perform_cordic_rotation_unscaled(int_least32_t &x, int_least32_t &y,
+                                        int_least32_t theta)
   {
-    long const *arctanptr = arctantab;
+    const int_least32_t *arctanptr = arctantab;
 
     for (int i = -1; i <= (int)fixed::resolution_shift; ++i) {
-      long const yshift=right_shift(y,i);
-      long const xshift=right_shift(x,i);
+      const int_least32_t yshift = right_shift(y, i);
+      const int_least32_t xshift = right_shift(x, i);
 
       if (theta < 0) {
         x += yshift;
@@ -308,30 +308,31 @@ namespace
     }    
   }
 
-  void perform_cordic_rotation(long&px, long&py, long theta)
+  void perform_cordic_rotation(int_least32_t &px, int_least32_t &py,
+                               int_least32_t theta)
   {
     perform_cordic_rotation_unscaled(px, py, theta);
     px = scale_cordic_result(px);
     py = scale_cordic_result(py);
   }
 
-  fixed::value_t perform_cordic_rotation_accurate_sin(long theta)
+  fixed::value_t perform_cordic_rotation_accurate_sin(int_least32_t theta)
   {
-    long x_cos=1<< fixed::resolution_shift;
-    long x_sin=0;
+    int_least32_t x_cos = 1 << fixed::resolution_shift;
+    int_least32_t x_sin = 0;
     perform_cordic_rotation_unscaled(x_cos, x_sin, theta);
     return scale_cordic_result_accurate(x_sin);
   }
 
-  void perform_cordic_polarization(long& argx, long&argy)
+  void perform_cordic_polarization(int_least32_t &argx, int_least32_t &argy)
   {
-    long theta=0;
-    long x = argx, y = argy;
-    long const *arctanptr = arctantab;
+    int_least32_t theta=0;
+    int_least32_t x = argx, y = argy;
+    const int_least32_t *arctanptr = arctantab;
 
     for (int i = -1; i <= (int)fixed::resolution_shift; ++i) {
-      long const yshift=right_shift(y,i);
-      long const xshift=right_shift(x,i);
+      const int_least32_t yshift = right_shift(y,i);
+      const int_least32_t xshift = right_shift(x,i);
       if (y < 0) {
         y += xshift;
         x -= yshift;
@@ -348,12 +349,23 @@ namespace
   }
 }
 
+/**
+ * Normalize the value to the range 0 to #internal_two_pi.
+ */
+gcc_const
+static inline int_least32_t
+NormalizeInternalAngle(fixed::value_t a)
+{
+  a %= internal_two_pi;
+  if (a < 0)
+    a += internal_two_pi;
+  return a;
+}
+
 fixed
 fixed::accurate_half_sin() const
 {
-  value_t x= (m_nVal>>1) % internal_two_pi;
-  if( x < 0 )
-    x += internal_two_pi;
+  int_least32_t x = NormalizeInternalAngle(m_nVal >> 1);
 
   bool negate_sin=false;
   
@@ -367,7 +379,7 @@ fixed::accurate_half_sin() const
     x=internal_pi-x;
   }
   
-  const value_t x_sin = perform_cordic_rotation_accurate_sin((long)x);
+  const value_t x_sin = perform_cordic_rotation_accurate_sin(x);
   return fixed(fixed::internal(), 
                (negate_sin? -x_sin:x_sin) );
 }
@@ -375,80 +387,71 @@ fixed::accurate_half_sin() const
 std::pair<fixed, fixed>
 fixed::sin_cos(fixed theta)
 {
-    value_t x=theta.m_nVal%internal_two_pi;
-    if( x < 0 )
-        x += internal_two_pi;
+  int_least32_t x = NormalizeInternalAngle(theta.m_nVal);
 
-    bool negate_cos=false;
-    bool negate_sin=false;
+  bool negate_cos=false;
+  bool negate_sin=false;
 
-    if( x > internal_pi )
-    {
-        x =internal_two_pi-x;
-        negate_sin=true;
-    }
-    if(x>internal_half_pi)
-    {
-        x=internal_pi-x;
-        negate_cos=true;
-    }
-    long x_cos=1<<resolution_shift,x_sin=0;
+  if (x > internal_pi) {
+    x = internal_two_pi - x;
+    negate_sin = true;
+  }
 
-    perform_cordic_rotation(x_cos,x_sin,(long)x);
+  if (x > internal_half_pi) {
+    x = internal_pi - x;
+    negate_cos = true;
+  }
 
-    return std::make_pair(fixed(internal(), negate_sin ? -x_sin : x_sin),
-                          fixed(internal(), negate_cos ? -x_cos : x_cos));
+  int_least32_t x_cos = 1 << resolution_shift, x_sin=0;
+  perform_cordic_rotation(x_cos, x_sin, x);
+
+  return std::make_pair(fixed(internal(), negate_sin ? -x_sin : x_sin),
+                        fixed(internal(), negate_cos ? -x_cos : x_cos));
 }
 
 fixed fixed::atan() const
 {
-    fixed r,theta;
-    to_polar(fixed_one, *this, &r, &theta);
-    return theta;
+  fixed r,theta;
+  to_polar(fixed(1), *this, &r, &theta);
+  return theta;
 }
 
-fixed fixed::atan2(fixed const& y, fixed const& x)
+fixed fixed::atan2(const fixed y, const fixed x)
 {
-    fixed r,theta;
-    to_polar(x,y, &r, &theta);
-    return theta;
+  fixed r,theta;
+  to_polar(x,y, &r, &theta);
+  return theta;
 }
 
-void fixed::to_polar(fixed const& x,fixed const& y,fixed* r,fixed* theta)
+void fixed::to_polar(const fixed x, const fixed y, fixed *r, fixed *theta)
 {
-    bool const negative_x=x.m_nVal<0;
-    bool const negative_y=y.m_nVal<0;
-    
-    uvalue_t a=negative_x?-x.m_nVal:x.m_nVal;
-    uvalue_t b=negative_y?-y.m_nVal:y.m_nVal;
+  bool const negative_x = x.m_nVal < 0;
+  bool const negative_y = y.m_nVal < 0;
 
-    unsigned right_shift=0;
-    unsigned const max_value=1U<<resolution_shift;
+  uvalue_t a = negative_x ? -x.m_nVal : x.m_nVal;
+  uvalue_t b = negative_y ? -y.m_nVal : y.m_nVal;
 
-    while((a>=max_value) || (b>=max_value))
-    {
-        ++right_shift;
-        a>>=1;
-        b>>=1;
-    }
-    long xtemp=(long)a;
-    long ytemp=(long)b;
-    perform_cordic_polarization(xtemp,ytemp);
-    r->m_nVal=(value_t)(xtemp)<<right_shift;
-    theta->m_nVal=ytemp;
+  unsigned right_shift = 0;
+  const unsigned max_value = 1U << resolution_shift;
 
-    if(negative_x && negative_y)
-    {
-        theta->m_nVal-=internal_pi;
-    }
-    else if(negative_x)
-    {
-        theta->m_nVal=internal_pi-theta->m_nVal;
-    }
-    else if(negative_y)
-    {
-        theta->m_nVal=-theta->m_nVal;
-    }
+  while (a >= max_value || b >= max_value) {
+    ++right_shift;
+    a >>= 1;
+    b >>= 1;
+  }
+
+  int_least32_t xtemp = (int_least32_t)a;
+  int_least32_t ytemp = (int_least32_t)b;
+  perform_cordic_polarization(xtemp,ytemp);
+  r->m_nVal = value_t(xtemp) << right_shift;
+  theta->m_nVal=ytemp;
+
+  if (negative_x && negative_y)
+    theta->m_nVal -= internal_pi;
+  else if (negative_x)
+    theta->m_nVal = internal_pi - theta->m_nVal;
+  else if (negative_y)
+    theta->m_nVal = -theta->m_nVal;
 }
 
 
@@ -495,7 +498,7 @@ fixed::rsqrt() const
   value_t v_last= y.m_nVal;
   while (1) {
     y *= threehalfs-x2*y.sqr();
-    assert(y>= fixed_zero);
+    assert(y>= fixed(0));
     const value_t err = y.m_nVal-v_last;
     if ((y.m_nVal<2) || ((err>0? err:-err) < tolerance))
       return y;

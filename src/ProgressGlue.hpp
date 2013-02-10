@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@ Copyright_License {
 #ifndef XCSOAR_PROGRESS_GLUE_HPP
 #define XCSOAR_PROGRESS_GLUE_HPP
 
-#include "Screen/Point.hpp"
-
 #include <tchar.h>
+
+struct PixelRect;
 
 namespace ProgressGlue {
   /**
@@ -35,7 +35,7 @@ namespace ProgressGlue {
    */
   void Create(const TCHAR *text);
 
-  void Resize(UPixelScalar width, UPixelScalar height);
+  void Move(const PixelRect &rc);
 
   /**
    * Closes the ProgressWindow

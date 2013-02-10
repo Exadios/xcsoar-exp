@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_OPENGL_CANVAS_HPP
 #define XCSOAR_SCREEN_OPENGL_CANVAS_HPP
 
-#include "Util/NonCopyable.hpp"
 #include "Math/fixed.hpp"
 #include "Math/Angle.hpp"
 #include "Screen/Brush.hpp"
@@ -34,17 +33,12 @@ Copyright_License {
 #include "Screen/OpenGL/Point.hpp"
 #include "Screen/OpenGL/Triangulate.hpp"
 #include "Screen/OpenGL/Features.hpp"
+#include "Screen/OpenGL/System.hpp"
 #include "Util/AllocatedArray.hpp"
 #include "Compiler.h"
 
 #include <assert.h>
 #include <tchar.h>
-
-#ifdef HAVE_GLES
-#include <GLES/gl.h>
-#else
-#include <SDL/SDL_opengl.h>
-#endif
 
 class Bitmap;
 class GLTexture;
@@ -53,13 +47,13 @@ class GLTexture;
  * Base drawable canvas class
  * 
  */
-class Canvas : private NonCopyable {
+class Canvas {
   friend class SubCanvas;
   friend class BufferCanvas;
 
 protected:
-  PixelScalar x_offset, y_offset;
-  UPixelScalar width, height;
+  RasterPoint offset;
+  PixelSize size;
 
   Pen pen;
   Brush brush;
@@ -76,15 +70,17 @@ protected:
 
 public:
   Canvas()
-    :x_offset(0), y_offset(0), width(0), height(0),
+    :offset(0, 0), size(0, 0),
      font(NULL), background_mode(OPAQUE) {}
-  Canvas(UPixelScalar _width, UPixelScalar _height)
-    :width(_width), height(_height),
+  Canvas(PixelSize _size)
+    :offset(0, 0), size(_size),
      font(NULL), background_mode(OPAQUE) {}
 
-  void set(UPixelScalar _width, UPixelScalar _height) {
-    width = _width;
-    height = _height;
+  Canvas(const Canvas &other) = delete;
+  Canvas &operator=(const Canvas &other) = delete;
+
+  void Create(PixelSize _size) {
+    size = _size;
   }
 
 protected:
@@ -93,7 +89,7 @@ protected:
    * been filled.  As an optimization, this function returns false if
    * brush and pen share the same color.
    */
-  bool pen_over_brush() const {
+  bool IsPenOverBrush() const {
     return pen.IsDefined() &&
       (brush.IsHollow() || brush.GetColor() != pen.GetColor());
   }
@@ -103,12 +99,21 @@ public:
     return true;
   }
 
-  UPixelScalar get_width() const {
-    return width;
+  PixelSize GetSize() const {
+    return size;
   }
 
-  UPixelScalar get_height() const {
-    return height;
+  UPixelScalar GetWidth() const {
+    return size.cx;
+  }
+
+  UPixelScalar GetHeight() const {
+    return size.cy;
+  }
+
+  gcc_pure
+  PixelRect GetRect() const {
+    return PixelRect(size);
   }
 
   void SelectNullPen() {
@@ -175,17 +180,17 @@ public:
                  PixelScalar right, PixelScalar bottom) {
     DrawFilledRectangle(left, top, right, bottom, brush);
 
-    if (pen_over_brush())
+    if (IsPenOverBrush())
       DrawOutlineRectangle(left, top, right, bottom);
   }
 
   void DrawFilledRectangle(PixelScalar left, PixelScalar top,
-                      PixelScalar right, PixelScalar bottom,
-                      const Color color);
+                           PixelScalar right, PixelScalar bottom,
+                           const Color color);
 
   void DrawFilledRectangle(PixelScalar left, PixelScalar top,
-                      PixelScalar right, PixelScalar bottom,
-                      const Brush &brush) {
+                           PixelScalar right, PixelScalar bottom,
+                           const Brush &brush) {
     if (!brush.IsHollow())
       DrawFilledRectangle(left, top, right, bottom, brush.GetColor());
   }
@@ -194,7 +199,7 @@ public:
     DrawFilledRectangle(rc.left, rc.top, rc.right, rc.bottom, color);
   }
 
-  void DrawFilledRectangle(const PixelRect rc, const Brush &brush) {
+  void DrawFilledRectangle(const PixelRect &rc, const Brush &brush) {
     DrawFilledRectangle(rc.left, rc.top, rc.right, rc.bottom, brush);
   }
 
@@ -206,14 +211,14 @@ public:
                           PixelScalar right, PixelScalar bottom);
 
   void DrawOutlineRectangle(PixelScalar left, PixelScalar top,
-                         PixelScalar right, PixelScalar bottom) {
+                            PixelScalar right, PixelScalar bottom) {
     pen.Set();
     OutlineRectangleGL(left, top, right, bottom);
   }
 
   void DrawOutlineRectangle(PixelScalar left, PixelScalar top,
-                         PixelScalar right, PixelScalar bottom,
-                         Color color) {
+                            PixelScalar right, PixelScalar bottom,
+                            Color color) {
     color.Set();
 #ifdef HAVE_GLES
     glLineWidthx(1 << 16);
@@ -234,15 +239,15 @@ public:
   void FadeToWhite(GLubyte alpha);
 
   void Clear() {
-    Rectangle(0, 0, get_width(), get_height());
+    Rectangle(0, 0, GetWidth(), GetHeight());
   }
 
   void Clear(const Color color) {
-    DrawFilledRectangle(0, 0, get_width(), get_height(), color);
+    DrawFilledRectangle(0, 0, GetWidth(), GetHeight(), color);
   }
 
   void Clear(const Brush &brush) {
-    DrawFilledRectangle(0, 0, get_width(), get_height(), brush);
+    DrawFilledRectangle(0, 0, GetWidth(), GetHeight(), brush);
   }
 
   void ClearWhite() {
@@ -272,28 +277,47 @@ public:
     DrawLine(a.x, a.y, b.x, b.y);
   }
 
+  /**
+   * Similar to DrawLine(), but force exact pixel coordinates.  This
+   * may be more expensive on some platforms, and works only for thin
+   * lines.
+   */
+  void DrawExactLine(PixelScalar ax, PixelScalar ay,
+                     PixelScalar bx, PixelScalar by);
+
+  void DrawExactLine(const RasterPoint a, const RasterPoint b) {
+    DrawExactLine(a.x, a.y, b.x, b.y);
+  }
+
   void DrawLinePiece(const RasterPoint a, const RasterPoint b);
 
   void DrawTwoLines(PixelScalar ax, PixelScalar ay,
-                 PixelScalar bx, PixelScalar by,
-                 PixelScalar cx, PixelScalar cy);
+                    PixelScalar bx, PixelScalar by,
+                    PixelScalar cx, PixelScalar cy);
   void DrawTwoLines(const RasterPoint a, const RasterPoint b,
-                 const RasterPoint c) {
+                    const RasterPoint c) {
     DrawTwoLines(a.x, a.y, b.x, b.y, c.x, c.y);
   }
+
+  /**
+   * @see DrawTwoLines(), DrawExactLine()
+   */
+  void DrawTwoLinesExact(PixelScalar ax, PixelScalar ay,
+                         PixelScalar bx, PixelScalar by,
+                         PixelScalar cx, PixelScalar cy);
 
   void DrawCircle(PixelScalar x, PixelScalar y, UPixelScalar radius);
 
   void DrawSegment(PixelScalar x, PixelScalar y, UPixelScalar radius,
-               Angle start, Angle end, bool horizon=false);
+                   Angle start, Angle end, bool horizon=false);
 
   void DrawAnnulus(PixelScalar x, PixelScalar y, UPixelScalar small_radius,
-               UPixelScalar big_radius,
-               Angle start, Angle end);
+                   UPixelScalar big_radius,
+                   Angle start, Angle end);
 
   void DrawKeyhole(PixelScalar x, PixelScalar y, UPixelScalar small_radius,
-               UPixelScalar big_radius,
-               Angle start, Angle end);
+                   UPixelScalar big_radius,
+                   Angle start, Angle end);
 
   void DrawFocusRectangle(PixelRect rc);
 
@@ -315,40 +339,41 @@ public:
     return font != NULL ? font->GetHeight() : 0;
   }
 
-  void text(PixelScalar x, PixelScalar y, const TCHAR *text);
-  void text(PixelScalar x, PixelScalar y, const TCHAR *text, size_t length);
+  void DrawText(PixelScalar x, PixelScalar y, const TCHAR *text);
+  void DrawText(PixelScalar x, PixelScalar y,
+                const TCHAR *text, size_t length);
 
-  void text_transparent(PixelScalar x, PixelScalar y, const TCHAR *text);
+  void DrawTransparentText(PixelScalar x, PixelScalar y, const TCHAR *text);
 
-  void text_opaque(PixelScalar x, PixelScalar y, const PixelRect &rc,
-                   const TCHAR *text);
+  void DrawOpaqueText(PixelScalar x, PixelScalar y, const PixelRect &rc,
+                      const TCHAR *text);
 
-  void text_clipped(PixelScalar x, PixelScalar y, const PixelRect &rc,
-                    const TCHAR *text) {
+  void DrawClippedText(PixelScalar x, PixelScalar y, const PixelRect &rc,
+                       const TCHAR *text) {
     // XXX
 
     if (x < rc.right)
-      text_clipped(x, y, rc.right - x, text);
+      DrawClippedText(x, y, rc.right - x, text);
   }
 
-  void TextClipped(PixelScalar x, PixelScalar y,
-                   UPixelScalar width, UPixelScalar height,
-                   const TCHAR *text);
+  void DrawClippedText(PixelScalar x, PixelScalar y,
+                       UPixelScalar width, UPixelScalar height,
+                       const TCHAR *text);
 
-  void text_clipped(PixelScalar x, PixelScalar y, UPixelScalar width,
-                    const TCHAR *text) {
-    TextClipped(x, y, width, 16384, text);
+  void DrawClippedText(PixelScalar x, PixelScalar y, UPixelScalar width,
+                       const TCHAR *text) {
+    DrawClippedText(x, y, width, 16384, text);
   }
 
   /**
    * Render text, clip it within the bounds of this Canvas.
    */
   void TextAutoClipped(PixelScalar x, PixelScalar y, const TCHAR *t) {
-    if (x < (int)get_width() && y < (int)get_height())
-      TextClipped(x, y, get_width() - x, get_height() - y, t);
+    if (x < (int)GetWidth() && y < (int)GetHeight())
+      DrawClippedText(x, y, GetWidth() - x, GetHeight() - y, t);
   }
 
-  void formatted_text(PixelRect *rc, const TCHAR *text, unsigned format);
+  void DrawFormattedText(PixelRect *rc, const TCHAR *text, unsigned format);
 
   /**
    * Draws a texture.  The caller is responsible for binding it and
@@ -365,13 +390,13 @@ public:
                const GLTexture &texture);
 
 
-  void copy(PixelScalar dest_x, PixelScalar dest_y,
+  void Copy(PixelScalar dest_x, PixelScalar dest_y,
             UPixelScalar dest_width, UPixelScalar dest_height,
             const Bitmap &src, PixelScalar src_x, PixelScalar src_y);
-  void copy(const Bitmap &src);
+  void Copy(const Bitmap &src);
 
-  void stretch_transparent(const Bitmap &src, Color key);
-  void invert_stretch_transparent(const Bitmap &src, Color key);
+  void StretchTransparent(const Bitmap &src, Color key);
+  void InvertStretchTransparent(const Bitmap &src, Color key);
 
   void Stretch(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
@@ -383,7 +408,7 @@ public:
                const Bitmap &src);
 
   void Stretch(const Bitmap &src) {
-    Stretch(0, 0, width, height, src);
+    Stretch(0, 0, size.cx, size.cy, src);
   }
 
   void StretchAnd(PixelScalar dest_x, PixelScalar dest_y,
@@ -419,7 +444,7 @@ public:
                const Bitmap &src, PixelScalar src_x, PixelScalar src_y);
 
   void CopyOr(const Bitmap &src) {
-    CopyOr(0, 0, get_width(), get_height(), src, 0, 0);
+    CopyOr(0, 0, GetWidth(), GetHeight(), src, 0, 0);
   }
 
   void CopyNotOr(PixelScalar dest_x, PixelScalar dest_y,
@@ -435,7 +460,7 @@ public:
                 const Bitmap &src, PixelScalar src_x, PixelScalar src_y);
 
   void CopyAnd(const Bitmap &src) {
-    CopyAnd(0, 0, get_width(), get_height(), src, 0, 0);
+    CopyAnd(0, 0, GetWidth(), GetHeight(), src, 0, 0);
   }
 
   void ScaleCopy(PixelScalar dest_x, PixelScalar dest_y,

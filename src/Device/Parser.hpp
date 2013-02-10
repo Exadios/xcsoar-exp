@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@ struct NMEAInfo;
 struct BrokenDateTime;
 class NMEAInputLine;
 struct GeoPoint;
+struct BrokenDate;
 
 class NMEAParser
 {
@@ -59,7 +60,7 @@ public:
   }
 
   void DisableGeoid() {
-    use_geoid = true;
+    use_geoid = false;
   }
 
   /**
@@ -79,7 +80,26 @@ public:
    */
   static bool NMEAChecksum(const char *string);
 
+  /**
+   * Checks whether time has advanced since last call and
+   * updates the last_time reference if necessary
+   * @return True if time has advanced since last call
+   */
+  static bool TimeHasAdvanced(fixed this_time, fixed &last_time, NMEAInfo &info);
+
+  /**
+   * Calculates a seconds-based FixTime and corrects it
+   * in case over passing the UTC midnight mark
+   * @param FixTime NMEA format fix time (HHMMSS)
+   * @param info NMEA_INFO struct to parse into
+   * @return Seconds-based FixTime
+   */
+  static fixed TimeModify(fixed fix_time, BrokenDateTime &date_time,
+                          bool date_available);
+
   static bool ReadGeoPoint(NMEAInputLine &line, GeoPoint &value_r);
+
+  static bool ReadDate(NMEAInputLine &line, BrokenDate &date);
 
 private:
 
@@ -104,16 +124,6 @@ private:
    * @return True if time has advanced since last call
    */
   bool TimeHasAdvanced(fixed this_time, NMEAInfo &info);
-
-  /**
-   * Calculates a seconds-based FixTime and corrects it
-   * in case over passing the UTC midnight mark
-   * @param FixTime NMEA format fix time (HHMMSS)
-   * @param info NMEA_INFO struct to parse into
-   * @return Seconds-based FixTime
-   */
-  static fixed TimeModify(fixed fix_time, BrokenDateTime &date_time,
-                          bool date_available);
 
   /**
    * Parses a GLL sentence

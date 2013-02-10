@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -60,10 +60,10 @@ int main(int argc, char **argv)
 
   GeoBounds bounds = rtc.GetBounds();
   printf("bounds = %f|%f - %f|%f\n",
-         (double)bounds.west.Degrees(),
-         (double)bounds.north.Degrees(),
-         (double)bounds.east.Degrees(),
-         (double)bounds.south.Degrees());
+         (double)bounds.GetWest().Degrees(),
+         (double)bounds.GetNorth().Degrees(),
+         (double)bounds.GetEast().Degrees(),
+         (double)bounds.GetSouth().Degrees());
 
   do {
     rtc.UpdateTiles(jp2_path, rtc.GetWidth() / 2, rtc.GetHeight() / 2,

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ Copyright_License {
 #include "Screen/Point.hpp"
 #include "Form/Form.hpp"
 #include "Form/ButtonPanel.hpp"
-#include "Form/ManagedWidget.hpp"
+#include "Widget/ManagedWidget.hpp"
 
 #include <tchar.h>
 
@@ -43,13 +43,29 @@ class WidgetDialog : public WndForm {
   bool changed;
 
 public:
-  WidgetDialog(const TCHAR *caption, const PixelRect &rc, Widget *widget);
+  WidgetDialog(const DialogLook &look);
+
+  void Create(SingleWindow &parent, const TCHAR *caption,
+              const PixelRect &rc, Widget *widget);
+
+  /**
+   * Create a full-screen dialog.
+   */
+  void CreateFull(SingleWindow &parent, const TCHAR *caption, Widget *widget);
 
   /**
    * Create a dialog with an automatic size (by
    * Widget::GetMinimumSize() and Widget::GetMaximumSize()).
    */
-  WidgetDialog(const TCHAR *caption, Widget *widget);
+  void CreateAuto(SingleWindow &parent, const TCHAR *caption, Widget *widget);
+
+  /**
+   * Create a dialog, but do not associate it with a #Widget yet.
+   * Call FinishPreliminary() to resume building the dialog.
+   */
+  void CreatePreliminary(SingleWindow &parent, const TCHAR *caption);
+
+  void FinishPreliminary(Widget *widget);
 
   bool GetChanged() const {
     return changed;
@@ -67,17 +83,12 @@ public:
   }
 
   WndButton *AddButton(const TCHAR *caption,
-                       WndButton::ClickNotifyCallback callback) {
-    return buttons.Add(caption, callback);
-  }
-
-  WndButton *AddButton(const TCHAR *caption,
-                       ActionListener *listener, int id) {
+                       ActionListener &listener, int id) {
     return buttons.Add(caption, listener, id);
   }
 
   WndButton *AddButton(const TCHAR *caption, int modal_result) {
-    return AddButton(caption, this, modal_result);
+    return AddButton(caption, *this, modal_result);
   }
 
   int ShowModal();
@@ -88,8 +99,9 @@ private:
   void AutoSize();
 
 protected:
-  virtual void OnDestroy();
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
+  /* virtual methods from class Window */
+  virtual void OnDestroy() override;
+  virtual void OnResize(PixelSize new_size) override;
 };
 
 /**
@@ -101,9 +113,11 @@ protected:
  * @return true if changed data was saved
  */
 bool
-DefaultWidgetDialog(const TCHAR *caption, const PixelRect &rc, Widget &widget);
+DefaultWidgetDialog(SingleWindow &parent, const DialogLook &look,
+                    const TCHAR *caption, const PixelRect &rc, Widget &widget);
 
 bool
-DefaultWidgetDialog(const TCHAR *caption, Widget &widget);
+DefaultWidgetDialog(SingleWindow &parent, const DialogLook &look,
+                    const TCHAR *caption, Widget &widget);
 
 #endif

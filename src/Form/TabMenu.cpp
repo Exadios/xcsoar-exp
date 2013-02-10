@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,24 +30,21 @@ Copyright_License {
 #include "Language/Language.hpp"
 
 #include <assert.h>
-#include <winuser.h>
 
 TabMenuControl::TabMenuControl(ContainerWindow &_parent, WndForm &_form,
                                const DialogLook &look, const TCHAR * _caption,
-                               PixelScalar x, PixelScalar y,
-                               UPixelScalar _width, UPixelScalar _height,
+                               PixelRect rc,
                                const WindowStyle style)
   :last_content_page(-1),
    caption(_caption),
    form(_form)
 {
-  set(_parent, x, y, _width, _height, style);
+  Create(_parent, rc, style);
 
-  const PixelRect rc = GetClientRect();
+  rc = GetClientRect();
   WindowStyle pager_style;
   pager_style.ControlParent();
-  pager.set(*this, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-            pager_style);
+  pager.Create(*this, rc, pager_style);
 
   tab_display = new TabMenuDisplay(*this, look, pager, rc);
 }
@@ -244,7 +241,7 @@ TabMenuControl::IsPointOverButton(RasterPoint Pos, unsigned mainIndex) const
 {
   // scan main menu buttons
   for (unsigned i = 0; i < GetNumMainMenuItems(); i++)
-    if (PtInRect(&GetMainMenuButtonSize(i), Pos))
+    if (GetMainMenuButtonSize(i).IsInside(Pos))
       return MenuTabIndex(i);
 
 
@@ -253,7 +250,7 @@ TabMenuControl::IsPointOverButton(RasterPoint Pos, unsigned mainIndex) const
     const MainMenuButton &main_button = GetMainMenuButton(mainIndex);
     for (unsigned i = main_button.first_page_index;
          i <= main_button.last_page_index; ++i) {
-      if (PtInRect(&GetSubMenuButtonSize(i), Pos))
+      if (GetSubMenuButtonSize(i).IsInside(Pos))
         return MenuTabIndex(mainIndex, i - main_button.first_page_index);
     }
   }
@@ -289,7 +286,7 @@ TabMenuControl::CreateSubMenu(const PageItem pages_in[], unsigned NumPages,
     const PageItem& item = pages_in[i];
     if (item.main_menu_index == main_menu_index) {
       CreateSubMenuItem(item);
-      firstPageIndex = min(i, firstPageIndex);
+      firstPageIndex = std::min(i, firstPageIndex);
       subMenuIndex++;
     }
   }

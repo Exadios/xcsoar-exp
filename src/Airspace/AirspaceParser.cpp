@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -36,7 +36,6 @@ Copyright_License {
 #include "Airspace/AirspacePolygon.hpp"
 #include "Airspace/AirspaceCircle.hpp"
 #include "Geo/GeoVector.hpp"
-#include "Compatibility/string.h"
 #include "Engine/Airspace/AirspaceClass.hpp"
 #include "Util/StaticString.hpp"
 
@@ -45,8 +44,6 @@ Copyright_License {
 #include <assert.h>
 #include <stdio.h>
 #include <windef.h> /* for MAX_PATH */
-
-#define fixed_7_5 fixed(7.5)
 
 enum AirspaceFileType {
   AFT_UNKNOWN,
@@ -66,7 +63,7 @@ struct AirspaceClassStringCouple
   AirspaceClass type;
 };
 
-static const AirspaceClassStringCouple airspace_class_strings[] = {
+static constexpr AirspaceClassStringCouple airspace_class_strings[] = {
   { _T("R"), RESTRICT },
   { _T("Q"), DANGER },
   { _T("P"), PROHIBITED },
@@ -83,7 +80,7 @@ static const AirspaceClassStringCouple airspace_class_strings[] = {
   { _T("G"), CLASSG },
 };
 
-static const AirspaceClassCharCouple airspace_tnp_class_chars[] = {
+static constexpr AirspaceClassCharCouple airspace_tnp_class_chars[] = {
   { _T('A'), CLASSA },
   { _T('B'), CLASSB },
   { _T('C'), CLASSC },
@@ -93,7 +90,7 @@ static const AirspaceClassCharCouple airspace_tnp_class_chars[] = {
   { _T('G'), CLASSG },
 };
 
-static const AirspaceClassStringCouple airspace_tnp_type_strings[] = {
+static constexpr AirspaceClassStringCouple airspace_tnp_type_strings[] = {
   { _T("C"), CTR },
   { _T("CTA"), CTR },
   { _T("CTR"), CTR },
@@ -112,6 +109,7 @@ static const AirspaceClassStringCouple airspace_tnp_type_strings[] = {
   { _T("CYR"), RESTRICT },
   { _T("CYD"), DANGER },
   { _T("CYA"), CLASSF },
+  { _T("MATZ"), MATZ },
 };
 
 // this can now be called multiple times to load several airspaces.
@@ -151,7 +149,7 @@ struct TempAirspaceType
     center.longitude = Angle::Zero();
     center.latitude = Angle::Zero();
     rotation = 1;
-    radius = fixed_zero;
+    radius = fixed(0);
   }
 
   void
@@ -162,7 +160,7 @@ struct TempAirspaceType
     center.longitude = Angle::Zero();
     center.latitude = Angle::Zero();
     rotation = 1;
-    radius = fixed_zero;
+    radius = fixed(0);
   }
 
   void
@@ -185,26 +183,50 @@ struct TempAirspaceType
     airspace_database.Add(as);
   }
 
+  static int
+  ArcStepWidth(fixed radius)
+  {
+    if (radius > fixed(50000))
+      return 1;
+    if (radius > fixed(25000))
+      return 2;
+    if (radius > fixed(10000))
+      return 3;
+
+    return 5;
+  }
+
   void
   AppendArc(const GeoPoint start, const GeoPoint end)
   {
-    // 5 or -5, depending on direction
-    const Angle step = Angle::Degrees(rotation * fixed(5));
 
     // Determine start bearing and radius
     const GeoVector v = center.DistanceBearing(start);
     Angle start_bearing = v.bearing;
     const fixed radius = v.distance;
 
+    // 5 or -5, depending on direction
+    const auto _step = ArcStepWidth(radius);
+    const Angle step = Angle::Degrees(rotation * _step);
+    const fixed threshold = _step * fixed(1.5);
+
     // Determine end bearing
     Angle end_bearing = center.Bearing(end);
+
+    if (rotation > 0) {
+      while (end_bearing < start_bearing)
+        end_bearing += Angle::FullCircle();
+    } else if (rotation < 0) {
+      while (end_bearing > start_bearing)
+        end_bearing -= Angle::FullCircle();
+    }
 
     // Add first polygon point
     points.push_back(start);
 
     // Add intermediate polygon points
-    while ((end_bearing - start_bearing).AbsoluteDegrees() > fixed_7_5) {
-      start_bearing = (start_bearing + step).AsBearing();
+    while ((end_bearing - start_bearing).AbsoluteDegrees() > threshold) {
+      start_bearing += step;
       points.push_back(FindLatitudeLongitude(center, start_bearing, radius));
     }
 
@@ -216,14 +238,24 @@ struct TempAirspaceType
   AppendArc(Angle start, Angle end)
   {
     // 5 or -5, depending on direction
-    const Angle step = Angle::Degrees(rotation * fixed(5));
+    const auto _step = ArcStepWidth(radius);
+    const Angle step = Angle::Degrees(rotation * _step);
+    const fixed threshold = _step * fixed(1.5);
+
+    if (rotation > 0) {
+      while (end < start)
+        end += Angle::FullCircle();
+    } else if (rotation < 0) {
+      while (end > start)
+        end -= Angle::FullCircle();
+    }
 
     // Add first polygon point
     points.push_back(FindLatitudeLongitude(center, start, radius));
 
     // Add intermediate polygon points
-    while ((end - start).AbsoluteDegrees() > fixed_7_5) {
-      start = (start + step).AsBearing();
+    while ((end - start).AbsoluteDegrees() > threshold) {
+      start += step;
       points.push_back(FindLatitudeLongitude(center, start, radius));
     }
 
@@ -247,7 +279,7 @@ ReadAltitude(const TCHAR *buffer, AirspaceAltitude &altitude)
 {
   Unit unit = Unit::FEET;
   enum { MSL, AGL, SFC, FL, STD, UNLIMITED } type = MSL;
-  fixed value = fixed_zero;
+  fixed value = fixed(0);
 
   const TCHAR *p = buffer;
   while (true) {
@@ -294,18 +326,18 @@ ReadAltitude(const TCHAR *buffer, AirspaceAltitude &altitude)
 
   switch (type) {
   case FL:
-    altitude.type = AirspaceAltitude::Type::FL;
+    altitude.reference = AltitudeReference::STD;
     altitude.flight_level = value;
     return;
 
   case UNLIMITED:
-    altitude.type = AirspaceAltitude::Type::MSL;
+    altitude.reference = AltitudeReference::MSL;
     altitude.altitude = fixed(50000);
     return;
 
   case SFC:
-    altitude.type = AirspaceAltitude::Type::AGL;
-    altitude.altitude_above_terrain = fixed_minus_one;
+    altitude.reference = AltitudeReference::AGL;
+    altitude.altitude_above_terrain = fixed(-1);
     return;
 
   default:
@@ -316,17 +348,17 @@ ReadAltitude(const TCHAR *buffer, AirspaceAltitude &altitude)
   value = Units::ToSysUnit(value, unit);
   switch (type) {
   case MSL:
-    altitude.type = AirspaceAltitude::Type::MSL;
+    altitude.reference = AltitudeReference::MSL;
     altitude.altitude = value;
     return;
 
   case AGL:
-    altitude.type = AirspaceAltitude::Type::AGL;
+    altitude.reference = AltitudeReference::AGL;
     altitude.altitude_above_terrain = value;
     return;
 
   case STD:
-    altitude.type = AirspaceAltitude::Type::FL;
+    altitude.reference = AltitudeReference::STD;
     altitude.flight_level = Units::ToUserUnit(value, Unit::FLIGHT_LEVEL);
     return;
 
@@ -369,7 +401,7 @@ ReadCoords(const TCHAR *buffer, GeoPoint &point)
     }
   }
 
-  point.latitude = Angle::Degrees(fixed(deg));
+  point.latitude = Angle::Degrees(deg);
 
   if (*endptr == ' ')
     endptr++;
@@ -408,7 +440,7 @@ ReadCoords(const TCHAR *buffer, GeoPoint &point)
     }
   }
 
-  point.longitude = Angle::Degrees(fixed(deg));
+  point.longitude = Angle::Degrees(deg);
 
   if (*endptr == ' ')
     endptr++;
@@ -429,8 +461,8 @@ ParseArcBearings(const TCHAR *buffer, TempAirspaceType &temp_area)
   // Determine radius and start/end bearing
   TCHAR *endptr;
   temp_area.radius = Units::ToSysUnit(fixed(_tcstod(&buffer[2], &endptr)), Unit::NAUTICAL_MILES);
-  Angle start_bearing = Angle::Degrees(fixed(_tcstod(&endptr[1], &endptr))).AsBearing();
-  Angle end_bearing = Angle::Degrees(fixed(_tcstod(&endptr[1], &endptr))).AsBearing();
+  Angle start_bearing = Angle::Degrees(_tcstod(&endptr[1], &endptr)).AsBearing();
+  Angle end_bearing = Angle::Degrees(_tcstod(&endptr[1], &endptr)).AsBearing();
 
   temp_area.AppendArc(start_bearing, end_bearing);
 }
@@ -633,8 +665,18 @@ ParseClassTNP(const TCHAR *buffer)
 static AirspaceClass
 ParseTypeTNP(const TCHAR *buffer)
 {
+  // Handle e.g. "TYPE=CLASS C" properly
+  const TCHAR *type = StringAfterPrefixCI(buffer, _T("CLASS "));
+  if (type) {
+    AirspaceClass _class = ParseClassTNP(type);
+    if (_class != OTHER)
+      return _class;
+  } else {
+    type = buffer;
+  }
+
   for (unsigned i = 0; i < ARRAY_SIZE(airspace_tnp_type_strings); i++)
-    if (StringIsEqualIgnoreCase(buffer, airspace_tnp_type_strings[i].string))
+    if (StringIsEqualIgnoreCase(type, airspace_tnp_type_strings[i].string))
       return airspace_tnp_type_strings[i].type;
 
   return OTHER;
@@ -656,7 +698,7 @@ ParseCoordsTNP(const TCHAR *buffer, GeoPoint &point)
   min = labs((sec - deg * 10000) / 100);
   sec = sec - min * 100 - deg * 10000;
 
-  point.latitude = Angle::DMS(fixed(deg), fixed(min), fixed(sec));
+  point.latitude = Angle::DMS(deg, min, sec);
   if (negative)
     point.latitude.Flip();
 
@@ -673,7 +715,7 @@ ParseCoordsTNP(const TCHAR *buffer, GeoPoint &point)
   min = labs((sec - deg * 10000) / 100);
   sec = sec - min * 100 - deg * 10000;
 
-  point.longitude = Angle::DMS(fixed(deg), fixed(min), fixed(sec));
+  point.longitude = Angle::DMS(deg, min, sec);
   if (negative)
     point.longitude.Flip();
 
@@ -840,7 +882,7 @@ AirspaceParser::Parse(TLineReader &reader, OperationEnvironment &operation)
   // Create and init ProgressDialog
   operation.SetProgressRange(1024);
 
-  long file_size = reader.size();
+  const long file_size = reader.GetSize();
 
   TempAirspaceType temp_area;
   AirspaceFileType filetype = AFT_UNKNOWN;
@@ -848,7 +890,7 @@ AirspaceParser::Parse(TLineReader &reader, OperationEnvironment &operation)
   TCHAR *line;
 
   // Iterate through the lines
-  for (unsigned line_num = 1; (line = reader.read()) != NULL; line_num++) {
+  for (unsigned line_num = 1; (line = reader.ReadLine()) != NULL; line_num++) {
     // Skip empty line
     if (StringIsEmpty(line))
       continue;
@@ -872,7 +914,7 @@ AirspaceParser::Parse(TLineReader &reader, OperationEnvironment &operation)
 
     // Update the ProgressDialog
     if ((line_num & 0xff) == 0)
-      operation.SetProgressPosition(reader.tell() * 1024 / file_size);
+      operation.SetProgressPosition(reader.Tell() * 1024 / file_size);
   }
 
   if (filetype == AFT_UNKNOWN) {

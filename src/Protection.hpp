@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_PROTECTION_HPP
 #define XCSOAR_PROTECTION_HPP
 
-#include "Thread/Flag.hpp"
 #include "Thread/Mutex.hpp"
 
 /**
@@ -69,20 +68,7 @@ TriggerAirspaceWarning();
 
 void CreateCalculationThread();
 
-// changed only in config or by user interface
-// used in settings dialog
-extern bool DevicePortChanged;
-extern bool AirspaceFileChanged;
-extern bool WaypointFileChanged;
-extern bool AirfieldFileChanged;
-extern bool PolarFileChanged;
-extern bool LanguageFileChanged;
-extern bool StatusFileChanged;
-extern bool InputFileChanged;
-extern bool MapFileChanged;
-extern bool LanguageChanged;
-
-extern Flag globalRunningEvent;
+extern bool global_running;
 
 /**
  * Suspend all threads which have unprotected access to shared data.

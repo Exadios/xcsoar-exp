@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -46,6 +46,19 @@ GetV60InfoBoxManagerConfig(InfoBoxSettings &settings) {
   }
 }
 
+static bool
+GetIBType(const TCHAR *key, InfoBoxFactory::Type &val)
+{
+  unsigned _val = val;
+  bool ret = ProfileMap::Get(key, _val);
+
+  if (_val >= e_NUM_TYPES)
+    return false;
+
+  val = (InfoBoxFactory::Type)_val;
+  return ret;
+}
+
 void
 Profile::Load(InfoBoxSettings &settings)
 {
@@ -75,7 +88,7 @@ Profile::Load(InfoBoxSettings &settings)
 
     for (unsigned j = 0; j < panel.MAX_CONTENTS; ++j) {
       _stprintf(profileKey, _T("InfoBoxPanel%uBox%u"), i, j);
-      Get(profileKey, panel.contents[j]);
+      GetIBType(profileKey, panel.contents[j]);
     }
   }
 }

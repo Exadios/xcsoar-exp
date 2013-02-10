@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -45,12 +45,26 @@ manhattan_distance(RasterPoint a, RasterPoint b)
   return abs(a.x - b.x) + abs(a.y - b.y);
 }
 
-gcc_const
-static inline PixelSize
-GetPixelRectSize(const PixelRect rc)
+gcc_pure
+static inline bool
+OverlapsRect(const PixelRect &a, const PixelRect &b)
 {
-  return { PixelScalar(rc.right - rc.left),
-      PixelScalar(rc.bottom - rc.top) };
+  return a.left < b.right && b.left <= a.right &&
+    a.top <= b.bottom && b.top <= a.bottom;
+}
+
+static inline void
+SetRect(PixelRect &rc, PixelScalar left, PixelScalar top,
+        PixelScalar right, PixelScalar bottom)
+{
+#ifdef USE_GDI
+  SetRect(&rc, left, top, right, bottom);
+#else
+  rc.left = left;
+  rc.top = top;
+  rc.right = right;
+  rc.bottom = bottom;
+#endif
 }
 
 #endif

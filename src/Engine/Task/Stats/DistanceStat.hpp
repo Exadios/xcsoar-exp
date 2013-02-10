@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,10 +23,6 @@
 #define DISTANCE_STAT_HPP
 
 #include "Math/fixed.hpp"
-
-#ifdef DO_PRINT
-#include <iostream>
-#endif
 
 #include "Math/Filter.hpp"
 #include "Math/AvFilter.hpp"
@@ -53,9 +49,9 @@ protected:
 
 public:
   void Reset() {
-    distance = fixed_minus_one;
-    speed = fixed_zero;
-    speed_incremental = fixed_zero;
+    distance = fixed(-1);
+    speed = fixed(0);
+    speed_incremental = fixed(0);
   }
 
   bool IsDefined() const {
@@ -104,11 +100,6 @@ public:
 
     return speed_incremental;
   }
-
-#ifdef DO_PRINT
-  friend std::ostream& operator<< (std::ostream& o, 
-                                   const DistanceStat& ds);
-#endif
 };
 
 /**

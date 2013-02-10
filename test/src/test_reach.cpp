@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,20 +33,21 @@
 #include "GlideSolvers/GlidePolar.hpp"
 #include "Geo/SpeedVector.hpp"
 #include "Operation/Operation.hpp"
+#include "OS/FileUtil.hpp"
 
 static void test_reach(const RasterMap& map, fixed mwind, fixed mc)
 {
   GlideSettings settings;
   settings.SetDefaults();
   GlidePolar polar(mc);
-  SpeedVector wind(Angle::Degrees(fixed(0)), mwind);
+  SpeedVector wind(Angle::Degrees(0), mwind);
   TerrainRoute route;
   route.UpdatePolar(settings, polar, polar, wind);
   route.SetTerrain(&map);
 
   GeoPoint origin(map.GetMapCenter());
 
-  fixed pd = map.pixel_distance(origin, 1);
+  fixed pd = map.PixelDistance(origin, 1);
   printf("# pixel size %g\n", (double)pd);
 
   bool retval= true;
@@ -62,19 +63,20 @@ static void test_reach(const RasterMap& map, fixed mwind, fixed mc)
 
   PrintHelper::print_reach_tree(route);
 
-  GeoPoint dest(origin.longitude-Angle::Degrees(fixed(0.02)),
-                origin.latitude-Angle::Degrees(fixed(0.02)));
+  GeoPoint dest(origin.longitude-Angle::Degrees(0.02),
+                origin.latitude-Angle::Degrees(0.02));
 
   {
-    std::ofstream fout ("results/terrain.txt");
+    Directory::Create(_T("output/results"));
+    std::ofstream fout("output/results/terrain.txt");
     unsigned nx = 100;
     unsigned ny = 100;
     for (unsigned i=0; i< nx; ++i) {
       for (unsigned j=0; j< ny; ++j) {
-        fixed fx = (fixed)i/(nx-1)*fixed_two-fixed_one;
-        fixed fy = (fixed)j/(ny-1)*fixed_two-fixed_one;
-        GeoPoint x(origin.longitude+Angle::Degrees(fixed(0.6)*fx),
-                   origin.latitude+Angle::Degrees(fixed(0.6)*fy));
+        fixed fx = (fixed)i / (nx - 1) * 2 - fixed(1);
+        fixed fy = (fixed)j / (ny - 1) * 2 - fixed(1);
+        GeoPoint x(origin.longitude + Angle::Degrees(fixed(0.6) * fx),
+                   origin.latitude + Angle::Degrees(fixed(0.6) * fy));
         short h = map.GetInterpolatedHeight(x);
         AGeoPoint adest(x, RoughAltitude(h));
         ReachResult reach;
@@ -118,7 +120,7 @@ int main(int argc, char** argv) {
   } while (map.IsDirty());
 
   plan_tests(1);
-  test_reach(map, fixed_zero, fixed(0.1));
+  test_reach(map, fixed(0), fixed(0.1));
 
   return exit_status();
 }

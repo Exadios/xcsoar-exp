@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -47,11 +47,11 @@ main(int argc, char **argv)
   plan_tests(14);
 
   TCHAR buffer[256];
-  GeoPoint location1(Angle::Degrees(fixed(8.466322)),
-                     Angle::Degrees(fixed(49.487153)));
+  GeoPoint location1(Angle::Degrees(8.466322),
+                     Angle::Degrees(49.487153));
 
-  GeoPoint location2(Angle::Degrees(fixed(-70.011667)),
-                     Angle::Degrees(fixed(-32.653333)));
+  GeoPoint location2(Angle::Degrees(-70.011667),
+                     Angle::Degrees(-32.653333));
 
   // Test DD.dddd
   FormatGeoPoint(location1, buffer, ARRAY_SIZE(buffer),

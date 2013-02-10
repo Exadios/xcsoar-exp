@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
 #include "Units/System.hpp"
 
 #include <cstdio>
+#include <stdlib.h>
 
 bool
 ParsePolarShape(PolarShape &shape, const TCHAR *s)
@@ -106,8 +107,8 @@ ParsePolar(PolarInfo &polar_r, const TCHAR *s)
     return false;
 
   polar.shape[2].w = fixed(_tcstod(p + 1, &p));
-  polar.wing_area = (*p != _T(',')) ? fixed_zero : fixed(_tcstod(p + 1, &p));
-  polar.v_no = (*p != _T(',')) ? fixed_zero : fixed(_tcstod(p + 1, &p));
+  polar.wing_area = (*p != _T(',')) ? fixed(0) : fixed(_tcstod(p + 1, &p));
+  polar.v_no = (*p != _T(',')) ? fixed(0) : fixed(_tcstod(p + 1, &p));
 
   polar_r = polar;
   return true;

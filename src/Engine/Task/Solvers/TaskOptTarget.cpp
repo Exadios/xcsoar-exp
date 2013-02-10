@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include "Task/Ordered/Points/AATPoint.hpp"
 #include "Task/Ordered/Points/StartPoint.hpp"
 #include "Util/Tolerances.hpp"
+#include "Util/Clamp.hpp"
 
 TaskOptTarget::TaskOptTarget(const std::vector<OrderedTaskPoint*>& tps,
                              const unsigned activeTaskPoint,
@@ -34,7 +35,7 @@ TaskOptTarget::TaskOptTarget(const std::vector<OrderedTaskPoint*>& tps,
                              const TaskProjection &projection,
                              StartPoint *_ts)
   :ZeroFinder(fixed(0.02), fixed(0.98), fixed(TOLERANCE_OPT_TARGET)),
-   tm(tps, activeTaskPoint, settings, _gp),
+   tm(tps.cbegin(), tps.cend(), activeTaskPoint, settings, _gp),
    aircraft(_aircraft),
    tp_start(_ts),
    tp_current(_tp_current),
@@ -65,7 +66,7 @@ TaskOptTarget::search(const fixed tp)
 {
   if (tp_current.IsTargetLocked()) {
     // can't move, don't bother
-    return -fixed_one;
+    return fixed(-1);
   }
   if (iso.IsValid()) {
     tm.target_save();
@@ -73,19 +74,19 @@ TaskOptTarget::search(const fixed tp)
     if (!valid(t)) {
       // invalid, so restore old value
       tm.target_restore();
-      return -fixed_one;
+      return fixed(-1);
     } else {
       return t;
     }
   } else {
-    return -fixed_one;
+    return fixed(-1);
   }
 }
 
 void
 TaskOptTarget::SetTarget(const fixed p)
 {
-  const GeoPoint loc = iso.Parametric(min(xmax, max(xmin, p)));
+  const GeoPoint loc = iso.Parametric(Clamp(p, xmin, xmax));
   tp_current.SetTarget(loc);
   tp_start->ScanDistanceRemaining(aircraft.location);
 }

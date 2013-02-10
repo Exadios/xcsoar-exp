@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ Copyright_License {
 
 class ZanderDevice : public AbstractDevice {
 public:
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 };
 
 static bool
@@ -87,7 +87,7 @@ PZAN3(NMEAInputLine &line, NMEAInfo &info)
   }
 
   if (okay == 'A') {
-    SpeedVector wind(Angle::Degrees(fixed(direction)),
+    SpeedVector wind(Angle::Degrees(direction),
                      Units::ToSysUnit(fixed(speed), Unit::KILOMETER_PER_HOUR));
     info.ProvideExternalWind(wind);
   }
@@ -115,16 +115,13 @@ PZAN5(NMEAInputLine &line, NMEAInfo &info)
   char state[3];
   line.Read(state, 3);
 
-  if (strcmp(state, "SF") == 0) {
-    info.switch_state.flight_mode = SwitchInfo::FlightMode::CRUISE;
-    info.switch_state.speed_command = true;
-  } else if (strcmp(state, "VA") == 0) {
-    info.switch_state.flight_mode = SwitchInfo::FlightMode::CIRCLING;
-    info.switch_state.speed_command = false;
-  } else
-    return false;
+  if (strcmp(state, "SF") == 0)
+    info.switch_state.flight_mode = SwitchState::FlightMode::CRUISE;
+  else if (strcmp(state, "VA") == 0)
+    info.switch_state.flight_mode = SwitchState::FlightMode::CIRCLING;
+  else
+    info.switch_state.flight_mode = SwitchState::FlightMode::UNKNOWN;
 
-  info.switch_state_available = true;
   return true;
 }
 
@@ -162,7 +159,7 @@ ZanderCreateOnPort(const DeviceConfig &config, Port &com_port)
   return new ZanderDevice();
 }
 
-const struct DeviceRegister zanderDevice = {
+const struct DeviceRegister zander_driver = {
   _T("Zander"),
   _T("Zander / SDI"),
   DeviceRegister::RECEIVE_SETTINGS,

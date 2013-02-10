@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,26 +23,14 @@ Copyright_License {
 
 #include "VarioSynthesiser.hpp"
 #include "Math/FastMath.h"
-#include "Util/Macros.hpp"
+#include "Util/Clamp.hpp"
 
 #include <algorithm>
 
 /**
  * The minimum and maximum vario range for the constants below [cm/s].
  */
-static const int min_vario = -500, max_vario = 500;
-
-/**
- * The vario range of the "dead band" during which no sound is emitted
- * [cm/s].
- */
-static const int min_dead = -30, max_dead = 10;
-
-static int
-Clamp(int value, int min, int max)
-{
-  return std::max(std::min(value, max), min);
-}
+static constexpr int min_vario = -500, max_vario = 500;
 
 unsigned
 VarioSynthesiser::VarioToFrequency(int ivario)
@@ -53,21 +41,16 @@ VarioSynthesiser::VarioToFrequency(int ivario)
     : (zero_frequency - (unsigned)(ivario * (int)(zero_frequency - min_frequency) / min_vario));
 }
 
-gcc_const
-static bool
-InDeadBand(int ivario)
-{
-  return ivario >= min_dead && ivario <= max_dead;
-}
-
 void
 VarioSynthesiser::SetVario(unsigned sample_rate, fixed vario)
 {
+  const ScopeLock protect(mutex);
+
   const int ivario = Clamp((int)(vario * 100), min_vario, max_vario);
 
   if (dead_band_enabled && InDeadBand(ivario)) {
     /* inside the "dead band" */
-    SetSilence();
+    UnsafeSetSilence();
     return;
   }
 
@@ -104,6 +87,13 @@ VarioSynthesiser::SetVario(unsigned sample_rate, fixed vario)
 void
 VarioSynthesiser::SetSilence()
 {
+  const ScopeLock protect(mutex);
+  UnsafeSetSilence();
+}
+
+void
+VarioSynthesiser::UnsafeSetSilence()
+{
   audible_count = 0;
   silence_count = 1;
 
@@ -116,9 +106,12 @@ VarioSynthesiser::SetSilence()
   silence_remaining = 0;
 }
 
+
 void
 VarioSynthesiser::Synthesise(int16_t *buffer, size_t n)
 {
+  const ScopeLock protect(mutex);
+
   assert(audible_count > 0 || silence_count > 0);
 
   if (silence_count == 0) {

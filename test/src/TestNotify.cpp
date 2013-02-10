@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,17 +21,32 @@
 */
 
 #include "Thread/Thread.hpp"
-#include "Thread/Notify.hpp"
-#include "Screen/TopWindow.hpp"
+#include "Event/Notify.hpp"
 #include "Screen/Init.hpp"
 #include "TestUtil.hpp"
 
 #ifdef ANDROID
-#include "Screen/Android/Event.hpp"
+#include "Event/Android/Loop.hpp"
+#include "Event/Android/Event.hpp"
+#include "Android/Main.hpp"
+#elif defined(USE_EGL)
+#include "Event/EGL/Event.hpp"
+#include "Event/EGL/Loop.hpp"
+#include "Event/EGL/Globals.hpp"
+#include "Screen/TopWindow.hpp"
 #elif defined(ENABLE_SDL)
-#include "Screen/SDL/Event.hpp"
+#include "Event/SDL/Event.hpp"
+#include "Event/SDL/Loop.hpp"
 #else
-#include "Screen/GDI/Event.hpp"
+#include "Event/GDI/Event.hpp"
+#include "Event/GDI/Loop.hpp"
+#endif
+
+#ifdef USE_EGL
+/* avoid TopWindow.cpp from being linked, as it brings some heavy
+   dependencies */
+void TopWindow::Refresh() {}
+bool TopWindow::OnEvent(const Event &event) { return false; }
 #endif
 
 static bool quit;
@@ -61,30 +76,19 @@ int main(int argc, char **argv)
 
   ScreenGlobalInit screen;
 
-#ifdef ANDROID
-  TopWindow main_window;
-  EventLoop loop(*event_queue, main_window);
-  Event event;
-#elif defined(ENABLE_SDL)
-  TopWindow main_window;
-  EventLoop loop(main_window);
-  SDL_Event event;
+#if defined(ANDROID) || defined(USE_EGL)
+  EventLoop loop(*event_queue);
 #else
   EventLoop loop;
-  MSG event;
 #endif
+  Event event;
 
   TestNotify notify;
   TestThread thread(notify);
   thread.Start();
 
-#ifndef USE_GDI
   while (!quit && loop.Get(event))
     loop.Dispatch(event);
-#else
-  while (!quit && loop.Get(event))
-    loop.Dispatch(event);
-#endif
 
   ok1(quit);
 

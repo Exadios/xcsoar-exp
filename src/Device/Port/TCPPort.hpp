@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,10 @@ Copyright_License {
 #define XCSOAR_DEVICE_TCP_PORT_HPP
 
 #include "SocketPort.hpp"
+
+#ifndef HAVE_POSIX
 #include "Thread/Trigger.hpp"
+#endif
 
 /**
  * A TCP listener port class.
@@ -36,9 +39,9 @@ class TCPPort : public SocketPort
 
 #ifndef HAVE_POSIX
   SocketThread thread;
-#endif
 
   Trigger closed_trigger;
+#endif
 
 public:
   /**
@@ -66,11 +69,11 @@ public:
   bool Open(unsigned port);
 
   /* overrided virtual methods from SocketPort */
-  virtual bool IsValid() const;
+  virtual PortState GetState() const override;
 
 protected:
   /* virtual methods from class FileEventHandler */
-  virtual bool OnFileEvent(int fd, unsigned mask);
+  virtual bool OnFileEvent(int fd, unsigned mask) override;
 };
 
 #endif

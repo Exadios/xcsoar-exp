@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -61,22 +61,19 @@ static bool
 IsTaskLegVisible(const OrderedTaskPoint &tp)
 {
   switch (tp.GetType()) {
-  case TaskPoint::START:
+  case TaskPointType::START:
     return tp.HasExited();
 
-  case TaskPoint::FINISH:
-  case TaskPoint::AAT:
-  case TaskPoint::AST:
+  case TaskPointType::FINISH:
+  case TaskPointType::AAT:
+  case TaskPointType::AST:
     return tp.HasEntered();
 
-  case TaskPoint::UNORDERED:
-  case TaskPoint::ROUTE:
+  case TaskPointType::UNORDERED:
     break;
   }
 
-  /* not reachable */
-  assert(false);
-  return false;
+  gcc_unreachable();
 }
 
 static void
@@ -86,11 +83,13 @@ DrawLegs(ChartRenderer &chart,
          const DerivedInfo& calculated,
          const bool task_relative)
 {
-  if (!calculated.common_stats.task_started)
+  const TaskStats &task_stats = calculated.ordered_task_stats;
+
+  if (!task_stats.task_started)
     return;
 
   const fixed start_time = task_relative
-    ? basic.time - calculated.common_stats.task_time_elapsed
+    ? basic.time - task_stats.total.time_elapsed
     : calculated.flight.takeoff_time;
 
   const OrderedTask &task = task_manager.GetOrderedTask();
@@ -128,7 +127,7 @@ RenderBarographSpark(Canvas &canvas, const PixelRect rc,
 
   chart.ScaleXFromData(fs.altitude);
   chart.ScaleYFromData(fs.altitude);
-  chart.ScaleYFromValue(fixed_zero);
+  chart.ScaleYFromValue(fixed(0));
 
   if (_task != NULL) {
     ProtectedTaskManager::Lease task(*_task);
@@ -163,8 +162,8 @@ RenderBarograph(Canvas &canvas, const PixelRect rc,
 
   chart.ScaleXFromData(fs.altitude);
   chart.ScaleYFromData(fs.altitude);
-  chart.ScaleYFromValue(fixed_zero);
-  chart.ScaleXFromValue(fs.altitude.x_min + fixed_one); // in case no data
+  chart.ScaleYFromValue(fixed(0));
+  chart.ScaleXFromValue(fs.altitude.x_min + fixed(1)); // in case no data
   chart.ScaleXFromValue(fs.altitude.x_min);
 
   if (_task != NULL) {
@@ -179,11 +178,10 @@ RenderBarograph(Canvas &canvas, const PixelRect rc,
   canvas.SelectWhitePen();
   canvas.SelectWhiteBrush();
 
-  chart.DrawXGrid(fixed_half, fs.altitude.x_min,
-                  ChartLook::STYLE_THINDASHPAPER,
-                  fixed_half, true);
+  chart.DrawXGrid(fixed(0.5),
+                  ChartLook::STYLE_THINDASHPAPER, fixed(0.5), true);
   chart.DrawYGrid(Units::ToSysAltitude(fixed(1000)),
-                  fixed_zero, ChartLook::STYLE_THINDASHPAPER, fixed(1000), true);
+                  ChartLook::STYLE_THINDASHPAPER, fixed(1000), true);
   chart.DrawLineGraph(fs.altitude, ChartLook::STYLE_MEDIUMBLACK);
 
   chart.DrawTrend(fs.altitude_base, ChartLook::STYLE_BLUETHIN);
@@ -210,16 +208,16 @@ RenderSpeed(Canvas &canvas, const PixelRect rc,
 
   chart.ScaleXFromData(fs.task_speed);
   chart.ScaleYFromData(fs.task_speed);
-  chart.ScaleYFromValue(fixed_zero);
-  chart.ScaleXFromValue(fs.task_speed.x_min + fixed_one); // in case no data
+  chart.ScaleYFromValue(fixed(0));
+  chart.ScaleXFromValue(fs.task_speed.x_min + fixed(1)); // in case no data
   chart.ScaleXFromValue(fs.task_speed.x_min);
 
   DrawLegs(chart, task, nmea_info, derived_info, true);
 
-  chart.DrawXGrid(fixed_half, fs.task_speed.x_min,
-                  ChartLook::STYLE_THINDASHPAPER, fixed_half, true);
-  chart.DrawYGrid(Units::ToSysTaskSpeed(fixed_ten),
-                  fixed_zero, ChartLook::STYLE_THINDASHPAPER, fixed(10), true);
+  chart.DrawXGrid(fixed(0.5),
+                  ChartLook::STYLE_THINDASHPAPER, fixed(0.5), true);
+  chart.DrawYGrid(Units::ToSysTaskSpeed(fixed(10)),
+                  ChartLook::STYLE_THINDASHPAPER, fixed(10), true);
   chart.DrawLineGraph(fs.task_speed, ChartLook::STYLE_MEDIUMBLACK);
   chart.DrawTrend(fs.task_speed, ChartLook::STYLE_BLUETHIN);
 

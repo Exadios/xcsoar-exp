@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@
 #include "Blackboard/BaseBlackboard.hpp"
 #include "TerrainXSRenderer.hpp"
 #include "AirspaceXSRenderer.hpp"
-#include "Screen/Point.hpp"
 
+struct PixelRect;
 struct MoreData;
 struct CrossSectionLook;
 struct AirspaceLook;
@@ -46,7 +46,11 @@ class CrossSectionRenderer :
   public BaseBlackboard
 {
 public:
-  static const unsigned NUM_SLICES = 16;
+#ifdef _WIN32_WCE
+  static constexpr unsigned NUM_SLICES = 16;
+#else
+  static constexpr unsigned NUM_SLICES = 64;
+#endif
 
 protected:
   const CrossSectionLook &look;

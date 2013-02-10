@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ public:
     :data(_width, _height) {}
 
   bool IsDefined() const {
-    return data.Defined();
+    return data.IsDefined();
   }
 
   unsigned GetWidth() const {
@@ -84,6 +84,14 @@ public:
 
   unsigned GetHeight() const {
     return data.GetHeight();
+  }
+
+  unsigned GetFineWidth() const {
+    return GetWidth() << 8;
+  }
+
+  unsigned GetFineHeight() const {
+    return GetHeight() << 8;
   }
 
   short *GetData() {

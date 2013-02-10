@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ Copyright_License {
 #ifdef ENABLE_OPENGL
 #include "Projection/Projection.hpp"
 #include "Screen/OpenGL/Triangulate.hpp"
-#include "Geo/Constants.hpp"
+#include "Geo/Math.hpp"
 #endif
 
 #include <algorithm>
@@ -100,10 +100,11 @@ XShape::XShape(shapefileObj *shpfile, int i, int label_field)
   msInitShape(&shape);
   msSHPReadShape(shpfile->hSHP, i, &shape);
 
-  bounds.west = Angle::Degrees(fixed(shape.bounds.minx));
-  bounds.south = Angle::Degrees(fixed(shape.bounds.miny));
-  bounds.east = Angle::Degrees(fixed(shape.bounds.maxx));
-  bounds.north = Angle::Degrees(fixed(shape.bounds.maxy));
+  bounds = GeoBounds(GeoPoint(Angle::Degrees(fixed(shape.bounds.minx)),
+                              Angle::Degrees(fixed(shape.bounds.maxy))),
+                     GeoPoint(Angle::Degrees(fixed(shape.bounds.maxx)),
+                              Angle::Degrees(fixed(shape.bounds.miny))));
+
 #ifdef ENABLE_OPENGL
   center = bounds.GetCenter();
 #endif
@@ -253,8 +254,7 @@ XShape::BuildIndices(unsigned thinning_level, unsigned min_distance)
     // TODO: free memory saved by thinning (use malloc/realloc or some class?)
     return true;
   } else {
-    assert(false);
-    return false;
+    gcc_unreachable();
   }
 }
 
@@ -279,9 +279,8 @@ XShape::geo_to_shape(const GeoPoint &origin, const GeoPoint &point) const
 
   ShapePoint pt;
   pt.x = (ShapeScalar)fast_mult(point.latitude.fastcosine(),
-                                fast_mult(d.longitude.Radians(),
-                                          fixed_earth_r, 12), 16);
-  pt.y = (ShapeScalar)-fast_mult(d.latitude.Radians(), fixed_earth_r, 12);
+                                AngleToEarthDistance(d.longitude), 16);
+  pt.y = (ShapeScalar)-AngleToEarthDistance(d.latitude);
   return pt;
 }
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@ Copyright_License {
 
 #include "Device/Driver.hpp"
 #include "Device/SettingsMap.hpp"
-#include "Atmosphere/Pressure.hpp"
 #include "Thread/Mutex.hpp"
+#include "Volatile.hpp"
 
 class NMEAInputLine;
 
@@ -35,26 +35,15 @@ class VegaDevice : public AbstractDevice {
 private:
   Port &port;
 
-  /**
-   * The most recent MacCready setting, written by PutMacCready(),
-   * read by VarioWriteSettings().
-   */
-  fixed mc;
-
-  /**
-   * The most recent QNH value, written by SetQNH(), read by
-   * VarioWriteSettings().
-   */
-  AtmosphericPressure qnh;
-
   bool detected;
+
+  Vega::VolatileData volatile_data;
 
   DeviceSettingsMap<int> settings;
 
 public:
   VegaDevice(Port &_port)
     :port(_port),
-     mc(fixed_zero), qnh(AtmosphericPressure::Standard()),
      detected(false) {}
 
   /**
@@ -83,18 +72,16 @@ public:
   std::pair<bool, int> GetSetting(const char *name) const;
 
 protected:
-  void VarioWriteSettings(const DerivedInfo &calculated,
-                          OperationEnvironment &env) const;
-
   bool PDVSC(NMEAInputLine &line, NMEAInfo &info);
 
 public:
-  virtual void LinkTimeout();
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
-  virtual bool PutMacCready(fixed mc, OperationEnvironment &env);
+  virtual void LinkTimeout() override;
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
+  virtual bool PutMacCready(fixed mc, OperationEnvironment &env) override;
   virtual bool PutQNH(const AtmosphericPressure& pres,
-                      OperationEnvironment &env);
-  virtual void OnSysTicker(const DerivedInfo &calculated);
+                      OperationEnvironment &env) override;
+  virtual void OnCalculatedUpdate(const MoreData &basic,
+                                  const DerivedInfo &calculated) override;
 };
 
 #endif

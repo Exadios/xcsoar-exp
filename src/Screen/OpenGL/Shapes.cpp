@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Compute5r - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #include "Screen/OpenGL/Shapes.hpp"
 #include "Screen/OpenGL/Buffer.hpp"
 #include "Screen/OpenGL/Globals.hpp"
-#include "Math/FastMath.h"
+#include "Math/FastTrig.hpp"
 
 static GLshort circle_data[OpenGL::CIRCLE_SIZE * 2];
 static GLshort small_circle_data[OpenGL::SMALL_CIRCLE_SIZE * 2];
@@ -78,8 +78,8 @@ OpenGL::DeinitShapes()
     return;
 
   delete circle_buffer;
-  circle_buffer = NULL;
+  circle_buffer = nullptr;
 
   delete small_circle_buffer;
-  small_circle_buffer = NULL;
+  small_circle_buffer = nullptr;
 }

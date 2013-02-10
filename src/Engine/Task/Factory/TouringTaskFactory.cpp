@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -63,10 +63,10 @@ TouringTaskFactory::UpdateOrderedTaskBehaviour(OrderedTaskBehaviour& to)
 {
   AbstractTaskFactory::UpdateOrderedTaskBehaviour(to);
 
-  to.aat_min_time = fixed_zero;
+  to.aat_min_time = fixed(0);
 
-  to.start_max_speed = fixed_zero;
-  to.start_max_height = 0;
-  to.start_max_height_ref = HeightReferenceType::AGL;
-  to.finish_min_height = 0;
+  to.start_constraints.max_speed = fixed(0);
+  to.start_constraints.max_height = 0;
+  to.start_constraints.max_height_ref = AltitudeReference::AGL;
+  to.finish_constraints.min_height = 0;
 }

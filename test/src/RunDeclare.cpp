@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ Copyright_License {
 #include "Profile/DeviceConfig.hpp"
 #include "Device/Port/Port.hpp"
 #include "Device/Port/ConfiguredPort.hpp"
+#include "Device/Declaration.hpp"
 #include "DebugPort.hpp"
 #include "IO/Async/GlobalIOThread.hpp"
 
@@ -64,12 +65,31 @@ NMEAParser::ReadGeoPoint(NMEAInputLine &line, GeoPoint &value_r)
   return false;
 }
 
+bool
+NMEAParser::ReadDate(NMEAInputLine &line, BrokenDate &date)
+{
+  return false;
+}
+
+bool
+NMEAParser::TimeHasAdvanced(fixed this_time, fixed &last_time, NMEAInfo &info)
+{
+  return false;
+}
+
+fixed
+NMEAParser::TimeModify(fixed fix_time, BrokenDateTime &date_time,
+                       bool date_available)
+{
+  return fixed(0);
+}
+
 static Waypoint
 MakeWaypoint(const TCHAR *name, int altitude,
              double longitude, double latitude)
 {
-  Waypoint wp(GeoPoint(Angle::Degrees(fixed(longitude)),
-                       Angle::Degrees(fixed(latitude))));
+  Waypoint wp(GeoPoint(Angle::Degrees(longitude),
+                       Angle::Degrees(latitude)));
   wp.name = name;
   wp.elevation = fixed(altitude);
   return wp;

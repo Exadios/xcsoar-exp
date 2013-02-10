@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,12 +25,16 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Waypoint/Waypoint.hpp"
 #include "Util/Macros.hpp"
+#include "Util/Clamp.hpp"
 
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
 
-static const unsigned ScaleList[] = {
+static constexpr unsigned ScaleList[] = {
+  100,
+  200,
+  300,
   500,
   1000,
   2000,
@@ -47,13 +51,12 @@ static const unsigned ScaleList[] = {
   1000000,
 };
 
-static const unsigned ScaleListCount = ARRAY_SIZE(ScaleList);
+static constexpr unsigned ScaleListCount = ARRAY_SIZE(ScaleList);
 
 bool
 MapWindowProjection::WaypointInScaleFilter(const Waypoint &way_point) const
 {
-  return (GetMapScale() <= (way_point.IsLandable() ? fixed_int_constant(20000) :
-                                                      fixed_int_constant(10000)));
+  return (GetMapScale() <= (way_point.IsLandable() ? fixed(20000) : fixed(10000)));
 }
 
 fixed
@@ -74,7 +77,7 @@ fixed
 MapWindowProjection::StepMapScale(const fixed scale, int Step) const
 {
   int i = FindMapScale(scale) + Step;
-  i = max(0, min((int)ScaleListCount - 1, i));
+  i = Clamp(i, 0, (int)ScaleListCount - 1);
   return CalculateMapScale(i);
 }
 

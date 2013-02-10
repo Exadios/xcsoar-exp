@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,11 +31,6 @@ Copyright_License {
 #include <iterator>
 #endif
 
-#include <string.h>
-#include <stdarg.h>
-
-#include <ctype.h>
-
 typedef char TCHAR;
 #define _stprintf sprintf
 #define _vstprintf vsprintf
@@ -56,31 +51,13 @@ typedef char TCHAR;
 #define _tcsrchr strrchr
 #define _tcspbrk strpbrk
 #define _tcscat strcat
-#define _tcsncat strncat
 #define _T(x) x
 #define _tfopen fopen
 #define _TEOF EOF
-#define _fgetts fgets
 #define _putts puts
 #define _stscanf sscanf
 
-#define _tcstok strtok
-#define _totupper toupper
 #define _tcstol strtol
 #define _tcstod strtod
-
-#define _istalnum isalnum
-#define _istpunct ispunct
-
-#define _tcsupr CharUpper
-
-static inline TCHAR *
-CharUpper(TCHAR *s)
-{
-  TCHAR *p;
-  for (p = s; *p != 0; ++p)
-    *p = (TCHAR)toupper(*p);
-  return s;
-}
 
 #endif

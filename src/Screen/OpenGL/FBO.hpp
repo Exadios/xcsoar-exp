@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,14 +25,8 @@ Copyright_License {
 #define XCSOAR_OPENGL_FBO_HPP
 
 #include "Features.hpp"
+#include "SystemExt.hpp"
 #include "Compiler.h"
-
-#ifdef HAVE_GLES
-#include <GLES/gl.h>
-#include <GLES/glext.h>
-#else
-#include <SDL/SDL_opengl.h>
-#endif
 
 /**
  * Support for OpenGL framebuffer objects (GL_*_framebuffer_object).
@@ -60,8 +54,6 @@ namespace FBO {
   void BindFramebuffer(GLenum target, GLuint framebuffer);
   void DeleteFramebuffers(GLsizei n, GLuint *framebuffers);
   void GenFramebuffers(GLsizei n, GLuint *framebuffers);
-  void FramebufferRenderbuffer(GLenum target, GLenum attachment,
-                               GLenum renderbuffertarget, GLuint renderbuffer);
   void FramebufferRenderbuffer(GLenum target, GLenum attachment,
                                GLenum renderbuffertarget, GLuint renderbuffer);
   void FramebufferTexture2D(GLenum target, GLenum attachment,

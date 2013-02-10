@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 #include "InputEvents.hpp"
 #include "Protection.hpp"
 #include "Thread/Mutex.hpp"
+#include "Thread/Debug.hpp"
 
 #include <algorithm>
 
@@ -47,33 +48,32 @@ InputEvents::ClearQueues()
 bool
 InputEvents::processNmea(unsigned ne_id)
 {
+  assert(InMainThread());
+
   // add an event to the bottom of the queue
-  mutexEventQueue.Lock();
   for (int i = 0; i < MAX_NMEA_QUEUE; i++) {
     if (NMEA_Queue[i] == -1) {
       NMEA_Queue[i] = ne_id;
       break;
     }
   }
-  mutexEventQueue.Unlock();
+
   return true; // ok.
 }
 
 
-// This should be called ONLY by the GUI thread.
 void
 InputEvents::DoQueuedEvents()
 {
+  assert(InMainThread());
+
   int GCE_Queue_copy[MAX_GCE_QUEUE];
-  int NMEA_Queue_copy[MAX_NMEA_QUEUE];
   int i;
 
   // copy the queue first, blocking
   mutexEventQueue.Lock();
   std::copy(GCE_Queue, GCE_Queue + MAX_GCE_QUEUE, GCE_Queue_copy);
   std::fill(GCE_Queue, GCE_Queue + MAX_GCE_QUEUE, -1);
-  std::copy(NMEA_Queue, NMEA_Queue + MAX_NMEA_QUEUE, NMEA_Queue_copy);
-  std::fill(NMEA_Queue, NMEA_Queue + MAX_NMEA_QUEUE, -1);
   mutexEventQueue.Unlock();
 
   // process each item in the queue
@@ -83,9 +83,8 @@ InputEvents::DoQueuedEvents()
     }
   }
   for (i = 0; i < MAX_NMEA_QUEUE; i++) {
-    if (NMEA_Queue_copy[i] != -1) {
-      processNmea_real(NMEA_Queue_copy[i]);
-    }
+    if (NMEA_Queue[i] != -1)
+      processNmea_real(NMEA_Queue[i]);
   }
 }
 

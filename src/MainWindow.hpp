@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,13 +29,14 @@ Copyright_License {
 #include "InfoBoxes/InfoBoxLayout.hpp"
 #include "PopupMessage.hpp"
 #include "BatteryTimer.hpp"
-#include "Form/ManagedWidget.hpp"
+#include "Widget/ManagedWidget.hpp"
 
 #include <stdint.h>
 #include <assert.h>
 
 struct ComputerSettings;
 struct MapSettings;
+struct UIState;
 struct Look;
 class GlueMapWindow;
 class Widget;
@@ -65,11 +66,23 @@ class MainWindow : public SingleWindow {
      * are available.  This updates the map and the info boxes.
      */
     CALCULATED_UPDATE,
+
+    /**
+     * @see DeferredActivateMap()
+     */
+    ACTIVATE_MAP,
   };
+
+  static constexpr const TCHAR *title = _T("XCSoar");
 
   Look *look;
 
   GlueMapWindow *map;
+
+  /**
+   * A #Widget that is shown below the map.
+   */
+  Widget *bottom_widget;
 
   /**
    * A #Widget that is shown instead of the map.  The #GlueMapWindow
@@ -96,18 +109,26 @@ private:
   PixelRect map_rect;
   bool FullScreen;
 
+#ifndef ENABLE_OPENGL
+  /**
+   * This variable tracks whether the #DrawThread was suspended
+   * because the map was replaced by a #Widget.
+   */
+  bool draw_suspended;
+#endif
+
+  bool activate_map_pending;
+
   bool airspace_warning_pending;
 
 public:
   MainWindow(const StatusMessageList &status_messages);
   virtual ~MainWindow();
 
-  static bool find(const TCHAR *text) {
-    return TopWindow::find(_T("XCSoarMain"), text);
-  }
-
 #ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance);
+  static bool Find() {
+    return SingleWindow::Find(title);
+  }
 #endif
 
 protected:
@@ -127,8 +148,9 @@ protected:
   void KillWidget();
 
 public:
-  void Set(const TCHAR *text, PixelRect rc,
-           TopWindowStyle style=TopWindowStyle());
+  void Create(PixelSize size, TopWindowStyle style=TopWindowStyle());
+
+  void Destroy();
 
   void Initialise();
   void InitialiseConfigured();
@@ -139,11 +161,16 @@ public:
    */
   void Deinitialise();
 
-  /**
-   * Destroy and re-create all info boxes, and adjust the map
-   * position/size.
-   */
-  void ReinitialiseLayout();
+private:
+  gcc_pure
+  const PixelRect &GetMainRect(const PixelRect &full_rc) const {
+    return FullScreen ? full_rc : map_rect;
+  }
+
+  gcc_pure
+  PixelRect GetMainRect() const {
+    return FullScreen ? GetClientRect() : map_rect;
+  }
 
   /**
    * Adjust the flarm radar position
@@ -157,13 +184,23 @@ public:
 
   void ReinitialiseLayoutTA(PixelRect rc, const InfoBoxLayout::Layout &layout);
 
+public:
   /**
-   * Adjust the window position and size, to make it full-screen again
-   * after display rotation.
+   * Called by XCSoarInterface::Startup() after startup has been
+   * completed.
    */
-  void ReinitialisePosition();
+  void FinishStartup();
 
-  void reset();
+  /**
+   * Called by XCSoarInterface::Shutdown() before shutdown begins.
+   */
+  void BeginShutdown();
+
+  /**
+   * Destroy and re-create all info boxes, and adjust the map
+   * position/size.
+   */
+  void ReinitialiseLayout();
 
   /**
    * Suspend threads that are owned by this object.
@@ -227,6 +264,7 @@ public:
 
   void SetComputerSettings(const ComputerSettings &settings_computer);
   void SetMapSettings(const MapSettings &settings_map);
+  void SetUIState(const UIState &ui_state);
 
   /**
    * Returns the map even if it is not active.  May return NULL if
@@ -258,11 +296,34 @@ public:
   GlueMapWindow *ActivateMap();
 
   /**
+   * Similar to ActivateMap(), but schedule the switch, do it
+   * asynchronously.  The function returns immediately, and designedly
+   * returns void.  There is no guarantee that this function succeeds.
+   */
+  void DeferredActivateMap();
+
+  /**
+   * Show this #Widget below the map.  This replaces (deletes) the
+   * previous bottom widget, if any.  To disable this feature, call
+   * this method with widget==nullptr.
+   */
+  void SetBottomWidget(Widget *widget);
+
+  /**
    * Replace the map with a #Widget.  The Widget instance gets deleted
    * when the map gets reactivated with ActivateMap() or if another
    * Widget gets set.
    */
   void SetWidget(Widget *_widget);
+
+  /**
+   * Returns the current #Widget, but only if the specified flavour is
+   * active.
+   *
+   * @see InputEvents::IsFlavour(), InputEvents::SetFlavour()
+   */
+  gcc_pure
+  Widget *GetFlavourWidget(const TCHAR *flavour);
 
   void UpdateGaugeVisibility();
 
@@ -273,21 +334,24 @@ public:
   void ToggleForceFLARMRadar();
 
 private:
+  void UpdateVarioGaugeVisibility();
   void UpdateTrafficGaugeVisibility();
 
 protected:
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-  bool OnActivate();
-  void OnSetFocus();
-  virtual bool OnKeyDown(unsigned key_code);
-  bool OnTimer(WindowTimer &timer);
-  virtual bool OnUser(unsigned id);
-  void OnCreate();
-  void OnDestroy();
-  bool OnClose();
+  /* virtual methods from class Window */
+  virtual void OnDestroy() override;
+  virtual void OnResize(PixelSize new_size) override;
+  virtual void OnSetFocus() override;
+  virtual bool OnKeyDown(unsigned key_code) override;
+  virtual bool OnUser(unsigned id) override;
+  virtual bool OnTimer(WindowTimer &timer) override;
+
+  /* virtual methods from class TopWindow */
+  virtual bool OnClose() override;
+  virtual bool OnActivate() override;
 
 #ifdef ANDROID
-  virtual void OnPause();
+  virtual void OnPause() override;
 #endif
 };
 

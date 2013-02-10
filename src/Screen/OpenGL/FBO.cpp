@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -62,17 +62,17 @@ FBO::Initialise()
   _glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DOESPROC)
     dlsym(RTLD_DEFAULT, "glFramebufferTexture2DOES");
 
-  return _glBindRenderbuffer != NULL && _glDeleteRenderbuffers != NULL &&
-    _glGenRenderbuffers != NULL && _glRenderbufferStorage != NULL &&
-    _glBindFramebuffer != NULL && _glDeleteFramebuffers != NULL &&
-    _glGenFramebuffers != NULL && _glFramebufferRenderbuffer != NULL &&
-    _glFramebufferTexture2D != NULL;
+  return _glBindRenderbuffer != nullptr && _glDeleteRenderbuffers != nullptr &&
+    _glGenRenderbuffers != nullptr && _glRenderbufferStorage != nullptr &&
+    _glBindFramebuffer != nullptr && _glDeleteFramebuffers != nullptr &&
+    _glGenFramebuffers != nullptr && _glFramebufferRenderbuffer != nullptr &&
+    _glFramebufferTexture2D != nullptr;
 }
 
 void
 FBO::BindRenderbuffer(GLenum target, GLuint renderbuffer)
 {
-  assert(_glBindRenderbuffer != NULL);
+  assert(_glBindRenderbuffer != nullptr);
 
   _glBindRenderbuffer(target, renderbuffer);
 }
@@ -80,7 +80,7 @@ FBO::BindRenderbuffer(GLenum target, GLuint renderbuffer)
 void
 FBO::DeleteRenderbuffers(GLsizei n, GLuint *renderbuffers)
 {
-  assert(_glDeleteRenderbuffers != NULL);
+  assert(_glDeleteRenderbuffers != nullptr);
 
   _glDeleteRenderbuffers(n, renderbuffers);
 }
@@ -88,7 +88,7 @@ FBO::DeleteRenderbuffers(GLsizei n, GLuint *renderbuffers)
 void
 FBO::GenRenderbuffers(GLsizei n, GLuint *renderbuffers)
 {
-  assert(_glGenRenderbuffers != NULL);
+  assert(_glGenRenderbuffers != nullptr);
 
   _glGenRenderbuffers(n, renderbuffers);
 }
@@ -97,7 +97,7 @@ void
 FBO::RenderbufferStorage(GLenum target, GLenum internalformat,
                          GLsizei width, GLsizei height)
 {
-  assert(_glRenderbufferStorage != NULL);
+  assert(_glRenderbufferStorage != nullptr);
 
   _glRenderbufferStorage(target, internalformat, width, height);
 }
@@ -105,7 +105,7 @@ FBO::RenderbufferStorage(GLenum target, GLenum internalformat,
 void
 FBO::BindFramebuffer(GLenum target, GLuint framebuffer)
 {
-  assert(_glBindFramebuffer != NULL);
+  assert(_glBindFramebuffer != nullptr);
 
   _glBindFramebuffer(target, framebuffer);
 }
@@ -113,7 +113,7 @@ FBO::BindFramebuffer(GLenum target, GLuint framebuffer)
 void
 FBO::DeleteFramebuffers(GLsizei n, GLuint *framebuffers)
 {
-  assert(_glDeleteFramebuffers != NULL);
+  assert(_glDeleteFramebuffers != nullptr);
 
   _glDeleteFramebuffers(n, framebuffers);
 }
@@ -121,7 +121,7 @@ FBO::DeleteFramebuffers(GLsizei n, GLuint *framebuffers)
 void
 FBO::GenFramebuffers(GLsizei n, GLuint *framebuffers)
 {
-  assert(_glGenFramebuffers != NULL);
+  assert(_glGenFramebuffers != nullptr);
 
   _glGenFramebuffers(n, framebuffers);
 }
@@ -130,7 +130,7 @@ void
 FBO::FramebufferRenderbuffer(GLenum target, GLenum attachment,
                              GLenum renderbuffertarget, GLuint renderbuffer)
 {
-  assert(_glFramebufferRenderbuffer != NULL);
+  assert(_glFramebufferRenderbuffer != nullptr);
 
   _glFramebufferRenderbuffer(target, attachment,
                                  renderbuffertarget, renderbuffer);
@@ -141,7 +141,7 @@ FBO::FramebufferTexture2D(GLenum target, GLenum attachment,
                           GLenum textarget, GLuint texture,
                           GLint level)
 {
-  assert(_glFramebufferTexture2D != NULL);
+  assert(_glFramebufferTexture2D != nullptr);
 
   _glFramebufferTexture2D(target, attachment, textarget, texture, level);
 }

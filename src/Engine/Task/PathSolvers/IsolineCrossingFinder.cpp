@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -45,18 +45,18 @@ IsolineCrossingFinder::f(const fixed t)
   // note: use of isInSector is slow!
   // if (aap.isInSector(s)) ->  attract solutions away from t
   // else                   ->  attract solutions towards t
-  return (aap.IsInSector(s) ? fixed_one : -fixed_one) - fabs(t);
+  return (aap.IsInSector(s) ? fixed(1) : fixed(-1)) - fabs(t);
 }
 
-#define bsgn(x) (x < fixed_one ? false : true)
+#define bsgn(x) (x < fixed(1) ? false : true)
 
 bool 
 IsolineCrossingFinder::valid(const fixed x) 
 {
 /*
   const bool bsgn_0 = bsgn(f(x));
-  const bool bsgn_m = bsgn(f(x-fixed_two*tolerance));
-  const bool bsgn_p = bsgn(f(x+fixed_two*tolerance));
+  const bool bsgn_m = bsgn(f(x-fixed(2)*tolerance));
+  const bool bsgn_p = bsgn(f(x+fixed(2)*tolerance));
 
   \todo this is broken, so assume it's ok for now
   return (bsgn_0 != bsgn_m) || (bsgn_0 != bsgn_p);
@@ -67,10 +67,10 @@ IsolineCrossingFinder::valid(const fixed x)
 fixed 
 IsolineCrossingFinder::solve() 
 {
-  const fixed sol = find_zero(half(xmax + xmin));
+  const fixed sol = find_zero(Half(xmax + xmin));
   if (valid(sol)) {
     return sol;
   } else {
-    return -fixed_one;
+    return fixed(-1);
   }
 }

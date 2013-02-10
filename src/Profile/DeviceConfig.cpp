@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
 #include "Asset.hpp"
 #include "Language/Language.hpp"
 #include "Util/Macros.hpp"
+#include "Interface.hpp"
 
 #include <stdio.h>
 
@@ -35,6 +36,10 @@ static const TCHAR *const port_type_strings[] = {
   _T("rfcomm"),
   _T("rfcomm_server"),
   _T("ioio_uart"),
+  _T("droidsoar_v2"),
+  _T("nunchuck"),
+  _T("i2c_baro"),
+  _T("ioio_voltage"),
   _T("auto"),
   _T("internal"),
   _T("tcp_listener"),
@@ -58,6 +63,10 @@ DeviceConfig::IsAvailable() const
     return IsAndroid();
 
   case PortType::IOIOUART:
+  case PortType::DROIDSOAR_V2:
+  case PortType::NUNCHUCK:
+  case PortType::I2CPRESSURESENSOR:
+  case PortType::IOIOVOLTAGE:
     return IsAndroid() && HasIOIOLib();
 
   case PortType::AUTO:
@@ -99,6 +108,10 @@ DeviceConfig::ShouldReopenOnTimeout() const
   case PortType::RFCOMM:
   case PortType::RFCOMM_SERVER:
   case PortType::IOIOUART:
+  case PortType::DROIDSOAR_V2:
+  case PortType::NUNCHUCK:
+  case PortType::I2CPRESSURESENSOR:
+  case PortType::IOIOVOLTAGE:
     /* errors on these are detected automatically by the driver */
     return false;
 
@@ -117,9 +130,7 @@ DeviceConfig::ShouldReopenOnTimeout() const
     return false;
   }
 
-  /* unreachable */
-  assert(false);
-  return false;
+  gcc_unreachable();
 }
 
 const TCHAR *
@@ -145,6 +156,18 @@ DeviceConfig::GetPortName(TCHAR *buffer, size_t max_size) const
                ioio_uart_id);
     return buffer;
 
+  case PortType::DROIDSOAR_V2:
+    return _T("DroidSoar V2");
+
+  case PortType::NUNCHUCK:
+    return _T("Nunchuck");
+
+  case PortType::I2CPRESSURESENSOR:
+    return _T("IOIO i2c pressure sensor");
+
+  case PortType::IOIOVOLTAGE:
+    return _T("IOIO voltage sensor");
+
   case PortType::AUTO:
     return _("GPS Intermediate Driver");
 
@@ -164,9 +187,7 @@ DeviceConfig::GetPortName(TCHAR *buffer, size_t max_size) const
     return buffer;
   }
 
-  /* unreachable */
-  assert(false);
-  return _T("Disabled");
+  gcc_unreachable();
 }
 
 static const TCHAR *
@@ -307,6 +328,21 @@ Profile::GetDeviceConfig(unsigned n, DeviceConfig &config)
   MakeDeviceSettingName(buffer, _T("Port"), n, _T("IgnoreChecksum"));
   if (!Get(buffer, config.ignore_checksum))
     Get(ProfileKeys::IgnoreNMEAChecksum, config.ignore_checksum);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("I2C_Bus"));
+  Get(buffer, config.i2c_bus);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("I2C_Addr"));
+  Get(buffer, config.i2c_addr);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("PressureUse"));
+  GetEnum(buffer, config.press_use);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("SensorOffset"));
+  Get(buffer, config.sensor_offset);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("SensorFactor"));
+  Get(buffer, config.sensor_factor);
 }
 
 static const TCHAR *
@@ -376,4 +412,27 @@ Profile::SetDeviceConfig(unsigned n, const DeviceConfig &config)
 
   MakeDeviceSettingName(buffer, _T("Port"), n, _T("IgnoreChecksum"));
   Set(buffer, config.ignore_checksum);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("I2C_Bus"));
+  Set(buffer, config.i2c_bus);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("I2C_Addr"));
+  Set(buffer, config.i2c_addr);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("PressureUse"));
+  SetEnum(buffer, config.press_use);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("SensorOffset"));
+  fixed offset = DeviceConfig::UsesCalibration(config.port_type) ? config.sensor_offset : fixed(0);
+  // Has new calibration data been delivered ?
+  if (CommonInterface::Basic().sensor_calibration_available)
+    offset = CommonInterface::Basic().sensor_calibration_offset;
+  Set(buffer, offset);
+
+  MakeDeviceSettingName(buffer, _T("Port"), n, _T("SensorFactor"));
+  fixed factor = DeviceConfig::UsesCalibration(config.port_type) ? config.sensor_factor : fixed(0);
+  // Has new calibration data been delivered ?
+  if (CommonInterface::Basic().sensor_calibration_available)
+    factor = CommonInterface::Basic().sensor_calibration_factor;
+  Set(buffer, factor);
 }

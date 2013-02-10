@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,13 +24,12 @@
 #define SAMPLEDTASKPOINT_H
 
 #include "Geo/SearchPointVector.hpp"
-#include "TaskWaypoint.hpp"
 #include "Compiler.h"
 
-class TaskEvents;
 class TaskProjection;
 class OZBoundary;
 struct GeoPoint;
+struct AircraftState;
 
 /**
  * Abstract specialisation of TaskPoint which has an observation zone
@@ -42,43 +41,44 @@ struct GeoPoint;
  * - Currently undefined as to what happens to interior samples if observation 
  *   zone is modified (e.g. due to previous/next taskpoint moving) in update_oz
  */
-class SampledTaskPoint : public TaskWaypoint {
-  friend class OrderedTask;
-  friend class PrintHelper;
-
-protected:
+class SampledTaskPoint {
   /**
    * Whether boundaries are used in scoring distance,
    * or just the reference point
    */
   const bool boundary_scored;
 
-private:
+  /**
+   * True when the current task state is past this task point.  This
+   * is used to determine whether the task point was missed.  In that
+   * case, a 'cheat' has to be applied.
+   */
+  bool past;
+
   SearchPointVector nominal_points;
   SearchPointVector sampled_points;
   SearchPointVector boundary_points;
   SearchPoint search_max;
   SearchPoint search_min;
-  SearchPoint search_reference;
 
 public:
   /**
    * Constructor.  Clears boundary and interior samples on instantiation.
    * Must be followed by update_oz() after task geometry is modified.
    *
-   * @param wp Waypoint associated with this task point
+   * @param location the reference location of this task point
    * @param is_scored Whether distance within OZ is scored
    *
    * @return Partially initialised object
    */
-  SampledTaskPoint(Type type,
-                   const Waypoint &wp,
-                   const bool is_scored);
-
-  virtual ~SampledTaskPoint() {}
+  SampledTaskPoint(const GeoPoint &location, const bool is_scored);
 
   /** Reset the task (as if never flown) */
-  virtual void Reset();
+  void Reset();
+
+  const GeoPoint &GetLocation() const {
+    return nominal_points.front().GetLocation();
+  }
 
   /**
    * Accessor to retrieve location of the sample/boundary polygon
@@ -105,34 +105,16 @@ public:
    * Construct boundary polygon from internal representation of observation zone.
    * Also updates projection.
    */
-  virtual void UpdateOZ(const TaskProjection &projection);
+  void UpdateOZ(const TaskProjection &projection, const OZBoundary &boundary);
 
   /**
-   * Check if aircraft is within observation zone if near, and if so,
-   * update the interior sample polygon.
-   *
-   * @param state Aircraft state
-   * @param task_events Callback class for feedback
+   * Update the interior sample polygon.  The caller checks if the
+   * given #AircraftState is inside the observation zone.
    *
    * @return True if internal state changed
    */
-  virtual bool UpdateSampleNear(const AircraftState &state,
-                                TaskEvents *task_events,
-                                const TaskProjection &projection);
-
-  /**
-   * Perform updates to samples as required if known to be far from the OZ
-   *
-   * @param state Aircraft state
-   * @param task_events Callback class for feedback
-   *
-   * @return True if internal state changed
-   */
-  virtual bool UpdateSampleFar(const AircraftState &state,
-                               TaskEvents *task_events,
-                               const TaskProjection &projection) {
-    return false;
-  }
+  bool AddInsideSample(const AircraftState &state,
+                       const TaskProjection &projection);
 
   /**
    * Test if the task point has recorded presence of the aircraft
@@ -160,6 +142,10 @@ public:
   }
 
 protected:
+  void SetPast(bool _past) {
+    past = _past;
+  }
+
   /**
    * Clear all sample points and add the current state as a sample.
    * This is used, for exmaple, for StartPoints to only remember the last sample
@@ -167,13 +153,6 @@ protected:
    */
   void ClearSampleAllButLast(const AircraftState &state,
                              const TaskProjection &projection);
-
-  /**
-   * Set minimum distance point based on location.
-   *
-   * @param location Location of min point
-   */
-  void SetSearchMin(const GeoPoint &location, const TaskProjection &projection);
 
   /**
    * Retrieve boundary points polygon
@@ -189,26 +168,7 @@ private:
    */
   void UpdateProjection(const TaskProjection &projection);
 
-  virtual bool IsInSector(const AircraftState &ref) const = 0;
-
-  /**
-   * Determines whether to 'cheat' a missed OZ prior to the current active task point.
-   *
-   * @return Vector of boundary points representing a closed polygon
-   */
-  gcc_pure
-  virtual bool SearchNominalIfUnsampled() const = 0;
-
-  /**
-   * Determines whether to return sampled or boundary points for max/min search
-   *
-   * @return Vector of boundary points representing a closed polygon
-   */
-  gcc_pure
-  virtual bool SearchBoundaryPoints() const = 0;
-
-  virtual OZBoundary GetBoundary() const = 0;
-
+public:
   /**
    * Retrieve interior sample polygon.
    * Because sometimes an OZ will be skipped (by accident, true miss, or
@@ -216,7 +176,7 @@ private:
    * the 'cheat' option allows non-achieved task points to be considered achieved
    * by assuming the aircraft appeared at the reference location.
    *
-   * @return Vector of boundary points representing a closed polygon
+   * @return a list of boundary points
    */
   gcc_pure
   const SearchPointVector &GetSearchPoints() const;
@@ -240,9 +200,6 @@ private:
   void SetSearchMin(const SearchPoint &locmin) {
     search_min = locmin;
   }
-
-  /** Clear all sample points. */
-  void ClearSamplePoints();
 };
 
 #endif //SAMPLEDOBSERVATIONZONE_H

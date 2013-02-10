@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,17 +24,12 @@
 #include "Boundary.hpp"
 #include "Geo/GeoVector.hpp"
 
+#include <stdlib.h>
+
 fixed
 CylinderZone::ScoreAdjustment() const
 {
   return radius;
-}
-
-GeoPoint
-CylinderZone::GetBoundaryParametric(fixed t) const
-{
-  return GeoVector(radius, Angle::Radians(t * fixed_two_pi)).
-           EndPoint(GetReference());
 }
 
 OZBoundary
@@ -67,7 +62,7 @@ CylinderZone::GetRandomPointInSector(const fixed mag) const
 
   do {
     Angle dir = Angle::Degrees(fixed(rand() % 360));
-    fixed dmag = max(min(radius, fixed(100.0)), radius * mag);
+    fixed dmag = std::max(std::min(radius, fixed(100.0)), radius * mag);
     fixed dis = fixed((0.1 + (rand() % 90) / 100.0)) * dmag;
     GeoVector vec(dis, dir);
     location = vec.EndPoint(GetReference());

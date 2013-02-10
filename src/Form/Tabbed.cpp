@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,23 +21,21 @@ Copyright_License {
 }
 */
 
-#include "Form/Tabbed.hpp"
-#include "WindowWidget.hpp"
+#include "Tabbed.hpp"
+#include "Widget/WindowWidget.hpp"
 
 #include <assert.h>
 
-TabbedControl::TabbedControl(ContainerWindow &parent,
-                             PixelScalar x, PixelScalar y,
-                             UPixelScalar width, UPixelScalar height,
+TabbedControl::TabbedControl(ContainerWindow &parent, PixelRect rc,
                              const WindowStyle style)
   :page_flipped_callback(NULL)
 {
-  set(parent, x, y, width, height, style);
+  Create(parent, rc, style);
 }
 
 TabbedControl::~TabbedControl()
 {
-  reset();
+  Destroy();
 }
 
 void
@@ -104,9 +102,9 @@ TabbedControl::UpdateLayout()
 }
 
 void
-TabbedControl::OnResize(UPixelScalar width, UPixelScalar height)
+TabbedControl::OnResize(PixelSize new_size)
 {
-  ContainerWindow::OnResize(width, height);
+  ContainerWindow::OnResize(new_size);
 
   UpdateLayout();
 }

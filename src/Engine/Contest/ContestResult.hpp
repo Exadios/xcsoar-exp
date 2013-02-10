@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,8 +23,9 @@
 #ifndef CONTEST_RESULT_HPP
 #define CONTEST_RESULT_HPP
 
-#include "Util/TypeTraits.hpp"
 #include "Math/fixed.hpp"
+
+#include <type_traits>
 
 struct ContestResult
 {
@@ -36,9 +37,9 @@ struct ContestResult
   fixed time;
 
   void Reset() {
-    score = fixed_zero;
-    distance = fixed_zero;
-    time = fixed_zero;
+    score = fixed(0);
+    distance = fixed(0);
+    time = fixed(0);
   }
 
   bool IsDefined() const {
@@ -53,10 +54,10 @@ struct ContestResult
   fixed GetSpeed() const {
     return positive(time)
       ? distance / time
-      : fixed_zero;
+      : fixed(0);
   }
 };
 
-static_assert(is_trivial<ContestResult>::value, "type is not trivial");
+static_assert(std::is_trivial<ContestResult>::value, "type is not trivial");
 
 #endif

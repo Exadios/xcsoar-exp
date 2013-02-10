@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_MAP_ITEM_LIST_SETTINGS_PANEL_HPP
 #define XCSOAR_MAP_ITEM_LIST_SETTINGS_PANEL_HPP
 
-#include "Form/RowFormWidget.hpp"
+#include "Widget/RowFormWidget.hpp"
 
 class MapItemListSettingsPanel : public RowFormWidget {
   enum ControlIndex {

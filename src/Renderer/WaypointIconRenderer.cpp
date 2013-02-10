@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -86,9 +86,9 @@ DrawLandableBase(Canvas &canvas, const RasterPoint& pt, bool airport,
 
 static void
 DrawLandableRunway(Canvas &canvas, const RasterPoint &pt,
-                   const Angle &angle, fixed radius, fixed width)
+                   const Angle angle, fixed radius, fixed width)
 {
-  if (radius <= fixed_zero)
+  if (radius <= fixed(0))
     return;
 
   const auto sc = angle.SinCos();
@@ -139,8 +139,8 @@ WaypointIconRenderer::DrawLandable(const Waypoint &waypoint,
 
   // SW rendering of landables
   fixed scale = fixed(Layout::SmallScale(settings.landable_rendering_scale)) /
-                fixed_int_constant(150);
-  fixed radius = fixed_int_constant(10) * scale;
+                fixed(150);
+  fixed radius = fixed(10) * scale;
 
   canvas.SelectBlackPen();
 
@@ -152,7 +152,7 @@ WaypointIconRenderer::DrawLandable(const Waypoint &waypoint,
                     ? look.reachable_brush
                     : look.terrain_unreachable_brush);
       DrawLandableBase(canvas, point, waypoint.IsAirport(),
-                       radius + half(radius));
+                       radius + Half(radius));
     }
     canvas.Select(look.magenta_brush);
     break;
@@ -185,15 +185,14 @@ WaypointIconRenderer::DrawLandable(const Waypoint &waypoint,
   if (runway.IsDirectionDefined()) {
     fixed len;
     if (settings.scale_runway_length && runway.IsLengthDefined())
-      len = half(radius) +
-        (((int) runway.GetLength() - 500) / 500) * (radius / fixed_four);
+      len = Half(radius) +
+        (((int) runway.GetLength() - 500) / 500) * Quarter(radius);
     else
       len = radius;
     len += Double(scale);
     Angle runwayDrawingAngle = runway.GetDirection() - screen_rotation;
     canvas.Select(look.white_brush);
-    DrawLandableRunway(canvas, point, runwayDrawingAngle, len,
-                       fixed_int_constant(5) * scale);
+    DrawLandableRunway(canvas, point, runwayDrawingAngle, len, fixed(5) * scale);
   }
 }
 

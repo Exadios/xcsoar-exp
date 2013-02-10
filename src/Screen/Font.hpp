@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,19 +25,20 @@ Copyright_License {
 #define XCSOAR_SCREEN_FONT_HPP
 
 #include "Screen/Point.hpp"
-#include "Util/NonCopyable.hpp"
 #include "Compiler.h"
 
-#ifdef ANDROID
-#include "Util/tstring.hpp"
-#include "Screen/Color.hpp"
-#else  // !ANDROID
-#ifdef ENABLE_SDL
+#ifdef USE_FREETYPE
+typedef struct FT_FaceRec_ *FT_Face;
+#elif defined(ENABLE_SDL)
 #include <SDL_ttf.h>
 #endif
-#endif // !ANDROID
 
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <wingdi.h>
+#endif
+
 #include <tchar.h>
 
 class TextUtil;
@@ -45,38 +46,42 @@ class TextUtil;
 /**
  * A font loaded from storage.  It is used by #Canvas to draw text.
  */
-class Font : private NonCopyable {
+class Font {
 protected:
-  #ifdef ANDROID
+#ifdef USE_FREETYPE
+  FT_Face face;
+#elif defined(ANDROID)
   TextUtil *text_util_object;
 
-  unsigned line_spacing, style;
-  tstring facename;
-  #else // !ANDROID
-  #ifdef ENABLE_SDL
-  TTF_Font *font;
-  #else
+  unsigned line_spacing;
+#elif defined(USE_GDI)
   HFONT font;
-  #endif
-  #endif
+#else
+  TTF_Font *font;
+#endif
 
   unsigned height, ascent_height, capital_height;
 
   void CalculateHeights();
-  #ifndef ANDROID
-  #ifdef ENABLE_SDL
-  bool _set(const char *file, UPixelScalar ptsize, bool bold = false,
-            bool italic = false);
-  #endif
-  #endif
+
+#if defined(ENABLE_SDL) || defined(USE_FREETYPE)
+  bool LoadFile(const char *file, UPixelScalar ptsize, bool bold = false,
+                bool italic = false);
+#endif
 
 public:
-  #ifdef ANDROID
+#ifdef USE_FREETYPE
+  Font():face(nullptr) {}
+#elif defined(ANDROID)
   Font():text_util_object(NULL) {}
-  #else
+#else
   Font():font(NULL) {}
-  #endif
-  ~Font() { Reset(); }
+#endif
+
+  ~Font() { Destroy(); }
+
+  Font(const Font &other) = delete;
+  Font &operator=(const Font &other) = delete;
 
   /**
    * Perform global font initialisation.
@@ -86,36 +91,42 @@ public:
 public:
   bool
   IsDefined() const {
-    #ifdef ANDROID
+#ifdef USE_FREETYPE
+    return face != nullptr;
+#elif defined(ANDROID)
     return text_util_object != NULL;
     #else
     return font != NULL;
     #endif
   }
 
-  bool Set(const TCHAR *facename, UPixelScalar height, bool bold = false,
-           bool italic = false);
-  bool Set(const LOGFONT &log_font);
-  void Reset();
+  bool Load(const TCHAR *facename, UPixelScalar height, bool bold = false,
+            bool italic = false);
+  bool Load(const LOGFONT &log_font);
+  void Destroy();
 
   gcc_pure
   PixelSize TextSize(const TCHAR *text) const;
 
-  #ifdef ANDROID
+#ifdef USE_FREETYPE
+  gcc_const
+  static size_t BufferSize(const PixelSize size) {
+    return size.cx * size.cy;
+  }
+
+  void Render(const TCHAR *text, const PixelSize size, void *buffer) const;
+#elif defined(ANDROID)
   int TextTextureGL(const TCHAR *text, PixelSize &size) const;
-  #else // !ANDROID
-  #ifdef ENABLE_SDL
+#elif defined(USE_GDI)
+  HFONT Native() const {
+    return font;
+  }
+#else
   TTF_Font*
   Native() const {
     return font;
   }
-  #else
-  HFONT
-  Native() const {
-    return font;
-  }
-  #endif
-  #endif // !ANDROID
+#endif
 
   UPixelScalar GetHeight() const {
     return height;
@@ -126,27 +137,16 @@ public:
   UPixelScalar GetCapitalHeight() const {
     return capital_height;
   }
-  #ifdef ANDROID
+
+#ifdef USE_FREETYPE
+  UPixelScalar GetLineSpacing() const {
+    return height;
+  }
+#elif defined(ANDROID)
   UPixelScalar GetLineSpacing() const {
     return line_spacing;
   }
-  unsigned GetStyle() const {
-    return style;
-  }
-  const TCHAR *GetFacename() const {
-    return facename.c_str();
-  }
 #elif defined(ENABLE_SDL)
-  gcc_pure
-  const TCHAR *GetFacename() const {
-    return ::TTF_FontFaceFamilyName(font);
-  }
-
-  gcc_pure
-  unsigned GetStyle() const {
-    return ::TTF_GetFontStyle(font);
-  }
-
   gcc_pure
   UPixelScalar GetLineSpacing() const {
     return ::TTF_FontLineSkip(font);

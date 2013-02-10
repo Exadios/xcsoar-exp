@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,32 +23,7 @@ Copyright_License {
 
 #include "Screen/DoubleBufferWindow.hpp"
 
-#ifdef ENABLE_OPENGL
-
-void
-DoubleBufferWindow::OnCreate()
-{
-  PaintWindow::OnCreate();
-
-  dirty = true;
-}
-
-void
-DoubleBufferWindow::OnDestroy()
-{
-  buffer.reset();
-  PaintWindow::OnDestroy();
-}
-
-void
-DoubleBufferWindow::OnResize(UPixelScalar width, UPixelScalar height)
-{
-  PaintWindow::OnResize(width, height);
-  buffer.reset();
-  Invalidate();
-}
-
-#else /* !OpenGL */
+#ifndef ENABLE_OPENGL
 
 #include "Screen/WindowCanvas.hpp"
 
@@ -58,8 +33,8 @@ DoubleBufferWindow::OnCreate()
   PaintWindow::OnCreate();
 
   WindowCanvas a_canvas(*this);
-  buffers[0].set(a_canvas);
-  buffers[1].set(a_canvas);
+  buffers[0].Create(a_canvas);
+  buffers[1].Create(a_canvas);
 }
 
 void
@@ -67,12 +42,12 @@ DoubleBufferWindow::OnDestroy()
 {
   PaintWindow::OnDestroy();
 
-  buffers[0].reset();
-  buffers[1].reset();
+  buffers[0].Destroy();
+  buffers[1].Destroy();
 }
 
 void
-DoubleBufferWindow::flip()
+DoubleBufferWindow::Flip()
 {
   /* enable the drawing buffer */
   mutex.Lock();
@@ -84,30 +59,14 @@ DoubleBufferWindow::flip()
 
   /* grow the current buffer, just in case the window has been
      resized */
-  buffers[current].grow(GetWidth(), GetHeight());
+  buffers[current].Grow(GetSize());
 }
-
-#endif
 
 void
 DoubleBufferWindow::OnPaint(Canvas &canvas)
 {
-#ifdef ENABLE_OPENGL
-  if (!buffer.IsDefined()) {
-    buffer.set(canvas, canvas.get_width(), canvas.get_height());
-    dirty = true;
-  }
-
-  if (dirty) {
-    dirty = false;
-    buffer.Begin(canvas);
-    OnPaintBuffer(buffer);
-    buffer.Commit(canvas);
-  } else
-    buffer.CopyTo(canvas);
-
-#else
   ScopeLock protect(mutex);
-  canvas.copy(get_visible_canvas());
-#endif
+  canvas.Copy(GetVisibleCanvas());
 }
+
+#endif

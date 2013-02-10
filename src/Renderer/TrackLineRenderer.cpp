@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,8 +37,8 @@ TrackLineRenderer::Draw(Canvas &canvas, const Angle screen_angle,
   const fixed x = sc.first, y = sc.second;
 
   RasterPoint end;
-  end.x = pos.x + iround(x * fixed_int_constant(400));
-  end.y = pos.y - iround(y * fixed_int_constant(400));
+  end.x = pos.x + iround(x * 400);
+  end.y = pos.y - iround(y * 400);
 
   canvas.Select(look.track_line_pen);
   canvas.DrawLine(pos, end);
@@ -51,11 +51,12 @@ TrackLineRenderer::Draw(Canvas &canvas, const Angle screen_angle,
                         const MapSettings &settings)
 {
   if (settings.display_ground_track == DisplayGroundTrack::OFF ||
+      !basic.track_available || !basic.attitude.heading_available ||
       calculated.circling)
     return;
 
   if (settings.display_ground_track == DisplayGroundTrack::AUTO &&
-      (basic.track - calculated.heading).AsDelta().AbsoluteDegrees() < fixed(5))
+      (basic.track - basic.attitude.heading).AsDelta().AbsoluteDegrees() < fixed(5))
     return;
 
   TrackLineRenderer::Draw(canvas, screen_angle, basic.track, pos);

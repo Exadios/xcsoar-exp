@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -45,8 +45,8 @@ AllocatedArray<RasterPoint> Canvas::vertex_buffer;
 
 void
 Canvas::DrawFilledRectangle(PixelScalar left, PixelScalar top,
-                       PixelScalar right, PixelScalar bottom,
-                       const Color color)
+                            PixelScalar right, PixelScalar bottom,
+                            const Color color)
 {
   color.Set();
 
@@ -69,14 +69,14 @@ void
 Canvas::OutlineRectangleGL(PixelScalar left, PixelScalar top,
                            PixelScalar right, PixelScalar bottom)
 {
-  const RasterPoint vertices[] = {
-    { left, top },
-    { right, top },
-    { right, bottom },
-    { left, bottom },
+  const ExactRasterPoint vertices[] = {
+    RasterPoint{left, top},
+    RasterPoint{right, top},
+    RasterPoint{right, bottom},
+    RasterPoint{left, bottom},
   };
 
-  glVertexPointer(2, GL_VALUE, 0, vertices);
+  glVertexPointer(2, GL_EXACT, 0, vertices);
   glDrawArrays(GL_LINE_LOOP, 0, 4);
 }
 
@@ -101,13 +101,13 @@ Canvas::DrawRaisedEdge(PixelRect &rc)
 {
   Pen bright(1, Color(240, 240, 240));
   Select(bright);
-  DrawTwoLines(rc.left, rc.bottom - 2, rc.left, rc.top,
-            rc.right - 2, rc.top);
+  DrawTwoLinesExact(rc.left, rc.bottom - 2, rc.left, rc.top,
+                    rc.right - 2, rc.top);
 
   Pen dark(1, Color(128, 128, 128));
   Select(dark);
-  DrawTwoLines(rc.left + 1, rc.bottom - 1, rc.right - 1, rc.bottom - 1,
-            rc.right - 1, rc.top + 1);
+  DrawTwoLinesExact(rc.left + 1, rc.bottom - 1, rc.right - 1, rc.bottom - 1,
+                    rc.right - 1, rc.top + 1);
 
   ++rc.left;
   ++rc.top;
@@ -144,7 +144,7 @@ Canvas::DrawPolygon(const RasterPoint *points, unsigned num_points)
                      triangle_buffer.begin());
   }
 
-  if (pen_over_brush()) {
+  if (IsPenOverBrush()) {
     pen.Bind();
 
     if (pen.GetWidth() <= 2) {
@@ -175,7 +175,7 @@ Canvas::DrawTriangleFan(const RasterPoint *points, unsigned num_points)
     glDrawArrays(GL_TRIANGLE_FAN, 0, num_points);
   }
 
-  if (pen_over_brush()) {
+  if (IsPenOverBrush()) {
     pen.Bind();
 
     if (pen.GetWidth() <= 2) {
@@ -200,6 +200,23 @@ Canvas::DrawLine(PixelScalar ax, PixelScalar ay, PixelScalar bx, PixelScalar by)
 
   const GLvalue v[] = { ax, ay, bx, by };
   glVertexPointer(2, GL_VALUE, 0, v);
+  glDrawArrays(GL_LINE_STRIP, 0, 2);
+
+  pen.Unbind();
+}
+
+void
+Canvas::DrawExactLine(PixelScalar ax, PixelScalar ay,
+                      PixelScalar bx, PixelScalar by)
+{
+  pen.Bind();
+
+  const GLexact v[] = {
+    ToGLexact(ax), ToGLexact(ay),
+    ToGLexact(bx), ToGLexact(by),
+  };
+
+  glVertexPointer(2, GL_EXACT, 0, v);
   glDrawArrays(GL_LINE_STRIP, 0, 2);
 
   pen.Unbind();
@@ -245,9 +262,28 @@ Canvas::DrawTwoLines(PixelScalar ax, PixelScalar ay,
 }
 
 void
+Canvas::DrawTwoLinesExact(PixelScalar ax, PixelScalar ay,
+                          PixelScalar bx, PixelScalar by,
+                          PixelScalar cx, PixelScalar cy)
+{
+  pen.Bind();
+
+  const GLexact v[] = {
+    ToGLexact(ax), ToGLexact(ay),
+    ToGLexact(bx), ToGLexact(by),
+    ToGLexact(cx), ToGLexact(cy),
+  };
+
+  glVertexPointer(2, GL_EXACT, 0, v);
+  glDrawArrays(GL_LINE_STRIP, 0, 3);
+
+  pen.Unbind();
+}
+
+void
 Canvas::DrawCircle(PixelScalar x, PixelScalar y, UPixelScalar radius)
 {
-  if (pen_over_brush() && pen.GetWidth() > 2) {
+  if (IsPenOverBrush() && pen.GetWidth() > 2) {
     GLDonutVertices vertices(x, y,
                              radius - pen.GetWidth() / 2,
                              radius + pen.GetWidth() / 2);
@@ -280,7 +316,7 @@ Canvas::DrawCircle(PixelScalar x, PixelScalar y, UPixelScalar radius)
       glDrawArrays(GL_TRIANGLE_FAN, 0, OpenGL::SMALL_CIRCLE_SIZE);
     }
 
-    if (pen_over_brush()) {
+    if (IsPenOverBrush()) {
       pen.Bind();
       glDrawArrays(GL_LINE_LOOP, 0, OpenGL::SMALL_CIRCLE_SIZE);
       pen.Unbind();
@@ -310,7 +346,7 @@ Canvas::DrawCircle(PixelScalar x, PixelScalar y, UPixelScalar radius)
       glDrawArrays(GL_TRIANGLE_FAN, 0, OpenGL::CIRCLE_SIZE);
     }
 
-    if (pen_over_brush()) {
+    if (IsPenOverBrush()) {
       pen.Bind();
       glDrawArrays(GL_LINE_LOOP, 0, OpenGL::CIRCLE_SIZE);
       pen.Unbind();
@@ -328,7 +364,7 @@ Canvas::DrawCircle(PixelScalar x, PixelScalar y, UPixelScalar radius)
       glDrawArrays(GL_TRIANGLE_FAN, 0, vertices.SIZE);
     }
 
-    if (pen_over_brush()) {
+    if (IsPenOverBrush()) {
       pen.Bind();
       glDrawArrays(GL_LINE_LOOP, 0, vertices.SIZE);
       pen.Unbind();
@@ -413,7 +449,7 @@ Canvas::DrawAnnulus(PixelScalar x, PixelScalar y,
     }
   }
 
-  if (pen_over_brush()) {
+  if (IsPenOverBrush()) {
     pen.Bind();
 
     if (istart != iend && iend != GLDonutVertices::MAX_ANGLE) {
@@ -463,15 +499,35 @@ Canvas::DrawFocusRectangle(PixelRect rc)
   DrawOutlineRectangle(rc.left, rc.top, rc.right, rc.bottom, COLOR_DARK_GRAY);
 }
 
+const PixelSize
+Canvas::CalcTextSize(const TCHAR *text) const
+{
+  assert(text != NULL);
+#ifndef UNICODE
+  assert(ValidateUTF8(text));
+#endif
+
+  PixelSize size = { 0, 0 };
+
+  if (font == NULL)
+    return size;
+
+  /* see if the TextCache can handle this request */
+  size = TextCache::LookupSize(*font, text);
+  if (size.cy > 0)
+    return size;
+
+  return TextCache::GetSize(*font, text);
+}
+
 void
-Canvas::text(PixelScalar x, PixelScalar y, const TCHAR *text)
+Canvas::DrawText(PixelScalar x, PixelScalar y, const TCHAR *text)
 {
   assert(text != NULL);
   assert(ValidateUTF8(text));
 
 #ifdef HAVE_GLES
-  assert(x_offset == OpenGL::translate_x);
-  assert(y_offset == OpenGL::translate_y);
+  assert(offset == OpenGL::translate);
 #endif
 
   if (font == NULL)
@@ -507,14 +563,13 @@ Canvas::text(PixelScalar x, PixelScalar y, const TCHAR *text)
 }
 
 void
-Canvas::text_transparent(PixelScalar x, PixelScalar y, const TCHAR *text)
+Canvas::DrawTransparentText(PixelScalar x, PixelScalar y, const TCHAR *text)
 {
   assert(text != NULL);
   assert(ValidateUTF8(text));
 
 #ifdef HAVE_GLES
-  assert(x_offset == OpenGL::translate_x);
-  assert(y_offset == OpenGL::translate_y);
+  assert(offset == OpenGL::translate);
 #endif
 
   if (font == NULL)
@@ -542,16 +597,15 @@ Canvas::text_transparent(PixelScalar x, PixelScalar y, const TCHAR *text)
 }
 
 void
-Canvas::TextClipped(PixelScalar x, PixelScalar y,
-                    UPixelScalar width, UPixelScalar height,
-                    const TCHAR *text)
+Canvas::DrawClippedText(PixelScalar x, PixelScalar y,
+                        UPixelScalar width, UPixelScalar height,
+                        const TCHAR *text)
 {
   assert(text != NULL);
   assert(ValidateUTF8(text));
 
 #ifdef HAVE_GLES
-  assert(x_offset == OpenGL::translate_x);
-  assert(y_offset == OpenGL::translate_y);
+  assert(offset == OpenGL::translate);
 #endif
 
   if (font == NULL)
@@ -591,8 +645,7 @@ Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
                 UPixelScalar src_width, UPixelScalar src_height)
 {
 #ifdef HAVE_GLES
-  assert(x_offset == OpenGL::translate_x);
-  assert(y_offset == OpenGL::translate_y);
+  assert(offset == OpenGL::translate);
 #endif
 
   texture.Draw(dest_x, dest_y, dest_width, dest_height,
@@ -609,7 +662,7 @@ Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
 }
 
 void
-Canvas::copy(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::Copy(PixelScalar dest_x, PixelScalar dest_y,
              UPixelScalar dest_width, UPixelScalar dest_height,
              const Bitmap &src, PixelScalar src_x, PixelScalar src_y)
 {
@@ -618,13 +671,13 @@ Canvas::copy(PixelScalar dest_x, PixelScalar dest_y,
 }
 
 void
-Canvas::copy(const Bitmap &src)
+Canvas::Copy(const Bitmap &src)
 {
-  copy(0, 0, src.GetWidth(), src.GetHeight(), src, 0, 0);
+  Copy(0, 0, src.GetWidth(), src.GetHeight(), src, 0, 0);
 }
 
 void
-Canvas::stretch_transparent(const Bitmap &src, Color key)
+Canvas::StretchTransparent(const Bitmap &src, Color key)
 {
   assert(src.IsDefined());
 
@@ -633,7 +686,7 @@ Canvas::stretch_transparent(const Bitmap &src, Color key)
 }
 
 void
-Canvas::invert_stretch_transparent(const Bitmap &src, Color key)
+Canvas::InvertStretchTransparent(const Bitmap &src, Color key)
 {
   assert(src.IsDefined());
 
@@ -649,8 +702,7 @@ Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
                 UPixelScalar src_width, UPixelScalar src_height)
 {
 #ifdef HAVE_GLES
-  assert(x_offset == OpenGL::translate_x);
-  assert(y_offset == OpenGL::translate_y);
+  assert(offset == OpenGL::translate);
 #endif
   assert(src.IsDefined());
 
@@ -669,8 +721,7 @@ Canvas::Stretch(PixelScalar dest_x, PixelScalar dest_y,
                 const Bitmap &src)
 {
 #ifdef HAVE_GLES
-  assert(x_offset == OpenGL::translate_x);
-  assert(y_offset == OpenGL::translate_y);
+  assert(offset == OpenGL::translate);
 #endif
   assert(src.IsDefined());
 
@@ -784,7 +835,7 @@ Canvas::CopyOr(PixelScalar dest_x, PixelScalar dest_y,
   assert(src.IsDefined());
 
   GLLogicOp logic_op(GL_OR);
-  copy(dest_x, dest_y, dest_width, dest_height,
+  Copy(dest_x, dest_y, dest_width, dest_height,
        src, src_x, src_y);
 }
 
@@ -796,7 +847,7 @@ Canvas::CopyNotOr(PixelScalar dest_x, PixelScalar dest_y,
   assert(src.IsDefined());
 
   GLLogicOp logic_op(GL_OR_INVERTED);
-  copy(dest_x, dest_y, dest_width, dest_height,
+  Copy(dest_x, dest_y, dest_width, dest_height,
        src, src_x, src_y);
 }
 
@@ -808,7 +859,7 @@ Canvas::CopyAnd(PixelScalar dest_x, PixelScalar dest_y,
   assert(src.IsDefined());
 
   GLLogicOp logic_op(GL_AND);
-  copy(dest_x, dest_y, dest_width, dest_height,
+  Copy(dest_x, dest_y, dest_width, dest_height,
        src, src_x, src_y);
 }
 
@@ -820,7 +871,7 @@ Canvas::CopyNot(PixelScalar dest_x, PixelScalar dest_y,
   assert(src.IsDefined());
 
   GLLogicOp logic_op(GL_COPY_INVERTED);
-  copy(dest_x, dest_y, dest_width, dest_height,
+  Copy(dest_x, dest_y, dest_width, dest_height,
        src, src_x, src_y);
 }
 
@@ -828,14 +879,13 @@ void
 Canvas::CopyToTexture(GLTexture &texture, PixelRect src_rc) const
 {
 #ifdef HAVE_GLES
-  assert(x_offset == OpenGL::translate_x);
-  assert(y_offset == OpenGL::translate_y);
+  assert(offset == OpenGL::translate);
 #endif
 
   texture.Bind();
   glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-                      OpenGL::translate_x + src_rc.left,
-                      OpenGL::screen_height - OpenGL::translate_y - src_rc.bottom,
+                      OpenGL::translate.x + src_rc.left,
+                      OpenGL::screen_height - OpenGL::translate.y - src_rc.bottom,
                       src_rc.right - src_rc.left,
                       src_rc.bottom - src_rc.top);
 
@@ -843,9 +893,9 @@ Canvas::CopyToTexture(GLTexture &texture, PixelRect src_rc) const
 
 void
 Canvas::DrawRoundRectangle(PixelScalar left, PixelScalar top,
-                        PixelScalar right, PixelScalar bottom,
-                        UPixelScalar ellipse_width,
-                        UPixelScalar ellipse_height)
+                           PixelScalar right, PixelScalar bottom,
+                           UPixelScalar ellipse_width,
+                           UPixelScalar ellipse_height)
 {
   UPixelScalar radius = std::min(std::min(ellipse_width, ellipse_height),
                                  (UPixelScalar) std::min(bottom - top,

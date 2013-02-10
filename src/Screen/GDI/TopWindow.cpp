@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,20 +22,9 @@ Copyright_License {
 */
 
 #include "Screen/TopWindow.hpp"
-#include "Screen/GDI/Event.hpp"
-
-TopWindow::TopWindow()
-  :hSavedFocus(NULL)
-{
-#ifdef _WIN32_WCE
-  task_bar = NULL;
-#endif
-
-#ifdef HAVE_AYGSHELL_DLL
-  memset(&s_sai, 0, sizeof(s_sai));
-  s_sai.cbSize = sizeof(s_sai);
-#endif
-}
+#include "Event/GDI/Event.hpp"
+#include "Event/GDI/Loop.hpp"
+#include "Event/GDI/Queue.hpp"
 
 bool
 TopWindow::find(const TCHAR *cls, const TCHAR *text)
@@ -60,18 +49,36 @@ TopWindow::find(const TCHAR *cls, const TCHAR *text)
 }
 
 void
-TopWindow::set(const TCHAR *cls, const TCHAR *text, PixelRect rc,
-               TopWindowStyle style)
+TopWindow::Create(const TCHAR *cls, const TCHAR *text, PixelSize size,
+                  TopWindowStyle style)
 {
-  Window::set(NULL, cls, text, rc, style);
+  hSavedFocus = nullptr;
+
+#ifdef _WIN32_WCE
+  task_bar = NULL;
+#endif
+
+#ifdef HAVE_AYGSHELL_DLL
+  memset(&s_sai, 0, sizeof(s_sai));
+  s_sai.cbSize = sizeof(s_sai);
+#endif
+
+#ifdef _WIN32_WCE
+  /* full-screen on Windows CE */
+  const RasterPoint position(0, 0);
+#else
+  const RasterPoint position(CW_USEDEFAULT, CW_USEDEFAULT);
+#endif
+
+  Window::Create(NULL, cls, text, PixelRect(position, size), style);
 }
 
 #ifdef _WIN32_WCE
 
 void
-TopWindow::reset()
+TopWindow::Destroy()
 {
-  ContainerWindow::reset();
+  ContainerWindow::Destroy();
 
   if (task_bar != NULL) {
     /* restore the task bar */
@@ -154,11 +161,23 @@ TopWindow::OnDeactivate()
   return false;
 }
 
+bool
+TopWindow::OnClose()
+{
+  return false;
+}
+
 LRESULT
 TopWindow::OnMessage(HWND _hWnd, UINT message,
                       WPARAM wParam, LPARAM lParam)
 {
   switch (message) {
+  case WM_CLOSE:
+    if (OnClose())
+      /* true returned: message was handled */
+      return 0;
+    break;
+
   case WM_ACTIVATE:
 #ifdef HAVE_AYGSHELL_DLL
     ayg_shell_dll.SHHandleWMActivate(_hWnd, wParam, lParam, &s_sai, FALSE);
@@ -181,11 +200,11 @@ int
 TopWindow::RunEventLoop()
 {
   EventLoop loop;
-  MSG msg;
-  while (loop.Get(msg))
-    loop.Dispatch(msg);
+  Event event;
+  while (loop.Get(event))
+    loop.Dispatch(event);
 
-  return msg.wParam;
+  return event.msg.wParam;
 }
 
 void

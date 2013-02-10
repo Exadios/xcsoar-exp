@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,25 +23,13 @@
 #define TASKPOINTVISITOR_HPP
 
 class TaskPoint;
-class UnorderedTaskPoint;
-class StartPoint;
-class ASTPoint;
-class AATPoint;
-class FinishPoint;
 
 /**
  * Generic visitor for const task points (for double-dispatch)
  */
 class TaskPointConstVisitor {
-protected:
-  virtual void Visit(const UnorderedTaskPoint &p) = 0;
-  virtual void Visit(const StartPoint &p) = 0;
-  virtual void Visit(const ASTPoint &p) = 0;
-  virtual void Visit(const AATPoint &p) = 0;
-  virtual void Visit(const FinishPoint &p) = 0;
-
 public:
-  void Visit(const TaskPoint &tp);
+  virtual void Visit(const TaskPoint &tp) = 0;
 };
 
 #endif

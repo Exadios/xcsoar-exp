@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -43,36 +43,36 @@ struct GridLocation;
 class OperationEnvironment;
 
 class RasterTileCache : private NonCopyable {
-  static const unsigned MAX_RTC_TILES = 4096;
+  static constexpr unsigned MAX_RTC_TILES = 4096;
 
   /**
    * The maximum number of tiles which are loaded at a time.  This
    * must be limited because the amount of memory is finite.
    */
 #if defined(ANDROID)
-  static const unsigned MAX_ACTIVE_TILES = 128;
+  static constexpr unsigned MAX_ACTIVE_TILES = 128;
 #elif !defined(_WIN32_WCE)
   // desktop: use a lot of memory
-  static const unsigned MAX_ACTIVE_TILES = 512;
+  static constexpr unsigned MAX_ACTIVE_TILES = 512;
 #elif !defined(_WIN32_WCE) || (_WIN32_WCE >= 0x0400 && !defined(GNAV))
   // embedded: use less memory
-  static const unsigned MAX_ACTIVE_TILES = 32;
+  static constexpr unsigned MAX_ACTIVE_TILES = 32;
 #else
   // old Windows CE and Altair: use only little memory
-  static const unsigned MAX_ACTIVE_TILES = 16;
+  static constexpr unsigned MAX_ACTIVE_TILES = 16;
 #endif
 
   /**
    * The width and height of the terrain bitmap is shifted by this
    * number of bits to determine the overview size.
    */
-  static const unsigned OVERVIEW_BITS = 4;
+  static constexpr unsigned OVERVIEW_BITS = 4;
 
   /**
    * Target number of steps in intersection searches; total distance
    * is shifted by this number of bits
    */
-  static const unsigned INTERSECT_BITS = 7;
+  static constexpr unsigned INTERSECT_BITS = 7;
 
 public:
   /**
@@ -81,13 +81,13 @@ public:
    * Do not edit!  There are still some hard-coded code sections left,
    * e.g. CombinedDivAndMod().
    */
-  static const unsigned SUBPIXEL_BITS = 8;
+  static constexpr unsigned SUBPIXEL_BITS = 8;
 
 protected:
   friend struct RTDistanceSort;
 
   struct MarkerSegmentInfo {
-    static const uint16_t NO_TILE = (uint16_t)-1;
+    static constexpr uint16_t NO_TILE = (uint16_t)-1;
 
     /**
      * The position of this marker segment within the file.
@@ -117,9 +117,9 @@ protected:
   struct CacheHeader {
     enum {
 #ifdef FIXED_MATH
-      VERSION = 0x8,
+      VERSION = 0xa,
 #else
-      VERSION = 0x9,
+      VERSION = 0xb,
 #endif
     };
 
@@ -317,6 +317,23 @@ public:
 
   unsigned int GetWidth() const { return width; }
   unsigned int GetHeight() const { return height; }
+
+  unsigned GetFineWidth() const {
+    return width << SUBPIXEL_BITS;
+  }
+
+  unsigned GetFineHeight() const {
+    return height << SUBPIXEL_BITS;
+  }
+
+private:
+  unsigned GetFineTileWidth() const {
+    return tile_width << SUBPIXEL_BITS;
+  }
+
+  unsigned GetFineTileHeight() const {
+    return tile_height << SUBPIXEL_BITS;
+  }
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ Copyright_License {
 #include <algorithm>
 
 void
-TraceHistoryRenderer::scale_chart(ChartRenderer &chart,
+TraceHistoryRenderer::ScaleChart(ChartRenderer &chart,
                                   const TraceVariableHistory& var,
                                   const bool centered) const
 {
@@ -41,14 +41,14 @@ TraceHistoryRenderer::scale_chart(ChartRenderer &chart,
   chart.ScaleXFromValue(fixed(0));
   chart.ScaleXFromValue(fixed(var.capacity()-1));
 
-  fixed vmin = fixed_zero;
-  fixed vmax = fixed_zero;
+  fixed vmin = fixed(0);
+  fixed vmax = fixed(0);
   for (auto it = var.begin(); it != var.end(); ++it) {
     vmin = std::min(*it, vmin);
     vmax = std::max(*it, vmax);
   }
   if (!(vmax>vmin)) {
-    vmax += fixed_one;
+    vmax += fixed(1);
   }
   if (centered) {
     vmax = std::max(vmax, -vmin);
@@ -59,44 +59,19 @@ TraceHistoryRenderer::scale_chart(ChartRenderer &chart,
 }
 
 void
-TraceHistoryRenderer::render_axis(ChartRenderer &chart,
+TraceHistoryRenderer::RenderAxis(ChartRenderer &chart,
                                   const TraceVariableHistory& var) const
 {
-  chart.DrawLine(fixed_zero, fixed_zero, 
-                 fixed(var.capacity()-1), fixed_zero, 
+  chart.DrawLine(fixed(0), fixed(0),
+                 fixed(var.capacity()-1), fixed(0),
                  look.axis_pen);
 }
 
-
-void 
-TraceHistoryRenderer::render_line(ChartRenderer &chart,
-                                  const TraceVariableHistory& var) const
-{
-  fixed x_last, y_last;
-  unsigned i=0;
-  for (auto it = var.begin(); it != var.end(); ++it, ++i) {
-    fixed x= fixed(i);
-    fixed y= *it;
-    if (i)
-      chart.DrawLine(x_last, y_last, x, y, look.line_pen);
-    x_last = x;
-    y_last = y;
-  }
-}
-
-static int sgn(const fixed x) {
-  if (positive(x))
-    return 1;
-  if (negative(x))
-    return -1;
-  return 0;
-}
-
-void 
+void
 TraceHistoryRenderer::render_filled_posneg(ChartRenderer &chart,
                                            const TraceVariableHistory& var) const
 {
-  fixed x_last(fixed_zero), y_last(fixed_zero);
+  fixed x_last(fixed(0)), y_last(fixed(0));
   unsigned i=0;
   for (auto it = var.begin(); it != var.end(); ++it, ++i) {
     fixed x= fixed(i);
@@ -104,14 +79,14 @@ TraceHistoryRenderer::render_filled_posneg(ChartRenderer &chart,
     if (i) {
       if (sgn(y)*sgn(y_last)<0) {
         if (positive(y_last))
-          chart.DrawFilledLine(x_last, y_last, x_last+fixed_half, fixed_zero,
+          chart.DrawFilledLine(x_last, y_last, x_last+fixed(0.5), fixed(0),
                                vario_look.lift_brush);
         else if (negative(y_last))
-          chart.DrawFilledLine(x_last, y_last, x_last+fixed_half, fixed_zero,
+          chart.DrawFilledLine(x_last, y_last, x_last+fixed(0.5), fixed(0),
                                vario_look.sink_brush);
-        
-        x_last = x-fixed_half;
-        y_last = fixed_zero;
+
+        x_last = x-fixed(0.5);
+        y_last = fixed(0);
 
       }
       if (positive(y) || positive(y_last))
@@ -137,17 +112,16 @@ TraceHistoryRenderer::RenderVario(Canvas& canvas,
                                   const fixed mc) const
 {
   ChartRenderer chart(chart_look, canvas, rc);
-  scale_chart(chart, var, centered);
+  ScaleChart(chart, var, centered);
   chart.ScaleYFromValue(mc);
-  // render_line(chart, var);
 
   if (positive(mc)) {
     canvas.SetBackgroundTransparent();
-    chart.DrawLine(fixed_zero, mc, 
-                   fixed(var.capacity()-1), mc, 
+    chart.DrawLine(fixed(0), mc,
+                   fixed(var.capacity()-1), mc,
                    ChartLook::STYLE_DASHGREEN);
   }
 
   render_filled_posneg(chart, var);
-  render_axis(chart, var);
+  RenderAxis(chart, var);
 }

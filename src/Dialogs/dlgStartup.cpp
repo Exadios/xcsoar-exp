@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
 #include "Dialogs/XML.hpp"
 #include "UIGlobals.hpp"
 #include "Profile/Profile.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Form/Form.hpp"
 #include "Form/Draw.hpp"
@@ -56,13 +57,13 @@ OnLogoPaint(WndOwnerDrawFrame *Sender, Canvas &canvas)
 }
 
 static void
-OnCloseClicked(gcc_unused WndButton &button)
+OnCloseClicked()
 {
   wf->SetModalResult(mrOK);
 }
 
 static void
-OnQuitClicked(gcc_unused WndButton &button)
+OnQuitClicked()
 {
   wf->SetModalResult(mrCancel);
 }
@@ -93,7 +94,7 @@ static constexpr CallBackTableEntry CallBackTable[] = {
 bool
 dlgStartupShowModal()
 {
-  LogStartUp(_T("Startup dialog"));
+  LogFormat("Startup dialog");
 
   logo = new LogoView();
 

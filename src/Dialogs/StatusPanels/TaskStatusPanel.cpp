@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -47,17 +47,18 @@ TaskStatusPanel::Refresh()
     return;
 
   const DerivedInfo &calculated = CommonInterface::Calculated();
-  const TaskStats &task_stats = calculated.task_stats;
+  const TaskStats &task_stats = calculated.ordered_task_stats;
+  const CommonStats &common_stats = calculated.common_stats;
 
   TCHAR Temp[80];
 
-  FormatSignedTimeHHMM(Temp, (int)protected_task_manager->GetOrderedTaskBehaviour().aat_min_time);
-  SetRowVisible(TaskTime, task_stats.has_targets);
-  if (task_stats.has_targets)
+  SetRowVisible(TaskTime, common_stats.ordered_has_targets);
+  if (common_stats.ordered_has_targets) {
+    FormatSignedTimeHHMM(Temp, (int)protected_task_manager->GetOrderedTaskBehaviour().aat_min_time);
     SetText(TaskTime, Temp);
+  }
 
-  int ete_time(task_stats.total.time_elapsed +
-               task_stats.total.time_remaining);
+  int ete_time(task_stats.GetEstimatedTotalTime());
   FormatSignedTimeHHMM(Temp, ete_time);
   SetText(ETETime, Temp);
 

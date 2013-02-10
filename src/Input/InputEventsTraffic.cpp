@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,15 +22,34 @@ Copyright_License {
 */
 
 #include "InputEvents.hpp"
+#include "UIActions.hpp"
 #include "Interface.hpp"
 #include "MainWindow.hpp"
-#include "Widgets/TrafficWidget.hpp"
+#include "Gauge/BigTrafficWidget.hpp"
+#include "FLARM/Glue.hpp"
+#include "Dialogs/Message.hpp"
+#include "Dialogs/TextEntry.hpp"
+#include "Dialogs/Traffic/TrafficDialogs.hpp"
+#include "Language/Language.hpp"
+#include "FLARM/FlarmDetails.hpp"
 #include "FLARM/Glue.hpp"
 
-/**
- * Evil global variable - please refactor!
- */
-static TrafficWidget *traffic_widget;
+void
+InputEvents::eventFLARMRadar(gcc_unused const TCHAR *misc)
+{
+  if (StringIsEqual(misc, _T("ForceToggle"))) {
+    CommonInterface::main_window->ToggleForceFLARMRadar();
+  } else
+    CommonInterface::main_window->ToggleSuppressFLARMRadar();
+}
+
+// FLARM Traffic
+// Displays the FLARM traffic dialog
+void
+InputEvents::eventFlarmTraffic(gcc_unused const TCHAR *misc)
+{
+  UIActions::ShowTrafficRadar();
+}
 
 void
 InputEvents::eventTraffic(const TCHAR *misc)
@@ -38,20 +57,14 @@ InputEvents::eventTraffic(const TCHAR *misc)
   LoadFlarmDatabases();
 
   if (StringIsEqual(misc, _T("show"))) {
-    if (CommonInterface::Basic().flarm.traffic.IsEmpty() ||
-        IsFlavour(_T("Traffic")))
-      return;
-
-    traffic_widget = new TrafficWidget();
-    CommonInterface::main_window->SetWidget(traffic_widget);
-    SetFlavour(_T("Traffic"));
+    UIActions::ShowTrafficRadar();
     return;
   }
 
-  if (!IsFlavour(_T("Traffic")))
+  TrafficWidget *traffic_widget = (TrafficWidget *)
+    CommonInterface::main_window->GetFlavourWidget(_T("Traffic"));
+  if (traffic_widget == nullptr)
     return;
-
-  assert(traffic_widget != NULL);
 
   if (StringIsEqual(misc, _T("zoom auto toggle"))) {
     traffic_widget->ToggleAutoZoom();
@@ -61,5 +74,16 @@ InputEvents::eventTraffic(const TCHAR *misc)
     traffic_widget->ZoomOut();
   } else if (StringIsEqual(misc, _T("northup toggle"))) {
     traffic_widget->ToggleNorthUp();
+  } else if (StringIsEqual(misc, _T("details"))) {
+    traffic_widget->OpenDetails();
+  } else if (StringIsEqual(misc, _T("label toggle"))) {
+    traffic_widget->SwitchData();
   }
+}
+
+void
+InputEvents::eventFlarmDetails(gcc_unused const TCHAR *misc)
+{
+  LoadFlarmDatabases();
+  TrafficListDialog();
 }

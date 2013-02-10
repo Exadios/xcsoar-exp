@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,36 +24,34 @@ Copyright_License {
 #ifndef XCSOAR_TRACKING_SKYLINES_GLUE_HPP
 #define XCSOAR_TRACKING_SKYLINES_GLUE_HPP
 
-#include "Settings.hpp"
 #include "Client.hpp"
-#include "GPSClock.hpp"
+#include "Computer/GPSClock.hpp"
 
 namespace SkyLinesTracking {
+  struct Settings;
+
   class Glue {
     Client client;
     unsigned interval;
     GPSClock clock;
 
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    GPSClock traffic_clock;
+    bool traffic_enabled;
+#endif
+
   public:
-    // TODO: make the interval configurable
-    Glue():interval(0), clock(fixed(10)) {}
+    Glue();
 
-    void SetSettings(const Settings &settings) {
-      client.SetKey(settings.key);
-
-      if (interval != settings.interval) {
-        interval = settings.interval;
-        clock = GPSClock(fixed(std::max(settings.interval, 1u)));
-      }
-
-      if (!settings.enabled)
-        client.Close();
-      else if (!client.IsDefined())
-        // TODO: fix hard-coded IP address:
-        client.Open("78.47.50.46");
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    void SetHandler(Handler *handler) {
+      client.SetHandler(handler);
     }
+#endif
 
-    void SendFix(const NMEAInfo &basic);
+    void SetSettings(const Settings &settings);
+
+    void Tick(const NMEAInfo &basic);
   };
 }
 

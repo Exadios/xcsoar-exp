@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,23 +23,22 @@
 #include "IntermediatePoint.hpp"
 #include "Task/TaskBehaviour.hpp"
 
-IntermediateTaskPoint::IntermediateTaskPoint(Type _type,
+IntermediateTaskPoint::IntermediateTaskPoint(TaskPointType _type,
                                              ObservationZonePoint *_oz,
                                              const Waypoint &wp,
                                              const TaskBehaviour &tb,
-                                             const OrderedTaskBehaviour &to,
                                              const bool b_scored)
-  :OrderedTaskPoint(_type, _oz, wp, to, b_scored),
-   safety_height_terrain(tb.route_planner.safety_height_terrain) {}
+  :OrderedTaskPoint(_type, _oz, wp, b_scored),
+   safety_height(tb.safety_height_arrival) {}
 
 void
 IntermediateTaskPoint::SetTaskBehaviour(const TaskBehaviour &tb)
 {
-  safety_height_terrain = tb.route_planner.safety_height_terrain;
+  safety_height = tb.safety_height_arrival;
 }
 
 fixed
 IntermediateTaskPoint::GetElevation() const
 {
-  return GetBaseElevation() + safety_height_terrain;
+  return GetBaseElevation() + safety_height;
 }

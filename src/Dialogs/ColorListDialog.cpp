@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,9 @@ Copyright_License {
 #include "ColorListDialog.hpp"
 #include "Dialogs/ListPicker.hpp"
 #include "Language/Language.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/Layout.hpp"
-#include "UIGlobals.hpp"
+#include "Form/List.hpp"
 #include "Look/AirspaceLook.hpp"
 #include "Util/Macros.hpp"
 
@@ -39,7 +40,7 @@ OnPaintListItem(Canvas &canvas, const PixelRect rc, unsigned i)
   const Color &color = AirspaceLook::preset_colors[i];
 
   PixelRect rc2 = rc;
-  InflateRect(&rc2, -Layout::FastScale(2), -Layout::FastScale(2));
+  rc2.Grow(-Layout::FastScale(2));
 
 #ifdef USE_GDI
   canvas.DrawFilledRectangle(rc2, color);
@@ -61,9 +62,18 @@ ShowColorListDialog(Color &color)
     if (AirspaceLook::preset_colors[i] == color)
       default_index = i;
 
-  int index = ListPicker(UIGlobals::GetMainWindow(), _("Select Color"),
+  /*
+  auto item_renderer = MakeListItemRenderer([](Canvas &canvas,
+                                               const PixelRect rc, unsigned i){
+                                              OnPaintListItem(canvas, rc, i);
+                                            });
+  */
+
+  FunctionListItemRenderer item_renderer(OnPaintListItem);
+
+  int index = ListPicker(_("Select Color"),
                          ARRAY_SIZE(AirspaceLook::preset_colors), default_index,
-                         Layout::FastScale(18), OnPaintListItem);
+                         Layout::FastScale(18), item_renderer);
 
   if (index < 0)
     return false;

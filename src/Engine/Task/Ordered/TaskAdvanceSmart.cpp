@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ TaskAdvanceSmart::SetFactoryConstraints(const TaskFactoryConstraints &constraint
   start_requires_arm = constraints.start_requires_arm;
 }
 
-bool 
+bool
 TaskAdvanceSmart::CheckReadyToAdvance(const TaskPoint &tp,
                                       const AircraftState &aircraft,
                                       const bool x_enter, const bool x_exit)
@@ -50,7 +50,7 @@ TaskAdvanceSmart::CheckReadyToAdvance(const TaskPoint &tp,
   if (armed)
     request_armed = false;
 
-  if (tp.GetType() == TaskPoint::START) {
+  if (tp.GetType() == TaskPointType::START) {
     const StartPoint *sp = (const StartPoint *)&tp;
     if (start_requires_arm) {
       if (armed) {
@@ -65,7 +65,7 @@ TaskAdvanceSmart::CheckReadyToAdvance(const TaskPoint &tp,
       state = TaskAdvance::AUTO;
       return state_ready;
     }
-  } else if (tp.GetType() == TaskPoint::AAT) {
+  } else if (tp.GetType() == TaskPointType::AAT) {
     if (armed) {
       state = TaskAdvance::TURN_ARMED;
     } else {
@@ -77,8 +77,8 @@ TaskAdvanceSmart::CheckReadyToAdvance(const TaskPoint &tp,
   } else if (tp.IsIntermediatePoint()) {
     state = TaskAdvance::AUTO;
     return state_ready;
-  } 
-  
+  }
+
   return false;
 }
 

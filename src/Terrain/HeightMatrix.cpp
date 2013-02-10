@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,9 +23,13 @@ Copyright_License {
 
 #include "HeightMatrix.hpp"
 #include "RasterMap.hpp"
-#include "Projection/WindowProjection.hpp"
 
-#include <algorithm>
+#ifdef ENABLE_OPENGL
+#include "Geo/GeoBounds.hpp"
+#else
+#include "Projection/WindowProjection.hpp"
+#endif
+
 #include <assert.h>
 
 void
@@ -53,6 +57,26 @@ HeightMatrix::SetSize(unsigned width, unsigned height,
           (height + quantisation_pixels - 1) / quantisation_pixels);
 }
 
+#ifdef ENABLE_OPENGL
+
+void
+HeightMatrix::Fill(const RasterMap &map, const GeoBounds &bounds,
+                   unsigned width, unsigned height, bool interpolate)
+{
+  SetSize(width, height);
+
+  const Angle delta_y = bounds.GetHeight() / height;
+  Angle latitude = bounds.GetNorth();
+  for (short *p = data.begin(), *const end = p + width * height;
+       p != end; p += width, latitude -= delta_y) {
+    map.ScanLine(GeoPoint(bounds.GetWest(), latitude),
+                 GeoPoint(bounds.GetEast(), latitude),
+                 p, width, interpolate);
+  }
+}
+
+#else
+
 void
 HeightMatrix::Fill(const RasterMap &map, const WindowProjection &projection,
                    unsigned quantisation_pixels, bool interpolate)
@@ -63,10 +87,13 @@ HeightMatrix::Fill(const RasterMap &map, const WindowProjection &projection,
   SetSize((screen_width + quantisation_pixels - 1) / quantisation_pixels,
           (screen_height + quantisation_pixels - 1) / quantisation_pixels);
 
-  for (unsigned y = 0; y < screen_height; y += quantisation_pixels) {
-    short *p = data.begin() + y * width / quantisation_pixels;
+  short *p = data.begin();
+  for (unsigned y = 0; y < screen_height;
+       y += quantisation_pixels, p += width) {
     map.ScanLine(projection.ScreenToGeo(0, y),
                  projection.ScreenToGeo(screen_width, y),
                  p, width, interpolate);
   }
 }
+
+#endif

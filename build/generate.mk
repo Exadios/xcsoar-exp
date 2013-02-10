@@ -6,7 +6,8 @@ $(OUT)/include/MathTables.h: $(HOST_OUTPUT_DIR)/tools/GenerateSineTables$(HOST_E
 	@$(NQ)echo "  GEN     $@"
 	$(Q)$(HOST_OUTPUT_DIR)/tools/GenerateSineTables$(HOST_EXEEXT) >$@
 
-$(call SRC_TO_OBJ,$(SRC)/Math/FastMath.c): $(OUT)/include/MathTables.h
+$(call SRC_TO_OBJ,$(SRC)/Math/FastMath.cpp): $(OUT)/include/MathTables.h
+$(call SRC_TO_OBJ,$(SRC)/Math/FastTrig.cpp): $(OUT)/include/MathTables.h
 
 $(OUT)/include/InputEvents_Text2Event.cpp: $(SRC)/Input/InputEvents.hpp \
 	$(topdir)/tools/Text2Event.pl | $(OUT)/include/dirstamp
@@ -85,7 +86,7 @@ $(TARGET_OUTPUT_DIR)/include/android_drawable.h: $(TARGET_OUTPUT_DIR)/XCSoar-dra
 $(call SRC_TO_OBJ,$(SRC)/ResourceLoader.cpp): $(TARGET_OUTPUT_DIR)/include/resource_data.h
 
 ifeq ($(TARGET),ANDROID)
-$(call SRC_TO_OBJ,$(SRC)/Screen/OpenGL/Bitmap.cpp): $(TARGET_OUTPUT_DIR)/include/android_drawable.h
+$(call SRC_TO_OBJ,$(SRC)/Screen/Android/Bitmap.cpp): $(TARGET_OUTPUT_DIR)/include/android_drawable.h
 endif
 
 endif

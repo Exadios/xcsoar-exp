@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,20 +24,15 @@ Copyright_License {
 #include "Device/All.hpp"
 #include "Device/List.hpp"
 #include "Device/Descriptor.hpp"
-#include "Device/device.hpp"
-#include "Thread/Mutex.hpp"
-#include "../Simulator.hpp"
-
-#include <assert.h>
 
 void
-devTick(const DerivedInfo &calculated)
+devTick()
 {
   int i;
 
   for (i = 0; i < NUMDEV; i++) {
     DeviceDescriptor &device = *device_list[i];
-    device.OnSysTicker(calculated);
+    device.OnSysTicker();
   }
 }
 
@@ -53,9 +48,6 @@ AllDevicesAutoReopen(OperationEnvironment &env)
 void
 AllDevicesPutMacCready(fixed mac_cready, OperationEnvironment &env)
 {
-  if (is_simulator())
-    return;
-
   for (unsigned i = 0; i < NUMDEV; ++i)
     device_list[i]->PutMacCready(mac_cready, env);
 }
@@ -63,9 +55,6 @@ AllDevicesPutMacCready(fixed mac_cready, OperationEnvironment &env)
 void
 AllDevicesPutBugs(fixed bugs, OperationEnvironment &env)
 {
-  if (is_simulator())
-    return;
-
   for (unsigned i = 0; i < NUMDEV; ++i)
     device_list[i]->PutBugs(bugs, env);
 }
@@ -74,19 +63,13 @@ void
 AllDevicesPutBallast(fixed fraction, fixed overload,
                      OperationEnvironment &env)
 {
-  if (is_simulator())
-    return;
-
   for (unsigned i = 0; i < NUMDEV; ++i)
     device_list[i]->PutBallast(fraction, overload, env);
 }
 
 void
-AllDevicesPutVolume(int volume, OperationEnvironment &env)
+AllDevicesPutVolume(unsigned volume, OperationEnvironment &env)
 {
-  if (is_simulator())
-    return;
-
   for (unsigned i = 0; i < NUMDEV; ++i)
     device_list[i]->PutVolume(volume, env);
 }
@@ -95,9 +78,6 @@ void
 AllDevicesPutActiveFrequency(RadioFrequency frequency,
                              OperationEnvironment &env)
 {
-  if (is_simulator())
-    return;
-
   for (unsigned i = 0; i < NUMDEV; ++i)
     device_list[i]->PutActiveFrequency(frequency, env);
 }
@@ -106,9 +86,6 @@ void
 AllDevicesPutStandbyFrequency(RadioFrequency frequency,
                               OperationEnvironment &env)
 {
-  if (is_simulator())
-    return;
-
   for (unsigned i = 0; i < NUMDEV; ++i)
     device_list[i]->PutStandbyFrequency(frequency, env);
 }
@@ -117,9 +94,21 @@ void
 AllDevicesPutQNH(const AtmosphericPressure &pres,
                  OperationEnvironment &env)
 {
-  if (is_simulator())
-    return;
-
   for (unsigned i = 0; i < NUMDEV; ++i)
     device_list[i]->PutQNH(pres, env);
+}
+
+void
+AllDevicesNotifySensorUpdate(const MoreData &basic)
+{
+  for (unsigned i = 0; i < NUMDEV; ++i)
+    device_list[i]->OnSensorUpdate(basic);
+}
+
+void
+AllDevicesNotifyCalculatedUpdate(const MoreData &basic,
+                                 const DerivedInfo &calculated)
+{
+  for (unsigned i = 0; i < NUMDEV; ++i)
+    device_list[i]->OnCalculatedUpdate(basic, calculated);
 }

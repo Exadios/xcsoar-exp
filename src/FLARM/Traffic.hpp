@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,11 +28,12 @@ Copyright_License {
 #include "Geo/GeoPoint.hpp"
 #include "NMEA/Validity.hpp"
 #include "Util/StaticString.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Rough/RoughAltitude.hpp"
 #include "Rough/RoughDistance.hpp"
 #include "Rough/RoughSpeed.hpp"
 #include "Rough/RoughAngle.hpp"
+
+#include <type_traits>
 
 #include <tchar.h>
 
@@ -171,7 +172,7 @@ struct FlarmTraffic {
   }
 
   bool IsPassive() const {
-    return IsPowered() || speed < fixed_four;
+    return IsPowered() || speed < fixed(4);
   }
 
   /**
@@ -180,7 +181,7 @@ struct FlarmTraffic {
    * @return true if the object is still valid
    */
   bool Refresh(fixed Time) {
-    valid.Expire(Time, fixed_two);
+    valid.Expire(Time, fixed(2));
     return valid;
   }
 
@@ -189,6 +190,6 @@ struct FlarmTraffic {
   void Update(const FlarmTraffic &other);
 };
 
-static_assert(is_trivial<FlarmTraffic>::value, "type is not trivial");
+static_assert(std::is_trivial<FlarmTraffic>::value, "type is not trivial");
 
 #endif

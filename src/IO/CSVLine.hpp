@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@ Copyright_License {
 
 #include "Util/Range.hpp"
 #include "Math/fixed.hpp"
+
+#include <stddef.h>
 
 /**
  * A helper class which can dissect a NMEA input line.
@@ -68,7 +70,7 @@ public:
   bool ReadCompare(const char *value);
 
   long Read(long default_value);
-  long ReadHex(long default_value);
+  unsigned ReadHex(unsigned default_value);
 
   int Read(int default_value) {
     return (int)Read((long)default_value);
@@ -97,7 +99,7 @@ public:
    * number should be written into
    * @return True if number was read successfully, False otherwise
    */
-  bool ReadHexChecked(long &value_r);
+  bool ReadHexChecked(unsigned &value_r);
 
   /**
    * Read a #fixed only if the unit string which follows matches.

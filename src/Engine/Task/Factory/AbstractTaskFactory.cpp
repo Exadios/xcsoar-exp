@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 static fixed
 GetOZSize(const ObservationZonePoint &oz)
 {
-  switch (oz.shape) {
+  switch (oz.GetShape()) {
   case ObservationZonePoint::SECTOR:
     return ((const SectorZone &)oz).GetRadius();
 
@@ -55,7 +55,7 @@ GetOZSize(const ObservationZonePoint &oz)
     return ((const AnnularSectorZone &)oz).GetRadius();
 
   default:
-    return fixed_minus_one;
+    return fixed(-1);
   }
 }
 
@@ -74,7 +74,7 @@ AbstractTaskFactory::GetMutatedPointType(const OrderedTaskPoint &tp) const
   TaskPointFactoryType newtype = oldtype;
 
   switch (tp.GetType()) {
-  case TaskPoint::START:
+  case TaskPointType::START:
     if (!IsValidStartType(newtype)) {
       newtype = behaviour.sector_defaults.start_type;
       if (!IsValidStartType(newtype))
@@ -82,8 +82,8 @@ AbstractTaskFactory::GetMutatedPointType(const OrderedTaskPoint &tp) const
     }
     break;
 
-  case TaskPoint::AST:
-  case TaskPoint::AAT:
+  case TaskPointType::AST:
+  case TaskPointType::AAT:
     if (!IsValidIntermediateType(newtype)) {
       newtype = behaviour.sector_defaults.turnpoint_type;
       if (!IsValidIntermediateType(newtype)) {
@@ -92,7 +92,7 @@ AbstractTaskFactory::GetMutatedPointType(const OrderedTaskPoint &tp) const
     }
     break;
 
-  case TaskPoint::FINISH:
+  case TaskPointType::FINISH:
     if (!IsValidFinishType(newtype)) {
       newtype = behaviour.sector_defaults.finish_type;
       if (!IsValidFinishType(newtype))
@@ -100,8 +100,7 @@ AbstractTaskFactory::GetMutatedPointType(const OrderedTaskPoint &tp) const
     }
     break;
 
-  case TaskPoint::UNORDERED:
-  case TaskPoint::ROUTE:
+  case TaskPointType::UNORDERED:
     break;
   }
   return newtype;
@@ -111,28 +110,30 @@ StartPoint*
 AbstractTaskFactory::CreateStart(ObservationZonePoint* oz,
                                  const Waypoint& wp) const
 {
-  return new StartPoint(oz, wp, behaviour, GetOrderedTaskBehaviour());
+  return new StartPoint(oz, wp, behaviour,
+                        GetOrderedTaskBehaviour().start_constraints);
 }
 
 FinishPoint*
 AbstractTaskFactory::CreateFinish(ObservationZonePoint* oz,
                                   const Waypoint& wp) const
 {
-  return new FinishPoint(oz, wp, behaviour, GetOrderedTaskBehaviour());
+  return new FinishPoint(oz, wp, behaviour,
+                         GetOrderedTaskBehaviour().finish_constraints);
 }
 
 AATPoint*
 AbstractTaskFactory::CreateAATPoint(ObservationZonePoint* oz,
                                const Waypoint& wp) const
 {
-  return new AATPoint(oz, wp, behaviour, GetOrderedTaskBehaviour());
+  return new AATPoint(oz, wp, behaviour);
 }
 
 ASTPoint*
 AbstractTaskFactory::CreateASTPoint(ObservationZonePoint* oz,
                                const Waypoint& wp) const
 {
-  return new ASTPoint(oz, wp, behaviour, GetOrderedTaskBehaviour());
+  return new ASTPoint(oz, wp, behaviour);
 }
 
 StartPoint* 
@@ -177,8 +178,8 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
   const ObservationZonePoint &oz = point.GetObservationZone();
 
   switch (point.GetType()) {
-  case TaskPoint::START:
-    switch (oz.shape) {
+  case TaskPointType::START:
+    switch (oz.GetShape()) {
     case ObservationZonePoint::FAI_SECTOR:
       return TaskPointFactoryType::START_SECTOR;
 
@@ -198,8 +199,8 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     }
     break;
 
-  case TaskPoint::AAT:
-    switch (oz.shape) {
+  case TaskPointType::AAT:
+    switch (oz.GetShape()) {
     case ObservationZonePoint::SECTOR:
     case ObservationZonePoint::FAI_SECTOR:
     case ObservationZonePoint::KEYHOLE:
@@ -215,8 +216,8 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     }
     break;
 
-  case TaskPoint::AST:
-    switch (oz.shape) {
+  case TaskPointType::AST:
+    switch (oz.GetShape()) {
     case ObservationZonePoint::FAI_SECTOR:
       return TaskPointFactoryType::FAI_SECTOR;
 
@@ -238,8 +239,8 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     }
     break;
 
-  case TaskPoint::FINISH:
-    switch (oz.shape) {
+  case TaskPointType::FINISH:
+    switch (oz.GetShape()) {
     case ObservationZonePoint::BGA_START:
     case ObservationZonePoint::FAI_SECTOR:
       return TaskPointFactoryType::FINISH_SECTOR;
@@ -257,24 +258,22 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     }
     break;
 
-  case TaskPoint::UNORDERED:
-  case TaskPoint::ROUTE:
+  case TaskPointType::UNORDERED:
     /* obviously, when we check the type of an OrderedTaskPoint, we
-       should never get type==UNORDERED or ROUTE. */
-    assert(false);
+       should never get type==UNORDERED */
+    gcc_unreachable();
     break;
   }
 
   // fail, should never get here
-  assert(1);
-  return TaskPointFactoryType::START_LINE;
+  gcc_unreachable();
 }
 
 OrderedTaskPoint* 
 AbstractTaskFactory::CreatePoint(const TaskPointFactoryType type,
                                  const Waypoint &wp) const
 {
-  return CreatePoint(type, wp, fixed_minus_one, fixed_minus_one, fixed_minus_one);
+  return CreatePoint(type, wp, fixed(-1), fixed(-1), fixed(-1));
 }
 
 void
@@ -285,13 +284,13 @@ AbstractTaskFactory::GetPointDefaultSizes(const TaskPointFactoryType type,
 {
   TaskBehaviour ob = this->behaviour;
 
-  if (start_radius < fixed_zero)
+  if (start_radius < fixed(0))
     start_radius = ob.sector_defaults.start_radius;
 
-  if (turnpoint_radius < fixed_zero)
+  if (turnpoint_radius < fixed(0))
     turnpoint_radius = ob.sector_defaults.turnpoint_radius;
 
-  if (finish_radius < fixed_zero)
+  if (finish_radius < fixed(0))
     finish_radius = ob.sector_defaults.finish_radius;
 }
 
@@ -564,7 +563,7 @@ AbstractTaskFactory::GetOrderedTaskBehaviour() const
 void 
 AbstractTaskFactory::UpdateOrderedTaskBehaviour(OrderedTaskBehaviour& to)
 {
-  to.fai_finish = constraints.fai_finish;
+  to.finish_constraints.fai_finish = constraints.fai_finish;
 }
 
 bool 
@@ -636,31 +635,29 @@ AbstractTaskFactory::IsValidType(const OrderedTaskPoint &new_tp,
                                unsigned position) const
 {
   switch (new_tp.GetType()) {
-  case TaskPoint::START:
+  case TaskPointType::START:
     return ValidAbstractType(POINT_START, position) &&
         IsValidStartType(GetType(new_tp));
 
-  case TaskPoint::AST:
+  case TaskPointType::AST:
     return ValidAbstractType(POINT_AST, position) &&
         IsValidIntermediateType(GetType(new_tp));
 
-  case TaskPoint::AAT:
+  case TaskPointType::AAT:
     return ValidAbstractType(POINT_AAT, position)&&
         IsValidIntermediateType(GetType(new_tp));
 
-  case TaskPoint::FINISH:
+  case TaskPointType::FINISH:
     return ValidAbstractType(POINT_FINISH, position)&&
         IsValidFinishType(GetType(new_tp));
 
-  case TaskPoint::UNORDERED:
-  case TaskPoint::ROUTE:
+  case TaskPointType::UNORDERED:
     /* obviously, when we check the type of an OrderedTaskPoint, we
-       should never get type==UNORDERED or ROUTE */
-    assert(false);
-    break;
+       should never get type==UNORDERED */
+    gcc_unreachable();
   }
 
-  return false;
+  gcc_unreachable();
 }
 
 bool
@@ -713,7 +710,7 @@ AbstractTaskFactory::ClearValidationErrors()
   validation_errors.clear();
 }
 
-AbstractTaskFactory::TaskValidationErrorVector
+TaskValidationErrorVector
 AbstractTaskFactory::GetValidationErrors()
 {
   return validation_errors;
@@ -797,7 +794,7 @@ AbstractTaskFactory::ValidateFAIOZs()
   }
 
   if (!valid)
-    AddValidationError(NON_FAI_OZS);
+    AddValidationError(TaskValidationErrorType::NON_FAI_OZS);
 
   return valid;
 }
@@ -810,37 +807,37 @@ AbstractTaskFactory::Validate()
   bool valid = true;
 
   if (!task.HasStart()) {
-    AddValidationError(NO_VALID_START);
+    AddValidationError(TaskValidationErrorType::NO_VALID_START);
     valid = false;
   }
   if (!task.HasFinish()) {
-    AddValidationError(NO_VALID_FINISH);
+    AddValidationError(TaskValidationErrorType::NO_VALID_FINISH);
     valid = false;
   }
 
   if (constraints.is_closed && !IsClosed()) {
-    AddValidationError(TASK_NOT_CLOSED);
+    AddValidationError(TaskValidationErrorType::TASK_NOT_CLOSED);
     valid = false;
   }
 
   if (constraints.IsFixedSize()) {
     if (task.TaskSize() != constraints.max_points) {
-      AddValidationError(INCORRECT_NUMBER_TURNPOINTS);
+      AddValidationError(TaskValidationErrorType::INCORRECT_NUMBER_TURNPOINTS);
       valid = false;
     }
   } else {
     if (task.TaskSize() < constraints.min_points) {
-      AddValidationError(UNDER_MIN_TURNPOINTS);
+      AddValidationError(TaskValidationErrorType::UNDER_MIN_TURNPOINTS);
       valid = false;
     }
     if (task.TaskSize() > constraints.max_points) {
-      AddValidationError(EXCEEDS_MAX_TURNPOINTS);
+      AddValidationError(TaskValidationErrorType::EXCEEDS_MAX_TURNPOINTS);
       valid = false;
     }
   }
 
   if (constraints.homogeneous_tps && !IsHomogeneous()) {
-    AddValidationError(TASK_NOT_HOMOGENEOUS);
+    AddValidationError(TaskValidationErrorType::TASK_NOT_HOMOGENEOUS);
     valid = false;
   }
 
@@ -940,7 +937,7 @@ AbstractTaskFactory::IsHomogeneous() const
 
     for (unsigned i = 2; i < size; i++) {
       const OrderedTaskPoint &tp = task.GetPoint(i);
-      if (tp.GetType() == TaskPoint::FINISH) {
+      if (tp.GetType() == TaskPointType::FINISH) {
         ; // don't check a valid finish point
       } else {
         if (GetType(tp) != homogtype) {
@@ -1037,7 +1034,7 @@ AbstractTaskFactory::MutateClosedFinishPerTaskType()
   if (constraints.is_closed) {
     if (!IsClosed()) {
       const OrderedTaskPoint &tp = task.GetPoint(task.TaskSize() - 1);
-      if (tp.GetType() == TaskPoint::FINISH) {
+      if (tp.GetType() == TaskPointType::FINISH) {
         FinishPoint *fp = CreateFinish(task.GetPoint(0).GetWaypoint());
         assert(fp);
         Remove(task.TaskSize() - 1, false);

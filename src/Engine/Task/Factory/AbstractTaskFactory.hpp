@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ Copyright_License {
 #include "Compiler.h"
 #include "Math/fixed.hpp"
 #include "TaskPointFactoryType.hpp"
+#include "ValidationError.hpp"
 
 #include <vector>
 #include <stdint.h>
@@ -77,24 +78,6 @@ public:
   typedef std::vector<TaskPointFactoryType> LegalPointVector;
 
   typedef ConstArray<TaskPointFactoryType> LegalPointConstArray;
-
-  /** Task Validation Error Types */
-  enum TaskValidationErrorType: uint8_t {
-    NO_VALID_START,
-    NO_VALID_FINISH,
-    TASK_NOT_CLOSED,
-    TASK_NOT_HOMOGENEOUS,
-    INCORRECT_NUMBER_TURNPOINTS,
-    EXCEEDS_MAX_TURNPOINTS,
-    UNDER_MIN_TURNPOINTS,
-    TURNPOINTS_NOT_UNIQUE,
-    INVALID_FAI_TRIANGLE_GEOMETRY,
-    EMPTY_TASK,
-    NON_FAI_OZS
-  };
-
-  /** Vector of errors returned by validation routine */
-  typedef std::vector<TaskValidationErrorType> TaskValidationErrorVector;
 
 protected:
   const TaskFactoryConstraints &constraints;
@@ -273,9 +256,9 @@ public:
   }
 
   /**
-   * @param start_radius: either fixed_minus_one or a valid value
-   * @param turnpoint_radius: either fixed_minus_one or a valid value
-   * @param finish_radius: either fixed_minus_one or a valid value
+   * @param start_radius: either fixed(-1) or a valid value
+   * @param turnpoint_radius: either fixed(-1) or a valid value
+   * @param finish_radius: either fixed(-1) or a valid value
    *
    * sets radiuses to the correct default for that task type or general defaults
    */

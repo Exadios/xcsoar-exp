@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -40,7 +40,8 @@
 /**
  * Local visitor class used for rendering airspaces in the CrossSectionRenderer
  */
-class AirspaceIntersectionVisitorSlice: public AirspaceIntersectionVisitor
+class AirspaceIntersectionVisitorSlice final
+  : public AirspaceIntersectionVisitor
 {
   /** Canvas to draw on */
   Canvas &canvas;
@@ -142,7 +143,7 @@ public:
     // Calculate top and bottom coordinate
     rcd.top = chart.ScreenY(as.GetTopAltitude(state));
     if (as.IsBaseTerrain())
-      rcd.bottom = chart.ScreenY(fixed_zero);
+      rcd.bottom = chart.ScreenY(fixed(0));
     else
       rcd.bottom = chart.ScreenY(as.GetBaseAltitude(state));
 
@@ -164,19 +165,7 @@ public:
     }
   }
 
-  /**
-   * Visitor function for intersectingAirspaceCircle objects
-   * @param as Intersecting AirspaceCircle instance
-   */
-  void Visit(const AirspaceCircle &as) {
-    Render(as);
-  }
-
-  /**
-   * Visitor function for intersecting AirspacePolygon objects
-   * @param as Intersecting AirspacePolygon instance
-   */
-  void Visit(const AirspacePolygon &as) {
+  virtual void Visit(const AbstractAirspace &as) override {
     Render(as);
   }
 };

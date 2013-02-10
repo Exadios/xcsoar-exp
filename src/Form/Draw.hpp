@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_FORM_DRAW_HPP
 #define XCSOAR_FORM_DRAW_HPP
 
-#include "Form/Control.hpp"
+#include "Screen/PaintWindow.hpp"
 
 class ContainerWindow;
 
@@ -35,8 +35,6 @@ class ContainerWindow;
 class WndOwnerDrawFrame : public PaintWindow {
 public:
   typedef void (*OnPaintCallback_t)(WndOwnerDrawFrame *Sender, Canvas &canvas);
-  typedef bool (*OnMouseDownCallback_t)(WndOwnerDrawFrame *Sender,
-                                        PixelScalar x, PixelScalar y);
 
 public:
   WndOwnerDrawFrame(ContainerWindow &parent,
@@ -52,14 +50,6 @@ public:
     mOnPaintCallback = OnPaintCallback;
   }
 
-  /**
-   * Sets the callback which is called when the mouse is
-   * pressed over the control.
-   */
-  void SetOnMouseDownNotify(OnMouseDownCallback_t OnMouseDownCallback) {
-    mOnMouseDownCallback = OnMouseDownCallback;
-  }
-
 protected:
   /**
    * The callback function for painting the content of the control
@@ -67,18 +57,8 @@ protected:
    */
   OnPaintCallback_t mOnPaintCallback;
 
-  /**
-   * The callback function that is called when the mouse is
-   * pressed over the control
-   * @see SetOnMouseDownNotify()
-   */
-  OnMouseDownCallback_t mOnMouseDownCallback;
-
   /** from class PaintWindow */
-  virtual void OnPaint(Canvas &canvas);
-
-  /** from class Window */
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
+  virtual void OnPaint(Canvas &canvas) override;
 };
 
 #endif

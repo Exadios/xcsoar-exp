@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,13 +23,13 @@ Copyright_License {
 
 #include "InfoBoxes/Content/MacCready.hpp"
 #include "InfoBoxes/Data.hpp"
+#include "InfoBoxes/Panel/Panel.hpp"
 #include "InfoBoxes/Panel/MacCreadyEdit.hpp"
 #include "InfoBoxes/Panel/MacCreadySetup.hpp"
 #include "Interface.hpp"
+#include "ActionInterface.hpp"
 #include "Units/Units.hpp"
 #include "Formatter/UserUnits.hpp"
-#include "Components.hpp"
-#include "Task/ProtectedTaskManager.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Language/Language.hpp"
 #include "Dialogs/dlgInfoBoxAccess.hpp"
@@ -53,23 +53,15 @@ SetVSpeed(InfoBoxData &data, fixed value)
  * Subpart callback function pointers
  */
 
-static constexpr InfoBoxContentMacCready::PanelContent panels[] = {
-  InfoBoxContentMacCready::PanelContent (
-    N_("Edit"),
-    LoadMacCreadyEditPanel),
-
-  InfoBoxContentMacCready::PanelContent (
-    N_("Setup"),
-    LoadMacCreadySetupPanel),
+static constexpr InfoBoxPanel panels[] = {
+  { N_("Edit"), LoadMacCreadyEditPanel },
+  { N_("Setup"), LoadMacCreadySetupPanel },
+  { nullptr, nullptr }
 };
 
-const InfoBoxContentMacCready::DialogContent InfoBoxContentMacCready::dlgContent = {
-  ARRAY_SIZE(panels), &panels[0],
-};
-
-const InfoBoxContentMacCready::DialogContent*
+const InfoBoxPanel *
 InfoBoxContentMacCready::GetDialogContent() {
-  return &dlgContent;
+  return panels;
 }
 
 /*
@@ -93,26 +85,16 @@ InfoBoxContentMacCready::Update(InfoBoxData &data)
 bool
 InfoBoxContentMacCready::HandleKey(const InfoBoxKeyCodes keycode)
 {
-  if (protected_task_manager == NULL)
-    return false;
-
-  const ComputerSettings &settings_computer =
-    CommonInterface::GetComputerSettings();
-  const GlidePolar &polar = settings_computer.polar.glide_polar_task;
+  const fixed step = Units::ToSysVSpeed(GetUserVerticalSpeedStep());
   TaskBehaviour &task_behaviour = CommonInterface::SetComputerSettings().task;
-  fixed mc = polar.GetMC();
 
   switch (keycode) {
   case ibkUp:
-    mc = std::min(mc + Units::ToSysVSpeed(GetUserVerticalSpeedStep()),
-                  fixed(5));
-    ActionInterface::SetManualMacCready(mc);
+    ActionInterface::OffsetManualMacCready(step);
     return true;
 
   case ibkDown:
-    mc = std::max(mc - Units::ToSysVSpeed(GetUserVerticalSpeedStep()),
-                  fixed_zero);
-    ActionInterface::SetManualMacCready(mc);
+    ActionInterface::OffsetManualMacCready(-step);
     return true;
 
   case ibkLeft:
@@ -130,47 +112,5 @@ InfoBoxContentMacCready::HandleKey(const InfoBoxKeyCodes keycode)
     Profile::Set(ProfileKeys::AutoMc, task_behaviour.auto_mc);
     return true;
   }
-  return false;
-}
-
-bool
-InfoBoxContentMacCready::HandleQuickAccess(const TCHAR *misc)
-{
-  if (protected_task_manager == NULL)
-    return false;
-
-  const ComputerSettings &settings_computer =
-    CommonInterface::GetComputerSettings();
-  const GlidePolar &polar = settings_computer.polar.glide_polar_task;
-  fixed mc = polar.GetMC();
-
-  if (_tcscmp(misc, _T("+0.1")) == 0) {
-    mc = std::min(mc + Units::ToSysVSpeed(GetUserVerticalSpeedStep()),
-                  fixed(5));
-    ActionInterface::SetManualMacCready(mc);
-    return true;
-
-  } else if (_tcscmp(misc, _T("+0.5")) == 0) {
-    mc = std::min(mc + Units::ToSysVSpeed(GetUserVerticalSpeedStep() * 5),
-                  fixed(5));
-    ActionInterface::SetManualMacCready(mc);
-    return true;
-
-  } else if (_tcscmp(misc, _T("-0.1")) == 0) {
-    mc = std::max(mc - Units::ToSysVSpeed(GetUserVerticalSpeedStep()),
-                  fixed_zero);
-    ActionInterface::SetManualMacCready(mc);
-    return true;
-
-  } else if (_tcscmp(misc, _T("-0.5")) == 0) {
-    mc = std::max(mc - Units::ToSysVSpeed(GetUserVerticalSpeedStep() * 5),
-                  fixed_zero);
-    ActionInterface::SetManualMacCready(mc);
-    return true;
-
-  } else if (_tcscmp(misc, _T("mode")) == 0) {
-    return HandleKey(ibkEnter);
-  }
-
   return false;
 }

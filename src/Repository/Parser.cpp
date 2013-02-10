@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ Commit(FileRepository &repository, AvailableFile &file)
   if (!file.IsValid())
     return false;
 
-  repository.files.push_back(std::move(file));
+  repository.files.emplace_back(std::move(file));
   file.Clear();
   return true;
 }
@@ -71,7 +71,7 @@ ParseFileRepository(FileRepository &repository, NLineReader &reader)
   file.Clear();
 
   char *line;
-  while ((line = reader.read()) != NULL) {
+  while ((line = reader.ReadLine()) != NULL) {
     line = const_cast<char *>(TrimLeft(line));
     if (*line == 0 || *line == '#')
       continue;

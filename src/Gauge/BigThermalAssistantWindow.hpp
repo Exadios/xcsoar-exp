@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,15 +32,15 @@ public:
                             UPixelScalar padding)
     :ThermalAssistantWindow(look, padding, false) {}
 
-  void set(ContainerWindow &parent, PixelRect rc,
+  void Create(ContainerWindow &parent, PixelRect rc,
            WindowStyle window_style=WindowStyle()) {
     window_style.EnableDoubleClicks();
-    ThermalAssistantWindow::set(parent, rc, window_style);
+    ThermalAssistantWindow::Create(parent, rc, window_style);
   }
 
 protected:
-  virtual bool OnMouseDouble(PixelScalar x, PixelScalar y);
-  virtual bool OnKeyDown(unsigned key_code);
+  virtual bool OnMouseDouble(PixelScalar x, PixelScalar y) override;
+  virtual bool OnKeyDown(unsigned key_code) override;
 };
 
 #endif

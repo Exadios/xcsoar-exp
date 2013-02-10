@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ Copyright_License {
 #define XCSOAR_AIRSPACE_COMPUTER_SETTINGS_HPP
 
 #include "Engine/Airspace/AirspaceWarningConfig.hpp"
-#include "Util/TypeTraits.hpp"
+
+#include <type_traits>
 
 /**
  * Settings for airspace options
@@ -39,6 +40,6 @@ struct AirspaceComputerSettings {
   void SetDefaults();
 };
 
-static_assert(is_trivial<AirspaceComputerSettings>::value, "type is not trivial");
+static_assert(std::is_trivial<AirspaceComputerSettings>::value, "type is not trivial");
 
 #endif

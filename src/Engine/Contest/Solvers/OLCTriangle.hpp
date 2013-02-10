@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -66,16 +66,16 @@ public:
 
 protected:
   /* virtual methods from AbstractContest */
-  virtual bool UpdateScore() gcc_override;
-  virtual void CopySolution(ContestTraceVector &vec) const gcc_override;
+  virtual bool UpdateScore() override;
+  virtual void CopySolution(ContestTraceVector &vec) const override;
 
   /* virtual methods from NavDijkstra */
-  virtual void AddEdges(ScanTaskPoint curNode) gcc_override;
+  virtual void AddEdges(ScanTaskPoint curNode) override;
 
   /* virtual methods from ContestDijkstra */
-  virtual void StartSearch() gcc_override;
-  virtual void AddStartEdges() gcc_override;
-  virtual ContestResult CalculateResult(const ContestTraceVector &solution) const gcc_override;
+  virtual void StartSearch() override;
+  virtual void AddStartEdges() override;
+  virtual ContestResult CalculateResult(const ContestTraceVector &solution) const override;
 };
 
 #endif

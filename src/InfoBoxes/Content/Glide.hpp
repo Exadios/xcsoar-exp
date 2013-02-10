@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,30 +24,18 @@ Copyright_License {
 #ifndef XCSOAR_INFOBOX_CONTENT_GLIDE_HPP
 #define XCSOAR_INFOBOX_CONTENT_GLIDE_HPP
 
-#include "InfoBoxes/Content/Base.hpp"
+struct InfoBoxData;
 
-class InfoBoxContentGRInstant : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxGRInstant(InfoBoxData &data);
 
-class InfoBoxContentGRCruise : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxGRCruise(InfoBoxData &data);
 
-class InfoBoxContentGRAvg : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxGRAvg(InfoBoxData &data);
 
-class InfoBoxContentLDVario : public InfoBoxContent
-{
-public:
-  virtual void Update(InfoBoxData &data);
-};
+void
+UpdateInfoBoxLDVario(InfoBoxData &data);
 
 #endif

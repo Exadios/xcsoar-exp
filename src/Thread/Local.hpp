@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_THREAD_LOCAL_HXX
 #define XCSOAR_THREAD_LOCAL_HXX
 
-#include "Util/NonCopyable.hpp"
-
 #ifdef HAVE_POSIX
 #include <pthread.h>
 #else
@@ -37,7 +35,7 @@ Copyright_License {
 /**
  * This class provides an interface to Thread Local Storage (TLS).
  */
-class ThreadLocal : private NonCopyable {
+class ThreadLocal {
 #ifdef HAVE_POSIX
 private:
   pthread_key_t key;
@@ -76,6 +74,9 @@ public:
     ::TlsSetValue(tls_index, value);
   }
 #endif /* !HAVE_POSIX */
+
+  ThreadLocal(const ThreadLocal &other) = delete;
+  ThreadLocal &operator=(const ThreadLocal &other) = delete;
 
   operator void*() const {
     return Get();

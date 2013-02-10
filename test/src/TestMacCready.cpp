@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "TestUtil.hpp"
 
 static GlideSettings glide_settings;
-static GlidePolar glide_polar(fixed_zero);
+static GlidePolar glide_polar(fixed(0));
 
 static void
 Test(const fixed distance, const fixed altitude, const SpeedVector wind)
@@ -65,7 +65,7 @@ Test(const fixed distance, const fixed altitude, const SpeedVector wind)
       : (best_speed - state.head_wind) / best_sink;
 
     const fixed height_glide = distance / ld_ground2;
-    const fixed height_climb = fixed_zero;
+    const fixed height_climb = fixed(0);
     const fixed altitude_difference = altitude - height_glide;
 
     ok1(equals(result.head_wind, wind.norm));
@@ -119,13 +119,13 @@ TestWind(const SpeedVector &wind)
 {
   Test(fixed(10000), fixed(-200), wind);
   Test(fixed(10000), fixed(-100), wind);
-  Test(fixed(10000), fixed_zero, wind);
+  Test(fixed(10000), fixed(0), wind);
   Test(fixed(10000), fixed(100), wind);
   Test(fixed(10000), fixed(200), wind);
 
   Test(fixed(1000), fixed(-500), wind);
   Test(fixed(1000), fixed(-100), wind);
-  Test(fixed(1000), fixed_zero, wind);
+  Test(fixed(1000), fixed(0), wind);
   Test(fixed(1000), fixed(100), wind);
   Test(fixed(1000), fixed(500), wind);
   Test(fixed(100000), fixed(-1000), wind);
@@ -135,7 +135,7 @@ TestWind(const SpeedVector &wind)
 static void
 TestAll()
 {
-  TestWind(SpeedVector(Angle::Zero(), fixed_zero));
+  TestWind(SpeedVector(Angle::Zero(), fixed(0)));
   TestWind(SpeedVector(Angle::Zero(), fixed(2)));
   TestWind(SpeedVector(Angle::Zero(), fixed(5)));
   TestWind(SpeedVector(Angle::Zero(), fixed(10)));
@@ -154,13 +154,13 @@ int main(int argc, char **argv)
   glide_polar.SetMC(fixed(0.1));
   TestAll();
 
-  glide_polar.SetMC(fixed_one);
+  glide_polar.SetMC(fixed(1));
   TestAll();
 
-  glide_polar.SetMC(fixed_four);
+  glide_polar.SetMC(fixed(4));
   TestAll();
 
-  glide_polar.SetMC(fixed_ten);
+  glide_polar.SetMC(fixed(10));
   TestAll();
 
   return exit_status();

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "MapWindow.hpp"
 #include "Screen/Icon.hpp"
-#include "Screen/Fonts.hpp"
+#include "Look/Fonts.hpp"
 #include "Geo/Math.hpp"
 #include "Task/ProtectedTaskManager.hpp"
 #include "Renderer/TaskRenderer.hpp"
@@ -117,7 +117,8 @@ MapWindow::DrawTaskOffTrackIndicator(Canvas &canvas)
     return;
 
   fixed distance_max =
-    min(vec.distance, render_projection.GetScreenDistanceMeters() * fixed(0.7));
+    std::min(vec.distance,
+             render_projection.GetScreenDistanceMeters() * fixed(0.7));
 
   // too short to bother
   if (distance_max < fixed(5000))
@@ -125,26 +126,26 @@ MapWindow::DrawTaskOffTrackIndicator(Canvas &canvas)
 
   GeoPoint start = Basic().location;
   
-  canvas.Select(Fonts::title);
+  canvas.Select(Fonts::map_bold);
   canvas.SetTextColor(COLOR_BLACK);
   canvas.SetBackgroundTransparent();
   
   GeoPoint dloc;
   int ilast = 0;
-  for (fixed d = fixed_one / 4; d <= fixed_one; d += fixed_one / 4) {
+  for (fixed d = fixed(1) / 4; d <= fixed(1); d += fixed(1) / 4) {
     dloc = FindLatitudeLongitude(start, Basic().track, distance_max * d);
     
     fixed distance0 = start.Distance(dloc);
     fixed distance1 = target.Distance(dloc);
     fixed distance = fixed(distance0 + distance1) / vec.distance;
-    int idist = iround((distance - fixed_one) * 100);
+    int idist = iround((distance - fixed(1)) * 100);
     
     if ((idist != ilast) && (idist > 0) && (idist < 1000)) {
       TCHAR Buffer[5];
       _stprintf(Buffer, _T("%d"), idist);
       RasterPoint sc = render_projection.GeoToScreen(dloc);
       PixelSize tsize = canvas.CalcTextSize(Buffer);
-      canvas.text(sc.x - tsize.cx / 2, sc.y - tsize.cy / 2, Buffer);
+      canvas.DrawText(sc.x - tsize.cx / 2, sc.y - tsize.cy / 2, Buffer);
       ilast = idist;
     }
   }

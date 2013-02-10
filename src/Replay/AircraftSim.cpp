@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,13 +26,13 @@
 void
 AircraftSim::Start(const GeoPoint& location_start,
                    const GeoPoint& location_last,
-                   const fixed& altitude)
+                   fixed altitude)
 {
   state.Reset();
   state.location = location_start;
   state.altitude = altitude;
-  state.time = fixed_zero;
-  state.wind.norm = fixed_zero;
+  state.time = fixed(0);
+  state.wind.norm = fixed(0);
   state.wind.bearing = Angle();
   state.ground_speed = fixed(16);
   state_last = state;
@@ -48,7 +48,7 @@ AircraftSim::GetEndPoint(const Angle heading, const fixed timestep) const
 {
   GeoPoint ref = GeoVector(state.true_airspeed*timestep, heading).EndPoint(state.location);
   return GeoVector(state.wind.norm*timestep,
-                   state.wind.bearing+ Angle::Degrees(fixed_180)).EndPoint(ref);
+                   state.wind.bearing + Angle::HalfCircle()).EndPoint(ref);
 }
 
 void

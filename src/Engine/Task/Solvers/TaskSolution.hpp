@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@ struct GlideResult;
 struct AircraftState;
 class GlidePolar;
 class TaskPoint;
+class OrderedTaskPoint;
 struct GeoPoint;
 struct SpeedVector;
 
@@ -52,7 +53,7 @@ namespace TaskSolution
                                      const AircraftState &state,
                                      const GlideSettings &settings,
                                      const GlidePolar &polar,
-                                     const fixed min_h = fixed_zero);
+                                     const fixed min_h = fixed(0));
 
   GlideResult GlideSolutionRemaining(const GeoPoint &location,
                                      const GeoPoint &target,
@@ -89,11 +90,11 @@ namespace TaskSolution
    * @param minH Minimum height at destination over-ride (max of this or the task points's elevation is used)
    * @return GlideResult of task leg
    */
-  GlideResult GlideSolutionTravelled(const TaskPoint &taskpoint,
+  GlideResult GlideSolutionTravelled(const OrderedTaskPoint &taskpoint,
                                      const AircraftState &state,
                                      const GlideSettings &settings,
                                      const GlidePolar &polar,
-                                     const fixed min_h = fixed_zero);
+                                     const fixed min_h = fixed(0));
 
   /**
    * Compute optimal glide solution from aircraft to destination, or modified
@@ -105,11 +106,11 @@ namespace TaskSolution
    * @param minH Minimum height at destination over-ride (max of this or the task points's elevation is used)
    * @return GlideResult of task leg
    */
-  GlideResult GlideSolutionPlanned(const TaskPoint &taskpoint,
+  GlideResult GlideSolutionPlanned(const OrderedTaskPoint &taskpoint,
                                    const AircraftState &state,
                                    const GlideSettings &settings,
                                    const GlidePolar &polar,
-                                   const fixed min_h = fixed_zero);
+                                   const fixed min_h = fixed(0));
 };
 
 #endif

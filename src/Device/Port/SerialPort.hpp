@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ class SerialPort : public BufferedPort, protected StoppableThread
    */
   bool is_widcomm;
 #else
-  static const bool is_widcomm = false;
+  static constexpr bool is_widcomm = false;
 #endif
 
 public:
@@ -83,6 +83,14 @@ protected:
   }
 
   /**
+   * Determine the number of bytes in the driver's send buffer.
+   *
+   * @return the number of bytes, or -1 on error
+   */
+  gcc_pure
+  int GetDataQueued() const;
+
+  /**
    * Determine the number of bytes in the driver's receive buffer.
    *
    * @return the number of bytes, or -1 on error
@@ -101,16 +109,16 @@ protected:
 
 public:
   /* virtual methods from class Port */
-  virtual bool IsValid() const;
-  virtual bool Drain();
-  virtual void Flush();
-  virtual bool SetBaudrate(unsigned baud_rate);
-  virtual unsigned GetBaudrate() const;
-  virtual size_t Write(const void *data, size_t length);
+  virtual PortState GetState() const override;
+  virtual bool Drain() override;
+  virtual void Flush() override;
+  virtual bool SetBaudrate(unsigned baud_rate) override;
+  virtual unsigned GetBaudrate() const override;
+  virtual size_t Write(const void *data, size_t length) override;
 
 protected:
   /* virtual methods from class Thread */
-  virtual void Run();
+  virtual void Run() override;
 };
 
 #endif

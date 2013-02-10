@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -243,8 +243,8 @@ Java_org_xcsoar_InternalGPS_setLocation(JNIEnv *env, jobject obj,
   basic.gps.satellites_used_available.Update(basic.clock);
   basic.gps.real = true;
   basic.gps.android_internal_gps = true;
-  basic.location = GeoPoint(Angle::Degrees(fixed(longitude)),
-                            Angle::Degrees(fixed(latitude)));
+  basic.location = GeoPoint(Angle::Degrees(longitude),
+                            Angle::Degrees(latitude));
   basic.location_available.Update(basic.clock);
 
   if (hasAltitude) {
@@ -255,7 +255,7 @@ Java_org_xcsoar_InternalGPS_setLocation(JNIEnv *env, jobject obj,
     basic.gps_altitude_available.Clear();
 
   if (hasBearing) {
-    basic.track = Angle::Degrees(fixed(bearing));
+    basic.track = Angle::Degrees(bearing);
     basic.track_available.Update(basic.clock);
   } else
     basic.track_available.Clear();
@@ -332,8 +332,8 @@ gcc_pure
 static inline
 fixed ComputeNoncompVario(const fixed pressure, const fixed d_pressure)
 {
-  static const fixed FACTOR(-2260.389548275485);
-  static const fixed EXPONENT(-0.8097374740609689);
+  static constexpr fixed FACTOR(-2260.389548275485);
+  static constexpr fixed EXPONENT(-0.8097374740609689);
   return fixed(FACTOR * pow(pressure, EXPONENT) * d_pressure);
 }
 

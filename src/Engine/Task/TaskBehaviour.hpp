@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,13 +23,13 @@
 #ifndef TASK_BEHAVIOUR_HPP
 #define TASK_BEHAVIOUR_HPP
 
-#include "Contest/Solvers/Contests.hpp"
 #include "Ordered/OrderedTaskBehaviour.hpp"
 #include "Task/Factory/TaskPointFactoryType.hpp"
 #include "Engine/Route/Config.hpp"
 #include "GlideSolvers/GlideSettings.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Task/Factory/TaskFactoryType.hpp"
+
+#include <type_traits>
 
 struct AircraftState;
 
@@ -63,9 +63,10 @@ struct SectorDefaults
 
 struct TaskStartMargins {
   /** Margin in maximum ground speed (m/s) allowed in start sector */
-  fixed start_max_speed_margin;
+  fixed max_speed_margin;
+
   /** Margin in maximum height (m) allowed in start sector */
-  unsigned start_max_height_margin;
+  unsigned max_height_margin;
 
   void SetDefaults();
 };
@@ -74,7 +75,7 @@ struct TaskStartMargins {
  *  Class defining options for task system.
  *  Typical uses might be default values, and simple aspects of task behaviour.
  */
-struct TaskBehaviour : public TaskStartMargins {
+struct TaskBehaviour {
   GlideSettings glide;
 
   /**
@@ -114,20 +115,6 @@ struct TaskBehaviour : public TaskStartMargins {
   /** Compensation factor for risk at low altitude */
   fixed risk_gamma;
 
-  /** Whether to do online OLC optimisation */
-  bool enable_olc;
-
-  /**
-   * For the contest score, predict that the aircraft will reach the
-   * next turn point?
-   */
-  bool predict_contest;
-
-  /** Rule set to scan for in OLC */
-  Contests contest;
-  /** Handicap factor */
-  unsigned contest_handicap;
-
   /** Safety MacCready value (m/s) used by abort task */
   fixed safety_mc;
 
@@ -136,6 +123,8 @@ struct TaskBehaviour : public TaskStartMargins {
 
   /** Default task type to use for new tasks */
   TaskFactoryType task_type_default;
+
+  TaskStartMargins start_margins;
 
   /** Default sector info for new ordered task */
   SectorDefaults sector_defaults;
@@ -174,6 +163,6 @@ struct TaskBehaviour : public TaskStartMargins {
   }
 };
 
-static_assert(is_trivial<TaskBehaviour>::value, "type is not trivial");
+static_assert(std::is_trivial<TaskBehaviour>::value, "type is not trivial");
 
 #endif

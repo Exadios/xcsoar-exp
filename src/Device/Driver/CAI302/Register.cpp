@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ CAI302CreateOnPort(const DeviceConfig &config, Port &port)
   return new CAI302Device(config, port);
 }
 
-const struct DeviceRegister cai302Device = {
+const struct DeviceRegister cai302_driver = {
   _T("CAI 302"),
   _T("Cambridge CAI302"),
   DeviceRegister::BULK_BAUD_RATE |

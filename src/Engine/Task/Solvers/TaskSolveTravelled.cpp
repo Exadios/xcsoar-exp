@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,29 +24,29 @@
 #include "Task/Ordered/Points/OrderedTaskPoint.hpp"
 #include "Util/Tolerances.hpp"
 
-TaskSolveTravelled::TaskSolveTravelled(const std::vector<OrderedTaskPoint*>& tps,
+TaskSolveTravelled::TaskSolveTravelled(const std::vector<OrderedTaskPoint *> &tps,
                                        const unsigned activeTaskPoint,
                                        const AircraftState &_aircraft,
                                        const GlideSettings &settings,
                                        const GlidePolar &gp,
-                                       const fixed _xmin, 
-                                       const fixed _xmax):
-  ZeroFinder(_xmin, _xmax, fixed(TOLERANCE_CRUISE_EFFICIENCY)),
-  aircraft(_aircraft),
-  tm(tps, activeTaskPoint, settings, gp)
+                                       const fixed _xmin,
+                                       const fixed _xmax)
+  :ZeroFinder(_xmin, _xmax, fixed(TOLERANCE_CRUISE_EFFICIENCY)),
+   aircraft(_aircraft),
+   tm(tps.cbegin(), activeTaskPoint, settings, gp)
 {
   dt = aircraft.time-tps[0]->GetEnteredState().time;
   if (positive(dt)) {
-    inv_dt = fixed_one/dt;
+    inv_dt = fixed(1)/dt;
   } else {
-    inv_dt = fixed_zero; // error!
+    inv_dt = fixed(0); // error!
   }
 }
 
 #define SOLVE_ZERO
 
-fixed 
-TaskSolveTravelled::time_error() 
+fixed
+TaskSolveTravelled::time_error()
 {
   GlideResult res = tm.glide_solution(aircraft);
   if (!res.IsOk())
@@ -65,8 +65,8 @@ TaskSolveTravelled::time_error()
   return d*inv_dt;
 }
 
-fixed 
-TaskSolveTravelled::search(const fixed ce) 
+fixed
+TaskSolveTravelled::search(const fixed ce)
 {
 #ifdef SOLVE_ZERO
   return find_zero(ce);

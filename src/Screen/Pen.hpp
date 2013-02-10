@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_PEN_HPP
 #define XCSOAR_SCREEN_PEN_HPP
 
-#include "Util/NonCopyable.hpp"
 #include "Screen/Color.hpp"
 #include "Screen/Features.hpp"
 
@@ -32,9 +31,6 @@ Copyright_License {
  * A pen draws lines and borders.
  */
 class Pen
-#ifdef USE_GDI
-  : private NonCopyable
-#endif
 {
 public:
 #ifndef USE_GDI
@@ -105,6 +101,9 @@ public:
 
   /** Destructor */
   ~Pen() { Reset(); }
+
+  Pen(const Pen &other) = delete;
+  Pen &operator=(const Pen &other) = delete;
 #endif /* USE_GDI */
 
 public:

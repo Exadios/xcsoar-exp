@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ struct FlarmTrafficLook {
   Font label_font, side_info_font, no_traffic_font;
   Font info_values_font, info_units_font, info_labels_font, call_sign_font;
 
-  void Initialise(const TrafficLook &other, bool small);
+  void Initialise(const TrafficLook &other, bool small, bool inverse = false);
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -39,7 +39,6 @@ class GlideComputerBlackboard:
 {
   DerivedInfo Finish_Derived_Info;
   MoreData last_gps_info;
-  DerivedInfo last_calculated_info;
   bool _time_retreated;
 
 public:
@@ -48,7 +47,6 @@ public:
   void ReadBlackboard(const MoreData &nmea_info);
   void ReadComputerSettings(const ComputerSettings &settings);
   const MoreData &LastBasic() const { return last_gps_info; }
-  const DerivedInfo& LastCalculated() const { return last_calculated_info; }
 
 protected:
   bool time_advanced() const {

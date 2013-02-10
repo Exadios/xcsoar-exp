@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,43 +29,33 @@ Copyright_License {
 #include "Hardware/Battery.hpp"
 #include "Hardware/Display.hpp"
 #include "UIState.hpp"
-
-/** timeout of display/battery mode in quarter seconds */
-static const unsigned DISPLAYTIMEOUTMAX = 60 * 4;
-
-unsigned DisplayTimeOut = 0;
+#include "Event/Idle.hpp"
 
 static void
 BlankDisplay(bool doblank)
 {
-  static bool oldblank = false;
-
-  if (!XCSoarInterface::GetUISettings().display.enable_auto_blank)
+  if (!CommonInterface::GetUISettings().display.enable_auto_blank)
     return;
 
-  if (doblank == oldblank)
+  UIState &ui_state = CommonInterface::SetUIState();
+
+  if (doblank == ui_state.screen_blanked)
     return;
 
   if (!Display::BlankSupported())
     // can't do it, not supported
     return;
 
-  UIState &ui_state = CommonInterface::SetUIState();
-
   if (doblank) {
     if (Power::External::Status == Power::External::OFF) {
       // Power off the display
       Display::Blank(true);
-      oldblank = true;
       ui_state.screen_blanked = true;
-    } else {
-      ResetDisplayTimeOut();
     }
   } else {
     // was blanked
     // Power on the display
     Display::Blank(false);
-    oldblank = false;
     ui_state.screen_blanked = false;
   }
 }
@@ -77,18 +67,12 @@ CheckDisplayTimeOut(bool sticky)
   SystemIdleTimerReset();
 #endif
 
-  if (!sticky) {
-    if (DisplayTimeOut < DISPLAYTIMEOUTMAX)
-      DisplayTimeOut++;
-  } else {
+  if (sticky) {
     // JMW don't let display timeout while a dialog is active
-    ResetDisplayTimeOut();
     return;
   }
-  if (DisplayTimeOut >= DISPLAYTIMEOUTMAX)
-    BlankDisplay(true);
-  else
-    BlankDisplay(false);
+
+  BlankDisplay(IsUserIdle(60000));
 }
 
 #endif /* HAVE_BLANK */

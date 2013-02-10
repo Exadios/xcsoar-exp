@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,19 +29,18 @@ TaskStats::reset()
   total.Reset();
   current_leg.Reset();
 
-  Time = fixed_zero;
-  glide_required = fixed_zero;
-  cruise_efficiency = fixed_one;
-  effective_mc = fixed_zero;
-  mc_best = fixed_zero;
-  distance_nominal = fixed_zero;
-  distance_max = fixed_zero;
-  distance_min = fixed_zero;
-  distance_scored = fixed_zero;
+  Time = fixed(0);
+  glide_required = fixed(0);
+  cruise_efficiency = fixed(1);
+  effective_mc = fixed(0);
+  mc_best = fixed(0);
+  distance_nominal = fixed(0);
+  distance_max = fixed(0);
+  distance_min = fixed(0);
+  distance_scored = fixed(0);
   task_valid = false;
   task_started = false;
   task_finished = false;
-  has_targets = false;
   flight_mode_final_glide = false;
   flight_mode_height_margin = 120;
 }

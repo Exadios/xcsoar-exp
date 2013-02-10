@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,93 +23,24 @@ Copyright_License {
 
 #include "FLARM/Friends.hpp"
 #include "FLARM/FlarmId.hpp"
-#include "Profile/Profile.hpp"
-#include "Util/tstring.hpp"
-#include "LogFile.hpp"
+#include "Global.hpp"
+#include "TrafficDatabases.hpp"
 
-#include <map>
-
-namespace FlarmFriends
-{
-  std::map<FlarmId, Color> friends;
-
-  void LoadColor(const TCHAR *key, Color color);
-}
-
-FlarmFriends::Color
+FlarmColor
 FlarmFriends::GetFriendColor(FlarmId id)
 {
-  auto i = friends.find(id);
-  if (i != friends.end())
-    return i->second;
+  assert(traffic_databases != nullptr);
 
-  return Color::NONE;
+  return traffic_databases->GetColor(id);
 }
 
 void
-FlarmFriends::SetFriendColor(FlarmId id, Color color)
+FlarmFriends::SetFriendColor(FlarmId id, FlarmColor color)
 {
-  friends[id] = color;
-}
+  assert(traffic_databases != nullptr);
 
-void
-FlarmFriends::LoadColor(const TCHAR *key, Color color)
-{
-  const TCHAR *ids = Profile::Get(key);
-  if (ids == NULL || StringIsEmpty(ids))
-    return;
-
-  FlarmId id;
-  TCHAR *endptr;
-
-  const TCHAR *p = ids;
-  while (p != NULL && *p) {
-    id = FlarmId::Parse(p, &endptr);
-
-    if (id.IsDefined()) {
-      SetFriendColor(id, color);
-      id.Clear();
-    }
-
-    p = _tcschr(endptr, _T(','));
-    if (p != NULL)
-      p++;
-  }
-}
-
-void
-FlarmFriends::Load()
-{
-  LogStartUp(_T("Loading FLARM friends database"));
-
-  LoadColor(_T("FriendsGreen"), Color::GREEN);
-  LoadColor(_T("FriendsBlue"), Color::BLUE);
-  LoadColor(_T("FriendsYellow"), Color::YELLOW);
-  LoadColor(_T("FriendsMagenta"), Color::MAGENTA);
-}
-
-void
-FlarmFriends::Save()
-{
-  TCHAR id[16];
-  tstring ids[4];
-
-  for (const auto &i : friends) {
-    assert(i.first.IsDefined());
-    assert((int)i.second < (int)Color::COUNT);
-
-    if (i.second == Color::NONE)
-      continue;
-
-    unsigned color_index = (int)i.second - 1;
-
-    i.first.Format(id);
-    ids[color_index] += id;
-    ids[color_index] += ',';
-  }
-
-  Profile::Set(_T("FriendsGreen"), ids[0].c_str());
-  Profile::Set(_T("FriendsBlue"), ids[1].c_str());
-  Profile::Set(_T("FriendsYellow"), ids[2].c_str());
-  Profile::Set(_T("FriendsMagenta"), ids[3].c_str());
+  if (color == FlarmColor::NONE)
+    traffic_databases->flarm_colors.Remove(id);
+  else
+    traffic_databases->flarm_colors.Set(id, color);
 }

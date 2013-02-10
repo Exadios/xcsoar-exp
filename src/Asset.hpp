@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,17 +25,15 @@ Copyright_License {
 
 #include "Hardware/ModelType.hpp"
 #include "Compiler.h"
-#ifdef ANDROID
-#include "Android/Main.hpp"
-#include "Android/NativeView.hpp"
-#include "unix/tchar.h"
-#endif
 
 #include <tchar.h>
 
 // asset/registration data
 extern TCHAR asset_number[];
 
+/**
+ * Finds the unique ID of this PDA
+ */
 void ReadAssetNumber();
 
 // model info
@@ -160,22 +158,6 @@ IsAndroid()
 {
 #if defined(ANDROID)
   return true;
-#else
-  return false;
-#endif
-}
-
-/**
- * Returns whether the application is running on Galaxy Tab with Android 2.2
- */
-static inline bool
-IsGalaxyTab22()
-{
-#if defined(ANDROID)
-  assert(native_view);
-  return native_view->GetAPILevel() == 8 &&
-         (_tcscmp(native_view->GetProduct(), _T("GT-P1000")) == 0 ||
-          _tcscmp(native_view->GetProduct(), _T("GT-P1010")) == 0);
 #else
   return false;
 #endif

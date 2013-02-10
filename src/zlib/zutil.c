@@ -1,11 +1,15 @@
 /* zutil.c -- target dependent utility functions for the compression library
- * Copyright (C) 1995-2005, 2010 Jean-loup Gailly.
+ * Copyright (C) 1995-2005, 2010, 2011, 2012 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) $Id$ */
 
 #include "zutil.h"
+#ifdef ZLIB_DISABLED
+#ifndef Z_SOLO
+#  include "gzguts.h"
+#endif
 
 #ifndef NO_DUMMY_DECL
 struct internal_state      {int dummy;}; /* for buggy compilers */
@@ -85,27 +89,27 @@ uLong ZEXPORT zlibCompileFlags()
 #ifdef FASTEST
     flags += 1L << 21;
 #endif
-#ifdef STDC
+#if defined(STDC) || defined(Z_HAVE_STDARG_H)
 #  ifdef NO_vsnprintf
-        flags += 1L << 25;
+    flags += 1L << 25;
 #    ifdef HAS_vsprintf_void
-        flags += 1L << 26;
+    flags += 1L << 26;
 #    endif
 #  else
 #    ifdef HAS_vsnprintf_void
-        flags += 1L << 26;
+    flags += 1L << 26;
 #    endif
 #  endif
 #else
-        flags += 1L << 24;
+    flags += 1L << 24;
 #  ifdef NO_snprintf
-        flags += 1L << 25;
+    flags += 1L << 25;
 #    ifdef HAS_sprintf_void
-        flags += 1L << 26;
+    flags += 1L << 26;
 #    endif
 #  else
 #    ifdef HAS_snprintf_void
-        flags += 1L << 26;
+    flags += 1L << 26;
 #    endif
 #  endif
 #endif
@@ -141,8 +145,7 @@ const char * ZEXPORT zError(err)
      * errno.  We define it as a global variable to simplify porting.
      * Its value is always 0 and should not be used.
      */
-//JMW we have it already
-//    int errno = 0;
+    int errno = 0;
 #endif
 
 #ifndef HAVE_MEMCPY
@@ -182,6 +185,9 @@ void ZLIB_INTERNAL zmemzero(dest, len)
 }
 #endif
 
+#endif
+
+#ifndef Z_SOLO
 
 #ifdef SYS16BIT
 
@@ -317,3 +323,5 @@ void ZLIB_INTERNAL zcfree (opaque, ptr)
 }
 
 #endif /* MY_ZCALLOC */
+
+#endif /* !Z_SOLO */

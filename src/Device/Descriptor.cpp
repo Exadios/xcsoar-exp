@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -49,6 +49,15 @@ Copyright_License {
 #include "Java/Global.hpp"
 #include "Android/InternalSensors.hpp"
 #include "Android/Main.hpp"
+#include "Android/Product.hpp"
+#endif
+
+#ifdef IOIOLIB
+#include "Android/IOIOHelper.hpp"
+#include "Android/BMP085Device.hpp"
+#include "Android/I2CbaroDevice.hpp"
+#include "Android/NunchuckDevice.hpp"
+#include "Android/VoltageDevice.hpp"
 #endif
 
 #include <assert.h>
@@ -73,7 +82,7 @@ struct ScopeReturnDevice {
   }
 };
 
-class OpenDeviceJob : public Job {
+class OpenDeviceJob final : public Job {
   DeviceDescriptor &device;
 
 public:
@@ -92,10 +101,19 @@ DeviceDescriptor::DeviceDescriptor(unsigned _index)
    driver(NULL), device(NULL),
 #ifdef ANDROID
    internal_sensors(NULL),
+#ifdef IOIOLIB
+   droidsoar_v2(nullptr),
+   nunchuck(nullptr),
+   voltage(nullptr),
+#endif
 #endif
    ticker(false), borrowed(false)
 {
   config.Clear();
+#ifdef IOIOLIB
+  for (unsigned i=0; i<sizeof i2cbaro/sizeof i2cbaro[0]; i++)
+    i2cbaro[i] = nullptr;
+#endif
 }
 
 void
@@ -116,21 +134,48 @@ DeviceDescriptor::ClearConfig()
   config.Clear();
 }
 
+PortState
+DeviceDescriptor::GetState() const
+{
+  if (open_job != nullptr)
+    return PortState::LIMBO;
+
+  if (port != nullptr)
+    return port->GetState();
+
+#ifdef ANDROID
+  if (internal_sensors != nullptr)
+    return PortState::READY;
+
+#ifdef IOIOLIB
+  if (droidsoar_v2 != nullptr)
+    return PortState::READY;
+
+  if (i2cbaro[0] != nullptr)
+    return PortState::READY;
+
+  if (nunchuck != nullptr)
+    return PortState::READY;
+
+  if (voltage != nullptr)
+    return PortState::READY;
+#endif
+#endif
+
+  return PortState::FAILED;
+}
+
 bool
 DeviceDescriptor::ShouldReopenDriverOnTimeout() const
 {
   return driver == NULL || driver->HasTimeout();
 }
 
-#if defined(__clang__) || GCC_VERSION >= 40700
-/* no, OpenDeviceJob really doesn't need a virtual destructor */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
-
 void
 DeviceDescriptor::CancelAsync()
 {
+  assert(InMainThread());
+
   if (!async.IsBusy())
     return;
 
@@ -142,10 +187,6 @@ DeviceDescriptor::CancelAsync()
   delete open_job;
   open_job = NULL;
 }
-
-#if defined(__clang__) || GCC_VERSION >= 40700
-#pragma GCC diagnostic pop
-#endif
 
 bool
 DeviceDescriptor::Open(Port &_port, OperationEnvironment &env)
@@ -188,7 +229,13 @@ DeviceDescriptor::Open(Port &_port, OperationEnvironment &env)
   if (config.IsDriver(_T("Condor")))
     parser.DisableGeoid();
 
-  device = driver->CreateOnPort(config, *port);
+  Device *new_device = driver->CreateOnPort(config, *port);
+
+  {
+    const ScopeLock protect(mutex);
+    device = new_device;
+  }
+
   EnableNMEA(env);
   return true;
 }
@@ -199,6 +246,10 @@ DeviceDescriptor::OpenInternalSensors()
 #ifdef ANDROID
   if (is_simulator())
     return true;
+
+  if (IsNookSimpleTouch())
+    /* avoid a crash on startup b/c nook has no internal sensors */
+    return false;
 
   internal_sensors =
       InternalSensors::create(Java::GetEnv(), context, GetIndex());
@@ -212,12 +263,125 @@ DeviceDescriptor::OpenInternalSensors()
 }
 
 bool
+DeviceDescriptor::OpenDroidSoarV2()
+{
+#ifdef IOIOLIB
+  if (is_simulator())
+    return true;
+
+  if (ioio_helper == nullptr)
+    return false;
+
+  if (i2cbaro[0] == NULL) {
+    i2cbaro[0] = new I2CbaroDevice(GetIndex(), Java::GetEnv(),
+                       ioio_helper->GetHolder(),
+                       DeviceConfig::PressureUse::STATIC_WITH_VARIO,
+                       config.sensor_offset,
+                       2 + (0x77 << 8) + (27 << 16), 0,	// bus, address
+                       5,                               // update freq.
+                       0);                              // flags
+
+    i2cbaro[1] = new I2CbaroDevice(GetIndex(), Java::GetEnv(),
+                       ioio_helper->GetHolder(),
+                       // needs calibration ?
+                       (config.sensor_factor == fixed(0)) ? DeviceConfig::PressureUse::PITOT_ZERO :
+                                                            DeviceConfig::PressureUse::PITOT,
+                       config.sensor_offset, 1 + (0x77 << 8) + (46 << 16), 0 ,
+                       5,
+                       0);
+    return true;
+  }
+#endif
+  return false;
+}
+
+bool
+DeviceDescriptor::OpenI2Cbaro()
+{
+#ifdef IOIOLIB
+  if (is_simulator())
+    return true;
+
+  if (ioio_helper == nullptr)
+    return false;
+
+  for (unsigned i=0; i<sizeof i2cbaro/sizeof i2cbaro[0]; i++) {
+    if (i2cbaro[i] == NULL) {
+      i2cbaro[i] = new I2CbaroDevice(GetIndex(), Java::GetEnv(),
+                       ioio_helper->GetHolder(),
+                       // needs calibration ?
+                       (config.sensor_factor == fixed(0) && config.press_use == DeviceConfig::PressureUse::PITOT) ?
+                                          DeviceConfig::PressureUse::PITOT_ZERO :
+                                          config.press_use,
+                       config.sensor_offset,
+                       config.i2c_bus, config.i2c_addr,
+                       config.press_use == DeviceConfig::PressureUse::TEK_PRESSURE ? 20 : 5,
+                       0); // called flags, actually reserved for future use.
+      return true;
+    }
+  }
+#endif
+  return false;
+}
+
+bool
+DeviceDescriptor::OpenNunchuck()
+{
+#ifdef IOIOLIB
+  if (is_simulator())
+    return true;
+
+  if (ioio_helper == nullptr)
+    return false;
+
+  nunchuck = new NunchuckDevice(GetIndex(), Java::GetEnv(),
+                                  ioio_helper->GetHolder(),
+                                  config.i2c_bus, 5); // twi, sample_rate
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool
+DeviceDescriptor::OpenVoltage()
+{
+#ifdef IOIOLIB
+  if (is_simulator())
+    return true;
+
+  if (ioio_helper == nullptr)
+    return false;
+
+  voltage = new VoltageDevice(GetIndex(), Java::GetEnv(),
+                                  ioio_helper->GetHolder(),
+                                  config.sensor_offset, config.sensor_factor,
+                                  60); // sample_rate per minute
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool
 DeviceDescriptor::DoOpen(OperationEnvironment &env)
 {
   assert(config.IsAvailable());
 
   if (config.port_type == DeviceConfig::PortType::INTERNAL)
     return OpenInternalSensors();
+
+  if (config.port_type == DeviceConfig::PortType::DROIDSOAR_V2)
+    return OpenDroidSoarV2();
+
+  if (config.port_type == DeviceConfig::PortType::I2CPRESSURESENSOR)
+    return OpenI2Cbaro();
+
+  if (config.port_type == DeviceConfig::PortType::NUNCHUCK)
+    return OpenNunchuck();
+
+  if (config.port_type == DeviceConfig::PortType::IOIOVOLTAGE)
+    return OpenVoltage();
 
   reopen_clock.Update();
 
@@ -232,6 +396,15 @@ DeviceDescriptor::DoOpen(OperationEnvironment &env)
     return false;
   }
 
+  while (port->GetState() == PortState::LIMBO) {
+    env.Sleep(200);
+
+    if (env.IsCancelled() || port->GetState() == PortState::FAILED) {
+      delete port;
+      return false;
+    }
+  }
+
   if (!Open(*port, env)) {
     delete port;
     return false;
@@ -243,6 +416,7 @@ DeviceDescriptor::DoOpen(OperationEnvironment &env)
 void
 DeviceDescriptor::Open(OperationEnvironment &env)
 {
+  assert(InMainThread());
   assert(port == NULL);
   assert(device == NULL);
   assert(!ticker);
@@ -266,6 +440,7 @@ DeviceDescriptor::Open(OperationEnvironment &env)
 void
 DeviceDescriptor::Close()
 {
+  assert(InMainThread());
   assert(!IsBorrowed());
 
   CancelAsync();
@@ -273,10 +448,37 @@ DeviceDescriptor::Close()
 #ifdef ANDROID
   delete internal_sensors;
   internal_sensors = NULL;
+
+#ifdef IOIOLIB
+  delete droidsoar_v2;
+  droidsoar_v2 = nullptr;
+
+  for (unsigned i=0; i<sizeof i2cbaro/sizeof i2cbaro[0]; i++) {
+    delete i2cbaro[i];
+    i2cbaro[i] = nullptr;
+  }
+  delete nunchuck;
+  nunchuck = nullptr;
+
+  delete voltage;
+  voltage = nullptr;
+
 #endif
 
-  delete device;
-  device = NULL;
+#endif
+
+  /* safely delete the Device object */
+  Device *old_device = device;
+
+  {
+    const ScopeLock protect(mutex);
+    device = nullptr;
+    /* after leaving this scope, no other thread may use the old
+       object; to avoid locking the mutex for too long, the "delete"
+       is called after the scope */
+  }
+
+  delete old_device;
 
   Port *old_port = port;
   port = NULL;
@@ -296,6 +498,7 @@ DeviceDescriptor::Close()
 void
 DeviceDescriptor::Reopen(OperationEnvironment &env)
 {
+  assert(InMainThread());
   assert(!IsBorrowed());
 
   Close();
@@ -305,6 +508,8 @@ DeviceDescriptor::Reopen(OperationEnvironment &env)
 void
 DeviceDescriptor::AutoReopen(OperationEnvironment &env)
 {
+  assert(InMainThread());
+
   if (/* don't reopen a device that is occupied */
       IsOccupied() ||
       !config.IsAvailable() ||
@@ -379,7 +584,7 @@ DeviceDescriptor::IsManageable() const
 
     if (_tcscmp(driver->name, _T("LX")) == 0 && device != NULL) {
       const LXDevice &lx = *(const LXDevice *)device;
-      return lx.IsV7() || lx.IsNano();
+      return lx.IsV7() || lx.IsNano() || lx.IsLX16xx();
     }
   }
 
@@ -389,6 +594,8 @@ DeviceDescriptor::IsManageable() const
 bool
 DeviceDescriptor::Borrow()
 {
+  assert(InMainThread());
+
   if (!CanBorrow())
     return false;
 
@@ -399,6 +606,7 @@ DeviceDescriptor::Borrow()
 void
 DeviceDescriptor::Return()
 {
+  assert(InMainThread());
   assert(IsBorrowed());
 
   borrowed = false;
@@ -496,6 +704,8 @@ DeviceDescriptor::WriteNMEA(const TCHAR *line, OperationEnvironment &env)
 bool
 DeviceDescriptor::PutMacCready(fixed value, OperationEnvironment &env)
 {
+  assert(InMainThread());
+
   if (device == NULL || settings_sent.CompareMacCready(value) ||
       !config.sync_to_device)
     return true;
@@ -519,6 +729,8 @@ DeviceDescriptor::PutMacCready(fixed value, OperationEnvironment &env)
 bool
 DeviceDescriptor::PutBugs(fixed value, OperationEnvironment &env)
 {
+  assert(InMainThread());
+
   if (device == NULL || settings_sent.CompareBugs(value) ||
       !config.sync_to_device)
     return true;
@@ -543,6 +755,8 @@ bool
 DeviceDescriptor::PutBallast(fixed fraction, fixed overload,
                              OperationEnvironment &env)
 {
+  assert(InMainThread());
+
   if (device == NULL || !config.sync_to_device ||
       (settings_sent.CompareBallastFraction(fraction) &&
        settings_sent.CompareBallastOverload(overload)))
@@ -567,8 +781,10 @@ DeviceDescriptor::PutBallast(fixed fraction, fixed overload,
 }
 
 bool
-DeviceDescriptor::PutVolume(int volume, OperationEnvironment &env)
+DeviceDescriptor::PutVolume(unsigned volume, OperationEnvironment &env)
 {
+  assert(InMainThread());
+
   if (device == NULL || !config.sync_to_device)
     return true;
 
@@ -584,6 +800,8 @@ bool
 DeviceDescriptor::PutActiveFrequency(RadioFrequency frequency,
                                      OperationEnvironment &env)
 {
+  assert(InMainThread());
+
   if (device == NULL || !config.sync_to_device)
     return true;
 
@@ -599,6 +817,8 @@ bool
 DeviceDescriptor::PutStandbyFrequency(RadioFrequency frequency,
                                       OperationEnvironment &env)
 {
+  assert(InMainThread());
+
   if (device == NULL || !config.sync_to_device)
     return true;
 
@@ -614,6 +834,8 @@ bool
 DeviceDescriptor::PutQNH(const AtmosphericPressure &value,
                          OperationEnvironment &env)
 {
+  assert(InMainThread());
+
   if (device == NULL || settings_sent.CompareQNH(value) ||
       !config.sync_to_device)
     return true;
@@ -699,7 +921,7 @@ bool
 DeviceDescriptor::ReadFlightList(RecordedFlightList &flight_list,
                                  OperationEnvironment &env)
 {
-  assert(IsBorrowed());
+  assert(borrowed);
   assert(port != NULL);
   assert(driver != NULL);
   assert(device != NULL);
@@ -716,7 +938,7 @@ DeviceDescriptor::DownloadFlight(const RecordedFlightInfo &flight,
                                  const TCHAR *path,
                                  OperationEnvironment &env)
 {
-  assert(IsBorrowed());
+  assert(borrowed);
   assert(port != NULL);
   assert(driver != NULL);
   assert(device != NULL);
@@ -732,9 +954,11 @@ DeviceDescriptor::DownloadFlight(const RecordedFlightInfo &flight,
 }
 
 void
-DeviceDescriptor::OnSysTicker(const DerivedInfo &calculated)
+DeviceDescriptor::OnSysTicker()
 {
-  if (port != NULL && !port->IsValid() && !IsOccupied())
+  assert(InMainThread());
+
+  if (port != NULL && port->GetState() == PortState::FAILED && !IsOccupied())
     Close();
 
   if (device == NULL)
@@ -755,8 +979,30 @@ DeviceDescriptor::OnSysTicker(const DerivedInfo &calculated)
     ticker = !ticker;
     if (ticker)
       // write settings to vario every second
-      device->OnSysTicker(calculated);
+      device->OnSysTicker();
   }
+}
+
+void
+DeviceDescriptor::OnSensorUpdate(const MoreData &basic)
+{
+  /* must hold the mutex because this method may run in any thread,
+     just in case the main thread deletes the Device while this method
+     still runs */
+  const ScopeLock protect(mutex);
+
+  if (device != nullptr)
+    device->OnSensorUpdate(basic);
+}
+
+void
+DeviceDescriptor::OnCalculatedUpdate(const MoreData &basic,
+                                     const DerivedInfo &calculated)
+{
+  assert(InMainThread());
+
+  if (device != nullptr)
+    device->OnCalculatedUpdate(basic, calculated);
 }
 
 bool
@@ -768,21 +1014,12 @@ DeviceDescriptor::ParseLine(const char *line)
   return ParseNMEA(line, basic);
 }
 
-#if defined(__clang__) || GCC_VERSION >= 40700
-/* no, OpenDeviceJob really doesn't need a virtual destructor */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
-
 void
 DeviceDescriptor::OnNotification()
 {
   /* notification from AsyncJobRunner, the Job was finished */
 
-  if (!async.IsBusy())
-    /* this can happen when CancelAsync() has been called */
-    return;
-
+  assert(InMainThread());
   assert(open_job != NULL);
 
   async.Wait();
@@ -790,10 +1027,6 @@ DeviceDescriptor::OnNotification()
   delete open_job;
   open_job = NULL;
 }
-
-#if defined(__clang__) || GCC_VERSION >= 40700
-#pragma GCC diagnostic pop
-#endif
 
 void
 DeviceDescriptor::DataReceived(const void *data, size_t length)

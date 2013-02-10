@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_GDI_CANVAS_HPP
 #define XCSOAR_SCREEN_GDI_CANVAS_HPP
 
-#include "Util/NonCopyable.hpp"
 #include "Math/Angle.hpp"
 #include "Screen/Brush.hpp"
 #include "Screen/Color.hpp"
@@ -42,41 +41,43 @@ Copyright_License {
  * Base drawable canvas class
  * 
  */
-class Canvas : private NonCopyable {
+class Canvas {
 protected:
   HDC dc, compatible_dc;
-  UPixelScalar width, height;
+  PixelSize size;
 
 public:
   Canvas():dc(NULL), compatible_dc(NULL) {}
-  Canvas(HDC _dc, UPixelScalar _width, UPixelScalar _height)
-    :dc(_dc), compatible_dc(NULL), width(_width), height(_height) {
+  Canvas(HDC _dc, PixelSize new_size)
+    :dc(_dc), compatible_dc(NULL), size(new_size) {
     assert(dc != NULL);
   }
 
   ~Canvas() {
-    reset();
+    Destroy();
   }
 
+  Canvas(const Canvas &other) = delete;
+  Canvas &operator=(const Canvas &other) = delete;
+
 protected:
-  void reset() {
+  void Destroy() {
     if (compatible_dc != NULL) {
       ::DeleteDC(compatible_dc);
       compatible_dc = NULL;
     }
   }
 
-  void set(HDC _dc, UPixelScalar _width, UPixelScalar _height) {
+  void Create(HDC _dc, PixelSize new_size) {
     assert(_dc != NULL);
-    assert(_width > 0);
-    assert(_height > 0);
+    assert(new_size.cx > 0);
+    assert(new_size.cy > 0);
 
-    reset();
+    Destroy();
 
     dc = _dc;
     compatible_dc = NULL;
-    width = _width;
-    height = _height;
+    size = new_size;
   }
 
   HDC GetCompatibleDC() {
@@ -98,21 +99,29 @@ public:
     return dc;
   }
 
-  UPixelScalar get_width() const {
-    assert(IsDefined());
-
-    return width;
+  const PixelSize &GetSize() const {
+    return size;
   }
 
-  UPixelScalar get_height() const {
+  UPixelScalar GetWidth() const {
     assert(IsDefined());
 
-    return height;
+    return size.cx;
   }
 
-  void resize(UPixelScalar _width, UPixelScalar _height) {
-    width = _width;
-    height = _height;
+  UPixelScalar GetHeight() const {
+    assert(IsDefined());
+
+    return size.cy;
+  }
+
+  gcc_pure
+  PixelRect GetRect() const {
+    return PixelRect{RasterPoint{0, 0}, size};
+  }
+
+  void Resize(PixelSize new_size) {
+    size = new_size;
   }
 
   gcc_pure
@@ -254,7 +263,7 @@ public:
     DrawFilledRectangle(rc, map(color));
   }
 
-  void DrawFilledRectangle(const PixelRect rc, const Brush &brush) {
+  void DrawFilledRectangle(const PixelRect &rc, const Brush &brush) {
     assert(IsDefined());
 
     ::FillRect(dc, &rc, brush.Native());
@@ -272,25 +281,25 @@ public:
   }
 
   void Clear() {
-    Rectangle(0, 0, width, height);
+    Rectangle(0, 0, GetWidth(), GetHeight());
   }
 
   void Clear(const HWColor color) {
-    DrawFilledRectangle(0, 0, width, height, color);
+    DrawFilledRectangle(0, 0, GetWidth(), GetHeight(), color);
   }
 
   void Clear(const Color color) {
-    DrawFilledRectangle(0, 0, width, height, color);
+    DrawFilledRectangle(0, 0, GetWidth(), GetHeight(), color);
   }
 
   void Clear(const Brush &brush) {
-    DrawFilledRectangle(0, 0, width, height, brush);
+    DrawFilledRectangle(0, 0, GetWidth(), GetHeight(), brush);
   }
 
   void ClearWhite() {
     assert(IsDefined());
 
-    ::BitBlt(dc, 0, 0, width, height, NULL, 0, 0, WHITENESS);
+    ::BitBlt(dc, 0, 0, GetWidth(), GetHeight(), NULL, 0, 0, WHITENESS);
   }
 
   void DrawRoundRectangle(PixelScalar left, PixelScalar top,
@@ -305,7 +314,7 @@ public:
   void DrawRaisedEdge(PixelRect &rc) {
     assert(IsDefined());
 
-    ::DrawEdge(dc, &rc, EDGE_RAISED, BF_ADJUST | BF_FLAT | BF_RECT);
+    ::DrawEdge(dc, &rc, EDGE_RAISED, BF_ADJUST | BF_RECT);
   }
 
   void DrawPolyline(const RasterPoint *lppt, unsigned cPoints) {
@@ -333,12 +342,27 @@ public:
     DrawLine(a, b);
   }
 
+  void DrawExactLine(PixelScalar ax, PixelScalar ay,
+                     PixelScalar bx, PixelScalar by) {
+    DrawLine(ax, ay, bx, by);
+  }
+
+  void DrawExactLine(const RasterPoint a, const RasterPoint b) {
+    DrawLine(a, b);
+  }
+
   void DrawTwoLines(PixelScalar ax, PixelScalar ay,
                     PixelScalar bx, PixelScalar by,
                     PixelScalar cx, PixelScalar cy);
   void DrawTwoLines(const RasterPoint a, const RasterPoint b,
                     const RasterPoint c) {
     DrawTwoLines(a.x, a.y, b.x, b.y, c.x, c.y);
+  }
+
+  void DrawTwoLinesExact(PixelScalar ax, PixelScalar ay,
+                         PixelScalar bx, PixelScalar by,
+                         PixelScalar cx, PixelScalar cy) {
+    DrawTwoLines(ax, ay, bx, by, cx, cy);
   }
 
   void DrawCircle(PixelScalar x, PixelScalar y, UPixelScalar radius) {
@@ -356,7 +380,7 @@ public:
   void DrawKeyhole(PixelScalar x, PixelScalar y, UPixelScalar small_radius,
                    UPixelScalar big_radius, Angle start, Angle end);
 
-  void DrawFocusRectangle(PixelRect rc) {
+  void DrawFocusRectangle(const PixelRect &rc) {
     assert(IsDefined());
 
     ::DrawFocusRect(dc, &rc);
@@ -383,28 +407,29 @@ public:
   gcc_pure
   UPixelScalar GetFontHeight() const;
 
-  void text(PixelScalar x, PixelScalar y, const TCHAR *text);
-  void text(PixelScalar x, PixelScalar y, const TCHAR *text, size_t length);
-  void text_opaque(PixelScalar x, PixelScalar y, const PixelRect &rc,
-                   const TCHAR *text);
+  void DrawText(PixelScalar x, PixelScalar y, const TCHAR *text);
+  void DrawText(PixelScalar x, PixelScalar y,
+                const TCHAR *text, size_t length);
+  void DrawOpaqueText(PixelScalar x, PixelScalar y, const PixelRect &rc,
+                      const TCHAR *text);
 
-  void text_clipped(PixelScalar x, PixelScalar y, const PixelRect &rc,
-                    const TCHAR *text);
-  void text_clipped(PixelScalar x, PixelScalar y, UPixelScalar width,
-                    const TCHAR *text);
+  void DrawClippedText(PixelScalar x, PixelScalar y, const PixelRect &rc,
+                       const TCHAR *text);
+  void DrawClippedText(PixelScalar x, PixelScalar y, UPixelScalar width,
+                       const TCHAR *text);
 
   /**
    * Render text, clip it within the bounds of this Canvas.
    */
   void TextAutoClipped(PixelScalar x, PixelScalar y, const TCHAR *t) {
-    text(x, y, t);
+    DrawText(x, y, t);
   }
 
-  void formatted_text(RECT *rc, const TCHAR *text, unsigned format) {
+  void DrawFormattedText(RECT *rc, const TCHAR *text, unsigned format) {
     ::DrawText(dc, text, -1, rc, format);
   }
 
-  void copy(PixelScalar dest_x, PixelScalar dest_y,
+  void Copy(PixelScalar dest_x, PixelScalar dest_y,
             UPixelScalar dest_width, UPixelScalar dest_height,
             HDC src, PixelScalar src_x, PixelScalar src_y,
             DWORD dwRop=SRCCOPY) {
@@ -415,32 +440,32 @@ public:
              src, src_x, src_y, dwRop);
   }
 
-  void copy(PixelScalar dest_x, PixelScalar dest_y,
+  void Copy(PixelScalar dest_x, PixelScalar dest_y,
             UPixelScalar dest_width, UPixelScalar dest_height,
             const Canvas &src, PixelScalar src_x, PixelScalar src_y) {
-    copy(dest_x, dest_y, dest_width, dest_height,
+    Copy(dest_x, dest_y, dest_width, dest_height,
          src.dc, src_x, src_y);
   }
 
-  void copy(PixelScalar dest_x, PixelScalar dest_y,
+  void Copy(PixelScalar dest_x, PixelScalar dest_y,
             UPixelScalar dest_width, UPixelScalar dest_height,
             HBITMAP src, PixelScalar src_x, PixelScalar src_y,
             DWORD dwRop=SRCCOPY);
 
-  void copy(PixelScalar dest_x, PixelScalar dest_y,
+  void Copy(PixelScalar dest_x, PixelScalar dest_y,
             UPixelScalar dest_width, UPixelScalar dest_height,
             const Bitmap &src, PixelScalar src_x, PixelScalar src_y,
             DWORD dwRop=SRCCOPY);
 
-  void copy(const Canvas &src, PixelScalar src_x, PixelScalar src_y);
-  void copy(const Canvas &src);
+  void Copy(const Canvas &src, PixelScalar src_x, PixelScalar src_y);
+  void Copy(const Canvas &src);
 
-  void copy(const Bitmap &src);
+  void Copy(const Bitmap &src);
 
-  void copy_transparent_white(const Canvas &src);
-  void copy_transparent_black(const Canvas &src);
-  void stretch_transparent(const Bitmap &src, Color key);
-  void invert_stretch_transparent(const Bitmap &src, Color key);
+  void CopyTransparentWhite(const Canvas &src);
+  void CopyTransparentBlack(const Canvas &src);
+  void StretchTransparent(const Bitmap &src, Color key);
+  void InvertStretchTransparent(const Bitmap &src, Color key);
 
   void Stretch(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
@@ -506,7 +531,8 @@ public:
   void Stretch(const Bitmap &src,
                PixelScalar src_x, PixelScalar src_y,
                UPixelScalar src_width, UPixelScalar src_height) {
-    Stretch(0, 0, width, height, src, src_x, src_y, src_width, src_height);
+    Stretch(0, 0, GetWidth(), GetHeight(),
+            src, src_x, src_y, src_width, src_height);
   }
 
   void Stretch(PixelScalar dest_x, PixelScalar dest_y,
@@ -586,18 +612,18 @@ public:
   void CopyOr(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
                const Canvas &src, PixelScalar src_x, PixelScalar src_y) {
-    copy(dest_x, dest_y, dest_width, dest_height,
+    Copy(dest_x, dest_y, dest_width, dest_height,
          src, src_x, src_y, SRCPAINT);
   }
 
   void CopyOr(const Canvas &src) {
-    CopyOr(0, 0, get_width(), get_height(), src, 0, 0);
+    CopyOr(0, 0, GetWidth(), GetHeight(), src, 0, 0);
   }
 
   void CopyOr(PixelScalar dest_x, PixelScalar dest_y,
               UPixelScalar dest_width, UPixelScalar dest_height,
               const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
-    copy(dest_x, dest_y, dest_width, dest_height,
+    Copy(dest_x, dest_y, dest_width, dest_height,
          src, src_x, src_y,
          SRCPAINT);
   }
@@ -609,7 +635,7 @@ public:
   void CopyNotOr(PixelScalar dest_x, PixelScalar dest_y,
                  UPixelScalar dest_width, UPixelScalar dest_height,
                  const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
-    copy(dest_x, dest_y, dest_width, dest_height,
+    Copy(dest_x, dest_y, dest_width, dest_height,
          src, src_x, src_y,
          MERGEPAINT);
   }
@@ -617,7 +643,7 @@ public:
   void CopyNot(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
                const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
-    copy(dest_x, dest_y, dest_width, dest_height,
+    Copy(dest_x, dest_y, dest_width, dest_height,
          src, src_x, src_y,
          NOTSRCCOPY);
   }
@@ -625,18 +651,18 @@ public:
   void CopyAnd(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
                const Canvas &src, PixelScalar src_x, PixelScalar src_y) {
-    copy(dest_x, dest_y, dest_width, dest_height,
+    Copy(dest_x, dest_y, dest_width, dest_height,
          src.dc, src_x, src_y, SRCAND);
   }
 
   void CopyAnd(const Canvas &src) {
-    CopyAnd(0, 0, get_width(), get_height(), src, 0, 0);
+    CopyAnd(0, 0, GetWidth(), GetHeight(), src, 0, 0);
   }
 
   void CopyAnd(PixelScalar dest_x, PixelScalar dest_y,
                UPixelScalar dest_width, UPixelScalar dest_height,
                const Bitmap &src, PixelScalar src_x, PixelScalar src_y) {
-    copy(dest_x, dest_y, dest_width, dest_height,
+    Copy(dest_x, dest_y, dest_width, dest_height,
          src, src_x, src_y,
          SRCAND);
   }

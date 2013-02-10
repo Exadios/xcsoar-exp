@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -66,8 +66,8 @@ ScrollBar::SetSize(const PixelSize size)
 void
 ScrollBar::Reset()
 {
-  SetRectEmpty(&rc);
-  SetRectEmpty(&rc_slider);
+  rc.SetEmpty();
+  rc_slider.SetEmpty();
 }
 
 void
@@ -120,64 +120,63 @@ ScrollBar::ToOrigin(unsigned size, unsigned view_size,
     return 0;
 
   unsigned origin = y * max_origin / GetScrollHeight();
-  return min(origin, max_origin);
+  return std::min(origin, max_origin);
 }
 
 void
 ScrollBar::Paint(Canvas &canvas) const
 {
-  // Prepare Pen
-  canvas.SelectBlackPen();
-
   // ###################
   // #### ScrollBar ####
   // ###################
 
   // draw rectangle around entire scrollbar area
-  canvas.DrawTwoLines(rc.left, rc.top, rc.left, rc.bottom,
-                   rc.right, rc.bottom);
-  canvas.DrawTwoLines(rc.right, rc.bottom, rc.right, rc.top,
-                   rc.left, rc.top);
+  canvas.SelectBlackPen();
+  canvas.SelectHollowBrush();
+  canvas.Rectangle(rc.left, rc.top, rc.right, rc.bottom);
 
   // ###################
   // ####  Buttons  ####
   // ###################
 
-  UPixelScalar arrow_padding = max(UPixelScalar(GetWidth() / 4),
-                                   UPixelScalar(4));
-  canvas.SelectBlackBrush();
+  const int arrow_padding = std::max(GetWidth() / 4, 4);
 
   PixelRect up_arrow_rect = rc;
   ++up_arrow_rect.left;
   up_arrow_rect.bottom = up_arrow_rect.top + GetWidth();
-  canvas.DrawLine(up_arrow_rect.left, up_arrow_rect.bottom,
-              up_arrow_rect.right, up_arrow_rect.bottom);
-  canvas.DrawButton(up_arrow_rect, false);
-
-  RasterPoint up_arrow[3] = {
-    { PixelScalar((up_arrow_rect.left + rc.right) / 2),
-      PixelScalar(up_arrow_rect.top + arrow_padding) },
-    { PixelScalar(up_arrow_rect.left + arrow_padding),
-      PixelScalar(up_arrow_rect.bottom - arrow_padding) },
-    { PixelScalar(rc.right - arrow_padding),
-      PixelScalar(up_arrow_rect.bottom - arrow_padding) },
-  };
-  canvas.DrawTriangleFan(up_arrow, ARRAY_SIZE(up_arrow));
 
   PixelRect down_arrow_rect = rc;
   ++down_arrow_rect.left;
   down_arrow_rect.top = down_arrow_rect.bottom - GetWidth();
-  canvas.DrawLine(down_arrow_rect.left, down_arrow_rect.top - 1,
-              down_arrow_rect.right, down_arrow_rect.top - 1);
+
+  canvas.DrawExactLine(up_arrow_rect.left, up_arrow_rect.bottom,
+                       up_arrow_rect.right, up_arrow_rect.bottom);
+  canvas.DrawExactLine(down_arrow_rect.left, down_arrow_rect.top - 1,
+                       down_arrow_rect.right, down_arrow_rect.top - 1);
+
+  canvas.DrawButton(up_arrow_rect, false);
   canvas.DrawButton(down_arrow_rect, false);
 
-  RasterPoint down_arrow[3] = {
-    { PixelScalar((down_arrow_rect.left + rc.right) / 2),
-      PixelScalar(down_arrow_rect.bottom - arrow_padding) },
-    { PixelScalar(down_arrow_rect.left + arrow_padding),
-      PixelScalar(down_arrow_rect.top + arrow_padding) },
-    { PixelScalar(rc.right - arrow_padding),
-      PixelScalar(down_arrow_rect.top + arrow_padding) },
+  canvas.SelectNullPen();
+  canvas.SelectBlackBrush();
+
+  const RasterPoint up_arrow[3] = {
+    { (up_arrow_rect.left + rc.right) / 2,
+      up_arrow_rect.top + arrow_padding },
+    { up_arrow_rect.left + arrow_padding,
+      up_arrow_rect.bottom - arrow_padding },
+    { rc.right - arrow_padding,
+      up_arrow_rect.bottom - arrow_padding },
+  };
+  canvas.DrawTriangleFan(up_arrow, ARRAY_SIZE(up_arrow));
+
+  const RasterPoint down_arrow[3] = {
+    { (down_arrow_rect.left + rc.right) / 2,
+      down_arrow_rect.bottom - arrow_padding },
+    { down_arrow_rect.left + arrow_padding,
+      down_arrow_rect.top + arrow_padding },
+    { rc.right - arrow_padding,
+      down_arrow_rect.top + arrow_padding },
   };
   canvas.DrawTriangleFan(down_arrow, ARRAY_SIZE(down_arrow));
 
@@ -186,10 +185,11 @@ ScrollBar::Paint(Canvas &canvas) const
   // ###################
 
   if (rc_slider.top + 4 < rc_slider.bottom) {
-    canvas.DrawLine(rc_slider.left, rc_slider.top,
-                rc_slider.right, rc_slider.top);
-    canvas.DrawLine(rc_slider.left, rc_slider.bottom,
-                rc_slider.right, rc_slider.bottom);
+    canvas.SelectBlackPen();
+    canvas.DrawExactLine(rc_slider.left, rc_slider.top,
+                         rc_slider.right, rc_slider.top);
+    canvas.DrawExactLine(rc_slider.left, rc_slider.bottom,
+                         rc_slider.right, rc_slider.bottom);
 
     PixelRect rc_slider2 = rc_slider;
     ++rc_slider2.left;
@@ -202,9 +202,9 @@ ScrollBar::Paint(Canvas &canvas) const
     canvas.DrawFilledRectangle(rc.left + 1, up_arrow_rect.bottom + 1,
                                rc.right, rc_slider.top, COLOR_GRAY);
 
-  if (rc_slider.bottom < down_arrow_rect.top)
-    canvas.DrawFilledRectangle(rc.left + 1, rc_slider.bottom,
-                               rc.right, down_arrow_rect.top, COLOR_GRAY);
+  if (rc_slider.bottom + 1 < down_arrow_rect.top - 1)
+    canvas.DrawFilledRectangle(rc.left + 1, rc_slider.bottom + 1,
+                               rc.right, down_arrow_rect.top - 1, COLOR_GRAY);
 }
 
 void

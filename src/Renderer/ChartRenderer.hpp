@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -48,12 +48,14 @@ class ChartRenderer
 
   ReusableArray<RasterPoint> point_buffer;
 
-  fixed yscale;
-  fixed xscale;
-  fixed y_min, x_min;
-  fixed x_max, y_max;
-  bool unscaled_x;
-  bool unscaled_y;
+  struct Axis {
+    fixed scale, min, max;
+    bool unscaled;
+
+    void Reset();
+
+    PixelScalar ToScreen(fixed value) const;
+  } x, y;
 
 public:
   int padding_left;
@@ -63,18 +65,16 @@ public:
   ChartRenderer(const ChartLook &look, Canvas &the_canvas,
                 const PixelRect the_rc);
 
-  void Reset();
-
   void DrawBarChart(const LeastSquares &lsdata);
   void DrawFilledLineGraph(const LeastSquares &lsdata);
   void DrawLineGraph(const LeastSquares &lsdata, const Pen &pen);
-  void DrawLineGraph(const LeastSquares &lsdata, ChartLook::Style Style);
-  void DrawTrend(const LeastSquares &lsdata, ChartLook::Style Style);
-  void DrawTrendN(const LeastSquares &lsdata, ChartLook::Style Style);
+  void DrawLineGraph(const LeastSquares &lsdata, ChartLook::Style style);
+  void DrawTrend(const LeastSquares &lsdata, ChartLook::Style style);
+  void DrawTrendN(const LeastSquares &lsdata, ChartLook::Style style);
   void DrawLine(const fixed xmin, const fixed ymin,
                 const fixed xmax, const fixed ymax, const Pen &pen);
   void DrawLine(const fixed xmin, const fixed ymin,
-                const fixed xmax, const fixed ymax, ChartLook::Style Style);
+                const fixed xmax, const fixed ymax, ChartLook::Style style);
   void DrawFilledLine(const fixed xmin, const fixed ymin,
                       const fixed xmax, const fixed ymax,
                       const Brush &brush);
@@ -86,23 +86,17 @@ public:
   void ScaleXFromData(const LeastSquares &lsdata);
   void ScaleYFromValue(const fixed val);
   void ScaleXFromValue(const fixed val);
-  void ScaleMakeSquare();
-
-  void StyleLine(const RasterPoint l1, const RasterPoint l2, const Pen &pen);
-  void StyleLine(const RasterPoint l1, const RasterPoint l2, ChartLook::Style Style);
 
   void ResetScale();
 
   static void FormatTicText(TCHAR *text, const fixed val, const fixed step);
-  void DrawXGrid(fixed tic_step, const fixed zero, const Pen &pen,
+  void DrawXGrid(fixed tic_step, const Pen &pen,
                  fixed unit_step, bool draw_units = false);
-  void DrawXGrid(const fixed tic_step, const fixed zero,
-                 ChartLook::Style Style,
+  void DrawXGrid(const fixed tic_step, ChartLook::Style style,
                  const fixed unit_step, bool draw_units = false);
-  void DrawYGrid(fixed tic_step, const fixed zero, const Pen &pen,
+  void DrawYGrid(fixed tic_step, const Pen &pen,
                  fixed unit_step, bool draw_units = false);
-  void DrawYGrid(const fixed tic_step, const fixed zero,
-                 ChartLook::Style Style,
+  void DrawYGrid(const fixed tic_step, ChartLook::Style style,
                  const fixed unit_step, bool draw_units = false);
 
   void DrawXLabel(const TCHAR *text);
@@ -112,14 +106,12 @@ public:
   void DrawYLabel(const TCHAR *text, const TCHAR *unit);
 
   void DrawLabel(const TCHAR *text, const fixed xv, const fixed yv);
-  void DrawArrow(const fixed x, const fixed y, const fixed mag,
-                 const Angle angle, ChartLook::Style Style);
   void DrawNoData();
 
-  fixed GetYMin() const { return y_min; }
-  fixed GetYMax() const { return y_max; }
-  fixed GetXMin() const { return x_min; }
-  fixed GetXMax() const { return x_max; }
+  fixed GetYMin() const { return y.min; }
+  fixed GetYMax() const { return y.max; }
+  fixed GetXMin() const { return x.min; }
+  fixed GetXMax() const { return x.max; }
 
   gcc_pure
   PixelScalar ScreenX(fixed x) const;
@@ -133,6 +125,10 @@ public:
   }
 
   Canvas& GetCanvas() { return canvas; }
+
+  const ChartLook &GetLook() const {
+    return look;
+  }
 };
 
 #endif

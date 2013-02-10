@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #define ORDEREDTASKPOINT_HPP
 
 #include "Task/Points/TaskLeg.hpp"
+#include "Task/Points/TaskWaypoint.hpp"
 #include "Task/Points/ScoredTaskPoint.hpp"
 #include "Task/ObservationZones/ObservationZoneClient.hpp"
 #include "Geo/Flat/FlatBoundingBox.hpp"
@@ -33,30 +34,26 @@
 struct OrderedTaskBehaviour;
 
 /**
- *  Abstract compound specialisation of TaskLeg and ScoredTaskPoint,
- *  for task points which are organised in an ordered sequence.  This
- *  class manages the concept of an active task point, and therefore
- *  in a task, one OrderedTaskPoint will be marked as active, and the
- *  others marked either before or after active.
+ * Abstract compound specialisation of TaskLeg and ScoredTaskPoint,
+ * for task points which are organised in an ordered sequence.  This
+ * class manages the concept of an active task point, and therefore in
+ * a task, one OrderedTaskPoint will be marked as active, and the
+ * others marked either before or after active.
  *
- *  The OrderedTaskPoint tracks previous and next OrderedTaskPoints. 
+ * The OrderedTaskPoint tracks previous and next OrderedTaskPoints.
  */
-class OrderedTaskPoint : 
-  public TaskLeg,
-  public ScoredTaskPoint,
-  public ObservationZoneClient
+class OrderedTaskPoint
+  :public TaskLeg,
+   public TaskWaypoint,
+   public ScoredTaskPoint,
+   public ObservationZoneClient
 {
-  friend class Serialiser;
-  friend class PrintHelper;
-
 public:
   /**
    * States each task point can be in
    * (with respect to which OrderedTaskPoint is active/selected).
    */
   enum ActiveState {
-    /** Active task point was not found, ERROR! */
-    NOTFOUND_ACTIVE = 0,
     /** This taskpoint is before the active one */
     BEFORE_ACTIVE,
     /** This taskpoint is currently the active one */
@@ -64,10 +61,6 @@ public:
     /** This taskpoint is after the active one */
     AFTER_ACTIVE
   };
-
-protected:
-  /** Reference to ordered task behaviour (for task-specific options) */
-  const OrderedTaskBehaviour &ordered_task_behaviour;
 
 private:
   /** ActiveState determined from ScanActive() */
@@ -85,20 +78,21 @@ public:
    * @param _oz Observation zone for this task point
    * @param wp Waypoint associated with this task point
    * @param tb Task Behaviour defining options (esp safety heights)
-   * @param to OrderedTask Behaviour defining options
    * @param b_scored Whether distance within OZ is scored
    *
    * @return Partially initialised object
    */
-  OrderedTaskPoint(Type _type, ObservationZonePoint* _oz,
+  OrderedTaskPoint(TaskPointType _type, ObservationZonePoint *_oz,
                    const Waypoint &wp,
-                   const OrderedTaskBehaviour &to,
-                   const bool b_scored=false);
+                   const bool b_scored);
 
   virtual ~OrderedTaskPoint() {}
 
+  /* choose TaskPoint's implementation, not SampledTaskPoint's */
+  using TaskPoint::GetLocation;
+
   /**
-   * Create a clone of the task point. 
+   * Create a clone of the task point.
    * Caller is responsible for destruction.
    *
    * @param task_behaviour Task behaviour of clone
@@ -110,7 +104,7 @@ public:
                           const OrderedTaskBehaviour &ordered_task_behaviour,
                           const Waypoint* waypoint=NULL) const;
 
-  /** 
+  /**
    * Update observation zone geometry (or other internal data) when
    * previous/next turnpoint changes.
    */
@@ -118,13 +112,16 @@ public:
 
   /** Is it possible to insert a task point before this one? */
   bool IsPredecessorAllowed() const {
-    return GetType() != START;
+    return GetType() != TaskPointType::START;
   }
 
   /** Is it possible to insert a task point after this one? */
   bool IsSuccessorAllowed() const {
-    return GetType() != FINISH;
+    return GetType() != TaskPointType::FINISH;
   }
+
+  virtual void SetTaskBehaviour(const TaskBehaviour &tb) {}
+  virtual void SetOrderedTaskBehaviour(const OrderedTaskBehaviour &otb) {}
 
   /**
    * Set previous/next task points.
@@ -160,7 +157,7 @@ public:
   OrderedTaskPoint *GetNext() {
     return tp_next;
   }
-  
+
   /**
    * Accessor for activation state of this task point.
    * This is valid only after ScanActive() has been called.
@@ -200,6 +197,8 @@ public:
    */
   void ScanProjection(TaskProjection &task_projection) const;
 
+  void UpdateOZ(const TaskProjection &projection);
+
   /**
    * Update the bounding box in flat projected coordinates
    */
@@ -210,6 +209,37 @@ public:
    */
   gcc_pure
   bool BoundingBoxOverlaps(const FlatBoundingBox &bb) const;
+
+  gcc_pure
+  const SearchPointVector &GetSearchPoints() const;
+
+  gcc_pure
+  virtual bool IsInSector(const AircraftState &ref) const;
+
+  /**
+   * Check if aircraft is within observation zone if near, and if so,
+   * update the interior sample polygon.
+   *
+   * @param state Aircraft state
+   * @param task_events Callback class for feedback
+   *
+   * @return True if internal state changed
+   */
+  virtual bool UpdateSampleNear(const AircraftState &state,
+                                const TaskProjection &projection);
+
+  /**
+   * Perform updates to samples as required if known to be far from the OZ
+   *
+   * @param state Aircraft state
+   * @param task_events Callback class for feedback
+   *
+   * @return True if internal state changed
+   */
+  virtual bool UpdateSampleFar(const AircraftState &state,
+                               const TaskProjection &projection) {
+    return false;
+  }
 
 protected:
   /**
@@ -227,37 +257,21 @@ protected:
 
 public:
   /* virtual methods from class TaskPoint */
-  virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const {
-    return vector_remaining;
+  virtual const GeoPoint &GetLocationRemaining() const override {
+    return ScoredTaskPoint::GetLocationRemaining();
   }
-  virtual GeoVector GetVectorPlanned() const {
-    return vector_planned;
+  virtual GeoVector GetVectorRemaining(const GeoPoint &reference) const override {
+    return TaskLeg::GetVectorRemaining();
   }
-  virtual GeoVector GetVectorTravelled() const {
-    return vector_travelled;
-  }
-  virtual GeoVector GetNextLegVector() const;
-
-  /* virtual methods from class SampledTaskPoint */
-  virtual void UpdateOZ(const TaskProjection &projection);
-
-private:
-  /* virtual methods from class SampledTaskPoint */
-  virtual bool SearchNominalIfUnsampled() const;
-  virtual bool SearchBoundaryPoints() const;
-
-public:
-  /* virtual methods from class SampledTaskPoint */
-  virtual bool IsInSector(const AircraftState &ref) const;
-  virtual OZBoundary GetBoundary() const;
+  virtual GeoVector GetNextLegVector() const override;
 
 protected:
   /* virtual methods from class ScoredTaskPoint */
   virtual bool CheckEnterTransition(const AircraftState &ref_now,
-                                    const AircraftState &ref_last) const;
+                                    const AircraftState &ref_last) const override;
 
   virtual bool CheckExitTransition(const AircraftState &ref_now,
-                                   const AircraftState &ref_last) const {
+                                   const AircraftState &ref_last) const  override{
     return CheckEnterTransition(ref_last, ref_now);
   }
 };

@@ -234,15 +234,17 @@ excessive template use may bloat the binary.
 \section{Graphical User Interface}
 \subsection{Letter Cases}
 
-Following the guidline should prevent the GUI from mixtures of "ON" and "On" text elements, and lead to a systematic GUI text presentation. The goal is to recognize GUI text fast and reliable.
+Following the guidline should prevent the GUI from mixtures of "ON" and
+"On" text elements, and lead to a systematic GUI text presentation.
+The goal is to recognize GUI text fast and reliable.
 
 \begin{description}
   \item[Captions] Captions (button captions, windows titles) to use
-        capitalization. E.g. ,"Pan On", "The Display Of ...". 
+        capitalization. E.g. ,"Pan On", "The Display Of ...".
 
   \item[Abbreviations] Generally known abbreviation use upper case like "MC", "ETA",
         "V"; or they can use CamelCase, especially when using synthetic
-        words  like "GoTo", "InfoBox". 
+        words  like "GoTo", "InfoBox".
         Abbreviated words by simply cutting the end of the word needs a
         dot, e.g. "Max. temp."
 
@@ -253,13 +255,13 @@ Following the guidline should prevent the GUI from mixtures of "ON" and "On" tex
 \begin{itemize}
     \item Captions for text (input) fields, e.g. "Wing loading"
     \item Info text on widgets. E.g. "No data" on an empty
-          analysis page. 
-    \item Label text for radio or check boxes. 
-    \item Selections on Combo-boxes, selectors, Pull-down menus. 
+          analysis page.
+    \item Label text for radio or check boxes.
+    \item Selections on Combo-boxes, selectors, Pull-down menus.
 \end{itemize}
   All those should go like prose, whereas exceptions might be
   meaningful.
-  
+
   \item[Gauge caption] Also the appearance of the gauge caption should be covered with
         that. They are currently mapped to upper case all over. I think
         the most readable also here is a CamelCase approach. E.g. to
@@ -439,6 +441,120 @@ applies to them.  We have a template class called \texttt{Guard} to
 enforce proper read/write locking.  Example: the task.
 
 
+\section{Accessing Sensor Data}
+
+Much of XCSoar deals with obtaining sensor data and visualising it.
+
+Suppose you want to write a dialog that needs the current GPS
+location, where do you get it?  The short and simple answer is: from
+\verb|CommonInterface::Basic()| (the \texttt{InterfaceBlackboard}).
+Example:
+
+\begin{verbatim}
+#include "Interface.hpp"
+
+...
+  const auto &basic = CommonInterface::Basic();
+  if (basic.location_available)
+    current_location = basic.location;
+\end{verbatim}
+
+This is true for the main thread (aka the ``user interface thread'').
+Other threads must not use the \texttt{Interface.hpp} library, because
+the \verb|InterfaceBlackboard| is not protected in any way.  It
+contains copies of various data structures just for the main thread.
+
+This is how sensor data moves inside XCSoar:
+
+\begin{tikzpicture}
+  \node(merge)[thread,align=center]{
+    MergeThread\\
+    BasicComputer\\
+    DeviceBlackboard
+  };
+
+  \path(merge.north)+(-2,2) node(device1)[thread]{Device 1};
+  \draw[->] (device1.south) -- (merge.north)
+  node[midway, below, sloped, font=\tiny]{NMEAInfo};
+
+  \path(merge.north)+(2,2) node(device2)[thread]{Device 2};
+  \draw[->] (device2.south) -- (merge.north)
+  node[midway, below, sloped, font=\tiny]{NMEAInfo};
+
+  \path(merge.south)+(0,-2) node(calc)[thread,align=center]{
+    CalcThread\\
+    GlideComputer\\
+    GlideComputerBlackboard
+  };
+  \draw[->] (merge.south) -- (calc.north)
+  node[midway, below, sloped, font=\tiny]{MoreData};
+
+  \path(calc.south)+(0,-2) node(ui)[thread,align=center]{
+    UI thread\\
+    InterfaceBlackboard\\
+    BlackboardListener
+  };
+  \draw[->] (calc.south) -- (ui.north)
+  node[midway, below, sloped, font=\tiny]{DerivedInfo};
+
+  \path(ui.east)+(3.5,0) node(draw)[thread,align=center]{
+    DrawThread\\
+    MapWindow\\
+    MapWindowBlackboard
+  };
+  \draw[->] (ui.east) -- (draw.west)
+  node[midway, below, sloped, font=\tiny]{DerivedInfo};
+\end{tikzpicture}
+
+The device driver parses input received from its device into its own
+\texttt{NMEAInfo} instance inside \texttt{DeviceBlackboard}
+(i.e. \verb|per_device_data|).  Then it wakes up the
+\texttt{MergeThread} to merge the new data into the central
+\texttt{NMEAInfo} instance.  The \texttt{MergeThread} hosts the
+\texttt{BasicComputer} which attempts to calculate missing data (for
+example, derives vario from GPS altitude).
+
+The \texttt{CalculationThread} wakes up and receives the
+\texttt{MoreData} object from \texttt{DeviceBlackboard}.  Here,
+expensive calculations are performed (\texttt{GlideComputer}: task
+engine, airspace warnings, ...), resulting in a \texttt{DerivedInfo}
+object.  The \texttt{CalculationThread} runs no more than twice per
+second.
+
+Finally, the UI thread wakes up and receives \texttt{MoreData} and
+\texttt{DerivedInfo} via \texttt{DeviceBlackboard}.  This updates
+InfoBoxes and other UI elements.  On Windows, the map is drawn in a
+separate thread, so there's another layer.
+
+Let's get back to the question: where do I get sensor data?  That
+depends on who you are:
+
+\begin{itemize}
+
+\item you are the user interface: (InfoBoxes, dialogs, any Window
+  callback): \texttt{InterfaceBlackboard} (see above).  To get
+  notified on changes, register a \texttt{BlackboardListener} (and
+  don't forget to unregister it).
+
+\item you are the MapWindow: depends!  If you're being called from
+  \texttt{OnPaintBuffer} (i.e. inside the \texttt{DrawThread}), you
+  must use the \texttt{MapWindowBlackboard}, all others must use the
+  \texttt{InterfaceBlackboard}.
+
+\item you are a ``computer'' library: you will get the values as a
+  parameter.  Don't try to use the \texttt{GlideComputerBlackboard}
+  directly.
+
+\item you are a device driver: implement the method
+  \texttt{OnSensorUpdate} or \texttt{OnCalculatedUpdate} if you need
+  to know values from other devices or calculation results.
+
+\item everybody else may use the \texttt{DeviceBlackboard}, but be
+  sure to lock it while using its data.
+
+\end{itemize}
+
+
 \chapter{The build system}
 
 A big plain \texttt{Makefile} is used to control the XCSoar build.
@@ -461,6 +577,39 @@ Search directories (\texttt{-L}) are technically linker ``flags'', but
 they are allowed in \texttt{LDLIBS}, too.
 
 
+\chapter{Developing}
+
+\section{Debugging XCSoar}
+
+The XCSoar source repository contains a module for the GNU debugger
+(\texttt{gdb}).  It contains pretty-printers for various XCSoar types,
+including \texttt{Angle}, \texttt{GeoPoint} and others.  These are
+helpful when you print values in the debugger.  To use it, start the
+debugging session and load the module:
+
+\begin{verbatim}
+$ gdb -ex "source tools/gdb.py" output/UNIX/xcsoar
+(gdb) run
+\end{verbatim}
+
+The module will automatically convert fixed-point to floating point,
+radian angles to degrees and more.  You can now do fancy stuff like:
+
+\begin{verbatim}
+(gdb) p basic.location
+$1 = GeoPoint(7.93911242887 51.1470221074)
+(gdb) p basic.date_time_utc
+$2 = DateTime(2012/12/23 21:41:57)
+(gdb) p basic.track
+$3 = 55.2254197961
+(gdb) p basic.external_wind
+$4 = GeoVector::ZERO
+(gdb) p current_leg.vector_remaining
+$5 = GeoVector(267.899420345 107957.109724)
+\end{verbatim}
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{User interface guidelines}
 
@@ -468,22 +617,28 @@ they are allowed in \texttt{LDLIBS}, too.
 
 \begin{itemize}
 \item Minimise the number of colours, and re-use colour groups already defined.
-\item Too much use of colour where it is not required serves only to reduce the effectiveness of bright colours for important items.
+\item Too much use of colour where it is not required serves only to reduce
+ the effectiveness of bright colours for important items.
 \item High colour saturation elements should be reserved for high importance items
 \item High contrast against background should be reserved for high importance items
 \item Attempt to adopt colours that are intuitive based the function of the item
-\item Minimise the clutter where possible --- readibility is essential for use in flight
-\item Use colours defined in \verb|Graphics| according to functional name, not their actual colour.
-\item Try to maintain consistent use of colours in all uses of that function, such as dialog graphics as well as map overlays and infoboxes.
+\item Minimise the clutter where possible --- readibility is essential for use
+ in flight
+\item Use colours defined in \verb|Graphics| according to functional name, not
+ their actual colour.
+\item Try to maintain consistent use of colours in all uses of that function,
+ such as dialogue graphics as well as map overlays and infoboxes.
 \item Text should always be monochrome.
 \end{itemize}
 
 Use aviation conventions or adopt best aviation human factors
 standards where possible, in particular:
 \begin{itemize}
-\item ICAO Internation Standards and Recommended Practices, Annex 4 to the Convention on International Civil Aviation (Aeronautical Charts).
+\item ICAO Internation Standards and Recommended Practices, Annex 4 to the
+ Convention on International Civil Aviation (Aeronautical Charts).
 \item NASA Colour Usage recommendations and design guidelines: \verb|http://colorusage.arc.nasa.gov/|
-\item DOT/FAA/AR-03/67 {\em Human Factors Considerations in the Design and Evaluation of Electronic Flight Bags (EFBs)} \verb|http://www.volpe.dot.gov/hf/aviation/efb/docs/efb_version2.pdf|
+\item DOT/FAA/AR-03/67 {\em Human Factors Considerations in the Design and
+ Evaluation of Electronic Flight Bags (EFBs)} \verb|http://www.volpe.dot.gov/hf/aviation/efb/docs/efb_version2.pdf|
 \item FAA Human Factors Design Standards \verb|http://hf.tc.faa.gov/hfds/|.
 \item DOT/FAA/AM-01/17 {\em Human Factors Design Guidelines for Multifunction Displays}
 \end{itemize}
@@ -493,9 +648,11 @@ This site has a useful tool that can be used to convert screenshots
 to how they would look to a person with common color blindness:
 \verb|http://www.etre.com/tools/colourcheck/|.
 
-{\bf For safety purposes, avoid use of elements that may encourage or require the user to stare at the screen continuously.}
+{\bf For safety purposes, avoid use of elements that may encourage or require
+the user to stare at the screen continuously.}
 
-{\bf For safety purposes, avoid user controls that have significant risk of producing unsafe results if misconfigured by the pilot.}
+{\bf For safety purposes, avoid user controls that have significant risk of
+producing unsafe results if misconfigured by the pilot.}
 
 \subsection{General colour conventions}
 Colour conventions generally in use throughout the program:
@@ -524,27 +681,28 @@ Colour conventions in use are:
 \item Buttons and other widgets rendered with an evenly shaded border
 \item Yellow for clicked items
 \item Light blue for the key focused item
-\item Medium blue for dialog title bar
+\item Medium blue for dialogue title bar
 \item Text is black if the item is enabled
 \item Text is greyed out (but still visible) if the item is disabled
 \end{itemize}
 
-\subsection{Dialog types and navigation buttons}
-There are four types of dialogs in XCSoar, and the navigation 
-buttons for each are different.  
+\subsection{dialogue types and navigation buttons}
+There are four types of dialogs in XCSoar, and the navigation
+buttons for each are different.
 Navigation buttons are the Close, OK, Cancel and Select buttons.
 \begin{itemize}
-\item Dialogs that modify and save data when the dialog closes.
+\item Dialogs that modify and save data when the dialogue closes.
 
-These shall usually have a Close button (no Cancel) and may have context specific 
+These shall usually have a Close button (no Cancel) and may have context specific
 function buttons
 \item Dialogs that modify data where Cancel would be important for the user.
 
-These shall have OK and Cancel buttons.  This may include dialogs with 
-children dialogs where hitting Cancel from the parent dialog cancels 
+These shall have OK and Cancel buttons.  This may include dialogs with
+children dialogs where hitting Cancel from the parent dialogue cancels
 all the changes made in the children dialogs
 
-\item Dialogs that have a list of values, one of which can be selected to return to the parent dialog.
+\item Dialogs that have a list of values, one of which can be selected to
+ return to the parent dialogue.
 
 These shall have Select and Cancel buttons
 \item Dialogs that display information that cannot be modified.
@@ -552,9 +710,10 @@ These shall have Select and Cancel buttons
 These shall have a Close button
 \end{itemize}
 
-\subsection{Dialog button placement and size}
+\subsection{dialogue button placement and size}
 \begin{itemize}
-\item The Close and Cancel buttons will never appear in the same dialog and are always located in the same place.  This location will be:
+\item The Close and Cancel buttons will never appear in the same dialogue and
+ are always located in the same place.  This location will be:
 
 For portrait: lower right
 
@@ -565,11 +724,17 @@ For portrait: Select in lower left, Cancel in lower right
 
 For landscape: Cancel in lower left, Select immediately above it
 \item Buttons will be 35 (scaled) pixels high
-\item Buttons will be flush with the bottom of the screen and with the sides of the screen and against each other (no margins)
+\item Buttons will be flush with the bottom of the screen and with the sides of
+ the screen and against each other (no margins)
 \item In portrait, buttons will be 33% or 50% or 100% width of the screen
-\item In landscape, buttons will be 65 to 80 (scaled) pixels wide, as wide as the frame permits.  They will generally be a vertical row of buttons flush left of the screen
-\item If text won't fit on a button, the buttons can be made larger consistently for a screen, but this should be the exception because if it must contain that much text consider using a different type of control.
-\item Exceptions to all the dialog concepts above are encouraged, but should be mocked up and reviewed with the development community prior to implementing and possibly documenting in the developers guide.
+\item In landscape, buttons will be 65 to 80 (scaled) pixels wide, as wide as the
+ frame permits.  They will generally be a vertical row of buttons flush left of the screen
+\item If text won't fit on a button, the buttons can be made larger consistently
+ for a screen, but this should be the exception because if it must contain that
+ much text consider using a different type of control.
+\item Exceptions to all the dialogue concepts above are encouraged, but should be
+ mocked up and reviewed with the development community prior to implementing and
+ possibly documenting in the developers guide.
 \end{itemize}
 
 \subsection{Usability}
@@ -616,7 +781,8 @@ informational widgets (final glide bar, wind, north arrow) should be rendered
 so as to help those elements be visually separated from the map:
 
 \begin{itemize}
-\item Generally adopt higher contrast (higher colour saturation or darker shade) than the background map layer elements.
+\item Generally adopt higher contrast (higher colour saturation or darker shade)
+ than the background map layer elements.
 
 \item For elements covering an area (non line), draw the entire element or a border
 with a luminosity contrasting pen, of width \verb|IBLSCALE(1)|.
@@ -635,13 +801,20 @@ priority, particularly with alert warning items above caution items above non-al
 
 \section{Terminology}
 \subsection{Glide Ratio}
-'Glide ratio' is a non-specific term which can refer to the ratio of horizontal to vertical motion with reference to either the surrounding airmass or the ground.
+'Glide ratio' is a non-specific term which can refer to the ratio of horizontal to
+vertical motion with reference to either the surrounding airmass or the ground.
 
-To reduce confusion, ground-referenced glide ratios (eg distance travelled over ground vs altitude lost) should be referred to by the term 'glide ratio over ground' when space allows, or 'glide ratio' / 'GR'.
+To reduce confusion, ground-referenced glide ratios (eg distance travelled over
+ground vs altitude lost) should be referred to by the term 'glide ratio over
+ground' when space allows, or 'glide ratio' / 'GR'.
 
-Air-referenced glide ratios (eg airspeed vs sink rate) should be specified as 'lift/drag ratio' / 'L/D ratio' / 'LD'. The lift/drag ratio is numerically equal to the air-referenced glide ratio when flying at constant speed.
+Air-referenced glide ratios (eg airspeed vs sink rate) should be specified as
+'lift/drag ratio' / 'L/D ratio' / 'LD'. The lift/drag ratio is numerically equal
+to the air-referenced glide ratio when flying at constant speed.
 
-If usage spans both air-referenced and ground-referenced glide ratios, the non-specific term 'glide ratio' / 'GR' should be used. 'Lift/drag ratio' should never be used to refer to ground-referenced glide ratios.
+If usage spans both air-referenced and ground-referenced glide ratios, the
+non-specific term 'glide ratio' / 'GR' should be used. 'Lift/drag ratio' should
+never be used to refer to ground-referenced glide ratios.
 
 \chapter{File formats}\label{cha:file_formats}
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -251,7 +251,7 @@ WaypointReaderSeeYou::ParseLine(const TCHAR* line, const unsigned linenum,
       new_waypoint.radio_frequency = RadioFrequency::Parse(params[iFrequency]);
 
     // Runway length (e.g. 546.0m)
-    fixed rwlen = fixed_minus_one;
+    fixed rwlen = fixed(-1);
     if (iRWLen < n_params && ParseDistance(params[iRWLen], rwlen) &&
         positive(rwlen))
       new_waypoint.runway.SetLength(uround(rwlen));
@@ -272,6 +272,6 @@ WaypointReaderSeeYou::ParseLine(const TCHAR* line, const unsigned linenum,
   if (iDescription < n_params)
     new_waypoint.comment = params[iDescription];
 
-  waypoints.Append(new_waypoint);
+  waypoints.Append(std::move(new_waypoint));
   return true;
 }

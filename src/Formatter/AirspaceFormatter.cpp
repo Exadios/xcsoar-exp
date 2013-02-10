@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,11 +22,10 @@ Copyright_License {
 */
 
 #include "AirspaceFormatter.hpp"
-
 #include "Engine/Airspace/AbstractAirspace.hpp"
 #include "Util/Macros.hpp"
 
-static const TCHAR *airspace_class_names[] = {
+static const TCHAR *const airspace_class_names[] = {
   _T("Unknown"),
   _T("Restricted"),
   _T("Prohibited"),
@@ -43,6 +42,7 @@ static const TCHAR *airspace_class_names[] = {
   _T("Class F"),
   _T("Transponder Mandatory Zone"),
   _T("Class G"),
+  _T("Military Aerodrome Traffic Zone"),
 };
 
 static_assert(ARRAY_SIZE(airspace_class_names) ==
@@ -50,7 +50,7 @@ static_assert(ARRAY_SIZE(airspace_class_names) ==
               "number of airspace class names does not match number of "
               "airspace classes");
 
-static const TCHAR *airspace_class_short_names[] = {
+static const TCHAR *const airspace_class_short_names[] = {
   _T("?"),
   _T("R"),
   _T("P"),
@@ -67,6 +67,7 @@ static const TCHAR *airspace_class_short_names[] = {
   _T("F"),
   _T("TMZ"),
   _T("G"),
+  _T("MATZ"),
 };
 
 static_assert(ARRAY_SIZE(airspace_class_short_names) ==
@@ -102,17 +103,4 @@ const TCHAR *
 AirspaceFormatter::GetClassShort(const AbstractAirspace &airspace)
 {
   return GetClassShort(airspace.GetType());
-}
-
-tstring
-AirspaceFormatter::GetNameAndClass(const AbstractAirspace &airspace)
-{
-  return tstring(airspace.GetName()) + _T(" ") + GetClass(airspace.GetType());
-}
-
-tstring
-AirspaceFormatter::GetVerticalText(const AbstractAirspace &airspace)
-{
-  return _T("Base: ") + airspace.GetBase().GetAsText(false) +
-         _T(" Top: ") + airspace.GetTop().GetAsText(false);
 }

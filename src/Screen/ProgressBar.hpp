@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -44,16 +44,8 @@ public:
 #endif
 
 public:
-  void set(ContainerWindow &parent,
-           PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height,
-           const ProgressBarStyle style=ProgressBarStyle());
-
-  void set(ContainerWindow &parent, const PixelRect rc,
-           const ProgressBarStyle style=ProgressBarStyle()) {
-    set(parent, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-        style);
-  }
+  void Create(ContainerWindow &parent, PixelRect rc,
+              const ProgressBarStyle style=ProgressBarStyle());
 
   void SetRange(unsigned min_value, unsigned max_value);
   void SetValue(unsigned value);
@@ -62,7 +54,7 @@ public:
 
 #ifndef USE_GDI
 protected:
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnPaint(Canvas &canvas) override;
 #endif
 };
 

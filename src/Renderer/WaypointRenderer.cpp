@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,12 +24,13 @@ Copyright_License {
 #include "WaypointRenderer.hpp"
 #include "WaypointRendererSettings.hpp"
 #include "WaypointIconRenderer.hpp"
+#include "WaypointLabelList.hpp"
 #include "Projection/MapWindowProjection.hpp"
-#include "MapWindow/MapWindowLabels.hpp"
 #include "ComputerSettings.hpp"
 #include "Task/Visitors/TaskPointVisitor.hpp"
 #include "Engine/Util/Gradient.hpp"
 #include "Engine/Waypoint/Waypoint.hpp"
+#include "Engine/Waypoint/Waypoints.hpp"
 #include "Engine/Waypoint/WaypointVisitor.hpp"
 #include "Engine/Navigation/Aircraft.hpp"
 #include "Engine/GlideSolvers/GlideState.hpp"
@@ -52,6 +53,7 @@ Copyright_License {
 #include "NMEA/MoreData.hpp"
 #include "NMEA/Derived.hpp"
 #include "Engine/Route/ReachResult.hpp"
+#include "Look/Fonts.hpp"
 
 #include <assert.h>
 #include <stdio.h>
@@ -310,17 +312,17 @@ protected:
     }
 
     TextInBoxMode text_mode;
+    bool bold = false;
     if (vwp.reachable != WaypointRenderer::Unreachable &&
         way_point.IsLandable()) {
-      text_mode.mode = settings.landable_render_mode;
-      text_mode.bold = true;
+      text_mode.shape = settings.landable_render_mode;
+      bold = true;
       text_mode.move_in_view = true;
     } else if (vwp.in_task) {
-      text_mode.mode = RM_OUTLINED_INVERTED;
-      text_mode.bold = true;
+      text_mode.shape = LabelShape::OUTLINED_INVERTED;
+      bold = true;
     } else if (watchedWaypoint) {
-      text_mode.mode = RM_OUTLINED;
-      text_mode.bold = false;
+      text_mode.shape = LabelShape::OUTLINED;
       text_mode.move_in_view = true;
     }
 
@@ -334,7 +336,7 @@ protected:
       // make space for the green circle
       sc.x += 5;
 
-    labels.Add(Buffer, sc.x + 5, sc.y, text_mode, vwp.reach.direct,
+    labels.Add(Buffer, sc.x + 5, sc.y, text_mode, bold, vwp.reach.direct,
                vwp.in_task, way_point.IsLandable(), way_point.IsAirport(),
                watchedWaypoint);
   }
@@ -361,36 +363,20 @@ public:
     AddWaypoint(way_point, false);
   }
 
-  void
-  Visit(const UnorderedTaskPoint& tp)
-  {
-    AddWaypoint(tp.GetWaypoint(), true);
-  }
+  virtual void Visit(const TaskPoint &tp) override {
+    switch (tp.GetType()) {
+    case TaskPointType::UNORDERED:
+      AddWaypoint(((const UnorderedTaskPoint &)tp).GetWaypoint(), true);
+      break;
 
-  void
-  Visit(const StartPoint& tp)
-  {
-    AddWaypoint(tp.GetWaypoint(), true);
+    case TaskPointType::START:
+    case TaskPointType::AST:
+    case TaskPointType::AAT:
+    case TaskPointType::FINISH:
+      AddWaypoint(((const OrderedTaskPoint &)tp).GetWaypoint(), true);
+      break;
+    }
   }
-
-  void
-  Visit(const FinishPoint& tp)
-  {
-    AddWaypoint(tp.GetWaypoint(), true);
-  }
-
-  void
-  Visit(const AATPoint& tp)
-  {
-    AddWaypoint(tp.GetWaypoint(), true);
-  }
-
-  void
-  Visit(const ASTPoint& tp)
-  {
-    AddWaypoint(tp.GetWaypoint(), true);
-  }
-
 
 public:
   void set_task_valid() {
@@ -454,9 +440,10 @@ MapWaypointLabelRender(Canvas &canvas, UPixelScalar width, UPixelScalar height,
 {
   labels.Sort();
 
-  for (unsigned i = 0; i < labels.size(); i++) {
-    const WaypointLabelList::Label *E = &labels[i];
-    TextInBox(canvas, E->Name, E->Pos.x, E->Pos.y, E->Mode,
+  for (const auto &l : labels) {
+    canvas.Select(l.bold ? Fonts::map_bold : Fonts::map);
+
+    TextInBox(canvas, l.Name, l.Pos.x, l.Pos.y, l.Mode,
               width, height, &label_block);
   }
 }

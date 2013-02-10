@@ -6,10 +6,12 @@
 #include "Computer/FlyingComputer.hpp"
 #include "NMEA/FlyingState.hpp"
 #include "OS/PathName.hpp"
+#include "OS/FileUtil.hpp"
 #include "IO/FileLineReader.hpp"
 #include "Task/Deserialiser.hpp"
 #include "XML/DataNodeXML.hpp"
 #include "NMEA/Info.hpp"
+#include "Engine/Waypoint/Waypoints.hpp"
 
 #include <fstream>
 
@@ -69,7 +71,8 @@ protected:
 static bool
 test_replay()
 {
-  std::ofstream f("results/res-sample.txt");
+  Directory::Create(_T("output/results"));
+  std::ofstream f("output/results/res-sample.txt");
 
   GlidePolar glide_polar(fixed(4.0));
   Waypoints waypoints;
@@ -108,7 +111,7 @@ test_replay()
   }
 
   ReplayLoggerSim sim(reader);
-  sim.state.netto_vario = fixed_zero;
+  sim.state.netto_vario = fixed(0);
 
   bool do_print = verbose;
   unsigned print_counter=0;
@@ -116,12 +119,12 @@ test_replay()
   NMEAInfo basic;
   basic.Reset();
 
-  while (sim.Update(basic, fixed_one) && !sim.started) {
+  while (sim.Update(basic, fixed(1)) && !sim.started) {
   }
   state_last = sim.state;
 
   sim.state.wind.norm = fixed(7);
-  sim.state.wind.bearing = Angle::Degrees(fixed(330));
+  sim.state.wind.bearing = Angle::Degrees(330);
 
   fixed time_last = sim.state.time;
 
@@ -134,18 +137,19 @@ test_replay()
   FlyingState flying_state;
   flying_state.Reset();
 
-  while (sim.Update(basic, fixed_one)) {
+  while (sim.Update(basic, fixed(1))) {
     if (sim.state.time>time_last) {
 
       n_samples++;
 
       flying_computer.Compute(glide_polar.GetVTakeoff(),
-                              sim.state, flying_state);
+                              sim.state, sim.state.time - time_last,
+                              flying_state);
       sim.state.flying = flying_state.flying;
 
       task_manager.Update(sim.state, state_last);
       task_manager.UpdateIdle(sim.state);
-      task_manager.UpdateAutoMC(sim.state, fixed_zero);
+      task_manager.UpdateAutoMC(sim.state, fixed(0));
       task_manager.GetTaskAdvance().SetArmed(true);
 
       state_last = sim.state;
@@ -170,7 +174,7 @@ test_replay()
            (double)task_manager.GetStats().total.travelled.GetDistance()/1000.0);
     printf("# scored distance %4.1f (km)\n", 
            (double)task_manager.GetStats().distance_scored/1000.0);
-    if (task_manager.GetStats().total.time_elapsed) {
+    if (positive(task_manager.GetStats().total.time_elapsed)) {
       printf("# scored speed %3.1f (kph)\n", 
              (double)task_manager.GetStats().distance_scored/(double)task_manager.GetStats().total.time_elapsed*3.6);
     }

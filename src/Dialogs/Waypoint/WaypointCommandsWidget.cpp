@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -184,9 +184,9 @@ SetHome(const Waypoint &waypoint)
   {
     ScopeSuspendAllThreads suspend;
     WaypointGlue::SetHome(way_points, terrain,
-                          settings_computer,
+                          settings_computer.poi, settings_computer.team_code,
                           device_blackboard, false);
-    WaypointGlue::SaveHome(settings_computer);
+    WaypointGlue::SaveHome(settings_computer.poi, settings_computer.team_code);
   }
 }
 
@@ -239,14 +239,14 @@ WaypointCommandsWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
   RowFormWidget::Prepare(parent, rc);
 
   if (task_manager != NULL) {
-    AddButton(_("Replace In Task"), this, REPLACE_IN_TASK);
-    AddButton(_("Insert In Task"), this, INSERT_IN_TASK);
-    AddButton(_("Append To Task"), this, APPEND_TO_TASK);
+    AddButton(_("Replace In Task"), *this, REPLACE_IN_TASK);
+    AddButton(_("Insert In Task"), *this, INSERT_IN_TASK);
+    AddButton(_("Append To Task"), *this, APPEND_TO_TASK);
 
     if (MapTaskManager::GetIndexInTask(waypoint) >= 0)
-      AddButton(_("Remove From Task"), this, REMOVE_FROM_TASK);
+      AddButton(_("Remove From Task"), *this, REMOVE_FROM_TASK);
   }
 
-  AddButton(_("Set As New Home"), this, SET_HOME);
-  AddButton(_("Pan To Waypoint"), this, PAN);
+  AddButton(_("Set As New Home"), *this, SET_HOME);
+  AddButton(_("Pan To Waypoint"), *this, PAN);
 }

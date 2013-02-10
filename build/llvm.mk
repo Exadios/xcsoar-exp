@@ -1,19 +1,20 @@
 ifeq ($(CLANG),y)
 
+ifneq ($(TARGET),ANDROID)
 ifneq ($(ANALYZER),y)
 CXX = clang++
 CC = clang
 endif
 
-DEPFLAGS = -MD -MF $(DEPFILE) -MT $@
-
 HOSTCC = $(CC)
 HOSTCXX = $(CXX)
+endif
 
-ifneq ($(DEBUG),y)
+DEPFLAGS = -MD -MF $(DEPFILE) -MT $@
+
+ifeq ($(DEBUG)$(LLVM),nn)
 OPTIMIZE := -O4 -DNDEBUG -Wuninitialized
-TARGET_LDFLAGS += -use-gold-plugin
-ARFLAGS += --plugin /usr/local/lib/LLVMgold.so
+AR += --plugin /usr/local/lib/LLVMgold.so
 endif
 
 ifeq ($(USE_CCACHE),y)
@@ -24,11 +25,22 @@ ifeq ($(USE_CCACHE),y)
 endif
 
 ifeq ($(TARGET),ANDROID)
-  TARGET_ARCH := $(subst armv5te,armv5,$(TARGET_ARCH))
   TARGET_ARCH := $(filter-out -mthumb-interwork,$(TARGET_ARCH))
-  TARGET_ARCH += -ccc-host-triple arm-android-eabi -integrated-as
+  TARGET_ARCH += -gcc-toolchain $(ANDROID_GCC_TOOLCHAIN)
+  TARGET_ARCH += -ccc-host-triple $(LLVM_TRIPLE)
   TARGET_CPPFLAGS += -DBIONIC -DLIBCPP_NO_IOSTREAM
-  CXX_FEATURES := $(filter-out -frtti,$(CXX_FEATURES))
 endif # Android
+
+ifeq ($(TARGET_IS_PI),y)
+  TARGET_LLVM_FLAGS = -march=arm -mcpu=arm1136jf-s -mattr=+vfp2 -float-abi=hard \
+	-enable-no-infs-fp-math -enable-no-nans-fp-math -enable-unsafe-fp-math
+  TARGET_ARCH := -target armv6-none-linux-gnueabihf -mfloat-abi=hard -mfpu=vfp -integrated-as
+endif
+
+ifeq ($(HOST_IS_PI)$(TARGET_IS_PI),ny)
+  TARGET_CPPFLAGS += -isystem /opt/pi/root/usr/include/c++/4.6
+  TARGET_CPPFLAGS += -isystem /opt/pi/root/usr/include/c++/4.6/arm-linux-gnueabihf
+  TARGET_LDFLAGS += -L$(PI)/usr/lib/gcc/arm-linux-gnueabihf/4.6
+endif
 
 endif

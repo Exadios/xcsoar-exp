@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -66,9 +66,9 @@ RasterMap::RasterMap(const TCHAR *_path, const TCHAR *world_file,
     }
   }
 
-  projection.set(raster_tile_cache.GetBounds(),
-                 raster_tile_cache.GetWidth() * 256,
-                 raster_tile_cache.GetHeight() * 256);
+  projection.Set(GetBounds(),
+                 raster_tile_cache.GetFineWidth(),
+                 raster_tile_cache.GetFineHeight());
 }
 
 RasterMap::~RasterMap() {
@@ -76,7 +76,7 @@ RasterMap::~RasterMap() {
 }
 
 static unsigned
-angle_to_pixel(Angle value, Angle start, Angle end, unsigned width)
+AngleToPixel(Angle value, Angle start, Angle end, unsigned width)
 {
   return unsigned((value - start).Native() * width / (end - start).Native());
 }
@@ -87,29 +87,29 @@ RasterMap::SetViewCenter(const GeoPoint &location, fixed radius)
   if (!raster_tile_cache.GetInitialised())
     return;
 
-  const GeoBounds &bounds = raster_tile_cache.GetBounds();
+  const GeoBounds &bounds = GetBounds();
 
-  int x = angle_to_pixel(location.longitude, bounds.west, bounds.east,
-                         raster_tile_cache.GetWidth());
+  int x = AngleToPixel(location.longitude, bounds.GetWest(), bounds.GetEast(),
+                       raster_tile_cache.GetWidth());
 
-  int y = angle_to_pixel(location.latitude, bounds.north, bounds.south,
-                         raster_tile_cache.GetHeight());
+  int y = AngleToPixel(location.latitude, bounds.GetNorth(), bounds.GetSouth(),
+                       raster_tile_cache.GetHeight());
 
   raster_tile_cache.UpdateTiles(path, x, y,
-                                projection.distance_pixels(radius) / 256);
+                                projection.DistancePixelsCoarse(radius));
 }
 
 short
 RasterMap::GetHeight(const GeoPoint &location) const
 {
-  RasterLocation pt = projection.project(location) >> 8;
+  RasterLocation pt = projection.ProjectCoarse(location);
   return raster_tile_cache.GetHeight(pt.x, pt.y);
 }
 
 short
 RasterMap::GetInterpolatedHeight(const GeoPoint &location) const
 {
-  RasterLocation pt = projection.project(location);
+  RasterLocation pt = projection.ProjectFine(location);
   return raster_tile_cache.GetInterpolatedHeight(pt.x, pt.y);
 }
 
@@ -131,16 +131,16 @@ RasterMap::ScanLine(const GeoPoint &start, const GeoPoint &end,
   /* clip the line to the map bounds */
 
   GeoPoint clipped_start = start, clipped_end = end;
-  const GeoClip clip(raster_tile_cache.GetBounds());
+  const GeoClip clip(GetBounds());
   if (!clip.ClipLine(clipped_start, clipped_end)) {
     std::fill(buffer, buffer + size, invalid);
     return;
   }
 
   fixed clipped_start_distance =
-    std::max(clipped_start.Distance(start), fixed_zero);
+    std::max(clipped_start.Distance(start), fixed(0));
   fixed clipped_end_distance =
-    std::max(clipped_end.Distance(start), fixed_zero);
+    std::max(clipped_end.Distance(start), fixed(0));
 
   /* calculate the offsets of the clipped range within the buffer */
 
@@ -165,18 +165,16 @@ RasterMap::ScanLine(const GeoPoint &start, const GeoPoint &end,
 
   /* now scan the middle part which is within the map */
 
-  const unsigned max_x =
-    raster_tile_cache.GetWidth() << RasterTileCache::SUBPIXEL_BITS;
-  const unsigned max_y =
-    raster_tile_cache.GetHeight() << RasterTileCache::SUBPIXEL_BITS;
+  const unsigned max_x = raster_tile_cache.GetFineWidth();
+  const unsigned max_y = raster_tile_cache.GetFineHeight();
 
-  RasterLocation raster_start = projection.project(clipped_start);
+  RasterLocation raster_start = projection.ProjectFine(clipped_start);
   if (raster_start.x >= max_x)
     raster_start.x = max_x - 1;
   if (raster_start.y >= max_y)
     raster_start.y = max_y - 1;
 
-  RasterLocation raster_end = projection.project(clipped_end);
+  RasterLocation raster_end = projection.ProjectFine(clipped_end);
   if (raster_end.x >= max_x)
     raster_end.x = max_x - 1;
   if (raster_end.y >= max_y)
@@ -195,9 +193,9 @@ RasterMap::FirstIntersection(const GeoPoint &origin, const short h_origin,
                              const short h_safety,
                              GeoPoint& intx, short &h) const
 {
-  const RasterLocation c_origin = projection.project_coarse(origin);
-  const RasterLocation c_destination = projection.project_coarse(destination);
-  const int c_diff = c_origin.manhattan_distance(c_destination);
+  const RasterLocation c_origin = projection.ProjectCoarse(origin);
+  const RasterLocation c_destination = projection.ProjectCoarse(destination);
+  const int c_diff = c_origin.ManhattanDistance(c_destination);
   const bool can_climb = (h_destination< h_virt);
 
   intx = destination; h = h_destination; // fallback, pass
@@ -219,7 +217,7 @@ RasterMap::FirstIntersection(const GeoPoint &origin, const short h_origin,
     bool changed = c_int != c_destination ||
       (h > h_destination && c_int == c_destination);
     if (changed) {
-      intx = projection.unproject_coarse(c_int);
+      intx = projection.UnprojectCoarse(c_int);
       assert(h>= h_origin);
     }
     return changed;
@@ -234,9 +232,9 @@ RasterMap::Intersection(const GeoPoint& origin,
                         const short h_glide,
                         const GeoPoint& destination) const
 {
-  const RasterLocation c_origin = projection.project_coarse(origin);
-  const RasterLocation c_destination = projection.project_coarse(destination);
-  const int c_diff = c_origin.manhattan_distance(c_destination);
+  const RasterLocation c_origin = projection.ProjectCoarse(origin);
+  const RasterLocation c_destination = projection.ProjectCoarse(destination);
+  const int c_diff = c_origin.ManhattanDistance(c_destination);
   if (c_diff==0) {
     return destination; // no distance
   }
@@ -251,5 +249,5 @@ RasterMap::Intersection(const GeoPoint& origin,
                               // of destination
     return destination;
 
-  return projection.unproject_coarse(c_int);
+  return projection.UnprojectCoarse(c_int);
 }

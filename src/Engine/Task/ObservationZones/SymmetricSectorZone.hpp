@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -62,9 +62,9 @@ public:
   }
 
   /* virtual methods from class ObservationZonePoint */
-  virtual void SetLegs(const GeoPoint *previous, const GeoPoint *current,
-                       const GeoPoint *next);
-  virtual bool Equals(const ObservationZonePoint &other) const;
+  virtual void SetLegs(const GeoPoint *previous,
+                       const GeoPoint *next) override;
+  virtual bool Equals(const ObservationZonePoint &other) const override;
 };
 
 #endif

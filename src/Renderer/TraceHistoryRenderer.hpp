@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@ Copyright_License {
 #ifndef TRACE_HISTORY_RENDERER_HPP
 #define TRACE_HISTORY_RENDERER_HPP
 
-#include "Screen/Point.hpp"
 #include "Math/fixed.hpp"
 
+struct PixelRect;
 struct TraceHistoryLook;
 struct VarioLook;
 struct ChartLook;
@@ -49,17 +49,14 @@ public:
                    const PixelRect rc,
                    const TraceVariableHistory& var,
                    const bool centered = false,
-                   const fixed mc=fixed_zero) const;
+                   const fixed mc=fixed(0)) const;
 
 private:
-  void scale_chart(ChartRenderer &chart,
+  void ScaleChart(ChartRenderer &chart,
                    const TraceVariableHistory& var,
                    const bool centered) const;
 
-  void render_axis(ChartRenderer &chart,
-                   const TraceVariableHistory& var) const;
-
-  void render_line(ChartRenderer &chart,
+  void RenderAxis(ChartRenderer &chart,
                    const TraceVariableHistory& var) const;
 
   void render_filled_posneg(ChartRenderer &chart,

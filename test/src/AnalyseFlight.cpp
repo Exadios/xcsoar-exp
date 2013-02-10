@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,12 +23,16 @@
 #include "Engine/Trace/Trace.hpp"
 #include "Contest/ContestManager.hpp"
 #include "OS/Args.hpp"
+#include "Computer/CirclingComputer.hpp"
 #include "DebugReplay.hpp"
 #include "Util/Macros.hpp"
 #include "IO/TextWriter.hpp"
 #include "Formatter/TimeFormatter.hpp"
 #include "JSON/Writer.hpp"
 #include "JSON/GeoWriter.hpp"
+#include "FlightPhaseDetector.hpp"
+#include "FlightPhaseJSON.hpp"
+#include "ComputerSettings.hpp"
 
 struct Result {
   BrokenDateTime takeoff_time, release_time, landing_time;
@@ -45,22 +49,11 @@ struct Result {
   }
 };
 
-static Trace full_trace(60, Trace::null_time, 256);
+static Trace full_trace(0, Trace::null_time, 256);
 static Trace sprint_trace(0, 9000, 64);
 
-static BrokenDateTime
-BreakTime(const NMEAInfo &basic, fixed time)
-{
-  assert(basic.time_available);
-  assert(basic.date_available);
-
-  BrokenDateTime broken = basic.date_time_utc;
-  (BrokenTime &)broken = BrokenTime::FromSecondOfDayChecked((unsigned)time);
-
-  // XXX: what if "time" refers to yesterday/tomorrow? (midnight rollover)
-
-  return broken;
-}
+static CirclingComputer circling_computer;
+static FlightPhaseDetector flight_phase_detector;
 
 static void
 Update(const MoreData &basic, const FlyingState &state,
@@ -70,20 +63,18 @@ Update(const MoreData &basic, const FlyingState &state,
     return;
 
   if (state.flying && !result.takeoff_time.Plausible()) {
-    result.takeoff_time = BreakTime(basic, state.takeoff_time);
+    result.takeoff_time = basic.GetDateTimeAt(state.takeoff_time);
     result.takeoff_location = state.takeoff_location;
   }
 
   if (!state.flying && result.takeoff_time.Plausible() &&
       !result.landing_time.Plausible()) {
-    result.landing_time = basic.date_time_utc;
-
-    if (basic.location_available)
-      result.landing_location = basic.location;
+    result.landing_time = basic.GetDateTimeAt(state.landing_time);
+    result.landing_location = state.landing_location;
   }
 
   if (!negative(state.release_time) && !result.release_time.Plausible()) {
-    result.release_time = BreakTime(basic, state.release_time);
+    result.release_time = basic.GetDateTimeAt(state.release_time);
     result.release_location = state.release_location;
   }
 }
@@ -93,6 +84,18 @@ Update(const MoreData &basic, const DerivedInfo &calculated,
        Result &result)
 {
   Update(basic, calculated.flight, result);
+}
+
+static void
+ComputeCircling(DebugReplay &replay, const CirclingSettings &circling_settings)
+{
+  circling_computer.TurnRate(replay.SetCalculated(),
+                             replay.Basic(),
+                             replay.Calculated().flight);
+  circling_computer.Turning(replay.SetCalculated(),
+                            replay.Basic(),
+                            replay.Calculated().flight,
+                            circling_settings);
 }
 
 static void
@@ -110,19 +113,40 @@ Finish(const MoreData &basic, const DerivedInfo &calculated,
   }
 }
 
-static int
-Run(DebugReplay &replay, ContestManager &contest, Result &result)
+static void
+Run(DebugReplay &replay, Result &result)
 {
+  CirclingSettings circling_settings;
+  circling_settings.SetDefaults();
+
   bool released = false;
 
-  for (int i = 1; replay.Next(); i++) {
+  GeoPoint last_location = GeoPoint::Invalid();
+  constexpr Angle max_longitude_change = Angle::Degrees(30);
+  constexpr Angle max_latitude_change = Angle::Degrees(1);
+
+  while (replay.Next()) {
+    ComputeCircling(replay, circling_settings);
+
     const MoreData &basic = replay.Basic();
 
     Update(basic, replay.Calculated(), result);
+    flight_phase_detector.Update(replay.Basic(), replay.Calculated());
 
     if (!basic.time_available || !basic.location_available ||
         !basic.NavAltitudeAvailable())
       continue;
+
+    if (last_location.IsValid() &&
+        ((last_location.latitude - basic.location.latitude).Absolute() > max_latitude_change ||
+         (last_location.longitude - basic.location.longitude).Absolute() > max_longitude_change))
+      /* there was an implausible warp, which is usually triggered by
+         an invalid point declared "valid" by a bugged logger; if that
+         happens, we stop the analysis, because the IGC file is
+         obviously broken */
+      break;
+
+    last_location = basic.location;
 
     if (!released && !negative(replay.Calculated().flight.release_time)) {
       released = true;
@@ -131,16 +155,29 @@ Run(DebugReplay &replay, ContestManager &contest, Result &result)
       sprint_trace.EraseEarlierThan(replay.Calculated().flight.release_time);
     }
 
+    if (released && !replay.Calculated().flight.flying)
+      /* the aircraft has landed, stop here */
+      /* TODO: at some point, we might want to emit the analysis of
+         all flights in this IGC file */
+      break;
+
     const TracePoint point(basic);
     full_trace.push_back(point);
     sprint_trace.push_back(point);
   }
 
-  contest.SolveExhaustive();
-
+  Update(replay.Basic(), replay.Calculated(), result);
   Finish(replay.Basic(), replay.Calculated(), result);
+  flight_phase_detector.Finish();
+}
 
-  return 0;
+gcc_pure
+static ContestStatistics
+SolveContest(Contest contest)
+{
+  ContestManager manager(contest, full_trace, sprint_trace);
+  manager.SolveExhaustive();
+  return manager.GetStats();
 }
 
 static void
@@ -168,37 +205,6 @@ WriteEvent(JSON::ObjectWriter &object, const char *name,
 }
 
 static void
-WriteTimes(TextWriter &writer, const Result &result)
-{
-  JSON::ObjectWriter object(writer);
-  NarrowString<64> buffer;
-
-  if (result.takeoff_time.Plausible()) {
-    FormatISO8601(buffer.buffer(), result.takeoff_time);
-    object.WriteElement("takeoff", JSON::WriteString, buffer);
-  }
-
-  if (result.landing_time.Plausible()) {
-    FormatISO8601(buffer.buffer(), result.landing_time);
-    object.WriteElement("landing", JSON::WriteString, buffer);
-  }
-}
-
-static void
-WriteLocations(TextWriter &writer, const Result &result)
-{
-  JSON::ObjectWriter object(writer);
-
-  if (result.takeoff_location.IsValid())
-    object.WriteElement("takeoff", JSON::WriteGeoPoint,
-                        result.takeoff_location);
-
-  if (result.landing_location.IsValid())
-    object.WriteElement("landing", JSON::WriteGeoPoint,
-                        result.landing_location);
-}
-
-static void
 WriteEvents(TextWriter &writer, const Result &result)
 {
   JSON::ObjectWriter object(writer);
@@ -212,11 +218,6 @@ static void
 WriteResult(JSON::ObjectWriter &root, const Result &result)
 {
   root.WriteElement("events", WriteEvents, result);
-
-  /* the following code is obsolete and is only here for compatibility
-     with old SkyLines code: */
-  root.WriteElement("times", WriteTimes, result);
-  root.WriteElement("locations", WriteLocations, result);
 }
 
 static void
@@ -283,11 +284,22 @@ WriteOLCPlus(TextWriter &writer, const ContestStatistics &stats)
 }
 
 static void
-WriteContests(TextWriter &writer, const ContestStatistics &olc_plus)
+WriteDMSt(TextWriter &writer, const ContestStatistics &stats)
+{
+  JSON::ObjectWriter object(writer);
+
+  object.WriteElement("quadrilateral", WriteContest,
+                      stats.result[0], stats.solution[0]);
+}
+
+static void
+WriteContests(TextWriter &writer, const ContestStatistics &olc_plus,
+              const ContestStatistics &dmst)
 {
   JSON::ObjectWriter object(writer);
 
   object.WriteElement("olc_plus", WriteOLCPlus, olc_plus);
+  object.WriteElement("dmst", WriteDMSt, dmst);
 }
 
 int main(int argc, char **argv)
@@ -299,10 +311,12 @@ int main(int argc, char **argv)
 
   args.ExpectEnd();
 
-  ContestManager olc_plus(OLC_Plus, full_trace, sprint_trace);
   Result result;
-  Run(*replay, olc_plus, result);
+  Run(*replay, result);
   delete replay;
+
+  const ContestStatistics olc_plus = SolveContest(Contest::OLC_PLUS);
+  const ContestStatistics dmst = SolveContest(Contest::DMST);
 
   TextWriter writer("/dev/stdout", true);
 
@@ -310,6 +324,10 @@ int main(int argc, char **argv)
     JSON::ObjectWriter root(writer);
 
     WriteResult(root, result);
-    root.WriteElement("contests", WriteContests, olc_plus.GetStats());
+    root.WriteElement("phases", WritePhaseList,
+                      flight_phase_detector.GetPhases());
+    root.WriteElement("performance", WritePerformanceStats,
+                      flight_phase_detector.GetTotals());
+    root.WriteElement("contests", WriteContests, olc_plus, dmst);
   }
 }

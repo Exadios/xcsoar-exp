@@ -1,4 +1,11 @@
-TARGETS = PC WIN64 PPC2000 PPC2003 PPC2003X WM5 WM5X ALTAIR WINE UNIX ANDROID ANDROID7 ANDROID86 ANDROIDMIPS ANDROIDFAT CYGWIN
+TARGETS = PC WIN64 \
+	PPC2000 PPC2003 PPC2003X WM5 WM5X \
+	ALTAIR \
+	UNIX UNIX32 UNIX64 \
+	PI \
+	ANDROID ANDROID7 ANDROID7NEON ANDROID86 ANDROIDMIPS \
+	ANDROIDFAT \
+	WINE CYGWIN
 
 ifeq ($(TARGET),)
   ifeq ($(HOST_IS_UNIX),y)
@@ -12,9 +19,6 @@ else
   endif
 endif
 
-# These targets are built when you don't specify the TARGET variable.
-DEFAULT_TARGETS = PC PPC2000 PPC2003 WM5 ALTAIR WINE
-
 TARGET_FLAVOR := $(TARGET)
 
 HAVE_CE := n
@@ -24,12 +28,14 @@ XSCALE := n
 ARMV5 = n
 ARMV6 = n
 ARMV7 := n
+NEON := n
 X86 := n
 MIPS := n
 FAT_BINARY := n
 
 TARGET_IS_DARWIN := n
 TARGET_IS_LINUX := n
+TARGET_IS_PI := n
 HAVE_POSIX := n
 HAVE_WIN32 := y
 HAVE_MSVCRT := y
@@ -40,19 +46,16 @@ TARGET_ARCH :=
 
 ifeq ($(TARGET),WIN64)
   X64 := y
-  TARGET_FLAVOR := $(TARGET)
   override TARGET = PC
 endif
 
 ifeq ($(TARGET),PPC2003X)
   XSCALE := y
-  TARGET_FLAVOR := $(TARGET)
   override TARGET = PPC2003
 endif
 
 ifeq ($(TARGET),WM5X)
   XSCALE := y
-  TARGET_FLAVOR := $(TARGET)
   override TARGET = WM5
 endif
 
@@ -65,27 +68,28 @@ ifeq ($(TARGET),ANDROID)
   endif
 endif
 
+ifeq ($(TARGET),ANDROID7NEON)
+  NEON := y
+  override TARGET = ANDROID7
+endif
+
 ifeq ($(TARGET),ANDROID7)
   ARMV7 := y
-  TARGET_FLAVOR := $(TARGET)
   override TARGET = ANDROID
 endif
 
 ifeq ($(TARGET),ANDROID86)
   X86 := y
-  TARGET_FLAVOR := $(TARGET)
   override TARGET = ANDROID
 endif
 
 ifeq ($(TARGET),ANDROIDMIPS)
   MIPS := y
-  TARGET_FLAVOR := $(TARGET)
   override TARGET = ANDROID
 endif
 
 ifeq ($(TARGET),ANDROIDFAT)
   FAT_BINARY := y
-  TARGET_FLAVOR := $(TARGET)
   override TARGET = ANDROID
 endif
 
@@ -170,6 +174,28 @@ ifeq ($(TARGET),UNIX)
   # LOCAL_TCPREFIX is set in local-config.mk if configure was run.
   TCPREFIX := $(LOCAL_TCPREFIX)
   TCSUFFIX := $(LOCAL_TCSUFFIX)
+  TARGET_IS_PI = $(HOST_IS_PI)
+endif
+
+ifeq ($(TARGET),UNIX32)
+  override TARGET = UNIX
+  TARGET_ARCH += -m32
+endif
+
+ifeq ($(TARGET),UNIX64)
+  override TARGET = UNIX
+  TARGET_ARCH += -m64
+endif
+
+ifeq ($(TARGET),PI)
+  override TARGET = UNIX
+  TCPREFIX := arm-linux-gnueabihf-
+  PI ?= /opt/pi/root
+  TARGET_ARCH += -march=armv6j -mfpu=vfp -mfloat-abi=hard
+  TARGET_IS_PI = y
+endif
+
+ifeq ($(TARGET),UNIX)
   HAVE_POSIX := y
   HAVE_WIN32 := n
   HAVE_MSVCRT := n
@@ -186,16 +212,21 @@ ifeq ($(filter $(TARGET),UNIX WINE),$(TARGET))
 endif
 
 ifeq ($(TARGET),ANDROID)
-  ANDROID_NDK ?= $(HOME)/opt/android-ndk-r8b
+  ANDROID_NDK ?= $(HOME)/opt/android-ndk-r8d
 
-  ANDROID_PLATFORM = android-14
+  ANDROID_PLATFORM = android-16
+  ANDROID_SDK_PLATFORM = $(ANDROID_PLATFORM)
+
+  # NDK r8b has only android-14
+  ANDROID_NDK_PLATFORM = android-14
+
   ANDROID_ARCH = arm
   ANDROID_ABI2 = arm-linux-androideabi
   ANDROID_ABI3 = armeabi
   ANDROID_ABI4 = $(ANDROID_ABI2)
   ANDROID_ABI_SUBDIR = .
-  ANDROID_GCC_VERSION = 4.6
-  ANDROID_GCC_VERSION2 = $(ANDROID_GCC_VERSION).x-google
+  ANDROID_GCC_VERSION = 4.7
+  ANDROID_GCC_VERSION2 = $(ANDROID_GCC_VERSION)
 
   ifeq ($(ARMV7),y)
     ANDROID_ABI3 = armeabi-v7a
@@ -215,14 +246,33 @@ ifeq ($(TARGET),ANDROID)
     ANDROID_ABI3 = mips
   endif
 
-  ANDROID_NDK_PLATFORM = $(ANDROID_NDK)/platforms/$(ANDROID_PLATFORM)
-  ANDROID_TARGET_ROOT = $(ANDROID_NDK_PLATFORM)/arch-$(ANDROID_ARCH)
-  ifeq ($(HOST_IS_DARWIN),y)
-    ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/$(ANDROID_ABI2)-$(ANDROID_GCC_VERSION)/prebuilt/darwin-x86
+  ANDROID_NDK_PLATFORM_DIR = $(ANDROID_NDK)/platforms/$(ANDROID_NDK_PLATFORM)
+  ANDROID_TARGET_ROOT = $(ANDROID_NDK_PLATFORM_DIR)/arch-$(ANDROID_ARCH)
+
+  ANDROID_GCC_TOOLCHAIN_NAME = $(ANDROID_ABI2)-$(ANDROID_GCC_VERSION)
+
+  ifeq ($(CLANG),y)
+    ANDROID_TOOLCHAIN_NAME = llvm-3.1
   else
-    ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/$(ANDROID_ABI2)-$(ANDROID_GCC_VERSION)/prebuilt/linux-x86
+    ANDROID_TOOLCHAIN_NAME = $(ANDROID_GCC_TOOLCHAIN_NAME)
   endif
-  TCPREFIX = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_ABI4)-
+
+  ifeq ($(HOST_IS_DARWIN),y)
+    ANDROID_HOST_TAG = darwin-x86
+  else ifeq ($(WINHOST),y)
+    ANDROID_HOST_TAG = windows
+  else
+    ANDROID_HOST_TAG = linux-x86
+  endif
+
+  ANDROID_GCC_TOOLCHAIN = $(ANDROID_NDK)/toolchains/$(ANDROID_GCC_TOOLCHAIN_NAME)/prebuilt/$(ANDROID_HOST_TAG)
+  ANDROID_TOOLCHAIN = $(ANDROID_NDK)/toolchains/$(ANDROID_TOOLCHAIN_NAME)/prebuilt/$(ANDROID_HOST_TAG)
+
+  ifeq ($(CLANG),y)
+    TCPREFIX = $(ANDROID_TOOLCHAIN)/bin/
+  else
+    TCPREFIX = $(ANDROID_TOOLCHAIN)/bin/$(ANDROID_ABI4)-
+  endif
 
   ifeq ($(X86),y)
     HAVE_FPU := y
@@ -233,18 +283,29 @@ ifeq ($(TARGET),ANDROID)
   endif
 
   ifeq ($(ARMV5),y)
+    LLVM_TRIPLE = armv5te-none-linux-androideabi
     TARGET_ARCH += -march=armv5te -mtune=xscale -msoft-float -mthumb-interwork
     HAVE_FPU := n
   endif
 
   ifeq ($(ARMV6),y)
+    LLVM_TRIPLE = armv6-none-linux-androideabi
     TARGET_ARCH += -march=armv6 -mtune=xscale -msoft-float -mthumb-interwork
     HAVE_FPU := n
   endif
 
   ifeq ($(ARMV7),y)
-    TARGET_ARCH += -march=armv7-a -mfloat-abi=softfp -mfpu=vfp -mthumb-interwork
+    LLVM_TRIPLE = armv7-none-linux-androideabi
+    TARGET_ARCH += -march=armv7-a -mfloat-abi=softfp -mthumb-interwork
     HAVE_FPU := y
+  endif
+
+  ifeq ($(ARMV7)$(NEON),yy)
+    TARGET_ARCH += -mfpu=neon
+  endif
+
+  ifeq ($(ARMV7)$(NEON),yn)
+    TARGET_ARCH += -mfpu=vfpv3-d16
   endif
 
   TARGET_ARCH += -fpic -funwind-tables
@@ -328,6 +389,10 @@ ifeq ($(TARGET),WINE)
   TARGET_INCLUDES += -I$(SRC)/wine
 endif
 
+ifeq ($(HOST_IS_PI)$(TARGET_IS_PI),ny)
+  TARGET_CPPFLAGS += --sysroot=$(PI) -isystem $(PI)/usr/include/arm-linux-gnueabihf
+endif
+
 ifeq ($(TARGET),ANDROID)
   TARGET_CPPFLAGS += --sysroot=$(ANDROID_TARGET_ROOT)
   TARGET_CPPFLAGS += -DANDROID
@@ -349,7 +414,7 @@ ifeq ($(HAVE_WIN32),y)
   endif
 
   WINDRESFLAGS := -I$(SRC) $(TARGET_CPPFLAGS)
-endif # UNIX
+endif
 
 ifeq ($(TARGET),PC)
   TARGET_ARCH += -mwindows -mms-bitfields
@@ -398,8 +463,8 @@ ifneq ($(TARGET),ANDROID)
 endif
 endif
 
-ifeq ($(TARGET_IS_DARWIN),y)
-  TARGET_LDFLAGS += -static-libgcc
+ifeq ($(HOST_IS_PI)$(TARGET_IS_PI),ny)
+  TARGET_LDFLAGS += --sysroot=$(PI) -L$(PI)/usr/lib/arm-linux-gnueabihf
 endif
 
 ifeq ($(TARGET),ANDROID)
@@ -412,12 +477,11 @@ ifeq ($(TARGET),ANDROID)
   endif
 endif
 
-ifneq ($(filter PC WINE,$(TARGET)),)
+ifneq ($(filter PC WINE CYGWIN,$(TARGET)),)
   TARGET_LDLIBS += -lwinmm
 endif
 
 ifeq ($(TARGET),CYGWIN)
-  TARGET_LDLIBS += -lwinmm
   TARGET_LDLIBS += -lintl
 endif
 
@@ -438,7 +502,7 @@ endif
 ifeq ($(TARGET),ANDROID)
   TARGET_LDLIBS += -lc -lm
   TARGET_LDLIBS += -llog
-  TARGET_LDADD += $(ANDROID_TOOLCHAIN)/lib/gcc/$(ANDROID_ABI4)/$(ANDROID_GCC_VERSION2)/$(ANDROID_ABI_SUBDIR)/libgcc.a
+  TARGET_LDADD += $(ANDROID_GCC_TOOLCHAIN)/lib/gcc/$(ANDROID_ABI4)/$(ANDROID_GCC_VERSION2)/$(ANDROID_ABI_SUBDIR)/libgcc.a
 endif
 
 ######## output files

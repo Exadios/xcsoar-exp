@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -44,11 +44,8 @@ class GlidePolar;
  */
 class MacCready 
 {
-#ifdef __clang__
   /* This attribute is currently not used, but may be some day. */
-  gcc_unused
-#endif
-  const GlideSettings &settings;
+  gcc_unused_field const GlideSettings &settings;
 
   const GlidePolar &glide_polar;
   const fixed cruise_efficiency;

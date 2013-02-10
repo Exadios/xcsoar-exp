@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ MapSettings::SetDefaults()
   max_auto_zoom_distance = fixed(100000); /* 100 km */
   topography_enabled = true;
   terrain.SetDefaults();
-  aircraft_symbol = acSimple;
+  aircraft_symbol = AircraftSymbol::SIMPLE;
   detour_cost_markers_enabled = false;
   display_ground_track = DisplayGroundTrack::AUTO;
   auto_zoom_enabled = false;
@@ -54,14 +54,15 @@ MapSettings::SetDefaults()
   waypoint.SetDefaults();
   airspace.SetDefaults();
   glider_screen_position = 20; // 20% from bottom
-  circling_orientation = TRACKUP;
-  cruise_orientation = TRACKUP;
-  circling_scale = fixed_one / 2;
-  cruise_scale = fixed_one / 60;
+  circling_orientation = DisplayOrientation::TRACK_UP;
+  cruise_orientation = DisplayOrientation::TRACK_UP;
+  circling_scale = fixed(1) / 2;
+  cruise_scale = fixed(1) / 60;
   show_flarm_on_map = true;
   show_flarm_alarm_level = true;
   show_thermal_profile = true;
   final_glide_bar_mc0_enabled = true;
+  show_fai_triangle_areas = false;
 
   trail.SetDefaults();
   item_list.SetDefaults();

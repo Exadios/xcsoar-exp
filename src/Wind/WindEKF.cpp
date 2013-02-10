@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,9 +23,8 @@ Copyright_License {
 */
 
 #include "Wind/WindEKF.hpp"
-#include "Math/FastMath.h"
 
-#include <math.h>
+#include <stdint.h>
 
 void
 WindEKF::StatePrediction(float gps_vel[2], float dT)
@@ -90,7 +89,7 @@ WindEKF::CovariancePrediction(float dT)
   }
 }
 
-void
+inline void
 WindEKF::SerialUpdate(float Z[NUMV], float Y[NUMV])
 {
   //  Outputs are Xnew & Pnew, and are written over P and X
@@ -137,7 +136,7 @@ WindEKF::SerialUpdate(float Z[NUMV], float Y[NUMV])
   }
 }
 
-void
+inline void
 WindEKF::RungeKutta(float U[NUMU], float dT)
 {
   //  Output, Xnew, is written over X
@@ -188,7 +187,8 @@ WindEKF::RungeKutta(float U[NUMU], float dT)
 //  H is output of LinearizeH(), all elements not set should be zero
 //  ************************************************
 
-void WindEKF::StateEq(float U[NUMU], float Xdot[NUMX])
+inline void
+WindEKF::StateEq(float U[NUMU], float Xdot[NUMX])
 {
   // assume wind and sf are constant
   Xdot[0] = 0;
@@ -196,7 +196,8 @@ void WindEKF::StateEq(float U[NUMU], float Xdot[NUMX])
   Xdot[2] = 0;
 }
 
-void WindEKF::LinearizeFG(float U[NUMU])
+inline void
+WindEKF::LinearizeFG(float U[NUMU])
 {
   F[0][0] = 1;
   F[1][1] = 1;
@@ -207,7 +208,8 @@ void WindEKF::LinearizeFG(float U[NUMU])
   G[2][2] = 1;
 }
 
-void WindEKF::MeasurementEq(float gps_vel[2], float Y[NUMV])
+inline void
+WindEKF::MeasurementEq(float gps_vel[2], float Y[NUMV])
 {
   float sf = X[2];
   float dx = gps_vel[0]-X[0];
@@ -215,7 +217,8 @@ void WindEKF::MeasurementEq(float gps_vel[2], float Y[NUMV])
   Y[0] = sf*(dx*dx+dy*dy);
 }
 
-void WindEKF::LinearizeH(float gps_vel[2])
+inline void
+WindEKF::LinearizeH(float gps_vel[2])
 {
   float sf = X[2];
   float dx = gps_vel[0]-X[0];
@@ -226,7 +229,8 @@ void WindEKF::LinearizeH(float gps_vel[2])
   H[0][2] = dx*dx+dy*dy;
 }
 
-void WindEKF::Init()
+void
+WindEKF::Init()
 {
   for (unsigned i = 0; i < NUMX; i++) {
     for (unsigned j = 0; j < NUMX; j++) {

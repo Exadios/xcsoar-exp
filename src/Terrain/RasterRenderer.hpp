@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,10 +26,16 @@ Copyright_License {
 
 #include "Terrain/HeightMatrix.hpp"
 #include "Screen/RawBitmap.hpp"
+#include "Math/fixed.hpp"
 #include "Util/NonCopyable.hpp"
+
+#ifdef ENABLE_OPENGL
+#include "Geo/GeoBounds.hpp"
+#endif
 
 #define NUM_COLOR_RAMP_LEVELS 13
 
+class Angle;
 class Canvas;
 class RasterMap;
 class WindowProjection;
@@ -39,11 +45,28 @@ class RasterRenderer : private NonCopyable {
   /** screen dimensions in coarse pixels */
   unsigned quantisation_pixels;
 
+#ifdef ENABLE_OPENGL
+  /**
+   * The value of #quantisation_pixels that was used in the last
+   * ScanMap() call.
+   */
+  unsigned last_quantisation_pixels;
+#endif
+
   /**
    * Step size used for slope calculations.  Slope shading is disabled
    * when this attribute is 0.
    */
   unsigned quantisation_effective;
+
+#ifdef ENABLE_OPENGL
+  /**
+   * The area that was rendered previously into the #HeightMatrix and
+   * the #RawBitmap.  This attribute is used to decide whether the
+   * texture has to be redrawn.
+   */
+  GeoBounds bounds;
+#endif
 
   HeightMatrix height_matrix;
   RawBitmap *image;
@@ -56,10 +79,6 @@ public:
   RasterRenderer();
   ~RasterRenderer();
 
-  unsigned GetQuantisation() const {
-    return quantisation_pixels;
-  }
-
   const HeightMatrix &GetHeightMatrix() const {
     return height_matrix;
   }
@@ -71,6 +90,28 @@ public:
   unsigned GetHeight() const {
     return height_matrix.GetHeight();
   }
+
+#ifdef ENABLE_OPENGL
+  void Invalidate() {
+    bounds.SetInvalid();
+  }
+
+  /**
+   * Calculate a new #quantisation_pixels value.
+   *
+   * @return true if the new #quantisation_pixels value is smaller
+   * than the previous one (redraw needed)
+   */
+  bool UpdateQuantisation();
+
+  const GeoBounds &GetBounds() const {
+    return bounds;
+  }
+
+  const GLTexture &BindAndGetTexture() const {
+    return image->BindAndGetTexture();
+  }
+#endif
 
   /**
    * Generate the color table.

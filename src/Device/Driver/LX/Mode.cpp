@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,16 +24,18 @@ Copyright_License {
 #include "Internal.hpp"
 #include "V7.hpp"
 #include "LX1600.hpp"
-#include "Nano.hpp"
+#include "NanoProtocol.hpp"
 #include "Device/Port/Port.hpp"
 #include "Operation/Operation.hpp"
 
 void
 LXDevice::LinkTimeout()
 {
+  busy = false;
+
   ScopeLock protect(mutex);
 
-  is_v7 = is_nano = is_forwarded_nano = false;
+  ResetDeviceDetection();
 
   v7_settings.Lock();
   v7_settings.clear();
@@ -45,7 +47,6 @@ LXDevice::LinkTimeout()
 
   mode = Mode::UNKNOWN;
   old_baud_rate = 0;
-  busy = false;
 }
 
 bool
@@ -63,6 +64,10 @@ LXDevice::EnableNMEA(OperationEnvironment &env)
     mode = Mode::NMEA;
     busy = false;
   }
+
+  if (is_colibri)
+    /* avoid confusing a Colibri with new protocol commands */
+    return true;
 
   /* just in case the LX1600 is still in pass-through mode: */
   V7::ModeVSeven(port, env);
@@ -86,7 +91,7 @@ LXDevice::EnableNMEA(OperationEnvironment &env)
 }
 
 void
-LXDevice::OnSysTicker(const DerivedInfo &calculated)
+LXDevice::OnSysTicker()
 {
   ScopeLock protect(mutex);
   if (mode == Mode::COMMAND && !busy) {
@@ -103,6 +108,12 @@ LXDevice::EnablePassThrough(OperationEnvironment &env)
   if (mode == Mode::PASS_THROUGH)
     return true;
 
+  if (is_colibri) {
+    /* avoid confusing a Colibri with new protocol commands */
+    mode = Mode::PASS_THROUGH;
+    return true;
+  }
+
   bool success = is_v7
     ? V7::ModeDirect(port, env)
     : LX1600::ModeColibri(port, env);
@@ -116,7 +127,7 @@ LXDevice::EnableNanoNMEA(OperationEnvironment &env)
 {
   return IsV7()
     ? EnablePassThrough(env)
-    : EnableNanoNMEA(env);
+    : true;
 }
 
 bool
@@ -143,7 +154,7 @@ LXDevice::EnableCommandMode(OperationEnvironment &env)
     old_baud_rate = port.GetBaudrate();
     if (old_baud_rate == bulk_baud_rate)
       old_baud_rate = 0;
-    else {
+    else if (old_baud_rate != 0) {
       /* before changing the baud rate, we need an additional delay,
          because Port::Drain() does not seem to work reliably on Linux
          with a USB-RS232 converter; with a V7+Nano, 100ms is more
@@ -169,8 +180,9 @@ LXDevice::EnableCommandMode(OperationEnvironment &env)
     return false;
   }
 
+  busy = false;
+
   ScopeLock protect(mutex);
   mode = Mode::COMMAND;
-  busy = false;
   return true;
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -120,9 +120,7 @@ TextUtil::getTextBounds(const char *text) const
     extent[1] = 0;
   }
 
-  PixelSize size = { PixelScalar(extent[0]),
-                     PixelScalar(extent[1]) };
-  return size;
+  return { extent[0], extent[1] };
 }
 
 TextUtil::Texture
@@ -133,7 +131,7 @@ TextUtil::getTextTextureGL(const char *text) const
     env->CallObjectMethod(Get(), midGetTextTextureGL,
                           text2.Get());
   jint result[3];
-  if (!Java::DiscardException(env)) {
+  if (!Java::DiscardException(env) && jresult != nullptr) {
     env->GetIntArrayRegion(jresult, 0, 3, result);
     env->DeleteLocalRef(jresult);
   } else {

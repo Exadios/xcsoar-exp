@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@ Copyright_License {
 #include "Engine/GlideSolvers/GlidePolar.hpp"
 #include "Atmosphere/Pressure.hpp"
 #include "Engine/Route/Config.hpp"
+#include "Engine/Contest/Settings.hpp"
 #include "Util/StaticString.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Task/TaskBehaviour.hpp"
 #include "Tracking/TrackingSettings.hpp"
 #include "Geo/SpeedVector.hpp"
@@ -38,6 +38,8 @@ Copyright_License {
 #include "Airspace/AirspaceComputerSettings.hpp"
 #include "TeamCodeSettings.hpp"
 #include "Plane/Plane.hpp"
+
+#include <type_traits>
 
 #include <stdint.h>
 
@@ -110,7 +112,7 @@ struct WindSettings {
   }
 };
 
-static_assert(is_trivial<WindSettings>::value, "type is not trivial");
+static_assert(std::is_trivial<WindSettings>::value, "type is not trivial");
 
 /**
  * Glide polar settings
@@ -194,10 +196,10 @@ struct PlacesOfInterestSettings {
  */
 struct FeaturesSettings {
   /** Calculate final glide over terrain */
-  enum FinalGlideTerrain {
-    FGT_OFF,
-    FGT_LINE,
-    FGT_SHADE,
+  enum class FinalGlideTerrain : uint8_t {
+    OFF,
+    LINE,
+    SHADE,
   } final_glide_terrain;
 
   /** block speed to fly instead of dolphin */
@@ -207,6 +209,14 @@ struct FeaturesSettings {
   bool nav_baro_altitude_enabled;
 
   void SetDefaults();
+};
+
+struct CirclingSettings {
+  bool external_trigger_cruise_enabled;
+
+  void SetDefaults() {
+    external_trigger_cruise_enabled = false;
+  }
 };
 
 enum AverageEffTime {
@@ -231,7 +241,7 @@ struct ComputerSettings {
 
   FeaturesSettings features;
 
-  bool external_trigger_cruise_enabled;
+  CirclingSettings circling;
 
   AverageEffTime average_eff_time;
 
@@ -257,6 +267,8 @@ struct ComputerSettings {
 
   TaskBehaviour task;
 
+  ContestSettings contest;
+
   LoggerSettings logger;
 
 #ifdef HAVE_TRACKING
@@ -266,7 +278,7 @@ struct ComputerSettings {
   void SetDefaults();
 };
 
-static_assert(is_trivial<ComputerSettings>::value,
+static_assert(std::is_trivial<ComputerSettings>::value,
               "type is not trivial");
 
 #endif

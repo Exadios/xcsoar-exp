@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ Copyright_License {
 #define XCSOAR_ASYNC_JOB_RUNNER_HPP
 
 #include "Thread/Thread.hpp"
-#include "Thread/Flag.hpp"
+
+#include <atomic>
 
 #include <assert.h>
 
@@ -45,9 +46,11 @@ class AsyncJobRunner : private Thread {
   ThreadedOperationEnvironment *env;
   Notify *notify;
 
-  Flag running;
+  std::atomic<bool> running;
 
 public:
+  AsyncJobRunner():running(false) {}
+
   ~AsyncJobRunner() {
     /* force the caller to invoke Wait() */
     assert(!IsBusy());
@@ -66,7 +69,7 @@ public:
   bool HasFinished() const {
     assert(IsBusy());
 
-    return !running.Get();
+    return !running.load(std::memory_order_relaxed);
   }
 
   /**
@@ -84,6 +87,11 @@ public:
   /**
    * Cancel the current #Job.  Returns immediately; to wait for the
    * #Job to return, call Wait().
+   *
+   * This suppresses the notification: after this method returns, no
+   * notification will be delivered.  It would be dangerous to deliver
+   * the notification, because the notification handler will call
+   * Wait() a second time.
    */
   void Cancel();
 

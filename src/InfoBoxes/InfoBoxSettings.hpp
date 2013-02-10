@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "Util/StaticString.hpp"
 #include "Compiler.h"
-#include "InfoBoxes/Content/Factory.hpp"
+#include "InfoBoxes/Content/Type.hpp"
 
 #include <stdint.h>
 
@@ -36,8 +36,15 @@ enum InfoBoxBorderAppearance_t {
 };
 
 struct InfoBoxSettings {
+  enum PanelIndex {
+    PANEL_CIRCLING,
+    PANEL_CRUISE,
+    PANEL_FINAL_GLIDE,
+    PANEL_AUXILIARY,
+  };
+
   struct Panel {
-    static const unsigned MAX_CONTENTS = 24;
+    static constexpr unsigned MAX_CONTENTS = 24;
 
     StaticString<32u> name;
     InfoBoxFactory::Type contents[MAX_CONTENTS];
@@ -48,8 +55,8 @@ struct InfoBoxSettings {
     bool IsEmpty() const;
   };
 
-  static const unsigned int MAX_PANELS = 8;
-  static const unsigned int PREASSIGNED_PANELS = 3;
+  static constexpr unsigned MAX_PANELS = 8;
+  static constexpr unsigned PREASSIGNED_PANELS = 3;
 
   /**
    * Auto-switch to the "final glide" panel if above final glide?

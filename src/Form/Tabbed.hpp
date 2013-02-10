@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "Screen/ContainerWindow.hpp"
 #include "Util/StaticArray.hpp"
-#include "PagerWidget.hpp"
+#include "Widget/PagerWidget.hpp"
 
 class Widget;
 
@@ -46,9 +46,7 @@ public:
    */
   TabbedControl():page_flipped_callback(NULL) {};
 
-  TabbedControl(ContainerWindow &parent,
-                PixelScalar x, PixelScalar y,
-                UPixelScalar width, UPixelScalar height,
+  TabbedControl(ContainerWindow &parent, PixelRect rc,
                 const WindowStyle style=WindowStyle());
 
   virtual ~TabbedControl();
@@ -129,9 +127,9 @@ public:
   void UpdateLayout();
 
 protected:
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-  virtual void OnCreate();
-  virtual void OnDestroy();
+  virtual void OnResize(PixelSize new_size) override;
+  virtual void OnCreate() override;
+  virtual void OnDestroy() override;
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -47,17 +47,14 @@ ProgressBarStyle::Smooth()
 }
 
 void
-ProgressBar::set(ContainerWindow &parent,
-                 PixelScalar left, PixelScalar top,
-                 UPixelScalar width, UPixelScalar height,
-                 const ProgressBarStyle style)
+ProgressBar::Create(ContainerWindow &parent, PixelRect rc,
+                    const ProgressBarStyle style)
 {
-  Window::set(&parent,
+  Window::Create(&parent,
 #ifdef USE_GDI
-              PROGRESS_CLASS, NULL,
+                 PROGRESS_CLASS, NULL,
 #endif
-              left, top, width, height,
-              style);
+                 rc, style);
 }
 
 void

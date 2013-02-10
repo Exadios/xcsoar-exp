@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,9 +31,6 @@ Copyright_License {
 
 struct DialogLook;
 
-/**
- * The PanelControl class implements the simplest form of a ContainerControl
- */
 class KeyboardControl : public ContainerWindow {
 public:
   typedef void (*OnCharacterCallback_t)(TCHAR key);
@@ -45,23 +42,19 @@ protected:
 
   const DialogLook &look;
 
+  OnCharacterCallback_t on_character;
+
+  UPixelScalar button_width;
+  UPixelScalar button_height;
+
   unsigned num_buttons;
   ButtonWindow buttons[MAX_BUTTONS];
   TCHAR button_values[MAX_BUTTONS];
 
 public:
-  /**
-   * Constructor of the KeyboardControl class
-   * @param parent the parent window
-   * @param x x-Coordinate of the Control
-   * @param y y-Coordinate of the Control
-   * @param width Width of the Control
-   * @param height Height of the Control
-   */
   KeyboardControl(ContainerWindow &parent, const DialogLook &look,
-                  PixelScalar x, PixelScalar y,
-                  UPixelScalar width, UPixelScalar height,
-                  OnCharacterCallback_t function,
+                  PixelRect rc,
+                  OnCharacterCallback_t on_character,
                   const WindowStyle _style = WindowStyle());
 
   /**
@@ -69,34 +62,33 @@ public:
    */
   void SetAllowedCharacters(const TCHAR *allowed);
 
-  void SetOnCharacterCallback(OnCharacterCallback_t Function) {
-    mOnCharacter = Function;
+  void SetOnCharacterCallback(OnCharacterCallback_t _on_character) {
+    on_character = _on_character;
   }
 
 protected:
-  virtual void OnPaint(Canvas &canvas);
-  virtual bool OnCommand(unsigned id, unsigned code);
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
+  virtual void OnPaint(Canvas &canvas) override;
+  virtual bool OnCommand(unsigned id, unsigned code) override;
+  virtual void OnResize(PixelSize new_size) override;
 
 private:
-  UPixelScalar button_width;
-  UPixelScalar button_height;
+  gcc_pure
+  ButtonWindow *FindButton(TCHAR ch);
 
-  ButtonWindow *get_button(TCHAR ch);
+  void MoveButton(TCHAR ch, PixelScalar left, PixelScalar top);
+  void ResizeButton(TCHAR ch, UPixelScalar width, UPixelScalar height);
+  void ResizeButtons();
+  void SetButtonsSize();
+  void MoveButtonsToRow(const TCHAR *buttons, int row,
+                        PixelScalar offset_left = 0);
+  void MoveButtons();
 
-  void move_button(TCHAR ch, PixelScalar left, PixelScalar top);
-  void resize_button(TCHAR ch, UPixelScalar width, UPixelScalar height);
-  void resize_buttons();
-  void set_buttons_size();
-  void move_buttons_to_row(const TCHAR* buttons, int row,
-                           PixelScalar offset_left = 0);
-  void move_buttons();
+  gcc_pure
+  bool IsLandscape() const {
+    return GetWidth() >= GetHeight();
+  }
 
-  bool is_landscape();
-
-  void add_button(const TCHAR* caption);
-
-  OnCharacterCallback_t mOnCharacter;
+  void AddButton(const TCHAR *caption);
 };
 
 #endif

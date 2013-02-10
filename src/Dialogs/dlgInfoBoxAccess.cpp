@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,160 +24,117 @@ Copyright_License {
 #include "Dialogs/Dialogs.h"
 #include "Dialogs/dlgInfoBoxAccess.hpp"
 #include "UIGlobals.hpp"
+#include "UIState.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Components.hpp"
 #include "Look/Look.hpp"
 #include "InfoBoxes/InfoBoxManager.hpp"
 #include "InfoBoxes/InfoBoxLayout.hpp"
+#include "InfoBoxes/Content/Factory.hpp"
+#include "InfoBoxes/Panel/Panel.hpp"
 #include "Form/TabBar.hpp"
 #include "Form/Form.hpp"
-#include "Form/Panel.hpp"
-#include "Form/PanelWidget.hpp"
+#include "Form/Button.hpp"
+#include "Widget/ActionWidget.hpp"
+#include "Widget/WindowWidget.hpp"
+#include "Widget/TwoWidgets.hpp"
 #include "Interface.hpp"
 #include "Language/Language.hpp"
 
 #include <assert.h>
 #include <stdio.h>
 
-class CloseInfoBoxAccess : public PanelWidget {
-protected:
-  /**
-   * The parent form that needs to be closed
-   */
-  WndForm &wf;
-public:
-  CloseInfoBoxAccess(WndForm &_wf) :
-    wf(_wf) {
-  }
-  virtual bool Click();
-  virtual void ReClick();
-};
-
-class SwitchInfoBox : public PanelWidget {
-protected:
-
-  /**
-   * The parent form that needs to be closed
-   * after the SwitchInfoBox popup routine is called
-   */
-  WndForm &wf;
-
-  /**
-   * id of the InfoBox
-   */
-  int id;
-public:
-  SwitchInfoBox(int _id, WndForm &_wf) :
-    wf(_wf), id(_id) {
-  }
-  virtual bool Click();
-  virtual void ReClick();
-};
-
-static WndForm *wf = NULL;
-
-static TabBarControl* wTabBar = NULL;
+/**
+ * This modal result will trigger the "Switch InfoBox" dialog.
+ */
+static constexpr int SWITCH_INFO_BOX = 100;
 
 void
-dlgInfoBoxAccessShowModeless(const int id,
-                             const InfoBoxContent::DialogContent *dlgContent)
+dlgInfoBoxAccessShowModeless(const int id, const InfoBoxPanel *panels)
 {
-  // check for another instance of this window
-  if (wf != NULL) return;
   assert (id > -1);
+
+  const InfoBoxSettings &settings = CommonInterface::SetUISettings().info_boxes;
+  const unsigned panel_index = CommonInterface::GetUIState().panel_index;
+  const InfoBoxSettings::Panel &panel = settings.panels[panel_index];
+  const InfoBoxFactory::Type old_type = panel.contents[id];
 
   const DialogLook &look = UIGlobals::GetDialogLook();
 
   PixelRect form_rc = InfoBoxManager::layout.remaining;
-  form_rc.top = form_rc.bottom - Layout::Scale(107);
 
-  wf = new WndForm(UIGlobals::GetMainWindow(), look, form_rc);
+  WndForm form(UIGlobals::GetMainWindow(), look, form_rc,
+               gettext(InfoBoxFactory::GetName(old_type)));
 
   WindowStyle tab_style;
   tab_style.ControlParent();
-  ContainerWindow &client_area = wf->GetClientAreaWindow();
-  const PixelRect rc = client_area.GetClientRect();
-  wTabBar = new TabBarControl(client_area, look, rc.left, rc.top,
-                              rc.right - rc.left, Layout::Scale(45),
-                              tab_style, Layout::landscape);
+  ContainerWindow &client_area = form.GetClientAreaWindow();
+  PixelRect client_rc = client_area.GetClientRect();
+  PixelRect tab_rc = client_rc;
+  tab_rc.bottom = tab_rc.top + Layout::Scale(45);
 
-  if (dlgContent != NULL) {
-    for (int i = 0; i < dlgContent->PANELSIZE; i++) {
-      assert(dlgContent->Panels[i].load != NULL);
+  TabBarControl tab_bar(client_area, look, tab_rc, tab_style, false);
 
-      Widget *widget = dlgContent->Panels[i].load(id);
+  if (panels != nullptr) {
+    for (; panels->load != nullptr; ++panels) {
+      assert(panels->name != nullptr);
+
+      Widget *widget = panels->load(id);
 
       if (widget == NULL)
         continue;
 
-      wTabBar->AddTab(widget, gettext(dlgContent->Panels[i].name));
+      if (panels[1].load == nullptr) {
+        /* add a "Switch InfoBox" button to the last tab, which we
+           expect to be the "Setup" tab - kludge! */
+
+        PixelRect button_rc;
+        button_rc.left = 0;
+        button_rc.top = 0;
+        button_rc.right = Layout::Scale(60);
+        button_rc.bottom = std::max(2u * Layout::GetMinimumControlHeight(),
+                                    Layout::GetMaximumControlHeight());
+
+        ButtonWindowStyle button_style;
+        button_style.Hide();
+        button_style.TabStop();
+        button_style.multiline();
+
+        WndButton *button =
+          new WndButton(tab_bar, look, _("Switch InfoBox"),
+                        button_rc, button_style,
+                        form, SWITCH_INFO_BOX);
+
+        widget = new TwoWidgets(widget, new WindowWidget(button), false);
+      }
+
+      tab_bar.AddTab(widget, gettext(panels->name));
     }
   }
 
-  if (!wTabBar->GetTabCount()) {
-    form_rc.top = form_rc.bottom - Layout::Scale(58);
-    wf->Move(form_rc);
-
-    Widget *wSwitch = new SwitchInfoBox(id, *wf);
-    wTabBar->AddTab(wSwitch, _("Switch InfoBox"));
+  if (tab_bar.GetTabCount() == 0) {
+    Widget *wSwitch = new ActionWidget(form, SWITCH_INFO_BOX);
+    tab_bar.AddTab(wSwitch, _("Switch InfoBox"));
   }
 
-  Widget *wClose = new CloseInfoBoxAccess(*wf);
-  wTabBar->AddTab(wClose, _("Close"));
+  Widget *wClose = new ActionWidget(form, mrOK);
+  tab_bar.AddTab(wClose, _("Close"));
 
-  InfoBoxSettings &settings = CommonInterface::SetUISettings().info_boxes;
-  const unsigned panel_index = InfoBoxManager::GetCurrentPanel();
-  InfoBoxSettings::Panel &panel = settings.panels[panel_index];
-  const InfoBoxFactory::Type old_type = panel.contents[id];
+  const PixelSize max_size = tab_bar.GetMaximumSize();
+  if (unsigned(max_size.cy) < unsigned(client_rc.bottom - client_rc.top)) {
+    form_rc.top += client_rc.bottom - client_rc.top - max_size.cy;
+    form.Move(form_rc);
+    tab_bar.Move(client_area.GetClientRect());
+  }
 
-  StaticString<32> buffer;
-  buffer = gettext(InfoBoxFactory::GetName(old_type));
+  int result = form.ShowModeless();
 
-  wf->SetCaption(buffer);
-  wf->ShowModeless();
-
-  if (wf->IsDefined()) {
+  if (form.IsDefined()) {
     bool changed = false, require_restart = false;
-    wTabBar->Save(changed, require_restart);
+    tab_bar.Save(changed, require_restart);
   }
 
-  delete wTabBar;
-  delete wf;
-  // unset wf because wf is still static and public
-  wf = NULL;
-}
-
-bool
-dlgInfoBoxAccess::OnClose()
-{
-  wf->SetModalResult(mrOK);
-  return true;
-}
-
-bool
-CloseInfoBoxAccess::Click()
-{
-  ReClick();
-  return false;
-}
-
-void
-CloseInfoBoxAccess::ReClick()
-{
-  wf.SetModalResult(mrOK);
-}
-
-bool
-SwitchInfoBox::Click()
-{
-  ReClick();
-  return false;
-}
-
-void
-SwitchInfoBox::ReClick()
-{
-  InfoBoxManager::ShowInfoBoxPicker(id);
-  wf.SetModalResult(mrOK);
+  if (result == SWITCH_INFO_BOX)
+    InfoBoxManager::ShowInfoBoxPicker(id);
 }

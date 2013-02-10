@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@ Copyright_License {
 #endif
 
 #include <windef.h> /* for MAX_PATH */
+#include <string.h>
 
 // Registration Data
 TCHAR asset_number[100] = _T(""); //4G17DW31L0HY");
@@ -169,10 +170,8 @@ ReadUUID()
 #endif
 }
 
-/**
- * Finds the unique ID of this PDA
- */
-void ReadAssetNumber()
+void
+ReadAssetNumber()
 {
   if (ReadCompaqID()) {
     LogStartUp(_T("Asset ID: %s (compaq)"), asset_number);

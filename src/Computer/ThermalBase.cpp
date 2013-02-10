@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ EstimateThermalBase(const RasterTerrain *terrain,
 {
   if (!positive(average) || !positive(altitude)) {    
     ground_location = location;
-    ground_alt = fixed_zero;
+    ground_alt = fixed(0);
     return;
   }
 
@@ -59,7 +59,7 @@ EstimateThermalBase(const RasterTerrain *terrain,
     ground_location = FindLatitudeLongitude(location, 
                                             wind.bearing,
                                             wind.norm * Tmax);
-    ground_alt = fixed_zero;
+    ground_alt = fixed(0);
     return;
   }
 

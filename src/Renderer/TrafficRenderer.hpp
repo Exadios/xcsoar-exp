@@ -2,7 +2,7 @@
  Copyright_License {
 
  XCSoar Glide Computer - http://www.xcsoar.org/
- Copyright (C) 2000-2012 The XCSoar Project
+ Copyright (C) 2000-2013 The XCSoar Project
  A detailed list of copyright holders can be found in the file "AUTHORS".
 
  This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@
 #ifndef XCSOAR_TRAFFIC_RENDERER_HPP
 #define XCSOAR_TRAFFIC_RENDERER_HPP
 
-#include "FLARM/Friends.hpp"
-#include "Screen/Point.hpp"
+#include "FLARM/Color.hpp"
 
+struct RasterPoint;
 class Canvas;
 struct TrafficLook;
 struct FlarmTraffic;
@@ -36,8 +36,8 @@ namespace TrafficRenderer
 {
 void
 Draw(Canvas &canvas, const TrafficLook &traffic_look,
-     const FlarmTraffic &traffic, const Angle &angle,
-     const FlarmFriends::Color color, const RasterPoint pt);
+     const FlarmTraffic &traffic, Angle angle,
+     const FlarmColor color, const RasterPoint pt);
 }
 
 #endif

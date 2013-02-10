@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -74,11 +74,12 @@ NmeaReplay::ReadUntilRMC(NMEAInfo &data, bool ignore)
 {
   char *buffer;
 
-  while ((buffer = reader->read()) != NULL) {
+  while ((buffer = reader->ReadLine()) != NULL) {
     if (!ignore)
       ParseLine(buffer, data);
 
-    if (strstr(buffer, "$GPRMC") == buffer)
+    if (StringStartsWith(buffer, "$GPRMC") ||
+        StringStartsWith(buffer, "$FLYSEN"))
       return true;
   }
 
@@ -91,8 +92,8 @@ NmeaReplay::Update(NMEAInfo &data, fixed time_scale)
   if (!UpdateTime())
     return true;
 
-  for (fixed i = fixed_one; i <= time_scale; i += fixed_one) {
-if (!ReadUntilRMC(data, i != time_scale))
+  for (fixed i = fixed(1); i <= time_scale; i += fixed(1)) {
+    if (!ReadUntilRMC(data, i != time_scale))
       return false;
   }
 

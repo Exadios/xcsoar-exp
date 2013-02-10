@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,11 +23,55 @@ Copyright_License {
 
 #include "StringUtil.hpp"
 #include "CharUtil.hpp"
-#include "Compatibility/string.h"
 
 #include <string.h>
-#include <ctype.h>
 #include <algorithm>
+
+bool
+StringEndsWith(const char *haystack, const char *needle)
+{
+  const size_t haystack_length = StringLength(haystack);
+  const size_t needle_length = StringLength(needle);
+
+  return haystack_length >= needle_length &&
+    StringIsEqual(haystack + haystack_length - needle_length, needle);
+}
+
+bool
+StringEndsWithIgnoreCase(const char *haystack, const char *needle)
+{
+  const size_t haystack_length = StringLength(haystack);
+  const size_t needle_length = StringLength(needle);
+
+  return haystack_length >= needle_length &&
+    StringIsEqualIgnoreCase(haystack + haystack_length - needle_length,
+                            needle);
+}
+
+#ifdef _UNICODE
+
+bool
+StringEndsWith(const TCHAR *haystack, const TCHAR *needle)
+{
+  const size_t haystack_length = StringLength(haystack);
+  const size_t needle_length = StringLength(needle);
+
+  return haystack_length >= needle_length &&
+    StringIsEqual(haystack + haystack_length - needle_length, needle);
+}
+
+bool
+StringEndsWithIgnoreCase(const TCHAR *haystack, const TCHAR *needle)
+{
+  const size_t haystack_length = StringLength(haystack);
+  const size_t needle_length = StringLength(needle);
+
+  return haystack_length >= needle_length &&
+    StringIsEqualIgnoreCase(haystack + haystack_length - needle_length,
+                            needle);
+}
+
+#endif
 
 const char *
 StringAfterPrefix(const char *string, const char *prefix)
@@ -205,6 +249,39 @@ CopyASCII(char *dest, size_t dest_size, const TCHAR *src, const TCHAR *src_end)
 
 #endif
 
+void
+CopyASCIIUppper(char *dest, const char *src)
+{
+  do {
+    char ch = *src;
+    if (IsASCII(ch)) {
+      if (IsLowerAlphaASCII(ch))
+        ch -= 'a' - 'A';
+
+      *dest++ = ch;
+    }
+  } while (*src++ != '\0');
+}
+
+#ifdef _UNICODE
+
+void
+CopyASCIIUppper(char *dest, const TCHAR *src)
+{
+  do {
+    TCHAR t = *src;
+    if (IsASCII(t)) {
+      char ch = (char)t;
+      if (IsLowerAlphaASCII(ch))
+        ch -= 'a' - 'A';
+
+      *dest++ = ch;
+    }
+  } while (*src++ != '\0');
+}
+
+#endif
+
 const char *
 TrimLeft(const char *p)
 {
@@ -254,8 +331,8 @@ NormalizeSearchString(char *gcc_restrict dest,
   char *retval = dest;
 
   for (; !StringIsEmpty(src); ++src)
-    if (static_cast<unsigned>(*src) < 128 && isalnum(*src))
-      *dest++ = toupper(*src);
+    if (IsAlphaNumericASCII(*src))
+      *dest++ = ToUpperASCII(*src);
 
   *dest = '\0';
 
@@ -270,8 +347,8 @@ NormalizeSearchString(TCHAR *gcc_restrict dest,
   TCHAR *retval = dest;
 
   for (; !StringIsEmpty(src); ++src)
-    if (static_cast<unsigned>(*src) < 128 && _istalnum(*src))
-      *dest++ = _totupper(*src);
+    if (IsAlphaNumericASCII(*src))
+      *dest++ = ToUpperASCII(*src);
 
   *dest = _T('\0');
 

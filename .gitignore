@@ -1,5 +1,5 @@
-results/res-*
-results/terrain.txt
+*.o
+
 .stgit*
 .together/*
 .deps
@@ -43,3 +43,5 @@ build/local-config.mk
 doc/Design/*.png
 Workings.txt
 test/tools/*.o
+*.pyc
+*.pyo

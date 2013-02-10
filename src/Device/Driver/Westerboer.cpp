@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -44,9 +44,9 @@ class WesterboerDevice : public AbstractDevice {
 public:
   WesterboerDevice(Port &_port):port(_port) {}
 
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
-  virtual bool PutMacCready(fixed mac_cready, OperationEnvironment &env);
-  virtual bool PutBugs(fixed bugs, OperationEnvironment &env);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
+  virtual bool PutMacCready(fixed mac_cready, OperationEnvironment &env) override;
+  virtual bool PutBugs(fixed bugs, OperationEnvironment &env) override;
 };
 
 /**
@@ -113,16 +113,12 @@ PWES1(NMEAInputLine &line, NMEAInfo &info)
   if (line.ReadChecked(i))
     info.settings.ProvideMacCready(fixed(i) / 10, info.clock);
 
+  info.switch_state.flight_mode = SwitchState::FlightMode::UNKNOWN;
   if (line.ReadChecked(i)) {
-    if (i == 0) {
-      info.switch_state.flight_mode = SwitchInfo::FlightMode::CIRCLING;
-      info.switch_state.speed_command = false;
-      info.switch_state_available = true;
-    } else if (i == 1) {
-      info.switch_state.flight_mode = SwitchInfo::FlightMode::CRUISE;
-      info.switch_state.speed_command = true;
-      info.switch_state_available = true;
-    }
+    if (i == 0)
+      info.switch_state.flight_mode = SwitchState::FlightMode::CIRCLING;
+    else if (i == 1)
+      info.switch_state.flight_mode = SwitchState::FlightMode::CRUISE;
   }
 
   line.Skip(3);
@@ -158,8 +154,8 @@ WesterboerDevice::ParseNMEA(const char *String, NMEAInfo &info)
 bool
 WesterboerDevice::PutMacCready(fixed _mac_cready, OperationEnvironment &env)
 {
-  /* "0 .. 60 in 5-er Schritten" */
-  unsigned mac_cready = std::min(uround(_mac_cready * 10 / 5) * 5, 60u);
+  /* 0 .. 60 -> 0.0 .. 6.0 m/s */
+  unsigned mac_cready = std::min(uround(_mac_cready * 10), 60u);
 
   char buffer[64];
   sprintf(buffer, "$PWES4,,%02u,,,,,,,", mac_cready);
@@ -191,7 +187,7 @@ WesterboerCreateOnPort(const DeviceConfig &config, Port &com_port)
   return new WesterboerDevice(com_port);
 }
 
-const struct DeviceRegister westerboer_device_driver = {
+const struct DeviceRegister westerboer_driver = {
   _T("Westerboer VW1150"),
   _T("Westerboer VW1150"),
   DeviceRegister::RECEIVE_SETTINGS | DeviceRegister::SEND_SETTINGS,

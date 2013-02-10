@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include "ContestManager.hpp"
 #include "Trace/Trace.hpp"
 
-ContestManager::ContestManager(const Contests _contest,
+ContestManager::ContestManager(const Contest _contest,
                                const Trace &trace_full,
                                const Trace &trace_sprint,
                                bool predict_triangle)
@@ -33,12 +33,13 @@ ContestManager::ContestManager(const Contests _contest,
    olc_classic(trace_full),
    olc_league(trace_sprint),
    olc_plus(),
-   olc_xcontest_free(trace_full, false),
-   olc_xcontest_triangle(trace_full, predict_triangle, false),
-   olc_dhvxc_free(trace_full, true),
-   olc_dhvxc_triangle(trace_full, predict_triangle, true),
-   olc_sisat(trace_full),
-   olc_netcoupe(trace_full)
+   dmst_quad(trace_full),
+   xcontest_free(trace_full, false),
+   xcontest_triangle(trace_full, predict_triangle, false),
+   dhv_xc_free(trace_full, true),
+   dhv_xc_triangle(trace_full, predict_triangle, true),
+   sis_at(trace_full),
+   net_coupe(trace_full)
 {
   Reset();
 }
@@ -49,12 +50,13 @@ ContestManager::SetIncremental(bool incremental)
   olc_sprint.SetIncremental(incremental);
   olc_fai.SetIncremental(incremental);
   olc_classic.SetIncremental(incremental);
-  olc_xcontest_free.SetIncremental(incremental);
-  olc_xcontest_triangle.SetIncremental(incremental);
-  olc_dhvxc_free.SetIncremental(incremental);
-  olc_dhvxc_triangle.SetIncremental(incremental);
-  olc_sisat.SetIncremental(incremental);
-  olc_netcoupe.SetIncremental(incremental);
+  dmst_quad.SetIncremental(incremental);
+  xcontest_free.SetIncremental(incremental);
+  xcontest_triangle.SetIncremental(incremental);
+  dhv_xc_free.SetIncremental(incremental);
+  dhv_xc_triangle.SetIncremental(incremental);
+  sis_at.SetIncremental(incremental);
+  net_coupe.SetIncremental(incremental);
 }
 
 void
@@ -64,9 +66,14 @@ ContestManager::SetPredicted(const TracePoint &predicted)
     olc_league.Reset();
     olc_plus.Reset();
 
-    if (contest == OLC_Classic || contest == OLC_League || contest == OLC_Plus)
+    if (contest == Contest::OLC_CLASSIC || contest == Contest::OLC_LEAGUE ||
+        contest == Contest::OLC_PLUS)
       stats.Reset();
   }
+
+  if (dmst_quad.SetPredicted(predicted) &&
+      contest == Contest::DMST)
+    stats.Reset();
 }
 
 void
@@ -77,12 +84,13 @@ ContestManager::SetHandicap(unsigned handicap)
   olc_classic.SetHandicap(handicap);
   olc_league.SetHandicap(handicap);
   olc_plus.SetHandicap(handicap);
-  olc_xcontest_free.SetHandicap(handicap);
-  olc_xcontest_triangle.SetHandicap(handicap);
-  olc_dhvxc_free.SetHandicap(handicap);
-  olc_dhvxc_triangle.SetHandicap(handicap);
-  olc_sisat.SetHandicap(handicap);
-  olc_netcoupe.SetHandicap(handicap);
+  dmst_quad.SetHandicap(handicap);
+  xcontest_free.SetHandicap(handicap);
+  xcontest_triangle.SetHandicap(handicap);
+  dhv_xc_free.SetHandicap(handicap);
+  dhv_xc_triangle.SetHandicap(handicap);
+  sis_at.SetHandicap(handicap);
+  net_coupe.SetHandicap(handicap);
 }
 
 static bool
@@ -114,22 +122,22 @@ ContestManager::UpdateIdle(bool exhaustive)
   bool retval = false;
 
   switch (contest) {
-  case OLC_Sprint:
+  case Contest::OLC_SPRINT:
     retval = RunContest(olc_sprint, stats.result[0],
                         stats.solution[0], exhaustive);
     break;
 
-  case OLC_FAI:
+  case Contest::OLC_FAI:
     retval = RunContest(olc_fai, stats.result[0],
                         stats.solution[0], exhaustive);
     break;
 
-  case OLC_Classic:
+  case Contest::OLC_CLASSIC:
     retval = RunContest(olc_classic, stats.result[0],
                         stats.solution[0], exhaustive);
     break;
 
-  case OLC_League:
+  case Contest::OLC_LEAGUE:
     retval = RunContest(olc_classic, stats.result[1],
                         stats.solution[1], exhaustive);
 
@@ -139,7 +147,7 @@ ContestManager::UpdateIdle(bool exhaustive)
                          stats.solution[0], exhaustive);
     break;
 
-  case OLC_Plus:
+  case Contest::OLC_PLUS:
     retval = RunContest(olc_classic, stats.result[0],
                         stats.solution[0], exhaustive);
 
@@ -156,26 +164,32 @@ ContestManager::UpdateIdle(bool exhaustive)
 
     break;
 
-  case OLC_XContest:
-    retval = RunContest(olc_xcontest_free, stats.result[0],
+  case Contest::DMST:
+    retval = RunContest(dmst_quad, stats.result[0],
                         stats.solution[0], exhaustive);
-    retval |= RunContest(olc_xcontest_triangle, stats.result[1],
+    break;
+
+  case Contest::XCONTEST:
+    retval = RunContest(xcontest_free, stats.result[0],
+                        stats.solution[0], exhaustive);
+    retval |= RunContest(xcontest_triangle, stats.result[1],
                          stats.solution[1], exhaustive);
     break;
 
-  case OLC_DHVXC:
-    retval = RunContest(olc_dhvxc_free, stats.result[0],
+  case Contest::DHV_XC:
+    retval = RunContest(dhv_xc_free, stats.result[0],
                         stats.solution[0], exhaustive);
-    retval |= RunContest(olc_dhvxc_triangle, stats.result[1],
+    retval |= RunContest(dhv_xc_triangle, stats.result[1],
                          stats.solution[1], exhaustive);
     break;
 
-  case OLC_SISAT:
-    retval = RunContest(olc_sisat, stats.result[0],
+  case Contest::SIS_AT:
+    retval = RunContest(sis_at, stats.result[0],
                         stats.solution[0], exhaustive);
     break;
-  case OLC_NetCoupe:
-    retval = RunContest(olc_netcoupe, stats.result[0],
+
+  case Contest::NET_COUPE:
+    retval = RunContest(net_coupe, stats.result[0],
                         stats.solution[0], exhaustive);
     break;
 
@@ -193,12 +207,13 @@ ContestManager::Reset()
   olc_classic.Reset();
   olc_league.Reset();
   olc_plus.Reset();
-  olc_xcontest_free.Reset();
-  olc_xcontest_triangle.Reset();
-  olc_dhvxc_free.Reset();
-  olc_dhvxc_triangle.Reset();
-  olc_sisat.Reset();
-  olc_netcoupe.Reset();
+  dmst_quad.Reset();
+  xcontest_free.Reset();
+  xcontest_triangle.Reset();
+  dhv_xc_free.Reset();
+  dhv_xc_triangle.Reset();
+  sis_at.Reset();
+  net_coupe.Reset();
 }
 
 /*

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -40,12 +40,18 @@ class AircraftStateFilter {
   fixed v_x, v_y, v_alt;
 
 public:
+  /**
+   * Non-initialising default constructor.  To initialise this
+   * instance, call Design() and Reset().
+   */
+  AircraftStateFilter() = default;
+
   /** 
    * Constructor
    * 
    * @param cutoff_wavelength -3db cutoff wavelength (s) of filters
    */
-  AircraftStateFilter(const fixed cutoff_wavelength = fixed_ten);
+  AircraftStateFilter(const fixed cutoff_wavelength);
 
   /**
    * Reset filters to initial state
@@ -102,7 +108,7 @@ public:
    * @param in_time Time step for extrapolation (s)
    * @return Predicted aircraft state in in_time seconds
    */
-  AircraftState GetPredictedState(const fixed &in_time) const;
+  AircraftState GetPredictedState(fixed in_time) const;
 };
 
 #endif

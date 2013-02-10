@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -47,9 +47,7 @@ class AnnularSectorZone;
 /**
  * Class to serialise and de-serialise tasks to/from a #DataNode structure
  */
-class Serialiser:
-  public TaskPointConstVisitor
-{
+class Serialiser {
   DataNode &node;
 
   bool mode_optional_start;
@@ -73,11 +71,6 @@ public:
    */
   void Serialise(const OrderedTask &task);
 
-  void Visit(const StartPoint &data);
-  void Visit(const ASTPoint &data);
-  void Visit(const AATPoint &data);
-  void Visit(const FinishPoint &data);
-  void Visit(const UnorderedTaskPoint &data);
   void Visit(const FAISectorZone &data);
   void Visit(const KeyholeZone &data);
   void Visit(const BGAFixedCourseZone &data);
@@ -124,10 +117,11 @@ protected:
    * @param name Type of point
    */
   void Serialise(const OrderedTaskPoint &data, const TCHAR* name);
+  void Serialise(const OrderedTaskPoint &tp);
 
 private:
   const TCHAR *GetTaskFactoryType(TaskFactoryType type) const;
-  const TCHAR *GetHeightRef(HeightReferenceType height_ref) const;
+  const TCHAR *GetHeightRef(AltitudeReference height_ref) const;
 };
 
 #endif

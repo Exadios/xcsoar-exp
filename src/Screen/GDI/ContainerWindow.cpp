@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "Screen/ContainerWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
+#include "Canvas.hpp"
 #include "Asset.hpp"
 
 bool
@@ -72,6 +73,12 @@ ContainerWindow::FocusPreviousControl()
   return true;
 }
 
+const Brush *
+ContainerWindow::OnChildColor(Window &window, Canvas &canvas)
+{
+  return NULL;
+}
+
 LRESULT
 ContainerWindow::OnMessage(HWND hWnd, UINT message,
                             WPARAM wParam, LPARAM lParam)
@@ -84,8 +91,8 @@ ContainerWindow::OnMessage(HWND hWnd, UINT message,
       if (window == NULL)
         break;
 
-      Canvas canvas((HDC)wParam, 1, 1);
-      const Brush *brush = on_color(*window, canvas);
+      Canvas canvas((HDC)wParam, {1, 1});
+      const Brush *brush = OnChildColor(*window, canvas);
       if (brush == NULL)
         break;
 
@@ -102,8 +109,7 @@ ContainerWindow::OnMessage(HWND hWnd, UINT message,
       if (window == NULL)
         break;
 
-      Canvas canvas(di->hDC, di->rcItem.right - di->rcItem.left,
-                    di->rcItem.bottom - di->rcItem.top);
+      Canvas canvas(di->hDC, PixelRect(di->rcItem).GetSize());
       window->OnPaint(canvas);
       return TRUE;
     }

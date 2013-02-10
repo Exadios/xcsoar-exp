@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,8 +37,7 @@
  * \todo 
  * - better documentation of this class!
  */
-class ScoredTaskPoint:
-  public SampledTaskPoint
+class ScoredTaskPoint : public SampledTaskPoint
 {
   AircraftState state_entered;
   bool has_exited;
@@ -47,27 +46,34 @@ public:
   /**
    * Constructor.  Clears entry/exit states on instantiation.
    *
-   * @param wp Waypoint associated with the task point
-   * @param tb Task Behaviour defining options (esp safety heights)
    * @param b_scored Whether distance within OZ is scored
    *
    * @return Partially initialised object
    */
-  ScoredTaskPoint(Type _type, const Waypoint &wp, bool b_scored);
-  virtual ~ScoredTaskPoint() {}
+  ScoredTaskPoint(const GeoPoint &location, bool b_scored);
 
-  /* virtual methods from class TaskPoint */
-  virtual const GeoPoint &GetLocationRemaining() const;
+  const GeoPoint &GetLocationRemaining() const {
+    return GetLocationMin();
+  }
 
-  virtual bool HasEntered() const {
+  /**
+   * Check whether aircraft has entered the observation zone.
+   *
+   * @return True if observation zone has been entered
+   */
+  bool HasEntered() const {
     return positive(state_entered.time);
   }
 
+  /**
+   * Recall aircraft state where it entered the observation zone.
+   *
+   * @return State at entry, or null if never entered
+   */
   const AircraftState &GetEnteredState() const {
     return state_entered;
   }
 
-  /* virtual methods from class SampledTaskPoint */
   virtual void Reset();
 
   /**

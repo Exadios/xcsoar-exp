@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,18 +31,13 @@ Copyright_License {
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Components.hpp"
 #include "Protection.hpp"
-#include "Dialogs/Waypoint.hpp"
-#include "Dialogs/Task.hpp"
 #include "Math/FastMath.h"
 #include "Compiler.h"
 #include "Interface.hpp"
-#include "Screen/Fonts.hpp"
 #include "Pan.hpp"
+#include "Util/Clamp.hpp"
 
 #include <algorithm>
-
-using std::min;
-using std::max;
 
 bool
 GlueMapWindow::OnMouseDouble(PixelScalar x, PixelScalar y)
@@ -63,9 +58,10 @@ bool
 GlueMapWindow::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
 {
   /* allow a bigger threshold on touch screens */
-  const int threshold = IsEmbedded() ? 50 : 10;
+  const unsigned threshold = Layout::Scale(IsEmbedded() ? 50 : 10);
   if (drag_mode != DRAG_NONE && arm_mapitem_list &&
-      (abs(drag_start.x - x) + abs(drag_start.y - y)) > Layout::Scale(threshold))
+      (manhattan_distance(drag_start, RasterPoint{x, y}) > threshold ||
+       mouse_down_clock.Elapsed() > 200))
     arm_mapitem_list = false;
 
   switch (drag_mode) {
@@ -80,11 +76,19 @@ GlueMapWindow::OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys)
                                       + drag_start_geopoint
                                       - drag_projection.ScreenToGeo(x, y));
     QuickRedraw();
+
+#ifdef ENABLE_OPENGL
+    kinetic_x.MouseMove(x);
+    kinetic_y.MouseMove(y);
+#endif
     return true;
 
   case DRAG_GESTURE:
     gestures.Update(x, y);
-    Invalidate();
+
+    /* invoke PaintWindow's Invalidate() implementation instead of
+       DoubleBufferWindow's in order to reuse the buffered map */
+    PaintWindow::Invalidate();
     return true;
 
   case DRAG_SIMULATOR:
@@ -98,6 +102,10 @@ bool
 GlueMapWindow::OnMouseDown(PixelScalar x, PixelScalar y)
 {
   map_item_timer.Cancel();
+
+#ifdef ENABLE_OPENGL
+  kinetic_timer.Cancel();
+#endif
 
   // Ignore single click event if double click detected
   if (ignore_single_click || drag_mode != DRAG_NONE)
@@ -119,6 +127,12 @@ GlueMapWindow::OnMouseDown(PixelScalar x, PixelScalar y)
   case FOLLOW_PAN:
     drag_mode = DRAG_PAN;
     drag_projection = visible_projection;
+
+#ifdef ENABLE_OPENGL
+    kinetic_x.MouseDown(x);
+    kinetic_y.MouseDown(y);
+#endif
+
     break;
   }
 
@@ -174,6 +188,12 @@ GlueMapWindow::OnMouseUp(PixelScalar x, PixelScalar y)
        redraws */
     scale_buffer = 2;
 #endif
+
+#ifdef ENABLE_OPENGL
+    kinetic_x.MouseUp(x);
+    kinetic_y.MouseUp(y);
+    kinetic_timer.Schedule(30);
+#endif
     break;
 
   case DRAG_SIMULATOR:
@@ -191,8 +211,8 @@ GlueMapWindow::OnMouseUp(PixelScalar x, PixelScalar y)
       const Angle new_bearing = drag_start_geopoint.Bearing(location);
       if (((new_bearing - old_bearing).AsDelta().AbsoluteDegrees() < fixed(30)) ||
           (CommonInterface::Basic().ground_speed < min_speed))
-        device_blackboard->SetSpeed(
-            min(fixed(100.0), max(min_speed, fixed(distance / (Layout::FastScale(3))))));
+        device_blackboard->SetSpeed(Clamp(fixed(distance) / Layout::FastScale(3),
+                                          min_speed, fixed(100)));
 
       device_blackboard->SetTrack(new_bearing);
       // change bearing without changing speed if direction change > 30
@@ -223,6 +243,10 @@ bool
 GlueMapWindow::OnMouseWheel(PixelScalar x, PixelScalar y, int delta)
 {
   map_item_timer.Cancel();
+
+#ifdef ENABLE_OPENGL
+  kinetic_timer.Cancel();
+#endif
 
   if (drag_mode != DRAG_NONE)
     return true;
@@ -268,6 +292,10 @@ GlueMapWindow::OnKeyDown(unsigned key_code)
 {
   map_item_timer.Cancel();
 
+#ifdef ENABLE_OPENGL
+  kinetic_timer.Cancel();
+#endif
+
   if (InputEvents::processKey(key_code)) {
     return true; // don't go to default handler
   }
@@ -275,7 +303,7 @@ GlueMapWindow::OnKeyDown(unsigned key_code)
   return false;
 }
 
-bool
+void
 GlueMapWindow::OnCancelMode()
 {
   MapWindow::OnCancelMode();
@@ -293,23 +321,16 @@ GlueMapWindow::OnCancelMode()
     drag_mode = DRAG_NONE;
   }
 
-  map_item_timer.Cancel();
+#ifdef ENABLE_OPENGL
+  kinetic_timer.Cancel();
+#endif
 
-  return false;
+  map_item_timer.Cancel();
 }
 
 void
 GlueMapWindow::OnPaint(Canvas &canvas)
 {
-#ifdef ENABLE_OPENGL
-  ExchangeBlackboard();
-
-  /* update terrain, topography, ... */
-  EnterDrawThread();
-  Idle();
-  LeaveDrawThread();
-#endif
-
   MapWindow::OnPaint(canvas);
 
   // Draw center screen cross hair in pan mode
@@ -323,7 +344,12 @@ void
 GlueMapWindow::OnPaintBuffer(Canvas &canvas)
 {
 #ifdef ENABLE_OPENGL
+  ExchangeBlackboard();
+
   EnterDrawThread();
+
+  /* update terrain, topography, ... */
+  Idle();
 #endif
 
   MapWindow::OnPaintBuffer(canvas);
@@ -342,8 +368,28 @@ GlueMapWindow::OnTimer(WindowTimer &timer)
 {
   if (timer == map_item_timer) {
     map_item_timer.Cancel();
+    if (!InputEvents::IsDefault() && !IsPanning()) {
+      InputEvents::HideMenu();
+      return true;
+    }
     ShowMapItems(drag_start_geopoint, false);
     return true;
+#ifdef ENABLE_OPENGL
+  } else if (timer == kinetic_timer) {
+    if (kinetic_x.IsSteady() && kinetic_y.IsSteady()) {
+      kinetic_timer.Cancel();
+    } else {
+      auto location = drag_projection.ScreenToGeo(kinetic_x.GetPosition(),
+                                                  kinetic_y.GetPosition());
+      location = drag_projection.GetGeoLocation() +
+          drag_start_geopoint - location;
+
+      visible_projection.SetGeoLocation(location);
+      QuickRedraw();
+    }
+
+    return true;
+#endif
   } else
     return MapWindow::OnTimer(timer);
 }
@@ -354,7 +400,7 @@ GlueMapWindow::Render(Canvas &canvas, const PixelRect &rc)
   MapWindow::Render(canvas, rc);
 
   if (IsNearSelf()) {
-    draw_sw.Mark(_T("DrawGlueMisc"));
+    draw_sw.Mark("DrawGlueMisc");
     if (GetMapSettings().show_thermal_profile)
       DrawThermalBand(canvas, rc);
     DrawStallRatio(canvas, rc);

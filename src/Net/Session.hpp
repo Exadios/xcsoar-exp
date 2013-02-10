@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,9 +31,7 @@ Copyright_License {
 #endif
 
 #ifdef HAVE_CURL
-#include <map>
-
-#include <curl/curl.h>
+#include "Net/CURL/Multi.hpp"
 #endif
 
 namespace Net {
@@ -44,10 +42,7 @@ namespace Net {
 #endif
 
 #ifdef HAVE_CURL
-    CURLM *multi;
-
-    typedef std::map<const CURL *, CURLcode> ResultMap;
-    ResultMap results;
+    CurlMulti multi;
 #endif
 
   public:
@@ -56,34 +51,42 @@ namespace Net {
     friend class Request;
 #endif
 
+#ifndef HAVE_CURL
     /**
      * Opens a session that can be used for
      * connections and registers the necessary callback.
      */
     Session();
-
-#ifdef HAVE_CURL
-    ~Session();
 #endif
 
     /**
      * Was the session created successfully
      * @return True if session was created successfully
      */
-    bool Error() const;
-
 #ifdef HAVE_CURL
-    bool Add(CURL *easy) {
-      return curl_multi_add_handle(multi, easy) == CURLM_OK;
+    bool Error() const {
+      return !multi.IsDefined();
     }
 
-    void Remove(CURL *easy);
+    bool Add(CURL *easy) {
+      return multi.Add(easy);
+    }
+
+    void Remove(CURL *easy) {
+      return multi.Remove(easy);
+    }
 
     bool Select(int timeout_ms);
 
-    CURLMcode Perform();
+    CURLMcode Perform() {
+      return multi.Perform();
+    }
 
-    CURLcode InfoRead(const CURL *easy);
+    CURLcode InfoRead(const CURL *easy) {
+      return multi.InfoRead(easy);
+    }
+#else
+    bool Error() const;
 #endif
   };
 }

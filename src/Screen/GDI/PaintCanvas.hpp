@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -41,8 +41,8 @@ public:
   PaintCanvas(Window &_window);
   ~PaintCanvas();
 
-  const RECT &get_dirty() const {
-    return ps.rcPaint;
+  const PixelRect &get_dirty() const {
+    return reinterpret_cast<const PixelRect &>(ps.rcPaint);
   }
 };
 

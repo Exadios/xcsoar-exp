@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,40 +23,37 @@
 #include "TaskMacCreadyTravelled.hpp"
 #include "TaskSolution.hpp"
 #include "Task/Points/TaskPoint.hpp"
+#include "Task/Ordered/Points/OrderedTaskPoint.hpp"
 #include "Navigation/Aircraft.hpp"
 
-TaskMacCreadyTravelled::TaskMacCreadyTravelled(const std::vector<OrderedTaskPoint*> &_tps,
-                                               const unsigned _active_index,
-                                               const GlideSettings &settings,
-                                               const GlidePolar &_gp):
-  TaskMacCready(_tps, _active_index, settings, _gp)
+GlideResult
+TaskMacCreadyTravelled::SolvePoint(const TaskPoint &tp,
+                                   const AircraftState &aircraft,
+                                   fixed minH) const
 {
-  end_index = active_index;
-}
+  assert(tp.GetType() != TaskPointType::UNORDERED);
+  const OrderedTaskPoint &otp = (const OrderedTaskPoint &)tp;
 
-
-GlideResult 
-TaskMacCreadyTravelled::tp_solution(const unsigned i,
-                                    const AircraftState &aircraft, 
-                                    fixed minH) const
-{
-  return TaskSolution::GlideSolutionTravelled(*points[i], aircraft,
+  return TaskSolution::GlideSolutionTravelled(otp, aircraft,
                                               settings, glide_polar, minH);
 }
 
 const AircraftState &
 TaskMacCreadyTravelled::get_aircraft_start(const AircraftState &aircraft) const
 {
-  if (points[0]->HasEntered()) {
-    return points[0]->GetEnteredState();
+  const OrderedTaskPoint &tp = *(const OrderedTaskPoint *)points[0];
+  assert(tp.GetType() != TaskPointType::UNORDERED);
+
+  if (tp.HasEntered()) {
+    return tp.GetEnteredState();
   } else {
     return aircraft;
   }
 }
 
 
-fixed 
-TaskMacCreadyTravelled::get_min_height(const AircraftState &aircraft) const 
+fixed
+TaskMacCreadyTravelled::get_min_height(const AircraftState &aircraft) const
 {
   return aircraft.altitude;
 }

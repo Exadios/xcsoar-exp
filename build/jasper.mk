@@ -1,4 +1,4 @@
-JASSRC = $(SRC)/jasper
+JASSRC = $(SRC)/Terrain/jasper
 JASPER_SOURCES = \
 	$(JASSRC)/base/jas_debug.c \
 	$(JASSRC)/base/jas_malloc.c \
@@ -23,5 +23,8 @@ ifneq ($(TARGET),CYGWIN)
 JASPER_CFLAGS += -Wno-unused-but-set-parameter -Wno-unused-but-set-variable
 endif
 endif
+
+JASPER_CPPFLAGS_INTERNAL = $(ZLIB_CPPFLAGS)
+JASPER_CPPFLAGS = -I$(JASSRC)/..
 
 $(eval $(call link-library,jasper,JASPER))

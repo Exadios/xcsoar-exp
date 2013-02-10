@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -113,10 +113,11 @@ Net::DownloadManager::Cancel(const TCHAR *relative_path)
 #include <list>
 #include <algorithm>
 
+#include <string.h>
 #include <windef.h> /* for MAX_PATH */
 
-class DownloadManagerThread : protected StandbyThread,
-                              private QuietOperationEnvironment {
+class DownloadManagerThread final
+  : protected StandbyThread, private QuietOperationEnvironment {
   struct Item {
     std::string uri;
     tstring path_relative;
@@ -197,7 +198,7 @@ public:
 
   void Enqueue(const char *uri, const TCHAR *path_relative) {
     ScopeLock protect(mutex);
-    queue.push_back(Item(uri, path_relative));
+    queue.emplace_back(uri, path_relative);
 
     for (auto i = listeners.begin(), end = listeners.end(); i != end; ++i)
       (*i)->OnDownloadAdded(path_relative, -1, -1);
@@ -243,12 +244,12 @@ private:
     return StandbyThread::IsStopped();
   }
 
-  virtual void SetProgressRange(unsigned range) gcc_override {
+  virtual void SetProgressRange(unsigned range) override {
     ScopeLock protect(mutex);
     current_size = range;
   }
 
-  virtual void SetProgressPosition(unsigned position) gcc_override {
+  virtual void SetProgressPosition(unsigned position) override {
     ScopeLock protect(mutex);
     current_position = position;
   }
@@ -305,12 +306,6 @@ Net::DownloadManager::BeginDeinitialise()
 
   thread->StopAsync();
 }
-
-#if defined(__clang__) || GCC_VERSION >= 40700
-/* no, DownloadManagerThread really doesn't need a virtual
-   destructor */
-#pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
 
 void
 Net::DownloadManager::Deinitialise()

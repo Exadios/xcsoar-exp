@@ -1,3 +1,52 @@
+xcsoar (6.5~alpha2) unstable; urgency=low
+
+  * new release
+
+ -- Max Kellermann <max@duempel.org>  Thu, 07 Feb 2013 22:21:30 +0100
+
+xcsoar (6.5~alpha1) unstable; urgency=low
+
+  * new release
+  * move manuals to separate documentation package
+
+ -- Max Kellermann <max@duempel.org>  Sun, 27 Jan 2013 23:08:17 +0100
+
+xcsoar (6.4.6) unstable; urgency=low
+
+  * new release
+
+ -- Max Kellermann <max@duempel.org>  Wed, 23 Jan 2013 11:21:14 +0100
+
+xcsoar (6.4.5) unstable; urgency=low
+
+  * new release
+
+ -- Max Kellermann <max@duempel.org>  Fri, 14 Dec 2012 21:42:52 +0100
+
+xcsoar (6.4.4) unstable; urgency=low
+
+  * new release
+
+ -- Max Kellermann <max@duempel.org>  Thu, 15 Nov 2012 00:37:09 +0100
+
+xcsoar (6.4.3) unstable; urgency=low
+
+  * new release
+
+ -- Max Kellermann <max@duempel.org>  Thu, 01 Nov 2012 16:31:28 +0100
+
+xcsoar (6.4.2) unstable; urgency=low
+
+  * new release
+
+ -- Max Kellermann <max@duempel.org>  Wed, 17 Oct 2012 00:51:00 +0200
+
+xcsoar (6.4.1) unstable; urgency=low
+
+  * new release
+
+ -- Max Kellermann <max@duempel.org>  Thu, 30 Aug 2012 00:36:26 +0200
+
 xcsoar (6.4) unstable; urgency=low
 
   * new release

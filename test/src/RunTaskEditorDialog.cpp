@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ Copyright_License {
 */
 
 #include "Screen/SingleWindow.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Init.hpp"
 #include "Dialogs/Dialogs.h"
 #include "UtilsSystem.hpp"
@@ -32,13 +31,13 @@ Copyright_License {
 #include "TaskClientUI.hpp"
 #include "Task/TaskManager.hpp"
 #include "InfoBoxes/InfoBoxLayout.hpp"
-#include "Screen/Layout.hpp"
 #include "Interface.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Logger/Logger.hpp"
 #include "Engine/Airspace/Airspaces.hpp"
 #include "Engine/Airspace/AirspaceWarningManager.hpp"
 #include "LocalPath.hpp"
+#include "Look/Fonts.hpp"
 
 #include <tchar.h>
 #include <stdio.h>
@@ -162,7 +161,6 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   ((Window &)main_window).InstallWndProc();
   main_window.Show();
 
-  Layout::Initialize(640, 480);
   Fonts::Initialize();
 
   dlgTaskOverviewShowModal(main_window);

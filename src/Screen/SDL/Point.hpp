@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,21 +24,11 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_SDL_POINT_HPP
 #define XCSOAR_SCREEN_SDL_POINT_HPP
 
-#include <SDL.h>
+#include <SDL_stdinc.h>
 
 typedef Sint16 PixelScalar;
 typedef Uint16 UPixelScalar;
 
-struct RasterPoint {
-  PixelScalar x, y;
-};
-
-struct PixelSize {
-  PixelScalar cx, cy;
-};
-
-struct PixelRect {
-  PixelScalar left, top, right, bottom;
-};
+#include "Screen/Custom/Point.hpp"
 
 #endif

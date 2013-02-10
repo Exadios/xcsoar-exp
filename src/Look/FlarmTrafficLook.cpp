@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,20 +22,20 @@
 */
 
 #include "FlarmTrafficLook.hpp"
-#include "Look/TrafficLook.hpp"
+#include "TrafficLook.hpp"
+#include "StandardFonts.hpp"
 #include "Screen/Layout.hpp"
-#include "Screen/Fonts.hpp"
 
 void
-FlarmTrafficLook::Initialise(const TrafficLook &other, bool small)
+FlarmTrafficLook::Initialise(const TrafficLook &other, bool small, bool inverse)
 {
   passive_color = Color(0x99, 0x99, 0x99);
   warning_color = other.warning_color;
   alarm_color = other.alarm_color;
-  default_color = COLOR_BLACK;
+  default_color = inverse ? COLOR_WHITE : COLOR_BLACK;
   selection_color = COLOR_BLUE;
-  background_color = COLOR_WHITE;
-  radar_color = COLOR_LIGHT_GRAY;
+  background_color = inverse ? COLOR_BLACK : COLOR_WHITE;
+  radar_color = inverse ? COLOR_DARK_GRAY : COLOR_LIGHT_GRAY;
   Color team_color_green = Color(0x74, 0xFF, 0);
   Color team_color_blue = Color(0, 0x90, 0xFF);
   Color team_color_yellow = Color(0xFF, 0xE8, 0);
@@ -66,15 +66,17 @@ FlarmTrafficLook::Initialise(const TrafficLook &other, bool small)
   plane_pen.Set(width, radar_color);
   radar_pen.Set(1, radar_color);
 
-  unit_fraction_pen.Set(1, COLOR_BLACK);
+  unit_fraction_pen.Set(1, inverse ? COLOR_WHITE : COLOR_BLACK);
 
-  no_traffic_font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(24));
-  label_font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(14));
-  side_info_font.Set(Fonts::GetStandardFontFace(),
-                 Layout::FastScale(small ? 12 : 18), true);
+  no_traffic_font.Load(GetStandardFontFace(), Layout::FastScale(24));
+  label_font.Load(GetStandardFontFace(), Layout::FastScale(14));
+  side_info_font.Load(GetStandardFontFace(),
+                      Layout::FastScale(small ? 12 : 18), true);
 
-  info_labels_font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(10), true);
-  info_values_font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(20));
-  info_units_font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(8));
-  call_sign_font.Set(Fonts::GetStandardFontFace(), Layout::FastScale(28), true);
+  info_labels_font.Load(GetStandardFontFace(),
+                        Layout::FastScale(10), true);
+  info_values_font.Load(GetStandardFontFace(), Layout::FastScale(20));
+  info_units_font.Load(GetStandardFontFace(), Layout::FastScale(8));
+  call_sign_font.Load(GetStandardFontFace(),
+                      Layout::FastScale(28), true);
 }

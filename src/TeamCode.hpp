@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,9 +25,12 @@ Copyright_License {
 #define	XCSOAR_TEAM_CODE_CALCULATION_HPP
 
 #include "Util/StaticString.hpp"
-#include "Util/TypeTraits.hpp"
 #include "Math/fixed.hpp"
 #include "Compiler.h"
+
+#include <type_traits>
+
+#include <tchar.h>
 
 struct GeoPoint;
 class Angle;
@@ -40,6 +43,10 @@ class TeamCode
 public:
   void Clear() {
     code.clear();
+  }
+
+  bool IsDefined() const {
+    return !code.empty();
   }
 
   /**
@@ -85,6 +92,6 @@ public:
   void Update(const TCHAR* _code);
 };
 
-static_assert(is_trivial<TeamCode>::value, "type is not trivial");
+static_assert(std::is_trivial<TeamCode>::value, "type is not trivial");
 
 #endif

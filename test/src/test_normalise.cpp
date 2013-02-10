@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #include "TestUtil.hpp"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 static 
 void test_normalise_err(const int x, const int y) 
@@ -65,9 +66,9 @@ test_fixed_err()
 {
   bool err_ok=true;
   for (fixed x=fixed(0.0001); x< fixed(100000.0); x*= fixed(1.5)) {
-    fixed y0 = fixed_one/sqrt(x);
+    fixed y0 = fixed(1)/sqrt(x);
     fixed y1 = rsqrt(x);
-    fixed err = fabs(y1/y0-fixed_one);
+    fixed err = fabs(y1 / y0 - fixed(1));
     bool this_ok = err< fixed(0.0001);
     err_ok &= this_ok;
     if (!this_ok) {

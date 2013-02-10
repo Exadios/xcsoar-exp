@@ -9,25 +9,6 @@
  * @author      Frank Vanden Berghen
  * based on original implementation by Martyn C Brown
  *
- * NOTE:
- *
- *   If you add "#define APPROXIMATE_PARSING", on the first line of this file
- *   the parser will see the following XML-stream:
- *     <data name="n1">
- *     <data name="n2">
- *     <data name="n3" />
- *   as equivalent to the following XML-stream:
- *     <data name="n1" />
- *     <data name="n2" />
- *     <data name="n3" />
- *   This can be useful for badly-formed XML-streams but prevent the use
- *   of the following XML-stream:
- *     <data name="n1">
- *        <data name="n2">
- *            <data name="n3" />
- *        </data>
- *     </data>
- *
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -123,13 +104,15 @@ XMLNode::AddText(const TCHAR *text, size_t length)
 XMLNode&
 XMLNode::operator=(const XMLNode& A)
 {
-  if (this != &A) {
-    if (d != NULL)
-      d->Unref();
-    d = A.d;
-    if (d)
-      d->Ref();
-  }
+  Data *old = d;
+
+  d = A.d;
+  if (d != nullptr)
+    d->Ref();
+
+  if (old != nullptr)
+    old->Unref();
+
   return *this;
 }
 

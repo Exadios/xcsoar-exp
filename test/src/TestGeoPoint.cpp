@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 
 #include "Geo/GeoPoint.hpp"
 #include "Geo/GeoVector.hpp"
+#include "Geo/Math.hpp"
 #include "Math/Angle.hpp"
 #include "Math/fixed.hpp"
 
@@ -32,10 +33,10 @@
 
 int main(int argc, char **argv)
 {
-  plan_tests(65);
+  plan_tests(66);
 
   // test constructor
-  GeoPoint p1(Angle::Degrees(fixed(345.32)), Angle::Degrees(fixed(-6.332)));
+  GeoPoint p1(Angle::Degrees(345.32), Angle::Degrees(-6.332));
   ok1(p1.IsValid());
   ok1(equals(p1, -6.332, 345.32));
 
@@ -45,14 +46,14 @@ int main(int argc, char **argv)
   ok1(equals(p1, -6.332, -14.68));
 
   // test parametric()
-  GeoPoint p2(Angle::Degrees(fixed_two), Angle::Degrees(fixed_one));
+  GeoPoint p2(Angle::Degrees(2), Angle::Degrees(1));
   GeoPoint p3 = p1.Parametric(p2, fixed(5));
   ok1(p2.IsValid());
   ok1(p3.IsValid());
   ok1(equals(p3, -1.332, -4.68));
 
   // test interpolate
-  GeoPoint p4 = p1.Interpolate(p3, fixed_half);
+  GeoPoint p4 = p1.Interpolate(p3, fixed(0.5));
   ok1(p4.IsValid());
   ok1(equals(p4, -3.832, -9.68));
 
@@ -129,7 +130,7 @@ int main(int argc, char **argv)
   ok1(equals(v.bearing, 63.272424));
 
   // test intermediate_point()
-  GeoPoint p7(Angle::Degrees(fixed_zero), Angle::Degrees(fixed_zero));
+  GeoPoint p7(Angle::Zero(), Angle::Zero());
   ok1(p7.IsValid());
   GeoPoint p8 = p7.IntermediatePoint(p2, fixed(100000));
   ok1(p8.IsValid());
@@ -142,19 +143,27 @@ int main(int argc, char **argv)
   // test projected_distance()
   ok1(equals(p8.ProjectedDistance(p7, p2), 100000));
   ok1(equals(p4.ProjectedDistance(p1, p3), 619599.304393));
-  ok1(equals((p2 * fixed_two).ProjectedDistance(p2, p6), 248567.832772));
+  ok1(equals((p2 * fixed(2)).ProjectedDistance(p2, p6), 248567.832772));
 
   // Tests moved here from test_fixed.cpp
   GeoPoint l1(Angle::Zero(), Angle::Zero());
   ok1(l1.IsValid());
-  GeoPoint l2(Angle::Degrees(fixed(-0.3)), Angle::Degrees(fixed(1.0)));
+  GeoPoint l2(Angle::Degrees(-0.3), Angle::Degrees(1.0));
   ok1(l2.IsValid());
-  GeoPoint l3(Angle::Degrees(fixed(0.00001)), Angle::Degrees(fixed_zero));
+  GeoPoint l3(Angle::Degrees(0.00001), Angle::Zero());
   ok1(l3.IsValid());
-  GeoPoint l4(Angle::Degrees(fixed(10)), Angle::Degrees(fixed_zero));
+  GeoPoint l4(Angle::Degrees(10), Angle::Zero());
   ok1(l4.IsValid());
   l4.SetInvalid();
   ok1(!l4.IsValid());
+
+  bool find_lat_lon_okay = true;
+  for (Angle bearing = Angle::Zero(); bearing < Angle::FullCircle();
+      bearing += Angle::Degrees(5)) {
+    GeoPoint p_test = FindLatitudeLongitude(p1, bearing, fixed(50000));
+    find_lat_lon_okay = equals(p_test.Distance(p1), 50000) && find_lat_lon_okay;
+  }
+  ok1(find_lat_lon_okay);
 
   v = l1.DistanceBearing(l2);
   printf("Dist %g bearing %d\n",
@@ -164,7 +173,7 @@ int main(int argc, char **argv)
   v = l1.DistanceBearing(l3);
   printf("Dist %g bearing %d\n",
          FIXED_DOUBLE(v.distance), FIXED_INT(v.bearing.Degrees()));
-  ok(positive(v.distance) && v.distance < fixed_two, "earth distance short", 0);
+  ok(positive(v.distance) && v.distance < fixed(2), "earth distance short", 0);
 
   v = l1.DistanceBearing(l4);
   printf("Dist %g bearing %d\n",

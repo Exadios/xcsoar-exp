@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -59,11 +59,11 @@ GlideResult::CalcCruiseBearing()
     return;
 
   const fixed sintheta = effective_wind_angle.sin();
-  if (sintheta == fixed_zero)
+  if (sintheta == fixed(0))
     return;
 
   cruise_track_bearing -=
-    Angle::Radians(half(asin(sintheta * effective_wind_speed / v_opt)));
+    Angle::asin(sintheta * effective_wind_speed / v_opt).Half();
 }
 
 void
@@ -136,7 +136,7 @@ GlideResult::GlideAngleGround() const
   if (positive(vector.distance))
     return pure_glide_height / vector.distance;
 
-  return fixed_int_constant(1000);
+  return fixed(1000);
 }
 
 fixed
@@ -145,7 +145,7 @@ GlideResult::DestinationAngleGround() const
   if (positive(vector.distance))
     return (altitude_difference + pure_glide_height) / vector.distance;
 
-  return fixed_int_constant(1000);
+  return fixed(1000);
 }
 
 bool 

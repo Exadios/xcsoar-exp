@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,14 +24,16 @@
 #define ORDEREDTASK_H
 
 #include "Geo/Flat/TaskProjection.hpp"
-#include "Geo/SearchPointVector.hpp"
 #include "Task/AbstractTask.hpp"
 #include "Task/TaskBehaviour.hpp"
 #include "TaskAdvanceSmart.hpp"
+#include "Util/DereferenceIterator.hpp"
 
 #include <assert.h>
 #include <vector>
 
+class SearchPoint;
+class SearchPointVector;
 class OrderedTaskPoint;
 class StartPoint;
 class FinishPoint;
@@ -42,7 +44,7 @@ struct Waypoint;
 class Waypoints;
 class AATPoint;
 class FlatBoundingBox;
-struct GeoBounds;
+class GeoBounds;
 struct TaskSummary;
 struct TaskFactoryConstraints;
 
@@ -57,14 +59,13 @@ struct TaskFactoryConstraints;
  * - have a method to check if a potential taskpoint is distinct from its neighbours?
  * - multiple start points
  */
-class OrderedTask:
-  public AbstractTask
+class OrderedTask final : public AbstractTask
 {
 public:
-  friend class Serialiser;
-  friend class PrintHelper;
-
   typedef std::vector<OrderedTaskPoint*> OrderedTaskPointVector; /**< Storage type of task points */ 
+
+  typedef DereferenceContainerAdapter<const OrderedTaskPointVector,
+                                      const OrderedTaskPoint> ConstTaskPointList;
 
 private:
   OrderedTaskPointVector task_points;
@@ -96,7 +97,7 @@ public:
    * @return Initialised object
    */
   OrderedTask(const TaskBehaviour &tb);
-  virtual ~OrderedTask();
+  ~OrderedTask();
 
   /**
    * Accessor for factory system for constructing tasks
@@ -115,10 +116,8 @@ public:
    * Set type of task factory to be used for constructing tasks
    *
    * @param _factory Type of task
-   *
-   * @return Type of task
    */
-  TaskFactoryType SetFactory(const TaskFactoryType _factory);
+  void SetFactory(const TaskFactoryType _factory);
 
   /** 
    * Return list of factory types
@@ -129,6 +128,13 @@ public:
    */
   gcc_pure
   std::vector<TaskFactoryType> GetFactoryTypes(bool all = true) const;
+
+  void SetTaskBehaviour(const TaskBehaviour &tb);
+
+  /**
+   * Removes all task points.
+   */
+  void RemoveAllPoints();
 
   /** 
    * Clear all points and restore default ordered task behaviour
@@ -162,7 +168,9 @@ public:
    * @return Index of active task point sequence
    */
   gcc_pure
-  unsigned GetActiveIndex() const;
+  unsigned GetActiveIndex() const {
+    return active_task_point;
+  }
 
   /**
    * Retrieve task point by sequence index
@@ -205,9 +213,12 @@ public:
   void RotateOptionalStarts();
 
   /**
-   * Return number of optional start points
+   * Returns true if there are optional start points.
    */
-  unsigned OptionalStartsSize() const;
+  gcc_pure
+  bool HasOptionalStarts() const {
+    return !optional_start_points.empty();
+  }
 
   /**
    * Insert taskpoint before specified index in task.  May fail if the candidate
@@ -433,6 +444,19 @@ private:
   fixed ScanDistanceMax();
 
   /**
+   * Optimise target ranges (for adjustable tasks) to produce an estimated
+   * time remaining with the current glide polar, equal to a target value.
+   *
+   * @param state_now Aircraft state
+   * @param t_target Desired time for remainder of task (s)
+   *
+   * @return Target range parameter (0-1)
+   */
+  fixed CalcMinTarget(const AircraftState &state_now,
+                      const GlidePolar &glide_polar,
+                      const fixed t_target);
+
+  /**
    * Sets previous/next taskpoint pointers for task point at specified
    * index in sequence.
    *
@@ -530,20 +554,15 @@ public:
   }
 
   /** 
-   * Retrieve the OrderedTaskBehaviour used by this task
-   * 
-   * @return Reference to OrderedTaskBehaviour
-   */
-  OrderedTaskBehaviour &GetOrderedTaskBehaviour() {
-    return ordered_behaviour;
-  }
-
-  /** 
    * Copy OrderedTaskBehaviour to this task
    * 
    * @param ob Value to set
    */
   void SetOrderedTaskBehaviour(const OrderedTaskBehaviour &ob);
+
+  ConstTaskPointList GetPoints() const {
+    return task_points;
+  }
 
   gcc_pure
   OrderedTaskPoint &GetPoint(const unsigned i) {
@@ -559,6 +578,10 @@ public:
     assert(task_points[i] != NULL);
 
     return *task_points[i];
+  }
+
+  ConstTaskPointList GetOptionalStartPoints() const {
+    return optional_start_points;
   }
 
   /**
@@ -582,62 +605,79 @@ public:
     return *optional_start_points[i];
   }
 
+  /** Determines whether the task has adjustable targets */
+  gcc_pure
+  bool HasTargets() const;
+
+  /**
+   * Find location of center of task (for rendering purposes)
+   *
+   * @return Location of center of task or GeoPoint::Invalid()
+   */
+  gcc_pure
+  GeoPoint GetTaskCenter() const;
+
+  /**
+   * Find approximate radius of task from center to edge (for rendering purposes)
+   *
+   * @return Radius (m) from center to edge of task
+   */
+  gcc_pure
+  fixed GetTaskRadius() const;
+
 public:
   /* virtual methods from class TaskInterface */
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb);
-  virtual unsigned TaskSize() const;
-  virtual void SetActiveTaskPoint(unsigned desired);
-  virtual TaskWaypoint *GetActiveTaskPoint() const;
-  virtual bool IsValidTaskPoint(const int index_offset=0) const;
+  virtual unsigned TaskSize() const override {
+    return task_points.size();
+  }
+
+  virtual void SetActiveTaskPoint(unsigned desired) override;
+  virtual TaskWaypoint *GetActiveTaskPoint() const override;
+  virtual bool IsValidTaskPoint(const int index_offset=0) const override;
   virtual bool UpdateIdle(const AircraftState& state_now,
-                          const GlidePolar &glide_polar);
+                          const GlidePolar &glide_polar) override;
 
   /* virtual methods from class AbstractTask */
-  virtual void Reset();
-  virtual bool TaskFinished() const;
-  virtual bool TaskStarted(bool soft=false) const;
-  virtual bool CheckTask() const;
-  virtual fixed GetFinishHeight() const;
-  virtual GeoPoint GetTaskCenter(const GeoPoint &fallback_location) const;
-  virtual fixed GetTaskRadius(const GeoPoint &fallback_location) const;
+  virtual void Reset() override;
+  virtual bool TaskFinished() const override;
+  virtual bool TaskStarted(bool soft=false) const override;
+  virtual bool CheckTask() const override;
+  virtual fixed GetFinishHeight() const override;
 
 protected:
   /* virtual methods from class AbstractTask */
   virtual bool UpdateSample(const AircraftState &state_now,
                             const GlidePolar &glide_polar,
-                            const bool full_update);
+                            const bool full_update) override;
   virtual bool CheckTransitions(const AircraftState &state_now,
-                                const AircraftState &state_last);
+                                const AircraftState &state_last) override;
   virtual bool CalcBestMC(const AircraftState &state_now,
                           const GlidePolar &glide_polar,
-                          fixed& best) const;
+                          fixed& best) const override;
   virtual fixed CalcRequiredGlide(const AircraftState &state_now,
-                                  const GlidePolar &glide_polar) const;
+                                  const GlidePolar &glide_polar) const override;
   virtual bool CalcCruiseEfficiency(const AircraftState &state_now,
                                     const GlidePolar &glide_polar,
-                                    fixed &value) const;
+                                    fixed &value) const override;
   virtual bool CalcEffectiveMC(const AircraftState &state_now,
                                const GlidePolar &glide_polar,
-                               fixed &value) const;
-  virtual fixed CalcMinTarget(const AircraftState &state_now,
-                              const GlidePolar &glide_polar,
-                              const fixed t_target);
-  virtual fixed CalcGradient(const AircraftState &state_now) const;
-  virtual fixed ScanTotalStartTime(const AircraftState &state_now);
-  virtual fixed ScanLegStartTime(const AircraftState &state_now);
-  virtual fixed ScanDistanceNominal();
-  virtual fixed ScanDistancePlanned();
-  virtual fixed ScanDistanceRemaining(const GeoPoint &ref);
-  virtual fixed ScanDistanceScored(const GeoPoint &ref);
-  virtual fixed ScanDistanceTravelled(const GeoPoint &ref);
+                               fixed &value) const override;
+  virtual fixed CalcGradient(const AircraftState &state_now) const override;
+  virtual fixed ScanTotalStartTime(const AircraftState &state_now) override;
+  virtual fixed ScanLegStartTime(const AircraftState &state_now) override;
+  virtual fixed ScanDistanceNominal() override;
+  virtual fixed ScanDistancePlanned() override;
+  virtual fixed ScanDistanceRemaining(const GeoPoint &ref) override;
+  virtual fixed ScanDistanceScored(const GeoPoint &ref) override;
+  virtual fixed ScanDistanceTravelled(const GeoPoint &ref) override;
   virtual void ScanDistanceMinMax(const GeoPoint &ref, bool full,
-                                  fixed *dmin, fixed *dmax);
+                                  fixed *dmin, fixed *dmax) override;
   virtual void GlideSolutionRemaining(const AircraftState &state_now,
                                       const GlidePolar &polar,
-                                      GlideResult &total, GlideResult &leg);
+                                      GlideResult &total, GlideResult &leg) override;
   virtual void GlideSolutionTravelled(const AircraftState &state_now,
                                       const GlidePolar &glide_polar,
-                                      GlideResult &total, GlideResult &leg);
+                                      GlideResult &total, GlideResult &leg) override;
   virtual void GlideSolutionPlanned(const AircraftState &state_now,
                                     const GlidePolar &glide_polar,
                                     GlideResult &total,
@@ -645,14 +685,11 @@ protected:
                                     DistanceStat &total_remaining_effective,
                                     DistanceStat &leg_remaining_effective,
                                     const GlideResult &solution_remaining_total,
-                                    const GlideResult &solution_remaining_leg);
-public:
-  virtual bool HasTargets() const;
+                                    const GlideResult &solution_remaining_leg) override;
 protected:
-  virtual bool IsScored() const;
+  virtual bool IsScored() const override;
 public:
-  virtual void AcceptTaskPointVisitor(TaskPointConstVisitor &visitor) const gcc_override;
-  virtual void AcceptStartPointVisitor(TaskPointConstVisitor &visitor) const gcc_override;
+  virtual void AcceptTaskPointVisitor(TaskPointConstVisitor &visitor) const override;
 };
 
 #endif //ORDEREDTASK_H

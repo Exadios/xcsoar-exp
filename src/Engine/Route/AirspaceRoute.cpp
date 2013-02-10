@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,14 +26,14 @@
 #include "Airspace/AirspaceCircle.hpp"
 #include "Airspace/AirspacePolygon.hpp"
 #include "Airspace/Predicate/AirspacePredicateHeightRange.hpp"
-#include "Math/FastMath.h"
+#include "Geo/Flat/FlatRay.hpp"
 
 // Airspace query helpers
 
 /**
  * Find airspace and location of nearest intercept
  */
-class AIV: public AirspaceIntersectionVisitor
+class AIV final : public AirspaceIntersectionVisitor
 {
 public:
   typedef std::pair<const AbstractAirspace*, RoutePoint> AIVResult;
@@ -52,20 +52,15 @@ public:
       const RoutePolars& _rpolar):
     AirspaceIntersectionVisitor(),
     link(_e),
-    min_distance(-fixed_one),
+    min_distance(fixed(-1)),
     proj(_proj),
     rpolar(_rpolar),
     origin(proj.Unproject(_e.first)),
     nearest((const AbstractAirspace *)NULL, _e.first)
     {
     }
-  virtual void Visit(const AirspaceCircle &as) {
-    visit_abstract(as);
-  }
-  virtual void Visit(const AirspacePolygon &as) {
-    visit_abstract(as);
-  }
-  void visit_abstract(const AbstractAirspace &as) {
+
+  virtual void Visit(const AbstractAirspace &as) override {
     assert(!intersections.empty());
 
     GeoPoint point = intersections[0].first;
@@ -92,7 +87,7 @@ public:
 };
 
 
-class AirspaceInsideOtherVisitor: public AirspaceVisitor {
+class AirspaceInsideOtherVisitor final : public AirspaceVisitor {
   const AbstractAirspace* m_found;
 
 public:
@@ -104,13 +99,7 @@ public:
   }
 
 protected:
-  virtual void Visit(const AirspaceCircle &as) {
-    visit_abstract(as);
-  }
-  virtual void Visit(const AirspacePolygon &as) {
-    visit_abstract(as);
-  }
-  virtual void visit_abstract(const AbstractAirspace &as) {
+  virtual void Visit(const AbstractAirspace &as) override {
     m_found = &as;
   }
 };
@@ -132,7 +121,7 @@ const AbstractAirspace*
 AirspaceRoute::InsideOthers(const AGeoPoint& origin) const
 {
   AirspaceInsideOtherVisitor visitor;
-  m_airspaces.VisitWithinRange(origin, fixed_one, visitor);
+  m_airspaces.VisitWithinRange(origin, fixed(1), visitor);
   count_airspace++;
   return visitor.found();
 }
@@ -250,7 +239,7 @@ AirspaceRoute::Synchronise(const Airspaces& master,
   // @todo: have margin for h_max to allow for climb
   AirspacePredicateHeightRangeExcludeTwo condition(h_min, h_max, origin, destination);
   if (m_airspaces.SynchroniseInRange(master, origin.Middle(destination),
-                                       half(origin.Distance(destination)),
+                                     Half(origin.Distance(destination)),
                                        condition))
   {
     if (m_airspaces.size())

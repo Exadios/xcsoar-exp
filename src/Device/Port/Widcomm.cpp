@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,11 +32,11 @@ FindDevice(const TCHAR *name, TCHAR *result, size_t result_size)
     return false;
 
   TCHAR key_name[64], value[64];
-  for (unsigned i = 0; drivers_active.enum_key(i, key_name, 64); ++i) {
+  for (unsigned i = 0; drivers_active.EnumKey(i, key_name, 64); ++i) {
     RegistryKey device(drivers_active, key_name, true);
-    if (!device.error() && device.get_value(_T("Name"), value, 64) &&
+    if (!device.error() && device.GetValue(_T("Name"), value, 64) &&
         _tcscmp(name, value) == 0)
-      return device.get_value(_T("Key"), result, result_size);
+      return device.GetValue(_T("Key"), result, result_size);
   }
 
   return false;
@@ -54,7 +54,7 @@ IsWidcommDevice(const TCHAR *name)
     return false;
 
   TCHAR dll[64];
-  return registry.get_value(_T("Dll"), dll, 64) &&
+  return registry.GetValue(_T("Dll"), dll, 64) &&
     _tcscmp(dll, _T("btcedrivers.dll"));
 }
 

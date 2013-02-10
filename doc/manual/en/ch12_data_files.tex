@@ -26,13 +26,13 @@ are only accessed at start-up (waypoints, airspace, glide polars,
 configuration files), this is acceptable.  However, terrain and
 topography files are accessed continuously while XCSoar is running, so
 these should be located in faster storage memory.
-For newer Windows Mobile or Android devices this is not an issue any 
-more. The access to modern memory cards usually meets the required performance.   
+For newer Windows Mobile or Android devices this is not an issue any
+more. The access to modern memory cards usually meets the required performance.
 
 Many PDAs provide a 'file store' which is nonvolatile; the same
 arguments above apply regarding their use and performance.
 
-All data files should be copied into the directory: 
+All data files should be copied into the directory:
 \begin{verbatim}
 My Documents/XCSoarData
 \end{verbatim}
@@ -61,7 +61,7 @@ format is GeoJPEG2000.
 
 The topography is vector data such as roads, railway lines, large
 built-up areas (cities), miscellaneous populated areas (towns and
-villages), lakes and rivers.  The topography is stored in ERSI Shape
+villages), lakes and rivers.  The topography is stored in ESRI Shape
 files which are generated from OpenStreetMap.
 
 Map files can be downloaded from the XCSoar web site:
@@ -73,8 +73,8 @@ may use the map generator:
 
 \url{http://mapgen.xcsoar.org/}
 
-As far as waypoints or airspaces are included in the map database CXSoar 
-defaults to them. An e.g. separately configured waypoint file will replace all the 
+As far as waypoints or airspaces are included in the map database CXSoar
+defaults to them. An e.g. separately configured waypoint file will replace all the
 waypoints given by the map database.
 
 \section{Waypoints}
@@ -92,9 +92,7 @@ XCSoar understands the following waypoint file formats:
 Files are available from the Soaring Turn-points section of the
 Soaring Server\footnote{Mirrors to this website exist, google search
 for ``worldwide soaring turnpoint exchange'' if the main server is
-inaccessible.}:
-
-\verb|http://soaringweb.org/TP|
+inaccessible.}: \url{http://soaringweb.org/TP}
 
 Several commercial and freely distributable programs exist for
 converting between different waypoint formats.
@@ -108,36 +106,36 @@ if available.
 XCSoar supports airspace files (extension \verb|.txt|) using a sub set
 of the widely distributed OpenAir format, as well as the Tim Newport-Pearce file
 format (extension \verb|.sua|). Files are available from the
-Special Use Airspace section of the Soaring Server:
+Special Use Airspace section of the soaring web site:
 
-\verb|http://soaringweb.org/Airspace|
+\url{http://soaringweb.org/Airspace}
 
-The following is the list of supported airspace types: Class A-G, Prohibited, Danger Areas,
-Restricted, Task Area, CTR, No Gliders, Wave, Transponder Mandatory, and Other.  All other airspace
-types will be drawn as type ``Other''.
-In addition to the OpenAir standard the AR command is recognized as the airspace radio frequency.
+The following is the list of supported airspace types: Class A-G, Prohibited,
+Danger Areas, Restricted, Task Area, CTR, No Gliders, Wave, Transponder
+Mandatory, and Other.  All other airspace types will be drawn as type ``Other''.
+In addition to the OpenAir standard the AR command is recognized as the
+airspace radio frequency.
 
-\section{Airfield details}
+\section{Airfield details}\label{sec:airfield-details}
 
 The airfield details file (extension \verb|.txt|) is a simple text
 format file containing entries for each airfield, marked in square
-brackets in uppercase, followed by the text to be displayed on the
-Waypoint Details Dialog for that particular waypoint.  The text should
-have a narrow margin because the waypoint details dialog cannot
+brackets, followed by the text to be displayed on the
+Waypoint Details Dialogue for that particular waypoint.  The text should
+have a narrow margin because the waypoint details dialogue cannot
 currently handle word wrapping.
 
-The text may also specifiy images or other arbitrary files for airfields.  To
+The text may also specify images for airfields or waypoints.  To
 show an image directly in XCSoar use \verb|image=| followed by the file
-name.  To open a file with an external application you can use
-\verb|file=| followed by an arbitrary filetype (e.g. \verb|.pdf|).  Be sure
+name (this is currently not supported on PC/Windows).  Be sure
 to avoid any additional whitespaces around the equal sign or in front of the
 keyword. Which files are supported depends on your operating system and the
 applications that are installed.  Android supports JPEG files and other
-arbitrary files, others mostly only BMP images.
+file types, others mostly BMP images.
 
 The names of airfields used in the file must correspond exactly to the
-names in the waypoints file, with the exception of being converted to
-uppercase.
+names in the waypoints file, with the exception that converting to
+uppercase is allowed.
 
 The XCSoar website provides airfield details files for several
 countries and includes tools to convert from various Enroute
@@ -167,6 +165,8 @@ REMARKS:
   ABTMT - Rwy 17R-35L fly wide
 
 ICAO: YBLA
+
+image=Benalla_sat.bmp
 
 [GROOTE EYLANDT]
 Blah blah blah blah
@@ -198,17 +198,17 @@ must contain a single row of numbers separated with commas:
 \item Speed in km/h for third measurement point, (usually max manoeuvring speed).
 \item Sink rate in m/s for third measurement point.
 \end{itemize}
-The following is an extension to the existing polare file format and thus optional. 
+The following is an extension to the existing polare file format and thus optional.
 \begin{itemize}
-\item The wing area in m$^2$ to allow the wing load computation (could be zero if unknown). 
-\item The max. manoeuvering speed in km/h to enable simple checks for the cruise speed command. 
+\item The wing area in m$^2$ to allow the wing load computation (could be zero if unknown).
+\item The max. manoeuvering speed in km/h to enable simple checks for the cruise speed command.
 \end{itemize}
 
 An example, for the LS-3 glider, is given below:
 \begin{verbatim}
-*LS-3	WinPilot POLAR file: MassDryGross[kg], 
-*  MaxWaterBallast[liters], Speed1[km/h], Sink1[m/s], 
-*  Speed2, Sink2, Speed3, Sink3  	
+*LS-3	WinPilot POLAR file: MassDryGross[kg],
+*  MaxWaterBallast[liters], Speed1[km/h], Sink1[m/s],
+*  Speed2, Sink2, Speed3, Sink3
 373,	121,	74.1,	-0.65,	102.0,	-0.67,	167.0,	-1.85
 \end{verbatim}
 
@@ -237,7 +237,7 @@ All values that have physical dimensions are expressed in SI units
 When a profile file is saved, it contains all configuration settings.
 Profile files may be edited with a text editor to produce a smaller
 set of configuration settings that can be given to other pilots to
-load.  
+load.
 
 When a profile file is loaded, only the settings present in that file
 overwrite the configuration settings in XCSoar; all other settings are
@@ -277,14 +277,14 @@ Remove tape from wings and tail
 
 \section{Tasks}
 
-Task files (extension \verb|.tsk|) are stored in a XCSoar own XML format, 
+Task files (extension \verb|.tsk|) are stored in a XCSoar own XML format,
 whereas SeeYou tasks can also be loaded from file (extension \verb|.cup|).
 
 \section{Flight logs} \label{sec:logfiles}
 
 The software flight logger generates IGC files (extension \verb|.igc|)
-according to the long naming convention described in the FAI 
-document {\em Technical Specification for IGC-Approved GNSS Flight Recorders}.  
+according to the long naming convention described in the FAI
+document {\em Technical Specification for IGC-Approved GNSS Flight Recorders}.
 
 Log-files are stored in the `logs' subdirectory of the XCSoarData directory.
 These files can be imported into other programs for analysis after flight.
@@ -312,8 +312,8 @@ DA8B06=Chuck Yeager
 
 Currently this file is limited to a maximum of 200 entries.
 
-Additionally the FlarmNet file \verb|data.fln| is supported. It contains all 
-the FLARM identifications distributed by the FlarmNet community. The file can 
+Additionally the FlarmNet file \verb|data.fln| is supported. It contains all
+the FLARM identifications distributed by the FlarmNet community. The file can
 be downloaded from the web site:
 
 \url{http://www.flarmnet.org}
@@ -342,7 +342,7 @@ Some reasons why you might like to use xci:
 For more information on editing or writing or your own input event
 file, see the {\em XCSoar Advanced Configuration Manual}.
 
-\section{Status}\label{sec:status}
+\section{Status}\label{sec:status-file}
 
 Status files are text of the form {\em label=value}, arranged in
 blocks of text where each block corresponds to an individual status
@@ -355,8 +355,8 @@ contain the following fields:
 \item[delay] Duration in milliseconds the status message is
   to be displayed.  This is optional.
 \item[hide] A boolean (yes/no) that dictates whether the message
- is to be hidden (that is, not displayed). 
-\end{description} 
+ is to be hidden (that is, not displayed).
+\end{description}
 
 Example:
 \begin{verbatim}
@@ -368,4 +368,4 @@ key=Task started
 delay=1500
 hide=yes
 \end{verbatim}
-% 
+%

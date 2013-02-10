@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,11 +27,12 @@ Copyright_License {
 #include <commctrl.h>
 
 void
-BaseButtonWindow::set(ContainerWindow &parent, const TCHAR *text, unsigned id,
-                      const PixelRect &rc,
-                      const WindowStyle style)
+BaseButtonWindow::Create(ContainerWindow &parent,
+                         const TCHAR *text, unsigned id,
+                         const PixelRect &rc,
+                         const WindowStyle style)
 {
-  Window::set(&parent, WC_BUTTON, text, rc, style);
+  Window::Create(&parent, WC_BUTTON, text, rc, style);
 
   SetWindowLong(GWL_ID, id);
 
@@ -56,7 +57,8 @@ BaseButtonWindow::Click()
 }
 
 void
-ButtonWindow::set_text(const TCHAR *_text) {
+ButtonWindow::SetText(const TCHAR *_text)
+{
   AssertNoneLocked();
   AssertThread();
 
@@ -86,7 +88,7 @@ ButtonWindow::set_text(const TCHAR *_text) {
 }
 
 const tstring
-ButtonWindow::get_text() const
+ButtonWindow::GetText() const
 {
   AssertNoneLocked();
   AssertThread();

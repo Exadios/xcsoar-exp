@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@ Copyright_License {
 #ifndef XCSOAR_RATE_LIMITER_HPP
 #define XCSOAR_RATE_LIMITER_HPP
 
-#include "Timer.hpp"
-#include "PeriodClock.hpp"
+#include "Event/Timer.hpp"
+#include "Time/PeriodClock.hpp"
 
 /**
  * A class that limits the rate at which events are processed.  It
@@ -68,7 +68,8 @@ protected:
   virtual void Run() = 0;
 
 private:
-  virtual void OnTimer();
+  /* virtual methods from class Timer */
+  virtual void OnTimer() override;
 };
 
 #endif

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,45 +22,40 @@ Copyright_License {
 */
 
 #include "Dialogs/TextEntry.hpp"
-#include "Dialogs/XML.hpp"
-#include "Dialogs/CallBackTable.hpp"
 #include "Form/Form.hpp"
 #include "Form/Button.hpp"
 #include "Form/Keyboard.hpp"
 #include "Form/Edit.hpp"
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
-#include "Compatibility/string.h"
 #include "Util/StringUtil.hpp"
+#include "UIGlobals.hpp"
+#include "Language/Language.hpp"
 
 #include <algorithm>
 #include <assert.h>
 
-using std::min;
-
-static WndForm *wf = NULL;
+static WndProperty *editor;
 static KeyboardControl *kb = NULL;
 
-static AllowedCharactersCallback_t AllowedCharactersCallback;
+static AllowedCharacters AllowedCharactersCallback;
 
-#define MAX_TEXTENTRY 40
+static constexpr size_t MAX_TEXTENTRY = 40;
 static unsigned int cursor = 0;
-static unsigned int max_width = MAX_TEXTENTRY;
+static size_t max_width;
 static TCHAR edittext[MAX_TEXTENTRY];
 
 static void
 UpdateAllowedCharacters()
 {
-  if (AllowedCharactersCallback != NULL)
+  if (AllowedCharactersCallback)
     kb->SetAllowedCharacters(AllowedCharactersCallback(edittext));
 }
 
 static void
 UpdateTextboxProp()
 {
-  WndProperty *wp = (WndProperty*)wf->FindByName(_T("prpText"));
-  assert(wp != NULL);
-  wp->SetText(edittext);
+  editor->SetText(edittext);
 
   UpdateAllowedCharacters();
 }
@@ -77,6 +72,12 @@ DoBackspace()
   return true;
 }
 
+static void
+OnBackspace()
+{
+  DoBackspace();
+}
+
 static bool
 DoCharacter(TCHAR character)
 {
@@ -89,51 +90,42 @@ DoCharacter(TCHAR character)
   return true;
 }
 
+static void
+OnCharacter(TCHAR character)
+{
+  DoCharacter(character);
+}
+
 static bool
-FormKeyDown(WndForm &Sender, unsigned key_code)
+FormKeyDown(unsigned key_code)
 {
   switch (key_code) {
-  case VK_RIGHT:
+  case KEY_RIGHT:
     return true;
-  case VK_LEFT:
-  case VK_BACK:
+  case KEY_LEFT:
+  case KEY_BACK:
     DoBackspace();
-    return true;
-  }
-
-  if (!HasKeyboard())
-    return false;
-
-  if ((key_code >= 'A' && key_code <= 'Z') ||
-      (key_code >= '0' && key_code <= '9')) {
-    DoCharacter(key_code);
-    return true;
-  }
-
-  if (key_code == VK_SPACE) {
-    DoCharacter(_T(' '));
     return true;
   }
 
   return false;
 }
 
-static void
-OnBackspace(WndButton &Sender)
+static bool
+FormCharacter(unsigned ch)
 {
-  DoBackspace();
-}
+  if (ch < 0x20)
+    return false;
 
-static void
-OnOk(WndButton &Sender)
-{
-  wf->SetModalResult(mrOK);
-}
+#ifndef _UNICODE
+  if (ch >= 0x80)
+    /* TODO: ASCII only for now, because we don't have proper UTF-8
+       support yet */
+    return false;
+#endif
 
-static void
-OnCancel(WndButton &Sender)
-{
-  wf->SetModalResult(mrCancel);
+  DoCharacter((TCHAR)ch);
+  return true;
 }
 
 static void
@@ -144,67 +136,117 @@ ClearText()
   UpdateTextboxProp();
 }
 
-static void
-OnClear(WndButton &Sender)
-{
-  ClearText();
-}
-
-static void
-OnCharacter(TCHAR character)
-{
-  DoCharacter(character);
-}
-
-static constexpr CallBackTableEntry CallBackTable[] = {
-  DeclareCallBackEntry(OnCharacter),
-  DeclareCallBackEntry(OnBackspace),
-  DeclareCallBackEntry(OnClear),
-  DeclareCallBackEntry(OnCancel),
-  DeclareCallBackEntry(OnOk),
-  DeclareCallBackEntry(NULL)
-};
-
 bool
-dlgTextEntryKeyboardShowModal(SingleWindow &parent, TCHAR *text,
-                              int width, const TCHAR* caption,
-                              AllowedCharactersCallback_t accb)
+dlgTextEntryKeyboardShowModal(TCHAR *text, size_t width,
+                              const TCHAR* caption,
+                              AllowedCharacters accb)
 {
   if (width == 0)
     width = MAX_TEXTENTRY;
 
-  max_width = min(MAX_TEXTENTRY, width);
+  max_width = std::min(MAX_TEXTENTRY, width);
 
-  wf = LoadDialog(CallBackTable, parent,
-                  Layout::landscape ? _T("IDR_XML_TEXTENTRY_KEYBOARD_L") :
-                                      _T("IDR_XML_TEXTENTRY_KEYBOARD"));
-  assert(wf != NULL);
+  const DialogLook &look = UIGlobals::GetDialogLook();
+  WndForm form(look);
+  form.Create(UIGlobals::GetMainWindow(), caption);
+  form.SetKeyDownFunction(FormKeyDown);
+  form.SetCharacterFunction(FormCharacter);
 
-  if (caption)
-    wf->SetCaption(caption);
+  ContainerWindow &client_area = form.GetClientAreaWindow();
+  const PixelRect rc = client_area.GetClientRect();
+
+  const PixelScalar client_height = rc.bottom - rc.top;
+
+  const PixelScalar padding = Layout::Scale(2);
+  const PixelScalar backspace_width = Layout::Scale(36);
+  const PixelScalar backspace_left = rc.right - padding - backspace_width;
+  const PixelScalar editor_height = Layout::Scale(22);
+  const PixelScalar editor_bottom = padding + editor_height;
+  const PixelScalar button_height = Layout::Scale(40);
+  constexpr unsigned keyboard_rows = 5;
+  const PixelScalar keyboard_top = editor_bottom + padding;
+  const PixelScalar keyboard_height = keyboard_rows * button_height;
+  const PixelScalar keyboard_bottom = keyboard_top + keyboard_height;
+
+  const bool vertical = client_height >= keyboard_bottom + button_height;
+
+  const PixelScalar button_top = vertical
+    ? rc.bottom - button_height
+    : keyboard_bottom - button_height;
+  const PixelScalar button_bottom = vertical
+    ? rc.bottom
+    : keyboard_bottom;
+
+  const PixelScalar ok_left = vertical ? 0 : padding;
+  const PixelScalar ok_right = vertical
+    ? rc.right / 3
+    : ok_left + Layout::Scale(80);
+
+  const PixelScalar cancel_left = vertical
+    ? ok_right
+    : Layout::Scale(175);
+  const PixelScalar cancel_right = vertical
+    ? rc.right * 2 / 3
+    : cancel_left + Layout::Scale(60);
+
+  const PixelScalar clear_left = vertical
+    ? cancel_right
+    : Layout::Scale(235);
+  const PixelScalar clear_right = vertical
+    ? rc.right
+    : clear_left + Layout::Scale(50);
+
+  WndProperty _editor(client_area, look, _T(""),
+                      { 0, padding, backspace_left - padding, editor_bottom },
+                      0, WindowStyle());
+  _editor.SetReadOnly();
+  editor = &_editor;
+
+  ButtonWindowStyle button_style;
+  button_style.TabStop();
+
+  WndButton backspace_button(client_area, look, _T("<-"),
+                             { backspace_left, padding, rc.right - padding,
+                                 editor_bottom },
+                             button_style, OnBackspace);
+
+  WndButton ok_button(client_area, look, _("OK"),
+                      { ok_left, button_top, ok_right, button_bottom },
+                      button_style, form, mrOK);
+
+  WndButton cancel_button(client_area, look, _("Cancel"),
+                          { cancel_left, button_top,
+                              cancel_right, button_bottom },
+                          button_style, form, mrCancel);
+
+  WndButton clear_button(client_area, look, _("Clear"),
+                         { clear_left, button_top,
+                             clear_right, button_bottom },
+                         button_style, ClearText);
+
+  KeyboardControl keyboard(client_area, look,
+                           { padding, keyboard_top,
+                              rc.right - padding,
+                              keyboard_bottom },
+                           OnCharacter);
+  kb = &keyboard;
 
   AllowedCharactersCallback = accb;
-
-  kb = (KeyboardControl*)wf->FindByName(_T("Keyboard"));
-  assert(kb != NULL);
 
   cursor = 0;
   ClearText();
 
   if (!StringIsEmpty(text)) {
-    _tcsupr(text);
-    CopyString(edittext, text, max_width);
+    CopyString(edittext, text, width);
     cursor = _tcslen(text);
   }
 
   UpdateTextboxProp();
-  wf->SetKeyDownNotify(FormKeyDown);
-  bool result = (wf->ShowModal() == mrOK);
+  bool result = form.ShowModal() == mrOK;
 
   if (result) {
-    CopyString(text, edittext, max_width);
+    CopyString(text, edittext, width);
   }
 
-  delete wf;
   return result;
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -262,7 +262,7 @@ MapWindow::DrawTerrainAbove(Canvas &canvas)
   // .. feature inaccessible
   if (!Basic().location_available
       || !Calculated().flight.flying
-      || GetComputerSettings().features.final_glide_terrain == FeaturesSettings::FGT_OFF
+      || GetComputerSettings().features.final_glide_terrain == FeaturesSettings::FinalGlideTerrain::OFF
       || route_planner == NULL)
     return;
 
@@ -281,7 +281,7 @@ MapWindow::DrawTerrainAbove(Canvas &canvas)
   // Don't draw shade if
   // .. shade feature disabled
   // .. pan mode activated
-  if (GetComputerSettings().features.final_glide_terrain == FeaturesSettings::FGT_SHADE &&
+  if (GetComputerSettings().features.final_glide_terrain == FeaturesSettings::FinalGlideTerrain::SHADE &&
       IsNearSelf()) {
 
 #ifdef ENABLE_OPENGL
@@ -341,7 +341,7 @@ MapWindow::DrawTerrainAbove(Canvas &canvas)
     visitor.fans.DrawFill(buffer);
 
     // Copy everything non-white to the buffer
-    canvas.copy_transparent_white(buffer);
+    canvas.CopyTransparentWhite(buffer);
 
     /* skip the separate terrain line step below, because we have done
        it already */
@@ -425,7 +425,7 @@ MapWindow::DrawTerrainAbove(Canvas &canvas)
   visitor.fans.DrawFill(buffer);
 
   // Copy everything non-white to the buffer
-  canvas.copy_transparent_white(buffer);
+  canvas.CopyTransparentWhite(buffer);
 
 #endif
   }

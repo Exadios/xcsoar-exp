@@ -16,7 +16,7 @@
 ***********************************************************************/
 
 #include "grecord.h"
-#include "vlapihlp.h"
+#include "Util/StringUtil.hpp"
 
 #include <stdio.h>
 #include <string.h>
@@ -85,7 +85,7 @@ GRECORD::update(uint8_t b)
   }
 }
 
-void GRECORD::final (void) {
+void GRECORD::finish(void) {
   if (tricnt || gcnt) {
     strcat(grecord,byte_bas64(ba));
     fprintf(ausgabe,"G%s\n",grecord);
@@ -161,7 +161,7 @@ Filtern einer Zeile:
 static char *
 filterline(char *st)
 {
-  strtrim(st);
+  TrimRight(st);
   if (!(
       (st[0]=='A')
    || (st[0]=='B')
@@ -199,7 +199,7 @@ print_g_record(FILE *datei, const uint8_t *puffer, int32 puflen)
  GRECORD g1(datei);
   for(i=0; i<puflen; i++)
     g1.update(puffer[i]);
-  g1.final();
+  g1.finish();
 }
 
 /*

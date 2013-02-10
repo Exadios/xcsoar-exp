@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -70,16 +70,17 @@ WaypointWriter::WriteWaypoint(TextWriter &writer, const Waypoint& wp)
 }
 
 void
-WaypointWriter::WriteAngle(TextWriter &writer, const Angle &angle,
+WaypointWriter::WriteAngle(TextWriter &writer, const Angle angle,
                            bool is_latitude)
 {
   // Calculate degrees, minutes and seconds
-  int deg, min, sec;
+  unsigned deg, min, sec;
   bool is_positive;
   angle.ToDMS(deg, min, sec, is_positive);
 
   // Save them into the buffer string
-  writer.Format(is_latitude ? "%02d:%02d:%02d" : "%03d:%02d:%02d", deg, min, sec);
+  writer.Format(is_latitude ? "%02u:%02u:%02u" : "%03u:%02u:%02u",
+                deg, min, sec);
 
   // Attach the buffer string to the output
   if (is_latitude)

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include "Geo/SpeedVector.hpp"
 #include "Geo/GeoVector.hpp"
 #include "Operation/Operation.hpp"
+#include "OS/FileUtil.hpp"
 
 static void
 test_troute(const RasterMap& map, fixed mwind, fixed mc, RoughAltitude ceiling)
@@ -40,28 +41,29 @@ test_troute(const RasterMap& map, fixed mwind, fixed mc, RoughAltitude ceiling)
   GlideSettings settings;
   settings.SetDefaults();
   GlidePolar polar(mc);
-  SpeedVector wind(Angle::Degrees(fixed(0)), mwind);
+  SpeedVector wind(Angle::Degrees(0), mwind);
   TerrainRoute route;
   route.UpdatePolar(settings, polar, polar, wind);
   route.SetTerrain(&map);
 
   GeoPoint origin(map.GetMapCenter());
 
-  fixed pd = map.pixel_distance(origin, 1);
+  fixed pd = map.PixelDistance(origin, 1);
   printf("# pixel size %g\n", (double)pd);
 
   bool retval= true;
 
   {
-    std::ofstream fout ("results/terrain.txt");
+    Directory::Create(_T("output/results"));
+    std::ofstream fout ("output/results/terrain.txt");
     unsigned nx = 100;
     unsigned ny = 100;
     for (unsigned i=0; i< nx; ++i) {
       for (unsigned j=0; j< ny; ++j) {
-        fixed fx = (fixed)i/(nx-1)*fixed_two-fixed_one;
-        fixed fy = (fixed)j/(ny-1)*fixed_two-fixed_one;
-        GeoPoint x(origin.longitude+Angle::Degrees(fixed(0.6)*fx),
-                   origin.latitude+Angle::Degrees(fixed(0.4)*fy));
+        fixed fx = (fixed)i / (nx - 1) * 2 - fixed(1);
+        fixed fy = (fixed)j / (ny - 1) * 2 - fixed(1);
+        GeoPoint x(origin.longitude + Angle::Degrees(fixed(0.6) * fx),
+                   origin.latitude + Angle::Degrees(fixed(0.4) * fy));
         short h = map.GetInterpolatedHeight(x);
         fout << x.longitude.Degrees() << " " << x.latitude.Degrees() << " " << h << "\n";
       }
@@ -74,7 +76,7 @@ test_troute(const RasterMap& map, fixed mwind, fixed mc, RoughAltitude ceiling)
   config.mode = RoutePlannerConfig::Mode::BOTH;
 
   unsigned i=0;
-  for (fixed ang=fixed_zero; ang< fixed_two_pi; ang+= fixed_quarter_pi*fixed_half) {
+  for (fixed ang = fixed(0); ang < fixed_two_pi; ang += fixed(M_PI / 8)) {
     GeoPoint dest = GeoVector(fixed(40000.0), Angle::Radians(ang)).EndPoint(origin);
 
     short hdest = map.GetHeight(dest)+100;
@@ -94,7 +96,7 @@ test_troute(const RasterMap& map, fixed mwind, fixed mc, RoughAltitude ceiling)
     i++;
   }
 
-  // polar.SetMC(fixed_zero);
+  // polar.SetMC(fixed(0));
   // route.UpdatePolar(polar, wind);
 }
 
@@ -123,9 +125,9 @@ int main(int argc, char** argv) {
   } while (map.IsDirty());
 
   plan_tests(16*3);
-  test_troute(map, fixed_zero, fixed(0.1), RoughAltitude(10000));
-  test_troute(map, fixed_zero, fixed_zero, RoughAltitude(10000));
-  test_troute(map, fixed(5.0), fixed_one, RoughAltitude(10000));
+  test_troute(map, fixed(0), fixed(0.1), RoughAltitude(10000));
+  test_troute(map, fixed(0), fixed(0), RoughAltitude(10000));
+  test_troute(map, fixed(5.0), fixed(1), RoughAltitude(10000));
 
   return exit_status();
 }

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #ifndef TASKINTERFACE_H
 #define TASKINTERFACE_H
 
+#include "TaskType.hpp"
 #include "Compiler.h"
 
 struct AircraftState;
@@ -42,26 +43,16 @@ class GlidePolar;
  */
 class TaskInterface
 {
-public:
-  enum Type {
-    ORDERED,
-    ABORT,
-    GOTO,
-  };
-
-private:
-  const Type type;
+  const TaskType type;
 
 public:
   constexpr
-  TaskInterface(const Type _type):type(_type) {}
+  TaskInterface(const TaskType _type):type(_type) {}
 
   constexpr
-  Type GetType() const {
+  TaskType GetType() const {
     return type;
   }
-
-  virtual void SetTaskBehaviour(const TaskBehaviour &tb) = 0;
 
   /**
    * Size of task
@@ -96,14 +87,6 @@ public:
    */
   gcc_pure
   virtual bool IsValidTaskPoint(const int index_offset) const = 0;
-
-  /**
-   * Accessor for task statistics for this task
-   *
-   * @return Task statistics reference
-   */
-  gcc_pure
-  virtual const TaskStats &GetStats() const = 0;
 
   /**
    * Update internal states as flight progresses.  This may perform

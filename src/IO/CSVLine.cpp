@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
 static const char *
 EndOfLine(const char *line)
@@ -91,11 +92,11 @@ CSVLine::Read(long default_value)
   return default_value;
 }
 
-long
-CSVLine::ReadHex(long default_value)
+unsigned
+CSVLine::ReadHex(unsigned default_value)
 {
   char *endptr;
-  long value = strtol(data, &endptr, 16);
+  unsigned long value = strtoul(data, &endptr, 16);
   assert(endptr >= data && endptr <= end);
   if (endptr == data)
     /* nothing was parsed */
@@ -203,10 +204,10 @@ CSVLine::ReadChecked(long &value_r)
 }
 
 bool
-CSVLine::ReadHexChecked(long &value_r)
+CSVLine::ReadHexChecked(unsigned &value_r)
 {
   char *endptr;
-  long value = strtol(data, &endptr, 16);
+  unsigned long value = strtoul(data, &endptr, 16);
   assert(endptr >= data && endptr <= end);
 
   bool success = endptr > data;

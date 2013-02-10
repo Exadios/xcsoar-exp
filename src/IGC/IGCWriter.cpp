@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,16 +22,12 @@ Copyright_License {
 */
 
 #include "IGC/IGCWriter.hpp"
-#include "IO/TextWriter.hpp"
+#include "IGCString.hpp"
 #include "NMEA/Info.hpp"
 #include "Version.hpp"
-#include "Compatibility/string.h"
 
 #include <assert.h>
-
-#ifdef _UNICODE
-#include <windows.h>
-#endif
+#include <windef.h> /* for MAX_PATH */
 
 static char *
 FormatIGCLocation(char *buffer, const GeoPoint &location)
@@ -53,52 +49,22 @@ FormatIGCLocation(char *buffer, const GeoPoint &location)
   return buffer + strlen(buffer);
 }
 
-IGCWriter::IGCWriter(const TCHAR *_path, bool simulator)
+IGCWriter::IGCWriter(const TCHAR *path)
+  :file(path)
 {
-  _tcscpy(path, _path);
+  fix.Clear();
 
-  last_valid_point_initialized = false;
-
-  if (!simulator)
-    grecord.Initialize();
+  grecord.Initialize();
 }
 
 bool
-IGCWriter::Flush()
+IGCWriter::CommitLine(char *line)
 {
-  if (buffer.IsEmpty())
-    return true;
-
-  TextWriter writer(path, true);
-  if (!writer.IsOpen())
+  if (!file.WriteLine(line))
     return false;
 
-  for (unsigned i = 0; i < buffer.Length(); ++i) {
-    if (!writer.WriteLine(buffer[i]))
-      return false;
-
-    grecord.AppendRecordToBuffer(buffer[i]);
-  }
-
-  if (!writer.Flush())
-    return false;
-
-  buffer.Clear();
+  grecord.AppendRecordToBuffer(line);
   return true;
-}
-
-void
-IGCWriter::Finish()
-{
-  Flush();
-}
-
-static void
-ReplaceNonIGCChars(char *p)
-{
-  for (; *p != 0; ++p)
-    if (!GRecord::IsValidIGCChar(*p))
-      *p = ' ';
 }
 
 bool
@@ -107,45 +73,35 @@ IGCWriter::WriteLine(const char *line)
   assert(strchr(line, '\r') == NULL);
   assert(strchr(line, '\n') == NULL);
 
-  if (buffer.IsFull() && !Flush())
+  char *const dest = BeginLine();
+  if (dest == nullptr)
     return false;
 
-  assert(!buffer.IsFull());
+  char *const end = dest + MAX_IGC_BUFF - 1, *p = dest;
 
-  char *dest = buffer.Append();
-  strncpy(dest, line, MAX_IGC_BUFF);
-  dest[MAX_IGC_BUFF - 1] = '\0';
+  p = CopyIGCString(dest, end, line);
+  *p = '\0';
 
-  ReplaceNonIGCChars(dest);
-
-  return true;
+  return CommitLine(dest);
 }
 
 bool
 IGCWriter::WriteLine(const char *a, const TCHAR *b)
 {
   size_t a_length = strlen(a);
-  size_t b_length = _tcslen(b);
-  char buffer[a_length + b_length * 4 + 1];
-  memcpy(buffer, a, a_length);
+  assert(a_length < MAX_IGC_BUFF);
 
-#ifdef _UNICODE
-  if (b_length > 0) {
-    int len = ::WideCharToMultiByte(CP_ACP, 0, b, b_length,
-                                    buffer + a_length, b_length * 4,
-                                    NULL, NULL);
-    if (len <= 0)
-      return false;
+  char *const dest = BeginLine();
+  if (dest == nullptr)
+    return false;
 
-    a_length += len;
-  }
+  char *const end = dest + MAX_IGC_BUFF - 1, *p = dest;
 
-  buffer[a_length] = 0;
-#else
-  memcpy(buffer + a_length, b, b_length + 1);
-#endif
+  p = std::copy(a, a + a_length, p);
+  p = CopyIGCString(p, end, b);
+  *p = '\0';
 
-  return WriteLine(buffer);
+  return CommitLine(dest);
 }
 
 void
@@ -236,21 +192,11 @@ void
 IGCWriter::AddDeclaration(const GeoPoint &location, const TCHAR *id)
 {
   char c_record[500];
-  char id_string[MAX_PATH];
-  int i;
-
-  TCHAR tmpstring[MAX_PATH];
-  _tcscpy(tmpstring, id);
-  _tcsupr(tmpstring);
-  for (i = 0; i < (int)_tcslen(tmpstring); i++)
-    id_string[i] = (char)tmpstring[i];
-
-  id_string[i] = '\0';
 
   char *p = c_record;
   *p++ = 'C';
   p = FormatIGCLocation(p, location);
-  strcpy(p, id_string);
+  CopyASCIIUppper(p, id);
 
   WriteLine(c_record);
 }
@@ -301,38 +247,14 @@ IGCWriter::LogPoint(const IGCFix &fix, int epe, int satellites)
           epe, satellites);
 
   WriteLine(b_record);
+  Flush();
 }
 
 void
 IGCWriter::LogPoint(const NMEAInfo& gps_info)
 {
-  if (!last_valid_point_initialized &&
-      ((gps_info.gps_altitude < fixed(-100))
-       || (gps_info.baro_altitude < fixed(-100))
-          || !gps_info.location_available))
-    return;
-
-  IGCFix fix;
-  if (!gps_info.location_available) {
-    fix = last_valid_point;
-    fix.gps_valid = false;
-  } else {
-    fix.gps_valid = true;
-    fix.location = gps_info.location;
-    fix.gps_altitude = (int)gps_info.gps_altitude;
-
-    // save last active fix location
-    last_valid_point = fix;
-    last_valid_point_initialized = true;
-  }
-
-  fix.time = gps_info.date_time_utc;
-  fix.pressure_altitude =
-      gps_info.baro_altitude_available ? (int)gps_info.baro_altitude :
-                                         /* fall back to GPS altitude */
-                                         fix.gps_altitude;
-
-  LogPoint(fix, (int)GetEPE(gps_info.gps), GetSIU(gps_info.gps));
+  if (fix.Apply(gps_info))
+    LogPoint(fix, (int)GetEPE(gps_info.gps), GetSIU(gps_info.gps));
 }
 
 void
@@ -391,20 +313,8 @@ IGCWriter::LogFRecord(const BrokenTime &time, const int *satellite_ids)
 void
 IGCWriter::Sign()
 {
-  // buffer is appended w/ each igc file write
-  grecord.FinalizeBuffer();
-  // read record built by individual file writes
-  char OldGRecordBuff[MAX_IGC_BUFF];
-  grecord.GetDigest(OldGRecordBuff);
+  assert(file.IsOpen());
 
-  // now calc from whats in the igc file on disk
-  grecord.Initialize();
-  grecord.SetFileName(path);
-  grecord.LoadFileToBuffer();
   grecord.FinalizeBuffer();
-  char NewGRecordBuff[MAX_IGC_BUFF];
-  grecord.GetDigest(NewGRecordBuff);
-
-  bool bFileValid = strcmp(OldGRecordBuff, NewGRecordBuff) == 0;
-  grecord.AppendGRecordToFile(bFileValid);
+  grecord.WriteTo(file);
 }

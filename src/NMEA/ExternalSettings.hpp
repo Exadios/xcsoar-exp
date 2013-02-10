@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@ Copyright_License {
 #include "NMEA/Validity.hpp"
 #include "Math/fixed.hpp"
 #include "Atmosphere/Pressure.hpp"
+
+#include <stdlib.h>
 
 /**
  * Settings received from an external device.
@@ -64,6 +66,11 @@ struct ExternalSettings {
 
   /** the QNH setting [hPa] */
   AtmosphericPressure qnh;
+
+  Validity volume_available;
+
+  /** the volume of the device [0-100%] */
+  unsigned volume;
 
   void Clear();
   void Expire(fixed time);
@@ -121,7 +128,7 @@ struct ExternalSettings {
    */
   bool CompareWingLoading(fixed value) const {
     return wing_loading_available &&
-      fabs(wing_loading - value) <= fixed_half;
+      fabs(wing_loading - value) <= fixed(0.5);
   }
 
   /**
@@ -142,7 +149,17 @@ struct ExternalSettings {
    */
   bool CompareQNH(AtmosphericPressure value) const {
     return qnh_available &&
-      fabs(qnh.GetHectoPascal() - value.GetHectoPascal()) <= fixed_half;
+      fabs(qnh.GetHectoPascal() - value.GetHectoPascal()) <= fixed(0.5);
+  }
+
+  /**
+   * Compare the volume setting with the specified value.
+   *
+   * @return true if the current setting is the same (within 3% difference),
+   * false if the value is different or if there is no value
+   */
+  bool CompareVolume(unsigned value) const {
+    return volume_available && abs(int(volume) - int(value)) < 3;
   }
 
   /**
@@ -157,6 +174,7 @@ struct ExternalSettings {
   bool ProvideWingLoading(fixed value, fixed time);
   bool ProvideBugs(fixed value, fixed time);
   bool ProvideQNH(AtmosphericPressure value, fixed time);
+  bool ProvideVolume(unsigned value, fixed time);
 };
 
 #endif

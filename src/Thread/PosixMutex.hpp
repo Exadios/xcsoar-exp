@@ -1,37 +1,41 @@
 /*
-Copyright_License {
-
-  XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
-  A detailed list of copyright holders can be found in the file "AUTHORS".
-
-  This program is free software; you can redistribute it and/or
-  modify it under the terms of the GNU General Public License
-  as published by the Free Software Foundation; either version 2
-  of the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-}
-*/
+ * Copyright (C) 2009-2013 Max Kellermann <max@duempel.org>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the
+ * distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef XCSOAR_THREAD_POSIX_MUTEX_HXX
 #define XCSOAR_THREAD_POSIX_MUTEX_HXX
-
-#include "Util/NonCopyable.hpp"
 
 #include <pthread.h>
 
 /**
  * Low-level wrapper for a pthread_mutex_t.
  */
-class PosixMutex : private NonCopyable {
+class PosixMutex {
   pthread_mutex_t mutex;
 
   friend class Cond;
@@ -40,24 +44,10 @@ public:
   /**
    * Create a "fast" mutex.
    */
-  PosixMutex() {
-    pthread_mutex_init(&mutex, NULL);
-  }
+  constexpr PosixMutex():mutex(PTHREAD_MUTEX_INITIALIZER) {}
 
-  /**
-   * Create a mutex of the specified kind.
-   */
-  PosixMutex(int kind) {
-    pthread_mutexattr_t recursive;
-    pthread_mutexattr_init(&recursive);
-    pthread_mutexattr_settype(&recursive, kind);
-    pthread_mutex_init(&mutex, &recursive);
-    pthread_mutexattr_destroy(&recursive);
-  }
-
-  ~PosixMutex() {
-    pthread_mutex_destroy(&mutex);
-  }
+  PosixMutex(const PosixMutex &other) = delete;
+  PosixMutex &operator=(const PosixMutex &other) = delete;
 
   void Lock() {
     pthread_mutex_lock(&mutex);

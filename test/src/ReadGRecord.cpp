@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 }
 */
 
-#include "Logger/LoggerGRecord.hpp"
+#include "Logger/GRecord.hpp"
 #include "Util/Macros.hpp"
 #include "OS/Args.hpp"
 
@@ -35,10 +35,9 @@ main(int argc, char **argv)
 
   GRecord g;
   g.Initialize();
-  g.SetFileName(path.c_str());
 
   char data[1024];
-  if (!g.ReadGRecordFromFile(data, ARRAY_SIZE(data))) {
+  if (!g.ReadGRecordFromFile(path.c_str(), data, ARRAY_SIZE(data))) {
     fprintf(stderr, "Error\n");
     return 2;
   }

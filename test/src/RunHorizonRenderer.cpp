@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,20 +21,16 @@ Copyright_License {
 }
 */
 
+#define ENABLE_SCREEN
+
+#include "Main.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/ButtonWindow.hpp"
-#include "Screen/Init.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Timer.hpp"
-#include "Fonts.hpp"
-#include "Look/DialogLook.hpp"
+#include "Screen/Canvas.hpp"
 #include "Look/HorizonLook.hpp"
 #include "Renderer/HorizonRenderer.hpp"
 #include "NMEA/Attitude.hpp"
-
-#ifdef USE_GDI
-#include "ResourceLoader.hpp"
-#endif
 
 class HorizonWindow : public PaintWindow
 {
@@ -51,14 +47,9 @@ public:
   }
 
 protected:
-  void OnPaint(Canvas &canvas) {
+  virtual void OnPaint(Canvas &canvas) override {
     canvas.ClearWhite();
-
-    PixelRect rc = {
-      0, 0, (PixelScalar)canvas.get_width(), (PixelScalar)canvas.get_height()
-    };
-
-    HorizonRenderer::Draw(canvas, rc, look, attitude);
+    HorizonRenderer::Draw(canvas, canvas.GetRect(), look, attitude);
   }
 };
 
@@ -84,47 +75,26 @@ public:
     timer.Cancel();
   }
 
-
-#ifdef USE_GDI
-  static bool register_class(HINSTANCE hInstance) {
-    WNDCLASS wc;
-
-    wc.style = CS_HREDRAW | CS_VREDRAW;
-    wc.lpfnWndProc = Window::WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = NULL;
-    wc.lpszMenuName = 0;
-    wc.lpszClassName = _T("RunHorizonRenderer");
-
-    return RegisterClass(&wc);
-  }
-#endif /* USE_GDI */
-
-  void Set(PixelRect _rc) {
+  void Create(PixelSize size) {
     TopWindowStyle style;
     style.Resizable();
 
-    SingleWindow::set(_T("RunHorizonRenderer"), _T("RunHorizonRenderer"),
-                      _rc, style);
+    SingleWindow::Create(_T("RunHorizonRenderer"), size, style);
 
     const PixelRect rc = GetClientRect();
 
     WindowStyle with_border;
     with_border.Border();
 
-    horizon.set(*this, rc.left, rc.top, rc.right, rc.bottom, with_border);
+    horizon.Create(*this, rc, with_border);
 
     PixelRect button_rc = rc;
     button_rc.top = button_rc.bottom - 30;
-    close_button.set(*this, _T("Close"), ID_CLOSE, button_rc);
+    close_button.Create(*this, _T("Close"), ID_CLOSE, button_rc);
   }
 
 protected:
-  virtual bool OnCommand(unsigned id, unsigned code) {
+  virtual bool OnCommand(unsigned id, unsigned code) override {
     switch (id) {
     case ID_CLOSE:
       Close();
@@ -134,7 +104,7 @@ protected:
     return SingleWindow::OnCommand(id, code);
   }
 
-  virtual bool OnTimer(WindowTimer &_timer) {
+  virtual bool OnTimer(WindowTimer &_timer) override {
     if (_timer == timer) {
       AttitudeState attitude;
       attitude.bank_angle_available = true;
@@ -149,44 +119,22 @@ protected:
     return SingleWindow::OnTimer(_timer);
   }
 
-  virtual void OnResize(UPixelScalar width, UPixelScalar height) {
-    SingleWindow::OnResize(width, height);
-    horizon.Resize(width, height);
+  virtual void OnResize(PixelSize new_size) override {
+    SingleWindow::OnResize(new_size);
+    if (horizon.IsDefined())
+      horizon.Resize(new_size);
   }
 };
 
-#ifndef WIN32
-int main(int argc, char **argv)
-#else
-int WINAPI
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-#ifdef _WIN32_WCE
-        LPWSTR lpCmdLine,
-#else
-        LPSTR lpCmdLine2,
-#endif
-        int nCmdShow)
-#endif
+static void
+Main()
 {
-  ScreenGlobalInit screen_init;
-
-#ifdef USE_GDI
-  ResourceLoader::Init(hInstance);
-  TestWindow::register_class(hInstance);
-#endif
-
-  Fonts::Initialize();
-
   HorizonLook horizon_look;
   horizon_look.Initialise();
 
   TestWindow window(horizon_look);
-  window.Set(PixelRect{0, 0, 160, 160});
+  window.Create({160, 160});
 
   window.Show();
   window.RunEventLoop();
-
-  Fonts::Deinitialize();
-
-  return 0;
 }

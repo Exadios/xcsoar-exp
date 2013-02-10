@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@ Copyright_License {
 
 #include "Float.hpp"
 #include "ComboList.hpp"
-#include "Math/FastMath.h"
 #include "Asset.hpp"
 
 #include <stdlib.h>
@@ -110,9 +109,9 @@ void
 DataFieldFloat::Inc()
 {
   // no keypad, allow user to scroll small values
-  if (mFine && mValue < fixed(0.95) && mStep >= fixed_half &&
-      mMin >= fixed_zero)
-    SetAsFloat(mValue + fixed_one / 10);
+  if (mFine && mValue < fixed(0.95) && mStep >= fixed(0.5) &&
+      mMin >= fixed(0))
+    SetAsFloat(mValue + fixed(1) / 10);
   else
     SetAsFloat(fixed(mValue + mStep * SpeedUp(true)));
 }
@@ -121,9 +120,9 @@ void
 DataFieldFloat::Dec()
 {
   // no keypad, allow user to scroll small values
-  if (mFine && mValue <= fixed_one && mStep >= fixed_half &&
-      mMin >= fixed_zero)
-    SetAsFloat(mValue - fixed_one / 10);
+  if (mFine && mValue <= fixed(1) && mStep >= fixed(0.5) &&
+      mMin >= fixed(0))
+    SetAsFloat(mValue - fixed(1) / 10);
   else
     SetAsFloat(fixed(mValue - mStep * SpeedUp(false)));
 }
@@ -132,27 +131,27 @@ fixed
 DataFieldFloat::SpeedUp(bool keyup)
 {
   if (IsAltair())
-    return fixed_one;
+    return fixed(1);
 
   if (keyup != DataFieldKeyUp) {
     mSpeedup = 0;
     DataFieldKeyUp = keyup;
     last_step.Update();
-    return fixed_one;
+    return fixed(1);
   }
 
   if (!last_step.Check(200)) {
     mSpeedup++;
     if (mSpeedup > 5) {
       last_step.UpdateWithOffset(350);
-      return fixed_ten;
+      return fixed(10);
     }
   } else
     mSpeedup = 0;
 
   last_step.Update();
 
-  return fixed_one;
+  return fixed(1);
 }
 
 void
@@ -227,11 +226,12 @@ DataFieldFloat::CreateComboList() const
     }
 
     if (!found_current && mValue <= i + epsilon) {
+      combo_list->ComboPopupItemSavedIndex = combo_list->size();
+
       if (mValue < i - epsilon)
         /* the current value is not listed - insert it here */
         AppendComboValue(*combo_list, mValue);
 
-      combo_list->ComboPopupItemSavedIndex = combo_list->size();
       found_current = true;
     }
 
@@ -241,8 +241,8 @@ DataFieldFloat::CreateComboList() const
   if (mValue > last + epsilon) {
     /* the current value out of range - append it here */
     last = mValue;
-    AppendComboValue(*combo_list, mValue);
     combo_list->ComboPopupItemSavedIndex = combo_list->size();
+    AppendComboValue(*combo_list, mValue);
   }
 
   if (last < mMax - epsilon)

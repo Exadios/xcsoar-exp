@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -42,11 +42,11 @@ Display::LoadOrientation(VerboseOperationEnvironment &env)
     return;
 
   if (!Display::Rotate(orientation)) {
-    LogStartUp(_T("Display rotation failed"));
+    LogFormat("Display rotation failed");
     return;
   }
 
-  LogStartUp(_T("Display rotated"));
+  LogFormat("Display rotated");
 
   CommonInterface::main_window->Initialise();
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,18 +23,20 @@ Copyright_License {
 
 #include "ThermalBand.hpp"
 
+#include <algorithm>
+
 #include <assert.h>
 
 void
 ThermalBandInfo::Clear()
 {
-  working_band_height = working_band_ceiling = fixed_zero;
-  working_band_fraction = fixed_zero;
+  working_band_height = working_band_ceiling = fixed(0);
+  working_band_fraction = fixed(0);
 
-  max_thermal_height = fixed_zero;
+  max_thermal_height = fixed(0);
 
   for (unsigned i = 0; i < NUMTHERMALBUCKETS; i++) {
-    thermal_profile_w[i] = fixed_zero;
+    thermal_profile_w[i] = fixed(0);
     thermal_profile_n[i] = 0;
   }
 }
@@ -88,7 +90,7 @@ ThermalBandInfo::Expand(const fixed height)
   fixed hbuk = max_thermal_height / NUMTHERMALBUCKETS;
 
   new_tbi.Clear();
-  new_tbi.max_thermal_height = std::max(fixed_one, max_thermal_height);
+  new_tbi.max_thermal_height = std::max(fixed(1), max_thermal_height);
 
   // increase ceiling until reach required height
   while (new_tbi.max_thermal_height < height) {

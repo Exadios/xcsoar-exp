@@ -22,28 +22,28 @@
 #include "Database.hpp"
 
 #include <stdint.h>
+#include <stddef.h>
 
 class DBB {
-//private:
 public:
-	enum {
-		DBBBeg  = 0x0000,
-		DBBEnd  = 0x3000,
-		FrmBeg  = 0x3000,
-		FrmEnd  = 0x4000
-	};
- int dbcursor;
- int fdfcursor;
- struct HEADER {
-	 int dsanzahl;
-	 int dslaenge, keylaenge;
-	 unsigned short int dsfirst, dslast;
- };
- HEADER header[8];
+  enum {
+    DBBBeg  = 0x0000,
+    DBBEnd  = 0x3000,
+    FrmBeg  = 0x3000,
+    FrmEnd  = 0x4000
+  };
+  size_t dbcursor;
+  size_t fdfcursor;
+  struct HEADER {
+    unsigned dsanzahl;
+    unsigned dslaenge, keylaenge;
+    unsigned dsfirst, dslast;
+  };
+  HEADER header[8];
 public:
- uint8_t block[DBBEnd-DBBBeg];
- uint8_t fdf[FrmEnd-FrmBeg];
-	DBB();
+  uint8_t block[DBBEnd-DBBBeg];
+  uint8_t fdf[FrmEnd-FrmBeg];
+  DBB();
 
 protected:
   Volkslogger::TableHeader *GetHeader(unsigned i) {
@@ -58,10 +58,26 @@ protected:
   }
 
 public:
-	void open_dbb();
-	void close_db(int kennung);
-	void add_ds(int kennung,void *quelle);
-	void add_fdf(int feldkennung,int feldlaenge, void *quelle);
+  void open_dbb();
+  void close_db(int kennung);
+  void add_ds(int kennung, const void *quelle);
+
+  /**
+   * Add a FDF entry.
+   *
+   * @return a writeable pointer of the specified size or nullptr if
+   * the buffer is full
+   */
+  void *AddFDF(uint8_t id, size_t size);
+
+  void add_fdf(int feldkennung, size_t feldlaenge, const void *quelle);
+
+  /**
+   * Add a FDF entry with the specified string value (convert to upper
+   * case).
+   */
+  void AddFDFStringUpper(uint8_t id, const char *value);
+
   int16 fdf_findfield(uint8_t id) const;
 };
 

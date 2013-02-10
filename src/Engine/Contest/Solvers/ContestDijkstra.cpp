@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -130,7 +130,9 @@ bool
 ContestDijkstra::UpdateTraceTail()
 {
   assert(continuous);
-  assert(incremental == finished);
+  /* the following assertion was disabled because this method doesn't
+     get the "force" parameter */
+  //assert(incremental == finished || force);
   assert(modify_serial == trace_master.GetModifySerial());
 
   if (!trace_master.SyncPoints(trace))
@@ -278,7 +280,7 @@ ContestDijkstra::CalculateResult(const ContestTraceVector &solution) const
 
   ContestResult result;
   result.time = fixed(solution[num_stages - 1].DeltaTime(solution[0]));
-  result.distance = result.score = fixed_zero;
+  result.distance = result.score = fixed(0);
 
   GeoPoint previous = solution[0].GetLocation();
   for (unsigned i = 1; i < num_stages; ++i) {
@@ -339,12 +341,27 @@ ContestDijkstra::AddEdges(const ScanTaskPoint origin,
 
   const unsigned weight = GetStageWeight(origin.GetStageNumber());
 
+  bool previous_above = false;
   for (const ScanTaskPoint end(destination.GetStageNumber(), n_points);
        destination != end; destination.IncrementPointIndex()) {
-    if (GetPoint(destination).GetIntegerAltitude() >= min_altitude) {
+    bool above = GetPoint(destination).GetIntegerAltitude() >= min_altitude;
+
+    if (above) {
+      const unsigned d = weight * CalcEdgeDistance(origin, destination);
+      Link(destination, origin, d);
+    } else if (previous_above) {
+      /* After excessive thinning, the exact TracePoint that matches
+         the required altitude difference may be gone, and the
+         calculated result becomes overly pessimistic.  This code path
+         makes it optimistic, by checking if the previous point
+         matches. */
+
+      /* TODO: interpolate the distance */
       const unsigned d = weight * CalcEdgeDistance(origin, destination);
       Link(destination, origin, d);
     }
+
+    previous_above = above;
   }
 
   if (IsFinal(destination) && predicted.IsDefined()) {

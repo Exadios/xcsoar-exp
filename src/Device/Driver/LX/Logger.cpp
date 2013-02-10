@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 */
 
 #include "Internal.hpp"
+#include "NanoLogger.hpp"
 #include "Protocol.hpp"
 #include "Convert.hpp"
 #include "Device/Port/Port.hpp"
@@ -90,6 +91,9 @@ Copy(RecordedFlightInfo &dest, const LX::FlightInfo &src)
       !ParseTime(dest.end_time, src.stop_time))
     return false;
 
+  /* not a Nano recording */
+  dest.internal.lx.nano_filename[0] = 0;
+
   dest.internal.lx.start_address[0] = src.start_address.address0;
   dest.internal.lx.start_address[1] = src.start_address.address1;
   dest.internal.lx.start_address[2] = src.start_address.address2;
@@ -133,21 +137,29 @@ bool
 LXDevice::ReadFlightList(RecordedFlightList &flight_list,
                          OperationEnvironment &env)
 {
+  if (IsNano()) {
+    if (!EnableNanoNMEA(env))
+      return false;
+
+    assert(!busy);
+    busy = true;
+
+    bool success = Nano::ReadFlightList(port, flight_list, env);
+    busy = false;
+    return success;
+  }
+
   if (!EnableCommandMode(env))
     return false;
 
   assert(!busy);
-  mutex.Lock();
   busy = true;
-  mutex.Unlock();
 
   bool success = ReadFlightListInner(port, flight_list, env);
 
   LX::CommandModeQuick(port, env);
 
-  mutex.Lock();
   busy = false;
-  mutex.Unlock();
 
   return success;
 }
@@ -203,6 +215,15 @@ LXDevice::DownloadFlight(const RecordedFlightInfo &flight,
                          const TCHAR *path,
                          OperationEnvironment &env)
 {
+  if (flight.internal.lx.nano_filename[0] != 0) {
+    assert(!busy);
+    busy = true;
+
+    bool success = Nano::DownloadFlight(port, flight, path, env);
+    busy = false;
+    return success;
+  }
+
   if (!EnableCommandMode(env))
     return false;
 
@@ -211,18 +232,14 @@ LXDevice::DownloadFlight(const RecordedFlightInfo &flight,
     return false;
 
   assert(!busy);
-  mutex.Lock();
   busy = true;
-  mutex.Unlock();
 
   bool success = DownloadFlightInner(port, flight, file, env);
   fclose(file);
 
   LX::CommandModeQuick(port, env);
 
-  mutex.Lock();
   busy = false;
-  mutex.Unlock();
 
   return success;
 }

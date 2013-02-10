@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_GEO_RECT_HPP
 #define XCSOAR_GEO_RECT_HPP
 
+#include "Math/ARange.hpp"
 #include "GeoPoint.hpp"
 #include "Compiler.h"
 
@@ -33,20 +34,29 @@ Copyright_License {
  * goal is to perform fast overlap checks, e.g. to determine if an
  * object is visible on the screen.
  */
-struct GeoBounds {
-  Angle west, north, east, south;
+class GeoBounds {
+  /**
+   * The range from west to east.
+   */
+  AngleRange longitude;
 
+  /**
+   * The range from south to north.
+   */
+  AngleRange latitude;
+
+public:
   GeoBounds() = default;
 
   constexpr
   GeoBounds(const GeoPoint pt)
-    :west(pt.longitude), north(pt.latitude),
-     east(pt.longitude), south(pt.latitude) {}
+    :longitude(pt.longitude, pt.longitude),
+     latitude(pt.latitude, pt.latitude) {}
 
   constexpr
-  GeoBounds(const GeoPoint _north_west, const GeoPoint _south_east)
-    :west(_north_west.longitude), north(_north_west.latitude),
-     east(_south_east.longitude), south(_south_east.latitude) {}
+  GeoBounds(const GeoPoint north_west, const GeoPoint south_east)
+    :longitude(north_west.longitude, south_east.longitude),
+     latitude(south_east.latitude, north_west.latitude) {}
 
   /**
    * Construct an instance that is "invalid", i.e. IsValid() will
@@ -63,7 +73,39 @@ struct GeoBounds {
    * The return value must not be used in any calculation.
    */
   void SetInvalid() {
-    north = Angle::FullCircle();
+    latitude.end = Angle::FullCircle();
+  }
+
+  constexpr Angle GetWest() const {
+    return longitude.start;
+  }
+
+  constexpr Angle GetEast() const {
+    return longitude.end;
+  }
+
+  constexpr Angle GetSouth() const {
+    return latitude.start;
+  }
+
+  constexpr Angle GetNorth() const {
+    return latitude.end;
+  }
+
+  constexpr GeoPoint GetNorthWest() const {
+    return GeoPoint(GetWest(), GetNorth());
+  }
+
+  constexpr GeoPoint GetNorthEast() const {
+    return GeoPoint(GetEast(), GetNorth());
+  }
+
+  constexpr GeoPoint GetSouthWest() const {
+    return GeoPoint(GetWest(), GetSouth());
+  }
+
+  constexpr GeoPoint GetSouthEast() const {
+    return GeoPoint(GetEast(), GetSouth());
   }
 
   /**
@@ -74,17 +116,45 @@ struct GeoBounds {
    */
   constexpr
   bool IsValid() const {
-    return north <= Angle::HalfCircle();
+    return latitude.end <= Angle::HalfCircle();
   }
 
-  bool IsEmpty() const {
-    return west == east && north == south;
+  constexpr bool IsEmpty() const {
+    return longitude.IsEmpty() || latitude.IsEmpty();
+  }
+
+  Angle GetWidth() const {
+    return longitude.GetLength();
+  }
+
+  Angle GetHeight() const {
+    return latitude.GetLength();
+  }
+
+  /**
+   * Returns the geographic width of the object (west to east) at its
+   * center in metres.
+   */
+  gcc_pure
+  fixed GetGeoWidth() const {
+    const Angle middle_latitude = latitude.GetMiddle();
+    return GeoPoint(GetWest(), middle_latitude)
+      .Distance(GeoPoint(GetEast(), middle_latitude));
+  }
+
+  /**
+   * Returns the geographic height of the object (south to north) in
+   * metres.
+   */
+  gcc_pure
+  fixed GetGeoHeight() const {
+    return GetNorthWest().Distance(GetSouthWest());
   }
 
   void Extend(const GeoPoint pt);
 
-  bool IsInside(Angle longitude, Angle latitude) const {
-    return longitude.Between(west, east) && latitude.Between(south, north);
+  bool IsInside(Angle _longitude, Angle _latitude) const {
+    return longitude.IsInside(_longitude) && latitude.IsInside(_latitude);
   }
 
   bool IsInside(const GeoPoint pt) const {
@@ -92,28 +162,26 @@ struct GeoBounds {
   }
 
   bool IsInside(const GeoBounds &interior) const {
-    return IsInside(interior.west, interior.north) &&
-      IsInside(interior.east, interior.south);
+    return longitude.IsInside(interior.longitude) &&
+      latitude.IsInside(interior.latitude);
   }
 
-protected:
-  /**
-   * Does the range a1..a2 overlap with b1..b2?
-   */
-  gcc_const
-  static bool Overlaps(Angle a1, Angle a2, Angle b1, Angle b2) {
-    return a1.Between(b1, b2) || b1.Between(a1, a2);
-  }
-
-public:
   /**
    * Does this GeoBounds instance overlap with the specified one?
    */
   gcc_pure
   bool Overlaps(const GeoBounds &other) const {
-    return Overlaps(west, east, other.west, other.east) &&
-      Overlaps(south, north, other.south, other.north);
+    return longitude.Overlaps(other.longitude) &&
+      latitude.Overlaps(other.latitude);
   }
+
+  /**
+   * Set this object to the intersection of this and the other object.
+   *
+   * @return false if the two objects do not overlap; in this case,
+   * the object is left in an undefined state
+   */
+  bool IntersectWith(const GeoBounds &other);
 
   gcc_pure
   GeoPoint GetCenter() const;

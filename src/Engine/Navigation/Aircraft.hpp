@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,10 +22,11 @@
 #ifndef AIRCRAFT_HPP
 #define AIRCRAFT_HPP
 
-#include "Util/TypeTraits.hpp"
 #include "Geo/GeoPoint.hpp"
 #include "Geo/SpeedVector.hpp"
 #include "Compiler.h"
+
+#include <type_traits>
 
 /**
  * @file
@@ -150,11 +151,11 @@ struct AircraftState:
    * @return Predicted aircraft state in in_time seconds
    */
   gcc_pure
-  AircraftState GetPredictedState(const fixed& in_time) const;
+  AircraftState GetPredictedState(fixed in_time) const;
 
   void Reset();
 };
 
-static_assert(is_trivial<AircraftState>::value, "type is not trivial");
+static_assert(std::is_trivial<AircraftState>::value, "type is not trivial");
 
 #endif

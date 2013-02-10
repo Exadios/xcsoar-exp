@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ Copyright_License {
 #include "Language/Language.hpp"
 #include "Message.hpp"
 #include "Interface.hpp"
+#include "ActionInterface.hpp"
 #include "Pages.hpp"
 #include "Profile/Profile.hpp"
 #include "Profile/ProfileKeys.hpp"
@@ -34,6 +35,7 @@ Copyright_License {
 #include "UIState.hpp"
 #include "Asset.hpp"
 #include "Pan.hpp"
+#include "Util/Clamp.hpp"
 
 // eventAutoZoom - Turn on|off|toggle AutoZoom
 // misc:
@@ -214,13 +216,14 @@ InputEvents::sub_SetZoom(fixed value)
   }
 
   fixed vmin = CommonInterface::GetComputerSettings().polar.glide_polar_task.GetVMin();
-  fixed scale_2min_distance = vmin * fixed_int_constant(12);
-  const fixed scale_500m = fixed_int_constant(50);
-  const fixed scale_1600km = fixed_int_constant(1600*100);
-  fixed minreasonable = (displayMode == DisplayMode::CIRCLING) ?
-                        scale_500m : max(scale_500m, scale_2min_distance);
+  fixed scale_2min_distance = vmin * 12;
+  const fixed scale_100m = fixed(10);
+  const fixed scale_1600km = fixed(1600*100);
+  fixed minreasonable = displayMode == DisplayMode::CIRCLING
+    ? scale_100m
+    : std::max(scale_100m, scale_2min_distance);
 
-  value = max(minreasonable, min(scale_1600km, value));
+  value = Clamp(value, minreasonable, scale_1600km);
   map_window->SetMapScale(value);
   map_window->QuickRedraw();
 }

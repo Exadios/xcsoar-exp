@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@ ExternalSettings::Clear()
   wing_loading_available.Clear();
   bugs_available.Clear();
   qnh_available.Clear();
+  volume_available.Clear();
 }
 
 void
@@ -73,6 +74,11 @@ ExternalSettings::Complement(const ExternalSettings &add)
     qnh = add.qnh;
     qnh_available = add.qnh_available;
   }
+
+  if (add.volume_available.Modified(volume_available)) {
+    volume = add.volume;
+    volume_available = add.volume_available;
+  }
 }
 
 void
@@ -103,6 +109,10 @@ ExternalSettings::EliminateRedundant(const ExternalSettings &other,
 
   if (qnh_available && other.CompareQNH(qnh) && !last.CompareQNH(qnh))
     qnh_available.Clear();
+
+  if (volume_available && other.CompareVolume(volume) &&
+      !last.CompareVolume(volume))
+    volume_available.Clear();
 }
 
 bool
@@ -123,7 +133,7 @@ ExternalSettings::ProvideMacCready(fixed value, fixed time)
 bool
 ExternalSettings::ProvideBallastFraction(fixed value, fixed time)
 {
-  if (negative(value) || value > fixed_one)
+  if (negative(value) || value > fixed(1))
     /* failed sanity check */
     return false;
 
@@ -138,7 +148,7 @@ ExternalSettings::ProvideBallastFraction(fixed value, fixed time)
 bool
 ExternalSettings::ProvideBallastOverload(fixed value, fixed time)
 {
-  if (value < fixed_one || value > fixed(5))
+  if (value < fixed(1) || value > fixed(5))
     /* failed sanity check */
     return false;
 
@@ -153,7 +163,7 @@ ExternalSettings::ProvideBallastOverload(fixed value, fixed time)
 bool
 ExternalSettings::ProvideWingLoading(fixed value, fixed time)
 {
-  if (value < fixed_one || value > fixed(200))
+  if (value < fixed(1) || value > fixed(200))
     /* failed sanity check */
     return false;
 
@@ -168,7 +178,7 @@ ExternalSettings::ProvideWingLoading(fixed value, fixed time)
 bool
 ExternalSettings::ProvideBugs(fixed value, fixed time)
 {
-  if (value < fixed_half || value > fixed_one)
+  if (value < fixed(0.5) || value > fixed(1))
     /* failed sanity check */
     return false;
 
@@ -193,5 +203,20 @@ ExternalSettings::ProvideQNH(AtmosphericPressure value, fixed time)
 
   qnh = value;
   qnh_available.Update(time);
+  return true;
+}
+
+bool
+ExternalSettings::ProvideVolume(unsigned value, fixed time)
+{
+  if (value > 100)
+    /* failed sanity check */
+    return false;
+
+  if (CompareVolume(value))
+    return false;
+
+  volume = value;
+  volume_available.Update(time);
   return true;
 }

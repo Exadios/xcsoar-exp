@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@ struct zzip_dir;
  */
 class RasterWeather {
 public:
-  static const unsigned MAX_WEATHER_MAP = 16; /**< Max number of items stored */
-  static const unsigned MAX_WEATHER_TIMES = 48; /**< Max time segments of each item */
+  static constexpr unsigned MAX_WEATHER_MAP = 16; /**< Max number of items stored */
+  static constexpr unsigned MAX_WEATHER_TIMES = 48; /**< Max time segments of each item */
 
 private:
   GeoPoint center;

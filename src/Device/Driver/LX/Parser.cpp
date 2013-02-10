@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -61,8 +61,6 @@ LXWP0(NMEAInputLine &line, NMEAInfo &info)
   11 windspeed (kph)
   */
 
-  fixed value;
-
   line.Skip();
 
   fixed airspeed;
@@ -71,16 +69,18 @@ LXWP0(NMEAInputLine &line, NMEAInfo &info)
     /* implausible */
     return false;
 
-  fixed alt = fixed_zero;
-  if (line.ReadChecked(alt))
+  fixed value;
+  if (line.ReadChecked(value))
     /* a dump on a LX7007 has confirmed that the LX sends uncorrected
        altitude above 1013.25hPa here */
-    info.ProvidePressureAltitude(alt);
+    info.ProvidePressureAltitude(value);
 
   if (tas_available)
-    info.ProvideTrueAirspeedWithAltitude(Units::ToSysUnit(airspeed,
-                                                          Unit::KILOMETER_PER_HOUR),
-                                         alt);
+    /*
+     * Call ProvideTrueAirspeed() after ProvidePressureAltitude() to use
+     * the provided altitude (if available)
+     */
+    info.ProvideTrueAirspeed(Units::ToSysUnit(airspeed, Unit::KILOMETER_PER_HOUR));
 
   if (line.ReadChecked(value))
     info.ProvideTotalEnergyVario(value);
@@ -143,14 +143,26 @@ LXWP2(NMEAInputLine &line, NMEAInfo &info)
     info.settings.ProvideBallastOverload(value, info.clock);
 
   // Bugs
-  if (line.ReadChecked(value))
-    info.settings.ProvideBugs((fixed(100) - value) / 100, info.clock);
+  if (line.ReadChecked(value)) {
+    if (value <= fixed(1.5) && value >= fixed(1.0))
+      // LX160 (sw 3.04) reports bugs as 1.00, 1.05 or 1.10 (#2167)
+      info.settings.ProvideBugs(fixed(2) - value, info.clock);
+    else
+      // All other known LX devices report bugs as 0, 5, 10, 15, ...
+      info.settings.ProvideBugs((fixed(100) - value) / 100, info.clock);
+  }
+
+  line.Skip(3);
+
+  unsigned volume;
+  if (line.ReadChecked(volume))
+    info.settings.ProvideVolume(volume, info.clock);
 
   return true;
 }
 
 static bool
-LXWP3(gcc_unused NMEAInputLine &line, gcc_unused NMEAInfo &info)
+LXWP3(NMEAInputLine &line, NMEAInfo &info)
 {
   /*
    * $LXWP3,
@@ -163,6 +175,16 @@ LXWP3(gcc_unused NMEAInputLine &line, gcc_unused NMEAInfo &info)
    * glider name
    * time offset
    */
+
+  fixed value;
+
+  // Altitude offset -> QNH
+  if (line.ReadChecked(value)) {
+    value = Units::ToSysUnit(-value, Unit::FEET);
+    auto qnh = AtmosphericPressure::PressureAltitudeToStaticPressure(value);
+    info.settings.ProvideQNH(qnh, info.clock);
+  }
+
   return true;
 }
 
@@ -294,16 +316,12 @@ PLXVS(NMEAInputLine &line, NMEAInfo &info)
   }
 
   int mode;
+  info.switch_state.flight_mode = SwitchState::FlightMode::UNKNOWN;
   if (line.ReadChecked(mode)) {
-    if (mode == 0) {
-      info.switch_state.flight_mode = SwitchInfo::FlightMode::CIRCLING;
-      info.switch_state.speed_command = false;
-      info.switch_state_available = true;
-    } else if (mode == 1) {
-      info.switch_state.flight_mode = SwitchInfo::FlightMode::CRUISE;
-      info.switch_state.speed_command = true;
-      info.switch_state_available = true;
-    }
+    if (mode == 0)
+      info.switch_state.flight_mode = SwitchState::FlightMode::CIRCLING;
+    else if (mode == 1)
+      info.switch_state.flight_mode = SwitchState::FlightMode::CRUISE;
   }
 
   fixed voltage;
@@ -338,6 +356,8 @@ LXDevice::ParseNMEA(const char *String, NMEAInfo &info)
 
     const bool saw_v7 = device_info.product.equals("V7");
     const bool saw_nano = device_info.product.equals("NANO");
+    const bool saw_lx16xx = device_info.product.equals("1606") ||
+                             device_info.product.equals("1600");
 
     if (mode == Mode::PASS_THROUGH) {
       /* in pass-through mode, we should never clear the V7 flag,
@@ -345,11 +365,16 @@ LXDevice::ParseNMEA(const char *String, NMEAInfo &info)
          currently */
       is_v7 |= saw_v7;
       is_nano |= saw_nano;
+      is_lx16xx |= saw_lx16xx;
       is_forwarded_nano = saw_nano;
     } else {
       is_v7 = saw_v7;
       is_nano = saw_nano;
+      is_lx16xx = saw_lx16xx;
     }
+
+    if (saw_v7 || saw_nano || saw_lx16xx)
+      is_colibri = false;
 
     return true;
   }
@@ -362,11 +387,13 @@ LXDevice::ParseNMEA(const char *String, NMEAInfo &info)
 
   if (StringIsEqual(type, "$PLXV0")) {
     is_v7 = true;
+    is_colibri = false;
     return PLXV0(line, v7_settings);
   }
 
   if (StringIsEqual(type, "$PLXVC")) {
     is_nano = true;
+    is_colibri = false;
     PLXVC(line, info.device, info.secondary_device, nano_settings);
     is_forwarded_nano = info.secondary_device.product.equals("NANO");
     return true;
@@ -374,11 +401,13 @@ LXDevice::ParseNMEA(const char *String, NMEAInfo &info)
 
   if (StringIsEqual(type, "$PLXVF")) {
     is_v7 = true;
+    is_colibri = false;
     return PLXVF(line, info);
   }
 
   if (StringIsEqual(type, "$PLXVS")) {
     is_v7 = true;
+    is_colibri = false;
     return PLXVS(line, info);
   }
 

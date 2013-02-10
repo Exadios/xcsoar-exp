@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "Dialogs/Message.hpp"
 #include "Dialogs/TextEntry.hpp"
+#include "Dialogs/TimeEntry.hpp"
 
 int
 ShowMessageBox(const TCHAR *lpText, const TCHAR *lpCaption, unsigned uType)
@@ -31,9 +32,15 @@ ShowMessageBox(const TCHAR *lpText, const TCHAR *lpCaption, unsigned uType)
 }
 
 bool
-dlgTextEntryShowModal(SingleWindow &parent, TCHAR *text,
-                      int width, const TCHAR *caption,
-                      AllowedCharactersCallback_t accb)
+dlgTextEntryShowModal(TCHAR *text, size_t size,
+                      const TCHAR *caption,
+                      AllowedCharacters accb)
+{
+  return false;
+}
+
+bool
+TimeEntryDialog(const TCHAR *caption, RoughTime &value, bool nullable)
 {
   return false;
 }

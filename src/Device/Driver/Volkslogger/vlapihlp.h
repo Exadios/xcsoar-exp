@@ -25,8 +25,10 @@
 
 
 char *igc_filter(char *);
-char *strtrim(char *);
-char *wordtoserno(word);
+
+void
+wordtoserno(char *buffer, unsigned serno);
+
 long pressure2altitude(word);
 
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@ Copyright_License {
 #include "LogFile.hpp"
 
 #include <tchar.h>
+#include <string.h>
 
 #ifndef HAVE_POSIX
 #include <windows.h>
@@ -79,7 +80,7 @@ const struct language_unit_map language_table[] = {
 
 #ifndef HAVE_POSIX
 static unsigned
-find_language(LANGID lang)
+FindLanguage(LANGID lang)
 {
   // Search for supported languages matching the language code
   for (unsigned i = 0; language_table[i].region_code != NULL; ++i)
@@ -90,7 +91,7 @@ find_language(LANGID lang)
 }
 #elif defined(ANDROID)
 static unsigned
-find_language(const TCHAR* lang)
+FindLanguage(const TCHAR* lang)
 {
   // Search for supported languages matching the language code
   for (unsigned i = 0; language_table[i].region_code != NULL; ++i)
@@ -111,7 +112,7 @@ AutoDetect()
      mingw32ce, we have to look it up dynamically */
   DynamicLibrary coreloc_dll(_T("coredll"));
   if (!coreloc_dll.IsDefined()) {
-    LogStartUp(_T("Units: coredll.dll not found"));
+    LogFormat("Units: coredll.dll not found");
     return 0;
   }
 
@@ -120,18 +121,18 @@ AutoDetect()
     (GetUserDefaultUILanguage_t)
     coreloc_dll.Lookup(_T("GetUserDefaultUILanguage"));
   if (GetUserDefaultUILanguage == NULL) {
-    LogStartUp(_T("Units: GetUserDefaultUILanguage() not available"));
+    LogFormat("Units: GetUserDefaultUILanguage() not available");
     return 0;
   }
 #endif
 
   // Retrieve the default user language identifier from the OS
   LANGID lang_id = GetUserDefaultUILanguage();
-  LogStartUp(_T("Units: GetUserDefaultUILanguage() = 0x%x"), (int)lang_id);
+  LogFormat("Units: GetUserDefaultUILanguage() = 0x%x", (int)lang_id);
   if (lang_id == 0)
     return 0;
 
-  return find_language(lang_id);
+  return FindLanguage(lang_id);
 
 #elif defined(ANDROID)
   JNIEnv *env = Java::GetEnv();
@@ -168,7 +169,7 @@ AutoDetect()
     return 0;
   }
 
-  unsigned id = find_language(language2);
+  unsigned id = FindLanguage(language2);
 
   // Clean up the memory
   env->ReleaseStringUTFChars(language, language2);

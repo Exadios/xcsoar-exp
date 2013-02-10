@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@ Copyright_License {
 
 #ifdef HAVE_CURL
 #include "Util/FifoBuffer.hpp"
+#include "Net/CURL/Easy.hpp"
 
 #include <curl/curl.h>
 #include <stdint.h>
@@ -54,7 +55,6 @@ namespace Net {
 #endif
 
   class Request {
-  public:
 #ifdef HAVE_WININET
     /** Internal connection handle */
     WinINet::HttpRequestHandle handle;
@@ -64,15 +64,15 @@ namespace Net {
     /** The last error code that was retrieved by the Callback() function */
     DWORD last_error;
 #elif defined(ANDROID)
-    static const unsigned INFINITE = 0;
+    static constexpr unsigned INFINITE = 0;
 #else
-    static const unsigned INFINITE = (unsigned)-1;
+    static constexpr unsigned INFINITE = (unsigned)-1;
 #endif
 
 #ifdef HAVE_CURL
     Session &session;
 
-    CURL *handle;
+    CurlEasy handle;
 
     typedef FifoBuffer<uint8_t, CURL_MAX_WRITE_SIZE> Buffer;
     Buffer buffer;
@@ -94,17 +94,6 @@ namespace Net {
     Request(Session &session, const char *url,
             unsigned timeout_ms=INFINITE);
 
-#ifdef HAVE_WININET
-    /**
-     * Creates a Request that can be used to get data from a webserver.
-     * @param connection Connection instance that is used for creating this Request
-     * @param file The file to request (e.g. /downloads/index.htm)
-     * @param timeout_ms Timeout used for creating this request
-     */
-    Request(Connection &connection, const char *file,
-            unsigned timeout_ms=INFINITE);
-#endif
-
 #if defined(HAVE_CURL) || defined(HAVE_JAVA_NET)
     ~Request();
 #endif
@@ -113,7 +102,7 @@ namespace Net {
   protected:
     size_t ResponseData(const uint8_t *ptr, size_t size);
 
-    static size_t WriteCallback(void *ptr, size_t size, size_t nmemb,
+    static size_t WriteCallback(char *ptr, size_t size, size_t nmemb,
                                 void *userdata);
 #endif
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,21 +24,47 @@ Copyright_License {
 #ifndef XCSOAR_TRACKING_SKYLINES_CLIENT_HPP
 #define XCSOAR_TRACKING_SKYLINES_CLIENT_HPP
 
+#include "Handler.hpp"
 #include "OS/SocketAddress.hpp"
 #include "OS/SocketDescriptor.hpp"
+#include "IO/Async/FileEventHandler.hpp"
 
 #include <stdint.h>
 
 struct NMEAInfo;
+class IOThread;
 
 namespace SkyLinesTracking {
-  class Client {
+  struct TrafficResponsePacket;
+
+  class Client
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    : private FileEventHandler
+#endif
+  {
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    IOThread *io_thread;
+    Handler *handler;
+#endif
+
     uint64_t key;
+
     SocketAddress address;
     SocketDescriptor socket;
 
   public:
-    Client():key(0) {}
+    Client()
+      :
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+      io_thread(nullptr), handler(nullptr),
+#endif
+      key(0) {}
+    ~Client() { Close(); }
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    void SetIOThread(IOThread *io_thread);
+    void SetHandler(Handler *handler);
+#endif
 
     bool IsDefined() const {
       return socket.IsDefined();
@@ -48,16 +74,21 @@ namespace SkyLinesTracking {
       key = _key;
     }
 
-    bool Open(const char *host) {
-      return address.Lookup(host, "5597", SOCK_DGRAM) && socket.CreateUDP();
-    }
-
-    void Close() {
-      socket.Close();
-    }
+    bool Open(const char *host);
+    void Close();
 
     bool SendFix(const NMEAInfo &basic);
     bool SendPing(uint16_t id);
+    bool SendTrafficRequest(bool followees, bool club);
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  private:
+    void OnTrafficReceived(const TrafficResponsePacket &packet, size_t length);
+    void OnDatagramReceived(void *data, size_t length);
+
+    /* virtual methods from FileEventHandler */
+    virtual bool OnFileEvent(int fd, unsigned mask) override;
+#endif
   };
 }
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@ Copyright_License {
 
 #include "Device/Port/Port.hpp"
 #include "Device/Internal.hpp"
+#include "Atmosphere/Pressure.hpp"
+#include "Units/System.hpp"
 
 /**
  * Code specific to LXNav varios (e.g. V7).
@@ -36,7 +38,7 @@ namespace V7 {
   /**
    * Enable direct link with GPS port.
    */
-  static bool
+  static inline bool
   ModeDirect(Port &port, OperationEnvironment &env)
   {
     return PortWriteNMEA(port, "PLXV0,CONNECTION,W,DIRECT", env);
@@ -45,7 +47,7 @@ namespace V7 {
   /**
    * Enable communication with V7.
    */
-  static bool
+  static inline bool
   ModeVSeven(Port &port, OperationEnvironment &env)
   {
     return PortWriteNMEA(port, "PLXV0,CONNECTION,W,VSEVEN", env);
@@ -62,10 +64,61 @@ namespace V7 {
    * - LXWP3 disabled (we don't parse it)
    * - LXWP5 disabled (we don't parse it)
    */
-  static bool
+  static inline bool
   SetupNMEA(Port &port, OperationEnvironment &env)
   {
     return PortWriteNMEA(port, "PLXV0,NMEARATE,W,2,5,1,60,30,0,0", env);
+  }
+
+  /**
+   * Set the MC setting of the V7 vario
+   * @param mc in m/s
+   */
+  static inline bool
+  SetMacCready(Port &port, OperationEnvironment &env, fixed mc)
+  {
+    char buffer[32];
+    sprintf(buffer, "PLXV0,MC,W,%.1f", (double)mc);
+    return PortWriteNMEA(port, buffer, env);
+  }
+
+  /**
+   * Set the ballast setting of the V7 vario
+   * @param overload 1.0 - 1.4 (100 - 140%)
+   */
+  static inline bool
+  SetBallast(Port &port, OperationEnvironment &env, fixed overload)
+  {
+    char buffer[100];
+    sprintf(buffer, "PLXV0,BAL,W,%.2f", (double)overload);
+    return PortWriteNMEA(port, buffer, env);
+  }
+
+  /**
+   * Set the bugs setting of the V7 vario
+   * @param bugs 0 - 30 %
+   */
+  static inline bool
+  SetBugs(Port &port, OperationEnvironment &env, unsigned bugs)
+  {
+    char buffer[100];
+    sprintf(buffer, "PLXV0,BUGS,W,%u", bugs);
+    return PortWriteNMEA(port, buffer, env);
+  }
+
+  /**
+   * Set the QNH setting of the V7 vario
+   */
+  static inline bool
+  SetQNH(Port &port, OperationEnvironment &env, const AtmosphericPressure &qnh)
+  {
+    fixed altitude_offset = Units::ToUserUnit(
+        qnh.StaticPressureToQNHAltitude(AtmosphericPressure::Standard()),
+        Unit::FEET);
+
+    char buffer[100];
+    sprintf(buffer, "PLXV0,QNH,W,%.2f", (double)altitude_offset);
+    return PortWriteNMEA(port, buffer, env);
   }
 }
 

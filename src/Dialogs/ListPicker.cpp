@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,138 +22,184 @@ Copyright_License {
 */
 
 #include "Dialogs/ListPicker.hpp"
-#include "Dialogs/XML.hpp"
-#include "Dialogs/CallBackTable.hpp"
-#include "Form/Form.hpp"
-#include "Form/Frame.hpp"
-#include "Form/Button.hpp"
+#include "WidgetDialog.hpp"
+#include "Widget/ListWidget.hpp"
+#include "Widget/TextWidget.hpp"
+#include "Widget/TwoWidgets.hpp"
 #include "Screen/Layout.hpp"
+#include "UIGlobals.hpp"
+#include "Language/Language.hpp"
+#include "Event/LambdaTimer.hpp"
+#include "Event/Timer.hpp"
 
 #include <assert.h>
 
-static WndForm *wf;
-static ListHelpCallback_t help_callback;
+static constexpr int HELP = 100;
 
-static WndFrame *wItemHelp;
-static ListControl *list_control;
-static ItemHelpCallback_t itemhelp_callback;
+class ListPickerWidget : public ListWidget, public ActionListener,
+                         private Timer {
+  unsigned num_items;
+  unsigned initial_value;
+  UPixelScalar row_height;
 
-static void
-OnHelpClicked(gcc_unused WndButton &button)
-{
-  assert(help_callback != NULL);
+  bool visible;
 
-  unsigned i = list_control->GetCursorIndex();
-  if (i < list_control->GetLength())
-    help_callback(i);
-}
+  ListItemRenderer &item_renderer;
+  ActionListener &action_listener;
 
-static void
-OnCloseClicked(gcc_unused WndButton &Sender)
-{
-  wf->SetModalResult(mrOK);
-}
+  ListHelpCallback_t help_callback;
+  ItemHelpCallback_t item_help_callback;
+  TextWidget *help_widget;
+  TwoWidgets *two_widgets;
 
-static void
-OnComboPopupListEnter(gcc_unused unsigned i)
-{
-  wf->SetModalResult(mrOK);
-}
+public:
+  ListPickerWidget(unsigned _num_items, unsigned _initial_value,
+                   UPixelScalar _row_height,
+                   ListItemRenderer &_item_renderer,
+                   ActionListener &_action_listener,
+                   ListHelpCallback_t _help_callback)
+    :num_items(_num_items), initial_value(_initial_value),
+     row_height(_row_height),
+     visible(false),
+     item_renderer(_item_renderer),
+     action_listener(_action_listener),
+     help_callback(_help_callback),
+     item_help_callback(nullptr) {}
 
-static void
-OnCancelClicked(gcc_unused WndButton &Sender)
-{
-  wf->SetModalResult(mrCancel);
-}
+  using ListWidget::GetList;
 
-static void
-OnTimerNotify(gcc_unused WndForm &Sender)
-{
-  list_control->Invalidate();
-}
+  void EnableItemHelp(ItemHelpCallback_t _item_help_callback,
+                      TextWidget *_help_widget,
+                      TwoWidgets *_two_widgets) {
+    item_help_callback = _item_help_callback;
+    help_widget = _help_widget;
+    two_widgets = _two_widgets;
+  }
 
-static void
-OnPointCursorCallback(unsigned i)
-{
-  assert(wItemHelp);
-  assert(itemhelp_callback);
-  const TCHAR* itemhelp = itemhelp_callback(i);
-  wItemHelp->SetText(itemhelp);
-}
+  void UpdateHelp(unsigned index) {
+    if (!visible || item_help_callback == nullptr)
+      return;
 
-static constexpr CallBackTableEntry CallBackTable[] = {
-  DeclareCallBackEntry(OnCloseClicked),
-  DeclareCallBackEntry(OnCancelClicked),
-  DeclareCallBackEntry(OnHelpClicked),
-  DeclareCallBackEntry(NULL)
+    help_widget->SetText(item_help_callback(index));
+    two_widgets->UpdateLayout();
+  }
+
+  /* virtual methods from class Widget */
+
+  virtual void Prepare(ContainerWindow &parent,
+                       const PixelRect &rc) override {
+    ListControl &list = CreateList(parent, UIGlobals::GetDialogLook(), rc,
+                                   row_height);
+    list.SetLength(num_items);
+    list.SetCursorIndex(initial_value);
+  }
+
+  virtual void Unprepare() override {
+    DeleteWindow();
+  }
+
+  virtual void Show(const PixelRect &rc) override {
+    ListWidget::Show(rc);
+
+    visible = true;
+    Schedule(0);
+  }
+
+  virtual void Hide() override {
+    visible = false;
+    Cancel();
+    ListWidget::Hide();
+  }
+
+  /* virtual methods from class ListControl::Handler */
+
+  virtual void OnPaintItem(Canvas &canvas, const PixelRect rc,
+                           unsigned idx) override {
+    item_renderer.OnPaintItem(canvas, rc, idx);
+  }
+
+  virtual void OnCursorMoved(unsigned index) override {
+    UpdateHelp(index);
+  }
+
+  virtual bool CanActivateItem(unsigned index) const override {
+    return true;
+  }
+
+  virtual void OnActivateItem(unsigned index) override {
+    action_listener.OnAction(mrOK);
+  }
+
+  /* virtual methods from class ActionListener */
+
+  virtual void OnAction(int id) override {
+    help_callback(GetList().GetCursorIndex());
+  }
+
+private:
+  /* virtual methods from class Timer */
+
+  /**
+   * This timer is used to postpone the initial UpdateHelp() call.
+   * This is necessary because the TwoWidgets instance is not fully
+   * initialised yet in Show(), and recursively calling into Widget
+   * methods is dangerous anyway.
+   */
+  virtual void OnTimer() override {
+    UpdateHelp(GetList().GetCursorIndex());
+    Timer::Cancel();
+  }
 };
 
 int
-ListPicker(SingleWindow &parent, const TCHAR *caption,
+ListPicker(const TCHAR *caption,
            unsigned num_items, unsigned initial_value,
-           UPixelScalar item_height,
-           ListControl::PaintItemCallback paint_callback, bool update,
+           unsigned item_height,
+           ListItemRenderer &item_renderer, bool update,
            ListHelpCallback_t _help_callback,
            ItemHelpCallback_t _itemhelp_callback)
 {
   assert(num_items <= 0x7fffffff);
   assert((num_items == 0 && initial_value == 0) || initial_value < num_items);
   assert(item_height > 0);
-  assert(paint_callback != NULL);
 
-  wf = LoadDialog(CallBackTable, parent, Layout::landscape
-                  ? _T("IDR_XML_COMBOPICKER_L")
-                  : _T("IDR_XML_COMBOPICKER"));
-  assert(wf != NULL);
+  WidgetDialog dialog(UIGlobals::GetDialogLook());
 
-  if (caption != NULL)
-    wf->SetCaption(caption);
+  ListPickerWidget *const list_widget =
+    new ListPickerWidget(num_items, initial_value, item_height,
+                         item_renderer, dialog, _help_callback);
+  TextWidget *text_widget = nullptr;
+  TwoWidgets *two_widgets = nullptr;
 
-  list_control = (ListControl *)wf->FindByName(_T("frmComboPopupList"));
-  assert(list_control != NULL);
-  list_control->SetItemHeight(item_height);
-  list_control->SetLength(num_items);
-  list_control->SetActivateCallback(OnComboPopupListEnter);
-  list_control->SetPaintItemCallback(paint_callback);
+  Widget *widget = list_widget;
 
-  help_callback = _help_callback;
-  itemhelp_callback = _itemhelp_callback;
+  if (_itemhelp_callback != nullptr) {
+    text_widget = new TextWidget();
+    widget = two_widgets = new TwoWidgets(list_widget, text_widget);
 
-  if (itemhelp_callback != NULL) {
-    wItemHelp = (WndFrame *)wf->FindByName(_T("lblItemHelp"));
-    assert(wItemHelp);
-    wItemHelp->Show();
-    const UPixelScalar help_height = wItemHelp->GetHeight();
-    PixelRect rc = list_control->GetPosition();
-    assert(rc.bottom - rc.top - help_height > 0);
-    rc.bottom -= help_height;
-    list_control->Move(rc);
-    list_control->SetCursorCallback(OnPointCursorCallback);
-    OnPointCursorCallback(initial_value);
-  }
-  else
-    wItemHelp = NULL;
-
-  list_control->SetCursorIndex(initial_value);
-
-  WndButton *help_button = (WndButton *)wf->FindByName(_T("cmdHelp"));
-  assert(help_button != NULL);
-  if (help_callback == NULL)
-    help_button->Hide();
-
-  if (num_items == 0) {
-    WndButton *select_button = (WndButton *)wf->FindByName(_T("SelectButton"));
-    assert(select_button != NULL);
-    select_button->SetEnabled(false);
+    list_widget->EnableItemHelp(_itemhelp_callback, text_widget, two_widgets);
   }
 
+  dialog.CreateFull(UIGlobals::GetMainWindow(), caption, widget);
+
+  if (_help_callback != nullptr)
+    dialog.AddButton(_("Help"), *list_widget, HELP);
+
+  if (num_items > 0)
+    dialog.AddButton(_("Select"), mrOK);
+
+  dialog.AddButton(_("Cancel"), mrCancel);
+
+  auto update_timer = MakeLambdaTimer([list_widget](){
+      list_widget->GetList().Invalidate();
+    });
   if (update)
-    wf->SetTimerNotify(OnTimerNotify);
+    update_timer.Schedule(1000);
 
-  int result = wf->ShowModal() == mrOK
-    ? (int)list_control->GetCursorIndex()
+  int result = dialog.ShowModal() == mrOK
+    ? (int)list_widget->GetList().GetCursorIndex()
     : -1;
-  delete wf;
 
+  update_timer.Cancel();
   return result;
 }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -68,21 +68,22 @@ RenderClimbChart(Canvas &canvas, const PixelRect rc,
   fixed MACCREADY = glide_polar.GetMC();
 
   chart.ScaleYFromData(fs.thermal_average);
-  chart.ScaleYFromValue(MACCREADY + fixed_half);
-  chart.ScaleYFromValue(fixed_zero);
+  chart.ScaleYFromValue(MACCREADY + fixed(0.5));
+  chart.ScaleYFromValue(fixed(0));
 
-  chart.ScaleXFromValue(fixed_minus_one);
+  chart.ScaleXFromValue(fixed(-1));
   chart.ScaleXFromValue(fixed(fs.thermal_average.sum_n));
 
-  chart.DrawYGrid(Units::ToSysVSpeed(fixed_one), fixed_zero,
-                  ChartLook::STYLE_THINDASHPAPER, fixed_one, true);
+  chart.DrawYGrid(Units::ToSysVSpeed(fixed(1)),
+                  ChartLook::STYLE_THINDASHPAPER, fixed(1), true);
   chart.DrawBarChart(fs.thermal_average);
 
-  chart.DrawLine(fixed_zero, MACCREADY, fixed(fs.thermal_average.sum_n), MACCREADY,
+  chart.DrawLine(fixed(0), MACCREADY, fixed(fs.thermal_average.sum_n), MACCREADY,
                  ChartLook::STYLE_REDTHICK);
 
   chart.DrawLabel(_T("MC"),
-                  max(fixed_half, fixed(fs.thermal_average.sum_n) - fixed_one),
+                  std::max(fixed(0.5),
+                           fixed(fs.thermal_average.sum_n) - fixed(1)),
                   MACCREADY);
 
   chart.DrawTrendN(fs.thermal_average, ChartLook::STYLE_BLUETHIN);

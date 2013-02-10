@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,25 +31,17 @@ Copyright_License {
 #include "Form/Util.hpp"
 #include "Form/Button.hpp"
 #include "Units/Units.hpp"
-#include "Math/FastMath.h"
 #include "Form/DataField/Base.hpp"
 #include "Form/DataField/Boolean.hpp"
-#include "Compatibility/string.h"
-#include "PeriodClock.hpp"
+#include "Time/PeriodClock.hpp"
 #include "Components.hpp"
 #include "Hardware/AltairControl.hpp"
 #include "UIGlobals.hpp"
 
 static WndForm *wf=NULL;
 
-static void
-OnCloseClicked(gcc_unused WndButton &Sender)
-{
-	wf->SetModalResult(mrOK);
-}
-
 static bool EnableAutoBrightness = true;
-static int BrightnessValue = 0;
+static unsigned BrightnessValue = 0;
 
 static void UpdateValues() {
   static PeriodClock last_time;
@@ -95,7 +87,6 @@ static void OnBrightnessData(DataField *Sender,
 static constexpr CallBackTableEntry CallBackTable[]={
   DeclareCallBackEntry(OnAutoData),
   DeclareCallBackEntry(OnBrightnessData),
-  DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(NULL)
 };
 
@@ -119,15 +110,10 @@ void dlgBrightnessShowModal(){
 
 #else /* !GNAV */
 
-#include "Dialogs/Message.hpp"
-
 void
 dlgBrightnessShowModal()
 {
-  /* XXX this is ugly, non-Altair platforms should not even see the
-     according menu item; not translating this superfluous message */
-  ShowMessageBox(_T("Only available on Altair"), _T("Brightness"),
-              MB_OK|MB_ICONERROR);
+  /* only available on Altair */
 }
 
 #endif /* !GNAV */

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,7 +26,18 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Asset.hpp"
 
-Font normal_font, small_font, bold_font;
+#include <string.h>
+
+Font normal_font, small_font, bold_font, monospace_font;
+
+static const TCHAR *
+GetStandardMonospaceFontFace()
+{
+  if (IsAndroid())
+    return _T("Droid Sans Mono");
+
+  return _T("Courier");
+}
 
 static void
 InitialiseLogfont(LOGFONT* font, const TCHAR* facename, int height,
@@ -60,26 +71,31 @@ InitialiseFonts()
   const TCHAR *face = _T("Tahoma");
 
 #ifndef USE_GDI
-  UPixelScalar FontHeight = Layout::SmallScale(IsAndroid() ? 30 : 24);
+  UPixelScalar font_height = Layout::SmallScale(IsAndroid() ? 30 : 24);
 #else
-  UPixelScalar FontHeight = Layout::SmallScale(35);
+  UPixelScalar font_height = Layout::SmallScale(35);
 #endif
 
   LOGFONT lf;
-  InitialiseLogfont(&lf, face, FontHeight / 2);
-  normal_font.Set(lf);
+  InitialiseLogfont(&lf, face, font_height / 2);
+  normal_font.Load(lf);
 
-  InitialiseLogfont(&lf, face, FontHeight / 2 - Layout::Scale(2));
-  small_font.Set(lf);
+  InitialiseLogfont(&lf, face, font_height / 2 - Layout::Scale(2));
+  small_font.Load(lf);
 
-  InitialiseLogfont(&lf, face, FontHeight / 2, true);
-  bold_font.Set(lf);
+  InitialiseLogfont(&lf, face, font_height / 2, true);
+  bold_font.Load(lf);
+
+  InitialiseLogfont(&lf, GetStandardMonospaceFontFace(),
+                    10, false, false, false);
+  monospace_font.Load(lf);
 }
 
 void
 DeinitialiseFonts()
 {
-  bold_font.Reset();
-  small_font.Reset();
-  normal_font.Reset();
+  monospace_font.Destroy();
+  bold_font.Destroy();
+  small_font.Destroy();
+  normal_font.Destroy();
 }

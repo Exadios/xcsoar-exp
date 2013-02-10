@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,17 +24,10 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_OPENGL_COLOR_HPP
 #define XCSOAR_SCREEN_OPENGL_COLOR_HPP
 
-#include "Screen/OpenGL/Features.hpp"
+#include "Features.hpp"
+#include "System.hpp"
 
-#ifdef HAVE_GLES
-#include <GLES/gl.h>
-#else
-#include <SDL/SDL_opengl.h>
-#endif
-
-#ifndef ANDROID
-#include <SDL_video.h> // for SDL_Color
-#endif
+#include <stdint.h>
 
 /**
  * This class represents a color in the RGB color space.  This is used
@@ -103,23 +96,6 @@ struct Color {
     return b;
 #endif
   }
-
-#ifndef HAVE_GLES
-  /**
-   * Convert this object to a SDL_Color.
-   *
-   * This function must be removed as soon as we have a pure OpenGL
-   * renderer (without libSDL).
-   */
-  operator SDL_Color() const {
-    SDL_Color color;
-    color.r = Red();
-    color.g = Green();
-    color.b = Blue();
-    color.unused = SDL_ALPHA_OPAQUE;
-    return color;
-  }
-#endif
 
   constexpr
   Color

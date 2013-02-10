@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,17 +25,13 @@ Copyright_License {
 #define XCSOAR_SCREEN_BITMAP_HPP
 
 #include "Screen/Point.hpp"
-#include "Util/NonCopyable.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Util/tstring.hpp"
 #include "Screen/OpenGL/Surface.hpp"
 #endif
 
-#ifdef ANDROID
-#elif defined(ENABLE_SDL)
-#include <SDL_video.h>
-#else
+#ifdef USE_GDI
 #include <windows.h>
 #endif
 
@@ -47,12 +43,16 @@ Copyright_License {
 class GLTexture;
 #endif
 
+#ifdef ENABLE_SDL
+struct SDL_Surface;
+#endif
+
 /**
  * An image loaded from storage.
  */
-class Bitmap : private NonCopyable
+class Bitmap
 #ifdef ENABLE_OPENGL
-             , private GLSurfaceListener
+             : private GLSurfaceListener
 #endif
 {
 public:
@@ -105,6 +105,9 @@ public:
     Reset();
   }
 
+  Bitmap(const Bitmap &other) = delete;
+  Bitmap &operator=(const Bitmap &other) = delete;
+
 public:
   bool IsDefined() const {
 #ifdef ENABLE_OPENGL
@@ -126,10 +129,8 @@ public:
   }
 #endif
 
-#ifndef ANDROID
 #ifdef ENABLE_SDL
   bool Load(SDL_Surface *_surface, Type type=Type::STANDARD);
-#endif
 #endif
 
   bool Load(unsigned id, Type type=Type::STANDARD);
@@ -170,8 +171,8 @@ private:
   bool Reload();
 
   /* from GLSurfaceListener */
-  virtual void surface_created();
-  virtual void surface_destroyed();
+  virtual void SurfaceCreated() override;
+  virtual void SurfaceDestroyed() override;
 #endif
 };
 

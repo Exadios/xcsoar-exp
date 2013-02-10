@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,8 @@ Copyright_License {
 
 struct MoreData;
 struct DerivedInfo;
+class AtmosphericPressure;
+struct FeaturesSettings;
 struct ComputerSettings;
 
 /**
@@ -38,6 +40,9 @@ public:
   /**
    * Fill the missing attributes with a fallback.
    */
+  void Fill(MoreData &data, const AtmosphericPressure qnh,
+            const FeaturesSettings &features);
+
   void Fill(MoreData &data, const ComputerSettings &settings_computer);
 
   /**
@@ -47,11 +52,9 @@ public:
    * @param last the previous sensor data structure
    * @param last_gps the previous GPS fix
    * @param calculations the most up-to-date version of calculated values
-   * @param settings_computer the computer settings
    */
   void Compute(MoreData &data, const MoreData &last, const MoreData &last_gps,
-               const DerivedInfo &calculated,
-               const ComputerSettings &settings_computer);
+               const DerivedInfo &calculated);
 };
 
 #endif

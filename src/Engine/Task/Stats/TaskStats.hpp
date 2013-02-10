@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,11 +23,8 @@
 #define TASKSTATS_HPP
 
 #include "ElementStat.hpp"
-#include "Util/TypeTraits.hpp"
 
-#ifdef DO_PRINT
-#include <iostream>
-#endif
+#include <type_traits>
 
 struct TaskBehaviour;
 
@@ -67,12 +64,14 @@ public:
   bool task_started;
   /** Whether the task is finished */
   bool task_finished;
-  /** Whether the task has adjustable targets */
-  bool has_targets;
   /** Whether the task is appoximately in final glide */
   bool flight_mode_final_glide;
   /** Margin for final glide flight mode transition (m) */
   int flight_mode_height_margin;
+
+  fixed GetEstimatedTotalTime() const {
+    return total.time_elapsed + total.time_remaining;
+  }
 
   /**
    * Check whether get_pirker_speed() is available.
@@ -95,14 +94,9 @@ public:
    * @return True if is mode changed
    */
   bool calc_flight_mode(const TaskBehaviour &settings);
-
-#ifdef DO_PRINT
-  friend std::ostream& operator<< (std::ostream& o, 
-                                   const TaskStats& ts);
-#endif
 };
 
-static_assert(is_trivial<TaskStats>::value, "type is not trivial");
+static_assert(std::is_trivial<TaskStats>::value, "type is not trivial");
 
 class TaskStatsComputer {
 public:

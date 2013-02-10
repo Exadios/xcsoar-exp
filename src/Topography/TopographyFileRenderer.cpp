@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@ Copyright_License {
 #include "Topography/TopographyFileRenderer.hpp"
 #include "Topography/TopographyFile.hpp"
 #include "Topography/XShape.hpp"
+#include "Look/Fonts.hpp"
+#include "Renderer/LabelBlock.hpp"
 #include "Projection/WindowProjection.hpp"
 #include "resource.h"
 #include "Screen/Canvas.hpp"
-#include "Screen/Fonts.hpp"
-#include "Screen/LabelBlock.hpp"
 #include "Screen/Features.hpp"
 #include "Screen/Layout.hpp"
 #include "Math/Matrix2D.hpp"
@@ -51,7 +51,7 @@ TopographyFileRenderer::UpdateVisibleShapes(const WindowProjection &projection)
 {
   if (file.GetSerial() == visible_serial &&
       visible_bounds.IsInside(projection.GetScreenBounds()) &&
-      projection.GetScreenBounds().Scale(fixed_two).IsInside(visible_bounds))
+      projection.GetScreenBounds().Scale(fixed(2)).IsInside(visible_bounds))
     /* cache is clean */
     return;
 
@@ -351,7 +351,8 @@ TopographyFileRenderer::PaintLabels(Canvas &canvas,
 
   canvas.Select(file.IsLabelImportant(map_scale) ?
                 Fonts::map_label_important : Fonts::map_label);
-  canvas.SetTextColor(Color(0x20, 0x20, 0x20));
+  canvas.SetTextColor(file.IsLabelImportant(map_scale) ?
+                COLOR_BLACK : COLOR_DARK_GRAY);
   canvas.SetBackgroundTransparent();
 
   // get drawing info
@@ -390,8 +391,8 @@ TopographyFileRenderer::PaintLabels(Canvas &canvas,
 #endif
 
     for (; lines < end_lines; ++lines) {
-      int minx = canvas.get_width();
-      int miny = canvas.get_height();
+      int minx = canvas.GetWidth();
+      int miny = canvas.GetHeight();
 
 #ifdef ENABLE_OPENGL
       const ShapePoint *end = points + *lines;
@@ -426,7 +427,7 @@ TopographyFileRenderer::PaintLabels(Canvas &canvas,
       if (!label_block.check(brect))
         continue;
 
-      canvas.text(minx, miny, label);
+      canvas.DrawText(minx, miny, label);
     }
   }
 }

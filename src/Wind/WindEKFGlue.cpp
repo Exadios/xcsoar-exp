@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,11 +27,6 @@ Copyright_License {
 #include "NMEA/Info.hpp"
 #include "NMEA/Derived.hpp"
 
-/**
- * time to not add points after flight condition is false
- */
-#define BLACKOUT_TIME 3
-
 void
 WindEKFGlue::Reset()
 {
@@ -55,7 +50,7 @@ WindEKFGlue::Update(const NMEAInfo &basic, const DerivedInfo &derived)
 
   if (!basic.track_available || !basic.ground_speed_available ||
       !basic.airspeed_available || !basic.airspeed_real ||
-      basic.true_airspeed < fixed_one) {
+      basic.true_airspeed < fixed(1)) {
     ResetBlackout();
     return Result(0);
   }
@@ -78,17 +73,17 @@ WindEKFGlue::Update(const NMEAInfo &basic, const DerivedInfo &derived)
   if ((fabs(derived.turn_rate) > fixed(20)) ||
       (basic.acceleration.available &&
        basic.acceleration.real &&
-       fabs(basic.acceleration.g_load - fixed_one) > fixed(0.3))) {
+       fabs(basic.acceleration.g_load - fixed(1)) > fixed(0.3))) {
 
-    blackout(time);
+    SetBlackout(time);
     return Result(0);
   }
 
-  if (in_blackout(time))
+  if (InBlackout(time))
     return Result(0);
 
   // clear blackout
-  blackout((unsigned)-1);
+  ResetBlackout();
 
   fixed V = basic.true_airspeed;
   fixed dynamic_pressure = sqr(V);
@@ -122,16 +117,4 @@ WindEKFGlue::Update(const NMEAInfo &basic, const DerivedInfo &derived)
   res.wind = SpeedVector(fixed(-x[0]), fixed(-x[1]));
 
   return res;
-}
-
-void
-WindEKFGlue::blackout(const unsigned time)
-{
-  time_blackout = time;
-}
-
-bool
-WindEKFGlue::in_blackout(const unsigned time) const
-{
-  return (time < time_blackout + BLACKOUT_TIME);
 }

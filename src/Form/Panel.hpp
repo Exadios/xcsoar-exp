@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,6 +27,10 @@ Copyright_License {
 #include "Screen/ContainerWindow.hpp"
 #include "Screen/Features.hpp"
 
+#ifdef HAVE_CLIPPING
+#include "Screen/Color.hpp"
+#endif
+
 struct DialogLook;
 
 /**
@@ -41,10 +45,6 @@ public:
   /**
    * Constructor of the PanelControl class
    * @param owner Parent ContainerControl
-   * @param x x-Coordinate of the Control
-   * @param y y-Coordinate of the Control
-   * @param width Width of the Control
-   * @param height Height of the Control
    */
   PanelControl(ContainerWindow &parent, const DialogLook &look,
                const PixelRect &rc,
@@ -52,7 +52,8 @@ public:
 
 #ifdef HAVE_CLIPPING
 protected:
-  void OnPaint(Canvas &canvas);
+  /* virtual methods from class PaintWindow */
+  void OnPaint(Canvas &canvas) override;
 #endif
 };
 

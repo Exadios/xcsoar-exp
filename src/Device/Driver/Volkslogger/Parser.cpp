@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -40,14 +40,16 @@ vl_PGCS1(NMEAInputLine &line, NMEAInfo &info)
   line.Skip();
 
   // four characers, hex, barometric altitude
-  long altitude = line.ReadHex(0L);
+  unsigned u_altitude;
+  if (line.ReadHexChecked(u_altitude)) {
+    int altitude(u_altitude);
+    if (altitude > 60000)
+      /* Assuming that altitude has wrapped around.  60 000 m occurs
+         at QNH ~2000 hPa */
+      altitude -= 65535;
 
-  if (altitude > 60000)
-    /* Assuming that altitude has wrapped around.  60 000 m occurs at
-       QNH ~2000 hPa */
-    altitude -= 65535;
-
-  info.ProvidePressureAltitude(fixed(altitude));
+    info.ProvidePressureAltitude(fixed(altitude));
+  }
 
   // ExtractParameter(String,ctemp,3);
   // four characters, hex, constant.  Value 1371 (dec)

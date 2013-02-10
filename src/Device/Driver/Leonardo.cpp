@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ Copyright_License {
 
 class LeonardoDevice : public AbstractDevice {
 public:
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 };
 
 static bool
@@ -67,21 +67,22 @@ LeonardoParseC(NMEAInputLine &line, NMEAInfo &info)
   if (line.ReadChecked(value))
     info.ProvideBaroAltitudeTrue(value);
 
-  // 1 = vario [dm/s]
+  // 1 = vario [cm/s]
   if (line.ReadChecked(value))
-    info.ProvideTotalEnergyVario(value / 10);
+    info.ProvideTotalEnergyVario(value / 100);
 
   // 2 = airspeed [km/h]
   /* XXX is that TAS or IAS? */
   if (line.ReadChecked(value))
     info.ProvideTrueAirspeed(Units::ToSysUnit(value, Unit::KILOMETER_PER_HOUR));
 
+  if (line.Rest().empty())
+    /* short "$C" sentence ends after airspeed */
+    return true;
+
   // 3 = netto vario [dm/s]
   if (line.ReadChecked(value))
     info.ProvideNettoVario(value / 10);
-  else
-    /* short "$C" sentence ends after airspeed */
-    return true;
 
   // 4 = temperature [deg C]
   fixed oat;
@@ -114,10 +115,13 @@ LeonardoParseD(NMEAInputLine &line, NMEAInfo &info)
   if (line.ReadChecked(value))
     info.ProvideTotalEnergyVario(value / 10);
 
-  // 1 = air pressure [Pa]
-  if (line.Skip() == 0)
-    /* short "$C" sentence ends after airspeed */
+  if (line.Rest().empty())
+    /* short "$D" sentence ends after vario */
     return true;
+
+  // 1 = air pressure [Pa]
+  if (line.ReadChecked(value))
+    info.ProvideStaticPressure(AtmosphericPressure::Pascal(value));
 
   // 2 = netto vario [dm/s]
   if (line.ReadChecked(value))
@@ -177,8 +181,11 @@ PDGFTL1(NMEAInputLine &line, NMEAInfo &info)
     info.ProvideNettoVario(value / 10);
 
   //  Indicated Air Speed  45       km/h         45 km/h
+  if (line.ReadChecked(value))
+    info.ProvideIndicatedAirspeed(Units::ToSysUnit(value, Unit::KILOMETER_PER_HOUR));
+
   //  Ground Efficiency  134      ratio        13,4 : 1
-  line.Skip(2);
+  line.Skip();
 
   //  Wind Speed  28       km/h         28 km/h
   //  Wind Direction  65       degree       65 degree
@@ -225,7 +232,7 @@ LeonardoCreateOnPort(const DeviceConfig &config, Port &com_port)
   return new LeonardoDevice();
 }
 
-const struct DeviceRegister leonardo_device_driver = {
+const struct DeviceRegister leonardo_driver = {
   _T("Leonardo"),
   _T("Digifly Leonardo"),
   0,

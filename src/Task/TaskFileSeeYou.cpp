@@ -2,7 +2,7 @@
  Copyright_License {
 
  XCSoar Glide Computer - http://www.xcsoar.org/
- Copyright (C) 2000-2012 The XCSoar Project
+ Copyright (C) 2000-2013 The XCSoar Project
  A detailed list of copyright holders can be found in the file "AUTHORS".
 
  This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ struct SeeYouTaskInformation {
   fixed max_start_altitude;
 
   SeeYouTaskInformation():
-    wp_dis(true), task_time(fixed_zero), max_start_altitude(fixed_zero) {}
+    wp_dis(true), task_time(fixed(0)), max_start_altitude(fixed(0)) {}
 };
 
 struct SeeYouTurnpointInformation {
@@ -74,10 +74,10 @@ struct SeeYouTurnpointInformation {
   SeeYouTurnpointInformation():
     valid(false), style(SYMMETRICAL), is_line(false), reduce(false),
     radius1(fixed(500)), radius2(fixed(500)),
-    max_altitude(fixed_zero),
-    angle1(Angle::Degrees(fixed_zero)),
-    angle2(Angle::Degrees(fixed_zero)),
-    angle12(Angle::Degrees(fixed_zero)) {}
+    max_altitude(fixed(0)),
+    angle1(Angle::Zero()),
+    angle2(Angle::Zero()),
+    angle12(Angle::Zero()) {}
 };
 
 static fixed
@@ -115,7 +115,7 @@ ParseAngle(const TCHAR* str)
   if (str == end)
     angle = 0;
 
-  return Angle::Degrees(fixed(angle));
+  return Angle::Degrees(angle);
 }
 
 static fixed
@@ -133,11 +133,11 @@ ParseRadius(const TCHAR* str)
 static fixed
 ParseMaxAlt(const TCHAR* str)
 {
-  fixed maxalt = fixed_zero;
+  fixed maxalt = fixed(0);
   TCHAR* end;
   maxalt = fixed(_tcstod(str, &end));
   if (str == end)
-    return fixed_zero;
+    return fixed(0);
 
   if (_tcslen(end) >= 2 && end[0] == _T('f') && end[1] == _T('t'))
     maxalt = Units::ToSysUnit(maxalt, Unit::FEET);
@@ -241,7 +241,7 @@ ParseCUTaskDetails(FileLineReader &reader, SeeYouTaskInformation *task_info,
   TCHAR *line;
   int TPIndex = 0;
   const unsigned int max_params = ARRAY_SIZE(params);
-  while ((line = reader.read()) != NULL &&
+  while ((line = reader.ReadLine()) != NULL &&
          line[0] != _T('\"') && line[0] != _T(',')) {
     const size_t n_params = WaypointReaderBase::
         ExtractParameters(line, params_buffer, params, max_params, true);
@@ -372,8 +372,8 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
     const Angle RadialStart = (A12adj - turnpoint_infos.angle1).AsBearing();
     const Angle RadialEnd = (A12adj + turnpoint_infos.angle1).AsBearing();
 
-    if (turnpoint_infos.radius2 > fixed_zero &&
-        (turnpoint_infos.angle2.AsBearing().Degrees()) < fixed_one) {
+    if (turnpoint_infos.radius2 > fixed(0) &&
+        (turnpoint_infos.angle2.AsBearing().Degrees()) < fixed(1)) {
       oz = new AnnularSectorZone(wp->location, turnpoint_infos.radius1,
           RadialStart, RadialEnd, turnpoint_infos.radius2);
     } else {
@@ -427,7 +427,7 @@ AdvanceReaderToTask(FileLineReader &reader, const unsigned index)
   unsigned count = 0;
   bool in_task_section = false;
   TCHAR *line;
-  for (unsigned i = 0; (line = reader.read()) != NULL; i++) {
+  for (unsigned i = 0; (line = reader.ReadLine()) != NULL; i++) {
     if (in_task_section) {
       if (line[0] == _T('\"') || line[0] == _T(',')) {
         if (count == index)
@@ -493,8 +493,8 @@ TaskFileSeeYou::GetTask(const TaskBehaviour &task_behaviour,
   }
   if (factType == TaskFactoryType::AAT ||
       factType == TaskFactoryType::RACING) {
-    beh.start_max_height = (unsigned)task_info.max_start_altitude;
-    beh.start_max_height_ref = HeightReferenceType::MSL;
+    beh.start_constraints.max_height = (unsigned)task_info.max_start_altitude;
+    beh.start_constraints.max_height_ref = AltitudeReference::MSL;
   }
   task->SetOrderedTaskBehaviour(beh);
 
@@ -509,18 +509,18 @@ TaskFileSeeYou::GetTask(const TaskBehaviour &task_behaviour,
 
     // If waypoint by name found and closer than 10m to the original
     if (wp != NULL &&
-        wp->location.Distance(file_wp->location) <= fixed_ten) {
+        wp->location.Distance(file_wp->location) <= fixed(10)) {
       // Use this waypoint for the task
       waypoints_in_task[i] = wp;
       continue;
     }
 
     // Try finding the closest waypoint to the original one
-    wp = waypoints->GetNearest(file_wp->location, fixed_ten);
+    wp = waypoints->GetNearest(file_wp->location, fixed(10));
 
     // If closest waypoint found and closer than 10m to the original
     if (wp != NULL &&
-        wp->location.Distance(file_wp->location) <= fixed_ten) {
+        wp->location.Distance(file_wp->location) <= fixed(10)) {
       // Use this waypoint for the task
       waypoints_in_task[i] = wp;
       continue;
@@ -561,7 +561,7 @@ TaskFileSeeYou::Count()
   unsigned count = 0;
   bool in_task_section = false;
   TCHAR *line;
-  while ((line = reader.read()) != NULL) {
+  while ((line = reader.ReadLine()) != NULL) {
     if (in_task_section) {
       // If the line starts with a string or "nothing" followed
       // by a comma it is a new task definition line

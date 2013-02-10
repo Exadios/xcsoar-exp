@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ struct DialogLook {
       Color background_color, text_color;
     } pressed;
 
-    const Font *font;
+    const Font *font, *font_bold;
 
     gcc_pure
     Color GetTextColor(bool is_selected, bool is_focused,
@@ -115,7 +115,7 @@ struct DialogLook {
   void Initialise(const Font &caption_font,
                   const Font &text_font, const Font &small_font,
                   const Font &button_font,
-                  const Font &list_font);
+                  const Font &list_font, const Font &list_font_bold);
 
   void SetBackgroundColor(Color color);
 };

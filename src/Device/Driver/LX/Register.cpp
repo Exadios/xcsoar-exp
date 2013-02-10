@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,10 +28,14 @@ Copyright_License {
 static Device *
 LXCreateOnPort(const DeviceConfig &config, Port &com_port)
 {
-  return new LXDevice(com_port, config.bulk_baud_rate);
+  const bool uses_speed = config.UsesSpeed();
+  const unsigned baud_rate = uses_speed ? config.baud_rate : 0;
+  const unsigned bulk_baud_rate = uses_speed ? config.bulk_baud_rate : 0;
+
+  return new LXDevice(com_port, baud_rate, bulk_baud_rate);
 }
 
-const struct DeviceRegister lxDevice = {
+const struct DeviceRegister lx_driver = {
   _T("LX"),
   _T("LX / Colibri"),
   DeviceRegister::DECLARE | DeviceRegister::LOGGER |

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,41 +25,35 @@ Copyright_License {
 #include "Dialogs/XML.hpp"
 #include "Dialogs/CallBackTable.hpp"
 #include "Dialogs/DialogSettings.hpp"
+#include "Screen/Canvas.hpp"
 #include "Screen/Key.h"
 #include "Form/Form.hpp"
 #include "Form/Draw.hpp"
 #include "Form/Button.hpp"
-#include "Compatibility/string.h"
 #include "MapSettings.hpp"
 #include "Asset.hpp"
 #include "Util/StringUtil.hpp"
+#include "Util/CharUtil.hpp"
 #include "UIGlobals.hpp"
 #include "Look/DialogLook.hpp"
 #include "Util/Macros.hpp"
 
 #include <algorithm>
 
-using std::min;
-
 static WndForm *wf = NULL;
 static WndOwnerDrawFrame *wGrid = NULL;
 
-#define MAX_TEXTENTRY 40
+static constexpr size_t MAX_TEXTENTRY = 40;
 static unsigned int cursor = 0;
 static int lettercursor = 0;
-static int max_width = MAX_TEXTENTRY;
+static size_t max_width;
 
 static TCHAR edittext[MAX_TEXTENTRY];
 
-static TCHAR EntryLetters[] = _T(" ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.-");
+static constexpr TCHAR EntryLetters[] =
+  _T(" ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.-");
 
 #define MAXENTRYLETTERS (ARRAY_SIZE(EntryLetters) - 1)
-
-static void
-OnCloseClicked(gcc_unused WndButton &button)
-{
-  wf->SetModalResult(mrOK);
-}
 
 static void
 OnTextPaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
@@ -97,7 +91,7 @@ OnTextPaint(gcc_unused WndOwnerDrawFrame *Sender, Canvas &canvas)
 
   canvas.SetBackgroundTransparent();
   canvas.SetTextColor(COLOR_WHITE);
-  canvas.text(p[0].x, p[0].y, edittext);
+  canvas.DrawText(p[0].x, p[0].y, edittext);
 }
 
 static void
@@ -115,35 +109,40 @@ UpdateCursor()
     wGrid->Invalidate();
 }
 
+/**
+ * Find a letter in the list and returns its index.  Returns 0
+ * (i.e. the index of the space character) if the given letter is
+ * unknown.
+ */
+gcc_const
+static unsigned
+FindEntryLetter(TCHAR ch)
+{
+  for (unsigned i = 0; i < (int)MAXENTRYLETTERS; ++i)
+    if (EntryLetters[i] == ch)
+      return i;
+
+  return 0;
+}
+
 static void
 MoveCursor()
 {
   if (cursor >= _tcslen(edittext))
     edittext[cursor + 1] = 0;
 
-  for (lettercursor = 0; lettercursor < (int)MAXENTRYLETTERS; lettercursor++) {
-    if (edittext[cursor] == EntryLetters[lettercursor])
-      break;
-  }
-
-  if (lettercursor == MAXENTRYLETTERS) {
-    lettercursor = 0;
-    edittext[cursor] = EntryLetters[lettercursor];
-  }
-
-  if (edittext[cursor] == 0)
-    lettercursor = 0;
+  lettercursor = FindEntryLetter(ToUpperASCII(edittext[cursor]));
 
   UpdateCursor();
 }
 
 static bool
-FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
+FormKeyDown(unsigned key_code)
 {
   switch (key_code) {
-  case VK_UP:
-  case VK_LEFT:
-    if ((key_code == VK_LEFT) ^ IsAltair()) {
+  case KEY_UP:
+  case KEY_LEFT:
+    if ((key_code == KEY_LEFT) ^ IsAltair()) {
       if (cursor < 1)
         return true; // min width
 
@@ -156,10 +155,10 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
       return true;
     }
 
-  case VK_DOWN:
-  case VK_RIGHT:
-    if ((key_code == VK_RIGHT) ^ IsAltair()) {
-      if ((int)cursor >= (max_width - 2))
+  case KEY_DOWN:
+  case KEY_RIGHT:
+    if ((key_code == KEY_RIGHT) ^ IsAltair()) {
+      if (cursor + 2 >= max_width)
         return true; // max width
 
       cursor++;
@@ -170,7 +169,7 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
       UpdateCursor();
       return true;
     }
-  case VK_RETURN:
+  case KEY_RETURN:
     wf->SetModalResult(mrOK);
     return true;
 
@@ -180,32 +179,31 @@ FormKeyDown(gcc_unused WndForm &Sender, unsigned key_code)
 }
 
 static void
-OnLeftClicked(gcc_unused WndButton &button)
+OnLeftClicked()
 {
-  FormKeyDown(*wf, IsAltair()? VK_UP : VK_LEFT);
+  FormKeyDown(IsAltair() ? KEY_UP : KEY_LEFT);
 }
 
 static void
-OnRightClicked(gcc_unused WndButton &button)
+OnRightClicked()
 {
-  FormKeyDown(*wf, IsAltair()? VK_DOWN : VK_RIGHT);
+  FormKeyDown(IsAltair() ? KEY_DOWN : KEY_RIGHT);
 }
 
 static void
-OnUpClicked(gcc_unused WndButton &button)
+OnUpClicked()
 {
-  FormKeyDown(*wf, !IsAltair()? VK_UP : VK_LEFT);
+  FormKeyDown(!IsAltair() ? KEY_UP : KEY_LEFT);
 }
 
 static void
-OnDownClicked(gcc_unused WndButton &button)
+OnDownClicked()
 {
-  FormKeyDown(*wf, !IsAltair()? VK_DOWN : VK_RIGHT);
+  FormKeyDown(!IsAltair() ? KEY_DOWN : KEY_RIGHT);
 }
 
 static constexpr CallBackTableEntry CallBackTable[] = {
   DeclareCallBackEntry(OnTextPaint),
-  DeclareCallBackEntry(OnCloseClicked),
   DeclareCallBackEntry(OnLeftClicked),
   DeclareCallBackEntry(OnRightClicked),
   DeclareCallBackEntry(OnUpClicked),
@@ -214,7 +212,7 @@ static constexpr CallBackTableEntry CallBackTable[] = {
 };
 
 static void
-dlgTextEntryHighscoreType(SingleWindow &parent, TCHAR *text, int width,
+dlgTextEntryHighscoreType(TCHAR *text, size_t width,
                           const TCHAR* caption)
 {
   wf = NULL;
@@ -223,11 +221,11 @@ dlgTextEntryHighscoreType(SingleWindow &parent, TCHAR *text, int width,
   if (width == 0)
     width = MAX_TEXTENTRY;
 
-  max_width = min(MAX_TEXTENTRY, width);
+  max_width = std::min(MAX_TEXTENTRY, width);
 
-  wf = LoadDialog(CallBackTable, parent, _T("IDR_XML_TEXTENTRY"));
-  if (!wf)
-    return;
+  wf = LoadDialog(CallBackTable, UIGlobals::GetMainWindow(),
+                  _T("IDR_XML_TEXTENTRY"));
+  assert(wf != nullptr);
 
   if (caption)
     wf->SetCaption(caption);
@@ -235,46 +233,35 @@ dlgTextEntryHighscoreType(SingleWindow &parent, TCHAR *text, int width,
   wGrid = (WndOwnerDrawFrame*)wf->FindByName(_T("frmGrid"));
 
   cursor = 0;
-  edittext[0] = 0;
-  edittext[1] = 0;
-  if (!StringIsEmpty(text)) {
-    _tcsupr(text);
-    CopyString(edittext, text, max_width);
-  }
+  CopyString(edittext, text, max_width);
   MoveCursor();
 
-  wf->SetKeyDownNotify(FormKeyDown);
+  wf->SetKeyDownFunction(FormKeyDown);
 
   if (wf->ShowModal() == mrOK) {
+    TrimRight(edittext);
     CopyString(text, edittext, max_width);
-
-    // strip trailing spaces
-    int len = _tcslen(text) - 1;
-    while ((len > 0) && (text[len] == _T(' '))) {
-      text[len] = 0;
-      len--;
-    }
   }
 
   delete wf;
 }
 
 bool
-dlgTextEntryShowModal(SingleWindow &parent, TCHAR *text, int width,
-                      const TCHAR* caption, AllowedCharactersCallback_t accb)
+dlgTextEntryShowModal(TCHAR *text, size_t width,
+                      const TCHAR* caption, AllowedCharacters accb)
 {
   switch (UIGlobals::GetDialogSettings().text_input_style) {
   case DialogSettings::TextInputStyle::Default:
   case DialogSettings::TextInputStyle::Keyboard:
     if (HasPointer())
-      return dlgTextEntryKeyboardShowModal(parent, text, width, caption, accb);
+      return dlgTextEntryKeyboardShowModal(text, width, caption, accb);
     else {
-      dlgTextEntryHighscoreType(parent, text, width, caption);
+      dlgTextEntryHighscoreType(text, width, caption);
       return true;
     }
 
   case DialogSettings::TextInputStyle::HighScore:
-    dlgTextEntryHighscoreType(parent, text, width, caption);
+    dlgTextEntryHighscoreType(text, width, caption);
     return true;
   }
 

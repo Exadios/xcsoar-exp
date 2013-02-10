@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -53,27 +53,33 @@ public:
   BufferCanvas(const Canvas &canvas,
                UPixelScalar _width, UPixelScalar _height);
   ~BufferCanvas() {
-    reset();
+    Destroy();
   }
 
   bool IsDefined() const {
     return texture != NULL;
   }
 
-  void set(const Canvas &canvas, UPixelScalar _width, UPixelScalar _height);
+  void Create(PixelSize new_size);
 
-  void set(const Canvas &canvas) {
-    set(canvas, canvas.get_width(), canvas.get_height());
+  void Create(const Canvas &canvas, PixelSize new_size) {
+    assert(canvas.IsDefined());
+
+    Create(new_size);
   }
 
-  void reset();
+  void Create(const Canvas &canvas) {
+    Create(canvas, canvas.GetSize());
+  }
 
-  void resize(UPixelScalar _width, UPixelScalar _height);
+  void Destroy();
+
+  void Resize(PixelSize new_size);
 
   /**
-   * Similar to resize(), but never shrinks the buffer.
+   * Similar to Resize(), but never shrinks the buffer.
    */
-  void grow(UPixelScalar _width, UPixelScalar _height);
+  void Grow(PixelSize new_size);
 
   /**
    * Begin painting to the buffer and to the specified #Canvas.
@@ -99,8 +105,8 @@ public:
 #ifdef ENABLE_OPENGL
 private:
   /* from GLSurfaceListener */
-  virtual void surface_created();
-  virtual void surface_destroyed();
+  virtual void SurfaceCreated() override;
+  virtual void SurfaceDestroyed() override;
 #endif
 };
 

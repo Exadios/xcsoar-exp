@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,14 +24,17 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_PAINT_WINDOW_HXX
 #define XCSOAR_SCREEN_PAINT_WINDOW_HXX
 
-#include "Screen/Canvas.hpp"
 #include "Screen/Window.hpp"
+
+#ifdef USE_GDI
+#include <tchar.h>
+#endif
 
 class ContainerWindow;
 
 /**
- * A #Window implementation for custom drawing.  Call get_canvas()
- * whenever you want to draw something.
+ * A #Window implementation for custom drawing.  Implement
+ * Window::OnPaint() to draw something.
  */
 class PaintWindow : public Window {
 private:
@@ -48,43 +51,28 @@ public:
 #endif
 
 #ifndef USE_GDI
-  using Window::set;
+  using Window::Create;
 
-  void set(ContainerWindow &parent,
-           PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height,
-           const WindowStyle style=WindowStyle()) {
-    set(&parent, left, top, width, height, style);
+  void Create(ContainerWindow &parent, PixelRect rc,
+              const WindowStyle style=WindowStyle()) {
+    Create(&parent, rc, style);
   }
 #else /* USE_GDI */
-  void set(ContainerWindow *parent, const TCHAR *cls,
-           PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height,
-           const WindowStyle style=WindowStyle()) {
-    Window::set(parent, cls, NULL,
-                left, top, width, height, style);
+  void Create(ContainerWindow *parent, const TCHAR *cls, PixelRect rc,
+              const WindowStyle style=WindowStyle()) {
+    Window::Create(parent, cls, nullptr, rc, style);
   }
 
-  void set(ContainerWindow &parent, const TCHAR *cls,
-           PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height,
-           const WindowStyle style=WindowStyle()) {
-    set(&parent, cls, left, top, width, height, style);
+  void Create(ContainerWindow &parent, const TCHAR *cls, PixelRect rc,
+              const WindowStyle style=WindowStyle()) {
+    Create(&parent, cls, rc, style);
   }
 
-  void set(ContainerWindow &parent,
-           PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height,
-           const WindowStyle style=WindowStyle()) {
-    set(parent, _T("PaintWindow"), left, top, width, height, style);
+  void Create(ContainerWindow &parent, PixelRect rc,
+              const WindowStyle style=WindowStyle()) {
+    Create(parent, _T("PaintWindow"), rc, style);
   }
 #endif /* USE_GDI */
-
-  void set(ContainerWindow &parent, PixelRect rc,
-           const WindowStyle window_style=WindowStyle()) {
-    set(parent, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-        window_style);
-  }
 
   constexpr
   static bool SupportsPartialRedraw() {

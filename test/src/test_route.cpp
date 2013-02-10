@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -20,18 +20,19 @@
 }
 */
 
-#include "Math/FastMath.h"
 #include "Printing.hpp"
 #define DO_PRINT
 #include "test_debug.hpp"
 #include "harness_airspace.hpp"
 #include "Route/AirspaceRoute.hpp"
+#include "Engine/Airspace/AirspaceAircraftPerformance.hpp"
 #include "Geo/SpeedVector.hpp"
 #include "Geo/GeoVector.hpp"
 #include "GlideSolvers/GlideSettings.hpp"
 #include "GlideSolvers/GlidePolar.hpp"
 #include "Terrain/RasterMap.hpp"
 #include "OS/PathName.hpp"
+#include "OS/FileUtil.hpp"
 #include "Compatibility/path.h"
 #include "Operation/Operation.hpp"
 
@@ -44,7 +45,8 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
   setup_airspaces(airspaces, map.GetMapCenter(), n_airspaces);
 
   {
-    std::ofstream fout("results/terrain.txt");
+    Directory::Create(_T("output/results"));
+    std::ofstream fout("output/results/terrain.txt");
 
     unsigned nx = 100;
     unsigned ny = 100;
@@ -52,8 +54,8 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
 
     for (unsigned i = 0; i < nx; ++i) {
       for (unsigned j = 0; j < ny; ++j) {
-        fixed fx = (fixed)i / (nx - 1) * fixed(2.0) - fixed_one;
-        fixed fy = (fixed)j / (ny - 1) * fixed(2.0) - fixed_one;
+        fixed fx = (fixed)i / (nx - 1) * 2 - fixed(1);
+        fixed fy = (fixed)j / (ny - 1) * 2 - fixed(1);
         GeoPoint x(origin.longitude + Angle::Degrees(fixed(0.2) + fixed(0.7) * fx),
                    origin.latitude + Angle::Degrees(fixed(0.9) * fy));
         short h = map.GetInterpolatedHeight(x);
@@ -69,10 +71,10 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
 
   {
     // local scope, see what happens when we go out of scope
-    GeoPoint p_start(Angle::Degrees(fixed(-0.3)), Angle::Degrees(fixed(0.0)));
+    GeoPoint p_start(Angle::Degrees(-0.3), Angle::Degrees(0.0));
     p_start += map.GetMapCenter();
 
-    GeoPoint p_dest(Angle::Degrees(fixed(0.8)), Angle::Degrees(fixed(-0.7)));
+    GeoPoint p_dest(Angle::Degrees(0.8), Angle::Degrees(-0.7));
     p_dest += map.GetMapCenter();
 
     AGeoPoint loc_start(p_start, RoughAltitude(map.GetHeight(p_start) + 100));
@@ -80,7 +82,7 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
 
     AircraftState state;
     GlidePolar glide_polar(fixed(0.1));
-    AirspaceAircraftPerformanceGlide perf(glide_polar);
+    const AirspaceAircraftPerformance perf(glide_polar);
 
     GeoVector vec(loc_start, loc_end);
     fixed range = fixed(10000) + vec.distance / 2;
@@ -98,7 +100,7 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
       if (verbose)
         printf("# route airspace size %d\n", size_1);
 
-      as_route.SynchroniseInRange(airspaces, vec.MidPoint(loc_start), fixed_one);
+      as_route.SynchroniseInRange(airspaces, vec.MidPoint(loc_start), fixed(1));
       int size_2 = as_route.size();
       if (verbose)
         printf("# route airspace size %d\n", size_2);
@@ -125,8 +127,8 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
     }
 
     // try the solver
-    SpeedVector wind(Angle::Degrees(fixed(0)), fixed(0.0));
-    GlidePolar polar(fixed_one);
+    SpeedVector wind(Angle::Degrees(0), fixed(0));
+    GlidePolar polar(fixed(1));
 
     GlideSettings settings;
     settings.SetDefaults();
@@ -138,7 +140,7 @@ test_route(const unsigned n_airspaces, const RasterMap& map)
 
     bool sol = false;
     for (int i = 0; i < NUM_SOL; i++) {
-      loc_end.latitude += Angle::Degrees(fixed(0.1));
+      loc_end.latitude += Angle::Degrees(0.1);
       loc_end.altitude = map.GetHeight(loc_end) + 100;
       route.Synchronise(airspaces, loc_start, loc_end);
       if (route.Solve(loc_start, loc_end, config)) {

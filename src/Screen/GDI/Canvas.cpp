@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@ Copyright_License {
 #include "Screen/Util.hpp"
 #include "Compatibility/gdi.h"
 #include "Asset.hpp" /* for needclipping */
+
+#include <algorithm>
 
 void
 Canvas::DrawLine(PixelScalar ax, PixelScalar ay, PixelScalar bx, PixelScalar by)
@@ -124,7 +126,7 @@ Canvas::GetFontHeight() const
 }
 
 void
-Canvas::text(PixelScalar x, PixelScalar y, const TCHAR *text)
+Canvas::DrawText(PixelScalar x, PixelScalar y, const TCHAR *text)
 {
   assert(IsDefined());
 
@@ -132,7 +134,8 @@ Canvas::text(PixelScalar x, PixelScalar y, const TCHAR *text)
 }
 
 void
-Canvas::text(PixelScalar x, PixelScalar y, const TCHAR *text, size_t length)
+Canvas::DrawText(PixelScalar x, PixelScalar y,
+                 const TCHAR *text, size_t length)
 {
   assert(IsDefined());
 
@@ -140,8 +143,8 @@ Canvas::text(PixelScalar x, PixelScalar y, const TCHAR *text, size_t length)
 }
 
 void
-Canvas::text_opaque(PixelScalar x, PixelScalar y, const PixelRect &rc,
-                    const TCHAR *text)
+Canvas::DrawOpaqueText(PixelScalar x, PixelScalar y, const PixelRect &rc,
+                       const TCHAR *text)
 {
   assert(IsDefined());
 
@@ -149,8 +152,8 @@ Canvas::text_opaque(PixelScalar x, PixelScalar y, const PixelRect &rc,
 }
 
 void
-Canvas::text_clipped(PixelScalar x, PixelScalar y, const PixelRect &rc,
-                     const TCHAR *text)
+Canvas::DrawClippedText(PixelScalar x, PixelScalar y, const PixelRect &rc,
+                        const TCHAR *text)
 {
   assert(IsDefined());
 
@@ -158,18 +161,18 @@ Canvas::text_clipped(PixelScalar x, PixelScalar y, const PixelRect &rc,
 }
 
 void
-Canvas::text_clipped(PixelScalar x, PixelScalar y, UPixelScalar width,
-                     const TCHAR *text)
+Canvas::DrawClippedText(PixelScalar x, PixelScalar y, UPixelScalar width,
+                        const TCHAR *text)
 {
   const PixelSize size = CalcTextSize(text);
 
   PixelRect rc;
-  ::SetRect(&rc, x, y, x + min(width, (UPixelScalar)size.cx), y + size.cy);
-  text_clipped(x, y, rc, text);
+  ::SetRect(&rc, x, y, x + std::min(width, (UPixelScalar)size.cx), y + size.cy);
+  DrawClippedText(x, y, rc, text);
 }
 
 void
-Canvas::copy(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::Copy(PixelScalar dest_x, PixelScalar dest_y,
              UPixelScalar dest_width, UPixelScalar dest_height,
              HBITMAP src, PixelScalar src_x, PixelScalar src_y,
              DWORD dwRop)
@@ -179,78 +182,78 @@ Canvas::copy(PixelScalar dest_x, PixelScalar dest_y,
 
   HDC virtual_dc = GetCompatibleDC();
   HBITMAP old = (HBITMAP)::SelectObject(virtual_dc, src);
-  copy(dest_x, dest_y, dest_width, dest_height,
+  Copy(dest_x, dest_y, dest_width, dest_height,
        virtual_dc, src_x, src_y,
        dwRop);
   ::SelectObject(virtual_dc, old);
 }
 
 void
-Canvas::copy(PixelScalar dest_x, PixelScalar dest_y,
+Canvas::Copy(PixelScalar dest_x, PixelScalar dest_y,
              UPixelScalar dest_width, UPixelScalar dest_height,
              const Bitmap &src, PixelScalar src_x, PixelScalar src_y,
              DWORD dwRop)
 {
-  copy(dest_x, dest_y, dest_width, dest_height,
+  Copy(dest_x, dest_y, dest_width, dest_height,
        src.GetNative(), src_x, src_y,
        dwRop);
 }
 
 void
-Canvas::copy(const Canvas &src, PixelScalar src_x, PixelScalar src_y)
+Canvas::Copy(const Canvas &src, PixelScalar src_x, PixelScalar src_y)
 {
-  copy(0, 0, width, height, src, src_x, src_y);
+  Copy(0, 0, GetWidth(), GetHeight(), src, src_x, src_y);
 }
 
 void
-Canvas::copy(const Canvas &src)
+Canvas::Copy(const Canvas &src)
 {
-  copy(src, 0, 0);
+  Copy(src, 0, 0);
 }
 
 void
-Canvas::copy(const Bitmap &src)
+Canvas::Copy(const Bitmap &src)
 {
   const PixelSize size = src.GetSize();
-  copy(0, 0, size.cx, size.cy, src, 0, 0);
+  Copy(0, 0, size.cx, size.cy, src, 0, 0);
 }
 
 void
-Canvas::copy_transparent_black(const Canvas &src)
+Canvas::CopyTransparentBlack(const Canvas &src)
 {
   assert(IsDefined());
   assert(src.IsDefined());
 
 #ifdef _WIN32_WCE
-  ::TransparentImage(dc, 0, 0, get_width(), get_height(),
-                     src.dc, 0, 0, get_width(), get_height(),
+  ::TransparentImage(dc, 0, 0, GetWidth(), GetHeight(),
+                     src.dc, 0, 0, GetWidth(), GetHeight(),
                      COLOR_BLACK);
 #else
-  ::TransparentBlt(dc, 0, 0, get_width(), get_height(),
-                   src.dc, 0, 0, get_width(), get_height(),
+  ::TransparentBlt(dc, 0, 0, GetWidth(), GetHeight(),
+                   src.dc, 0, 0, GetWidth(), GetHeight(),
                    COLOR_BLACK);
 #endif
 }
 
 void
-Canvas::copy_transparent_white(const Canvas &src)
+Canvas::CopyTransparentWhite(const Canvas &src)
 {
   assert(IsDefined());
   assert(src.IsDefined());
 
 #ifdef _WIN32_WCE
-  ::TransparentImage(dc, 0, 0, get_width(), get_height(),
-                     src.dc, 0, 0, get_width(), get_height(),
+  ::TransparentImage(dc, 0, 0, GetWidth(), GetHeight(),
+                     src.dc, 0, 0, GetWidth(), GetHeight(),
                      COLOR_WHITE);
 #else
-  ::TransparentBlt(dc, 0, 0, get_width(), get_height(),
-                   src.dc, 0, 0, get_width(), get_height(),
+  ::TransparentBlt(dc, 0, 0, GetWidth(), GetHeight(),
+                   src.dc, 0, 0, GetWidth(), GetHeight(),
                    COLOR_WHITE);
 #endif
 }
 
 void
-Canvas::stretch_transparent(const Bitmap &src, Color key)
+Canvas::StretchTransparent(const Bitmap &src, Color key)
 {
   assert(IsDefined());
   assert(src.IsDefined());
@@ -260,11 +263,11 @@ Canvas::stretch_transparent(const Bitmap &src, Color key)
 
   const PixelSize size = src.GetSize();
 #ifdef _WIN32_WCE
-  ::TransparentImage(dc, 0, 0, get_width(), get_height(),
+  ::TransparentImage(dc, 0, 0, GetWidth(), GetHeight(),
                      virtual_dc, 0, 0, size.cx, size.cy,
                      key);
 #else
-  ::TransparentBlt(dc, 0, 0, get_width(), get_height(),
+  ::TransparentBlt(dc, 0, 0, GetWidth(), GetHeight(),
                    virtual_dc, 0, 0, size.cx, size.cy,
                    key);
 #endif
@@ -273,7 +276,7 @@ Canvas::stretch_transparent(const Bitmap &src, Color key)
 }
 
 void
-Canvas::invert_stretch_transparent(const Bitmap &src, Color key)
+Canvas::InvertStretchTransparent(const Bitmap &src, Color key)
 {
   assert(IsDefined());
   assert(src.IsDefined());
@@ -282,17 +285,17 @@ Canvas::invert_stretch_transparent(const Bitmap &src, Color key)
   HBITMAP old = (HBITMAP)::SelectObject(virtual_dc, src.GetNative());
   const PixelSize size = src.GetSize();
 
-  BufferCanvas inverted(*this, size.cx, size.cy);
+  BufferCanvas inverted(*this, size);
   ::BitBlt(inverted, 0, 0, size.cx, size.cy,
            virtual_dc, 0, 0, NOTSRCCOPY);
   ::SelectObject(virtual_dc, old);
 
 #ifdef _WIN32_WCE
-  ::TransparentImage(dc, 0, 0, get_width(), get_height(),
+  ::TransparentImage(dc, 0, 0, GetWidth(), GetHeight(),
                      inverted, 0, 0, size.cx, size.cy,
                      key);
 #else
-  ::TransparentBlt(dc, 0, 0, get_width(), get_height(),
+  ::TransparentBlt(dc, 0, 0, GetWidth(), GetHeight(),
                    inverted, 0, 0, size.cx, size.cy,
                    key);
 #endif
@@ -338,7 +341,8 @@ Canvas::Stretch(const Canvas &src,
                 PixelScalar src_x, PixelScalar src_y,
                 UPixelScalar src_width, UPixelScalar src_height)
 {
-  Stretch(0, 0, width, height, src, src_x, src_y, src_width, src_height);
+  Stretch(0, 0, GetWidth(), GetHeight(),
+          src, src_x, src_y, src_width, src_height);
 }
 
 void

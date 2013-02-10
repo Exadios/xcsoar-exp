@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ TriangleSecondLeg::Calculate(const SearchPoint &c, unsigned best) const
     return Result(0, 0);
   }
 
-  const unsigned shortest = min(df_1, min(df_2, df_3));
+  const unsigned shortest = std::min({df_1, df_2, df_3});
 
   // require all legs to have distance
   if (!shortest)
@@ -178,7 +178,7 @@ TriangleSecondLeg::Calculate(const SearchPoint &c, unsigned best) const
     // this automatically means we pass max > 45% worst-case
     return Result(d, df_total);
 
-  const unsigned longest = max(df_1, max(df_2, df_3));
+  const unsigned longest = std::max({df_1, df_2, df_3});
   if (longest * 20 > df_total * 9) // fails max > 45% worst-case rule!
     return Result(0, 0);
 
@@ -312,7 +312,7 @@ OLCTriangle::AddEdges(const ScanTaskPoint origin)
     break;
 
   default:
-    assert(false);
+    gcc_unreachable();
   }
 }
 
@@ -322,10 +322,10 @@ OLCTriangle::CalculateResult(const ContestTraceVector &solution) const
   ContestResult result;
   result.time = n_points > 0
     ? fixed(GetPoint(n_points - 1).DeltaTime(GetPoint(0)))
-    : fixed_zero;
+    : fixed(0);
   result.distance = is_complete
     ? CalcLegDistance(solution, 0) + CalcLegDistance(solution, 1) + CalcLegDistance(solution, 2)
-    : fixed_zero;
+    : fixed(0);
   result.score = ApplyHandicap(result.distance * fixed(0.001));
   return result;
 }

@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -42,6 +42,7 @@
 #include "IGC/IGCParser.hpp"
 #include "IGC/IGCHeader.hpp"
 #include "Formatter/IGCFilenameFormatter.hpp"
+#include "Time/BrokenDate.hpp"
 
 #include <windef.h> /* for MAX_PATH */
 
@@ -118,7 +119,7 @@ ExternalLogger::Declare(const Declaration &decl, const Waypoint *home)
   for (unsigned i = 0; i < NUMDEV; ++i) {
     DeviceDescriptor &device = *device_list[i];
 
-    if (device.CanDeclare() && device.IsOpen()) {
+    if (device.CanDeclare() && device.GetState() == PortState::READY) {
       found_logger = true;
       DeviceDeclare(device, decl, home);
     }
@@ -198,17 +199,17 @@ ReadIGCMetaData(const TCHAR *path, IGCHeader &header, BrokenDate &date)
 
   FileLineReaderA reader(path);
   if (reader.error()) {
-    date = BrokenDateTime::NowUTC();
+    date = BrokenDate::TodayUTC();
     return;
   }
 
-  char *line = reader.read();
+  char *line = reader.ReadLine();
   if (line != NULL)
     IGCParseHeader(line, header);
 
-  line = reader.read();
+  line = reader.ReadLine();
   if (line == NULL || !IGCParseDateRecord(line, date))
-    date = BrokenDateTime::NowUTC();
+    date = BrokenDate::TodayUTC();
 }
 
 /**
@@ -252,7 +253,7 @@ ShowFlightList(const RecordedFlightList &flight_list)
   }
 
   // Show list of the flights
-  int i = ComboPicker(UIGlobals::GetMainWindow(), _T("Choose a flight"),
+  int i = ComboPicker(_T("Choose a flight"),
                       combo, NULL, false);
 
   return (i < 0) ? NULL : &flight_list[i];
@@ -261,8 +262,6 @@ ShowFlightList(const RecordedFlightList &flight_list)
 void
 ExternalLogger::DownloadFlightFrom(DeviceDescriptor &device)
 {
-  assert(device.IsBorrowed());
-
   MessageOperationEnvironment env;
 
   // Download the list of flights that the logger contains

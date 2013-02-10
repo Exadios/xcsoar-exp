@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,14 +26,17 @@ Copyright_License {
 #include "Math/FastMath.h"
 #include "Screen/Ramp.hpp"
 #include "Screen/Layout.hpp"
+#include "Screen/Color.hpp"
 #include "Projection/WindowProjection.hpp"
 #include "Asset.hpp"
+#include "Event/Idle.hpp"
 
 #include <assert.h>
 #include <stdint.h>
 
 //#define FAST_RSQRT
 
+constexpr
 static inline unsigned
 MIX(unsigned x, unsigned y, unsigned i)
 {
@@ -46,13 +49,13 @@ TerrainShading(const short illum, uint8_t &r, uint8_t &g, uint8_t &b)
   char x;
   if (illum < 0) {
     // shadow to blue
-    x = min(63, -illum);
+    x = std::min(63, -illum);
     r = MIX(0,r,x);
     g = MIX(0,g,x);
     b = MIX(64,b,x);
   } else if (illum > 0) {
     // highlight to yellow
-    x = min(32, illum / 2);
+    x = std::min(32, illum / 2);
     r = MIX(255,r,x);
     g = MIX(255,g,x);
     b = MIX(16,b,x);
@@ -61,6 +64,10 @@ TerrainShading(const short illum, uint8_t &r, uint8_t &g, uint8_t &b)
 
 RasterRenderer::RasterRenderer()
   :quantisation_pixels(2),
+#ifdef ENABLE_OPENGL
+   last_quantisation_pixels(-1),
+   bounds(GeoBounds::Invalid()),
+#endif
    image(NULL)
 {
   // scale quantisation_pixels so resolution is not too high on old hardware
@@ -74,6 +81,33 @@ RasterRenderer::~RasterRenderer()
 {
   delete image;
 }
+
+#ifdef ENABLE_OPENGL
+
+gcc_pure
+static unsigned
+GetQuantisation()
+{
+  if (IsUserIdle(2000))
+    /* full terrain resolution when the user is idle */
+    return 1;
+  else if (IsUserIdle(1000))
+    /* reduced terrain resolution when the user has interacted with
+       XCSoar recently */
+    return 2;
+  else
+    /* the user is actively operating XCSoar: reduce UI latency */
+    return Layout::FastScale(2);
+}
+
+bool
+RasterRenderer::UpdateQuantisation()
+{
+  quantisation_pixels = GetQuantisation();
+  return quantisation_pixels < last_quantisation_pixels;
+}
+
+#endif
 
 void
 RasterRenderer::ScanMap(const RasterMap &map, const WindowProjection &projection)
@@ -92,11 +126,12 @@ RasterRenderer::ScanMap(const RasterMap &map, const WindowProjection &projection
 
   // set resolution
 
-  fixed map_pixel_size = map.pixel_distance(Gmid, 1);
-  fixed q = map_pixel_size / pixel_size;
   if (pixel_size < fixed(3000)) {
     /* round down to reduce slope shading artefacts (caused by
        RasterBuffer interpolation) */
+
+    fixed map_pixel_size = map.PixelDistance(Gmid, 1);
+    fixed q = map_pixel_size / pixel_size;
     quantisation_effective = std::max(1, (int)q);
 
     if (quantisation_effective > 25)
@@ -107,7 +142,17 @@ RasterRenderer::ScanMap(const RasterMap &map, const WindowProjection &projection
     /* disable slope shading when zoomed out very far (too tiny) */
     quantisation_effective = 0;
 
+#ifdef ENABLE_OPENGL
+  bounds = projection.GetScreenBounds().Scale(fixed(1.5));
+  height_matrix.Fill(map, bounds,
+                     projection.GetScreenWidth() / quantisation_pixels,
+                     projection.GetScreenHeight() / quantisation_pixels,
+                     true);
+
+  last_quantisation_pixels = quantisation_pixels;
+#else
   height_matrix.Fill(map, projection, quantisation_pixels, true);
+#endif
 }
 
 void
@@ -151,7 +196,7 @@ RasterRenderer::GenerateUnshadedImage(unsigned height_scale)
         if (h < 0)
           h = 0;
 
-        h = min(254, h >> height_scale);
+        h = std::min(254, h >> height_scale);
         *p++ = oColorBuf[h];
       } else if (RasterBuffer::IsWater(h)) {
         // we're in the water, so look up the color for water
@@ -164,6 +209,23 @@ RasterRenderer::GenerateUnshadedImage(unsigned height_scale)
   }
 
   image->SetDirty();
+}
+
+/**
+ * Clip the difference between two adjacent terrain height values to
+ * sane bounds.  This works around integer overflows in the
+ * GenerateSlopeImage() formula when the map file is broken, avoiding
+ * the sqrt() call with a negative argument.
+ */
+gcc_const
+static int
+ClipHeightDelta(int d)
+{
+  if (d > 512)
+    d = 512;
+  else if (d < -512)
+    d = -512;
+  return d;
 }
 
 // JMW: if zoomed right in (e.g. one unit is larger than terrain
@@ -184,7 +246,7 @@ RasterRenderer::GenerateSlopeImage(unsigned height_scale,
   border.right = height_matrix.GetWidth() - quantisation_effective;
   border.bottom = height_matrix.GetHeight() - quantisation_effective;
 
-  const unsigned height_slope_factor = max(1, (int)pixel_size);
+  const unsigned height_slope_factor = std::max(1, (int)pixel_size);
 
   const short *src = height_matrix.GetData();
   const BGRColor *oColorBuf = color_table + 64 * 256;
@@ -221,7 +283,7 @@ RasterRenderer::GenerateSlopeImage(unsigned height_scale,
         if (h < 0)
           h = 0;
 
-        h = min(254, h >> height_scale);
+        h = std::min(254, h >> height_scale);
 
         // no need to calculate slope if undefined height or sea level
 
@@ -259,8 +321,8 @@ RasterRenderer::GenerateSlopeImage(unsigned height_scale,
           continue;
         }
 
-        const int p32 = h_above - h_below;
-        const int p22 = h_right - h_left;
+        const int p32 = ClipHeightDelta(h_above - h_below);
+        const int p22 = ClipHeightDelta(h_right - h_left);
 
         const unsigned p20 = column_plus_index + column_minus_index;
 

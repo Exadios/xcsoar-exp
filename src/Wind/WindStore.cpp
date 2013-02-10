@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,9 +35,9 @@ void
 WindStore::reset()
 {
   windlist.Reset();
-  update_clock = fixed_zero;
+  update_clock = fixed(0);
   updated = true;
-  _lastAltitude = fixed_zero;
+  _lastAltitude = fixed(0);
 }
 
 void
@@ -85,10 +85,10 @@ WindStore::NewWind(const NMEAInfo &info, DerivedInfo &derived,
   fixed mag = wind.Magnitude();
   Angle bearing;
 
-  if (wind.y == fixed_zero && wind.x == fixed_zero)
+  if (wind.y == fixed(0) && wind.x == fixed(0))
     bearing = Angle::Zero();
   else
-    bearing = Angle::Radians(atan2(wind.y, wind.x));
+    bearing = Angle::FromXY(wind.x, wind.y);
 
   if (mag < fixed(30)) { // limit to reasonable values
     derived.estimated_wind = SpeedVector(bearing.AsBearing(), mag);

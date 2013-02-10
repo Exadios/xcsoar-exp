@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -68,21 +68,21 @@ public:
    * read() subsequently (without consume()) will not get you more
    * data.  An empty range marks the end of the stream.
    */
-  virtual Range read() = 0;
+  virtual Range Read() = 0;
 
   /**
    * Marks words as "consumed".  The buffer returned by read() is not
    * yet Invalidated, and may be used until the next read() call is
    * issued.
    */
-  virtual void consume(unsigned n) = 0;
+  virtual void Consume(unsigned n) = 0;
 
   /**
    * Determins the size of the file.  Returns -1 if the size is
    * unknown.
    */
   gcc_pure
-  virtual long size() const {
+  virtual long GetSize() const {
     return -1;
   }
 
@@ -91,7 +91,7 @@ public:
    * this is unknown.
    */
   gcc_pure
-  virtual long tell() const {
+  virtual long Tell() const {
     return -1;
   }
 };

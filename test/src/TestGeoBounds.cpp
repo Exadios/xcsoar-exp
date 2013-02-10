@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,29 +25,36 @@
 
 #include <stdio.h>
 
+static GeoBounds
+MakeGeoBounds(int west, int north, int east, int south)
+{
+  return GeoBounds(GeoPoint(Angle::Degrees(west), Angle::Degrees(north)),
+                   GeoPoint(Angle::Degrees(east), Angle::Degrees(south)));
+}
+
 int main(int argc, char **argv)
 {
-  plan_tests(24);
+  plan_tests(38);
 
-  GeoPoint g(Angle::Degrees(fixed(2)), Angle::Degrees(fixed(4)));
+  GeoPoint g(Angle::Degrees(2), Angle::Degrees(4));
 
   GeoBounds b(g);
 
-  ok1(equals(b.east, 2));
-  ok1(equals(b.west, 2));
-  ok1(equals(b.north, 4));
-  ok1(equals(b.south, 4));
+  ok1(equals(b.GetEast(), 2));
+  ok1(equals(b.GetWest(), 2));
+  ok1(equals(b.GetNorth(), 4));
+  ok1(equals(b.GetSouth(), 4));
 
   ok1(b.IsEmpty());
 
-  g.latitude = Angle::Degrees(fixed(6));
-  g.longitude = Angle::Degrees(fixed(8));
+  g.latitude = Angle::Degrees(6);
+  g.longitude = Angle::Degrees(8);
   b.Extend(g);
 
-  ok1(equals(b.east, 8));
-  ok1(equals(b.west, 2));
-  ok1(equals(b.north, 6));
-  ok1(equals(b.south, 4));
+  ok1(equals(b.GetEast(), 8));
+  ok1(equals(b.GetWest(), 2));
+  ok1(equals(b.GetNorth(), 6));
+  ok1(equals(b.GetSouth(), 4));
 
   ok1(!b.IsEmpty());
 
@@ -55,24 +62,44 @@ int main(int argc, char **argv)
   ok1(equals(g.latitude, 5));
   ok1(equals(g.longitude, 5));
 
-  ok1(b.IsInside(Angle::Degrees(fixed(7)), Angle::Degrees(fixed(4.5))));
-  ok1(!b.IsInside(Angle::Degrees(fixed(9)), Angle::Degrees(fixed(4.5))));
-  ok1(!b.IsInside(Angle::Degrees(fixed(7)), Angle::Degrees(fixed(1))));
-  ok1(!b.IsInside(Angle::Degrees(fixed(9)), Angle::Degrees(fixed(1))));
+  ok1(b.IsInside(Angle::Degrees(7), Angle::Degrees(4.5)));
+  ok1(!b.IsInside(Angle::Degrees(9), Angle::Degrees(4.5)));
+  ok1(!b.IsInside(Angle::Degrees(7), Angle::Degrees(1)));
+  ok1(!b.IsInside(Angle::Degrees(9), Angle::Degrees(1)));
 
   b = b.Scale(fixed(2));
 
-  ok1(equals(b.east, 11));
-  ok1(equals(b.west, -1));
-  ok1(equals(b.north, 7));
-  ok1(equals(b.south, 3));
+  ok1(equals(b.GetEast(), 11));
+  ok1(equals(b.GetWest(), -1));
+  ok1(equals(b.GetNorth(), 7));
+  ok1(equals(b.GetSouth(), 3));
 
   b = b.Scale(fixed(0.5));
 
-  ok1(equals(b.east, 8));
-  ok1(equals(b.west, 2));
-  ok1(equals(b.north, 6));
-  ok1(equals(b.south, 4));
+  ok1(equals(b.GetEast(), 8));
+  ok1(equals(b.GetWest(), 2));
+  ok1(equals(b.GetNorth(), 6));
+  ok1(equals(b.GetSouth(), 4));
+
+  GeoBounds c = MakeGeoBounds(2, 6, 8, 4);
+  ok1(c.Overlaps(b));
+  ok1(c.IntersectWith(b));
+  ok1(equals(c.GetWest(), 2));
+  ok1(equals(c.GetNorth(), 6));
+  ok1(equals(c.GetEast(), 8));
+  ok1(equals(c.GetSouth(), 4));
+
+  GeoBounds d = MakeGeoBounds(2, 6, 7, 5);
+  ok1(c.Overlaps(d));
+  ok1(c.IntersectWith(d));
+  ok1(equals(c.GetWest(), 2));
+  ok1(equals(c.GetNorth(), 6));
+  ok1(equals(c.GetEast(), 7));
+  ok1(equals(c.GetSouth(), 5));
+
+  d = MakeGeoBounds(8, 6, 1, 5);
+  ok1(!c.Overlaps(d));
+  ok1(!c.IntersectWith(d));
 
   return exit_status();
 }

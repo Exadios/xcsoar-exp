@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,24 +22,25 @@ Copyright_License {
 */
 
 #include "BlackboardListener.hpp"
+#include "Compiler.h"
 
 void
-NullBlackboardListener::OnGPSUpdate(const MoreData &basic)
+NullBlackboardListener::OnGPSUpdate(gcc_unused const MoreData &basic)
 {
 }
 
 void
-NullBlackboardListener::OnCalculatedUpdate(const MoreData &basic,
-                                           const DerivedInfo &calculated)
+NullBlackboardListener::OnCalculatedUpdate(gcc_unused const MoreData &basic,
+                                           gcc_unused const DerivedInfo &calculated)
 {
 }
 
 void
-NullBlackboardListener::OnComputerSettingsUpdate(const ComputerSettings &settings)
+NullBlackboardListener::OnComputerSettingsUpdate(gcc_unused const ComputerSettings &settings)
 {
 }
 
 void
-NullBlackboardListener::OnUISettingsUpdate(const UISettings &settings)
+NullBlackboardListener::OnUISettingsUpdate(gcc_unused const UISettings &settings)
 {
 }

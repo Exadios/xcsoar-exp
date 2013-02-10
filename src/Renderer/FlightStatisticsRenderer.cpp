@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -60,7 +60,6 @@ FlightStatisticsRenderer::FlightStatisticsRenderer(const ChartLook &_chart_look,
 void
 FlightStatisticsRenderer::RenderOLC(Canvas &canvas, const PixelRect rc,
                             const NMEAInfo &nmea_info, 
-                            const DerivedInfo &calculated,
                             const ComputerSettings &settings_computer,
                             const MapSettings &settings_map,
                             const ContestStatistics &contest,
@@ -88,7 +87,7 @@ FlightStatisticsRenderer::RenderOLC(Canvas &canvas, const PixelRect rc,
 
   RasterPoint aircraft_pos = proj.GeoToScreen(nmea_info.location);
   AircraftRenderer::Draw(canvas, settings_map, map_look.aircraft,
-                         calculated.heading, aircraft_pos);
+                         nmea_info.attitude.heading, aircraft_pos);
 
   trail_renderer.Draw(canvas, proj);
 
@@ -102,10 +101,10 @@ FlightStatisticsRenderer::RenderOLC(Canvas &canvas, const PixelRect rc,
 
 void
 FlightStatisticsRenderer::CaptionOLC(TCHAR *sTmp,
-                                     const TaskBehaviour &task_behaviour,
+                                     const ContestSettings &settings,
                                      const DerivedInfo &derived)
 {
-  if (task_behaviour.contest == OLC_Plus) {
+  if (settings.contest == Contest::OLC_PLUS) {
     const ContestResult& result =
         derived.contest_stats.GetResult(2);
 
@@ -131,8 +130,8 @@ FlightStatisticsRenderer::CaptionOLC(TCHAR *sTmp,
               _("Score"), (double)result.score, _("pts"),
               _("Time"), timetext1,
               _("Speed"), speed);
-  } else if (task_behaviour.contest == OLC_DHVXC ||
-             task_behaviour.contest == OLC_XContest) {
+  } else if (settings.contest == Contest::DHV_XC ||
+             settings.contest == Contest::XCONTEST) {
     const ContestResult& result_free =
         derived.contest_stats.GetResult(0);
 
@@ -157,13 +156,14 @@ FlightStatisticsRenderer::CaptionOLC(TCHAR *sTmp,
               _("Speed"), speed);
   } else {
     unsigned result_index;
-    switch (task_behaviour.contest) {
-      case OLC_League:
-        result_index = 0;
-        break;
-      default:
-        result_index = -1;
-        break;
+    switch (settings.contest) {
+    case Contest::OLC_LEAGUE:
+      result_index = 0;
+      break;
+
+    default:
+      result_index = -1;
+      break;
     }
 
     const ContestResult& result_olc =
@@ -189,7 +189,6 @@ FlightStatisticsRenderer::CaptionOLC(TCHAR *sTmp,
 void
 FlightStatisticsRenderer::RenderTask(Canvas &canvas, const PixelRect rc,
                              const NMEAInfo &nmea_info, 
-                             const DerivedInfo &calculated,
                              const ComputerSettings &settings_computer,
                              const MapSettings &settings_map,
                                      const ProtectedTaskManager &_task_manager,
@@ -225,16 +224,17 @@ FlightStatisticsRenderer::RenderTask(Canvas &canvas, const PixelRect rc,
   if (nmea_info.location_available) {
     RasterPoint aircraft_pos = proj.GeoToScreen(nmea_info.location);
     AircraftRenderer::Draw(canvas, settings_map, map_look.aircraft,
-                           calculated.heading, aircraft_pos);
+                           nmea_info.attitude.heading, aircraft_pos);
   }
 }
 
 void
 FlightStatisticsRenderer::CaptionTask(TCHAR *sTmp, const DerivedInfo &derived)
 {
+  const TaskStats &task_stats = derived.ordered_task_stats;
   const CommonStats &common = derived.common_stats;
 
-  if (!common.ordered_valid ||
+  if (!task_stats.task_valid ||
       !derived.task_stats.total.remaining.IsDefined()) {
     _tcscpy(sTmp, _("No task"));
   } else {
@@ -242,7 +242,7 @@ FlightStatisticsRenderer::CaptionTask(TCHAR *sTmp, const DerivedInfo &derived)
     TCHAR timetext1[100];
     TCHAR timetext2[100];
     if (common.ordered_has_targets) {
-      FormatSignedTimeHHMM(timetext1, (int)common.task_time_remaining);
+      FormatSignedTimeHHMM(timetext1, (int)task_stats.total.time_remaining);
       FormatSignedTimeHHMM(timetext2, (int)common.aat_time_remaining);
 
       if (Layout::landscape) {
@@ -266,7 +266,7 @@ FlightStatisticsRenderer::CaptionTask(TCHAR *sTmp, const DerivedInfo &derived)
             Units::GetTaskSpeedName());
       }
     } else {
-      FormatSignedTimeHHMM(timetext1, (int)common.task_time_remaining);
+      FormatSignedTimeHHMM(timetext1, (int)task_stats.total.time_remaining);
       _stprintf(sTmp, _T("%s: %s\r\n%s: %5.0f %s\r\n"),
                 _("Task to go"), timetext1, _("Distance to go"),
                 (double)Units::ToUserDistance(d_remaining),

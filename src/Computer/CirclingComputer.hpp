@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,11 +24,15 @@ Copyright_License {
 #ifndef XCSOAR_CIRCLING_COMPUTER_HPP
 #define XCSOAR_CIRCLING_COMPUTER_HPP
 
+#include "Math/fixed.hpp"
+#include "Geo/GeoPoint.hpp"
+#include "DeltaTime.hpp"
+
 struct CirclingInfo;
 struct NMEAInfo;
 struct MoreData;
 struct DerivedInfo;
-struct ComputerSettings;
+struct CirclingSettings;
 struct FlyingState;
 
 /**
@@ -37,29 +41,72 @@ struct FlyingState;
  * Dependencies: #FlyingComputer.
  */
 class CirclingComputer {
+  DeltaTime turn_rate_delta_time;
+
+  Angle last_track, last_heading;
+
+  DeltaTime turning_delta_time;
+
+  /**
+   * Start/end time of the turn.
+   */
+  fixed turn_start_time;
+
+  /**
+   * Start/end location of the turn.
+   */
+  GeoPoint turn_start_location;
+
+  /**
+   * Start/end energy height of the turn.
+   */
+  fixed turn_start_energy_height;
+
+  /**
+   * Start/end altitude of the turn.
+   */
+  fixed turn_start_altitude;
+
+  DeltaTime percent_delta_time;
+
+  /**
+   * Minimum altitude since start of task.
+   */
+  fixed min_altitude;
+
 public:
+  /**
+   * Reset this computer, as if a new flight starts.
+   */
+  void Reset();
+
+  /**
+   * Reset only statistics, to be called when the task starts, to
+   * eliminate the portion of the flight that is irrelevant to the
+   * task.
+   */
+  void ResetStats();
+
   /**
    * Calculates the turn rate
    */
   void TurnRate(CirclingInfo &circling_info,
-                const NMEAInfo &basic, const NMEAInfo &last_basic,
-                const DerivedInfo &calculated,
-                const DerivedInfo &last_calculated);
+                const NMEAInfo &basic,
+                const FlyingState &flight);
 
   /**
    * Calculates the turn rate and the derived features.
    * Determines the current flight mode (cruise/circling).
    */
   void Turning(CirclingInfo &circling_info,
-               const MoreData &basic, const MoreData &last_basic,
-               const DerivedInfo &calculated,
-               const DerivedInfo &last_calculated,
-               const ComputerSettings &settings_computer);
+               const MoreData &basic,
+               const FlyingState &flight,
+               const CirclingSettings &settings);
 
   /**
    * Calculate the circling time and percentage
    */
-  void PercentCircling(const MoreData &basic, const MoreData &last_basic,
+  void PercentCircling(const MoreData &basic,
                        CirclingInfo &circling_info);
 
   void MaxHeightGain(const MoreData &basic, const FlyingState &flight,

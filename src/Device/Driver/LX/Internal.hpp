@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ Copyright_License {
 #include "Device/SettingsMap.hpp"
 #include "Thread/Mutex.hpp"
 
+#include <atomic>
 #include <stdint.h>
 
 class LXDevice: public AbstractDevice
@@ -44,6 +45,17 @@ class LXDevice: public AbstractDevice
 
   unsigned bulk_baud_rate;
 
+  std::atomic<bool> busy;
+
+  /**
+   * Is this ia Colibri or LX20 or a similar "old" logger?  This is
+   * initialised to true if the NMEA baud rate is configured to 4800,
+   * which disables the advanced V7/Nano protocol, to avoid confusing
+   * the Colibri.  It is cleared as soon as a "modern" LX product is
+   * detected (passively).
+   */
+  bool is_colibri;
+
   /**
    * Was a LXNAV V7 detected?
    */
@@ -53,6 +65,11 @@ class LXDevice: public AbstractDevice
    * Was a LXNAV Nano detected?
    */
   bool is_nano;
+
+  /**
+   * Was a LXNavigation LX1600/1606 vario detected?
+   */
+  bool is_lx16xx;
 
   /**
    * Was a V7 with a Nano on the GPS port detected?
@@ -71,13 +88,14 @@ class LXDevice: public AbstractDevice
 
   Mutex mutex;
   Mode mode;
-  bool busy;
   unsigned old_baud_rate;
 
 public:
-  LXDevice(Port &_port, unsigned _bulk_baud_rate)
+  LXDevice(Port &_port, unsigned baud_rate, unsigned _bulk_baud_rate)
     :port(_port), bulk_baud_rate(_bulk_baud_rate),
-     is_v7(false), is_nano(false), is_forwarded_nano(false),
+     busy(false),
+     is_colibri(baud_rate == 4800),
+     is_v7(false), is_nano(false), is_lx16xx(false), is_forwarded_nano(false),
      mode(Mode::UNKNOWN), old_baud_rate(0) {}
 
   /**
@@ -92,6 +110,17 @@ public:
    */
   bool IsNano() const {
     return is_nano || is_forwarded_nano;
+  }
+
+  /**
+   * Was a LXNavigation LX1600/1606 vario detected?
+   */
+  bool IsLX16xx() const {
+    return is_lx16xx;
+  }
+
+  void ResetDeviceDetection() {
+    is_v7 = is_nano = is_lx16xx = is_forwarded_nano = false;
   }
 
   /**
@@ -171,30 +200,32 @@ protected:
   bool EnableCommandMode(OperationEnvironment &env);
 
 public:
-  virtual void LinkTimeout();
-  virtual bool EnableNMEA(OperationEnvironment &env);
+  virtual void LinkTimeout() override;
+  virtual bool EnableNMEA(OperationEnvironment &env) override;
 
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 
   virtual bool PutBallast(fixed fraction, fixed overload,
-                          OperationEnvironment &env);
-  virtual bool PutBugs(fixed bugs, OperationEnvironment &env);
-  virtual bool PutMacCready(fixed mc, OperationEnvironment &env);
+                          OperationEnvironment &env) override;
+  virtual bool PutBugs(fixed bugs, OperationEnvironment &env) override;
+  virtual bool PutMacCready(fixed mc, OperationEnvironment &env) override;
   virtual bool PutQNH(const AtmosphericPressure &pres,
-                      OperationEnvironment &env);
+                      OperationEnvironment &env) override;
 
-  virtual bool EnablePassThrough(OperationEnvironment &env);
+  virtual bool PutVolume(unsigned volume, OperationEnvironment &env) override;
+
+  virtual bool EnablePassThrough(OperationEnvironment &env) override;
 
   virtual bool Declare(const Declaration &declaration, const Waypoint *home,
-                       OperationEnvironment &env);
+                       OperationEnvironment &env) override;
 
-  virtual void OnSysTicker(const DerivedInfo &calculated);
+  virtual void OnSysTicker() override;
 
   virtual bool ReadFlightList(RecordedFlightList &flight_list,
-                              OperationEnvironment &env);
+                              OperationEnvironment &env) override;
   virtual bool DownloadFlight(const RecordedFlightInfo &flight,
                               const TCHAR *path,
-                              OperationEnvironment &env);
+                              OperationEnvironment &env) override;
 };
 
 #endif

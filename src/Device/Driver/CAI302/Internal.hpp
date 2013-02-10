@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -60,23 +60,23 @@ private:
   bool SetBaudRate(unsigned baud_rate, OperationEnvironment &env);
 
 public:
-  virtual void LinkTimeout();
-  virtual bool EnableNMEA(OperationEnvironment &env);
+  virtual void LinkTimeout() override;
+  virtual bool EnableNMEA(OperationEnvironment &env) override;
 
-  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info);
-  virtual bool PutMacCready(fixed mc, OperationEnvironment &env);
-  virtual bool PutBugs(fixed bugs, OperationEnvironment &env);
+  virtual bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
+  virtual bool PutMacCready(fixed mc, OperationEnvironment &env) override;
+  virtual bool PutBugs(fixed bugs, OperationEnvironment &env) override;
   virtual bool PutBallast(fixed fraction, fixed overload,
-                          OperationEnvironment &env);
+                          OperationEnvironment &env) override;
 
   virtual bool Declare(const Declaration &declaration, const Waypoint *home,
-                       OperationEnvironment &env);
+                       OperationEnvironment &env) override;
 
   virtual bool ReadFlightList(RecordedFlightList &flight_list,
-                              OperationEnvironment &env);
+                              OperationEnvironment &env) override;
   virtual bool DownloadFlight(const RecordedFlightInfo &flight,
                               const TCHAR *path,
-                              OperationEnvironment &env);
+                              OperationEnvironment &env) override;
 
 public:
   bool EnableBulkMode(OperationEnvironment &env);

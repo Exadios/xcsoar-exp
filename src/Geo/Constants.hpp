@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,10 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_GEO_CONSTANTS_HPP
 #define XCSOAR_GEO_CONSTANTS_HPP
 
-#include "Math/fixed.hpp"
-
-#define REARTH 6371000
-#define fixed_earth_r fixed_int_constant(REARTH)
-#define fixed_inv_earth_r fixed(1.0 / REARTH)
+static constexpr unsigned REARTH = 6371000;
 
 #endif

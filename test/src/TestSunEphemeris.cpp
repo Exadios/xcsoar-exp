@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,14 +22,14 @@
 
 #include "Math/SunEphemeris.hpp"
 #include "Geo/GeoPoint.hpp"
-#include "DateTime.hpp"
+#include "Time/BrokenDateTime.hpp"
 #include "TestUtil.hpp"
 
 static void
 test_times()
 {
-  const GeoPoint location(Angle::Degrees(fixed(7.7061111111111114)),
-                          Angle::Degrees(fixed(51.051944444444445)));
+  const GeoPoint location(Angle::Degrees(7.7061111111111114),
+                          Angle::Degrees(51.051944444444445));
   BrokenDateTime dt;
   dt.year = 2010;
   dt.month = 9;
@@ -39,7 +39,7 @@ test_times()
   dt.second = 12;
 
   SunEphemeris::Result sun =
-      SunEphemeris::CalcSunTimes(location, dt, fixed_two);
+      SunEphemeris::CalcSunTimes(location, dt, fixed(2));
 
   ok1(between(sun.morning_twilight, 6.88, 6.9));
   ok1(between(sun.time_of_noon, 13.3, 13.4));
@@ -105,7 +105,7 @@ test_azimuth()
       152.198463
   };
 
-  GeoPoint location(Angle::Degrees(fixed(7)), Angle::Degrees(fixed(51)));
+  GeoPoint location(Angle::Degrees(7), Angle::Degrees(51));
 
   BrokenDateTime dt;
   dt.year = 2010;
@@ -118,7 +118,7 @@ test_azimuth()
     dt.hour = hour;
 
     SunEphemeris::Result sun =
-        SunEphemeris::CalcSunTimes(location, dt, fixed_zero);
+        SunEphemeris::CalcSunTimes(location, dt, fixed(0));
 
     ok1(equals(sun.azimuth, test_data1[hour]));
   }
@@ -129,7 +129,7 @@ test_azimuth()
     dt.hour = hour;
 
     SunEphemeris::Result sun =
-        SunEphemeris::CalcSunTimes(location, dt, fixed_two);
+        SunEphemeris::CalcSunTimes(location, dt, fixed(2));
 
     ok1(equals(sun.azimuth, test_data2[hour]));
   }

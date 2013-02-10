@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -37,36 +37,34 @@ public:
    * @param tb Global task behaviour settings
    * 
    */
-  UnorderedTask(const enum Type _type,
+  UnorderedTask(TaskType _type,
                 const TaskBehaviour &tb);
 
 public:
   /* virtual methods from class AbstractTask */
-  virtual bool CheckTask() const;
-  virtual fixed GetFinishHeight() const;
-  virtual GeoPoint GetTaskCenter(const GeoPoint &fallback_location) const;
-  virtual fixed GetTaskRadius(const GeoPoint &fallback_location) const;
+  virtual bool CheckTask() const override;
+  virtual fixed GetFinishHeight() const override;
   virtual bool CalcBestMC(const AircraftState &state_now,
                           const GlidePolar &glide_polar,
-                          fixed& best) const;
+                          fixed& best) const override;
   virtual fixed CalcRequiredGlide(const AircraftState &state_now,
-                                  const GlidePolar &glide_polar) const;
-  virtual fixed CalcGradient(const AircraftState &state_now) const;
-  virtual fixed ScanTotalStartTime(const AircraftState &state_now);
-  virtual fixed ScanLegStartTime(const AircraftState &state_now);
-  virtual fixed ScanDistanceNominal();
-  virtual fixed ScanDistancePlanned();
-  virtual fixed ScanDistanceRemaining(const GeoPoint &ref);
-  virtual fixed ScanDistanceScored(const GeoPoint &ref);
-  virtual fixed ScanDistanceTravelled(const GeoPoint &ref);
+                                  const GlidePolar &glide_polar) const override;
+  virtual fixed CalcGradient(const AircraftState &state_now) const override;
+  virtual fixed ScanTotalStartTime(const AircraftState &state_now) override;
+  virtual fixed ScanLegStartTime(const AircraftState &state_now) override;
+  virtual fixed ScanDistanceNominal() override;
+  virtual fixed ScanDistancePlanned() override;
+  virtual fixed ScanDistanceRemaining(const GeoPoint &ref) override;
+  virtual fixed ScanDistanceScored(const GeoPoint &ref) override;
+  virtual fixed ScanDistanceTravelled(const GeoPoint &ref) override;
   virtual void ScanDistanceMinMax(const GeoPoint &ref, bool full,
-                                  fixed *dmin, fixed *dmax);
+                                  fixed *dmin, fixed *dmax) override;
   virtual void GlideSolutionRemaining(const AircraftState &state_now,
                                       const GlidePolar &polar,
-                                      GlideResult &total, GlideResult &leg);
+                                      GlideResult &total, GlideResult &leg) override;
   virtual void GlideSolutionTravelled(const AircraftState &state_now,
                                       const GlidePolar &glide_polar,
-                                      GlideResult &total, GlideResult &leg);
+                                      GlideResult &total, GlideResult &leg) override;
   virtual void GlideSolutionPlanned(const AircraftState &state_now,
                                     const GlidePolar &glide_polar,
                                     GlideResult &total,
@@ -74,10 +72,8 @@ public:
                                     DistanceStat &total_remaining_effective,
                                     DistanceStat &leg_remaining_effective,
                                     const GlideResult &solution_remaining_total,
-                                    const GlideResult &solution_remaining_leg);
-  virtual bool HasTargets() const { return false; }
-  virtual bool IsScored() const { return false; }
-  virtual void AcceptStartPointVisitor(TaskPointConstVisitor& visitor) const gcc_override;
+                                    const GlideResult &solution_remaining_leg) override;
+  virtual bool IsScored() const override { return false; }
 };
 
 #endif

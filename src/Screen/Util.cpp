@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,18 +26,14 @@ Copyright_License {
 #include "Util/Macros.hpp"
 #include "Math/FastMath.h"
 
-#include <winuser.h>
-
 gcc_const
 static RasterPoint
 CirclePoint(int x, int y, int radius, unsigned angle)
 {
   assert(angle < ARRAY_SIZE(ISINETABLE));
 
-  return RasterPoint {
-    PixelScalar(x + ISINETABLE[angle] * radius / 1024),
-    PixelScalar(y - ICOSTABLE[angle] * radius / 1024),
-  };
+  return RasterPoint(x + ISINETABLE[angle] * radius / 1024,
+                     y - ICOSTABLE[angle] * radius / 1024);
 }
 
 static void
@@ -82,9 +78,9 @@ Segment(Canvas &canvas, PixelScalar x, PixelScalar y, UPixelScalar radius,
 {
   // dont draw if out of view
   PixelRect rc, bounds;
-  SetRect(&rc, 0, 0, canvas.get_width(), canvas.get_height());
-  SetRect(&bounds, x - radius, y - radius, x + radius, y + radius);
-  if (!IntersectRect(&bounds, &bounds, &rc))
+  SetRect(rc, 0, 0, canvas.GetWidth(), canvas.GetHeight());
+  SetRect(bounds, x - radius, y - radius, x + radius, y + radius);
+  if (!OverlapsRect(bounds, rc))
     return false;
 
   const int istart = NATIVE_TO_INT(start.Native());
@@ -116,9 +112,9 @@ Annulus(Canvas &canvas, PixelScalar x, PixelScalar y, UPixelScalar radius,
 {
   // dont draw if out of view
   PixelRect rc, bounds;
-  SetRect(&rc, 0, 0, canvas.get_width(), canvas.get_height());
-  SetRect(&bounds, x - radius, y - radius, x + radius, y + radius);
-  if (!IntersectRect(&bounds, &bounds, &rc))
+  SetRect(rc, 0, 0, canvas.GetWidth(), canvas.GetHeight());
+  SetRect(bounds, x - radius, y - radius, x + radius, y + radius);
+  if (!OverlapsRect(bounds, rc))
     return false;
 
   const int istart = NATIVE_TO_INT(start.Native());
@@ -143,9 +139,9 @@ KeyHole(Canvas &canvas, PixelScalar x, PixelScalar y, UPixelScalar radius,
 {
   // dont draw if out of view
   PixelRect rc, bounds;
-  SetRect(&rc, 0, 0, canvas.get_width(), canvas.get_height());
-  SetRect(&bounds, x - radius, y - radius, x + radius, y + radius);
-  if (!IntersectRect(&bounds, &bounds, &rc))
+  SetRect(rc, 0, 0, canvas.GetWidth(), canvas.GetHeight());
+  SetRect(bounds, x - radius, y - radius, x + radius, y + radius);
+  if (!OverlapsRect(bounds, rc))
     return false;
 
   const int istart = NATIVE_TO_INT(start.Native());

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -36,9 +36,9 @@ Copyright_License {
 #include <SDL_endian.h>
 #include <SDL_image.h>
 
-  #ifdef WIN32
-    #include <windows.h>
-  #endif
+#ifdef WIN32
+  #include <windows.h>
+#endif
 
 #include <assert.h>
 
@@ -79,18 +79,7 @@ Bitmap::Load(SDL_Surface *_surface, Type type)
 #endif
 }
 
-#ifdef ENABLE_OPENGL
-bool
-Bitmap::Reload()
-{
-  assert(id != 0);
-  assert(texture == NULL);
-
-  /* XXX this is no real implementation; we currently support OpenGL
-     surface reinitialisation only on Android */
-  return Load(id);
-}
-#endif
+#ifndef USE_LIBPNG
 
 bool
 Bitmap::Load(unsigned id, Type type)
@@ -108,7 +97,7 @@ Bitmap::Load(unsigned id, Type type)
   if (data.second < sizeof(*info))
     return false;
 
-  int pitch = (((info->bmiHeader.biWidth * info->bmiHeader.biBitCount) / 8 - 1) | 3) + 1;
+  int pitch = (((info->bmiHeader.biWidth * info->bmiHeader.biBitCount + 7) / 8 - 1) | 3) + 1;
   int data_size = pitch * info->bmiHeader.biHeight;
 
   /* duplicate the BMP file and re-insert the BITMAPFILEHEADER which
@@ -135,18 +124,24 @@ Bitmap::Load(unsigned id, Type type)
 #endif
 
   SDL_RWops *rw = SDL_RWFromConstMem(bmp_data, bmp_size);
+
+#ifdef WIN32
   SDL_Surface *original = ::SDL_LoadBMP_RW(rw, 1);
+  free(header);
+#else
+  SDL_Surface *original = ::IMG_LoadPNG_RW(rw);
+  SDL_RWclose(rw);
+#endif
+
   if (original == NULL)
     return false;
 
   Load(original, type);
 
-#ifdef WIN32
-  free(header);
-#endif
-
   return true;
 }
+
+#endif /* !USE_LIBPNG */
 
 bool
 Bitmap::LoadStretch(unsigned id, unsigned zoom)
@@ -157,6 +152,8 @@ Bitmap::LoadStretch(unsigned id, unsigned zoom)
   return Load(id);
 }
 
+#ifndef USE_LIBPNG
+
 bool
 Bitmap::LoadFile(const TCHAR *path)
 {
@@ -165,22 +162,19 @@ Bitmap::LoadFile(const TCHAR *path)
   return original != NULL && Load(original);
 }
 
+#endif /* !USE_LIBPNG */
+
+#ifndef ENABLE_OPENGL
+
 void
 Bitmap::Reset()
 {
   assert(!IsDefined() || IsScreenInitialized());
 
-#ifdef ENABLE_OPENGL
-  assert(!IsDefined() || pthread_equal(pthread_self(), OpenGL::thread));
-
-  delete texture;
-  texture = NULL;
-#else
   if (surface != NULL) {
     SDL_FreeSurface(surface);
     surface = NULL;
   }
-#endif
 }
 
 const PixelSize
@@ -188,8 +182,7 @@ Bitmap::GetSize() const
 {
   assert(IsDefined());
 
-#ifndef ENABLE_OPENGL
-  const PixelSize size = { PixelScalar(surface->w), PixelScalar(surface->h) };
-#endif
-  return size;
+  return { surface->w, surface->h };
 }
+
+#endif /* !OpenGL */

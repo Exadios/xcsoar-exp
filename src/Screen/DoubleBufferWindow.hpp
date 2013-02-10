@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,17 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_DOUBLE_BUFFER_WINDOW_HXX
 #define XCSOAR_SCREEN_DOUBLE_BUFFER_WINDOW_HXX
 
+#ifdef ENABLE_OPENGL
+
+#include "BufferWindow.hpp"
+
+class DoubleBufferWindow : public BufferWindow {
+  /* there's no DrawThread on OpenGL, so this is just a normal
+     BufferWindow */
+};
+
+#else
+
 #include "Screen/PaintWindow.hpp"
 #include "Screen/BufferCanvas.hpp"
 #include "Thread/Mutex.hpp"
@@ -34,30 +45,6 @@ Copyright_License {
  * copies the other buffer to the screen.
  */
 class DoubleBufferWindow : public PaintWindow {
-#ifdef ENABLE_OPENGL
-  /* on OpenGL, there is no DrawThread, and we use only one buffer to
-     cache the painted window, to reduce CPU/GPU usage for new
-     frames */
-  BufferCanvas buffer;
-
-  /**
-   * Is the buffer dirty, i.e. does it need a full repaint with
-   * OnPaintBuffer()?
-   */
-  bool dirty;
-
-public:
-  void Invalidate() {
-    dirty = true;
-    PaintWindow::Invalidate();
-  }
-
-protected:
-  virtual void OnCreate();
-  virtual void OnDestroy();
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
-
-#else
   BufferCanvas buffers[2];
 
   /**
@@ -82,7 +69,7 @@ private:
    * Returns the Canvas which is currently used for rendering.  This
    * method may only be called within the drawing thread.
    */
-  Canvas &get_canvas() {
+  Canvas &GetPaintCanvas() {
     return buffers[current];
   }
 
@@ -90,35 +77,30 @@ private:
    * Marks the hidden Canvas as "done" and schedules it for painting
    * to the Window.
    */
-  void flip();
+  void Flip();
 
 protected:
   /**
    * Returns the Canvas which is currently visible.  A call to this
    * method must be protected with the Mutex.
    */
-  const Canvas &get_visible_canvas() const {
+  const Canvas &GetVisibleCanvas() const {
     return buffers[current ^ 1];
   }
 
 protected:
-  virtual void OnCreate();
-  virtual void OnDestroy();
-#endif
-
-protected:
-  virtual void OnPaint(Canvas &canvas);
+  virtual void OnCreate() override;
+  virtual void OnDestroy() override;
+  virtual void OnPaint(Canvas &canvas) override;
   virtual void OnPaintBuffer(Canvas &canvas) = 0;
 
 public:
-  void repaint() {
-#ifndef ENABLE_OPENGL
-    OnPaintBuffer(get_canvas());
-    flip();
-#else
-    Invalidate();
-#endif
+  void Repaint() {
+    OnPaintBuffer(GetPaintCanvas());
+    Flip();
   }
 };
+
+#endif
 
 #endif

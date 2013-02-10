@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,11 +22,10 @@ Copyright_License {
 */
 
 #include "WindArrowRenderer.hpp"
+#include "TextInBox.hpp"
 #include "Look/WindArrowLook.hpp"
 #include "Screen/Canvas.hpp"
-#include "Screen/Fonts.hpp"
 #include "Screen/Layout.hpp"
-#include "Screen/TextInBox.hpp"
 #include "Math/Angle.hpp"
 #include "Math/Screen.hpp"
 #include "NMEA/Derived.hpp"
@@ -62,7 +61,7 @@ WindArrowRenderer::DrawArrow(Canvas &canvas, RasterPoint pos, Angle angle,
   if (arrow_style == WindArrowStyle::FULL_ARROW) {
     RasterPoint tail[] = {
       { 0, (PixelScalar)(-offset + 3) },
-      { 0, (PixelScalar)(-offset - 3 - min(PixelScalar(20), length) * 3) },
+      { 0, -offset - 3 - std::min(PixelScalar(20), length) * 3 },
     };
 
     PolygonRotateShift(tail, ARRAY_SIZE(tail),
@@ -89,7 +88,7 @@ WindArrowRenderer::Draw(Canvas &canvas, const Angle screen_angle,
   buffer.Format(_T("%i"), iround(Units::ToUserWindSpeed(wind.norm)));
 
   canvas.SetTextColor(COLOR_BLACK);
-  canvas.Select(Fonts::map_bold);
+  canvas.Select(*look.font);
 
   PixelScalar offset = iround(fixed_sqrt_two * wind.norm);
   RasterPoint label[] = {
@@ -99,9 +98,9 @@ WindArrowRenderer::Draw(Canvas &canvas, const Angle screen_angle,
                      pos.x, pos.y, wind.bearing - screen_angle);
 
   TextInBoxMode style;
-  style.align = A_CENTER;
-  style.vertical_position = VerticalPosition::CENTERED;
-  style.mode = RM_OUTLINED;
+  style.align = TextInBoxMode::Alignment::CENTER;
+  style.vertical_position = TextInBoxMode::VerticalPosition::CENTERED;
+  style.shape = LabelShape::OUTLINED;
 
   TextInBox(canvas, buffer, label[0].x, label[0].y, style, rc);
 }
@@ -112,11 +111,12 @@ WindArrowRenderer::Draw(Canvas &canvas, const Angle screen_angle,
                         const DerivedInfo &calculated,
                         const MapSettings &settings)
 {
-  if (!calculated.wind_available)
+  if (!calculated.wind_available ||
+      settings.wind_arrow_style == WindArrowStyle::NO_ARROW)
     return;
 
   // don't bother drawing it if not significant
-  if (calculated.wind.norm < fixed_one)
+  if (calculated.wind.norm < fixed(1))
     return;
 
   WindArrowRenderer::Draw(canvas, screen_angle, calculated.wind, pos, rc,

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,8 +24,6 @@ Copyright_License {
 #ifndef XCSOAR_SCREEN_WINDOW_HPP
 #define XCSOAR_SCREEN_WINDOW_HPP
 
-#include "Util/NonCopyable.hpp"
-#include "Screen/Font.hpp"
 #include "Screen/Point.hpp"
 #include "Screen/Features.hpp"
 #include "Thread/Debug.hpp"
@@ -41,6 +39,7 @@ Copyright_License {
 struct Event;
 #endif
 
+class Font;
 class Canvas;
 class ContainerWindow;
 class WindowTimer;
@@ -185,7 +184,7 @@ public:
  * which optionally interacts with the user.  To draw custom graphics
  * into a Window, derive your class from #PaintWindow.
  */
-class Window : private NonCopyable {
+class Window {
   friend class ContainerWindow;
 
 protected:
@@ -193,8 +192,8 @@ protected:
   ContainerWindow *parent;
 
 private:
-  PixelScalar left, top;
-  UPixelScalar width, height;
+  RasterPoint position;
+  PixelSize size;
 
 private:
   const Font *font;
@@ -221,7 +220,7 @@ private:
 public:
 #ifndef USE_GDI
   Window()
-    :parent(NULL), width(0), height(0),
+    :parent(NULL), size(0, 0),
      font(NULL),
      visible(true), focused(false), capture(false), has_border(false),
      double_clicks(false) {}
@@ -230,6 +229,9 @@ public:
            double_clicks(false), custom_painting(false) {}
 #endif
   virtual ~Window();
+
+  Window(const Window &other) = delete;
+  Window &operator=(const Window &other) = delete;
 
   /**
    * Activates the OnPaint() method.  It is disabled by default
@@ -243,10 +245,14 @@ public:
 
 #ifndef USE_GDI
   const ContainerWindow *GetParent() const {
+    assert(IsDefined());
+
     return parent;
   }
 #else
   operator HWND() const {
+    assert(IsDefined());
+
     return hWnd;
   };
 
@@ -255,6 +261,8 @@ public:
    */
   gcc_pure
   bool Identify(HWND h) const {
+    assert(IsDefined());
+
     return h == hWnd;
   }
 
@@ -263,6 +271,8 @@ public:
    */
   gcc_pure
   bool IdentifyDescendant(HWND h) const {
+    assert(IsDefined());
+
     return h == hWnd || ::IsChild(hWnd, h);
   }
 #endif
@@ -295,7 +305,7 @@ protected:
 public:
   bool IsDefined() const {
 #ifndef USE_GDI
-    return width > 0;
+    return size.cx > 0;
 #else
     return hWnd != NULL;
 #endif
@@ -303,19 +313,27 @@ public:
 
 #ifndef USE_GDI
   PixelScalar GetTop() const {
-    return top;
+    assert(IsDefined());
+
+    return position.y;
   }
 
   PixelScalar GetLeft() const {
-    return left;
+    assert(IsDefined());
+
+    return position.x;
   }
 
   UPixelScalar GetWidth() const {
-    return width;
+    assert(IsDefined());
+
+    return size.cx;
   }
 
   UPixelScalar GetHeight() const {
-    return height;
+    assert(IsDefined());
+
+    return size.cy;
   }
 
   PixelScalar GetRight() const {
@@ -340,28 +358,12 @@ public:
 #endif
 
 #ifndef USE_GDI
-  void set(ContainerWindow *parent,
-           PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height,
-           const WindowStyle window_style=WindowStyle());
-
-  void set(ContainerWindow *parent, const PixelRect rc,
-           const WindowStyle window_style=WindowStyle()) {
-    set(parent, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-        window_style);
-  }
+  void Create(ContainerWindow *parent, const PixelRect rc,
+              const WindowStyle window_style=WindowStyle());
 #else
-  void set(ContainerWindow *parent, const TCHAR *cls, const TCHAR *text,
-           PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height,
-           const WindowStyle window_style=WindowStyle());
-
-  void set(ContainerWindow *parent, const TCHAR *cls, const TCHAR *text,
-           const PixelRect rc, const WindowStyle window_style=WindowStyle()) {
-    set(parent, cls, text, rc.left, rc.top,
-        rc.right - rc.left, rc.bottom - rc.top,
-        window_style);
-  }
+  void Create(ContainerWindow *parent, const TCHAR *cls, const TCHAR *text,
+              const PixelRect rc,
+              const WindowStyle window_style=WindowStyle());
 
   /**
    * Create a message-only window.
@@ -373,7 +375,7 @@ public:
   void Created(HWND _hWnd);
 #endif
 
-  void reset();
+  void Destroy();
 
   /**
    * Determines the root owner window of this Window.  This is
@@ -382,13 +384,20 @@ public:
   gcc_pure
   ContainerWindow *GetRootOwner();
 
+  /**
+   * Checks whether the window is "maximised" within its parent
+   * window, i.e. whether its dimensions are not smaller than its
+   * parent's dimensions.
+   */
+  gcc_pure
+  bool IsMaximised() const;
+
   void Move(PixelScalar left, PixelScalar top) {
     AssertNoneLocked();
     AssertThread();
 
 #ifndef USE_GDI
-    this->left = left;
-    this->top = top;
+    position = { left, top };
     Invalidate();
 #else
     ::SetWindowPos(hWnd, NULL, left, top, 0, 0,
@@ -414,6 +423,14 @@ public:
 
   void Move(const PixelRect rc) {
     Move(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
+  }
+
+  void MoveToCenter() {
+    const PixelSize window_size = GetSize();
+    const PixelSize parent_size = GetParentClientRect().GetSize();
+    PixelScalar dialog_x = (parent_size.cx - window_size.cx) / 2;
+    PixelScalar dialog_y = (parent_size.cy - window_size.cy) / 2;
+    Move(dialog_x, dialog_y);
   }
 
   /**
@@ -462,20 +479,23 @@ public:
     AssertThread();
 
 #ifndef USE_GDI
-    if (width == this->width && height == this->height)
+    if (width == GetWidth() && height == GetHeight())
       return;
 
-    this->width = width;
-    this->height = height;
+    size = { width, height };
 
     Invalidate();
-    OnResize(width, height);
+    OnResize(size);
 #else /* USE_GDI */
     ::SetWindowPos(hWnd, NULL, 0, 0, width, height,
                    SWP_NOMOVE | SWP_NOZORDER |
                    SWP_NOACTIVATE | SWP_NOOWNERZORDER);
     // XXX store new size?
 #endif
+  }
+
+  void Resize(PixelSize size) {
+    Resize(size.cx, size.cy);
   }
 
 #ifndef USE_GDI
@@ -517,28 +537,24 @@ public:
 #endif
   }
 
-#ifndef USE_GDI
+#ifdef USE_GDI
+  void SetFont(const Font &_font);
+#else
+  void SetFont(const Font &_font) {
+    AssertNoneLocked();
+    AssertThread();
+
+    font = &_font;
+    Invalidate();
+  }
+
   const Font &GetFont() const {
     AssertThread();
-    assert(IsDefined());
     assert(font != NULL);
 
     return *font;
   }
 #endif
-
-  void SetFont(const Font &_font) {
-    AssertNoneLocked();
-    AssertThread();
-
-#ifndef USE_GDI
-    font = &_font;
-    Invalidate();
-#else
-    ::SendMessage(hWnd, WM_SETFONT,
-                  (WPARAM)_font.Native(), MAKELPARAM(TRUE,0));
-#endif
-  }
 
   /**
    * Determine whether this Window is visible.  This method disregards
@@ -547,6 +563,8 @@ public:
    */
   gcc_pure
   bool IsVisible() const {
+    assert(IsDefined());
+
 #ifndef USE_GDI
     return visible;
 #else
@@ -598,10 +616,14 @@ public:
 
 #ifndef USE_GDI
   bool IsTabStop() const {
+    assert(IsDefined());
+
     return tab_stop;
   }
 
   bool IsControlParent() const {
+    assert(IsDefined());
+
     return control_parent;
   }
 #endif
@@ -611,6 +633,8 @@ public:
    */
   gcc_pure
   bool IsEnabled() const {
+    assert(IsDefined());
+
 #ifndef USE_GDI
     return enabled;
 #else
@@ -662,6 +686,8 @@ public:
 
   gcc_pure
   bool HasFocus() const {
+    assert(IsDefined());
+
 #ifndef USE_GDI
     return focused;
 #else
@@ -719,6 +745,8 @@ public:
   gcc_pure
   const PixelRect GetScreenPosition() const
   {
+    assert(IsDefined());
+
     PixelRect rc;
 #ifndef USE_GDI
     rc = GetPosition();
@@ -735,6 +763,8 @@ public:
   gcc_pure
   const PixelRect GetPosition() const
   {
+    assert(IsDefined());
+
 #ifndef USE_GDI
     return { GetLeft(), GetTop(), GetRight(), GetBottom() };
 #else
@@ -763,21 +793,22 @@ public:
   gcc_pure
   const PixelRect GetClientRect() const
   {
-    PixelRect rc;
+    assert(IsDefined());
+
 #ifndef USE_GDI
-    rc.left = 0;
-    rc.top = 0;
-    rc.right = GetWidth();
-    rc.bottom = GetHeight();
+    return PixelRect(size);
 #else
+    PixelRect rc;
     ::GetClientRect(hWnd, &rc);
-#endif
     return rc;
+#endif
   }
 
   gcc_pure
   const PixelSize GetSize() const
   {
+    assert(IsDefined());
+
 #ifdef USE_GDI
     PixelRect rc = GetClientRect();
     PixelSize s;
@@ -785,8 +816,25 @@ public:
     s.cy = rc.bottom;
     return s;
 #else
-    return { PixelScalar(GetWidth()), PixelScalar(GetHeight()) };
+    return size;
 #endif
+  }
+
+  /**
+   * Checks whether the specified coordinates are inside the Window's
+   * client area.
+   */
+  gcc_pure
+  bool IsInside(int x, int y) const {
+    assert(IsDefined());
+
+    const PixelSize size = GetSize();
+    return unsigned(x) < unsigned(size.cx) && unsigned(y) < unsigned(size.cy);
+  }
+
+  gcc_pure
+  bool IsInside(RasterPoint pt) const {
+    return IsInside(pt.x, pt.y);
   }
 
   /**
@@ -795,6 +843,8 @@ public:
 #ifdef USE_GDI
   gcc_pure
   PixelRect GetParentClientRect() const {
+    assert(IsDefined());
+
     HWND hParent = ::GetParent(hWnd);
     assert(hParent != NULL);
 
@@ -825,6 +875,8 @@ public:
   }
 
   void Scroll(PixelScalar dx, PixelScalar dy, const PixelRect &rc) {
+    assert(IsDefined());
+
     ::ScrollWindowEx(hWnd, dx, dy, &rc, NULL, NULL, NULL, SW_INVALIDATE);
   }
 
@@ -859,10 +911,14 @@ public:
 
   gcc_pure
   LONG GetWindowLong(int nIndex) const {
+    assert(IsDefined());
+
     return ::GetWindowLong(hWnd, nIndex);
   }
 
   void SetWindowLong(int nIndex, LONG value) {
+    assert(IsDefined());
+
     ::SetWindowLong(hWnd, nIndex, value);
   }
 
@@ -887,6 +943,8 @@ public:
   void SendUser(unsigned id);
 #else
   void SendUser(unsigned id) {
+    assert(IsDefined());
+
     ::PostMessage(hWnd, WM_USER + id, (WPARAM)0, (LPARAM)0);
   }
 #endif
@@ -901,8 +959,7 @@ public:
    */
   virtual void OnCreate();
   virtual void OnDestroy();
-  virtual bool OnClose();
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
+  virtual void OnResize(PixelSize new_size);
   virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
   virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
   virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
@@ -933,8 +990,18 @@ public:
 
   virtual bool OnKeyDown(unsigned key_code);
   virtual bool OnKeyUp(unsigned key_code);
+
+  /**
+   * A character was entered with the (virtual) keyboard.  This will
+   * not be called if OnKeydown() has been handled already.
+   *
+   * @param ch the unicode character
+   * @return true if the event was handled
+   */
+  virtual bool OnCharacter(unsigned ch);
+
   virtual bool OnCommand(unsigned id, unsigned code);
-  virtual bool OnCancelMode();
+  virtual void OnCancelMode();
   virtual void OnSetFocus();
   virtual void OnKillFocus();
   virtual bool OnTimer(WindowTimer &timer);

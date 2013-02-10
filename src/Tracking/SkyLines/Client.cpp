@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,68 @@ Copyright_License {
 #include "OS/ByteOrder.hpp"
 #include "NMEA/Info.hpp"
 #include "Util/CRC.hpp"
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+#include "IO/Async/IOThread.hpp"
+#endif
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+
+void
+SkyLinesTracking::Client::SetIOThread(IOThread *_io_thread)
+{
+  if (socket.IsDefined() && io_thread != nullptr && handler != nullptr)
+    io_thread->LockRemove(socket.Get());
+
+  io_thread = _io_thread;
+
+  if (socket.IsDefined() && io_thread != nullptr && handler != nullptr)
+    io_thread->LockAdd(socket.Get(), IOThread::READ, *this);
+}
+
+void
+SkyLinesTracking::Client::SetHandler(Handler *_handler)
+{
+  if (socket.IsDefined() && io_thread != nullptr && handler != nullptr)
+    io_thread->LockRemove(socket.Get());
+
+  handler = _handler;
+
+  if (socket.IsDefined() && io_thread != nullptr && handler != nullptr)
+    io_thread->LockAdd(socket.Get(), IOThread::READ, *this);
+}
+
+#endif
+
+bool
+SkyLinesTracking::Client::Open(const char *host)
+{
+  Close();
+
+  if (!address.Lookup(host, "5597", SOCK_DGRAM) || !socket.CreateUDP())
+    return false;
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  if (io_thread != nullptr && handler != nullptr)
+    io_thread->LockAdd(socket.Get(), IOThread::READ, *this);
+#endif
+
+  return true;
+}
+
+void
+SkyLinesTracking::Client::Close()
+{
+  if (!socket.IsDefined())
+    return;
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  if (io_thread != nullptr && handler != nullptr)
+    io_thread->LockRemove(socket.Get());
+#endif
+
+  socket.Close();
+}
 
 bool
 SkyLinesTracking::Client::SendFix(const NMEAInfo &basic)
@@ -123,3 +185,97 @@ SkyLinesTracking::Client::SendPing(uint16_t id)
 
   return socket.Write(&packet, sizeof(packet), address) == sizeof(packet);
 }
+
+bool
+SkyLinesTracking::Client::SendTrafficRequest(bool followees, bool club)
+{
+  if (key == 0 || !socket.IsDefined())
+    return false;
+
+  TrafficRequestPacket packet;
+  packet.header.magic = ToBE32(MAGIC);
+  packet.header.crc = 0;
+  packet.header.type = ToBE16(Type::TRAFFIC_REQUEST);
+  packet.header.key = ToBE64(key);
+  packet.flags = ToBE32((followees ? packet.FLAG_FOLLOWEES : 0)
+                        | (club ? packet.FLAG_CLUB : 0));
+  packet.reserved = 0;
+
+  packet.header.crc = ToBE16(UpdateCRC16CCITT(&packet, sizeof(packet), 0));
+
+  return socket.Write(&packet, sizeof(packet), address) == sizeof(packet);
+}
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+
+inline void
+SkyLinesTracking::Client::OnTrafficReceived(const TrafficResponsePacket &packet,
+                                            size_t length)
+{
+  const unsigned n = packet.traffic_count;
+  const TrafficResponsePacket::Traffic *traffic =
+    (const TrafficResponsePacket::Traffic *)(&packet + 1);
+
+  if (length != sizeof(packet) + n * sizeof(*traffic))
+    return;
+
+  const TrafficResponsePacket::Traffic *end = traffic + n;
+  for (; traffic != end; ++traffic)
+    handler->OnTraffic(FromBE32(traffic->pilot_id),
+                       FromBE32(traffic->time),
+                       ::GeoPoint(Angle::Degrees(fixed(FromBE32(traffic->location.longitude)) / 1000000),
+                                  Angle::Degrees(fixed(FromBE32(traffic->location.latitude)) / 1000000)),
+                       FromBE16(traffic->altitude));
+}
+
+inline void
+SkyLinesTracking::Client::OnDatagramReceived(void *data, size_t length)
+{
+  Header &header = *(Header *)data;
+  if (length < sizeof(header))
+    return;
+
+  const uint16_t received_crc = FromBE16(header.crc);
+  header.crc = 0;
+
+  const uint16_t calculated_crc = UpdateCRC16CCITT(data, length, 0);
+  if (received_crc != calculated_crc)
+    return;
+
+  const ACKPacket &ack = *(const ACKPacket *)data;
+  const TrafficResponsePacket &traffic = *(const TrafficResponsePacket *)data;
+
+  switch ((Type)FromBE16(header.type)) {
+  case PING:
+  case FIX:
+  case TRAFFIC_REQUEST:
+    break;
+
+  case ACK:
+    handler->OnAck(FromBE16(ack.id));
+    break;
+
+  case TRAFFIC_RESPONSE:
+    OnTrafficReceived(traffic, length);
+    break;
+  }
+}
+
+bool
+SkyLinesTracking::Client::OnFileEvent(int fd, unsigned mask)
+{
+  if (!socket.IsDefined())
+    return false;
+
+  uint8_t buffer[4096];
+  ssize_t nbytes;
+  SocketAddress source_address;
+
+  while ((nbytes = socket.Read(buffer, sizeof(buffer), source_address)) > 0)
+    if (source_address == address)
+      OnDatagramReceived(buffer, nbytes);
+
+  return true;
+}
+
+#endif

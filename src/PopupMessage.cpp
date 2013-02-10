@@ -3,7 +3,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,10 +24,10 @@ Copyright_License {
 */
 
 #include "PopupMessage.hpp"
-#include "Protection.hpp"
-#include "Screen/Fonts.hpp"
+#include "Look/Fonts.hpp"
 #include "Screen/SingleWindow.hpp"
 #include "Screen/Layout.hpp"
+#include "Screen/Font.hpp"
 #include "LocalPath.hpp"
 #include "Audio/Sound.hpp"
 #include "LogFile.hpp"
@@ -107,18 +107,16 @@ PopupMessage::PopupMessage(const StatusMessageList &_status_messages,
 }
 
 void
-PopupMessage::set(const PixelRect _rc)
+PopupMessage::Create(const PixelRect _rc)
 {
   rc = _rc;
 
-  EditWindowStyle style;
+  LargeTextWindowStyle style;
   style.Border();
   style.SetCenter();
-  style.SetMultiLine();
-  style.SetReadOnly();
   style.Hide();
 
-  EditWindow::set(parent, GetRect(100), style);
+  LargeTextWindow::Create(parent, GetRect(100), style);
 
   SetFont(Fonts::map_bold);
   InstallWndProc();
@@ -138,7 +136,7 @@ PopupMessage::GetRect(UPixelScalar height) const
 {
   PixelRect rthis;
 
-  if (settings.popup_message_position == UISettings::smAlignTopLeft){
+  if (settings.popup_message_position == UISettings::PopupMessagePosition::TOP_LEFT) {
     rthis.top = 0;
     rthis.left = 0;
     rthis.bottom = height;
@@ -182,8 +180,8 @@ PopupMessage::UpdateTextAndLayout(const TCHAR *text)
       /* on Windows, the TEXT control can never change its text style
          after it has been created, so we have to destroy it and
          create a new one */
-      reset();
-      set(rthis);
+      Destroy();
+      Create(rthis);
       SetText(text);
     } else
 #endif
@@ -196,9 +194,6 @@ PopupMessage::UpdateTextAndLayout(const TCHAR *text)
 bool
 PopupMessage::Render()
 {
-  if (!globalRunningEvent.Test())
-    return false;
-
   mutex.Lock();
   if (parent.HasDialog()) {
     mutex.Unlock();

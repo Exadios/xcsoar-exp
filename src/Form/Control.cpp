@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,10 +23,8 @@ Copyright_License {
 
 #include "Form/Control.hpp"
 #include "Form/Internal.hpp"
-#include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Dialogs/HelpDialog.hpp"
-#include "Util/StringUtil.hpp"
 
 #include <stdlib.h>
 
@@ -84,7 +82,7 @@ WindowControl::OnKeyDown(unsigned key_code)
 {
   KeyTimer(true, key_code);
 
-  return ContainerWindow::OnKeyDown(key_code);
+  return PaintWindow::OnKeyDown(key_code);
 }
 
 bool
@@ -93,22 +91,8 @@ WindowControl::OnKeyUp(unsigned key_code)
   // JMW: detect long enter release
   // VENTA4: PNAs don't have Enter, so it should be better to find an alternate solution
   // activate tool tips if hit return for long time
-  if (KeyTimer(false, key_code) && key_code == VK_RETURN && OnHelp())
+  if (KeyTimer(false, key_code) && key_code == KEY_RETURN && OnHelp())
     return true;
 
-  return ContainerWindow::OnKeyUp(key_code);
-}
-
-void
-WindowControl::OnSetFocus()
-{
-  ContainerWindow::OnSetFocus();
-  Invalidate();
-}
-
-void
-WindowControl::OnKillFocus()
-{
-  ContainerWindow::OnKillFocus();
-  Invalidate();
+  return PaintWindow::OnKeyUp(key_code);
 }

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -19,23 +19,9 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
+
 #include "AirspaceVisitor.hpp"
 #include "Airspace.hpp"
-#include "AbstractAirspace.hpp"
-
-void
-AirspaceVisitor::Visit(const AbstractAirspace &aa)
-{
-  switch (aa.GetShape()) {
-  case AbstractAirspace::Shape::CIRCLE:
-    Visit((const AirspaceCircle &)aa);
-    break;
-
-  case AbstractAirspace::Shape::POLYGON:
-    Visit((const AirspacePolygon &)aa);
-    break;
-  }
-}
 
 void
 AirspaceVisitor::Visit(const Airspace &as)

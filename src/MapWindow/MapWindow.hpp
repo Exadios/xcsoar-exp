@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,13 +25,12 @@ Copyright_License {
 #define XCSOAR_MAP_WINDOW_HPP
 
 #include "Projection/MapWindowProjection.hpp"
-#include "MapWindowTimer.hpp"
 #include "Renderer/AirspaceRenderer.hpp"
 #include "Screen/DoubleBufferWindow.hpp"
 #ifndef ENABLE_OPENGL
 #include "Screen/BufferCanvas.hpp"
 #endif
-#include "Screen/LabelBlock.hpp"
+#include "Renderer/LabelBlock.hpp"
 #include "Screen/StopWatch.hpp"
 #include "MapWindowBlackboard.hpp"
 #include "Renderer/BackgroundRenderer.hpp"
@@ -39,6 +38,7 @@ Copyright_License {
 #include "Renderer/TrailRenderer.hpp"
 #include "Compiler.h"
 #include "Weather/Features.hpp"
+#include "Tracking/SkyLines/Features.hpp"
 
 struct MapLook;
 struct TrafficLook;
@@ -54,13 +54,15 @@ class ProtectedTaskManager;
 class GlideComputer;
 class GlidePolar;
 class ContainerWindow;
-class WaypointLabelList;
 class NOAAStore;
+
+namespace SkyLinesTracking {
+  struct Data;
+}
 
 class MapWindow :
   public DoubleBufferWindow,
-  public MapWindowBlackboard,
-  public MapWindowTimer
+  public MapWindowBlackboard
 {
 #ifndef ENABLE_OPENGL
   // graphics vars
@@ -142,6 +144,10 @@ protected:
   NOAAStore *noaa_store;
 #endif
 
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  const SkyLinesTracking::Data *skylines_data;
+#endif
+
   bool compass_visible;
 
 #ifndef ENABLE_OPENGL
@@ -184,7 +190,7 @@ public:
     return follow_mode == FOLLOW_PAN;
   }
 
-  virtual void set(ContainerWindow &parent, const PixelRect &rc);
+  void Create(ContainerWindow &parent, const PixelRect &rc);
 
   void SetWaypoints(const Waypoints *_waypoints) {
     waypoints = _waypoints;
@@ -219,8 +225,13 @@ public:
   }
 #endif
 
-  void ReadBlackboard(const MoreData &nmea_info,
-                      const DerivedInfo &derived_info);
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  void SetSkyLinesData(const SkyLinesTracking::Data *_data) {
+    skylines_data = _data;
+  }
+#endif
+
+  using MapWindowBlackboard::ReadBlackboard;
 
   void ReadBlackboard(const MoreData &nmea_info,
                       const DerivedInfo &derived_info,
@@ -240,7 +251,7 @@ public:
     visible_projection.SetGeoLocation(location);
   }
 
-public:
+protected:
   void DrawBestCruiseTrack(Canvas &canvas,
                            const RasterPoint aircraft_pos) const;
   void DrawTrackBearing(Canvas &canvas,
@@ -253,7 +264,13 @@ public:
   void DrawTrail(Canvas &canvas, const RasterPoint aircraft_pos,
                  unsigned min_time, bool enable_traildrift = false);
   virtual void RenderTrail(Canvas &canvas, const RasterPoint aircraft_pos);
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  void DrawSkyLinesTraffic(Canvas &canvas) const;
+#endif
+
   void DrawTeammate(Canvas &canvas) const;
+  void DrawContest(Canvas &canvas);
   void DrawTask(Canvas &canvas);
   void DrawRoute(Canvas &canvas);
   void DrawTaskOffTrackIndicator(Canvas &canvas);
@@ -271,7 +288,6 @@ public:
    */
   virtual void Render(Canvas &canvas, const PixelRect &rc);
 
-protected:
   unsigned UpdateTopography(unsigned max_update=1024);
 
   /**
@@ -291,12 +307,14 @@ protected:
   }
 
 protected:
-  virtual void OnCreate();
-  virtual void OnDestroy();
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
+  /* virtual methods from class Window */
+  virtual void OnCreate() override;
+  virtual void OnDestroy() override;
+  virtual void OnResize(PixelSize new_size) override;
+  virtual void OnPaint(Canvas& canvas) override;
 
-  virtual void OnPaint(Canvas& canvas);
-  virtual void OnPaintBuffer(Canvas& canvas);
+  /* virtual methods from class DoubleBufferWindow */
+  virtual void OnPaintBuffer(Canvas& canvas) override;
 
 private:
   /**

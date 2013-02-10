@@ -1,7 +1,7 @@
 /* Copyright_License {
 
  XCSoar Glide Computer - http://www.xcsoar.org/
- Copyright (C) 2000-2012 The XCSoar Project
+ Copyright (C) 2000-2013 The XCSoar Project
  A detailed list of copyright holders can be found in the file "AUTHORS".
 
  This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ main(int argc, char **argv)
 {
   plan_tests(192 + 232 + 40);
 
-  DiffFilter df;
+  DiffFilter df(fixed(0));
 
   // Test steady-state response scaling
   for (long dY = 1; dY <= 10000000; dY *= 10) {
@@ -52,7 +52,7 @@ main(int argc, char **argv)
 
   // Test steady-state response scaling with reset(0, dX) call
   for (long dY = 1; dY <= 10000000; dY *= 10) {
-    df.Reset(fixed_zero, fixed(dY));
+    df.Reset(fixed(0), fixed(dY));
     for (int Y = dY; Y < 30 * dY; Y += dY) {
       // test if the filter response is close enough to dX
       //

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,16 +23,8 @@
 #define ORDEREDTASK_BEHAVIOUR_HPP
 
 #include "Math/fixed.hpp"
-
-#include <stdint.h>
-
-struct AircraftState;
-struct TaskStartMargins;
-
-enum class HeightReferenceType: uint8_t {
-  AGL,
-  MSL,
-};
+#include "StartConstraints.hpp"
+#include "FinishConstraints.hpp"
 
 /**
  * Settings for ordered tasks; most of these are set by
@@ -41,64 +33,11 @@ enum class HeightReferenceType: uint8_t {
 struct OrderedTaskBehaviour {
   /** Desired AAT minimum task time (s) */
   fixed aat_min_time;
-  /** Maximum ground speed (m/s) allowed in start sector */
-  fixed start_max_speed;
-  /** Maximum height (m) allowed in start sector */
-  unsigned start_max_height;
-  /** Reference for max start height */
-  HeightReferenceType start_max_height_ref;
-  /** Minimum height AGL (m) allowed to finish */
-  unsigned finish_min_height;
-  /** Reference for min finish height */
-  HeightReferenceType finish_min_height_ref;
 
-  /**
-   * Whether ordered task start and finish requires FAI height rules
-   * and (no) speed rule.  The default value is
-   * TaskFactoryConstraints::fai_finish.
-   */
-  bool fai_finish;
+  StartConstraints start_constraints;
+  FinishConstraints finish_constraints;
 
   void SetDefaults();
-
-  /**
-   * Check whether aircraft speed is within start speed limits
-   *
-   * @param state Aircraft state
-   * @param behaviour TaskBehaviour (contains margins)
-   * @param with_margin Whether to use margin for minor rule violation
-   *
-   * @return True if within limits
-   */
-  bool CheckStartSpeed(const AircraftState &state,
-                       const TaskStartMargins &margins,
-                       const bool with_margin = false) const;
-
-  /**
-   * Check whether aircraft height is within start height limit
-   *
-   * @param state Aircraft state
-   * @param behaviour TaskBehaviour (contains margins)
-   * @param spAlt start point altitude
-   * @param with_margin Whether to use margin for minor rule violation
-   *
-   * @return True if within limits
-   */
-  bool CheckStartHeight(const AircraftState &state,
-                        const TaskStartMargins &margins,
-                        const fixed start_elevation,
-                        const bool with_margin = false) const;
-
-  /**
-   * Check whether aircraft height is within finish height limit
-   *
-   * @param state Aircraft state
-   * @param fpAlt finish point altitude
-   *
-   * @return True if within limits
-   */
-  bool CheckFinishHeight(const AircraftState &state,
-                         const fixed finish_elevation) const;
 };
 
 #endif

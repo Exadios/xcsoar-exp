@@ -11,11 +11,8 @@ VOLKSLOGGER_SOURCES = \
 	$(DRIVER_SRC_DIR)/Volkslogger/grecord.cpp \
 	$(DRIVER_SRC_DIR)/Volkslogger/vlapi2.cpp \
 	$(DRIVER_SRC_DIR)/Volkslogger/vlapihlp.cpp \
+	$(DRIVER_SRC_DIR)/Volkslogger/vlutils.cpp \
 	$(DRIVER_SRC_DIR)/Volkslogger/vlconv.cpp
-
-ifeq ($(HAVE_MSVCRT),n)
-VOLKSLOGGER_SOURCES += $(DRIVER_SRC_DIR)/Volkslogger/vlutils.cpp
-endif
 
 CAI302_SOURCES = \
 	$(DRIVER_SRC_DIR)/CAI302/Protocol.cpp \
@@ -41,6 +38,7 @@ IMI_SOURCES = \
 	$(DRIVER_SRC_DIR)/IMI/Register.cpp
 
 LX_SOURCES = \
+	$(DRIVER_SRC_DIR)/LX/NanoLogger.cpp \
 	$(DRIVER_SRC_DIR)/LX/Protocol.cpp \
 	$(DRIVER_SRC_DIR)/LX/Mode.cpp \
 	$(DRIVER_SRC_DIR)/LX/Parser.cpp \
@@ -64,10 +62,16 @@ FLARM_SOURCES = \
 	$(DRIVER_SRC_DIR)/FLARM/BinaryProtocol.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/TextProtocol.cpp
 
+FLYTEC_SOURCES = \
+	$(DRIVER_SRC_DIR)/Flytec/Register.cpp \
+	$(DRIVER_SRC_DIR)/Flytec/Parser.cpp \
+	$(DRIVER_SRC_DIR)/Flytec/Logger.cpp
+
 VEGA_SOURCES = \
 	$(DRIVER_SRC_DIR)/Vega/Misc.cpp \
 	$(DRIVER_SRC_DIR)/Vega/Parser.cpp \
 	$(DRIVER_SRC_DIR)/Vega/Settings.cpp \
+	$(DRIVER_SRC_DIR)/Vega/Volatile.cpp \
 	$(DRIVER_SRC_DIR)/Vega/Register.cpp
 
 DRIVER_SOURCES = \
@@ -75,18 +79,21 @@ DRIVER_SOURCES = \
 	$(IMI_SOURCES) \
 	$(LX_SOURCES) \
 	$(FLARM_SOURCES) \
+	$(FLYTEC_SOURCES) \
 	$(VEGA_SOURCES) \
 	$(DRIVER_SRC_DIR)/AltairPro.cpp \
+	$(DRIVER_SRC_DIR)/BlueFlyVario.cpp \
 	$(DRIVER_SRC_DIR)/BorgeltB50.cpp \
 	$(DRIVER_SRC_DIR)/CaiGpsNav.cpp \
 	$(DRIVER_SRC_DIR)/Condor.cpp \
 	$(DRIVER_SRC_DIR)/CProbe.cpp \
 	$(DRIVER_SRC_DIR)/EW.cpp \
 	$(DRIVER_SRC_DIR)/EWMicroRecorder.cpp \
+	$(DRIVER_SRC_DIR)/Eye.cpp \
 	$(DRIVER_SRC_DIR)/FlymasterF1.cpp \
 	$(DRIVER_SRC_DIR)/FlyNet.cpp \
-	$(DRIVER_SRC_DIR)/Flytec.cpp \
 	$(DRIVER_SRC_DIR)/Generic.cpp \
+	$(DRIVER_SRC_DIR)/LevilAHRS_G.cpp \
 	$(DRIVER_SRC_DIR)/Leonardo.cpp \
 	$(DRIVER_SRC_DIR)/GTAltimeter.cpp \
 	$(DRIVER_SRC_DIR)/NmeaOut.cpp \

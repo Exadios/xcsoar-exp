@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,42 +25,20 @@ Copyright_License {
 #define XCSOAR_SCREEN_OPENGL_POINT_HPP
 
 #include "Screen/OpenGL/Types.hpp"
-#include "Screen/OpenGL/Features.hpp"
 
 typedef GLvalue PixelScalar;
 typedef GLuvalue UPixelScalar;
 
-struct RasterPoint {
-  /**
-   * Type to be used by vector math, where a range of
-   * max(GLvalue)*max(GLvalue) is needed.
-   */
-  typedef int SquareType;
-  PixelScalar x, y;
+#include "Screen/Custom/Point.hpp"
 
-  bool operator==(const RasterPoint &other) const {
-    return x == other.x && y == other.y;
-  }
+struct ExactRasterPoint {
+  GLexact x, y;
 
-  bool operator!=(const RasterPoint &other) const {
-    return !(*this == other);
-  }
-};
-
-struct PixelSize {
-  PixelScalar cx, cy;
-
-  bool operator==(const PixelSize &other) const {
-    return cx == other.cx && cy == other.cy;
-  }
-
-  bool operator!=(const PixelSize &other) const {
-    return !(*this == other);
-  }
-};
-
-struct PixelRect {
-  PixelScalar left, top, right, bottom;
+  ExactRasterPoint() = default;
+  constexpr ExactRasterPoint(GLexact _x, GLexact _y)
+    :x(_x), y(_y) {}
+  constexpr ExactRasterPoint(RasterPoint p)
+    :x(ToGLexact(p.x)), y(ToGLexact(p.y)) {}
 };
 
 #endif

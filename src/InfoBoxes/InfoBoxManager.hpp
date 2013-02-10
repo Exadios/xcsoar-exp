@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,16 +24,14 @@ Copyright_License {
 #ifndef XCSOAR_INFO_BOX_MANAGER_HPP
 #define XCSOAR_INFO_BOX_MANAGER_HPP
 
-#include "Screen/PaintWindow.hpp"
-#include "InfoBoxes/Content/Base.hpp"
-#include "InfoBoxes/Content/Factory.hpp"
-#include "Profile/InfoBoxConfig.hpp"
+#include "Compiler.h"
 
-struct InfoBoxSettings;
+#include <tchar.h>
 
 struct InfoBoxLook;
 struct UnitsLook;
 class InfoBoxWindow;
+class ContainerWindow;
 
 namespace InfoBoxLayout {
   struct Layout;
@@ -41,27 +39,10 @@ namespace InfoBoxLayout {
 
 namespace InfoBoxManager
 {
-  enum PanelSelection {
-    PANEL_CIRCLING,
-    PANEL_CRUISE,
-    PANEL_FINAL_GLIDE,
-    PANEL_AUXILIARY,
-  };
-
   extern InfoBoxLayout::Layout layout;
 
   void Event_Select(int i);
   void Event_Change(int i);
-
-  /**
-   * ProcessQuickAccess takes the id of the InfoBox where to pass the
-   * value Value. It doesn't expect the target InfoBox to be focussed.
-   * @param id
-   * @param Value
-   */
-  void ProcessQuickAccess(const int id, const TCHAR *Value);
-
-  bool Click(InfoBoxWindow &ib);
 
   void ProcessTimer();
   void SetDirty();
@@ -71,16 +52,6 @@ namespace InfoBoxManager
   void Destroy();
   void Show();
   void Hide();
-
-  unsigned GetCurrentPanel();
-  const TCHAR* GetCurrentPanelName();
-  const TCHAR* GetPanelName(unsigned panel);
-
-  const TCHAR* GetTitle(unsigned box);
-
-  bool IsEmpty(unsigned panel);
-
-  bool HasFocus();
 
   /**
    * Opens a dialog to select the InfoBox contents for

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ Copyright_License {
 #include "Android/NativeView.hpp"
 #endif
 
-#ifdef HAVE_EGL
+#if defined(HAVE_EGL) && defined(ANDROID)
 #include "EGL.hpp"
 #endif
 
@@ -109,14 +109,14 @@ static bool
 SupportsNonPowerOfTwoTextures()
 {
   return OpenGL::IsExtensionSupported("GL_ARB_texture_non_power_of_two") ||
-    (have_gles() && SupportsNonPowerOfTwoTexturesGLES());
+    (HaveGLES() && SupportsNonPowerOfTwoTexturesGLES());
 }
 
 gcc_pure
 static bool
 CheckFBO()
 {
-  return have_gles()
+  return HaveGLES()
     ? (OpenGL::IsExtensionSupported("GL_OES_framebuffer_object") &&
        OpenGL::IsExtensionSupported("GL_OES_packed_depth_stencil"))
     : (OpenGL::IsExtensionSupported("GL_EXT_framebuffer_object") &&
@@ -126,7 +126,7 @@ CheckFBO()
 void
 OpenGL::SetupContext()
 {
-#ifdef HAVE_EGL
+#if defined(HAVE_EGL) && defined(ANDROID)
   egl = EGLInit();
 #endif
 

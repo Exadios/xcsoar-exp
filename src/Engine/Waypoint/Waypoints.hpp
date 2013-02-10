@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,8 +30,6 @@
 #include "Waypoint.hpp"
 #include "Geo/Flat/TaskProjection.hpp"
 
-#include <functional>
-
 class WaypointVisitor;
 
 /**
@@ -45,13 +43,13 @@ class Waypoints: private NonCopyable
    * QuadTree.
    */
   struct WaypointAccessor {
+    constexpr
     int GetX(const Waypoint &wp) const {
-      assert(wp.flat_location_initialised);
       return wp.flat_location.longitude;
     }
 
+    constexpr
     int GetY(const Waypoint &wp) const {
-      assert(wp.flat_location_initialised);
       return wp.flat_location.latitude;
     }
   };
@@ -107,7 +105,7 @@ public:
    *
    * @param wp Waypoint to add to internal store
    */
-  const Waypoint &Append(const Waypoint &wp);
+  const Waypoint &Append(Waypoint &&wp);
 
   /**
    * Erase waypoint from the internal store.  Requires optimise() to
@@ -201,6 +199,7 @@ public:
    *
    * @return Pointer to waypoint if found (or NULL if not)
    */
+  gcc_pure
   const Waypoint *FindHome();
 
   /**
@@ -218,6 +217,7 @@ public:
    *
    * @return Pointer to waypoint if found (or NULL if not)
    */
+  gcc_pure
   const Waypoint* LookupId(const unsigned id) const;
 
   /**
@@ -228,8 +228,9 @@ public:
    *
    * @return Pointer to waypoint if found (or NULL if none found)
    */
+  gcc_pure
   const Waypoint* LookupLocation(const GeoPoint &loc,
-                                 const fixed range = fixed_zero) const;
+                                 const fixed range = fixed(0)) const;
 
   /**
    * Look up waypoint by name (returns first match)
@@ -238,8 +239,10 @@ public:
    *
    * @return Pointer to waypoint if found (or NULL if not)
    */
+  gcc_pure
   const Waypoint* LookupName(const TCHAR *name) const;
 
+  gcc_pure
   const Waypoint* LookupName(const tstring &name) const {
     return LookupName(name.c_str());
   }
@@ -276,6 +279,7 @@ public:
    * Returns a set of possible characters following the specified
    * prefix.
    */
+  gcc_pure
   TCHAR *SuggestNamePrefix(const TCHAR *prefix,
                            TCHAR *dest, size_t max_length) const {
     return name_tree.suggest(prefix, dest, max_length);
@@ -290,6 +294,7 @@ public:
    *
    * @return Null if none found, otherwise pointer to nearest
    */
+  gcc_pure
   const Waypoint *GetNearest(const GeoPoint &loc, fixed range) const;
 
   /**
@@ -302,6 +307,7 @@ public:
    *
    * @return Null if none found, otherwise pointer to nearest
    */
+  gcc_pure
   const Waypoint *GetNearestLandable(const GeoPoint &loc, fixed range) const;
 
   /**
@@ -315,8 +321,9 @@ public:
    *
    * @return Null if none found, otherwise pointer to nearest
    */
+  gcc_pure
   const Waypoint *GetNearestIf(const GeoPoint &loc, fixed range,
-                               std::function<bool(const Waypoint &)> predicate) const;
+                               bool (*predicate)(const Waypoint &)) const;
 
   /**
    * Access first waypoint in store, for use in iterators.

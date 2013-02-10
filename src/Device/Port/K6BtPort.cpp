@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@ Copyright_License {
 #include <assert.h>
 #include <tchar.h>
 #include <stdio.h>
+#include <string.h>
 
 K6BtPort::K6BtPort(Port *_port, unsigned _baud_rate, DataHandler &_handler)
   :Port(_handler), port(_port), baud_rate(0)
@@ -53,10 +54,10 @@ K6BtPort::SendCommand(uint8_t cmd)
   return port->Write(data, sizeof(data)) == sizeof(data);
 }
 
-bool
-K6BtPort::IsValid() const
+PortState
+K6BtPort::GetState() const
 {
-  return port->IsValid();
+  return port->GetState();
 }
 
 size_t

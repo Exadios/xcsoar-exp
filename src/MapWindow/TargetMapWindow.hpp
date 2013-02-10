@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ Copyright_License {
 #include "Projection/MapWindowProjection.hpp"
 #include "Renderer/AirspaceRenderer.hpp"
 #include "Screen/BufferWindow.hpp"
-#include "Screen/LabelBlock.hpp"
+#include "Renderer/LabelBlock.hpp"
 #include "MapWindowBlackboard.hpp"
 #include "Renderer/BackgroundRenderer.hpp"
 #include "Renderer/WaypointRenderer.hpp"
@@ -100,8 +100,7 @@ public:
                   const AircraftLook &aircraft_look);
   virtual ~TargetMapWindow();
 
-  void set(ContainerWindow &parent, PixelScalar left, PixelScalar top,
-           UPixelScalar width, UPixelScalar height, WindowStyle style);
+  void Create(ContainerWindow &parent, PixelRect rc, WindowStyle style);
 
   void SetTerrain(RasterTerrain *terrain);
   void SetTopograpgy(TopographyStore *topography);
@@ -202,18 +201,20 @@ protected:
   virtual void OnTaskModified();
 
 protected:
-  virtual void OnCreate();
-  virtual void OnDestroy();
-  virtual void OnResize(UPixelScalar width, UPixelScalar height);
+  /* virtual methods from class Window */
+  virtual void OnCreate() override;
+  virtual void OnDestroy() override;
+  virtual void OnResize(PixelSize new_size) override;
 
-  virtual void OnPaintBuffer(Canvas& canvas);
-  virtual void OnPaint(Canvas& canvas);
+  virtual void OnPaintBuffer(Canvas& canvas) override;
+  virtual void OnPaint(Canvas& canvas) override;
 
-  virtual bool OnCancelMode();
+  virtual void OnCancelMode() override;
 
-  virtual bool OnMouseDown(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseUp(PixelScalar x, PixelScalar y);
-  virtual bool OnMouseMove(PixelScalar x, PixelScalar y, unsigned keys);
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y,
+                           unsigned keys) override;
 };
 
 #endif

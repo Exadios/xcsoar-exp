@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -125,14 +125,18 @@ public class XCSoar extends Activity {
   }
 
   private void quit() {
+    Log.d(TAG, "in quit()");
+
     nativeView = null;
 
+    Log.d(TAG, "stopping service");
     stopService(new Intent(this, serviceClass));
 
     TextView tv = new TextView(XCSoar.this);
     tv.setText("Shutting down XCSoar...");
     setContentView(tv);
 
+    Log.d(TAG, "finish()");
     finish();
   }
 
@@ -153,10 +157,15 @@ public class XCSoar extends Activity {
     nativeView.setFocusable(true);
     nativeView.requestFocus();
 
+    // Obtain an instance of the Android PowerManager class
     PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+
+    // Create a WakeLock instance to keep the screen from timing out
+    // Note: FULL_WAKE_LOCK is deprecated in favor of FLAG_KEEP_SCREEN_ON
     wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK|
-                              PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                              "XCSoar");
+                              PowerManager.ACQUIRE_CAUSES_WAKEUP, TAG);
+
+    // Activate the WakeLock
     wakeLock.acquire();
   }
 
@@ -194,17 +203,21 @@ public class XCSoar extends Activity {
 
   @Override protected void onDestroy()
   {
+    Log.d(TAG, "in onDestroy()");
+
     if (nativeView != null) {
       nativeView.exitApp();
       nativeView = null;
     }
 
+    // Release the WakeLock instance to re-enable screen timeouts
     if (wakeLock != null) {
       wakeLock.release();
       wakeLock = null;
     }
 
     super.onDestroy();
+    Log.d(TAG, "System.exit()");
     System.exit(0);
   }
 

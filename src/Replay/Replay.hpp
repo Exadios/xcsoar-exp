@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2012 The XCSoar Project
+  Copyright (C) 2000-2013 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ class Replay
 
 public:
   Replay(Logger *_logger, ProtectedTaskManager &_task_manager)
-    :time_scale(fixed_one), replay(NULL),
+    :time_scale(fixed(1)), replay(nullptr),
      logger(_logger), task_manager(_task_manager) {
     path[0] = _T('\0');
   }
