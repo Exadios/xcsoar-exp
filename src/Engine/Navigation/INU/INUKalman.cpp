@@ -51,9 +51,9 @@ INUKalman::makeBaseA()
 
   for (i = 0; i < 14; i++)
     for (j = 0; j < 14; j++)
-      this->A(i, j) = 0;
+      this->A(i, j) = fixed(0);
   for (i = 0; i < 8; i++)
-    this->A(i, i) = 1.0;
+    this->A(i, i) = fixed(1.0);
   for (i = 0; i < 4; i++)
     this->A(i, i + 4) = this->dT;
   }
@@ -95,9 +95,9 @@ INUKalman::makeBaseQ()
   Vector w;
 	w.resize(8);
   for (size_t i = 0; i < 4; i++)
-    w(i) = 0.1;
+    w(i) = fixed(0.1);
   for (size_t i = 4; i < 8; i++)
-    w(i) = 0.5;
+    w(i) = fixed(0.5);
   for (size_t i = 0; i < 8; i++)
     for (size_t j = 0; j < 8; j++)
       Q(i, j) = w(i) * w(j);
