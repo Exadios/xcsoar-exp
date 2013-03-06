@@ -31,6 +31,8 @@
 #include<Math/kalman/kalman/kfilter.hpp>
 
 /**
+ * \ingroup Engine_Navigation_INU
+ * @file
  * A class designed to take INU and GPS data and merge those two data in an
  * optimal manner.
  */

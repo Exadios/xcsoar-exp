@@ -1,4 +1,4 @@
-/**
+/*
  * This file is part of kfilter.
  * kfilter is a C++ variable-dimension extended kalman filter library.
  *
@@ -28,6 +28,11 @@
 
 #ifndef KVECTOR_HPP
 #define KVECTOR_HPP
+
+/**
+ * \addtogroup Math_kalman_kalman
+ * @{
+ */
 
 //! \file
 //! \brief Contains the interface of the \c KVector template class.
@@ -142,7 +147,7 @@ namespace Kalman {
 
   private:
     std::vector<T> vimpl_;      //!< Underlying vector implementation.
-    
+
     //! Pointer to start of \a vimpl_ array.
 
     /**
@@ -156,12 +161,12 @@ namespace Kalman {
 
   //! Reads a vector from a stream.
   template<typename T, bool DBG>
-  inline std::istream& operator>>(std::istream& is, 
+  inline std::istream& operator>>(std::istream& is,
                                   KVector<T, DBG>& v);
 
   //! Writes a vector to a stream.
   template<typename T, bool DBG>
-  inline std::ostream& operator<<(std::ostream& os, 
+  inline std::ostream& operator<<(std::ostream& os,
                                   const KVector<T, DBG>& v);
 
   //! Handle type to a vector printing context.
@@ -171,9 +176,9 @@ namespace Kalman {
   extern KVectorContext DEFAULT_VECTOR_CONTEXT;
 
   //! Creates a vector printing context.
-  KVectorContext createKVectorContext(std::string elemDelim = " ", 
-                                      std::string startDelim = "", 
-                                      std::string endDelim = "", 
+  KVectorContext createKVectorContext(std::string elemDelim = " ",
+                                      std::string startDelim = "",
+                                      std::string endDelim = "",
                                       unsigned prec = 4);
 
   //! Selects a vector printing context as the current context.
@@ -181,5 +186,9 @@ namespace Kalman {
 }
 
 #include "kvector_impl.hpp"
+
+/**
+ * @}
+ */
 
 #endif

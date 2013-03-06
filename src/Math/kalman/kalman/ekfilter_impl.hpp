@@ -1,4 +1,4 @@
-/**
+/*
  * This file is part of kfilter.
  * kfilter is a C++ variable-dimension extended kalman filter library.
  *
@@ -32,7 +32,7 @@
 //! \file
 //! \brief Contains the implementation of the \c EKFilter base template class.
 
-//! \internal 
+//! \internal
 //! Flag : \a n has changed
 #define KALMAN_N_MODIFIED    1
 
@@ -99,8 +99,8 @@ namespace Kalman {
     : flags(0) {}
 
   template<typename T, bool OQ, bool OVR, bool DBG>
-  EKFilter<T, OQ, OVR, DBG>::EKFilter(K_UINT_32 n_, K_UINT_32 nu_, 
-                                      K_UINT_32 nw_, K_UINT_32 m_, 
+  EKFilter<T, OQ, OVR, DBG>::EKFilter(K_UINT_32 n_, K_UINT_32 nu_,
+                                      K_UINT_32 nw_, K_UINT_32 m_,
                                       K_UINT_32 nv_)
     : flags(0) {
     setDim(n_, nu_, nw_, m_, nv_);
@@ -110,8 +110,8 @@ namespace Kalman {
   EKFilter<T, OQ, OVR, DBG>::~EKFilter() {}
 
   template<typename T, bool OQ, bool OVR, bool DBG>
-  void EKFilter<T, OQ, OVR, DBG>::setDim(K_UINT_32 n_, K_UINT_32 nu_, 
-                                         K_UINT_32 nw_, K_UINT_32 m_, 
+  void EKFilter<T, OQ, OVR, DBG>::setDim(K_UINT_32 n_, K_UINT_32 nu_,
+                                         K_UINT_32 nw_, K_UINT_32 m_,
                                          K_UINT_32 nv_) {
     setSizeX(n_);
     setSizeU(nu_);
@@ -212,7 +212,7 @@ namespace Kalman {
 
     sizeUpdate();
     u.swap(u_);
-    
+
     makeCommonProcess();
     makeAImpl();
     makeWImpl();
@@ -230,27 +230,27 @@ namespace Kalman {
       }
 
       Q.swap(Q_);
-      
+
       // W_ = W*U   n.nw = n.nw * nw.nw
 
       if (flags & ( KALMAN_W_MODIFIED | KALMAN_Q_MODIFIED ) ) {
 
         for (i = 0; i < n; ++i) {
-    
+
           for (j = 0; j < nw; ++j) {
-      
+
             W_(i,j) = W(i,j);
             for (k = 0; k < j; ++k)
               W_(i,j) += W(i,k)*Q(j,k);
-      
+
           }
-    
+
         }
-  
+
       }
-      
+
       W.swap(W_);
-  
+
     }
 
     timeUpdate();
@@ -275,13 +275,13 @@ namespace Kalman {
     if (m == 0) {
       return;
     }
-    
+
     makeCommonMeasure();
     makeHImpl();
     makeVImpl();
-    makeRImpl();    
+    makeRImpl();
     makeMeasure();
-    
+
     // verif : nv != 0
 
     for (i = 0; i < m; ++i)
@@ -306,7 +306,7 @@ namespace Kalman {
       if (flags & ( KALMAN_V_MODIFIED | KALMAN_R_MODIFIED ) ) { // calculate R_
 
         _x.resize(nv);
-      
+
         // R_ = V*R*V'
         for (i = 0; i < m; ++i) {
 
@@ -365,14 +365,14 @@ namespace Kalman {
 
         _x(i) = dz(i);
         for (k = i + 1; k < m; ++k)
-          _x(i) += R_(k,i)*dz(k); 
+          _x(i) += R_(k,i)*dz(k);
 
       }
 
       dz.swap(_x);
 
     }
-    
+
     _x.resize(n); // dx : innovation
     _x = T(0.0);
     for (i = 0; i < m; ++i) {
@@ -395,16 +395,16 @@ namespace Kalman {
 
   template<typename T, bool OQ, bool OVR, bool DBG>
   const KTYPENAME EKFilter<T, OQ, OVR, DBG>::Vector& EKFilter<T, OQ, OVR, DBG>::predict(Vector& u_) {
-    
+
     // verif : u_.size() == nu
 
     sizeUpdate();
-    u.swap(u_);   
+    u.swap(u_);
     _x = x;
-    
+
     makeCommonProcess();
     makeProcess();
-    
+
     x.swap(_x);
     u.swap(u_);
     return _x;
@@ -412,13 +412,13 @@ namespace Kalman {
 
   template<typename T, bool OQ, bool OVR, bool DBG>
   const KTYPENAME EKFilter<T, OQ, OVR, DBG>::Vector& EKFilter<T, OQ, OVR, DBG>::simulate() {
-    
+
     sizeUpdate();
     _x = z;
-    
+
     makeCommonMeasure();
     makeMeasure();
-    
+
     z.swap(_x);
     return _x;
   }
@@ -434,7 +434,7 @@ namespace Kalman {
     if (!(flags & KALMAN_P_MODIFIED)) {
 
       _P.resize(n, n);         // keep this resize
-    
+
       for (K_UINT_32 i = 0; i < n; ++i) {
 
         _P(i,i) = U(i,i);
@@ -468,7 +468,7 @@ namespace Kalman {
   void EKFilter<T, OQ, OVR, DBG>::makeBaseA() {
     NoModification();
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeBaseW() {
     NoModification();
@@ -478,7 +478,7 @@ namespace Kalman {
   void EKFilter<T, OQ, OVR, DBG>::makeBaseQ() {
     NoModification();
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeBaseH() {
     NoModification();
@@ -504,7 +504,7 @@ namespace Kalman {
   void EKFilter<T, OQ, OVR, DBG>::makeA() {
     NoModification();
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeW() {
     NoModification();
@@ -514,7 +514,7 @@ namespace Kalman {
   void EKFilter<T, OQ, OVR, DBG>::makeQ() {
     NoModification();
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeH() {
     NoModification();
@@ -535,7 +535,7 @@ namespace Kalman {
 
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::sizeUpdate() {
-    
+
     if (!flags) {
       return;
     }
@@ -559,10 +559,10 @@ namespace Kalman {
     // KALMAN_N_MODIFIED imply KALMAN_P_MODIFIED
     // => KALMAN_N_MODIFIED must not be set OR KALMAN_P_MODIFIED must be set
     // => NOT  KALMAN_N_MODIFIED  OR  KALMAN_P_MODIFIED  must be set
-    // verif : (flags ^ KALMAN_N_MODIFIED) & 
+    // verif : (flags ^ KALMAN_N_MODIFIED) &
     //              (KALMAN_N_MODIFIED | KALMAN_P_MODIFIED)
 
-    if (flags & KALMAN_P_MODIFIED) { 
+    if (flags & KALMAN_P_MODIFIED) {
       // this covers the case of KALMAN_N_MODIFIED = true also
 
       // We have a new matrix P : let's factorize it and store it in U
@@ -571,7 +571,7 @@ namespace Kalman {
       for (K_UINT_32 i = 0; i < n; ++i)
         for (K_UINT_32 j = 0; j < n; ++j)
           U(i,j) = _P(i,j);
-      
+
       // Factorize
       factor(U);
 
@@ -621,7 +621,7 @@ namespace Kalman {
       }
 
     }
-    
+
     flags &= ~KALMAN_LOWMASK;
   }
 
@@ -674,10 +674,10 @@ namespace Kalman {
 
     K_UINT_32 i, j, k;
     T sigma, dinv;
-  
+
     // U = phi * U
     // d = diag(U)
-    // 
+    //
     // This algo could be faster
     // if phi is known to be diagonal
     // It could be almost zapped if phi=I
@@ -695,8 +695,8 @@ namespace Kalman {
     for(j = 0; j < n; ++j)
       U(j, 0) = A(j, 0);
 
-    // d(n+1:nn) = q 
-    // U(:,n+1:nn) = G 
+    // d(n+1:nn) = q
+    // U(:,n+1:nn) = G
     for(i = 0; i < nw; ++i) {
       d(i+n) = Q(i,i);
       for(j = 0; j < n; ++j)
@@ -717,10 +717,10 @@ namespace Kalman {
       dinv = T(1.0)/sigma;
       for(k = 0; k < j; ++k) {
         sigma = T(0.0);
-        for(i = 0; i < nn; ++i) 
+        for(i = 0; i < nn; ++i)
           sigma += U(k,i)*a(i);
         sigma *= dinv;
-        for(i = 0; i < nn; ++i) 
+        for(i = 0; i < nn; ++i)
           U(k,i) -= sigma*v(i);
         U(j,k) = sigma;
       }
@@ -750,7 +750,7 @@ namespace Kalman {
     // dz = dz - Hdx
     for (j = 0; j < n; ++j)
       dz -= a(j)*_x(j);
-    
+
     // d = D * transpose(U) * a
     // a =     transpose(U) * a
     //
@@ -780,7 +780,7 @@ namespace Kalman {
         d(i) += d(j)*beta;
       }
     }
-  
+
     // dx = dx + K(dz - Hdx)
     dz *= gamma;
     for(j = 0; j < n; ++j)
@@ -794,85 +794,85 @@ namespace Kalman {
     if (modified_)
       flags |= KALMAN_A_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeBaseWImpl() {
     modified_ = true;
     makeBaseW();
     if (modified_)
-      flags |= KALMAN_W_MODIFIED;    
+      flags |= KALMAN_W_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeBaseQImpl() {
     modified_ = true;
     makeBaseQ();
     if (modified_)
-      flags |= KALMAN_Q_MODIFIED;    
+      flags |= KALMAN_Q_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeBaseHImpl() {
     modified_ = true;
     makeBaseH();
     if (modified_)
-      flags |= KALMAN_H_MODIFIED;    
+      flags |= KALMAN_H_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeBaseVImpl() {
     modified_ = true;
     makeBaseV();
     if (modified_)
-      flags |= KALMAN_V_MODIFIED;    
+      flags |= KALMAN_V_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeBaseRImpl() {
     modified_ = true;
     makeBaseR();
     if (modified_)
-      flags |= KALMAN_R_MODIFIED;    
+      flags |= KALMAN_R_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeAImpl() {
     modified_ = true;
     makeA();
     if (modified_)
-      flags |= KALMAN_A_MODIFIED;    
+      flags |= KALMAN_A_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeWImpl() {
     modified_ = true;
     makeW();
     if (modified_)
-      flags |= KALMAN_W_MODIFIED;    
+      flags |= KALMAN_W_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeQImpl() {
     modified_ = true;
     makeQ();
     if (modified_)
-      flags |= KALMAN_Q_MODIFIED;    
+      flags |= KALMAN_Q_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeHImpl() {
     modified_ = true;
     makeH();
     if (modified_)
-      flags |= KALMAN_H_MODIFIED;    
+      flags |= KALMAN_H_MODIFIED;
   }
-  
+
   template<typename T, bool OQ, bool OVR, bool DBG>
   void EKFilter<T, OQ, OVR, DBG>::makeVImpl() {
     modified_ = true;
     makeV();
     if (modified_)
-      flags |= KALMAN_V_MODIFIED;    
+      flags |= KALMAN_V_MODIFIED;
   }
 
   template<typename T, bool OQ, bool OVR, bool DBG>
@@ -880,7 +880,7 @@ namespace Kalman {
     modified_ = true;
     makeR();
     if (modified_)
-      flags |= KALMAN_R_MODIFIED;    
+      flags |= KALMAN_R_MODIFIED;
   }
 
 }

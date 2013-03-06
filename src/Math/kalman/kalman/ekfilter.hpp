@@ -30,6 +30,11 @@
 #define EKFILTER_HPP
 
 /**
+ * \addtogroup Math_kalman_kalman
+ * @{
+ */
+
+/**
  * \file
  * \brief Contains the interface of the \c EKFilter base template class.
 */
@@ -920,6 +925,10 @@ namespace Kalman {
 }
 
 #include "ekfilter_impl.hpp"
+
+/**
+ * @}
+ */
 
 #endif
 

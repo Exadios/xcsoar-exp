@@ -22,6 +22,11 @@
 #ifndef INU_HPP
 #define INU_HPP
 
+/**
+ * \addgroup Engine_Navigation_INU
+ * \@{
+ */
+
 #include <valarray>
 #include <Math/fixed.hpp>
 #include <Math/kalman/kalman/kvector.hpp>
@@ -31,6 +36,7 @@ typedef Kalman::KVector<fixed, false> IMUvector;
 typedef Kalman::KMatrix<fixed, false> IMUmatrix;
 
 /**
+ * \ingroup Engine_Navigation_INU
  * @file
  * A class to implement a Inertial Navigation Unit (INU) using gyros and
  * accelerometers (typically MEMS devices) found on many Android platforms.
@@ -38,83 +44,86 @@ typedef Kalman::KMatrix<fixed, false> IMUmatrix;
  */
 
 class Inu
-{
-  public:
+  {
+public:
   
-    /**
-     * CTOR.
-     * @param dt The IMU sample rate in seconds.
-     */
-    Inu(fixed dt);
+  /**
+   * CTOR.
+   * @param dt The IMU sample rate in seconds.
+   */
+  Inu(fixed dt);
 
-    /**
-     * DTOR.
-     */
-     virtual ~Inu();
+  /**
+   * DTOR.
+   */
+  virtual ~Inu();
 
-    /**
-     * Update the state of the INS. To be called once every IMU sample, \deltaT.
-     * @param Omega The vector of the gyro rotation velocities in the 'b'
-     *              domain.
-     * @param f The vector of the accelerometer forces in the 'b' domain.
-     * @param v The vector of the velocities in the 'e' domain.
-     * @param gx The value of gravity, G, at our current position in the
-     *           'e' domain.
-     * @result If a result can be computed then true, false otherwise.
-     */
-     bool Update(IMUmatrix& Omega, IMUvector& f, IMUvector& v, fixed gx);
+  /**
+   * Update the state of the INS. To be called once every IMU sample, \deltaT.
+   * @param Omega The vector of the gyro rotation velocities in the 'b'
+   *              domain.
+   * @param f The vector of the accelerometer forces in the 'b' domain.
+   * @param v The vector of the velocities in the 'e' domain.
+   * @param gx The value of gravity, G, at our current position in the
+   *           'e' domain.
+   * @result If a result can be computed then true, false otherwise.
+   */
+  bool Update(IMUmatrix& Omega, IMUvector& f, IMUvector& v, fixed gx);
 
-   private:
+private:
      
-     /**
-      * Multiply two 3x3 matrices.
-      * @param A The L.H. matrix.
-      * @param B The R.H. matrix.
-      * @return The result matrix.
-      */
-     inline IMUmatrix multiply(const IMUmatrix& A, const IMUmatrix& B)
-       {
-       int i, j;
-       IMUmatrix R;
+  /**
+   * Multiply two 3x3 matrices.
+   * @param A The L.H. matrix.
+   * @param B The R.H. matrix.
+   * @return The result matrix.
+   */
+  inline IMUmatrix multiply(const IMUmatrix& A, const IMUmatrix& B)
+    {
+    int i, j;
+    IMUmatrix R;
 
-       for (i = 0; i < 3; i++)
-         for (j = 0; j < 3; j++)
-           R(i, j) = A(i, 0) * B(0, j) + A(i, 1) * B(1, j) + A(i, 2) * B(2, j);
-       return R;
-       }
+    for (i = 0; i < 3; i++)
+      for (j = 0; j < 3; j++)
+        R(i, j) = A(i, 0) * B(0, j) + A(i, 1) * B(1, j) + A(i, 2) * B(2, j);
+    return R;
+    }
 
-     /**
-      * Compute an approximate gravitational force ans a function of height
-      * above the Geod.
-      * @param h Height above the Geog in meters.
-      * @return Gravitational acceleration at h.
-      */
-     fixed gfh(fixed h) const;
+  /**
+   * Compute an approximate gravitational force ans a function of height
+   * above the Geod.
+   * @param h Height above the Geog in meters.
+   * @return Gravitational acceleration at h.
+   */
+  fixed gfh(fixed h) const;
 
-     /**
-      * The IMU sample rate in seconds.
-      */
-     fixed dt;
+  /**
+   * The IMU sample rate in seconds.
+   */
+  fixed dt;
 
-     /**
-      * The attitude state in the 'e' domain.
-      */
-     IMUmatrix R;
+  /**
+   * The attitude state in the 'e' domain.
+   */
+  IMUmatrix R;
 
-     /**
-      * The acceleration state in the 'e' domain.
-      */
-     IMUvector a;
+  /**
+   * The acceleration state in the 'e' domain.
+   */
+  IMUvector a;
      
-     /**
-      * The attitude rate in the 'e' domain.
-     */
+  /**
+   * The attitude rate in the 'e' domain.
+   */
      IMUmatrix Omega;
 
-     /**
-      * Has Compute been initialized by one, or more, sample(s).
-      */
-     bool init;
-};
+  /**
+   * Has Compute been initialized by one, or more, sample(s).
+   */
+  bool init;
+ `};
 
+/**
+ * \@}
+ */
 #endif // INU_HPP

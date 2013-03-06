@@ -1,4 +1,4 @@
-/**
+/*
  * This file is part of kfilter.
  * kfilter is a C++ variable-dimension extended kalman filter library.
  *
@@ -40,7 +40,7 @@ namespace Kalman {
 
   /**
    * Instances of this class defines the behaviour of input/output operations
-   * of \c KMatrix instances from/to streams. That is to say, 
+   * of \c KMatrix instances from/to streams. That is to say,
    * <tt>get()</tt> and <tt>put()</tt> as well as corresponding
    * <tt>operator>>()</tt> and <tt>operator<<()</tt>
    * depend of the \c KMatrixContextImpl that has been selected by calling
@@ -64,18 +64,18 @@ namespace Kalman {
                        std::string rowDelim = "\n",
                        std::string startDelim = std::string(),
                        std::string endDelim = std::string(),
-                       unsigned prec = 4) 
-      : elemDelim_(elemDelim), rowDelim_(rowDelim), startDelim_(startDelim), 
+                       unsigned prec = 4)
+      : elemDelim_(elemDelim), rowDelim_(rowDelim), startDelim_(startDelim),
         endDelim_(endDelim), precision_(prec), width_(8+prec) {
-      
+
       std::string ws(" \t\n");
-      skipElemDelim_  = 
+      skipElemDelim_  =
         ( elemDelim_.find_first_not_of(ws) != std::string::npos);
-      skipRowDelim_   = 
+      skipRowDelim_   =
         (  rowDelim_.find_first_not_of(ws) != std::string::npos);
-      skipStartDelim_ = 
+      skipStartDelim_ =
         (startDelim_.find_first_not_of(ws) != std::string::npos);
-      skipEndDelim_   = 
+      skipEndDelim_   =
         (  endDelim_.find_first_not_of(ws) != std::string::npos);
     }
 
@@ -93,12 +93,12 @@ namespace Kalman {
 
   //! Refers to the currently selected matrix printing context.
 
-  //! \warning Never modify this value directly. Use 
+  //! \warning Never modify this value directly. Use
   //! <tt>selectKMatrixContext()</tt> instead.
   extern KMatrixContextImpl* currentMatrixContext;
 
   /**
-   * This function is called by all the constructors and also by the 
+   * This function is called by all the constructors and also by the
    * \c resize() function. If either \c m or \c n is 0, then both
    * \a m_ and \a n_ will be set to 0.
    * \pre \a Mimpl_ has been resized to <tt>m*n</tt> elements.
@@ -118,7 +118,7 @@ namespace Kalman {
       T* ptr = &Mimpl_[0];
       T** M = &vimpl_[0];
       T** end = M + m;
-      
+
       while (M != end) {
         *M++ = ptr;
         ptr += n;
@@ -152,7 +152,7 @@ namespace Kalman {
    */
   template<typename T, bool DBG>
   inline KMatrix<T, DBG>::KMatrix(K_UINT_32 m, K_UINT_32 n)
-    : Mimpl_(m*n) { 
+    : Mimpl_(m*n) {
     init(m, n);
   }
 
@@ -171,7 +171,7 @@ namespace Kalman {
 
   /**
    * This function allows to transform a C-style array of \c T objects in
-   * a <tt>KMatrix<T, DBG></tt> equivalent array. Note that objects from 
+   * a <tt>KMatrix<T, DBG></tt> equivalent array. Note that objects from
    * the C-style array are copied into the matrix, which may slow down
    * application if used extensively. The elements are copied row-wise,
    * that is to say, the elements of the C-style array first fill the first
@@ -191,7 +191,7 @@ namespace Kalman {
   //! \param M Matrix to copy. Can be an empty matrix.
   //!
   template<typename T, bool DBG>
-  inline KMatrix<T, DBG>::KMatrix(const KMatrix& M) 
+  inline KMatrix<T, DBG>::KMatrix(const KMatrix& M)
     : Mimpl_(M.Mimpl_) {
     init(M.m_, M.n_);
   }
@@ -202,18 +202,18 @@ namespace Kalman {
   /**
    * \param i Row index of matrix element.
    * \param j Column index of matrix element.
-   * \return A reference to the element <tt>(i,j)</tt>. 
-   * \exception OutOfBoundError Thrown if \c i or \c j is out of matrix 
+   * \return A reference to the element <tt>(i,j)</tt>.
+   * \exception OutOfBoundError Thrown if \c i or \c j is out of matrix
    *   bounds and <tt>DBG == true</tt>.
    */
   template<typename T, bool DBG>
-  inline T& KMatrix<T, DBG>::operator()(K_UINT_32 i, 
+  inline T& KMatrix<T, DBG>::operator()(K_UINT_32 i,
                                              K_UINT_32 j) {
     if (DBG) {
       if (i >= m_ || j >= n_) {
         KOSTRINGSTREAM oss;
-        oss << "Trying to access element (" << i << ", " << j 
-            << ") not included in [" << 0 << ", " << m_ - 1 << "][" 
+        oss << "Trying to access element (" << i << ", " << j
+            << ") not included in [" << 0 << ", " << m_ - 1 << "]["
             << 0 << ", " << n_ - 1 << "]." KEND_OF_STREAM;
       }
     }
@@ -223,8 +223,8 @@ namespace Kalman {
   /**
    * \param i Row index of matrix element.
    * \param j Column index of matrix element.
-   * \return A \c const reference to the element <tt>(i,j)</tt>. 
-   * \exception OutOfBoundError Thrown if \c i or \c j is out of matrix 
+   * \return A \c const reference to the element <tt>(i,j)</tt>.
+   * \exception OutOfBoundError Thrown if \c i or \c j is out of matrix
    *   bounds and <tt>DBG == true</tt>.
    */
   template<typename T, bool DBG>
@@ -232,8 +232,8 @@ namespace Kalman {
     if (DBG) {
       if (i >= m_ || j >= n_) {
         KOSTRINGSTREAM oss;
-        oss << "Trying to access element (" << i << ", " << j 
-            << ") not included in [" << 0 << ", " << m_ - 1 << "][" 
+        oss << "Trying to access element (" << i << ", " << j
+            << ") not included in [" << 0 << ", " << m_ - 1 << "]["
             << 0 << ", " << n_ - 1 << "]." KEND_OF_STREAM;
       }
     }
@@ -281,7 +281,7 @@ namespace Kalman {
    */
   template<typename T, bool DBG>
   inline KMatrix<T, DBG>& KMatrix<T, DBG>::operator=(const T& a) {
-    
+
     T* ptr = &Mimpl_[0];
     const T* end = ptr + Mimpl_.size();
 
@@ -297,10 +297,10 @@ namespace Kalman {
    * \warning This function invalidates pointers inside the matrix.
    */
   template<typename T, bool DBG>
-  inline KMatrix<T, DBG>& 
+  inline KMatrix<T, DBG>&
   KMatrix<T, DBG>::operator=(const KMatrix& M) {
     KMatrix temp(M);
-    swap(temp);    
+    swap(temp);
     return *this;
   }
 
@@ -314,7 +314,7 @@ namespace Kalman {
    * \warning This function invalidates pointers inside the vector.
    */
   template<typename T, bool DBG>
-  inline void KMatrix<T, DBG>::assign(K_UINT_32 m, K_UINT_32 n, 
+  inline void KMatrix<T, DBG>::assign(K_UINT_32 m, K_UINT_32 n,
                                            const T* v) {
     KMatrix temp(m, n, v);
     swap(temp);
@@ -337,8 +337,8 @@ namespace Kalman {
   }
 
   /**
-   * This function will extract <tt>nrow()*ncol()</tt> elements from a 
-   * stream to fill the matrix, while considering the formatting constraints 
+   * This function will extract <tt>nrow()*ncol()</tt> elements from a
+   * stream to fill the matrix, while considering the formatting constraints
    * of the current matrix printing context.
    * \param is A reference to the input stream.
    * \see <tt>createKMatrixContext()</tt>
@@ -415,8 +415,8 @@ namespace Kalman {
   }
 
   /**
-   * This function will send all the matrix elements to a stream, while 
-   * considering the formatting constraints of the current matrix printing 
+   * This function will send all the matrix elements to a stream, while
+   * considering the formatting constraints of the current matrix printing
    * context.
    * \param os A reference to the output stream.
    * \see <tt>createKMatrixContext()</tt>

@@ -1,4 +1,4 @@
-/**
+/*
  * This file is part of kfilter.
  * kfilter is a C++ variable-dimension extended kalman filter library.
  *
@@ -70,7 +70,7 @@ namespace Kalman {
 
   template<typename T, bool OQ, bool OVR, bool DBG>
   void KFilter<T, OQ, OVR, DBG>::makeMeasure() {
-    
+
     // z = Hx + Vv
     K_UINT_32 i, j;
 
@@ -92,8 +92,8 @@ namespace Kalman {
     if (EKFilter<T, OQ, OVR, DBG>::flags & ( KALMAN_N_MODIFIED | KALMAN_NU_MODIFIED ) ) {
       B.resize(EKFilter<T, OQ, OVR, DBG>::n, EKFilter<T, OQ, OVR, DBG>::nu);
       makeBaseB();
-    }   
-    
+    }
+
     EKFilter<T, OQ, OVR, DBG>::sizeUpdate();
   }
 

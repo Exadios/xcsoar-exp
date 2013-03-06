@@ -1,4 +1,4 @@
-/**
+/*
  * This file is part of kfilter.
  * kfilter is a C++ variable-dimension extended kalman filter library.
  *
@@ -28,6 +28,11 @@
 
 #ifndef KTYPES_HPP
 #define KTYPES_HPP
+
+/**
+ * \addtogroup Math_kalman_kalman
+ * @{
+ */
 
 //! \file
 //! \brief Contains type definitions specific to each platform.
@@ -65,14 +70,14 @@
  * everything.
  */
 namespace Kalman {
-  
+
   typedef short int K_INT_16;             //!< Signed 16-bits integral type
   typedef unsigned short int K_UINT_16;   //!< Unsigned 16-bits integral type
   typedef long int K_INT_32;              //!< Signed 32-bits integral type
   typedef unsigned long int K_UINT_32;    //!< Unsigned 32-bits integral type
   typedef float K_REAL_32;                //!< 32-bits floating point type
   typedef double K_REAL_64;               //!< 64-bits floating point type
-  
+
   //! Base class for all exceptions thrown in the \c Kalman namespace.
   struct KalmanError : public std::logic_error {
 
@@ -83,7 +88,7 @@ namespace Kalman {
      * the error message can be displayed by the \c what() function.
      * \param message Error message.
      */
-    explicit KalmanError(const std::string& message) 
+    explicit KalmanError(const std::string& message)
       : logic_error(message) {}
   };
 
@@ -91,19 +96,19 @@ namespace Kalman {
   struct OutOfBoundError : public KalmanError {
 
     //! Constructor taking an error message.
-    explicit OutOfBoundError(const std::string& message) 
+    explicit OutOfBoundError(const std::string& message)
       : KalmanError(message) {}
   };
 
   //! Nested namespace in \c Kalman to avoid name clash with \c std::swap
   namespace Util {
-    
+
     //! Swaps objects \c a and \c b.
-    
+
     /**
      * \par Type requirements
      * \c T must be \b assignable.
-     * If \c t1, \c t2 are instances of \c T, the following expressions 
+     * If \c t1, \c t2 are instances of \c T, the following expressions
      * must be valid :
      * - \code T t1 = t2; \endcode Copy constructor
      * - \code t1 = t2; \endcode Assignment operator
@@ -114,9 +119,13 @@ namespace Kalman {
       a = b;
       b = tmp;
     }
-    
+
   }
 
 }
+
+/**
+ * @}
+ */
 
 #endif

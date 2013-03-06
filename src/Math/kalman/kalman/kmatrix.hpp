@@ -1,4 +1,4 @@
-/**
+/*
  * This file is part of kfilter.
  * kfilter is a C++ variable-dimension extended kalman filter library.
  *
@@ -28,6 +28,11 @@
 
 #ifndef KMATRIX_HPP
 #define KMATRIX_HPP
+
+/**
+ * \addtogroup Math_kalman_kalman
+ * @{
+ */
 
 //! \file
 //! \brief Contains the interface of the \c KMatrix template class.
@@ -146,11 +151,11 @@ namespace Kalman {
   private:
     //! Array of pointers to rows of \a Mimpl_.
 
-    //! In fact, \a vimpl_ is such that 
+    //! In fact, \a vimpl_ is such that
     //! <tt>&vimpl_[i][beg] == &Mimpl_[i*n_]</tt>.
     std::vector<T*> vimpl_;
     std::vector<T> Mimpl_;    //!< Underlying vector implementation.
-    
+
     //! Pointer to the start of \a vimpl_.
 
     /**
@@ -169,12 +174,12 @@ namespace Kalman {
 
   //! Reads a matrix from a stream.
   template<typename T, bool DBG>
-  inline std::istream& operator>>(std::istream& is, 
+  inline std::istream& operator>>(std::istream& is,
                                   KMatrix<T, DBG>& M);
 
   //! Writes a matrix to a stream.
   template<typename T, bool DBG>
-  inline std::ostream& operator<<(std::ostream& os, 
+  inline std::ostream& operator<<(std::ostream& os,
                                   const KMatrix<T, DBG>& M);
 
   //! Handle type to a matrix printing context.
@@ -184,10 +189,10 @@ namespace Kalman {
   extern KMatrixContext DEFAULT_MATRIX_CONTEXT;
 
   //! Creates a matrix printing context.
-  KMatrixContext createKMatrixContext(std::string elemDelim = " ", 
+  KMatrixContext createKMatrixContext(std::string elemDelim = " ",
                                       std::string rowDelim = "\n",
-                                      std::string startDelim = "", 
-                                      std::string endDelim = "", 
+                                      std::string startDelim = "",
+                                      std::string endDelim = "",
                                       unsigned prec = 4);
 
   //! Selects a matrix printing context as the current context.
@@ -196,5 +201,9 @@ namespace Kalman {
 }
 
 #include "kmatrix_impl.hpp"
+
+/**
+ * @}
+ */
 
 #endif
