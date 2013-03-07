@@ -26,7 +26,6 @@ Copyright_License {
 #include "Message.hpp"
 #include "Interface.hpp"
 #include "ActionInterface.hpp"
-#include "Pages.hpp"
 #include "Profile/Profile.hpp"
 #include "Profile/ProfileKeys.hpp"
 #include "UIGlobals.hpp"
@@ -35,6 +34,7 @@ Copyright_License {
 #include "UIState.hpp"
 #include "Asset.hpp"
 #include "Pan.hpp"
+#include "PageActions.hpp"
 #include "Util/Clamp.hpp"
 
 // eventAutoZoom - Turn on|off|toggle AutoZoom
@@ -202,7 +202,7 @@ void
 InputEvents::sub_SetZoom(fixed value)
 {
   MapSettings &settings_map = CommonInterface::SetMapSettings();
-  GlueMapWindow *map_window = UIGlobals::ActivateMap();
+  GlueMapWindow *map_window = PageActions::ShowMap();
   if (map_window == NULL)
     return;
 
@@ -231,7 +231,7 @@ InputEvents::sub_SetZoom(fixed value)
 void
 InputEvents::sub_ScaleZoom(int vswitch)
 {
-  const GlueMapWindow *map_window = UIGlobals::ActivateMap();
+  const GlueMapWindow *map_window = PageActions::ShowMap();
   if (map_window == NULL)
     return;
 
@@ -264,5 +264,5 @@ void
 InputEvents::eventMap(const TCHAR *misc)
 {
   if (StringIsEqual(misc, _T("show")))
-    UIGlobals::ActivateMap();
+    PageActions::ShowMap();
 }

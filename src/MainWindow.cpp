@@ -30,6 +30,7 @@ Copyright_License {
 #include "Interface.hpp"
 #include "ActionInterface.hpp"
 #include "UIActions.hpp"
+#include "PageActions.hpp"
 #include "Input/InputEvents.hpp"
 #include "Menu/ButtonLabel.hpp"
 #include "Screen/Layout.hpp"
@@ -116,7 +117,7 @@ MainWindow::MainWindow(const StatusMessageList &status_messages)
 #ifndef ENABLE_OPENGL
    draw_suspended(false),
 #endif
-   activate_map_pending(false),
+   restore_page_pending(false),
    airspace_warning_pending(false)
 {
 }
@@ -133,6 +134,7 @@ MainWindow::~MainWindow()
 void
 MainWindow::Create(PixelSize size, TopWindowStyle style)
 {
+  style.EnableDoubleClicks();
   SingleWindow::Create(title, size, style);
 }
 
@@ -531,6 +533,17 @@ MainWindow::OnSetFocus()
 }
 
 bool
+MainWindow::OnMouseDouble(PixelScalar x, PixelScalar y)
+{
+  if (SingleWindow::OnMouseDouble(x, y))
+    return true;
+
+  if (!HasDialog())
+    InputEvents::ShowMenu();
+  return false;
+}
+
+bool
 MainWindow::OnKeyDown(unsigned key_code)
 {
   return InputEvents::processKey(key_code) ||
@@ -601,9 +614,9 @@ MainWindow::OnUser(unsigned id)
     UIReceiveCalculatedData();
     return true;
 
-  case Command::ACTIVATE_MAP:
-    if (activate_map_pending)
-      ActivateMap();
+  case Command::RESTORE_PAGE:
+    if (restore_page_pending)
+      PageActions::Restore();
     return true;
   }
 
@@ -702,7 +715,7 @@ MainWindow::GetMapIfActive()
 GlueMapWindow *
 MainWindow::ActivateMap()
 {
-  activate_map_pending = false;
+  restore_page_pending = false;
 
   if (map == NULL)
     return NULL;
@@ -728,13 +741,13 @@ MainWindow::ActivateMap()
 }
 
 void
-MainWindow::DeferredActivateMap()
+MainWindow::DeferredRestorePage()
 {
-  if (IsMapActive() || activate_map_pending)
+  if (restore_page_pending)
     return;
 
-  activate_map_pending = true;
-  SendUser((unsigned)Command::ACTIVATE_MAP);
+  restore_page_pending = true;
+  SendUser((unsigned)Command::RESTORE_PAGE);
 }
 
 void
@@ -794,7 +807,7 @@ MainWindow::SetWidget(Widget *_widget)
 {
   assert(_widget != NULL);
 
-  activate_map_pending = false;
+  restore_page_pending = false;
 
   /* delete the old widget */
   KillWidget();

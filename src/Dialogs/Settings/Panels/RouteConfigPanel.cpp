@@ -42,7 +42,7 @@ enum ControlIndex {
   ReachPolarMode
 };
 
-class RouteConfigPanel
+class RouteConfigPanel final
   : public RowFormWidget, DataFieldListener {
 public:
   RouteConfigPanel()
@@ -53,12 +53,12 @@ public:
   void ShowReachControls(bool show);
 
   /* methods from Widget */
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
-  virtual bool Save(bool &changed, bool &require_restart);
+  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc) override;
+  virtual bool Save(bool &changed, bool &require_restart) override;
 
 private:
   /* methods from DataFieldListener */
-  virtual void OnModified(DataField &df);
+  virtual void OnModified(DataField &df) override;
 };
 
 void
@@ -79,12 +79,14 @@ void
 RouteConfigPanel::OnModified(DataField &df)
 {
   if (IsDataField(RoutePlannerMode, df)) {
+    const DataFieldEnum &dfe = (const DataFieldEnum &)df;
     RoutePlannerConfig::Mode mode =
-      (RoutePlannerConfig::Mode)df.GetAsInteger();
+      (RoutePlannerConfig::Mode)dfe.GetValue();
     ShowRouteControls(mode != RoutePlannerConfig::Mode::NONE);
   } else if (IsDataField(TurningReach, df)) {
+    const DataFieldEnum &dfe = (const DataFieldEnum &)df;
     RoutePlannerConfig::ReachMode mode =
-      (RoutePlannerConfig::ReachMode)df.GetAsInteger();
+      (RoutePlannerConfig::ReachMode)dfe.GetValue();
     ShowReachControls(mode != RoutePlannerConfig::ReachMode::OFF);
   }
 }

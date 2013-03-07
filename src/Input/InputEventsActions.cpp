@@ -87,7 +87,7 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "Task/ProtectedTaskManager.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "UtilsSettings.hpp"
-#include "Pages.hpp"
+#include "PageActions.hpp"
 #include "Hardware/AltairControl.hpp"
 #include "NMEA/Aircraft.hpp"
 #include "Compiler.h"
@@ -140,31 +140,18 @@ InputEvents::eventScreenModes(const TCHAR *misc)
   //  -- full screen
   //  -- normal infobox
 
-  using namespace Pages;
-  typedef PageSettings::InfoBoxConfig InfoBoxConfig;
-  typedef PageSettings::PageLayout PageLayout;
-
   const UIState &ui_state = CommonInterface::GetUIState();
 
   if (StringIsEqual(misc, _T("normal"))) {
-    const PageSettings::PageLayout pl(PageLayout::tlMapAndInfoBoxes,
-                                      InfoBoxConfig(true, 0));
-    OpenLayout(pl);
+    PageActions::OpenLayout(PageLayout::Default());
   } else if (StringIsEqual(misc, _T("auxilary"))) {
-    const PageSettings::PageLayout pl(PageLayout::tlMapAndInfoBoxes,
-                                      InfoBoxConfig(false, 3));
-    OpenLayout(pl);
+    PageActions::OpenLayout(PageLayout::Aux());
   } else if (StringIsEqual(misc, _T("toggleauxiliary"))) {
-    const PageLayout pl(!ui_state.auxiliary_enabled ?
-                        PageLayout(PageLayout::tlMapAndInfoBoxes,
-                                   PageSettings::InfoBoxConfig(false, 3)) :
-                        PageLayout(PageLayout::tlMapAndInfoBoxes,
-                                   PageSettings::InfoBoxConfig(true, 0)));
-    OpenLayout(pl);
+    PageActions::OpenLayout(ui_state.auxiliary_enabled
+                            ? PageLayout::Default()
+                            : PageLayout::Aux());
   } else if (StringIsEqual(misc, _T("full"))) {
-    const PageLayout pl(PageLayout::tlMap,
-                        PageSettings::InfoBoxConfig(true, 0));
-    OpenLayout(pl);
+    PageActions::OpenLayout(PageLayout::FullScreen());
   } else if (StringIsEqual(misc, _T("togglefull"))) {
     CommonInterface::main_window->SetFullScreen(
         !CommonInterface::main_window->GetFullScreen());
@@ -176,9 +163,9 @@ InputEvents::eventScreenModes(const TCHAR *misc)
     else
         Message::AddMessage(_("Default InfoBoxes"));
   } else if (StringIsEqual(misc, _T("previous")))
-    Pages::Prev();
+    PageActions::Prev();
   else
-    Pages::Next();
+    PageActions::Next();
 
 
   trigger_redraw();

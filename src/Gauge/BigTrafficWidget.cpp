@@ -29,7 +29,9 @@
 #include "Screen/Layout.hpp"
 #include "Screen/Key.h"
 #include "Form/SymbolButton.hpp"
+#include "UIState.hpp"
 #include "UIGlobals.hpp"
+#include "PageActions.hpp"
 #include "Look/Look.hpp"
 #include "Profile/Profile.hpp"
 #include "Compiler.h"
@@ -49,7 +51,7 @@
  */
 class FlarmTrafficControl : public FlarmTrafficWindow {
 protected:
-  bool enable_auto_zoom;
+  bool enable_auto_zoom, dragging;
   unsigned zoom;
   Angle task_direction;
   GestureManager gestures;
@@ -58,7 +60,7 @@ public:
   FlarmTrafficControl(const FlarmTrafficLook &look)
     :FlarmTrafficWindow(look, Layout::Scale(10),
                         Layout::GetMinimumControlHeight() + Layout::Scale(2)),
-     enable_auto_zoom(true),
+     enable_auto_zoom(true), dragging(false),
      zoom(2),
      task_direction(Angle::Degrees(-1)) {}
 
@@ -120,6 +122,14 @@ protected:
   void PaintID(Canvas &canvas, PixelRect rc, const FlarmTraffic &traffic) const;
   void PaintTaskDirection(Canvas &canvas) const;
 
+  void StopDragging() {
+    if (!dragging)
+      return;
+
+    dragging = false;
+    ReleaseCapture();
+  }
+
 protected:
   bool OnMouseGesture(const TCHAR* gesture);
 
@@ -130,6 +140,7 @@ protected:
   virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
   virtual bool OnMouseDouble(PixelScalar x, PixelScalar y) override;
   virtual bool OnKeyDown(unsigned key_code) override;
+  virtual void OnCancelMode() override;
 
   /* virtual methods from class PaintWindow */
   virtual void OnPaint(Canvas &canvas) override;
@@ -648,7 +659,7 @@ TrafficWidget::Update()
     /* this must be deferred, because this method is called from
        within the BlackboardListener, and we must not unregister the
        listener in this context */
-    UIGlobals::DeferredActivateMap();
+    PageActions::DeferredRestore();
     return;
   }
 
@@ -668,7 +679,8 @@ bool
 FlarmTrafficControl::OnMouseMove(PixelScalar x, PixelScalar y,
                                  gcc_unused unsigned keys)
 {
-  gestures.Update(x, y);
+  if (dragging)
+    gestures.Update(x, y);
 
   return true;
 }
@@ -676,7 +688,11 @@ FlarmTrafficControl::OnMouseMove(PixelScalar x, PixelScalar y,
 bool
 FlarmTrafficControl::OnMouseDown(PixelScalar x, PixelScalar y)
 {
-  gestures.Start(x, y, Layout::Scale(20));
+  if (!dragging) {
+    dragging = true;
+    SetCapture();
+    gestures.Start(x, y, Layout::Scale(20));
+  }
 
   return true;
 }
@@ -684,9 +700,13 @@ FlarmTrafficControl::OnMouseDown(PixelScalar x, PixelScalar y)
 bool
 FlarmTrafficControl::OnMouseUp(PixelScalar x, PixelScalar y)
 {
-  const TCHAR *gesture = gestures.Finish();
-  if (gesture && OnMouseGesture(gesture))
-    return true;
+  if (dragging) {
+    StopDragging();
+
+    const TCHAR *gesture = gestures.Finish();
+    if (gesture && OnMouseGesture(gesture))
+      return true;
+  }
 
   if (!WarningMode())
     SelectNearTarget(x, y, Layout::Scale(15));
@@ -697,6 +717,7 @@ FlarmTrafficControl::OnMouseUp(PixelScalar x, PixelScalar y)
 bool
 FlarmTrafficControl::OnMouseDouble(PixelScalar x, PixelScalar y)
 {
+  StopDragging();
   InputEvents::ShowMenu();
   return true;
 }
@@ -710,14 +731,6 @@ FlarmTrafficControl::OnMouseGesture(const TCHAR* gesture)
   }
   if (StringIsEqual(gesture, _T("D"))) {
     ZoomOut();
-    return true;
-  }
-  if (StringIsEqual(gesture, _T("L"))) {
-    PrevTarget();
-    return true;
-  }
-  if (StringIsEqual(gesture, _T("R"))) {
-    NextTarget();
     return true;
   }
   if (StringIsEqual(gesture, _T("UD"))) {
@@ -734,6 +747,13 @@ FlarmTrafficControl::OnMouseGesture(const TCHAR* gesture)
   }
 
   return InputEvents::processGesture(gesture);
+}
+
+void
+FlarmTrafficControl::OnCancelMode()
+{
+  FlarmTrafficWindow::OnCancelMode();
+  StopDragging();
 }
 
 bool
@@ -754,19 +774,15 @@ FlarmTrafficControl::OnKeyDown(unsigned key_code)
     ZoomOut();
     return true;
 
-  case KEY_LEFT:
 #ifdef GNAV
   case '6':
-#endif
     PrevTarget();
     return true;
 
-  case KEY_RIGHT:
-#ifdef GNAV
   case '7':
-#endif
     NextTarget();
     return true;
+#endif
   }
 
   return FlarmTrafficWindow::OnKeyDown(key_code) ||
@@ -909,6 +925,11 @@ TrafficWidget::Show(const PixelRect &rc)
   ContainerWidget::Show(rc);
   UpdateLayout();
 
+#ifndef GNAV
+  /* show the "Close" button only if this is a "special" page */
+  close_button->SetVisible(CommonInterface::GetUIState().special_page.IsDefined());
+#endif
+
   CommonInterface::GetLiveBlackboard().AddListener(*this);
 }
 
@@ -942,7 +963,7 @@ TrafficWidget::OnAction(int id)
 {
   switch ((Action)id) {
   case CLOSE:
-    UIGlobals::ActivateMap();
+    PageActions::Restore();
     break;
 
   case DETAILS:

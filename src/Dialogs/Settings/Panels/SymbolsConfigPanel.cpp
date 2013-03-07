@@ -47,7 +47,7 @@ enum ControlIndex {
   SHOW_FAI_TRIANGLE_AREAS,
 };
 
-class SymbolsConfigPanel
+class SymbolsConfigPanel final
   : public RowFormWidget, DataFieldListener {
 public:
   SymbolsConfigPanel()
@@ -57,12 +57,12 @@ public:
   void ShowTrailControls(bool show);
 
   /* methods from Widget */
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
-  virtual bool Save(bool &changed, bool &require_restart);
+  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc) override;
+  virtual bool Save(bool &changed, bool &require_restart) override;
 
 private:
   /* methods from DataFieldListener */
-  virtual void OnModified(DataField &df);
+  virtual void OnModified(DataField &df) override;
 };
 
 void
@@ -77,7 +77,8 @@ void
 SymbolsConfigPanel::OnModified(DataField &df)
 {
   if (IsDataField(TRAIL_LENGTH, df)) {
-    TrailSettings::Length trail_length = (TrailSettings::Length)df.GetAsInteger();
+    const DataFieldEnum &dfe = (const DataFieldEnum &)df;
+    TrailSettings::Length trail_length = (TrailSettings::Length)dfe.GetValue();
     ShowTrailControls(trail_length != TrailSettings::Length::OFF);
   }
 }

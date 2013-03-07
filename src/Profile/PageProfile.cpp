@@ -26,32 +26,58 @@ Copyright_License {
 #include "PageSettings.hpp"
 #include "InfoBoxes/InfoBoxSettings.hpp"
 
+/**
+ * Old enum moved from PageSettings.
+ */
+enum eTopLayout {
+  tlEmpty,
+  tlMap,
+  tlMapAndInfoBoxes,
+};
+
 static void
-Load(PageSettings::PageLayout &_pl, const unsigned page)
+Load(PageLayout &_pl, const unsigned page)
 {
   TCHAR profileKey[32];
   unsigned prefixLen = _stprintf(profileKey, _T("Page%u"), page);
   if (prefixLen <= 0)
     return;
 
-  PageSettings::PageLayout pl;
+  PageLayout pl = PageLayout::Default();
   _tcscpy(profileKey + prefixLen, _T("InfoBoxMode"));
   if (!Profile::Get(profileKey, pl.infobox_config.auto_switch))
     return;
   _tcscpy(profileKey + prefixLen, _T("InfoBoxPanel"));
   if (!Profile::Get(profileKey, pl.infobox_config.panel))
     return;
+
   _tcscpy(profileKey + prefixLen, _T("Layout"));
   unsigned temp = 0;
-  if (!Profile::Get(profileKey, temp))
-    return;
-  pl.top_layout = (PageSettings::PageLayout::eTopLayout) temp;
-  if (pl.top_layout > PageSettings::PageLayout::tlLAST)
-    return;
+  Profile::Get(profileKey, temp);
+  switch (temp) {
+  case tlEmpty:
+    pl.valid = false;
+    break;
+
+  case tlMap:
+    pl.infobox_config.enabled = false;
+    break;
+  }
+
   if (pl.infobox_config.panel >= InfoBoxSettings::MAX_PANELS)
     return;
-  if (page == 0 && pl.top_layout == PageSettings::PageLayout::tlEmpty)
+  if (page == 0 && !pl.IsDefined())
     return;
+
+  _tcscpy(profileKey + prefixLen, _T("Bottom"));
+  if (!Profile::GetEnum(profileKey, pl.bottom) ||
+      unsigned(pl.bottom) >= unsigned(PageLayout::Bottom::MAX))
+    pl.bottom = PageLayout::Bottom::NOTHING;
+
+  _tcscpy(profileKey + prefixLen, _T("Main"));
+  if (!Profile::GetEnum(profileKey, pl.main) ||
+      unsigned(pl.main) >= unsigned(PageLayout::Main::MAX))
+    pl.main = PageLayout::Main::MAP;
 
   _pl = pl;
 }
@@ -61,10 +87,12 @@ Profile::Load(PageSettings &settings)
 {
   for (unsigned i = 0; i < PageSettings::MAX_PAGES; ++i)
     ::Load(settings.pages[i], i);
+
+  settings.Compress();
 }
 
 void
-Profile::Save(const PageSettings::PageLayout &page, const unsigned i)
+Profile::Save(const PageLayout &page, const unsigned i)
 {
   TCHAR profileKey[32];
   unsigned prefixLen = _stprintf(profileKey, _T("Page%u"), i);
@@ -74,8 +102,20 @@ Profile::Save(const PageSettings::PageLayout &page, const unsigned i)
   Profile::Set(profileKey, page.infobox_config.auto_switch);
   _tcscpy(profileKey + prefixLen, _T("InfoBoxPanel"));
   Profile::Set(profileKey, page.infobox_config.panel);
+
   _tcscpy(profileKey + prefixLen, _T("Layout"));
-  Profile::Set(profileKey, page.top_layout);
+  Profile::Set(profileKey,
+               page.valid
+               ? (page.infobox_config.enabled
+                  ? tlMapAndInfoBoxes
+                  : tlMap)
+               : tlEmpty);
+
+  _tcscpy(profileKey + prefixLen, _T("Bottom"));
+  Profile::Set(profileKey, (unsigned)page.bottom);
+
+  _tcscpy(profileKey + prefixLen, _T("Main"));
+  Profile::Set(profileKey, (unsigned)page.main);
 }
 
 

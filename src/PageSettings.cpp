@@ -25,21 +25,36 @@ Copyright_License {
 #include "InfoBoxes/InfoBoxSettings.hpp"
 #include "Language/Language.hpp"
 
+#include <algorithm>
+
 #include <stdio.h>
 
 void
-PageSettings::PageLayout::MakeTitle(const InfoBoxSettings &info_box_settings,
-                                    TCHAR *buffer, const bool concise) const
+PageLayout::MakeTitle(const InfoBoxSettings &info_box_settings,
+                      TCHAR *buffer, const bool concise) const
 {
-  switch (top_layout) {
-  case PageSettings::PageLayout::tlMap:
-    if (concise)
-      _tcscpy(buffer, _("Info Hide"));
-    else
-      _tcscpy(buffer, _("Map (Full screen)"));
+  if (!valid) {
+    _tcscpy(buffer, _T("---"));
+    return;
+  }
+
+  switch (main) {
+  case PageLayout::Main::MAP:
     break;
 
-  case PageSettings::PageLayout::tlMapAndInfoBoxes:
+  case PageLayout::Main::FLARM_RADAR:
+    _tcscpy(buffer, _("FLARM radar"));
+    return;
+
+  case PageLayout::Main::THERMAL_ASSISTANT:
+    _tcscpy(buffer, _("Thermal assistant"));
+    return;
+
+  case PageLayout::Main::MAX:
+    gcc_unreachable();
+  }
+
+  if (infobox_config.enabled) {
     _tcscpy(buffer, concise ? _("Info") : _("Map and InfoBoxes"));
 
     if (!infobox_config.auto_switch &&
@@ -58,20 +73,45 @@ PageSettings::PageLayout::MakeTitle(const InfoBoxSettings &info_box_settings,
         _tcscat(buffer, _T(")"));
       }
     }
+  } else {
+    if (concise)
+      _tcscpy(buffer, _("Info Hide"));
+    else
+      _tcscpy(buffer, _("Map (Full screen)"));
+  }
+
+  switch (bottom) {
+  case Bottom::NOTHING:
     break;
 
-  default:
-    _tcscpy(buffer, _T("---"));
+  case Bottom::CROSS_SECTION:
+    // TODO: better text and translate
+    _tcscat(buffer, _T(", XS"));
     break;
+
+  case Bottom::MAX:
+    gcc_unreachable();
   }
 }
 
 void
 PageSettings::SetDefaults()
 {
-  pages[0] = PageLayout(PageLayout::tlMapAndInfoBoxes, InfoBoxConfig(true, 0));
-  pages[1] = PageLayout(PageLayout::tlMap, InfoBoxConfig(true, 0));
+  pages[0] = PageLayout::Default();
+  pages[1] = PageLayout::FullScreen();
 
-  for (unsigned i = 2; i < MAX_PAGES; ++i)
-    pages[i].SetDefaults();
+  std::fill(pages.begin() + 2, pages.end(), PageLayout::Undefined());
+
+  n_pages = 2;
+}
+
+void
+PageSettings::Compress()
+{
+  auto last = std::remove_if(pages.begin(), pages.end(),
+                             [](const PageLayout &layout) {
+                               return !layout.IsDefined();
+                             });
+  std::fill(last, pages.end(), PageLayout::Undefined());
+  n_pages = std::distance(pages.begin(), last);
 }
