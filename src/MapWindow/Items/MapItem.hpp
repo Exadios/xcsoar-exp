@@ -24,16 +24,16 @@ Copyright_License {
 #ifndef XCSOAR_MAP_ITEM_HPP
 #define XCSOAR_MAP_ITEM_HPP
 
-#include "Util/StaticArray.hpp"
 #include "Geo/GeoPoint.hpp"
 #include "Geo/GeoVector.hpp"
-#include "Task/ObservationZones/ObservationZonePoint.hpp"
 #include "Markers/Marker.hpp"
-#include "FLARM/Traffic.hpp"
+#include "FLARM/FlarmId.hpp"
 #include "FLARM/Color.hpp"
 #include "NMEA/ThermalLocator.hpp"
 #include "Weather/Features.hpp"
 #include "Engine/Route/ReachResult.hpp"
+#include "Tracking/SkyLines/Features.hpp"
+#include "Util/StaticString.hpp"
 
 #ifdef HAVE_NOAA
 #include "Weather/NOAAStore.hpp"
@@ -43,6 +43,7 @@ enum class TaskPointType : uint8_t;
 
 class AbstractAirspace;
 struct Waypoint;
+class ObservationZonePoint;
 
 struct MapItem
 {
@@ -59,6 +60,9 @@ struct MapItem
     THERMAL,
     WAYPOINT,
     TRAFFIC,
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+    SKYLINES_TRAFFIC,
+#endif
   } type;
 
 protected:
@@ -115,13 +119,8 @@ struct TaskOZMapItem: public MapItem
   const Waypoint &waypoint;
 
   TaskOZMapItem(int _index, const ObservationZonePoint &_oz,
-                TaskPointType _tp_type, const Waypoint &_waypoint)
-    :MapItem(TASK_OZ), index(_index), oz(_oz.Clone()),
-     tp_type(_tp_type), waypoint(_waypoint) {}
-
-  ~TaskOZMapItem() {
-    delete oz;
-  }
+                TaskPointType _tp_type, const Waypoint &_waypoint);
+  virtual ~TaskOZMapItem();
 };
 
 struct AirspaceMapItem: public MapItem
@@ -164,9 +163,25 @@ struct TrafficMapItem: public MapItem
   FlarmId id;
   FlarmColor color;
 
-  TrafficMapItem(const FlarmTraffic &_traffic, FlarmColor _color)
-    :MapItem(TRAFFIC), id(_traffic.id), color(_color) {}
+  TrafficMapItem(FlarmId _id, FlarmColor _color)
+    :MapItem(TRAFFIC), id(_id), color(_color) {}
 };
+
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+
+struct SkyLinesTrafficMapItem : public MapItem
+{
+  uint32_t id, time_of_day_ms;
+
+  StaticString<40> name;
+
+  SkyLinesTrafficMapItem(uint32_t _id, uint32_t _time_of_day_ms,
+                         const TCHAR *_name)
+    :MapItem(SKYLINES_TRAFFIC), id(_id), time_of_day_ms(_time_of_day_ms),
+     name(_name) {}
+};
+
+#endif
 
 struct ThermalMapItem: public MapItem
 {

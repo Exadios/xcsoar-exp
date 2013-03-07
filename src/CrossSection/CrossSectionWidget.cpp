@@ -29,34 +29,9 @@
 #include "Components.hpp"
 
 void
-CrossSectionWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
-{
-  const Look &look = UIGlobals::GetLook();
-
-  WindowStyle style;
-  style.Hide();
-
-  CrossSectionWindow *w =
-    new CrossSectionWindow(look.cross_section, look.map.airspace, look.chart);
-  w->SetAirspaces(&airspace_database);
-  w->SetTerrain(terrain);
-  w->Create(parent, rc, style);
-
-  SetWindow(w);
-
-  CommonInterface::GetLiveBlackboard().AddListener(*this);
-}
-
-void
-CrossSectionWidget::Unprepare()
-{
-  CommonInterface::GetLiveBlackboard().RemoveListener(*this);
-  DeleteWindow();
-}
-
-void
-CrossSectionWidget::OnCalculatedUpdate(const MoreData &basic,
-                                       const DerivedInfo &calculated)
+CrossSectionWidget::Update(const MoreData &basic,
+                           const DerivedInfo &calculated,
+                           const AirspaceRendererSettings &settings)
 {
   CrossSectionWindow &w = *(CrossSectionWindow *)GetWindow();
 
@@ -66,8 +41,58 @@ CrossSectionWidget::OnCalculatedUpdate(const MoreData &basic,
   if (basic.location_available && basic.track_available) {
     w.SetStart(basic.location);
     w.SetDirection(basic.track);
+    w.SetRange(fixed(50000));
   } else
     w.SetInvalid();
 
   w.Invalidate();
+}
+
+void
+CrossSectionWidget::Prepare(ContainerWindow &parent, const PixelRect &rc)
+{
+  const Look &look = UIGlobals::GetLook();
+
+  WindowStyle style;
+  style.Hide();
+  style.Disable();
+
+  CrossSectionWindow *w =
+    new CrossSectionWindow(look.cross_section, look.map.airspace, look.chart);
+  w->SetAirspaces(&airspace_database);
+  w->SetTerrain(terrain);
+  w->Create(parent, rc, style);
+
+  SetWindow(w);
+}
+
+void
+CrossSectionWidget::Unprepare()
+{
+  DeleteWindow();
+}
+
+void
+CrossSectionWidget::Show(const PixelRect &rc)
+{
+  Update(CommonInterface::Basic(), CommonInterface::Calculated(),
+         CommonInterface::GetMapSettings().airspace);
+  CommonInterface::GetLiveBlackboard().AddListener(*this);
+
+  WindowWidget::Show(rc);
+}
+
+void
+CrossSectionWidget::Hide()
+{
+  WindowWidget::Hide();
+
+  CommonInterface::GetLiveBlackboard().RemoveListener(*this);
+}
+
+void
+CrossSectionWidget::OnCalculatedUpdate(const MoreData &basic,
+                                       const DerivedInfo &calculated)
+{
+  Update(basic, calculated, CommonInterface::GetMapSettings().airspace);
 }

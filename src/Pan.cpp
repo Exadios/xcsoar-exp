@@ -22,10 +22,12 @@ Copyright_License {
 */
 
 #include "Pan.hpp"
+#include "UIGlobals.hpp"
+#include "UIActions.hpp"
 #include "MainWindow.hpp"
 #include "MapWindow/GlueMapWindow.hpp"
 #include "Interface.hpp"
-#include "Pages.hpp"
+#include "PageActions.hpp"
 #include "Input/InputEvents.hpp"
 
 #include <assert.h>
@@ -33,9 +35,7 @@ Copyright_License {
 bool
 IsPanning()
 {
-  assert(CommonInterface::main_window != NULL);
-
-  const GlueMapWindow *map = CommonInterface::main_window->GetMapIfActive();
+  const GlueMapWindow *map = UIGlobals::GetMapIfActive();
   return map != NULL && map->IsPanning();
 }
 
@@ -44,14 +44,14 @@ EnterPan()
 {
   assert(CommonInterface::main_window != NULL);
 
-  GlueMapWindow *map = CommonInterface::main_window->ActivateMap();
+  GlueMapWindow *map = PageActions::ShowOnlyMap();
   if (map == NULL || map->IsPanning())
     return;
 
   map->SetPan(true);
 
-  InputEvents::setMode(InputEvents::MODE_PAN);
-  CommonInterface::main_window->SetFullScreen(true);
+  InputEvents::setMode(InputEvents::MODE_DEFAULT);
+  InputEvents::UpdatePan();
 }
 
 bool
@@ -59,38 +59,34 @@ PanTo(const GeoPoint &location)
 {
   assert(CommonInterface::main_window != NULL);
 
-  GlueMapWindow *map = CommonInterface::main_window->ActivateMap();
+  GlueMapWindow *map = PageActions::ShowOnlyMap();
   if (map == NULL)
     return false;
 
   map->PanTo(location);
 
-  InputEvents::setMode(InputEvents::MODE_PAN);
-  CommonInterface::main_window->SetFullScreen(true);
+  InputEvents::setMode(InputEvents::MODE_DEFAULT);
+  InputEvents::UpdatePan();
   return true;
 }
 
 void
 LeavePan()
 {
-  assert(CommonInterface::main_window != NULL);
-
-  GlueMapWindow *map = CommonInterface::main_window->GetMapIfActive();
+  GlueMapWindow *map = UIGlobals::GetMapIfActive();
   if (map == NULL || !map->IsPanning())
     return;
 
   map->SetPan(false);
 
-  setMode(InputEvents::MODE_DEFAULT);
-  Pages::Update();
+  InputEvents::UpdatePan();
+  PageActions::Restore();
 }
 
 void
 TogglePan()
 {
-  assert(CommonInterface::main_window != NULL);
-
-  const GlueMapWindow *map = CommonInterface::main_window->GetMap();
+  GlueMapWindow *map = UIGlobals::GetMap();
   if (map == NULL)
     EnterPan();
   else if (map->IsPanning())

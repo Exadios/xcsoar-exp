@@ -66,7 +66,8 @@ public:
   virtual void OnPaint(Canvas &canvas) override;
 };
 
-class TerrainDisplayConfigPanel : public RowFormWidget, DataFieldListener {
+class TerrainDisplayConfigPanel final
+  : public RowFormWidget, DataFieldListener {
 
 protected:
   TerrainRendererSettings terrain_settings;
@@ -75,10 +76,12 @@ public:
   TerrainDisplayConfigPanel()
     :RowFormWidget(UIGlobals::GetDialogLook()) {}
 
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc);
-  virtual bool Save(bool &changed, bool &require_restart);
   void ShowTerrainControls();
   void OnPreviewPaint(Canvas &canvas);
+
+  /* methods from Widget */
+  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc) override;
+  virtual bool Save(bool &changed, bool &require_restart) override;
 
 protected:
   /* methods from DataFieldListener */
@@ -207,7 +210,7 @@ TerrainDisplayConfigPanel::Prepare(ContainerWindow &parent, const PixelRect &rc)
   };
 
   AddEnum(_("Slope shading"),
-          _("The terrain can be shaded among slopes to indicate either wind direction, sun position or a fixed shading from north-east."),
+          _("The terrain can be shaded among slopes to indicate either wind direction, sun position or a fixed shading from North-West."),
           slope_shading_list, (unsigned)terrain.slope_shading);
   GetDataField(TerrainSlopeShading).SetListener(this);
   SetExpertRow(TerrainSlopeShading);

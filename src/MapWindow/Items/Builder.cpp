@@ -21,8 +21,9 @@ Copyright_License {
 }
 */
 
-#include "MapItemListBuilder.hpp"
-
+#include "Builder.hpp"
+#include "MapItem.hpp"
+#include "List.hpp"
 #include "Util/StaticArray.hpp"
 #include "Engine/Airspace/AirspaceVisitor.hpp"
 #include "Engine/Airspace/AirspaceWarning.hpp"
@@ -40,13 +41,14 @@ Copyright_License {
 #include "Markers/ProtectedMarkers.hpp"
 #include "Markers/Markers.hpp"
 #include "NMEA/ThermalLocator.hpp"
-#include "MapItem.hpp"
-#include "MapItemList.hpp"
 #include "NMEA/MoreData.hpp"
 #include "NMEA/Derived.hpp"
 #include "Terrain/RasterTerrain.hpp"
 #include "FLARM/Friends.hpp"
 #include "TeamCodeSettings.hpp"
+#include "Tracking/SkyLines/Data.hpp"
+#include "Tracking/TrackingGlue.hpp"
+#include "Components.hpp"
 
 #ifdef HAVE_NOAA
 #include "Weather/NOAAStore.hpp"
@@ -291,9 +293,42 @@ MapItemListBuilder::AddTraffic(const TrafficList &flarm)
 
     if (location.Distance(t.location) < range) {
       auto color = FlarmFriends::GetFriendColor(t.id);
-      list.append(new TrafficMapItem(t, color));
+      list.append(new TrafficMapItem(t.id, color));
     }
   }
+}
+
+void
+MapItemListBuilder::AddSkyLinesTraffic()
+{
+#ifdef HAVE_SKYLINES_TRACKING_HANDLER
+  const auto &data = tracking->GetSkyLinesData();
+  const ScopeLock protect(data.mutex);
+
+  StaticString<32> buffer;
+
+  for (const auto &i : data.traffic) {
+    if (list.full())
+      break;
+
+    if (i.second.location.IsValid() &&
+        location.Distance(i.second.location) < range) {
+      const uint32_t id = i.first;
+      auto name_i = data.user_names.find(id);
+      const TCHAR *name;
+      if (name_i == data.user_names.end()) {
+        /* no name found */
+        buffer.UnsafeFormat(_T("SkyLines %u"), (unsigned)id);
+        name = buffer;
+      } else
+        /* we know the name */
+        name = name_i->second.c_str();
+
+      list.append(new SkyLinesTrafficMapItem(id, i.second.time_of_day_ms,
+                                             name));
+    }
+  }
+#endif
 }
 
 void

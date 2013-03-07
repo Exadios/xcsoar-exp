@@ -79,6 +79,7 @@ enum {
   LANG_SPANISH,
   LANG_FINNISH,
   LANG_FRENCH,
+  LANG_HEBREW,
   LANG_CROATIAN,
   LANG_HUNGARIAN,
   LANG_ITALIAN,
@@ -95,6 +96,7 @@ enum {
   LANG_SWEDISH,
   LANG_TURKISH,
   LANG_UKRAINIAN,
+  LANG_VIETNAMESE,
 };
 #endif
 
@@ -106,6 +108,7 @@ const BuiltinLanguage language_table[] = {
   { LANG_SPANISH, _T("es.mo"), _T("Spanish") },
   { LANG_FINNISH, _T("fi.mo"), _T("Finnish") },
   { LANG_FRENCH, _T("fr.mo"), _T("French") },
+  { LANG_HEBREW, _T("he.mo"), _T("Hebrew") },
   { LANG_CROATIAN, _T("hr.mo"), _T("Croatian") },
   { LANG_HUNGARIAN, _T("hu.mo"), _T("Hungarian") },
   { LANG_ITALIAN, _T("it.mo"), _T("Italian") },
@@ -127,6 +130,7 @@ const BuiltinLanguage language_table[] = {
   { LANG_SWEDISH, _T("sv.mo"), _T("Swedish") },
   { LANG_TURKISH, _T("tr.mo"), _T("Turkish") },
   { LANG_UKRAINIAN, _T("uk.mo"), _T("Ukranian") },
+  { LANG_VIETNAMESE, _T("vi.mo"), _T("Vietnamese") },
   { 0, NULL }
 };
 

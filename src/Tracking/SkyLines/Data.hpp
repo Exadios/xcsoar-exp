@@ -26,24 +26,47 @@ Copyright_License {
 
 #include "Geo/GeoPoint.hpp"
 #include "Thread/Mutex.hpp"
+#include "Util/tstring.hpp"
+#include "Compiler.h"
 
 #include <map>
+
+#include <stdint.h>
 
 namespace SkyLinesTracking {
   struct Data {
     struct Traffic {
+      /**
+       * Millisecond of day.
+       *
+       * @see SkyLinesTracking::TrafficResponsePacket::Traffic::time
+       */
+      uint32_t time_of_day_ms;
+
       GeoPoint location;
       int altitude;
 
       Traffic() = default;
-      constexpr Traffic(GeoPoint _location,
+      constexpr Traffic(uint32_t _time, GeoPoint _location,
                         int _altitude)
-        :location(_location), altitude(_altitude) {}
+        :time_of_day_ms(_time),
+         location(_location), altitude(_altitude) {}
     };
 
     mutable Mutex mutex;
 
-    std::map<unsigned, Traffic> traffic;
+    std::map<uint32_t, Traffic> traffic;
+
+    /**
+     * A database of user-id to display-name.  An empty string means
+     * the server has failed/refused to supply a name.
+     */
+    std::map<uint32_t, tstring> user_names;
+
+    gcc_pure
+    bool IsUserKnown(uint32_t id) const {
+      return user_names.find(id) != user_names.end();
+    }
   };
 }
 
