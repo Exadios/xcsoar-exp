@@ -10,11 +10,11 @@ else
 HOST_CPPFLAGS = $(INCLUDES) $(CPPFLAGS)
 HOST_CXXFLAGS = $(OPTIMIZE) $(CXX_FEATURES) $(CXXFLAGS)
 endif
-HOST_CFLAGS = $(OPTIMIZE) $(C_FEATURES) $(CFLAGS) -m32
+HOST_CFLAGS = $(OPTIMIZE) $(C_FEATURES) $(CFLAGS)
 
 host-cc-flags = $(DEPFLAGS) $(HOST_CFLAGS) $(HOST_CPPFLAGS)
 host-cxx-flags = $(DEPFLAGS) $(HOST_CXXFLAGS) $(HOST_CPPFLAGS)
-host-ld-libs = -lm -lstdc++ -m32
+host-ld-libs = -lm -lstdc++
 
 $(HOST_OUTPUT_DIR)/%.o: %.c | $(HOST_OUTPUT_DIR)/%/../dirstamp
 	@$(NQ)echo "  HOSTCC  $@"

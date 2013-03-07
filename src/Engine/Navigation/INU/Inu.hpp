@@ -121,7 +121,7 @@ private:
    * Has Compute been initialized by one, or more, sample(s).
    */
   bool init;
- `};
+  };
 
 /**
  * \@}
