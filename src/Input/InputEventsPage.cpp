@@ -21,58 +21,13 @@ Copyright_License {
 }
 */
 
-#include "Screen/Brush.hpp"
-#include "Screen/Bitmap.hpp"
-#include "Screen/Debug.hpp"
-
-#include <assert.h>
+#include "InputEvents.hpp"
+#include "Util/StringUtil.hpp"
+#include "PageActions.hpp"
 
 void
-Brush::Set(const Color c)
+InputEvents::eventPage(const TCHAR *misc)
 {
-  assert(IsScreenInitialized());
-
-  #ifndef USE_GDI
-  hollow = false;
-  color = c;
-  #else
-  Reset();
-  brush = ::CreateSolidBrush(c);
-  #endif
-}
-
-#ifdef HAVE_HATCHED_BRUSH
-
-void
-Brush::Set(const Bitmap &bitmap)
-{
-  /* GDI works best when the bitmap is 8x8 - to avoid bad performance,
-     disallow using any other bitmap size */
-  assert(bitmap.GetSize().cx == 8);
-  assert(bitmap.GetSize().cy == 8);
-
-  Reset();
-  brush = ::CreatePatternBrush(bitmap.GetNative());
-}
-
-#endif
-
-void
-Brush::Reset()
-{
-  assert(!IsDefined() || IsScreenInitialized());
-
-  #ifndef USE_GDI
-  hollow = true;
-  #else
-  if (brush != NULL) {
-#ifndef NDEBUG
-    bool success =
-#endif
-      ::DeleteObject(brush);
-    assert(success);
-
-    brush = NULL;
-  }
-  #endif
+  if (StringIsEqual(misc, _T("restore")))
+    PageActions::Restore();
 }

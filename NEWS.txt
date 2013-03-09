@@ -2,7 +2,7 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
-Version 6.5 - not yet released
+Version 6.5 - 2013/03/08
 * map
   - lower zoom levels possible while circling (#1120)
   - draw FAI triangle areas (#1563)
@@ -10,6 +10,7 @@ Version 6.5 - not yet released
   - added "Wind Up" display orientation
   - high-resolution terrain renderer (Android/Linux only)
   - kinetic panning (Android/Linux only)
+  - new terrain color ramp "Gaudy"
 * calculations
   - don't detect landing while climbing in a wave (#1330, #2289, #2406)
   - basic support for the contest "DMSt" (#2208)
