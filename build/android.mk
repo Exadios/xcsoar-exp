@@ -76,8 +76,7 @@ RAW_DIR = $(ANDROID_BUILD)/res/raw
 ifeq ($(TESTING),y)
 ICON_SVG = $(topdir)/Data/graphics/logo_red.svg
 else
-$(ANDROID_BUILD)/res/drawable/icon.png: $(DATA)/graphics/xcsoarswiftsplash_red_160.png | $(ANDROID_BUILD)/res/drawable/dirstamp
-	$(Q)$(IM_PREFIX)convert -scale 48x48 $< $@
+ICON_SVG = $(topdir)/Data/graphics/logo_red.svg
 endif  # TESTING
 
 $(ANDROID_BUILD)/res/drawable-ldpi/icon.png: $(ICON_SVG) | $(ANDROID_BUILD)/res/drawable-ldpi/dirstamp
@@ -166,6 +165,9 @@ ifeq ($(WINHOST),y)
 else
 	$(Q)$(ANDROID_SDK)/tools/android $(ANDROID_TOOL_OPTIONS) update project --path $(@D) --target $(ANDROID_SDK_PLATFORM)
 	$(Q)ln -s ../../../android/custom_rules.xml $(@D)/
+	$(Q)# pfb - kudge the com.exadios.xcsoar / org.xcsoar problem.
+	$(Q)cat $(@D)/build.xml | sed -f build/r.sed > $(@D)/build.xml.tmp
+	$(Q)mv $(@D)/build.xml.tmp $(@D)/build.xml
 endif
 ifeq ($(TESTING),y)
 	$(Q)ln -s ../../../../../../android/src/testing $(@D)/src/org/xcsoar
