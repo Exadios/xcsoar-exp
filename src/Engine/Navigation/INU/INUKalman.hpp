@@ -19,8 +19,8 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
-#ifndef KALMAN_HPP
-#define KALMAN_HPP
+#ifndef INUKALMAN_HPP
+#define INUKALMAN_HPP
 
 #include <Thread/Mutex.hpp>
 #include <Math/fixed.hpp>
@@ -141,4 +141,4 @@ class INUKalman : public Kalman::KFilter<fixed, false, false, false>
      */
     Mutex sl;
   };
-#endif // KALMAN_HPP
+#endif // INUKALMAN_HPP

@@ -274,7 +274,7 @@ $\dot{b_p}$ is the GPS rate of change of the clock bias scalar
 
 $\Delta f^e_g$ is the gyro drift vector
 
-$\Delta f^e_a$ is the accelerometer biase vector.
+$\Delta f^e_a$ is the accelerometer bias vector.
 
 \bigskip
 
@@ -448,6 +448,13 @@ and $g_g$ and $g_a$ are design constants and are typically less than one.
 
 \clearpage\setcounter{page}{1}
 \chapter[Energy]{Energy}
+
+\clearpage\setcounter{page}{1}
+\chapter[Using the Internal GPS on Android Devices]{Using the Internal GPS on Android Devices}
+
+In general the receiver bias errors are not avaliable at the API. Therefore these are set to zero.
+
+The GPS call back is only called when the position has changed. Therefore the Kalman code must account for this.
 
 \clearpage\setcounter{page}{1}
 \chapter[XCSoar Integration]{XCSoar Integration}
