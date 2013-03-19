@@ -97,24 +97,195 @@ The purpose of this design document is to describe an instrument that will provi
 
 A glider climbs as a result of an acceleration normal to the Geod. By observing the normal acceleration the climb velocity may be determined.
 \begin{equation}
+\label{BasicVarioEquation}
 v = \int{\left( a - g \right)} dt
 \end{equation}
-where $a$ is the observed acceleration normal to to the Geoid, $g$ is the acceleration due to gravity and $v$ is the velocity normal to the Geod.
+where $a$ is the observed acceleration normal to to the Geoid, $g$ is the acceleration due to gravity (which, by definition, is normal to the Geod) and $v$ is the velocity normal to the Geod.
+
+\clearpage\setcounter{page}{1}
+\chapter[Context]{Context}
+
+Here, a rotation from the $i$ basis to the $j$ basis is performed by the rotation matrix (Direction Cosine Matrix)
+
+\begin{equation}
+R^j_i =
+\begin{bmatrix}
+cos \left( \psi \right) cos \left( \theta \right) &
+sin \left( \psi \right) cos \left( \phi \right) + cos \left( \theta \right) sin \left( \theta \right) sin \left( \phi \right) &
+sin \left( \psi \right) sin \left( \phi \right) - cos \left( \psi \right) sin \left( \theta \right) cos \left( \phi \right) \\
+-sin \left( \psi \right) cos \left( \theta \right) &
+cos \left( \psi \right) cos \left( \phi \right) - sin \left( \psi \right) sin \left( \theta \right) sin \left( \phi \right) &
+cos \left( \psi \right) cos \left( \phi \right) \\
+sin \left( \theta \right) &
+-sin \left( \phi \right) cos \left( \theta \right) &
+cos \left( \theta \right) cos \left( \phi \right)
+\end{bmatrix}
+\end{equation}
+
+where
+
+$\psi$ is a rotation about the $Z$ axis
+
+$\theta$ is a rotation about the $Y$ axis
+
+$\phi$ is a rotation about the $X$ axis
+
+\bigskip
+
+And
+
+\begin{equation}
+R^j_i = \left( R^i_j \right) ^T
+\end{equation}
+
+\bigskip
+
+The Similarity Transform applies. If
+
+\begin{equation}
+v^i = A r^i
+\end{equation}
+then
+\begin{equation}
+v^j = R^j_i A R^i_j r^j
+\end{equation}
+
+\section[Bases]{Bases}
+
+\subsection[Earth Centered Inertial Fixed Basis]{Earth Centered Inertial Fixed Basis}
+
+\bigskip
+
+This basis, $i_X, i_Y, i_Z$, has its origin at the (nominal) center of the earth and rotationally fixed in inertial space. By convention the $Y$ domain of this basis is aligned with the center of the earth's rotation and the $Z$ domain intersects the equator at the point that inertial navigation is started (i.e. at time, $t$, zero). The $X$ domain is othoragonal to $Z$ and $Y$.
+
+This basis is denoted by $i$ as a super or sub script and is abreviated as ECIF.
+
+\bigskip
+
+\subsection[Earth Centered Earth Fixed Basis]{Earth Centered Earth Fixed Basis}
+
+\bigskip
+
+Like the ECIF basis this basis, $e_X, e_Y, e_Z$, has its origin at the nominal center of the earth. However this basis rotates in intertial space in sympathy with the earth. In epoch terms the $e$ basis and the $i$ basis are coincident at $t_0$.
+
+\bigskip
+
+The $e$ basis is related to the $i$ basis by
+
+\bigskip
+
+\begin{equation}
+R^e_i =
+\begin{bmatrix}
+cos \left( \lambda \left( t \right) \right) & 0 & -sin \left( \lambda \left( t \right) \right) \\
+0 & 1 & 0 \\
+sin \left( \lambda \left( t \right) \right) & 0 & cos \left( \lambda \left( t \right) \right)
+
+\end{bmatrix}
+\end{equation}
+
+\bigskip
+
+where
+
+$t$ is the time in the epoch - i.e. the time since $t_0$.
+
+$\lambda$ is the angle in the equatorial plane between the $e$ and $i$ bases.
+
+\bigskip
+
+This basis is given the abreviation ECEF.
+
+\subsection[Local Geodetic Basis]{Local Geodetic Basis}
+
+This basis, $g_X, g_Y, g_Z$, has its origin at the center of the IMU. It is oriented so that the $Y$ domain is aligned to north, the $X$ domain is aligned with east and the $Z$ domain is aligned with up (ENU).
+
+\bigskip
+
+This basis is given the abreviation LG.
+
+\bigskip
+
+The transform from the $e$ basis to the $g$ basis is given by
+
+\begin{equation}
+R^g_e =
+\begin{bmatrix}
+cos \left( \lambda \right) & 0 & -sin \left( \lambda \right) \\
+-sin \left( \lambda \right) sin \left( \phi \right) &
+cos \left( \phi \right) &
+-cos \left( \lambda \right) sin \left( \phi \right) \\
+cos \left( \phi \right) sin \left( \lambda \right) &
+sin \left( \phi \right) &
+cos \left( \lambda \right) cos \left( \phi \right)
+\end{bmatrix}
+\end{equation}
+
+\subsection[Navigation Basis]{Navigation Basis}
+
+This basis, $n_X, n_Y, n_Z$, is the $g$ basis rotated about the $Z$ axis by a wander angle, $\alpha$. This basis is introduced to avoid navigation problems at the poles.
+
+\bigskip
+
+The transform from the $e$ basis to the $n$ basis is
+
+\begin{equation}
+R^n_e =
+\begin{bmatrix}
+cos \left( \lambda \right) cos \left( \alpha \right) - sin \left( \lambda \right) sin \left( \phi \right) sin \left( \alpha \right) &
+cos \left( \phi \right) sin \left( \alpha \right) &
+-cos \left( \lambda \right) sin \left( \phi \right) sin \left( \alpha \right) \\
+-cos \left( \lambda \right) sin \left( \alpha \right) - sin \left( \lambda \right) sin \left( \phi \right) cos \left( \alpha \right) &
+cos \left( \alpha \right) cos \left( \phi \right) &
+sin \left( \lambda \right) sin \left( \alpha \right) - cos \left( \lambda \right) sin \left( \phi \right) cos \left( \alpha \right) \\
+cos \left( \phi \right) sin \left( \lambda \right) &
+sin \left( \phi \right) &
+cos \left( \lambda \right) sin \left( \phi \right)
+\end{bmatrix}
+\end{equation}
+
+\bigskip
+
+The transform from the $g$ basis to the $n$ basis is
+
+\begin{equation}
+R^n_g =
+\begin{bmatrix}
+cos \left( \alpha \right) & sin \left( \alpha \right) & 0 \\
+-sin \left( \alpha \right) & cos \left( \alpha \right) & 0 \\
+0 & 0 & 1
+\end{bmatrix}
+\end{equation}
+
+\bigskip
+
+It should be evident the the value of the $Z$ domain in either the $g$ or $n$ bases is the signal of interest in eqn. \ref{BasicVarioEquation}.
+
+\subsection[Relative Angular Velocity of Bases]{Relative Angular Velocity of Bases}
+
+When talking of an angular velocity it is necessary to ask with respect to what and in which basis is it observed. So an angular velocity, $\omega$, of basis $j$ relative to basis $i$ and expressed in the $j$ basis's domains is
+
+\begin{equation}
+\omega^j_{ij} =
+\begin{bmatrix}
+\omega^j_{ij,X} & \omega^j_{ij,Y} & \omega^j_{ij,Z}
+\end{bmatrix} ^T
+\end{equation}
 
 \clearpage\setcounter{page}{1}
 \chapter[Design]{Design}
 
-In order to observe $a$ it is necessary to have an accelerometer vector which is aligned with the Geodetical normal. This requires a level stable platform. This platform will consist of a "strapdown" inertial platform.
+In order to observe $a$ it is necessary to have an accelerometer vector which is aligned with the Geodetical normal. This requires a level stable platform. This platform will consist of a "strapdown" inertial measurement unit (IMU).
 
 \bigskip
 
-Given the quality of avaliable inertial sensors (gyros, accelerometers) it is unrealistic to attempt to build a stand alone dead reckoning inertial platform. It will be necessary to couple the platform to a GPS solution of position ($\phi$, $\lambda$, $h$, $t$). This coupling will need to be fairly tight - time constants will need to be less than sixty seconds.
+Given the quality of avaliable inertial sensors (gyros, accelerometers) it is unrealistic to attempt to build a stand alone dead reckoning inertial platform. It will be necessary to couple the platform to a GPS solution of position ($\phi$, $\lambda$, $h$, $t$). This coupling will need to be moderately tight - time constants will need to be less than sixty seconds.
 
 \bigskip
 
 The necessary integration of the intertial platform and the GPS solution will be effected using a suitably designed Kalman Filter. The output of the filter is position ($\phi$, $\lambda$ and $h$) and velocity ($v_N$, $v_E$ and $v_h$). The height, $h$, is the height above the Elipsoid in use (WGS84). The vertical velocity is normal to the Elipsoid which, for the purposes of this application, is close enough to the Geodetic normal that the two are considered equal. The general arrangement is shown in \ref{fig:001}.
 \begin{figure}
-\centering 
+\centering
 \includegraphics{G-Meter-fig-001.png}
 \caption[INS/GPS integration using a Kalman Filter]{INS/GPS integration using a Kalman Filter}
 \label{fig:001}
@@ -163,7 +334,22 @@ where
 
 \bigskip
 
-The vectors are functions of time and the super dots denote derivatives w.r.t. The skew-dynamtic matrices are of the form
+The earth's rotation rate, $\omega^e_{ie}$, is:
+
+\begin{equation}
+\omega^e_{ie} =
+\begin{bmatrix}
+0 & \omega_e & 0
+\end{bmatrix}
+\end{equation}
+where,
+\begin{equation}
+\omega_e = 7292115.0 \times 10^{-11}
+\end{equation} Rads/sec
+
+\bigskip
+
+The vectors are functions of time and the super dots denote derivatives with respect to time, $t$. The skew-dynamtic matrices are of the form
 \begin{equation}
 \Omega =
 \begin{bmatrix}
@@ -183,6 +369,10 @@ where
 
   $\omega^b_{ib}$ the measured angular velocities from the gyros w.r.t. the inertial frame in the body domain.
 
+\begin{equation}
+\Omega^b_{eb} = \omega^b_{ib} - R^b_e \omega^e_{ie}
+\end{equation}
+
 \subsection[Discrete Time Navigation System]{Discrete Time Navigation System}
 
 Consider a system in which the IMU is sampled at regular intervals, $t_{k+1} - t_k = \delta{T}$, then (\ref{eqn:dynamic}) becomes
@@ -190,7 +380,7 @@ Consider a system in which the IMU is sampled at regular intervals, $t_{k+1} - t
 R^e_b \left( t_{k + 1} \right) = R^e_b \left( t_k \right) e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)}
 \end{equation}
 \begin{equation}
-\dot{v}^e \left( t_k \right) = R^e_b \left( t_k \right) f^b - 2 \Omega^e_{eb} \left( t_k \right) v^e \left( t_k \right) + g^e \left( x^e \left( t_k \right) \right)
+\dot{v}^e \left( t_k \right) = R^e_b \left( t_k \right) f^b - 2 \Omega^e_{ib} \left( t_k \right) v^e \left( t_k \right) + g^e \left( x^e \left( t_k \right) \right)
 \end{equation}
 
 For computational efficiency the (1, 1) Pade approximation of $e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)}$, $P \left(e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)} \right)$, is
@@ -202,6 +392,9 @@ P \left( e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)} \right) =
 
 The implementation equations are
 \begin{equation}
+\hat{\Omega}^b_{eb} \left( t_k \right) = \omega^b_{ib} \left( t_k \right) - \left( \hat{R}^e_b \left( t_k \right) \right)^T \omega^e_{ie}
+\end{equation}
+\begin{equation}
 \hat{R}^e_b \left( t_{k + 1} \right) = \hat{R}^e_b \left( t_k \right) \left( 2I + \hat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)\left( 2I - \hat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)^{-1}
 \end{equation}
 \begin{equation}
@@ -211,7 +404,11 @@ where
 
   $\hat{R}^e_b$ is the estimate of the transformation matrix from the $b$ to the $e$ domains
 
-  $\hat{\Omega}e_{eb}$ is the estimate of the skew-symetric matrix of the angular velocity vector of the $b$ domain, w.r.t. the $e$ domain, $\omega_{eb}$ , coordinated in the $b$ domain
+  $\hat{\Omega}^e_{eb}$ is the estimate of the skew-symetric matrix of the angular velocity vector of the $b$ domain, w.r.t. the $e$ domain, $\omega_{eb}$ , coordinated in the $b$ domain
+
+  $\omega^b_{ib}$ is the body rotation rate read from the hardware gyros in the body domain.
+
+  $\omega^e_{ie}$ is the well know earth rotation rate in the ECEF basis.
 
   $\hat{\dot{v}}^e$ is the estimate of the accelerations in the $e$ domain
 
@@ -422,7 +619,7 @@ P_P \left( t_k | t_k \right) = \left[ I - K_P \left( t_k \right) O_P^{\mathrm{T}
 \hat{x} \left( t_k | t_k \right) = \hat{x} \left( t_k | t_{k - 1} \right) + K \left( t_k \right) \left[ z \left( t_k \right) - O_P^{\mathrm{T}} \left( t_k \right) \hat{x} \left( t_k | t_{k - 1} \right) \right]
 \end{equation}
 \begin{equation}
-K \left( t_k \right) = 
+K \left( t_k \right) =
 \begin{cases}
 \begin{bmatrix}
 K_P \left( t_k \right)\\
@@ -452,12 +649,24 @@ and $g_g$ and $g_a$ are design constants and are typically less than one.
 \clearpage\setcounter{page}{1}
 \chapter[Using the Internal GPS on Android Devices]{Using the Internal GPS on Android Devices}
 
-In general the receiver bias errors are not avaliable at the API. Therefore these are set to zero.
-
-The GPS call back is only called when the position has changed. Therefore the Kalman code must account for this.
+In general the receiver bias errors are not avaliable at the API in the Android context. Therefore these are set to zero.
 
 \clearpage\setcounter{page}{1}
 \chapter[XCSoar Integration]{XCSoar Integration}
+
+The GPS call back is invoked every 1000mS. This is setup in android/src/InternalGPS.java in the InternalGPS::run() method.
+
+\section[IMU Major States]{IMU Major States}
+
+\subsection[Align]{Align}
+
+\subsubsection[Coarse Align]{Coarse Align}
+
+\subsubsection[Fine Align]{Fine Align}
+
+\subsection[Navigate]{Navigation}
+
+\subsection[Aided]{Aided}
 
 \appendix
 

@@ -40,3 +40,5 @@ Workings.txt
 test/tools/*.o
 *.pyc
 *.pyo
+*.dblite
+*.test

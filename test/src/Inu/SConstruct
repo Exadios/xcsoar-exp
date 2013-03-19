@@ -1,0 +1,48 @@
+# Copyright_License {
+#
+#  XCSoar Glide Computer - http://www.xcsoar.org/
+#  Copyright (C) 2000-2012 The XCSoar Project
+#  A detailed list of copyright holders can be found in the file "AUTHORS".
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#}
+
+import os
+
+topdir = '../../..'
+topsrcdir = topdir + '/src'
+topobjdir = topdir + '/output/UNIX32/src'
+
+env = Environment(ENV = os.environ)
+verbose = ARGUMENTS.get('VERBOSE')
+if int(ARGUMENTS.get('VERBOSE', 0)):
+    env['CXXCOMSTR']  = 'Compiling $TARGET'
+    env['LINKCOMSTR'] = 'Linking $TARGET'
+env.Append(CXXFLAGS = '-I' + topsrcdir + ' ' +
+                      '-fno-exceptions ' +
+                      '-fno-rtti ' +
+                      '-std=gnu++0x ' +
+                      '-fno-threadsafe-statics ' +
+                      '-fmerge-all-constants ' +
+                      '-m32 ' +
+                      '-g')
+env.Append(LINKFLAGS = '-m32')
+
+env.StaticObject('Inu.test.cpp')
+env.Program(target = 'Inu.test',
+            CPPPATH = topsrcdir,
+            source = ['Inu.test.o',
+                      topobjdir + '/Engine/Navigation/INU/Inu.o',
+                      topobjdir + '/Math/kalman/kstatics.o'])
