@@ -69,6 +69,8 @@
 \pagenumbering{arabic}
 \renewcommand{\thepage}{\arabic{chapter}.\arabic{page}}
 
+\newcommand{\mat}[1]{\boldsymbol{#1}}
+
 \title{G Meter Variometer Design}
 
 \begin{document}
@@ -135,7 +137,7 @@ $\phi$ is a rotation about the $X$ axis
 And
 
 \begin{equation}
-R^j_i = \left( R^i_j \right) ^T
+\mat{R}^j_i = \left( \mat{R}^i_j \right) ^{\mathrm{T}}
 \end{equation}
 
 \bigskip
@@ -143,11 +145,11 @@ R^j_i = \left( R^i_j \right) ^T
 The Similarity Transform applies. If
 
 \begin{equation}
-v^i = A r^i
+\mat{v}^i = \mat{A} \mat{r}^i
 \end{equation}
 then
 \begin{equation}
-v^j = R^j_i A R^i_j r^j
+\mat{v}^j = \mat{R}^j_i \mat{A} \mat{R}^i_j \mat{r}^j
 \end{equation}
 
 \section[Bases]{Bases}
@@ -175,7 +177,7 @@ The $e$ basis is related to the $i$ basis by
 \bigskip
 
 \begin{equation}
-R^e_i =
+\mat{R}^e_i =
 \begin{bmatrix}
 cos \left( \lambda \left( t \right) \right) & 0 & -sin \left( \lambda \left( t \right) \right) \\
 0 & 1 & 0 \\
@@ -209,7 +211,7 @@ This basis is given the abreviation LG.
 The transform from the $e$ basis to the $g$ basis is given by
 
 \begin{equation}
-R^g_e =
+\mat{R}^g_e =
 \begin{bmatrix}
 cos \left( \lambda \right) & 0 & -sin \left( \lambda \right) \\
 -sin \left( \lambda \right) sin \left( \phi \right) &
@@ -230,7 +232,7 @@ This basis, $n_X, n_Y, n_Z$, is the $g$ basis rotated about the $Z$ axis by a wa
 The transform from the $e$ basis to the $n$ basis is
 
 \begin{equation}
-R^n_e =
+\mat{R}^n_e =
 \begin{bmatrix}
 cos \left( \lambda \right) cos \left( \alpha \right) - sin \left( \lambda \right) sin \left( \phi \right) sin \left( \alpha \right) &
 cos \left( \phi \right) sin \left( \alpha \right) &
@@ -249,7 +251,7 @@ cos \left( \lambda \right) sin \left( \phi \right)
 The transform from the $g$ basis to the $n$ basis is
 
 \begin{equation}
-R^n_g =
+\mat{R}^n_g =
 \begin{bmatrix}
 cos \left( \alpha \right) & sin \left( \alpha \right) & 0 \\
 -sin \left( \alpha \right) & cos \left( \alpha \right) & 0 \\
@@ -266,10 +268,27 @@ It should be evident the the value of the $Z$ domain in either the $g$ or $n$ ba
 When talking of an angular velocity it is necessary to ask with respect to what and in which basis is it observed. So an angular velocity, $\omega$, of basis $j$ relative to basis $i$ and expressed in the $j$ basis's domains is
 
 \begin{equation}
-\omega^j_{ij} =
+\mat{\omega}^j_{ij} =
 \begin{bmatrix}
 \omega^j_{ij,X} & \omega^j_{ij,Y} & \omega^j_{ij,Z}
-\end{bmatrix} ^T
+\end{bmatrix} ^{\mathrm{T}}
+\end{equation}
+
+\subsection[Skew Symmetrix Matrices]{Skew Symmetrix Matrices}
+
+\begin{equation}
+\mat{a} \times \mat{b} = \mat{A} \mat{b}
+\end{equation}
+
+where $\mat{A}$ is the skew matrix form of $\mat{a}$. The skew matrix form is
+
+\begin{equation}
+\mat{A} =
+\begin {bmatrix}
+0 & -a_3 & a_2 \\
+a_3 & 0 & -a_1 \\
+-a_2 & a_1 & 0
+\end{bmatrix}
 \end{equation}
 
 \clearpage\setcounter{page}{1}
@@ -295,49 +314,49 @@ The necessary integration of the intertial platform and the GPS solution will be
 
 In the following the $b$ super or sub script denote a variable in the body (aircraft) domain and the $e$ super or sub script denote a variable in the Earth Centered Earth Fixed (ECEF) domain.
 \begin{equation}
-f^e = R^e_b f^b
+\mat{f}^e = \mat{R}^e_b \mat{f}^b
 \label{eqn:BodytoECEFForce}
 \end{equation}
 where
 
-  $f^e$ is a force vector in the $e$ domain
+  $\mat{f}^e$ is a force vector in the $e$ domain
 
-  $f^b$ is a force vector in the $b$ domain which is read from the accelerometers
+  $\mat{f}^b$ is a force vector in the $b$ domain which is read from the accelerometers
 
-  $R^e_b$ is the transformation matrix from the $b$ domain to the $e$ domain.
+  $\mat{R}^e_b$ is the transformation matrix from the $b$ domain to the $e$ domain.
 
 \begin{equation}
 \begin{bmatrix}
-\dot{x^e}\\
-\dot{v^e}\\
-\dot{R^e_b}
+\dot{\mat{x}^e}\\
+\dot{\mat{v}^e}\\
+\dot{\mat{R}^e_b}
 \end{bmatrix}
 =
 \begin{bmatrix}
-v^e\\
-f^e - 2\Omega^e_{ie} v^e + g^e \left( x^e \right)\\
-R^e_b \Omega^b_{eb}
+\mat{v}^e\\
+\mat{f}^e - 2\mat{\Omega}^e_{ie} \mat{v}^e + \mat{g}^e \left( \mat{x}^e \right)\\
+\mat{R}^e_b \mat{\Omega}^b_{eb}
 \end{bmatrix}
 \label{eqn:dynamic}
 \end{equation}
 where
 
-  $x^e$ is the position vector in the $e$ domain
+  $\mat{x}^e$ is the position vector in the $e$ domain
 
-  $v^e$ is the velocity vector in the $e$ domain
+  $\mat{v}^e$ is the velocity vector in the $e$ domain
 
-  $\Omega^e_{ie}$ is the skew-symentric matrix of the earth's rotation rate, $\omega^e_{ie}$, which is well known
+  $\mat{\Omega}^e_{ie}$ is the skew-symentric matrix of the earth's rotation rate, $\mat{\omega}^e_{ie}$, which is well known
 
-  $\Omega^b_{eb}$ is the skew-symetric matrix of the angular velocity vector of the $b$ domain w.r.t. the $e$ domain, $\omega^b_{eb}$, coordinated in the $b$ domain
+  $\mat{\Omega}^b_{eb}$ is the skew-symetric matrix of the angular velocity vector of the $b$ domain w.r.t. the $e$ domain, $\mat{\omega}^b_{eb}$, coordinated in the $b$ domain
 
-  $g^e \left( x^e \right)$ is the force due to gravity at the current $e$ domain position, $x^e$.
+  $\mat{g}^e \left( \mat{x}^e \right)$ is the force due to gravity at the current $e$ domain position, $\mat{x}^e$.
 
 \bigskip
 
-The earth's rotation rate, $\omega^e_{ie}$, is:
+The earth's rotation rate, $\mat{\omega}^e_{ie}$, is:
 
 \begin{equation}
-\omega^e_{ie} =
+\mat{\omega}^e_{ie} =
 \begin{bmatrix}
 0 & \omega_e & 0
 \end{bmatrix}
@@ -351,7 +370,7 @@ where,
 
 The vectors are functions of time and the super dots denote derivatives with respect to time, $t$. The skew-dynamtic matrices are of the form
 \begin{equation}
-\Omega =
+\mat{\Omega} =
 \begin{bmatrix}
 0 & - \omega_z & \omega_y\\
 \omega_z & 0 & - \omega_x\\
@@ -359,89 +378,89 @@ The vectors are functions of time and the super dots denote derivatives with res
 \end{bmatrix}
 \end{equation}
 
-The angular velocity vector, $\omega^b_{eb}$, is given by
+The angular velocity vector, $\mat{\omega}^b_{eb}$, is given by
 \begin{equation}
-\omega^b_{eb} = \omega^b_{ib} - R^b_e \omega^e_{ie}
+\mat{\omega}^b_{eb} = \mat{\omega}^b_{ib} - \mat{R}^b_e \mat{\omega}^e_{ie}
 \text{, }
-R^b_e = R^{e\mathrm{T}}_b
+\mat{R}^b_e = \mat{R}^{e\mathrm{T}}_b
 \end{equation}
 where
 
-  $\omega^b_{ib}$ the measured angular velocities from the gyros w.r.t. the inertial frame in the body domain.
+  $\mat{\omega}^b_{ib}$ the measured angular velocities from the gyros w.r.t. the inertial frame in the body domain.
 
 \begin{equation}
-\Omega^b_{eb} = \omega^b_{ib} - R^b_e \omega^e_{ie}
+\mat{\Omega}^b_{eb} = \mat{\omega}^b_{ib} - \mat{R}^b_e \mat{\omega}^e_{ie}
 \end{equation}
 
 \subsection[Discrete Time Navigation System]{Discrete Time Navigation System}
 
 Consider a system in which the IMU is sampled at regular intervals, $t_{k+1} - t_k = \delta{T}$, then (\ref{eqn:dynamic}) becomes
 \begin{equation}
-R^e_b \left( t_{k + 1} \right) = R^e_b \left( t_k \right) e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)}
+\mat{R}^e_b \left( t_{k + 1} \right) = \mat{R}^e_b \left( t_k \right) e^{\left( \mat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)}
 \end{equation}
 \begin{equation}
-\dot{v}^e \left( t_k \right) = R^e_b \left( t_k \right) f^b - 2 \Omega^e_{ib} \left( t_k \right) v^e \left( t_k \right) + g^e \left( x^e \left( t_k \right) \right)
+\dot{\mat{v}}^e \left( t_k \right) = \mat{R}^e_b \left( t_k \right) \mat{f}^b - 2 \mat{\Omega}^e_{ib} \left( t_k \right) \mat{v}^e \left( t_k \right) + \mat{g}^e \left( \mat{x}^e \left( t_k \right) \right)
 \end{equation}
 
-For computational efficiency the (1, 1) Pade approximation of $e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)}$, $P \left(e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)} \right)$, is
+For computational efficiency the (1, 1) Pade approximation of $e^{\left( \mat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)}$, $P \left(e^{\left( \mat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)} \right)$, is
 \begin{equation}
-P \left( e^{\left( \Omega^b_{eb} \left( t_k \right) \delta{T} \right)} \right) = \left( 2I + \Omega^b_{eb} \left( t_k \right) \delta{T} \right)\left( 2I - \Omega^b_{eb} \left( t_k \right) \delta{T} \right)^{-1}
+P \left( e^{\left( \mat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)} \right) = \left( 2\mat{I} + \mat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)\left( 2\mat{I} - \mat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)^{-1}
 \end{equation}
 
 \bigskip
 
 The implementation equations are
 \begin{equation}
-\hat{\Omega}^b_{eb} \left( t_k \right) = \omega^b_{ib} \left( t_k \right) - \left( \hat{R}^e_b \left( t_k \right) \right)^T \omega^e_{ie}
+\hat{\mat{\Omega}}^b_{eb} \left( t_k \right) = \mat{\omega}^b_{ib} \left( t_k \right) - \left( \hat{\mat{R}}^e_b \left( t_k \right) \right)^{\mathrm{T}} \mat{\omega}^e_{ie}
 \end{equation}
 \begin{equation}
-\hat{R}^e_b \left( t_{k + 1} \right) = \hat{R}^e_b \left( t_k \right) \left( 2I + \hat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)\left( 2I - \hat{\Omega}^b_{eb} \left( t_k \right) \delta{T} \right)^{-1}
+\hat{\mat{R}}^e_b \left( t_{k + 1} \right) = \hat{\mat{R}}^e_b \left( t_k \right) \left( 2\mat{I} + \hat{\mat{\Omega}}^b_{eb} \left( t_k \right) \delta{T} \right)\left( 2\mat{I} - \hat{\mat{\Omega}}^b_{eb} \left( t_k \right) \delta{T} \right)^{-1}
 \end{equation}
 \begin{equation}
-\hat{\dot{v}}^e \left( t_k \right) = \hat{R}^e_b \left( t_k \right) \hat{f}^b - 2 \hat{\Omega}^e_{eb} \left( t_k \right) \hat{v}^e \left( t_k \right) + g^e \left( \hat{x}^e \left( t_k \right) \right)
+\hat{\dot{\mat{v}}}^e \left( t_k \right) = \hat{\mat{R}}^e_b \left( t_k \right) \hat{\mat{f}}^b - 2 \hat{\mat{\Omega}}^e_{eb} \left( t_k \right) \hat{\mat{v}}^e \left( t_k \right) + \mat{g}^e \left( \hat{\mat{x}}^e \left( t_k \right) \right)
 \end{equation}
 where
 
-  $\hat{R}^e_b$ is the estimate of the transformation matrix from the $b$ to the $e$ domains
+  $\hat{\mat{R}}^e_b$ is the estimate of the transformation matrix from the $b$ to the $e$ domains
 
-  $\hat{\Omega}^e_{eb}$ is the estimate of the skew-symetric matrix of the angular velocity vector of the $b$ domain, w.r.t. the $e$ domain, $\omega_{eb}$ , coordinated in the $b$ domain
+  $\hat{\mat{\Omega}}^e_{eb}$ is the estimate of the skew-symetric matrix of the angular velocity vector of the $b$ domain, w.r.t. the $e$ domain, $\mat{\omega}_{eb}$ , coordinated in the $b$ domain
 
-  $\omega^b_{ib}$ is the body rotation rate read from the hardware gyros in the body domain.
+  $\mat{\omega}^b_{ib}$ is the body rotation rate read from the hardware gyros in the body domain.
 
-  $\omega^e_{ie}$ is the well know earth rotation rate in the ECEF basis.
+  $\mat{\omega}^e_{ie}$ is the well know earth rotation rate in the ECEF basis.
 
-  $\hat{\dot{v}}^e$ is the estimate of the accelerations in the $e$ domain
+  $\hat{\dot{\mat{v}}}^e$ is the estimate of the accelerations in the $e$ domain
 
-  $\hat{f}^b$ is the estimate of the forces from the IMU in the $b$ domain
+  $\hat{\mat{f}}^b$ is the estimate of the forces from the IMU in the $b$ domain
 
-  $\hat{v}^e$ is the estimate of the velocities from the Kalman Filter in the $e$ domain
+  $\hat{\mat{v}}^e$ is the estimate of the velocities from the Kalman Filter in the $e$ domain
 
-  $g^e \left( \hat{x}^e \left(t_k \right) \right)$ is the estimate of the gravity force using the position from the Kalman Filter.
+  $\hat{g}^e \left( \hat{\mat{x}}^e \left(t_k \right) \right)$ is the estimate of the gravity force using the position from the Kalman Filter.
 
 \section[IMU Systematic Error Model]{IMU Systematic Error Model}
 
 The solution to $R^e_b \left( t \right)$ of (\ref{eqn:BodytoECEFForce}) is
 \begin{equation}
-R^e_b \left( t \right) = R^e_b \left( 0 \right) e^{\Omega^b_{eb} t}
+\mat{R}^e_b \left( t \right) = \mat{R}^e_b \left( 0 \right) e^{\mat{\Omega}^b_{eb} t}
 \label{eqn:DifferentialSolution}
 \end{equation}
-when $\Omega^b_{eb}$ is constant. Let the angular velocity errors of $\omega^b_{eb}$ caused by gyro drifts be $\Delta \omega^b_{eb}$, giving drifts $\Delta \Omega^b_{eb}$ in $\Omega^b_{eb}$ and $\Delta R^e_b \left( t \right)$ in $R^e_b \left( t \right)$. Then (\ref{eqn:DifferentialSolution}) can become
+when $\mat{\Omega}^b_{eb}$ is constant. Let the angular velocity errors of $\mat{\omega}^b_{eb}$ caused by gyro drifts be $\Delta \mat{\omega}^b_{eb}$, giving drifts $\Delta \mat{\Omega}^b_{eb}$ in $\mat{\Omega}^b_{eb}$ and $\Delta \mat{R}^e_b \left( t \right)$ in $\mat{R}^e_b \left( t \right)$. Then (\ref{eqn:DifferentialSolution}) can become
 \begin{equation}
-R^e_b \left( t \right) + \Delta R^e_b \left( t \right) = R^e_b \left( 0 \right) e^{\left( \Omega^b_{eb} + \Delta \Omega^b_{eb} t \right)} = R^e_b \left( t \right) + R^e_b \left( 0 \right) \Delta \Omega^e_{eb} \left( t \right) + \dotsb
+\mat{R}^e_b \left( t \right) + \Delta \mat{R}^e_b \left( t \right) = \mat{R}^e_b \left( 0 \right) e^{\left( \mat{\Omega}^b_{eb} + \Delta \mat{\Omega}^b_{eb} t \right)} = \mat{R}^e_b \left( t \right) + \mat{R}^e_b \left( 0 \right) \Delta \mat{\Omega}^e_{eb} \left( t \right) + \dotsb
 \end{equation}
-Let accelerometer bias be $\Delta f^b$, then
+Let accelerometer bias be $\Delta \mat{f}^b$, then
 \begin{equation}
-\left( R^e_b \left( t \right) + R^e_b \left( 0 \right) \Delta \Omega^b_{eb} t \right) \left( f^b + \Delta f^b \right) = f^e + R^e_b \left( t \right) \Delta f^b + R^e_b \left( 0 \right) \Delta \Omega^b_{eb} \left( f^b + \Delta f^b \right) t
+\left( \mat{R}^e_b \left( t \right) + \mat{R}^e_b \left( 0 \right) \Delta \mat{\Omega}^b_{eb} t \right) \left( f^b + \Delta \mat{f}^b \right) = \mat{f}^e + \mat{R}^e_b \left( t \right) \Delta \mat{f}^b + R^e_b \left( 0 \right) \Delta \mat{\Omega}^b_{eb} \left( \mat{f}^b + \Delta \mat{f}^b \right) t
 \end{equation}
 That is
 \begin{equation}
-\left( R^e_b \left( t \right) + R^e_b \left( 0 \right) \Delta \Omega^b_{eb} t \right) \left( f^b + \Delta f^b \right) = f^e + \Delta f^e_g + \Delta f^e_a t
+\left( \mat{R}^e_b \left( t \right) + \mat{R}^e_b \left( 0 \right) \Delta \mat{\Omega}^b_{eb} t \right) \left( \mat{f}^b + \Delta \mat{f}^b \right) = \mat{f}^e + \Delta \mat{f}^e_g + \Delta \mat{f}^e_a t
 \end{equation}
 where
 
-$\Delta f^e_g = R^e_b \Delta f^b$ is the gyro drifts
+$\Delta \mat{f}^e_g = \mat{R}^e_b \Delta \mat{f}^b$ is the gyro drifts
 
-$\Delta f^e_a = R^e_b \Delta \Omega^b_{eb} \left( f^b + \Delta f^b \right)$ is the accelerometer biases.
+$\Delta \mat{f}^e_a = \mat{R}^e_b \Delta \mat{\Omega}^b_{eb} \left( \mat{f}^b + \Delta \mat{f}^b \right)$ is the accelerometer biases.
 
 
 \section[Kalman Filter]{Kalman Filter}
@@ -450,43 +469,43 @@ Let the state space model of the Kalman Filter used to integrate the data be
 \begin{equation}
 x =
 \begin{bmatrix}
-x^e_p\\
+\mat{x}^e_p\\
 b_p\\
-\dot{x^e_p}\\
+\dot{\mat{x}^e_p}\\
 \dot{b_p}\\
-\Delta f^e_g\\
-\Delta f^e_a
+\Delta \mat{f}^e_g\\
+\Delta \mat{f}^e_a
 \end{bmatrix}
 \label{StateSpaceModel}
 \end{equation}
 where
 
-$x^e_p$ is the system position vector in the ECEF domain
+$\mat{x}^e_p$ is the system position vector in the ECEF domain
 
 $b_p$ is the GPS clock bias scalar
 
-$\dot{x^e_p}$ is the system velocity vector in the ECEF domain
+$\dot{\mat{x}^e_p}$ is the system velocity vector in the ECEF domain
 
 $\dot{b_p}$ is the GPS rate of change of the clock bias scalar
 
-$\Delta f^e_g$ is the gyro drift vector
+$\Delta \mat{f}^e_g$ is the gyro drift vector
 
-$\Delta f^e_a$ is the accelerometer bias vector.
+$\Delta \mat{f}^e_a$ is the accelerometer bias vector.
 
 \bigskip
 
 The plant model is
 \begin{equation}
-\hat{x} \left( t_{k + 1} | t_k \right) = A_k \hat{x} \left( t_k | t_k \right) + B u \left( t_k \right)
+\hat{\mat{x}} \left( t_{k + 1} | t_k \right) = \mat{A}_k \hat{\mat{x}} \left( t_k | t_k \right) + \mat{B} \mat{u} \left( t_k \right)
 \label{eqn:PlantModel}
 \end{equation}
-In this case the INS accelerations, $\dot{v}^e$, are introduced into the model via $u \left( t_k \right)$ and the time interval, $t_{k + 1} - t_k$, is equal to $\delta T$, the INS sample rate. The GPS sample rate is very likely to be more that a order of magnitude less than the INS sample rate. In the case where the two sample rates are synchronous then the filter can be implemented without additional observation error. In the case that they are not synchronous then the same filter is assumed (or hoped) that the introduced noise has a white Gaussian distribution. The GPS sample rate is $\Delta T = m \delta T$ where m is some integer in the synchronous case and a real number in the asynchronous case. (However, if m is an integer the sample rates are not necessarilly synchronous!)
+In this case the INS accelerations, $\dot{\mat{v}}^e$, are introduced into the model via $\mat{u} \left( t_k \right)$ and the time interval, $t_{k + 1} - t_k$, is equal to $\delta T$, the INS sample rate. The GPS sample rate is very likely to be more that a order of magnitude less than the INS sample rate. In the case where the two sample rates are synchronous then the filter can be implemented without additional observation error. In the case that they are not synchronous then the same filter is assumed (or hoped) that the introduced noise has a white Gaussian distribution. The GPS sample rate is $\Delta T = m \delta T$ where m is some integer in the synchronous case and a real number in the asynchronous case. (However, if m is an integer the sample rates are not necessarilly synchronous!)
 
 \bigskip
 
 So
 \begin{equation}
-u =
+\mat{u} =
 \begin{bmatrix}
 \dot{v^e_x}\\
 \dot{v^e_y}\\
@@ -495,7 +514,7 @@ u =
 \end{equation}
 and
 \begin{equation}
-B =
+\mat{B} =
 \begin{bmatrix}
 0 & 0 & 0\\
 0 & 0 & 0\\
@@ -518,15 +537,15 @@ B =
 
 The transition matrix is
 \begin{equation}
-A_k =
+\mat{A}_k =
 \begin{bmatrix}
-A_{11} & A_{12}\\
-0 & A_{22}
+\mat{A}_{11} & \mat{A}_{12}\\
+\mat{0} & \mat{A}_{22}
 \end{bmatrix}
 \end{equation}
 where
 \begin{equation}
-A_{11} =
+\mat{A}_{11} =
 \begin{bmatrix}
 1 & 0 & 0 & 0 & \delta T & 0 & 0 & 0\\
 0 & 1 & 0 & 0 & 0 & \delta T & 0 & 0\\
@@ -539,7 +558,7 @@ A_{11} =
 \end{bmatrix}
 \end{equation}
 \begin{equation}
-A_{12P} =
+\mat{A}_{12P} =
 \begin{bmatrix}
 0 & 0 & 0 & 0 & 0 & 0\\
 0 & 0 & 0 & 0 & 0 & 0\\
@@ -552,24 +571,24 @@ A_{12P} =
 \end{bmatrix}
 \end{equation}
 \begin{equation}
-A_{22P} =
+\mat{A}_{22P} =
 \begin{bmatrix}
-q_G I_{3 \times 3} & 0_{3 \times 3}\\
-0_{3 \times 3} & q_A I_{3 \times 3}
+q_G \mat{I}_{3 \times 3} & \mat{0}_{3 \times 3}\\
+\mat{0}_{3 \times 3} & q_A \mat{I}_{3 \times 3}
 \end{bmatrix}
 \end{equation}
 \begin{equation}
-A_{12} =
+\mat{A}_{12} =
 \begin{cases}
-A_{12P} & \text{if $k = mN$}\\
-0_{8 \times 6} & \text{otherwise}
+\mat{A}_{12P} & \text{if $k = mN$}\\
+\mat{0}_{8 \times 6} & \text{otherwise}
 \end{cases}
 \end{equation}
 \begin{equation}
-A_{22} =
+\mat{A}_{22} =
 \begin{cases}
-A_{22P} & \text{if $k = mN$}\\
-0_{6 \times 6} & \text{otherwise}
+\mat{A}_{22P} & \text{if $k = mN$}\\
+\mat{0}_{6 \times 6} & \text{otherwise}
 \end{cases}
 \end{equation}
 where $q_G$ and $q_A$ are the arbitary aging rates for the angular velocity drifts and the accelerometer biases.
@@ -578,64 +597,64 @@ where $q_G$ and $q_A$ are the arbitary aging rates for the angular velocity drif
 
 The observation model is
 \begin{equation}
-z \left( t_k \right) = O^{\mathrm{T}} \left( t_k \right) x \left( t_k \right)
+\mat{z} \left( t_k \right) = \mat{O}^{\mathrm{T}} \left( t_k \right) \mat{x} \left( t_k \right)
 \end{equation}
 \begin{equation}
-O^{\mathrm{T}} \left( t_k \right) =
+\mat{O}^{\mathrm{T}} \left( t_k \right) =
 \begin{cases}
-I_{8 \times 8} & \text{if $k = mN$}\\
-0 & \text{otherwise}\\
+\mat{I}_{8 \times 8} & \text{if $k = mN$}\\
+\mat{0} & \text{otherwise}\\
 \end{cases}
 \end{equation}
-where $x \left( t_k \right)$ is the observed data from the GPS here.
+where $\mat{x} \left( t_k \right)$ is the observed data from the GPS here.
 
 \subsection[Initialization]{Initialization}
 
 \begin{equation}
-\hat{x} \left( 0 | 0 \right) = x \left( 0 \right)
+\hat{\mat{x}} \left( 0 | 0 \right) = \mat{x} \left( 0 \right)
 \end{equation}
 \begin{equation}
-P \left( 0 | 0 \right) = P \left( 0 \right)
+\mat{P} \left( 0 | 0 \right) = \mat{P} \left( 0 \right)
 \end{equation}
 
 \subsection[Innovation]{Innovation}
 
 \begin{equation}
-\hat{x} \left( t_k | t_{k - 1} \right) = A \left( t_{k - 1} \right) \hat{x} \left( t_{k - 1} | t_{k - 1} \right) + B \left( t_{k - 1} \right) u \left( t_{k - 1} \right)
+\hat{\mat{x}} \left( t_k | t_{k - 1} \right) = \mat{A} \left( t_{k - 1} \right) \hat{\mat{x}} \left( t_{k - 1} | t_{k - 1} \right) + \mat{B} \left( t_{k - 1} \right) \mat{u} \left( t_{k - 1} \right)
 \end{equation}
 \begin{equation}
-P_P \left( t_k | t_{k - 1} \right) = A_{11} P_P \left( t_{k - 1} | t_{k - 1} \right) A^{\mathrm{T}}_{11} + Q_P \left( t_{k - 1} \right)
+\mat{P}_P \left( t_k | t_{k - 1} \right) = \mat{A}_{11} \mat{P}_P \left( t_{k - 1} | t_{k - 1} \right) \mat{A}^{\mathrm{T}}_{11} + \mat{Q}_P \left( t_{k - 1} \right)
 \end{equation}
 
 \subsection[Update]{Update}
 
 \begin{equation}
-K_P \left( t_k \right) = P_P \left( t_k | t_{k - 1} \right) O_P \left( t_k \right) \left[ O^{\mathrm{T}}_P \left( t_k \right) P_P \left( t_k | t_{k - 1} \right) O_P \left( t_k \right) + R \left( t_k \right) \right]^{-1}
+\mat{K}_P \left( t_k \right) = \mat{P}_P \left( t_k | t_{k - 1} \right) \mat{O}_P \left( t_k \right) \left[ \mat{O}^{\mathrm{T}}_P \left( t_k \right) \mat{P}_P \left( t_k | t_{k - 1} \right) \mat{O}_P \left( t_k \right) + \mat{R} \left( t_k \right) \right]^{-1}
 \end{equation}
 \begin{equation}
-P_P \left( t_k | t_k \right) = \left[ I - K_P \left( t_k \right) O_P^{\mathrm{T}} \left( t_k \right) \right] P_P \left( t_k | t_{k - 1} \right)
+\mat{P}_P \left( t_k | t_k \right) = \left[ \mat{I} - \mat{K}_P \left( t_k \right) \mat{O}_P^{\mathrm{T}} \left( t_k \right) \right] \mat{P}_P \left( t_k | t_{k - 1} \right)
 \end{equation}
 \begin{equation}
-\hat{x} \left( t_k | t_k \right) = \hat{x} \left( t_k | t_{k - 1} \right) + K \left( t_k \right) \left[ z \left( t_k \right) - O_P^{\mathrm{T}} \left( t_k \right) \hat{x} \left( t_k | t_{k - 1} \right) \right]
+\hat{\mat{x}} \left( t_k | t_k \right) = \hat{\mat{x}} \left( t_k | t_{k - 1} \right) + \mat{K} \left( t_k \right) \left[ \mat{z} \left( t_k \right) - \mat{O}_P^{\mathrm{T}} \left( t_k \right) \hat{\mat{x}} \left( t_k | t_{k - 1} \right) \right]
 \end{equation}
 \begin{equation}
-K \left( t_k \right) =
+\mat{K} \left( t_k \right) =
 \begin{cases}
 \begin{bmatrix}
-K_P \left( t_k \right)\\
-K_I \left( t_k \right)_{6 \times 8}\\
+\mat{K}_P \left( t_k \right)\\
+\mat{K}_I \left( t_k \right)_{6 \times 8}\\
 \end{bmatrix}
 & \text{, if $ k = mN$} \\
-0 & \text{, otherwise}
+\mat{0} & \text{, otherwise}
 \end{cases}
 \end{equation}
 where the Kalman gain of the three gyro drift and three accelerometer biases is
 
 \begin{equation}
-K_I \left( t_k \right)_{6 \times 8} =
+\mat{K}_I \left( t_k \right)_{6 \times 8} =
 \begin{bmatrix}
-0_{3 \times 3} & g_g I_{3 \times 3} & 0_{3 \times 2}\\
-0_{3 \times 3} & g_a I_{3 \times 3} & 0_{3 \times 2}\\
+\mat{0}_{3 \times 3} & g_g I_{3 \times 3} & \mat{0}_{3 \times 2}\\
+\mat{0}_{3 \times 3} & g_a I_{3 \times 3} & \mat{0}_{3 \times 2}\\
 \end{bmatrix}
 \end{equation}
 and $g_g$ and $g_a$ are design constants and are typically less than one.
