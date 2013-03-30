@@ -112,15 +112,15 @@ Here, a rotation from the $i$ basis to the $j$ basis is performed by the rotatio
 \begin{equation}
 R^j_i =
 \begin{bmatrix}
-cos \left( \psi \right) cos \left( \theta \right) &
-sin \left( \psi \right) cos \left( \phi \right) + cos \left( \theta \right) sin \left( \theta \right) sin \left( \phi \right) &
-sin \left( \psi \right) sin \left( \phi \right) - cos \left( \psi \right) sin \left( \theta \right) cos \left( \phi \right) \\
--sin \left( \psi \right) cos \left( \theta \right) &
-cos \left( \psi \right) cos \left( \phi \right) - sin \left( \psi \right) sin \left( \theta \right) sin \left( \phi \right) &
-cos \left( \psi \right) cos \left( \phi \right) \\
-sin \left( \theta \right) &
--sin \left( \phi \right) cos \left( \theta \right) &
-cos \left( \theta \right) cos \left( \phi \right)
+\cos \left( \psi \right) \cos \left( \theta \right) &
+\sin \left( \psi \right) \cos \left( \phi \right) + \cos \left( \theta \right) \sin \left( \theta \right) \sin \left( \phi \right) &
+\sin \left( \psi \right) \sin \left( \phi \right) - \cos \left( \psi \right) \sin \left( \theta \right) \cos \left( \phi \right) \\
+-\sin \left( \psi \right) \cos \left( \theta \right) &
+\cos \left( \psi \right) \cos \left( \phi \right) - \sin \left( \psi \right) \sin \left( \theta \right) \sin \left( \phi \right) &
+\cos \left( \psi \right) \cos \left( \phi \right) \\
+\sin \left( \theta \right) &
+-\sin \left( \phi \right) \cos \left( \theta \right) &
+\cos \left( \theta \right) \cos \left( \phi \right)
 \end{bmatrix}
 \end{equation}
 
@@ -179,9 +179,9 @@ The $e$ basis is related to the $i$ basis by
 \begin{equation}
 \mat{R}^e_i =
 \begin{bmatrix}
-cos \left( \lambda \left( t \right) \right) & 0 & -sin \left( \lambda \left( t \right) \right) \\
+\cos \left( \lambda \left( t \right) \right) & 0 & -\sin \left( \lambda \left( t \right) \right) \\
 0 & 1 & 0 \\
-sin \left( \lambda \left( t \right) \right) & 0 & cos \left( \lambda \left( t \right) \right)
+\sin \left( \lambda \left( t \right) \right) & 0 & \cos \left( \lambda \left( t \right) \right)
 
 \end{bmatrix}
 \end{equation}
@@ -213,13 +213,13 @@ The transform from the $e$ basis to the $g$ basis is given by
 \begin{equation}
 \mat{R}^g_e =
 \begin{bmatrix}
-cos \left( \lambda \right) & 0 & -sin \left( \lambda \right) \\
--sin \left( \lambda \right) sin \left( \phi \right) &
-cos \left( \phi \right) &
--cos \left( \lambda \right) sin \left( \phi \right) \\
-cos \left( \phi \right) sin \left( \lambda \right) &
-sin \left( \phi \right) &
-cos \left( \lambda \right) cos \left( \phi \right)
+\cos \left( \lambda \right) & 0 & -\sin \left( \lambda \right) \\
+-\sin \left( \lambda \right) \sin \left( \phi \right) &
+\cos \left( \phi \right) &
+-\cos \left( \lambda \right) \sin \left( \phi \right) \\
+\cos \left( \phi \right) \sin \left( \lambda \right) &
+\sin \left( \phi \right) &
+\cos \left( \lambda \right) \cos \left( \phi \right)
 \end{bmatrix}
 \end{equation}
 
@@ -234,15 +234,15 @@ The transform from the $e$ basis to the $n$ basis is
 \begin{equation}
 \mat{R}^n_e =
 \begin{bmatrix}
-cos \left( \lambda \right) cos \left( \alpha \right) - sin \left( \lambda \right) sin \left( \phi \right) sin \left( \alpha \right) &
-cos \left( \phi \right) sin \left( \alpha \right) &
--cos \left( \lambda \right) sin \left( \phi \right) sin \left( \alpha \right) \\
--cos \left( \lambda \right) sin \left( \alpha \right) - sin \left( \lambda \right) sin \left( \phi \right) cos \left( \alpha \right) &
-cos \left( \alpha \right) cos \left( \phi \right) &
-sin \left( \lambda \right) sin \left( \alpha \right) - cos \left( \lambda \right) sin \left( \phi \right) cos \left( \alpha \right) \\
-cos \left( \phi \right) sin \left( \lambda \right) &
-sin \left( \phi \right) &
-cos \left( \lambda \right) sin \left( \phi \right)
+\cos \left( \lambda \right) \cos \left( \alpha \right) - \sin \left( \lambda \right) \sin \left( \phi \right) \sin \left( \alpha \right) &
+\cos \left( \phi \right) \sin \left( \alpha \right) &
+-\cos \left( \lambda \right) \sin \left( \phi \right) \sin \left( \alpha \right) \\
+-\cos \left( \lambda \right) \sin \left( \alpha \right) - \sin \left( \lambda \right) \sin \left( \phi \right) \cos \left( \alpha \right) &
+\cos \left( \alpha \right) \cos \left( \phi \right) &
+\sin \left( \lambda \right) \sin \left( \alpha \right) - \cos \left( \lambda \right) \sin \left( \phi \right) \cos \left( \alpha \right) \\
+\cos \left( \phi \right) \sin \left( \lambda \right) &
+\sin \left( \phi \right) &
+\cos \left( \lambda \right) \sin \left( \phi \right)
 \end{bmatrix}
 \end{equation}
 
@@ -253,8 +253,8 @@ The transform from the $g$ basis to the $n$ basis is
 \begin{equation}
 \mat{R}^n_g =
 \begin{bmatrix}
-cos \left( \alpha \right) & sin \left( \alpha \right) & 0 \\
--sin \left( \alpha \right) & cos \left( \alpha \right) & 0 \\
+\cos \left( \alpha \right) & \sin \left( \alpha \right) & 0 \\
+-\sin \left( \alpha \right) & \cos \left( \alpha \right) & 0 \\
 0 & 0 & 1
 \end{bmatrix}
 \end{equation}
@@ -659,8 +659,54 @@ where the Kalman gain of the three gyro drift and three accelerometer biases is
 \end{equation}
 and $g_g$ and $g_a$ are design constants and are typically less than one.
 
+\section[Simulation and Testing]{Simulation and Testing}
 
+\subsection[Accelerometer Signal]{Accelerometer Signal}
 
+\begin{equation}
+\dot{\mat{v}}^n = \mat{a}^n - \left( \mat{\Omega}^n_{en} + 2 \mat{\Omega}^n_{ie} \right) \mat{v}^n - \mat{g}^n
+\end{equation}
+So,
+\begin{equation}
+\mat{a}^b = \mat{R}^b_n \left( \dot{\mat{v}}^n + \left( \mat{\Omega}^n_{en} + 2 \mat{\Omega}^n_{ie} \right) \mat{v}^n + \mat{g}^n \right)
+\end{equation}
+where
+\begin{equation}
+\dot{\mat{R}^b_n} = \mat{R}^b_n \left( 0 \right) \mat{\Omega}^n_{bn}
+\end{equation}
+where $\mat{R}^n_b \left( 0 \right)$ is the rotation from the $b$ to $n$ bases at $t = 0$ and is initialized by the caller.
+\begin{equation}
+\mat{\Omega}^n_{ie} = \mat{R}^n_e \mat{\Omega}^e_{ie} \mat{R}^e_n
+\end{equation}
+\begin{equation}
+\dot{\alpha} = \dot{\lambda} \sin \left( \phi \right), \alpha \left( t_0 \right) = 0
+\end{equation}
+\begin{equation}
+\mat{v}^n = \mat{R}^n_g \mat{v}^g
+\end{equation}
+\begin{equation}
+\mat{v}^g =
+\begin{bmatrix}
+\dot{\lambda} \left( r_{nor} + h \right) \cos \left( \phi \right) \\
+\dot{\phi} \left( r_{mer} + h \right) \\
+\dot{h}
+\end{bmatrix}
+\end{equation}
+\begin{equation}
+\mat{\omega}^n_{en} = \mat{R}^n_g
+\begin{bmatrix}
+-\dot{\phi} \\
+\dot{\lambda} \cos \left( \phi \right) \\
+0
+\end{bmatrix}
+\end{equation}
+
+\subsection[Gyro Signal]{Gyro Signal}
+
+\begin{equation}
+\mat{\Omega}^b_{ib} = R^b_n \left( \mat{\Omega}^n_{ie} + \mat{\Omega}^n_{en} + \mat{\Omega}^n_{nb} \right)
+\end{equation}
+The body rotations $\mat{\Omega}^n_{nb}$ are given by the caller.`
 
 \clearpage\setcounter{page}{1}
 \chapter[Energy]{Energy}
