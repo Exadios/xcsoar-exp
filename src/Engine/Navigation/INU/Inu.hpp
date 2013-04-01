@@ -40,7 +40,6 @@ typedef Kalman::KMatrix<fixed, false> IMUmatrix;
  * @file
  * A class to implement a Inertial Navigation Unit (INU) using gyros and
  * accelerometers (typically MEMS devices) found on many Android platforms.
- *
  */
 
 class Inu
@@ -60,15 +59,29 @@ public:
 
   /**
    * Update the state of the INS. To be called once every IMU sample, \deltaT.
-   * @param Omega The vector of the gyro rotation velocities in the 'b'
-   *              domain.
+   * @param w The vector of the gyro rotation velocities in the 'b'
+   *          domain.
    * @param f The vector of the accelerometer forces in the 'b' domain.
    * @param v The vector of the velocities in the 'e' domain.
    * @param gx The value of gravity, G, at our current position in the
    *           'e' domain.
    * @result If a result can be computed then true, false otherwise.
    */
-  bool Update(IMUmatrix& Omega, IMUvector& f, IMUvector& v, fixed gx);
+  bool Update(IMUvector& w, IMUvector& f, IMUvector& v, fixed gx);
+
+  /**
+   * Give the accelerations in the 'e' domain.
+   * @return The 'e' domain acceleration vector.
+   */
+  IMUvector v_dot_super_e() const;
+
+  /**
+   * Compute an approximate gravitational force ans a function of height
+   * above the Geod.
+   * @param h Height above the Geog in meters.
+   * @return Gravitational acceleration at h.
+   */
+  fixed gfh(fixed h) const;
 
 private:
      
@@ -90,14 +103,6 @@ private:
     }
 
   /**
-   * Compute an approximate gravitational force ans a function of height
-   * above the Geod.
-   * @param h Height above the Geog in meters.
-   * @return Gravitational acceleration at h.
-   */
-  fixed gfh(fixed h) const;
-
-  /**
    * The IMU sample rate in seconds.
    */
   fixed dt;
@@ -115,12 +120,17 @@ private:
   /**
    * The attitude rate in the 'e' domain.
    */
-     IMUmatrix Omega;
+  IMUmatrix Omega;
 
   /**
    * Has Compute been initialized by one, or more, sample(s).
    */
   bool init;
+
+  /**
+   * The value of the instrinsic earth rotation rate.
+   */
+  const fixed omega_ie;
   };
 
 /**

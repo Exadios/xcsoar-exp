@@ -25,31 +25,63 @@ topdir = './'
 topsrcdir = topdir + 'src/'
 
 env     = Environment(ENV = os.environ)
-verbose = ARGUMENTS.get('VERBOSE', 1)
-debug   = ARGUMENTS.get('DEBUG', 0)
+verbose = ARGUMENTS.get('VERBOSE', 0)
+debug   = ARGUMENTS.get('DEBUG', 1)
 targets = ARGUMENTS.get('TARGETS', ['UNIX32'])
-if int(verbose):
+enable_sdl = 1
+if int(verbose) == 0:
     env['CXXCOMSTR']  = 'Compiling $TARGET'
     env['LINKCOMSTR'] = 'Linking $TARGET'
+    env['ARCOMSTR']   = 'Archiving $TARGET'
 
 env.Append(CXXFLAGS = '-I' + topsrcdir + ' ' +
+                      '-I' + topsrcdir + 'unix/ ' +
+                      '-I' + topsrcdir + 'Engine/ ' +
+                      '-I./src/Terrain/jasper/.. ' +
+                      '-I/home/pfb/Software/Libraries/SDL_ttf/SDL_ttf-2.0.11/local/include/SDL ' +
+                      '-I/usr/include/SDL ' +
                       '-fno-exceptions ' +
                       '-fno-rtti ' +
                       '-std=gnu++0x ' +
                       '-fno-threadsafe-statics ' +
                       '-fmerge-all-constants ' +
                       '-funit-at-a-time ' +
-                      '-Wp ' +
                       '-m32 ' +
-                      '-g -O0 ' +
-                      '-DHAVE_POSIX ')
-env.Append(LINKFLAGS = '-m32')
+                      '-Os ' +
+                      '-Wuninitialized ' +
+                      '-ffast-math -ftree-vectorize ' +
+                      '-funsafe-loop-optimizations  -fno-exceptions ' +
+                      '-fno-rtti -std=gnu++0x -fno-threadsafe-statics ' +
+                      '-fmerge-all-constants -fconserve-space ' +
+                      '-fno-operator-names -fvisibility=hidden ' +
+                      '-ffunction-sections -finput-charset=utf-8 -Wall ' +
+                      '-Wextra -Wwrite-strings -Wcast-qual -Wpointer-arith '+
+                      '-Wsign-compare -Wundef -Wmissing-declarations ' +
+                      '-Wredundant-decls -Wmissing-noreturn ' +
+                      '-Wno-unused-parameter ' +
+                      '-Wno-missing-field-initializers  -Wcast-align ' +
+                      '-DHAVE_POSIX ' +
+                      '-DHAVE_STDINT_H -DHAVE_UNISTD_H -DHAVE_VASPRINTF ' +
+                      '-DRADIANS -DEYE_CANDY  -DHAVE_BOOST -DXCSOAR ' +
+                      '-D_GNU_SOURCE=1 -D_REENTRANT ' +
+                      '-DENABLE_SDL  -DENABLE_OPENGL -DGL_GLEXT_PROTOTYPES ')
 
-Export('env', 'verbose', 'debug', 'targets', 'topdir', 'topsrcdir')
+env.Append(LINKFLAGS = '-m32')
+dbgenv = env
+stdenv = env
+dbgenv.Append(CXXFLAGS = ' -g -O0 -DNDEBUG')
+stdenv.Append(CXXFLAGS = ' -O2')
+if int(debug):
+  e = dbgenv
+else:
+  e = stdenv
+
+
+Export('e', 'verbose', 'debug', 'targets', 'topdir', 'topsrcdir', 'enable_sdl')
 
 for target in targets:
     outbase = 'output/' + target + '/'
-    Export('outbase')
-    SConscript(topsrcdir + 'OS/SConscript', variant_dir=outbase + 'src/OS/', duplicate=0)
+    Export('outbase', 'target')
+#    SConscript(topsrcdir + 'OS/SConscript', variant_dir=outbase + 'src/OS/', duplicate=0)
     SConscript('./SConscript', variant_dir=outbase, duplicate=0)
 

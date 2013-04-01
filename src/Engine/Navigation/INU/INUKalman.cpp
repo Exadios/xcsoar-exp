@@ -32,6 +32,7 @@ INUKalman::INUKalman(fixed dT, int m)
     s(0)
   {
   this->x.resize(14);
+  this->R.resize(14, 14);
   this->P.resize(14, 14);
   this->Q.resize(14, 14);
   this->K.resize(14, 14);

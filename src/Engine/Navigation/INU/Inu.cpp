@@ -26,12 +26,22 @@
 
 //-----------------------------------------------------------------------------
 Inu::Inu(fixed dt)
+  : omega_ie(0.00007292115) // Rads / sec
   {
   this->dt = dt;
   this->init = false;
   this->R.resize(3, 3);
   this->a.resize(3);
   this->Omega.resize(3, 3);
+  for (size_t i = 0; i < 3; i++)
+    {
+    this->a(i) = 0.0;
+    for (size_t j = 0; j < 3; j++)
+      {
+      this->R(i, j) = 0.0;
+      this->Omega(i, j) = 0.0;
+      }
+    }
   }
 
 //-----------------------------------------------------------------------------
@@ -41,54 +51,64 @@ Inu::~Inu()
 
 //----------------------------------------------------------------------------
 bool
-Inu::Update(IMUmatrix &Omega, IMUvector &f, IMUvector &v, fixed gx)
+Inu::Update(IMUvector& w, IMUvector &f, IMUvector &v, fixed gx)
   {
   // Write out the system in full, for clarity, and let the optimizer do
   // its work.
+
+  // Compute eqn 3.11- Omega_{eb}^b
+  this->Omega(1, 2) = -(this->Omega(2, 1) = w(0) - this->R(0, 1) * omega_ie);
+  this->Omega(2, 0) = -(this->Omega(0, 2) = w(1) - this->R(1, 1) * omega_ie);
+  this->Omega(0, 1) = -(this->Omega(1, 0) = w(2) - this->R(2, 1) * omega_ie);
+  // Done with eqn 2.11
+
+  // Compute eqn 3.13 - \dot(v)(t_k)
   this->a(0) = this->R(0, 0) * f(0) +
                this->R(0, 1) * f(1) +
                this->R(0, 2) * f(2) -
                fixed(2) *
-               (Omega(0, 0) * v(0) +
-                Omega(0, 1) * v(1) +
-                Omega(0, 2) * v(2)) +
+               (this->Omega(0, 0) * v(0) +
+                this->Omega(0, 1) * v(1) +
+                this->Omega(0, 2) * v(2)) +
                gx;
   this->a(1) = this->R(1, 0) * f(1) +
                this->R(1, 1) * f(1) +
                this->R(1, 2) * f(2) -
                fixed(2) *
-               (Omega(1, 0) * v(0) +
-                Omega(1, 1) * v(1) +
-                Omega(1, 2) * v(2)) +
+               (this->Omega(1, 0) * v(0) +
+                this->Omega(1, 1) * v(1) +
+                this->Omega(1, 2) * v(2)) +
                gx;
   this->a(2) = this->R(2, 0) * f(1) +
                this->R(2, 1) * f(1) +
                this->R(2, 2) * f(2) -
                fixed(2) *
-               (Omega(2, 0) * v(0) +
-                Omega(2, 1) * v(1) +
-                Omega(2, 2) * v(2)) +
+               (this->Omega(2, 0) * v(0) +
+                this->Omega(2, 1) * v(1) +
+                this->Omega(2, 2) * v(2)) +
                gx;
+  // Done with eqn 3.13
 
+  // Compute eqn 3.12 - R(t_k + 1)
   IMUmatrix Num(3, 3), Inv(3, 3);
-  Num(0, 0) = fixed(2) + Omega(0, 0) * this->dt;
-  Num(0, 1) = fixed(0) + Omega(0, 1) * this->dt;
-  Num(0, 2) = fixed(0) + Omega(0, 2) * this->dt;
-  Num(1, 0) = fixed(0) + Omega(1, 0) * this->dt;
-  Num(1, 1) = fixed(2) + Omega(1, 1) * this->dt;
-  Num(1, 2) = fixed(0) + Omega(1, 2) * this->dt;
-  Num(2, 0) = fixed(0) + Omega(2, 0) * this->dt;
-  Num(2, 1) = fixed(0) + Omega(2, 1) * this->dt;
-  Num(2, 2) = fixed(0) + Omega(2, 2) * this->dt;
-  Inv(0, 0) = fixed(2) - Omega(0, 0) * this->dt;
-  Inv(0, 1) = fixed(0) - Omega(0, 1) * this->dt;
-  Inv(0, 2) = fixed(0) - Omega(0, 2) * this->dt;
-  Inv(1, 0) = fixed(0) - Omega(1, 0) * this->dt;
-  Inv(1, 1) = fixed(2) - Omega(1, 1) * this->dt;
-  Inv(1, 2) = fixed(0) - Omega(1, 2) * this->dt;
-  Inv(2, 0) = fixed(0) - Omega(2, 0) * this->dt;
-  Inv(2, 1) = fixed(0) - Omega(2, 1) * this->dt;
-  Inv(2, 2) = fixed(0) - Omega(2, 2) * this->dt;
+  Num(0, 0) = fixed(2) + this->Omega(0, 0) * this->dt;
+  Num(0, 1) = fixed(0) + this->Omega(0, 1) * this->dt;
+  Num(0, 2) = fixed(0) + this->Omega(0, 2) * this->dt;
+  Num(1, 0) = fixed(0) + this->Omega(1, 0) * this->dt;
+  Num(1, 1) = fixed(2) + this->Omega(1, 1) * this->dt;
+  Num(1, 2) = fixed(0) + this->Omega(1, 2) * this->dt;
+  Num(2, 0) = fixed(0) + this->Omega(2, 0) * this->dt;
+  Num(2, 1) = fixed(0) + this->Omega(2, 1) * this->dt;
+  Num(2, 2) = fixed(2) + this->Omega(2, 2) * this->dt;
+  Inv(0, 0) = fixed(2) - this->Omega(0, 0) * this->dt;
+  Inv(0, 1) = fixed(0) - this->Omega(0, 1) * this->dt;
+  Inv(0, 2) = fixed(0) - this->Omega(0, 2) * this->dt;
+  Inv(1, 0) = fixed(0) - this->Omega(1, 0) * this->dt;
+  Inv(1, 1) = fixed(2) - this->Omega(1, 1) * this->dt;
+  Inv(1, 2) = fixed(0) - this->Omega(1, 2) * this->dt;
+  Inv(2, 0) = fixed(0) - this->Omega(2, 0) * this->dt;
+  Inv(2, 1) = fixed(0) - this->Omega(2, 1) * this->dt;
+  Inv(2, 2) = fixed(2) - this->Omega(2, 2) * this->dt;
 
   // Check for non sigularity.
   fixed D = Inv(0, 0) * (Inv(1, 1) * Inv(2, 2) - Inv(2, 1) * Inv(1, 2)) -
@@ -117,7 +137,7 @@ Inu::Update(IMUmatrix &Omega, IMUvector &f, IMUvector &v, fixed gx)
                 Num(i, 1) * CT(1, j) +
                 Num(i, 2) * CT(2, j);
 
-  // Compute the update of R.
+  // Compute the update of R(t_k + 1).
   IMUmatrix R(3, 3);
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++)
@@ -125,8 +145,16 @@ Inu::Update(IMUmatrix &Omega, IMUvector &f, IMUvector &v, fixed gx)
                 this->R(i, 1) * P(1, j) +
                 this->R(i, 2) * P(2, j);
   this->R = R;
+  // Done with eqn 3.12
 
   return true;
+  }
+
+//------------------------------------------------------------------------------
+IMUvector
+Inu::v_dot_super_e() const
+  {
+  return this->a;
   }
 
 //------------------------------------------------------------------------------
