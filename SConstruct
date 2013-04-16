@@ -28,6 +28,8 @@ env     = Environment(ENV = os.environ)
 verbose = ARGUMENTS.get('VERBOSE', 0)
 debug   = ARGUMENTS.get('DEBUG', 1)
 targets = ARGUMENTS.get('TARGETS', ['UNIX32'])
+conf = Configure(env)
+env = conf.Finish()
 enable_sdl = 1
 if int(verbose) == 0:
     env['CXXCOMSTR']  = 'Compiling $TARGET'
@@ -38,7 +40,7 @@ env.Append(CXXFLAGS = '-I' + topsrcdir + ' ' +
                       '-I' + topsrcdir + 'unix/ ' +
                       '-I' + topsrcdir + 'Engine/ ' +
                       '-I./src/Terrain/jasper/.. ' +
-                      '-I/home/pfb/Software/Libraries/SDL_ttf/SDL_ttf-2.0.11/local/include/SDL ' +
+                      '-I/usr/local/SDL_ttf/include/SDL ' +
                       '-I/usr/include/SDL ' +
                       '-fno-exceptions ' +
                       '-fno-rtti ' +
