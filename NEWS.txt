@@ -2,6 +2,51 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
+Version 6.5.4 - 2013/04/10
+* devices
+  - Volkslogger: increase timeout for reading flight list
+  - V7: fix QNH change
+* logger
+  - fix failing IGC logger (#2658, #2735, #2736, #2746, #2751)
+
+Version 6.5.3 - 2013/03/26
+* user interface
+  - eliminate flickering in the cross section on Windows
+  - fix wrong radial display in target dialog
+  - start at terrain center when there's no GPS fix and no home location
+* task
+  - fix line OZ rounding error (#2599)
+* devices
+  - FLARM: fix IGC file download on firmware 5.09 (#2619)
+* Android
+  - fix crash with Hebrew language
+* Mac OS X
+  - fix crash on startup (#2607, #2667)
+  - show missing serial ports, hide internal devices (#2668)
+* infoboxes
+  - fix rendering of thermal assistant aircraft symbol (#2702)
+
+Version 6.5.2 - 2013/03/15
+* user interface
+  - fix hang during startup (#2662, #2663)
+  - fix freeze in dialogs (#2664)
+  - automatically re-enable manual wind controls (#2336)
+  - fix crash after connecting FLARM (#2669)
+
+Version 6.5.1 - 2013/03/12
+* infoboxes
+  - fix MacCready adjustment for non-metric units (#2654)
+* user interface
+  - fix bogus "restart XCSoar" messages
+  - fix cross section render error on some OpenGL chips (#2631, #2661)
+  - allow gestures in cross section (#2655)
+* devices
+  - fix crash in Android Bluetooth driver (#2636, #2656)
+  - fix NMEA input on Android Bluetooth Server
+* data files
+  - use the terrain cache even when the system clock is wrong
+  - fix G record regression (#2657)
+
 Version 6.5 - 2013/03/08
 * map
   - lower zoom levels possible while circling (#1120)

@@ -30,6 +30,7 @@ Copyright_License {
 #include "PopupMessage.hpp"
 #include "BatteryTimer.hpp"
 #include "Widget/ManagedWidget.hpp"
+#include "UIUtil/GestureManager.hpp"
 
 #include <stdint.h>
 #include <assert.h>
@@ -98,6 +99,9 @@ class MainWindow : public SingleWindow {
 
   ManagedWidget thermal_assistant;
 
+  bool dragging;
+  GestureManager gestures;
+
 public:
   PopupMessage popup;
 
@@ -146,6 +150,13 @@ protected:
    * caller is responsible for reactivating the map or another Widget.
    */
   void KillWidget();
+
+  /**
+   * Destroy the current "bottom" Widget, but don't resize the main
+   * area.  The caller is responsible for doing that or installing a
+   * new bottom Widget.
+   */
+  void KillBottomWidget();
 
 public:
   void Create(PixelSize size, TopWindowStyle style=TopWindowStyle());
@@ -336,11 +347,18 @@ private:
   void UpdateVarioGaugeVisibility();
   void UpdateTrafficGaugeVisibility();
 
+  void StopDragging();
+
 protected:
   /* virtual methods from class Window */
   virtual void OnDestroy() override;
   virtual void OnResize(PixelSize new_size) override;
   virtual void OnSetFocus() override;
+  virtual void OnCancelMode() override;
+  virtual bool OnMouseDown(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseUp(PixelScalar x, PixelScalar y) override;
+  virtual bool OnMouseMove(PixelScalar x, PixelScalar y,
+                           unsigned keys) override;
   virtual bool OnMouseDouble(PixelScalar x, PixelScalar y) override;
   virtual bool OnKeyDown(unsigned key_code) override;
   virtual bool OnUser(unsigned id) override;

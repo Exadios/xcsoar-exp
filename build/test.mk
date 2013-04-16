@@ -88,7 +88,7 @@ TEST_NAMES = \
 	TestAngle TestUnits TestEarth TestSunEphemeris \
 	TestValidity TestUTM TestProfile \
 	TestRadixTree TestGeoBounds TestGeoClip \
-	TestLogger TestDriver TestClimbAvCalc \
+	TestLogger TestGRecord TestDriver TestClimbAvCalc \
 	TestWaypointReader TestThermalBase \
 	TestFlarmNet \
 	TestColorRamp TestGeoPoint TestDiffFilter \
@@ -105,7 +105,7 @@ TEST_NAMES = \
 	TestIGCParser \
 	TestByteOrder \
 	TestByteOrder2 \
-	TestStrings \
+	TestStrings TestUTF8 \
 	TestCRC \
 	TestUnitsFormatter \
 	TestGeoPointFormatter \
@@ -437,6 +437,12 @@ TEST_STRINGS_SOURCES = \
 TEST_STRINGS_DEPENDS = UTIL
 $(eval $(call link-program,TestStrings,TEST_STRINGS))
 
+TEST_UTF8_SOURCES = \
+	$(TEST_SRC_DIR)/tap.c \
+	$(TEST_SRC_DIR)/TestUTF8.cpp
+TEST_UTF8_DEPENDS = UTIL
+$(eval $(call link-program,TestUTF8,TEST_UTF8))
+
 TEST_POLARS_SOURCES = \
 	$(SRC)/Profile/ProfileKeys.cpp \
 	$(SRC)/Units/Descriptor.cpp \
@@ -564,6 +570,15 @@ TEST_LOGGER_SOURCES = \
 TEST_LOGGER_DEPENDS = IO OS GEO MATH UTIL
 $(eval $(call link-program,TestLogger,TEST_LOGGER))
 
+TEST_GRECORD_SOURCES = \
+	$(SRC)/Logger/GRecord.cpp \
+	$(SRC)/Logger/MD5.cpp \
+	$(SRC)/Version.cpp \
+	$(TEST_SRC_DIR)/tap.c \
+	$(TEST_SRC_DIR)/TestGRecord.cpp
+TEST_GRECORD_DEPENDS = IO OS UTIL
+$(eval $(call link-program,TestGRecord,TEST_GRECORD))
+
 TEST_DRIVER_SOURCES = \
 	$(SRC)/Device/Port/NullPort.cpp \
 	$(SRC)/Device/Parser.cpp \
@@ -660,7 +675,7 @@ DEBUG_PROGRAM_NAMES = \
 	ReadProfileString ReadProfileInt \
 	WriteProfileString WriteProfileInt \
 	RunMD5 \
-	ReadGRecord VerifyGRecord AppendGRecord \
+	ReadGRecord VerifyGRecord AppendGRecord FixGRecord \
 	AddChecksum \
 	KeyCodeDumper \
 	LoadTopography LoadTerrain \
@@ -988,6 +1003,13 @@ APPEND_GRECORD_SOURCES = \
 	$(TEST_SRC_DIR)/AppendGRecord.cpp
 APPEND_GRECORD_DEPENDS = IO OS UTIL
 $(eval $(call link-program,AppendGRecord,APPEND_GRECORD))
+
+FIX_GRECORD_SOURCES = \
+	$(SRC)/Logger/GRecord.cpp \
+	$(SRC)/Logger/MD5.cpp \
+	$(TEST_SRC_DIR)/FixGRecord.cpp
+FIX_GRECORD_DEPENDS = IO OS UTIL
+$(eval $(call link-program,FixGRecord,FIX_GRECORD))
 
 ADD_CHECKSUM_SOURCES = \
 	$(TEST_SRC_DIR)/AddChecksum.cpp

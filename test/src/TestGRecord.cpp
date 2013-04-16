@@ -1,5 +1,4 @@
-/*
-Copyright_License {
+/* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
   Copyright (C) 2000-2013 The XCSoar Project
@@ -21,40 +20,25 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_WIND_SETTINGS_PANEL_HPP
-#define XCSOAR_WIND_SETTINGS_PANEL_HPP
+#include "Logger/GRecord.hpp"
+#include "TestUtil.hpp"
 
-#include "Widget/RowFormWidget.hpp"
-#include "Form/DataField/Listener.hpp"
+static void
+CheckGRecord(const TCHAR *path)
+{
+  GRecord grecord;
+  grecord.Initialize();
+  ok1(grecord.VerifyGRecordInFile(path));
+}
 
-class WindSettingsPanel final
-  : public RowFormWidget, private DataFieldListener {
-  enum ControlIndex {
-    AutoWind,
-    ExternalWind,
-    TrailDrift,
-    Speed,
-    Direction,
-  };
+int main(int argc, char **argv)
+{
+  plan_tests(4);
 
-  const bool edit_manual_wind, edit_trail_drift;
+  CheckGRecord(_T("test/data/grecord64a.igc"));
+  CheckGRecord(_T("test/data/grecord64b.igc"));
+  CheckGRecord(_T("test/data/grecord65a.igc"));
+  CheckGRecord(_T("test/data/grecord65b.igc"));
 
-  bool external_wind;
-
-public:
-  /**
-   * @param manual_wind edit the manual wind setting
-   */
-  WindSettingsPanel(bool edit_manual_wind, bool edit_trail_drift);
-
-  virtual void Prepare(ContainerWindow &parent, const PixelRect &rc) override;
-  virtual bool Save(bool &changed, bool &require_restart) override;
-
-private:
-  void UpdateVector();
-
-  /* methods from DataFieldListener */
-  virtual void OnModified(DataField &df) override;
-};
-
-#endif
+  return exit_status();
+}

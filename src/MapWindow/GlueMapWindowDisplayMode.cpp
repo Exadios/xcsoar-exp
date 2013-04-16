@@ -22,6 +22,7 @@ Copyright_License {
 */
 
 #include "GlueMapWindow.hpp"
+#include "Terrain/RasterTerrain.hpp"
 #include "Interface.hpp"
 #include "Profile/Profile.hpp"
 #include "Screen/Layout.hpp"
@@ -188,9 +189,9 @@ GlueMapWindow::UpdateScreenAngle()
     visible_projection.SetScreenAngle(calculated.task_stats.current_leg.
                                       vector_remaining.bearing);
   else if (orientation == DisplayOrientation::HEADING_UP)
-    visible_projection.SetScreenAngle(basic.attitude.heading);
-  else if (orientation == DisplayOrientation::NORTH_UP ||
-           !basic.track_available)
+    visible_projection.SetScreenAngle(
+      basic.attitude.IsHeadingUseable() ? basic.attitude.heading : Angle::Zero());
+  else if (orientation == DisplayOrientation::NORTH_UP)
     visible_projection.SetScreenAngle(Angle::Zero());
   else if (orientation == DisplayOrientation::WIND_UP &&
            calculated.wind_available &&
@@ -198,7 +199,8 @@ GlueMapWindow::UpdateScreenAngle()
     visible_projection.SetScreenAngle(calculated.wind.bearing);
   else
     // normal, glider forward
-    visible_projection.SetScreenAngle(basic.track);
+    visible_projection.SetScreenAngle(
+      basic.track_available ? basic.track : Angle::Zero());
 
   compass_visible = orientation != DisplayOrientation::NORTH_UP;
 }
@@ -245,6 +247,11 @@ GlueMapWindow::UpdateMapScale()
 void
 GlueMapWindow::SetLocationLazy(const GeoPoint location)
 {
+  if (!visible_projection.IsValid()) {
+    SetLocation(location);
+    return;
+  }
+
   const fixed distance_meters =
     visible_projection.GetGeoLocation().Distance(location);
   const fixed distance_pixels =
@@ -326,6 +333,11 @@ GlueMapWindow::UpdateProjection()
   } else if (basic.location_available)
     // Pan is off
     SetLocationLazy(basic.location);
+  else if (!visible_projection.IsValid() && terrain != nullptr)
+    /* if there's no GPS fix yet and no home waypoint, start at the
+       map center, to avoid showing a fully white map, which confuses
+       users */
+    SetLocation(terrain->GetTerrainCenter());
 
   visible_projection.UpdateScreenBounds();
 }
