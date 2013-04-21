@@ -33,15 +33,71 @@ Inu::Inu(fixed dt)
   this->R.resize(3, 3);
   this->a.resize(3);
   this->Omega.resize(3, 3);
+  this->R0(0, 0, 0);
   for (size_t i = 0; i < 3; i++)
     {
     this->a(i) = 0.0;
     for (size_t j = 0; j < 3; j++)
-      {
-      this->R(i, j) = 0.0;
       this->Omega(i, j) = 0.0;
-      }
     }
+  }
+
+//-----------------------------------------------------------------------------
+Inu::Inu(fixed dt, fixed x, fixed y, fixed z)
+  : omega_ie(0.00007292115) // Rads / sec
+  {
+  this->dt = dt;
+  this->init = false;
+  this->R.resize(3, 3);
+  this->a.resize(3);
+  this->Omega.resize(3, 3);
+  this->R0(x, y, z);
+  for (size_t i = 0; i < 3; i++)
+    {
+    this->a(i) = 0.0;
+    for (size_t j = 0; j < 3; j++)
+      this->Omega(i, j) = 0.0;
+    }
+  }
+
+//-----------------------------------------------------------------------------
+Inu::Inu(fixed dt, IMUmatrix R)
+  : omega_ie(0.00007292115) // Rads / sec
+  {
+  this->dt = dt;
+  this->init = false;
+  this->R.resize(3, 3);
+  this->a.resize(3);
+  this->Omega.resize(3, 3);
+  this->R0(R);
+  for (size_t i = 0; i < 3; i++)
+    {
+    this->a(i) = 0.0;
+    for (size_t j = 0; j < 3; j++)
+      this->Omega(i, j) = 0.0;
+    }
+  }
+
+//-----------------------------------------------------------------------------
+void
+Inu::R0(fixed x, fixed y, fixed z)
+  {
+  this->R(0, 0) = cos(z) * cos(y);
+  this->R(0, 1) = sin(z) * cos(x) + cos(y) * sin(y) * sin(x);
+  this->R(0, 2) = sin(z) * sin(x) - cos(z) * sin(y) * cos(x);
+  this->R(1, 0) = -cos(z) * cos(y);
+  this->R(1, 1) = cos(z) * cos(x) - sin(z) * sin(y) * sin(x);
+  this->R(1, 2) = cos(z) * cos(x);
+  this->R(2, 0) = sin(y);
+  this->R(2, 1) = -sin(x) * cos(y);
+  this->R(2, 2) = cos(y) * cos(x);
+  }
+
+//-----------------------------------------------------------------------------
+void
+Inu::R0(IMUmatrix R)
+  {
+  this->R = R;
   }
 
 //-----------------------------------------------------------------------------
@@ -53,7 +109,7 @@ Inu::~Inu()
 bool
 Inu::Update(IMUvector& w, IMUvector &f, IMUvector &v, fixed gx)
   {
-  // Write out the system in full, for clarity, and let the optimizer do
+  // For clarity write out the system in full and let the optimizer do
   // its work.
 
   // Compute eqn 3.11- Omega_{eb}^b
@@ -148,6 +204,20 @@ Inu::Update(IMUvector& w, IMUvector &f, IMUvector &v, fixed gx)
   // Done with eqn 3.12
 
   return true;
+  }
+
+//-----------------------------------------------------------------------------
+IMUmatrix
+Inu::Omega_sub_eb_super_b() const
+  {
+  return this->Omega;
+  }
+
+//-----------------------------------------------------------------------------
+IMUmatrix
+Inu::R_sub_b_super_e() const
+  {
+  return this->R;
   }
 
 //------------------------------------------------------------------------------

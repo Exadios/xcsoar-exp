@@ -47,13 +47,44 @@ class Inu
 public:
   
   /**
-   * CTOR.
+   * Ctor. The initial rotation matrix from the body basis to the ECEF basis is
+   * set to (0, 0, 0)
    * @param dt The IMU sample rate in seconds.
    */
   Inu(fixed dt);
 
   /**
-   * DTOR.
+   * Ctor.
+   * @param dt The IMU sample rate in seconds.
+   * @x Roatation about the $x$ axis, Radians.
+   * @y Roatation about the $y$ axis, Radians.
+   * @z Roatation about the $z$ axis, Radians.
+   */
+  Inu(fixed dt, fixed x, fixed y, fixed z);
+
+  /**
+   * Ctor.
+   * @param dt The IMU sample rate in seconds.
+   * @R The initial rotation matrix from the body basis to the ECEF basis.
+   */
+  Inu(fixed dt, IMUmatrix R);
+
+  /**
+   * Set the initial rotation matrix from the body basis to the ECEF basis.
+   * @x Roatation about the $x$ axis, Radians.
+   * @y Roatation about the $y$ axis, Radians.
+   * @z Roatation about the $z$ axis, Radians.
+   */
+  void R0(fixed x, fixed y, fixed z);
+
+  /**
+   * Set the initial rotation matrix from the body basis to the ECEF basis.
+   * @R The initial rotation matrix from the body basis to the ECEF basis.
+   */
+  void R0(IMUmatrix R);
+
+  /**
+   * Dtor.
    */
   virtual ~Inu();
 
@@ -68,6 +99,18 @@ public:
    * @result If a result can be computed then true, false otherwise.
    */
   bool Update(IMUvector& w, IMUvector& f, IMUvector& v, fixed gx);
+
+  /**
+   * Give the body angular velocities, $\Omega_{eb}^b$, in the body basis.
+   * @return The $b$ basis velocity matrix.
+   */
+  IMUmatrix Omega_sub_eb_super_b() const;
+
+  /**
+   * Give the Direction Cosine Matrix of the $b$ basis to the $e$ basis.
+   * @return The Direction Cosine Matrix.
+  */
+  IMUmatrix R_sub_b_super_e() const;
 
   /**
    * Give the accelerations in the 'e' domain.
