@@ -661,6 +661,8 @@ and $g_g$ and $g_a$ are design constants and are typically less than one.
 
 \section[Simulation and Testing]{Simulation and Testing}
 
+For the puposes of testing the system it is usefull to have a testing simulator. This simulator will take the eviromental and user data in order to generate simulated accelerometer and gyro output which then may be used as input to the solution.
+
 \subsection[Accelerometer Signal]{Accelerometer Signal}
 
 \begin{equation}
@@ -706,7 +708,7 @@ where $\mat{R}^n_b \left( 0 \right)$ is the rotation from the $b$ to $n$ bases a
 \begin{equation}
 \mat{\Omega}^b_{ib} = R^b_n \left( \mat{\Omega}^n_{ie} + \mat{\Omega}^n_{en} + \mat{\Omega}^n_{nb} \right)
 \end{equation}
-The body rotations $\mat{\Omega}^n_{nb}$ are given by the caller.`
+The body rotations $\mat{\Omega}^n_{nb}$ are given by the caller.
 
 \clearpage\setcounter{page}{1}
 \chapter[Energy]{Energy}

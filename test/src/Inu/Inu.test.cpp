@@ -81,5 +81,32 @@ int main()
       std::cout << "Singular" << std::endl;
     }
 
+    {
+    std::cout << "Test " << ++test << std::endl;
+    Inu inu(.1);
+    IMUvector f, v, a, w;
+    IMUmatrix Omega;
+    f.resize(3);
+    v.resize(3);
+    w.resize(3);
+    f(2) = f(1) = f(0) = 1.0;
+    for (int i = 0; i < 10; i++)
+      {
+      if (inu.Update(w, f, v, inu.gfh(0)) == true)
+        {
+        a = inu.v_dot_super_e();
+        std::cout << i << ": ";
+        a.put(std::cout);
+        std::cout << std::endl;
+        }
+      else
+        {
+        std::cout << "Singular" << std::endl;
+        break;
+        }
+      f(2) = f(1) = f(0) = 0.0;
+      }
+    }
+
   return 0;
   }
