@@ -21,8 +21,6 @@
 
 Import ('*')
 
-print e['ENABLE_SDL']
-
 bd = topsrcdir + 'Engine/Airspace/'
 e.StaticLibrary('airspace',
                 [ topsrcdir + '/Engine/Util/AircraftStateFilter.cpp',
