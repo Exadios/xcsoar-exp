@@ -50,16 +50,19 @@ if verbose == 'n':
     env['CCCOMSTR']   = 'Compiling $TARGET'
     env['LINKCOMSTR'] = 'Linking $TARGET'
     env['ARCOMSTR']   = 'Archiving $TARGET'
+    env['CPPCOMSTR']  = 'Processing $TARGET'
+    env['PERLCOMSTR'] = 'Generating $TARGET'
 
 githash = os.popen('git rev-parse --short --verify HEAD 2>/dev/null').read()
 version = os.popen('cat ' + topdir + 'VERSION.txt').read()
-env.Append(CXXFLAGS = '-I' + topsrcdir + ' ' +
-                      '-I' + topsrcdir + 'unix/ ' +
+env['CPPFLAGS'] = '-DHAVE_POSIX ' + '-DHAVE_STDINT_H ' + '-DHAVE_UNISTD_H ' + '-DHAVE_VASPRINTF'
+env.Append(CXXFLAGS = '-I' + topsrcdir + 'unix/ ' +
+                      '-I' + topdir + 'output/include ' +
+                      '-I' + topsrcdir + ' ' +
                       '-I' + topsrcdir + 'Engine/ ' +
                       '-I./src/Terrain/jasper/.. ' +
                       '-I/usr/local/SDL_ttf/include/SDL ' +
                       '-I/usr/include/SDL ' +
-                      '-I' + topdir + 'output/include ' +
                       '-m32 -Wuninitialized -g -ffast-math -ftree-vectorize -fno-exceptions -fno-rtti -std=gnu++0x -fno-threadsafe-statics -fmerge-all-constants -fconserve-space -fno-operator-names -fvisibility=hidden -ffunction-sections -finput-charset=utf-8 -Wall -Wextra -Wwrite-strings -Wcast-qual -Wpointer-arith -Wsign-compare -Wundef -Wmissing-declarations -Wredundant-decls -Wmissing-noreturn -Wno-unused-parameter -Wno-missing-field-initializers  -Wcast-align ' +
                       '-DHAVE_POSIX ' +
                       '-DHAVE_STDINT_H -DHAVE_UNISTD_H -DHAVE_VASPRINTF ' +
@@ -71,6 +74,27 @@ env.Append(CXXFLAGS = '-I' + topsrcdir + ' ' +
 env.Append(CFLAGS = env['CXXFLAGS'])
 
 env.Append(LINKFLAGS = '-m32')
+
+# Make common includes.
+env.Command('output/include/MathTables.h',
+            'output/host/tools/GenerateSineTables',
+            'output/host/tools/GenerateSineTables > $TARGET')
+env.Command('output/include/InputEvents_Text2Event.cpp',
+            topsrcdir + 'Input/InputEvents.hpp',
+            'perl ' + topdir + '/tools/Text2Event.pl $SOURCE >$TARGET')
+env.Command('output/include/InputEvents_Text2GCE.cpp',
+            topsrcdir + 'Input/InputQueue.hpp',
+            'perl ' + topdir + 'tools/Text2GCE.pl $SOURCE > $TARGET')
+env.Command('output/include/InputEvents_Text2NE.cpp',
+            topsrcdir + 'Input/InputQueue.hpp',
+            'perl ' + topdir + 'tools/Text2NE.pl $SOURCE > $TARGET')
+env.Command('output/include/InputEvents_default.cpp',
+            topdir + 'Data/Input/default.xci',
+            'perl ' + topdir + 'tools/xci2cpp.pl $SOURCE > $TARGET')
+env.Command('output/include/Status_defaults.cpp',
+            topdir + 'Data/Status/default.xcs',
+            'perl ' + topdir + 'tools/xcs2cpp.pl $SOURCE > $TARGET')
+
 dbg = env.Clone()
 std = env.Clone()
 dbg['DEBUG'] = 'y'
@@ -107,7 +131,7 @@ dbg.androidmips = dbg.Clone(TARGET_OS = 'Android',
 
 map = { 'y' : { 'Unix' : dbg.unix, 'Android' : dbg.android } }
 
-Export('verbose', 'debug', 'targets', 'topdir', 'topsrcdir')
+Export('verbose', 'debug', 'targets', 'topdir', 'topsrcdir', 'env')
 
 if debug == 'y':
   for target in targets:

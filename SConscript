@@ -21,6 +21,20 @@
 
 Import ('*')
 
+# Make common includes.
+e.Command('XCSoar.rc',
+          topdir + 'Data/XCSoar.rc',
+          'cpp -o $TARGET $SOURCE -I' + topsrcdir + ' $CPPFLAGS')
+e.Command('include/resource_data.h',
+          'XCSoar.rc',
+          'perl ' + topdir + 'tools/GenerateResources.pl $SOURCE > $TARGET')
+e.Command('XCSoar-drawable.rc',
+          topdir + 'Data/XCSoar.rc',
+          'cpp -o $TARGET $SOURCE -I' + topsrcdir + ' $CPPFLAGS -DANDROID_DRAWABLE')
+e.Command('include/android_drawable.h',
+          'XCSoar-drawable.rc',
+          'perl ' + topdir + 'tools/GenerateAndroidResources.pl $SOURCE > $TARGET')
+
 bd = topsrcdir + 'Engine/Airspace/'
 e.StaticLibrary('airspace',
                 [ topsrcdir + '/Engine/Util/AircraftStateFilter.cpp',
@@ -1248,7 +1262,8 @@ if e['TARGET_OS'] == 'Android':
                    bd + 'Android/Vibrator.cpp',
                    bd + 'Android/Context.cpp',
                    bd + 'Android/LogCat.cpp',
-                   bd + 'Android/Main.cpp' ]
+                   bd + 'Android/Main.cpp',
+                   bd + 'Screen/Android/Bitmap.cpp' ]
   if e['IOIOLIB_DIR'] != '':
     xcsoar_srcs += [ bd + 'Device/Port/AndroidIOIOUartPort.cpp',
                      bd + 'Android/NativeBMP085Listener.cpp',
