@@ -75,25 +75,28 @@ env.Append(CFLAGS = env['CXXFLAGS'])
 
 env.Append(LINKFLAGS = '-m32')
 
-# Make common includes.
-env.Command('output/include/MathTables.h',
-            'output/host/tools/GenerateSineTables',
-            'output/host/tools/GenerateSineTables > $TARGET')
-env.Command('output/include/InputEvents_Text2Event.cpp',
-            topsrcdir + 'Input/InputEvents.hpp',
-            'perl ' + topdir + '/tools/Text2Event.pl $SOURCE >$TARGET')
-env.Command('output/include/InputEvents_Text2GCE.cpp',
-            topsrcdir + 'Input/InputQueue.hpp',
-            'perl ' + topdir + 'tools/Text2GCE.pl $SOURCE > $TARGET')
-env.Command('output/include/InputEvents_Text2NE.cpp',
-            topsrcdir + 'Input/InputQueue.hpp',
-            'perl ' + topdir + 'tools/Text2NE.pl $SOURCE > $TARGET')
-env.Command('output/include/InputEvents_default.cpp',
-            topdir + 'Data/Input/default.xci',
-            'perl ' + topdir + 'tools/xci2cpp.pl $SOURCE > $TARGET')
-env.Command('output/include/Status_defaults.cpp',
-            topdir + 'Data/Status/default.xcs',
-            'perl ' + topdir + 'tools/xcs2cpp.pl $SOURCE > $TARGET')
+env.Environment(BUILDERS = { 'PreBuild' : prebuild })
+#env.PreBuild(topdir + 'output/include')
+
+#gen1 = env.Command('output/include/MathTables.h',
+#                   'output/host/tools/GenerateSineTables',
+#                   'output/host/tools/GenerateSineTables > $TARGET')
+#gen2 = env.Command('output/include/InputEvents_Text2Event.cpp',
+#                   topsrcdir + 'Input/InputEvents.hpp',
+#                   'perl ' + topdir + '/tools/Text2Event.pl $SOURCE >$TARGET')
+#gen3 = env.Command('output/include/InputEvents_Text2GCE.cpp',
+#                   topsrcdir + 'Input/InputQueue.hpp',
+#                   'perl ' + topdir + 'tools/Text2GCE.pl $SOURCE > $TARGET')
+#gen4 = env.Command('output/include/InputEvents_Text2NE.cpp',
+#                   topsrcdir + 'Input/InputQueue.hpp',
+#                   'perl ' + topdir + 'tools/Text2NE.pl $SOURCE > $TARGET')
+#gen5 = env.Command('output/include/InputEvents_default.cpp',
+#                   topdir + 'Data/Input/default.xci',
+#                   'perl ' + topdir + 'tools/xci2cpp.pl $SOURCE > $TARGET')
+#gen6 = env.Command('output/include/Status_defaults.cpp',
+#                   topdir + 'Data/Status/default.xcs',
+#                   'perl ' + topdir + 'tools/xcs2cpp.pl $SOURCE > $TARGET')
+#gen = [ gen1, gen2, gen3, gen4, gen5, gen6 ]
 
 dbg = env.Clone()
 std = env.Clone()

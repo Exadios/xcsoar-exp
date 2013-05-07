@@ -22,6 +22,24 @@
 Import ('*')
 
 # Make common includes.
+#env.Command('output/include/MathTables.h',
+#            'output/host/tools/GenerateSineTables',
+#            'output/host/tools/GenerateSineTables > $TARGET')
+#env.Command('output/include/InputEvents_Text2Event.cpp',
+#            topsrcdir + 'Input/InputEvents.hpp',
+#            'perl ' + topdir + '/tools/Text2Event.pl $SOURCE >$TARGET')
+#env.Command('output/include/InputEvents_Text2GCE.cpp',
+#            topsrcdir + 'Input/InputQueue.hpp',
+#            'perl ' + topdir + 'tools/Text2GCE.pl $SOURCE > $TARGET')
+#env.Command('output/include/InputEvents_Text2NE.cpp',
+#            topsrcdir + 'Input/InputQueue.hpp',
+#            'perl ' + topdir + 'tools/Text2NE.pl $SOURCE > $TARGET')
+#env.Command('output/include/InputEvents_default.cpp',
+#            topdir + 'Data/Input/default.xci',
+#            'perl ' + topdir + 'tools/xci2cpp.pl $SOURCE > $TARGET')
+#env.Command('output/include/Status_defaults.cpp',
+#            topdir + 'Data/Status/default.xcs',
+#            'perl ' + topdir + 'tools/xcs2cpp.pl $SOURCE > $TARGET')
 e.Command('XCSoar.rc',
           topdir + 'Data/XCSoar.rc',
           'cpp -o $TARGET $SOURCE -I' + topsrcdir + ' $CPPFLAGS')
@@ -746,6 +764,12 @@ if e['HAVE_HTTP'] == 'y':
   dialog_srcs += [ bd + 'Dialogs/Weather/NOAAList.cpp',
                    bd + 'Dialogs/Weather/NOAADetails.cpp' ]
 
+#InputDefaults = e.Object(bd + 'Input/InputDefaults.cpp', CCFLAGS='-MD -MF InputDefaults.d')
+#SideEffect('InputDefaults.d', InputDefaults)
+#ParseDepends('InputDefaults.d')
+#InputLookup = e.Object(bd + 'Input/InputLookup.cpp')
+#e.Depends(InputDefaults, topdir + 'output/include/InputEvents_default.cpp')
+#e.Depends(InputLookup, topdir + 'output/include/InputEvents_Text2Event.cpp')
 xcsoar_srcs = [
   bd + 'IO/ConfiguredFile.cpp',
   bd + 'IO/DataFile.cpp',
@@ -1280,8 +1304,9 @@ else:
                    bd + 'Hardware/Battery.cpp',
                    bd + 'XCSoar.cpp' ]
 
-e.Program('bin/xcsoar',
-          xcsoar_srcs,
+xcs = e.Program(target = 'bin/xcsoar',
+          source = xcsoar_srcs,
+#          object = [ InputDefaults ],
           LIBS = [ 'profile',
                    'terrain',
                    'jasper',
@@ -1324,3 +1349,4 @@ e.Program('bin/xcsoar',
                    'curl'],
           LIBPATH = [ '.',
                     '/usr/local/SDL_ttf/lib' ])
+e.Depends(xcs, topdir + 'output/include/InputEvents_Text2Event.cpp')
