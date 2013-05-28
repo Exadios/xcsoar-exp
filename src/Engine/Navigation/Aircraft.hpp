@@ -22,6 +22,11 @@
 #ifndef AIRCRAFT_HPP
 #define AIRCRAFT_HPP
 
+/**
+ * \ingroup Engine_Navigation
+ */
+ /* \@{ */
+
 #include "Geo/GeoPoint.hpp"
 #include "Geo/SpeedVector.hpp"
 #include "Compiler.h"
@@ -158,4 +163,5 @@ struct AircraftState:
 
 static_assert(std::is_trivial<AircraftState>::value, "type is not trivial");
 
+/* \@} */
 #endif

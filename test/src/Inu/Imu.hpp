@@ -23,9 +23,14 @@
 #ifndef IMU_HPP
 #define IMU_HPP
 
+/*
+ * \ingroup test_Inu
+ */
+ /* @{ */
+
 #include <kvector.hpp>
 
-namespace Simulator
+namespace InuSimulator
   {
 
   typedef KVector<3> IMUVector;
@@ -50,8 +55,9 @@ namespace Simulator
     void Update();
 
     /**
-     * Give the accelerometer data of this state.
-     * @return The acc data, $\begin{bmatrix} x & y & z \end{bmatrix}$, in meters per second per second.
+     * Give the accelerometer data of this state. \f$.\f$.
+     * @return The acc data, \f$\begin{bmatrix} x & y & z \end{bmatrix}\f$, in
+     *         meters per second per second.
      */
     IMUVector &Accelerometer() const;
 
@@ -87,11 +93,12 @@ namespace Simulator
     IMUVector a_caret_b;
 
     /**
-     * $\mat{\Omega^b_{ib}$
+     * $\mat{\Omega^b_{ib}}$
      */
     IMUVector Omega_caret_b_ib;
 
     };
   };
 
+/*  \@} */
 #endif

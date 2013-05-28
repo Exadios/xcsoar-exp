@@ -23,6 +23,11 @@ Copyright_License {
 #ifndef TRACEHISTORY_HPP
 #define TRACEHISTORY_HPP
 
+/**
+ * \ingroup Engine_Navigation
+ */
+ /* \@{ */
+
 #include "Util/OverwritingRingBuffer.hpp"
 #include "Math/fixed.hpp"
 
@@ -44,4 +49,5 @@ public:
 
 static_assert(std::is_trivial<TraceHistory>::value, "type is not trivial");
 
+/* \@} */
 #endif

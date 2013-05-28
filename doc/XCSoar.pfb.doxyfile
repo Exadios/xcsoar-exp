@@ -592,7 +592,8 @@ WARN_LOGFILE           =
 
 INPUT                  = /home/pfb/src/XCSoar/xcsoar/src \
                          /home/pfb/src/XCSoar/xcsoar/tools \
-                         /home/pfb/src/XCSoar/xcsoar/android
+                         /home/pfb/src/XCSoar/xcsoar/android \
+                         /home/pfb/src/XCSoar/xcsoar/test/src/Inu
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
