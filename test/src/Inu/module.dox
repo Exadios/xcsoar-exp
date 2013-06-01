@@ -23,5 +23,5 @@
 /**
  * \defgroup test_Inu test/Inu
  *
- * IMU Simulator.
+ * IMU Simulation.
  */

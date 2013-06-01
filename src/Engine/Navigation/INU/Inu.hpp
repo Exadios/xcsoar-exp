@@ -23,8 +23,8 @@
 #define INU_HPP
 
 /**
- * \addgroup Engine_Navigation_INU
- * \@{
+ * \ingroup Engine_Navigation_INU
+ * @{
  */
 
 #include <valarray>
@@ -36,7 +36,6 @@ typedef Kalman::KVector<fixed, false> IMUvector;
 typedef Kalman::KMatrix<fixed, false> IMUmatrix;
 
 /**
- * \ingroup Engine_Navigation_INU
  * @file
  * A class to implement a Inertial Navigation Unit (INU) using gyros and
  * accelerometers (typically MEMS devices) found on many Android platforms.
@@ -176,7 +175,7 @@ private:
   const fixed omega_ie;
   };
 
-/**
+/*
  * \@}
  */
 #endif // INU_HPP

@@ -22,6 +22,11 @@
 #ifndef INUKALMAN_HPP
 #define INUKALMAN_HPP
 
+/**
+ * \ingroup Engine_Navigation_INU
+ * @{
+ */
+
 #include <Thread/Mutex.hpp>
 #include <Math/fixed.hpp>
 //#include <Math/VectorT.hpp>
@@ -31,7 +36,6 @@
 #include<Math/kalman/kalman/kfilter.hpp>
 
 /**
- * \ingroup Engine_Navigation_INU
  * @file
  * A class designed to take INU and GPS data and merge those two data in an
  * optimal manner.
@@ -141,4 +145,8 @@ class INUKalman : public Kalman::KFilter<fixed, false, false, false>
      */
     Mutex sl;
   };
+
+/*
+ * @}
+ */
 #endif // INUKALMAN_HPP
