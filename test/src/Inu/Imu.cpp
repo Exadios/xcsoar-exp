@@ -54,3 +54,16 @@ InuSimulator::Imu::Gyro() const
   return this->Omega_caret_b_ib;
   }
 
+//------------------------------------------------------------------------------
+void
+InuSimulator::R_caret_n_b(const KMatrix &t_0)
+  {
+  this->R_caret_n_b = t_0;
+  }
+
+//------------------------------------------------------------------------------
+void
+InuSimulator::Omega_caret_n_nb(const KMatrix &t_0)
+  {
+  this->Omega_caret_n_nb = t_0;
+  }

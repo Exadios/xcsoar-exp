@@ -28,12 +28,13 @@
  */
  /* @{ */
 
-#include <kvector.hpp>
+#include "Math/kalman/kalman/kvector.hpp"
 
 namespace InuSimulator
   {
 
-  typedef KVector<3> IMUVector;
+  typedef Kalman::KVector<fixed, false> IMUVector;
+  typedef Kalman::KMatrix<fixed, false> IMUMatrix;
 
   class Imu
     {
@@ -96,6 +97,10 @@ namespace InuSimulator
      * $\mat{\Omega^b_{ib}}$
      */
     IMUVector Omega_caret_b_ib;
+
+    IMUMatrix R_caret_n_b;
+
+    IMUMatrix Omega_caret_n_nb;
 
     };
   };
