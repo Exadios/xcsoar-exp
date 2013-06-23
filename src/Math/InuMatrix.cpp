@@ -18,55 +18,67 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }*/
- /**
- * \addtogroup test_Inu
- * @{
- */
 
-#include <iostream>
-#include "Imu.hpp"
+#include "InuMatrix.hpp"
+#include "InuVector.hpp"
 
 //------------------------------------------------------------------------------
-InuSimulator::Imu::Imu(double dt)
+InuMatrix::InuMatrix()
   {
-  this->dt = dt;
+  this->resize(3, 3);
   }
 
 //------------------------------------------------------------------------------
-InuSimulator::Imu::~Imu()
+InuMatrix::~InuMatrix()
   {
   }
 
 //------------------------------------------------------------------------------
-void
-InuSimulator::Imu::Update()
+InuMatrix
+operator+(const InuMatrix& x, const InuMatrix& y)
   {
+  InuMatrix rtn;
+
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      rtn(i, j) = x(i, j) + y(i, j);
+  return rtn;
   }
 
 //------------------------------------------------------------------------------
-IMUVector &
-Accelerometer() const
+InuMatrix
+operator-(const InuMatrix& x, const InuMatrix& y)
   {
-  return this->a_caret_b;
+  InuMatrix rtn;
+
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      rtn(i, j) = x(i, j) - y(i, j);
+  return rtn;
   }
 
 //------------------------------------------------------------------------------
-IMUVector &
-InuSimulator::Imu::Gyro() const
+InuMatrix
+operator*(const InuMatrix& x, const InuMatrix& y)
   {
-  return this->Omega_caret_b_ib;
+  InuMatrix rtn;
+
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      {
+      rtn(i, j) = 0.0;
+      for (int k = 0; k < 3; k++)
+        rtn(i, j) += x(i, k) * y(k, j);
+      }
+  return rtn;
   }
 
 //------------------------------------------------------------------------------
-void
-InuSimulator::R_caret_n_b(const KMatrix &t_0)
+InuMatrix
+operator*(const InuMatrix& x, const InuVector& y)
   {
-  this->R_caret_n_b = t_0;
-  }
+  InuVector rtn;
 
-//------------------------------------------------------------------------------
-void
-InuSimulator::Omega_caret_n_nb(const KMatrix &t_0)
-  {
-  this->Omega_caret_n_nb = t_0;
+  for (int i = 0; i < 3; i++)
+    rtn(i) = x(i, 0) * y(0) + x(i, 1) * y(1) + x(i, 2) * y(2);
   }
