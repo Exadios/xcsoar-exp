@@ -19,74 +19,72 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }*/
 
-#ifndef _INUMATRIX_HPP
-#define _INUMATRIX_HPP
+#ifndef _INUVECTOR_HPP
+#define _INUVECTOR_HPP
 /**
  * \addtogroup Math
  * @{
  */
 
-#include "Math/kalman/kalman/kmatrix.hpp"
-
-class InuVector;
+#include "Math/kalman/kalman/kvector.hpp"
 
 /**
  * This class implements some operation on the KMatrix class.
  */
-class InuMatrix : public Kalman::KMatrix<double, false>
+class InuVector : public Kalman::KVector<double, false>
   {
 public:
   /**
    * Ctor.
    */
-  InuMatrix();
+  InuVector();
 
   /**
    * Dtor.
    */
-  virtual ~InuMatrix();
+  virtual ~InuVector();
 
 private:
 
-  friend InuMatrix operator+(const InuMatrix&, const InuMatrix&);
-  friend InuMatrix operator-(const InuMatrix&, const InuMatrix&);
-  friend InuMatrix operator*(const InuMatrix&, const InuMatrix&);
-  friend InuVector operator*(const InuMatrix&, const InuVector&);
+  friend InuVector operator+(const InuVector&, const InuVector&);
+  friend InuVector operator-(const InuVector&, const InuVector&);
+  friend InuVector operator^(const InuVector&, const InuVector&);
+  friend double    operator*(const InuVector&, const InuVector&);
   };
 
 /**
- * Add two INU matrices.
- * @param x LH matrix.
- * @param y RH matrix.
+ * Add two INU vectors.
+ * @param x LH vector.
+ * @param y RH vector.
  * @return The result of \f$\bf{x} + \bf{y}\f$.
  */
-InuMatrix operator+(const InuMatrix&, const InuMatrix&);
+InuVector operator+(const InuVector&, const InuVector&);
 
 /**
- * Subtract two INU matrices.
- * @param x LH matrix.
- * @param y RH matrix.
+ * Subtract two INU vectors.
+ * @param x LH vector.
+ * @param y RH vector.
  * @return The result of \f$\bf{x} - \bf{y}\f$.
  */
-InuMatrix operator-(const InuMatrix&, const InuMatrix&);
+InuVector operator-(const InuVector&, const InuVector&);
 
 /**
- * Multiply two INU matrices.
- * @param x LH matrix.
- * @param y RH matrix.
- * @return The result of \f$\bf{x} \times \bf{y}\f$.
- */
-InuMatrix operator*(const InuMatrix&, const InuMatrix&);
-
-/**
- * Multiply an INU matrix and INU vector.
- * @param x LH matrix.
+ * Form the cross product of two INU vectors.
+ * @param x LH vector.
  * @param y RH vector.
  * @return The result of \f$\bf{x} \times \bf{y}\f$.
  */
-InuVector operator*(const InuMatrix&, const InuVector&);
+InuVector operator^(const InuVector&, const InuVector&);
+
+/**
+ * Form the dot product of two INU vectors.
+ * @param x LH vector.
+ * @param y RH vector.
+ * @return The result of \f$\bf{x} \cdot \bf{y}\f$.
+ */
+double    operator*(const InuVector&, const InuVector&);
 
 /**
  * @}
  */
-#endif  // _INUMATRIX_HPP
+#endif  // _INUVECTOR_HPP

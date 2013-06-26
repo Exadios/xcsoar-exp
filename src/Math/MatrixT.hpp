@@ -22,6 +22,11 @@
 #ifndef MATRIXT_HPP
 #define MATRIXT_HPP
 
+/**
+ * \addtogroup Math
+ * @{
+ */
+
 #include <valarray>
 #include <assert.h>
 
@@ -359,6 +364,10 @@ template<typename T> class Cslice_iter
      */
     const T& deref(size_t i) const;
 };
+
+/**
+ * @}
+ */
 
 #include "MatrixT.i.cpp"
 

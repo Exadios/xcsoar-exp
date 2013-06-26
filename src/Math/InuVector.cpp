@@ -19,67 +19,59 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }*/
 
-#include "InuMatrix.hpp"
 #include "InuVector.hpp"
+#include "InuMatrix.hpp"
 
 //------------------------------------------------------------------------------
-InuMatrix::InuMatrix()
+InuVector::InuVector()
   {
-  this->resize(3, 3);
+  this->resize(3);
   }
 
 //------------------------------------------------------------------------------
-InuMatrix::~InuMatrix()
+InuVector::~InuVector()
   {
   }
 
 //------------------------------------------------------------------------------
-InuMatrix
-operator+(const InuMatrix& x, const InuMatrix& y)
+InuVector
+operator+(const InuVector& x, const InuVector& y)
   {
-  InuMatrix rtn;
+  InuVector rtn;
 
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++)
-      rtn(i, j) = x(i, j) + y(i, j);
-  return rtn;
-  }
-
-//------------------------------------------------------------------------------
-InuMatrix
-operator-(const InuMatrix& x, const InuMatrix& y)
-  {
-  InuMatrix rtn;
-
-  for (int i = 0; i < 3; i++)
-    for (int j = 0; j < 3; j++)
-      rtn(i, j) = x(i, j) - y(i, j);
-  return rtn;
-  }
-
-//------------------------------------------------------------------------------
-InuMatrix
-operator*(const InuMatrix& x, const InuMatrix& y)
-  {
-  InuMatrix rtn;
-
-  for (int i = 0; i < 3; i++)
-    for (int j = 0; j < 3; j++)
-      {
-      rtn(i, j) = 0.0;
-      for (int k = 0; k < 3; k++)
-        rtn(i, j) += x(i, k) * y(k, j);
-      }
+      rtn(i) = x(i) + y(i);
   return rtn;
   }
 
 //------------------------------------------------------------------------------
 InuVector
-operator*(const InuMatrix& x, const InuVector& y)
+operator-(const InuVector& x, const InuVector& y)
   {
   InuVector rtn;
 
   for (int i = 0; i < 3; i++)
-    rtn(i) = x(i, 0) * y(0) + x(i, 1) * y(1) + x(i, 2) * y(2);
+    for (int j = 0; j < 3; j++)
+      rtn(i) = x(i) - y(i);
   return rtn;
+  }
+
+//------------------------------------------------------------------------------
+InuVector
+operator^(const InuVector& x, const InuVector& y)
+  {
+  InuVector rtn;
+
+  rtn(0) = x(1) * y(2) - x(2) * y(1);
+  rtn(1) = x(2) * y(0) - x(0) * y(2);
+  rtn(2) = x(0) * y(1) - x(1) * y(0);
+  return rtn;
+  }
+
+//------------------------------------------------------------------------------
+double
+operator*(const InuVector& x, const InuVector& y)
+  {
+  return x(0) * y(0) + x(1) * y(1) + x(2) * y(2);
   }

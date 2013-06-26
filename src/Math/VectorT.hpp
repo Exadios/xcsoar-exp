@@ -24,6 +24,11 @@ Copyright_License {
 #ifndef VECTORT_HPP
 #define VECTORT_HPP
 
+/**
+ * \addtogroup Math
+ * @{
+ */
+
 #include <valarray>
 #include <assert.h>
 
@@ -106,6 +111,10 @@ template<class T, size_t Trow> class VectorT
      */
     std::valarray<T> v;
 };
+
+/**
+ * @}
+ */
 
 #include "./VectorT.i.cpp"
 
