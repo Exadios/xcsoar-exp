@@ -25,6 +25,8 @@
 
 #include <iostream>
 #include "Imu.hpp"
+#include "Math/InuMatrix.hpp"
+#include "Math/InuVector.hpp"
 
 //------------------------------------------------------------------------------
 InuSimulator::Imu::Imu(double dt)
@@ -44,14 +46,20 @@ InuSimulator::Imu::Update()
   }
 
 //------------------------------------------------------------------------------
-IMUVector &
-Accelerometer() const
+InuVector &
+InuSimulator::Imu::Accelerometer() const
   {
+  InuMatrix R_dot_caret_b_n;
+  R_dot_caret_b_n = this->R_caret_b_n_0 * this->Omega_caret_n_bn;
+  this->R_caret_b_n = this->R_caret_n_b + R_dot_caret_b_n;
+  InuMatrix Omega_caret_n_ie;
+  Omega_caret_n_ie = this->R_caret_n_e * this->Omega_caret_e_ie * this->R_caret_e_n;
+  this->a_caret_b = this->R_caret_b_n * (this->a_caret_n - (this->Omega_caret_n_en + 2 * Omega_caret_n_ie) * this->v_caret_n + this->g_caret_n);
   return this->a_caret_b;
   }
 
 //------------------------------------------------------------------------------
-IMUVector &
+InuVector &
 InuSimulator::Imu::Gyro() const
   {
   return this->Omega_caret_b_ib;
@@ -59,9 +67,10 @@ InuSimulator::Imu::Gyro() const
 
 //------------------------------------------------------------------------------
 void
-InuSimulator::R_caret_n_b(const KMatrix &t_0)
+InuSimulator::R_caret_b_n(const KMatrix &t_0)
   {
-  this->R_caret_n_b = t_0;
+  this->R_caret_b_n   = t_0;
+  this->R_caret_b_n_0 = this->R_dot_caret_b_n;
   }
 
 //------------------------------------------------------------------------------

@@ -30,11 +30,11 @@
 
 #include "Math/kalman/kalman/kvector.hpp"
 
+class InuVector;
+class InuMatrix;
+
 namespace InuSimulator
   {
-
-  typedef Kalman::KVector<fixed, false> IMUVector;
-  typedef Kalman::KMatrix<fixed, false> IMUMatrix;
 
   class Imu
     {
@@ -57,14 +57,14 @@ namespace InuSimulator
 
     /**
      * Give the accelerometer data of this state. \f$.\f$.
-     * @return The acc data, \f$\begin{bmatrix} x & y & z \end{bmatrix}\f$, in
+     * @return The acc data, \f$\begin{matrix} x & y & z \end{matrix}\f$, in
      *         meters per second per second.
      */
     IMUVector &Accelerometer() const;
 
     /**
      * Give the gyro data of this state.
-     * @return The gyro data, $\begin{bmatrix} x & y & z \end{bmatrix}, in radians per second.
+     * @return The gyro data, $\begin{matrix} x & y & z \end{matrix}, in radians per second.
      */
     IMUVector &Gyro() const;
 
@@ -91,16 +91,17 @@ namespace InuSimulator
     /**
      * $\mat{a^b}$
      */
-    IMUVector a_caret_b;
+    InuVector a_caret_b;
 
     /**
      * $\mat{\Omega^b_{ib}}$
      */
-    IMUVector Omega_caret_b_ib;
+    InuVector Omega_caret_b_ib;
 
-    IMUMatrix R_caret_n_b;
+    InuMatrix R_caret_b_n;
+    InuMatrix R_caret_b_n_0;
 
-    IMUMatrix Omega_caret_n_nb;
+    InuMatrix Omega_caret_n_nb;
 
     };
   };
