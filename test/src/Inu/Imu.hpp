@@ -29,6 +29,8 @@
  /* @{ */
 
 #include "Math/kalman/kalman/kvector.hpp"
+#include "Math/InuVector.hpp"
+#include "Math/InuMatrix.hpp"
 
 class InuVector;
 class InuMatrix;
@@ -60,13 +62,13 @@ namespace InuSimulator
      * @return The acc data, \f$\begin{matrix} x & y & z \end{matrix}\f$, in
      *         meters per second per second.
      */
-    IMUVector &Accelerometer() const;
+    InuVector &Accelerometer() const;
 
     /**
      * Give the gyro data of this state.
      * @return The gyro data, $\begin{matrix} x & y & z \end{matrix}, in radians per second.
      */
-    IMUVector &Gyro() const;
+    InuVector &Gyro() const;
 
     /**
      * Initialize the $R^b_n$ roation for time, $t_0$.
@@ -76,9 +78,10 @@ namespace InuSimulator
 
     /**
      * Initialize the $\Omega^n_{nb}$ matrix at time, $t_0$.
-     * @param Omega_caret_n_nb The matrix at $T_0$.
+     * @param Omega_caret_n_nb The matrix of body rotations in the
+     *                         navigation basis.
      */
-    void Omega_caret_n_nb(const KMatrix &t_0);
+    void Omega_caret_n_nb(const KMatrix &Omega_caret_n_nb);
 
   protected:
 
@@ -99,7 +102,6 @@ namespace InuSimulator
     InuVector Omega_caret_b_ib;
 
     InuMatrix R_caret_b_n;
-    InuMatrix R_caret_b_n_0;
 
     InuMatrix Omega_caret_n_nb;
 
