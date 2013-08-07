@@ -104,6 +104,10 @@ v = \int{\left( a - g \right)} dt
 \end{equation}
 where $a$ is the observed acceleration normal to to the Geoid, $g$ is the acceleration due to gravity (which, by definition, is normal to the Geod) and $v$ is the velocity normal to the Geod.
 
+\bigskip
+
+In addition the described instrument will be capable of providing precision accelerations, velocities and postitions which will be better than the GPS data over the short term. Also the instrument will provide accurate attitude data.
+
 \clearpage\setcounter{page}{1}
 \chapter[Context]{Context}
 
@@ -288,6 +292,86 @@ where $\mat{A}$ is the skew matrix form of $\mat{a}$. The skew matrix form is
 0 & -a_3 & a_2 \\
 a_3 & 0 & -a_1 \\
 -a_2 & a_1 & 0
+\end{bmatrix}
+\end{equation}
+
+\section[Geodesy]{Geodesy}
+
+\subsection[Geodetic Variables and Constants]{Geodetic Variables and Constants}
+
+The rotational rate of the earth, $\omega_e$, is:
+
+\begin{equation}
+\omega_e = 7292115.0 \times 10^{-11}  rad / s
+\end{equation}
+
+In the earth coordinate system:
+
+\begin{equation}
+\mat{\omega}^e_{ie} = 
+\begin{bmatrix}
+ 0 & \omega_e & 0
+ \end{bmatrix}
+\end{equation}
+
+The semimajor axis of the earth (WGS84), $r_a$, is:
+
+\begin{equation}
+r_a = 6378137 m
+\end{equation}
+
+The semiminor axis of the earth (WGS84), $r_b$, is:
+
+\begin{equation}
+r_b = 6399592 m
+\end{equation}
+
+The eccentricity of the earth (WGS84), $\epsilon$, is:
+
+\begin{equation}
+\epsilon = \sqrt{1 - \frac{r^2_b}{r^2_a}} = 0.0818191908426
+\end{equation}
+
+The meridional (north-south) radius of curvature, $r_m$, is:
+
+\begin{equation}
+r_m = \frac{r_a \left(1 - \epsilon^2 \right)}{\left(1 - \epsilon^2\sin^2\left(\phi\right)\right)^{3/2}}
+\end{equation}
+
+The normal (east-west) radius of curvature, $r_n$, is:
+
+\begin{equation}
+r_n = \frac{r_a}{\sqrt{\left(1 - \epsilon^2\sin^2\left(\phi\right)\right)}}
+\end{equation}
+
+The gavitational magnitude, $g$, is approximated by:
+
+\begin{equation}
+g = \frac{\mu}{r^2}\left(1 - \frac{3}{4}J_2\left(1 - 3\cos\left(2\phi\right)\right)\right) - r\omega^2_e\cos^2\left(\phi\right)
+\end{equation}
+
+Where:
+
+\begin{equation}
+\mu = \left(3.9860307 \pm 0.000000311 \right) \times 10^{11} m^3/sec^2
+\end{equation}
+
+\begin{equation}
+J_2 = \left(1.08230 \pm 0.00020 \right) \times 10^{-3}
+\end{equation}
+
+\begin{equation}
+r = r_a \left(1 - \epsilon\sin^2\left(\phi\right)\right) + h
+\end{equation}
+
+The gavitational model in the navigation basis is:
+
+\begin{equation}
+\mat{g}^n = 
+\begin{bmatrix}
+0 \\
+0 \\
+g
 \end{bmatrix}
 \end{equation}
 
@@ -734,6 +818,10 @@ The GPS call back is invoked every 1000mS. This is setup in android/src/Internal
 \subsection[Navigate]{Navigation}
 
 \subsection[Aided]{Aided}
+
+\section[Instrument as a Android Service]{Instrument as a Android Service}
+
+The G-Meter will be presented to XCSoar as an Android service.
 
 \appendix
 
