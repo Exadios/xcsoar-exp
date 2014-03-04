@@ -2,6 +2,10 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
+Version 6.7.3-Virt-Menu 2014/03/05
+
+As for Version 6.7.3 but built against API 13 to re-enable Nexus virtual menus.
+
 Version 6.7.3 - 2014/01/22
 * tracking
   - changed host for DHV tracking server (#3208)
