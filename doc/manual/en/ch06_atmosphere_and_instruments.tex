@@ -15,7 +15,7 @@ centre of the dial the instantaneous measurement is shown as text.
 Additionally, speed command arrows (chevrons) appear above or below
 the gross variometer measurement.  Chevrons pointing up indicate
 slowing down is recommended.  Chevrons pointing down indicates that
-speeding up is recommended.  
+speeding up is recommended.
 
 When the averager value is displayed, the value shown is the average
 gross climb rate over the previous 30 seconds when in circling mode,
@@ -32,7 +32,7 @@ along with the gross value etc.
 When an intelligent variometer is connected to XCSoar, the needle
 displays data from the instrument; otherwise it produces variometer
 estimates based on GPS vertical speed, which is slow and uncompensated
-for aircraft total energy.  
+for aircraft total energy.
 
 The MacCready value, bugs and ballast, optimum speed to fly and wind
 data are transferred between XCSoar and supported external intelligent
@@ -42,10 +42,10 @@ adjusting the MacCready setting on one device should be kept in sync
 with the other, by the software and to not require additional input from
 the pilot.
 
-Pilots abuse the device synchronisation (see \ref{conf:comdevices}) for various 
-reasons. You may have  different MacCready settings on PDA and inteligent vario 
-to cross-check the results. You may do computations with different ballast 
-settings and cross-chsck the results. You may choose on one of the devices 
+Pilots abuse the device synchronisation (see \ref{conf:comdevices}) for various
+reasons. You may have  different MacCready settings on PDA and inteligent vario
+to cross-check the results. You may do computations with different ballast
+settings and cross-chsck the results. You may choose on one of the devices
 manually a different wind setting and cross-check the results, etc.
 
 A list of supported variometers is maintained in
@@ -56,9 +56,9 @@ the variometer is in climb audio mode.
 
 \section{Audio Variometer}
 
-In addition to the variometer display XCSoar provides an acoustic variometer which transfers the 
-variometer measurements are transferre into sounds. The audio variometer is for now only available 
-on android devices. For proper performance connect your device to a barometric sensor or use the 
+In addition to the variometer display XCSoar provides an acoustic variometer which transfers the
+variometer measurements are transferre into sounds. The audio variometer is for now only available
+on android devices. For proper performance connect your device to a barometric sensor or use the
 internal one of your android device if provided.
 The audio vario is enabled/disabled via the gauges configuration in the configuration.
 
@@ -121,7 +121,7 @@ XCSoar offers two ways of estimating wind during flight.
 \end{description}
 
 The wind magnitude and direction can also be adjusted manually from the
-wind settings dialogue (see below).  
+wind settings dialogue (see below).
 
 Statistics are gathered so that winds are recorded at different
 altitudes and times.  When the glider's altitude changes significantly,
@@ -219,7 +219,7 @@ how this affects the display of the snail trail.
 Statistics on climb rates in thermals are collected and displayed in a
 thermal band meter.  This is shown above the final glide difference
 bar on the left side of the map display.  It is not shown when the
-glider is above final glide.  
+glider is above final glide.
 
 \vskip 2cm
 \marginpar{\hbox{\vbox{\includegraphics[angle=0,width=0.7\linewidth,keepaspectratio='true']{figures/thermalprofile.png}}}}
@@ -249,18 +249,18 @@ thermal marker symbol is a green circle with a spiral.
 \includegraphics[angle=0,width=0.8\linewidth,keepaspectratio='true']{figures/shot-tlocator-circling.png}
 \end{center}
 
-The thermal locator marks the location of the last 20 
+The thermal locator marks the location of the last 20
 thermals on the map with the thermal symbol during cruise.
 
-This location is calculated to compensate for the thermal drift at 
-the glider's altitude.  This means that internally XCSoar remembers 
-the location of the thermal source on the ground.  In other words, 
-if you leave a thermal at the top and later return at low altitude, 
-the position on the map shows the predicted location of the thermal 
-at that low altitude (which is further upwind than the top).  
+This location is calculated to compensate for the thermal drift at
+the glider's altitude.  This means that internally XCSoar remembers
+the location of the thermal source on the ground.  In other words,
+if you leave a thermal at the top and later return at low altitude,
+the position on the map shows the predicted location of the thermal
+at that low altitude (which is further upwind than the top).
 
-If the wind changes and the thermal source is still active, its 
-position on the map reflects the wind change; that is, the thermal 
+If the wind changes and the thermal source is still active, its
+position on the map reflects the wind change; that is, the thermal
 at altitude will be projected downwind at the new wind estimate.
 
 \begin{center}
@@ -273,7 +273,7 @@ at altitude will be projected downwind at the new wind estimate.
 The thermal assistant is a graphical aid to maximise the exploitation of the
 given thermal updraft. If it is configured ``On" \config{thermalassistant} the
 small polar digram is mapped to the lower left corner of the screen. A
-single tap on the small digram enlarges it to a full-screen view. 
+single tap on the small digram enlarges it to a full-screen view.
 
 The polar diagram shows the climb rate over the circular course of the glider.
 The screen-shots show a right circle, where the glider position is fixed to the
@@ -297,7 +297,7 @@ Open the circle a bit to displace the circle centre in the direction of the
 strongest climb rate.
 \item[2.]  At the moment the maximum peak on the polar diagram passes the
 gliders position; the vario should show the maximal climb rate: Narrow the
-circle as much as possible to centre the thermal updraft at it's maximum. 
+circle as much as possible to centre the thermal updraft at it's maximum.
 \end{description}
 
 It must be said, that the interpretation of the thermal assistant allways relays
@@ -375,33 +375,51 @@ The climb history and barograph pages, described in
 Section~\ref{sec:analysis-climb}, are also useful to determine
 trends in the soaring conditions.
 
-\section{Weather forecast}\label{sec:weather-forecast}
+\section{Weather, METAR / TAF}\label{sec:metar-taf}
 
-Weather forecasts, typically generated from RASP (Regional Atmospheric
-Soaring Prediction) forecasts, may be overlaid on the map.  The user
-must install a `xcsoar-rasp.dat' file, prepared by a RASP provider,
-into the XCSoarData directory for this function to be available.
+If the hardware hosting XCSoar is able to connect to the internet, weather
+reports and forecasts can be downloaded. \menulabelr{\bmenug{Info}\blink
+\bmenug{METAR TAF}} Present actual informations available are depicted by a
+little flag, pinned to the waypoint of the reporting station.
+\menulabelr{\includegraphics[width=0.6cm]{icons/map_weather_station.pdf}} To
+set up reports and forecasts, invoke the METAR and TAF dialogue. With
+\bmenuw{Add} a filtering screen for ICAO codes comes up. After typing and
+pushing \bmenuw{OK}another station is added to the list. Accessing the
+information is either possible via selecting an airport and pushing
+\bmenuw{Details} on the same screen or by touching the map invoking the ``Map
+elements at this location'' dialogue. The dialogue will show airports,
+airspaces... ...and weather data. If the flags are missing on the map, no
+actual information is available. Invoke the info dialogue and touch
+\bmenuw{Update}.
 
-This section of the documentation is intended to describe the basic
-functionality; the reader is referred to the RASP website
-\url{www.drjack.info} for more details on how RASP forecasts work, from where 
-they are available, and their use and limitations.
+\section{Weather forecast, RASP}\label{sec:weather-forecast}
 
-The forecast overlays are accessed by the weather dialogue. 
-\menulabel{\bmenug{Info 2}\blink\bmenug{Weather}}
+Regional Atmospheric Soaring Prediction - RASP - is intended to provide
+detailed graphical weather forecasts for soaring purposes. For further details
+the keen pilot is invited to consult \url{http://www.drjack.info} on how RASP
+forecasts work, from where they are available, and their use and limitations.
+At \url{http://www.drjack.info/RASP} a map depicts the coverage of available
+RASP forecasts worldwide, provided by many soaring and paragliding enthusiasts.
+Please note, that some of these links do provide data in-season only as well
+as just a part of these providers make available data in XCSoar format.
 
-\begin{center}
-\includegraphics[angle=0,width=0.5\linewidth,keepaspectratio='true']{figures/dialog-weather.png}
-\end{center}
+For use within XCSoar, an ``xcsoar-rasp.dat'' file has to be installed
+into the XCSoarData directory.  As is with February 2014, download of
+``xcsoar.rasp.dat'' files is not (yet) supported by XCSoar's file manager. The
+rasp forecasts are displayed as colour-coded terrain overlays on the map. \\ \\
+Make sure, terrain display is set to on. \tip{} \\ \\
+The RASP-forecast overlays are invoked via menu
+\menulabelr{\bmenug{Info 2/3}\blink\bmenug{Weather}}
+\bmenug{Info 2/3}.
 
 The Field setting determines which data field is displayed on the map.
 The Time setting determines at which forecast time the data field will
 be displayed.  Upon entering the weather dialogue, the Time setting is
 advanced to the next nearest forecast time available in the RASP file.
-
 When a field is not available in the RASP file, the background is left blank.
 
 The maximum and minimum values of the field in the map area are drawn
+\marginpar{\includegraphics[angle=0,width=0.95\linewidth,keepaspectratio='true']{figures/dialog-weather.png}}
 at their respective locations on the map.  The field name is displayed
 on the lower left of the screen.
 
@@ -409,7 +427,7 @@ The fields available to display are as follows:
 \begin{description}
 \item[Terrain] Display terrain on map, no weather data displayed.
 
-\item[W*] 
+\item[W*]
 Average dry thermal updraft strength near mid-BL height.  Subtract
 glider descent rate to get average vario reading for cloudless
 thermals.  Updraft strengths will be stronger than this forecast if
@@ -421,7 +439,7 @@ the surface heating and the BL depth.
 \includegraphics[angle=0,width=0.8\linewidth,keepaspectratio='true']{figures/rasp-wstar.png}
 \end{center}
 
-\item[BL wind spd] 
+\item[BL wind spd]
 The speed and direction of the vector-averaged wind in the BL.  This
 prediction can be misleading if there is a large change in wind
 direction through the BL.
@@ -430,7 +448,7 @@ direction through the BL.
 \includegraphics[angle=0,width=0.8\linewidth,keepaspectratio='true']{figures/rasp-blwindspd.png}
 \end{center}
 
-\item[H bl]  
+\item[H bl]
 Altitude of the top of the mixing layer, which for thermal convection is
 the average top of a dry thermal.  Over flat terrain, maximum
 thermalling heights will be lower due to the glider descent rate and
@@ -445,7 +463,7 @@ glider flying.
 \includegraphics[angle=0,width=0.8\linewidth,keepaspectratio='true']{figures/rasp-hbl.png}
 \end{center}
 
-\item[dwcrit]  
+\item[dwcrit]
 This parameter estimates the height above ground at which the average
 dry updraft strength drops below 225 fpm and is expected to give
 better quantitative numbers for the maximum cloudless thermalling
@@ -456,7 +474,7 @@ consitions.) In the presence of clouds the maximum thermalling height
 may instead be limited by the cloud base.  Being for ``dry'' thermals,
 this parameter omits the effect of ``cloudsuck''.
 
-\item[bl cloud]  
+\item[bl cloud]
 This parameter provides an additional means of evaluating the
 formation of clouds within the BL and might be used either in
 conjunction with or instead of the other cloud prediction parameters.
@@ -469,13 +487,13 @@ altitude.
 \includegraphics[angle=0,width=0.8\linewidth,keepaspectratio='true']{figures/rasp-blcloudpct.png}
 \end{center}
 
-\item[Sfc temp] 
+\item[Sfc temp]
 The temperature at a height of 2m above ground level.  This can be
 compared to observed surface temperatures as an indication of model
 simulation accuracy; e.g. if observed surface temperatures are
 significantly below those forecast, then soaring conditions will be
 poorer than forecast.
-\item[hwcrit]  
+\item[hwcrit]
 This parameter estimates the altitude at which the average dry updraft
 strength drops below 225 fpm and is expected to give better
 quantitative numbers for the maximum cloudless thermalling height than
@@ -485,7 +503,7 @@ underpredict the max. thermalling height for dry consitions.) In the
 presence of clouds the maximum thermalling height may instead be
 limited by the cloud base.  Being for ``dry'' thermals, this parameter
 omits the effect of ``cloudsuck''.
-\item[wblmaxmin]  
+\item[wblmaxmin]
 Maximum grid-area-averaged extensive upward or downward motion within
 the BL as created by horizontal wind convergence. Positive convergence
 is associated with local small-scale convergence lines.  Negative

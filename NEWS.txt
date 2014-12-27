@@ -2,9 +2,56 @@
 SUMMARY OF NEW FEATURES AND BUG FIXES SINCE V4.0
 ============================================================================
 
-Version 6.7.3-Virt-Menu 2014/03/05
+Version 6.7.6-Virt-Menu 2014/12/27
 
-As for Version 6.7.3 but built against API 13 to re-enable Nexus virtual menus.
+As for Version 6.7.6 but built against API 13 to re-enable Nexus virtual menus.
+
+Version 6.7.6 - 2014/10/18
+* tracking
+  - updated SkyLines server IP
+* user interface
+  - fix crash when switching pages with cross section (#3012, #3231, #3395)
+* devices
+  - LX: relax download timeout (#3199)
+  - OpenVario: new device driver
+  - Vaulter: new device driver
+* replay
+  - accept "$GNRMC" in replay of NMEA files
+* calculations
+  - improve circling detection when using some external NMEA devices (#3360, #3372)
+* configuration
+  - report missing plane configuration file in log file
+
+Version 6.7.5 - 2014/06/09
+* fix crash in task manager (#3305)
+* work around crash on Windows (PC) (#3284)
+* devices
+  - fixed attitude data handling
+  - properly detect LXNAV Nano 3
+  - FLARM: fix declaration with asterisk in task point name (#3323)
+* airspace
+  - assume all airspaces are active if day of week is not known
+  - restore "Repetitive Sound" setting on startup (#3308)
+* Android
+  - fix crash when opening IOIO port (#3309)
+  - allow reconnecting IOIO sensors
+* tasks
+  - fix loading of some tasks from .cup files
+
+Version 6.7.4 - 2014/04/11
+* map
+  - fix topography rendering for polygon shapes (#3245)
+  - fix SDL clipped polygon rendering algorithm (#3250)
+* devices
+  - Westerboer: ignore implausible values from buggy devices
+* logger
+  - create "logs" directory automatically for external flight downloads
+* user interface
+  - show status message when switching to next turnpoint (#3270)
+* airspace
+  - relax parsing of TNP airspace files (#3272)
+* infoboxes
+  - don't use depreciated content in default configuration (#3278)
 
 Version 6.7.3 - 2014/01/22
 * tracking

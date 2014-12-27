@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2013 The XCSoar Project
+  Copyright (C) 2000-2014 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,28 +21,10 @@ Copyright_License {
 }
 */
 
-#include "Device/Driver/LX.hpp"
-#include "Device/Driver/LX/Internal.hpp"
-#include "Device/Config.hpp"
+#ifndef XCSOAR_DEVICE_DRIVER_VAULTER_HPP
+#define XCSOAR_DEVICE_DRIVER_VAULTER_HPP
 
-static Device *
-LXCreateOnPort(const DeviceConfig &config, Port &com_port)
-{
-  const bool uses_speed = config.UsesSpeed();
-  const unsigned baud_rate = uses_speed ? config.baud_rate : 0;
-  const unsigned bulk_baud_rate = uses_speed ? config.bulk_baud_rate : 0;
+extern const struct DeviceRegister vaulter_driver;
 
-  const bool is_nano = config.BluetoothNameStartsWith("LXNAV-NANO");
+#endif
 
-  return new LXDevice(com_port, baud_rate, bulk_baud_rate, is_nano);
-}
-
-const struct DeviceRegister lx_driver = {
-  _T("LX"),
-  _T("LX / Colibri"),
-  DeviceRegister::DECLARE | DeviceRegister::LOGGER |
-  DeviceRegister::PASS_THROUGH |
-  DeviceRegister::BULK_BAUD_RATE |
-  DeviceRegister::RECEIVE_SETTINGS | DeviceRegister::SEND_SETTINGS,
-  LXCreateOnPort,
-};
