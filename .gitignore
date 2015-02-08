@@ -39,3 +39,4 @@ build/local-config.mk
 Makefile
 *cmake_install.cmake
 .*.swp
+Makefile
