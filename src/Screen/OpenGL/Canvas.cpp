@@ -57,6 +57,8 @@ Copyright_License {
 
 #include <assert.h>
 
+#include <iostream>
+
 AllocatedArray<RasterPoint> Canvas::vertex_buffer;
 
 void
@@ -152,7 +154,10 @@ void
 Canvas::DrawPolygon(const RasterPoint *points, unsigned num_points)
 {
   if (brush.IsHollow() && !pen.IsDefined())
+    {
+    std::cerr << "Canvas::DrawPolygon: no brush" << std::endl;
     return;
+    }
 
 #ifdef USE_GLSL
   OpenGL::solid_shader->Use();
