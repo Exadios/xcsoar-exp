@@ -53,7 +53,7 @@ endif
 # a red Activity icon, to allow simultaneous installation of "stable"
 # and "testing".
 # In the stable branch, this should default to "n".
-TESTING = y # This build is to test the "Australian Sector" alpha builds.
+TESTING = y # This build is to test the "Variable Sector" alpha builds.
 
 ifeq ($(TESTING),y)
   TARGET_CPPFLAGS += -DTESTING
