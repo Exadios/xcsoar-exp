@@ -30,7 +30,7 @@
 #include "Task/ObservationZones/LineSectorZone.hpp"
 #include "Task/ObservationZones/KeyholeZone.hpp"
 #include "Task/ObservationZones/AnnularSectorZone.hpp"
-#include "Task/ObservationZones/AustralianKeyholeZone.hpp"
+#include "Task/ObservationZones/VariableKeyholeZone.hpp"
 #include "Task/Factory/AbstractTaskFactory.hpp"
 #include "XML/DataNode.hpp"
 #include "Engine/Waypoint/Waypoints.hpp"
@@ -167,12 +167,12 @@ DeserialiseOZ(const Waypoint &wp, const ConstDataNode &node, bool is_turnpoint)
   else if (StringIsEqual(type, _T("Keyhole")))
     return KeyholeZone::CreateDAeCKeyholeZone(wp.location);
 
-  else if (StringIsEqual(type, _T("AustralianKeyholeZone")))
+  else if (StringIsEqual(type, _T("VariableKeyholeZone")))
     {
     fixed radius, inner_radius;
     Angle start, end;
 
-    AustralianKeyholeZone *z = AustralianKeyholeZone::New(wp.location);
+    VariableKeyholeZone *z = VariableKeyholeZone::New(wp.location);
     if (node.GetAttribute(_T("radius"), radius) && positive(radius))
       z->SetRadius(radius);
     if (node.GetAttribute(_T("inner_radius"), inner_radius) &&
