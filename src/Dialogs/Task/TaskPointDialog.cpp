@@ -46,7 +46,7 @@ Copyright_License {
 #include "Task/ObservationZones/CylinderZone.hpp"
 #include "Task/ObservationZones/AnnularSectorZone.hpp"
 #include "Task/ObservationZones/KeyholeZone.hpp"
-#include "Task/ObservationZones/AustralianKeyholeZone.hpp"
+#include "Task/ObservationZones/VariableKeyholeZone.hpp"
 #include "Task/TypeStrings.hpp"
 #include "Gauge/TaskView.hpp"
 #include "Compiler.h"
@@ -59,7 +59,7 @@ Copyright_License {
 #include "Widgets/SectorZoneEditWidget.hpp"
 #include "Widgets/LineSectorZoneEditWidget.hpp"
 #include "Widgets/KeyholeZoneEditWidget.hpp"
-#include "Widgets/AustralianKeyholeZoneEditWidget.hpp"
+#include "Widgets/VariableKeyholeZoneEditWidget.hpp"
 
 #ifdef ENABLE_OPENGL
 #include "Screen/OpenGL/Scissor.hpp"
@@ -357,8 +357,8 @@ CreateObservationZoneEditWidget(ObservationZonePoint &oz, bool is_fai_general)
   case ObservationZone::Shape::CUSTOM_KEYHOLE:
     return new KeyholeZoneEditWidget((KeyholeZone &)oz);
 
-  case ObservationZone::Shape::AUSTRALIAN_KEYHOLE:
-    return new AustralianKeyholeZoneEditWidget((AustralianKeyholeZone &)oz);
+  case ObservationZone::Shape::VARIABLE_KEYHOLE:
+    return new VariableKeyholeZoneEditWidget((VariableKeyholeZone &)oz);
 
   case ObservationZone::Shape::FAI_SECTOR:
   case ObservationZone::Shape::DAEC_KEYHOLE:
