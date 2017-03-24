@@ -30,6 +30,7 @@
 #include "Waypoint/WaypointReaderSeeYou.hpp"
 #include "Task/ObservationZones/LineSectorZone.hpp"
 #include "Task/ObservationZones/AnnularSectorZone.hpp"
+#include "Task/ObservationZones/VariableKeyholeZone.hpp"
 #include "Task/ObservationZones/KeyholeZone.hpp"
 #include "Engine/Task/Ordered/OrderedTask.hpp"
 #include "Engine/Task/Ordered/Points/StartPoint.hpp"
@@ -189,10 +190,14 @@ ParseOZs(SeeYouTurnpointInformation turnpoint_infos[], const TCHAR *params[],
     return -1;
 
   turnpoint_infos[oz_index].valid = true;
+  // Defaults
+  turnpoint_infos[oz_index].radius2 = 0;
+
   // Iterate through available OZ options
   for (unsigned i = 1; i < n_params; i++) {
     const TCHAR *pair = params[i];
     SeeYouTurnpointInformation &tp_info = turnpoint_infos[oz_index];
+
 
     if (StringIsEqual(pair, _T("Style"), 5)) {
       if (_tcslen(pair) > 6)
@@ -292,9 +297,9 @@ gcc_pure
 static Angle
 CalcIntermediateAngle(const SeeYouTurnpointInformation &turnpoint_infos,
                       const GeoPoint &location,
-                      const GeoPoint &start,
                       const GeoPoint &previous,
-                      const GeoPoint &next)
+                      const GeoPoint &next,
+                      const GeoPoint &start)
 {
     switch (turnpoint_infos.style) {
     case SeeYouTurnpointInformation::FIXED:
@@ -331,12 +336,9 @@ CalcIntermediateAngle(const SeeYouTurnpointInformation &turnpoint_infos,
  * @param array of wps for each point in task
  * @param factType The XCSoar factory type
  * @return the XCSoar OZ
- *
- * /TODO Get hold of a CU file containing an Australian Keyhole Sector and
- *       modify this code to parse it.
  */
 static ObservationZonePoint*
-CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
+CreateOZ(const  SeeYouTurnpointInformation &turnpoint_infos,
          unsigned pos, unsigned size, const Waypoint *wps[],
          TaskFactoryType factType)
 {
@@ -390,11 +392,17 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
 
     if (turnpoint_infos.radius2 > fixed(0) &&
         (turnpoint_infos.angle2.AsBearing().Degrees()) < fixed(1)) {
-      oz = new AnnularSectorZone(wp->location, turnpoint_infos.radius1,
-          RadialStart, RadialEnd, turnpoint_infos.radius2);
+      oz = new AnnularSectorZone(wp->location,
+                                 turnpoint_infos.radius1,
+                                 RadialStart,
+                                 RadialEnd,
+                                 turnpoint_infos.radius2);
     } else {
-      oz = new SectorZone(wp->location, turnpoint_infos.radius1,
-          RadialStart, RadialEnd);
+      oz = VariableKeyholeZone::New(wp->location,
+                                    turnpoint_infos.radius1,
+                                    turnpoint_infos.radius2,
+                                    RadialStart,
+                                    RadialEnd);
     }
 
   } else { // catch-all
