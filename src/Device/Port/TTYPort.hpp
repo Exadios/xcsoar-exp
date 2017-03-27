@@ -66,7 +66,9 @@ public:
    *
    * @return the path of the slave pseudo-terminal, nullptr on error
    */
+#ifndef WIN32
   const char *OpenPseudo();
+#endif
 
   WaitResult WaitWrite(unsigned timeout_ms);
 

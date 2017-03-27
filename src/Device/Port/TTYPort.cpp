@@ -23,16 +23,24 @@ Copyright_License {
 
 #include "TTYPort.hpp"
 #include "Asset.hpp"
-#include "OS/FileDescriptor.hxx"
-#include "OS/Error.hxx"
 #include "IO/Async/AsioUtil.hpp"
+#include "Util/ConvertString.hpp"
 #include "Util/StringFormat.hpp"
 
 #include <system_error>
+#ifdef WIN32
+#include "OS/OverlappedEvent.hpp"
+#else
+#include "OS/Error.hxx"
+#include "OS/FileDescriptor.hxx"
+#endif
+
 #include <boost/system/system_error.hpp>
 
+#ifndef WIN32
 #include <sys/stat.h>
 #include <termios.h>
+#endif
 
 #include <assert.h>
 #include <tchar.h>
@@ -69,7 +77,12 @@ TTYPort::GetState() const
 bool
 TTYPort::Drain()
 {
-#ifdef __BIONIC__
+#ifdef WIN32
+  SetCommMask(serial_port.native_handle(), EV_ERR | EV_TXEMPTY);
+  DWORD events;
+  return WaitCommEvent(serial_port.native_handle(), &events, nullptr) &&
+      (events & EV_TXEMPTY) != 0;
+#elif defined(__BIONIC__)
   /* bionic doesn't have tcdrain() */
   return true;
 #else
@@ -77,6 +90,7 @@ TTYPort::Drain()
 #endif
 }
 
+#ifndef WIN32
 gcc_pure
 static bool
 IsCharDev(const char *path)
@@ -84,10 +98,12 @@ IsCharDev(const char *path)
   struct stat st;
   return stat(path, &st) == 0 && S_ISCHR(st.st_mode);
 }
+#endif
 
 bool
 TTYPort::Open(const TCHAR *path, unsigned baud_rate)
 {
+#ifndef WIN32
   if (IsAndroid() && IsCharDev(path)) {
     /* attempt to give the XCSoar process permissions to access the
        USB serial adapter; this is mostly relevant to the Nook */
@@ -95,12 +111,15 @@ TTYPort::Open(const TCHAR *path, unsigned baud_rate)
     StringFormat(command, MAX_PATH, "su -c 'chmod 666 %s'", path);
     system(command);
   }
+#endif
 
   boost::system::error_code ec;
-  serial_port.open(path, ec);
+  const WideToACPConverter narrow_path(path);
+  serial_port.open(static_cast<const char *>(narrow_path), ec);
   if (ec) {
     char error_msg[MAX_PATH + 16];
-    StringFormat(error_msg, sizeof(error_msg), "Failed to open %s", path);
+    StringFormat(error_msg, sizeof(error_msg),
+                 "Failed to open %s", static_cast<const char *>(narrow_path));
     throw boost::system::system_error(ec);
   }
 
@@ -131,6 +150,7 @@ TTYPort::Open(const TCHAR *path, unsigned baud_rate)
   if (ec)
     return false;
 
+#ifndef WIN32
   class
   {
   public:
@@ -154,6 +174,7 @@ TTYPort::Open(const TCHAR *path, unsigned baud_rate)
   serial_port.set_option(custom_options, ec);
   if (ec)
     return false;
+#endif
 
   valid.store(true, std::memory_order_relaxed);
 
@@ -163,6 +184,7 @@ TTYPort::Open(const TCHAR *path, unsigned baud_rate)
   return true;
 }
 
+#ifndef WIN32
 const char *
 TTYPort::OpenPseudo()
 {
@@ -184,6 +206,7 @@ TTYPort::OpenPseudo()
   StateChanged();
   return ptsname(serial_port.native_handle());
 }
+#endif
 
 void
 TTYPort::Flush()
@@ -191,10 +214,19 @@ TTYPort::Flush()
   if (!valid.load(std::memory_order_relaxed))
     return;
 
+#ifdef WIN32
+  PurgeComm(serial_port.native_handle(), PURGE_TXABORT |
+                                         PURGE_RXABORT |
+                                         PURGE_TXCLEAR |
+                                         PURGE_RXCLEAR);
+  BufferedPort::Flush();
+#else
   tcflush(serial_port.native_handle(), TCIFLUSH);
+#endif
   BufferedPort::Flush();
 }
 
+#ifndef WIN32
 Port::WaitResult
 TTYPort::WaitWrite(unsigned timeout_ms)
 {
@@ -212,6 +244,7 @@ TTYPort::WaitWrite(unsigned timeout_ms)
   else
     return WaitResult::FAILED;
 }
+#endif
 
 size_t
 TTYPort::Write(const void *data, size_t length)
@@ -221,6 +254,35 @@ TTYPort::Write(const void *data, size_t length)
   if (!valid.load(std::memory_order_relaxed))
     return 0;
 
+#ifdef WIN32
+  DWORD nbytes;
+
+  OverlappedEvent osWriter;
+
+  // Start reading data
+  if (::WriteFile(serial_port.native_handle(), data, length, &nbytes,
+                  osWriter.GetPointer()))
+    return nbytes;
+
+  if (::GetLastError() != ERROR_IO_PENDING)
+    return 0;
+
+  // Let's wait for ReadFile() to finish
+  unsigned timeout_ms = 1000 + length * 10;
+  switch (osWriter.Wait(timeout_ms)) {
+  case OverlappedEvent::FINISHED:
+    // Get results
+    ::GetOverlappedResult(serial_port.native_handle(), osWriter.GetPointer(),
+                          &nbytes, FALSE);
+    return nbytes;
+
+  default:
+    ::CancelIo(serial_port.native_handle());
+    ::SetCommMask(serial_port.native_handle(), 0);
+    osWriter.Wait();
+    return 0;
+  }
+#else
   boost::system::error_code ec;
   auto nbytes = serial_port.write_some(boost::asio::buffer(data, length), ec);
   if (ec == boost::asio::error::try_again) {
@@ -231,6 +293,7 @@ TTYPort::Write(const void *data, size_t length)
 
     nbytes = serial_port.write_some(boost::asio::buffer(data, length), ec);
   }
+#endif
 
   return nbytes;
 }
