@@ -258,7 +258,7 @@ TTYPort::SetBaudrate(unsigned baud_rate)
 }
 
 void
-TTYPort::OnReadReady(const boost::system::error_code &ec)
+TTYPort::OnRead(const boost::system::error_code &ec, size_t nbytes)
 {
   if (ec == boost::asio::error::operation_aborted)
     /* this object has already been deleted; bail out quickly without
@@ -272,21 +272,7 @@ TTYPort::OnReadReady(const boost::system::error_code &ec)
     return;
   }
 
-  char buffer[1024];
-
-  boost::system::error_code ec2;
-  auto nbytes = serial_port.read_some(boost::asio::buffer(buffer,
-                                                          sizeof(buffer)),
-                                      ec2);
-  if (nbytes == 0 || (ec2 && ec2 != boost::asio::error::try_again &&
-                      ec2 != boost::asio::error::interrupted)) {
-    valid.store(false, std::memory_order_relaxed);
-    StateChanged();
-    return;
-  }
-
-  if (nbytes > 0)
-    BufferedPort::DataReceived(buffer, nbytes);
+  DataReceived(input, nbytes);
 
   AsyncRead();
 }

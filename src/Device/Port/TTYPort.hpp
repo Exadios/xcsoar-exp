@@ -41,6 +41,8 @@ class TTYPort : public BufferedPort
 
   std::atomic<bool> valid;
 
+  char input[1024];
+
 public:
   /**
    * Creates a new TTYPort object, but does not open it yet.
@@ -77,12 +79,13 @@ public:
   virtual size_t Write(const void *data, size_t length) override;
 
 private:
-  void OnReadReady(const boost::system::error_code &ec);
+  void OnRead(const boost::system::error_code &ec, size_t nbytes);
 
   void AsyncRead() {
-    serial_port.async_read_some(boost::asio::null_buffers(),
-                                std::bind(&TTYPort::OnReadReady, this,
-                                          std::placeholders::_1));
+    serial_port.async_read_some(boost::asio::buffer(input, sizeof(input)),
+                                std::bind(&TTYPort::OnRead, this,
+                                          std::placeholders::_1,
+                                          std::placeholders::_2));
   }
 };
 
