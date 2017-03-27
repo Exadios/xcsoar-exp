@@ -28,17 +28,12 @@ Copyright_License {
 #include "Device/Config.hpp"
 #include "LogFile.hpp"
 #include "Util/ConvertString.hpp"
+#include "SerialPort.hpp"
 #include "TCPClientPort.hpp"
 
 #ifdef ANDROID
 #include "AndroidBluetoothPort.hpp"
 #include "AndroidIOIOUartPort.hpp"
-#endif
-
-#if defined(HAVE_POSIX)
-#include "TTYPort.hpp"
-#else
-#include "SerialPort.hpp"
 #endif
 
 #ifndef NDEBUG
@@ -175,7 +170,7 @@ OpenPortInternal(boost::asio::io_service &io_service,
                                               std::system_category()),
                               "Failed to delete pty");
 
-    TTYPort *port = new TTYPort(io_service, listener, handler);
+    SerialPort *port = new SerialPort(io_service, listener, handler);
     const char *slave_path = port->OpenPseudo();
     if (slave_path == nullptr) {
       delete port;
@@ -197,11 +192,7 @@ OpenPortInternal(boost::asio::io_service &io_service,
   if (path == nullptr)
     throw std::runtime_error("No port path configured");
 
-#ifdef HAVE_POSIX
-  TTYPort *port = new TTYPort(io_service, listener, handler);
-#else
-  SerialPort *port = new SerialPort(listener, handler);
-#endif
+  SerialPort *port = new SerialPort(io_service, listener, handler);
   if (!port->Open(path, config.baud_rate)) {
     delete port;
     return nullptr;

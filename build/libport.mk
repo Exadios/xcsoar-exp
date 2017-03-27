@@ -7,14 +7,11 @@ PORT_SOURCES = \
 	$(SRC)/Device/Port/TCPPort.cpp \
 	$(SRC)/Device/Port/K6BtPort.cpp \
 	$(SRC)/Device/Port/DumpPort.cpp \
-	$(SRC)/Device/Port/NullPort.cpp
+	$(SRC)/Device/Port/NullPort.cpp \
+	$(SRC)/Device/Port/SerialPort.cpp
 
 ifeq ($(HAVE_POSIX),y)
-PORT_SOURCES += \
-	$(SRC)/Device/Port/TTYEnumerator.cpp \
-	$(SRC)/Device/Port/TTYPort.cpp
-else
-PORT_SOURCES += $(SRC)/Device/Port/SerialPort.cpp
+PORT_SOURCES += $(SRC)/Device/Port/TTYEnumerator.cpp
 endif
 
 PORT_SOURCES += $(SRC)/Device/Port/TCPClientPort.cpp

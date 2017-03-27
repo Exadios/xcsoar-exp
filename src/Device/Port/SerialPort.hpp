@@ -21,37 +21,38 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_DEVICE_SERIAL_PORT_HPP
-#define XCSOAR_DEVICE_SERIAL_PORT_HPP
+#ifndef XCSOAR_DEVICE_TTY_PORT_HPP
+#define XCSOAR_DEVICE_TTY_PORT_HPP
 
-#include "Thread/StoppableThread.hpp"
 #include "BufferedPort.hpp"
 
-#include <windef.h>
+#include <boost/asio/serial_port.hpp>
 
-class OverlappedEvent;
+#include <atomic>
+
+#include <tchar.h>
 
 /**
- * Generic SerialPort thread handler class
+ * A serial port class for POSIX (/dev/ttyS*, /dev/ttyUSB*) TTYs
+ * and Win32 COM ports.
  */
-class SerialPort : public BufferedPort, protected StoppableThread
+class SerialPort : public BufferedPort
 {
-  unsigned baud_rate;
+  boost::asio::serial_port serial_port;
 
-  HANDLE hPort;
+  std::atomic<bool> valid;
+
+  char input[1024];
 
 public:
   /**
-   * Creates a new serial port (RS-232) object, but does not open it yet.
+   * Creates a new SerialPort object, but does not open it yet.
    *
    * @param _handler the callback object for input received on the
    * port
    */
-  SerialPort(PortListener *_listener, DataHandler &_handler);
-
-  /**
-   * Closes the serial port (Destructor)
-   */
+  SerialPort(boost::asio::io_service &io_service,
+          PortListener *_listener, DataHandler &_handler);
   virtual ~SerialPort();
 
   /**
@@ -60,41 +61,18 @@ public:
    */
   bool Open(const TCHAR *path, unsigned baud_rate);
 
-protected:
-  bool SetRxTimeout(unsigned Timeout);
-
-  bool IsDataPending() const {
-    COMSTAT com_stat;
-    DWORD errors;
-
-    return ::ClearCommError(hPort, &errors, &com_stat) &&
-      com_stat.cbInQue > 0;
-  }
-
   /**
-   * Determine the number of bytes in the driver's send buffer.
+   * Opens this object with a new pseudo-terminal.  This is only used
+   * for debugging.
    *
-   * @return the number of bytes, or -1 on error
+   * @return the path of the slave pseudo-terminal, nullptr on error
    */
-  gcc_pure
-  int GetDataQueued() const;
+#ifndef WIN32
+  const char *OpenPseudo();
+#endif
 
-  /**
-   * Determine the number of bytes in the driver's receive buffer.
-   *
-   * @return the number of bytes, or -1 on error
-   */
-  int GetDataPending() const;
+  WaitResult WaitWrite(unsigned timeout_ms);
 
-  /**
-   * Wait until there is data in the driver's receive buffer.
-   *
-   * @return the number of bytes, or -1 on error
-   */
-  WaitResult WaitDataPending(OverlappedEvent &overlapped,
-                             unsigned timeout_ms) const;
-
-public:
   /* virtual methods from class Port */
   virtual PortState GetState() const override;
   virtual bool Drain() override;
@@ -103,9 +81,15 @@ public:
   virtual unsigned GetBaudrate() const override;
   virtual size_t Write(const void *data, size_t length) override;
 
-protected:
-  /* virtual methods from class Thread */
-  virtual void Run() override;
+private:
+  void OnRead(const boost::system::error_code &ec, size_t nbytes);
+
+  void AsyncRead() {
+    serial_port.async_read_some(boost::asio::buffer(input, sizeof(input)),
+                                std::bind(&SerialPort::OnRead, this,
+                                          std::placeholders::_1,
+                                          std::placeholders::_2));
+  }
 };
 
 #endif

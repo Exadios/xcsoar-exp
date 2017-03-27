@@ -23,19 +23,36 @@ Copyright_License {
 
 #include "SerialPort.hpp"
 #include "Asset.hpp"
-#include "OS/LogError.hpp"
-#include "OS/Sleep.h"
+#include "IO/Async/AsioUtil.hpp"
+#include "Util/ConvertString.hpp"
+#include "Util/StringFormat.hpp"
+
+#include <system_error>
+#ifdef WIN32
 #include "OS/OverlappedEvent.hpp"
+#else
+#include "OS/Error.hxx"
+#include "OS/FileDescriptor.hxx"
+#endif
 
-#include <windows.h>
+#include <boost/system/system_error.hpp>
 
-#include <algorithm>
+#ifndef WIN32
+#include <sys/stat.h>
+#include <termios.h>
+#endif
+
 #include <assert.h>
 #include <tchar.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <windef.h> // for MAX_PATH
 
-SerialPort::SerialPort(PortListener *_listener, DataHandler &_handler)
-  :BufferedPort(_listener, _handler), StoppableThread("SerialPort")
+SerialPort::SerialPort(boost::asio::io_service &io_service,
+                 PortListener *_listener, DataHandler &_handler)
+  :BufferedPort(_listener, _handler),
+   serial_port(io_service)
 {
 }
 
@@ -43,95 +60,16 @@ SerialPort::~SerialPort()
 {
   BufferedPort::BeginClose();
 
-  // Close the communication port.
-  if (hPort != INVALID_HANDLE_VALUE) {
-    StoppableThread::BeginStop();
-
-    if (CloseHandle(hPort) && !IsEmbedded())
-      Sleep(2000); // needed for windows bug
-
-    Thread::Join();
-  }
+  if (serial_port.is_open())
+    CancelWait(serial_port);
 
   BufferedPort::EndClose();
-}
-
-bool
-SerialPort::Open(const TCHAR *path, unsigned _baud_rate)
-{
-  assert(!Thread::IsInside());
-
-  DCB PortDCB;
-
-  // Open the serial port.
-  hPort = CreateFile(path,
-                     GENERIC_READ | GENERIC_WRITE, // Access (read-write) mode
-                     0,            // Share mode
-                     nullptr, // Pointer to the security attribute
-                     OPEN_EXISTING,// How to open the serial port
-                     FILE_FLAG_OVERLAPPED, // Overlapped I/O
-                     nullptr); // Handle to port with attribute to copy
-
-  // If it fails to open the port, return false.
-  if (hPort == INVALID_HANDLE_VALUE) {
-    LogLastError(_T("Failed to open port '%s'"), path);
-    return false;
-  }
-
-  baud_rate = _baud_rate;
-
-  PortDCB.DCBlength = sizeof(DCB);
-
-  // Get the default port setting information.
-  GetCommState(hPort, &PortDCB);
-
-  // Change the DCB structure settings.
-  PortDCB.BaudRate = baud_rate; // Current baud
-  PortDCB.fBinary = true;               // Binary mode; no EOF check
-  PortDCB.fParity = true;               // Enable parity checking
-  PortDCB.fOutxCtsFlow = false;         // No CTS output flow control
-  PortDCB.fOutxDsrFlow = false;         // No DSR output flow control
-  PortDCB.fDtrControl = DTR_CONTROL_ENABLE; // DTR flow control type
-  PortDCB.fDsrSensitivity = false;      // DSR sensitivity
-  PortDCB.fTXContinueOnXoff = true;     // XOFF continues Tx
-  PortDCB.fOutX = false;                // No XON/XOFF out flow control
-  PortDCB.fInX = false;                 // No XON/XOFF in flow control
-  PortDCB.fErrorChar = false;           // Disable error replacement
-  PortDCB.fNull = false;                // Disable null removal
-  PortDCB.fRtsControl = RTS_CONTROL_ENABLE; // RTS flow control
-  PortDCB.fAbortOnError = true;         // JMW abort reads/writes on error
-  PortDCB.ByteSize = 8;                 // Number of bits/byte, 4-8
-  PortDCB.Parity = NOPARITY;            // 0-4=no,odd,even,mark,space
-  PortDCB.StopBits = ONESTOPBIT;        // 0,1,2 = 1, 1.5, 2
-  PortDCB.EvtChar = '\n';               // wait for end of line
-
-  // Configure the port according to the specifications of the DCB structure.
-  if (!SetCommState(hPort, &PortDCB)) {
-    LogLastError(_T("Failed to configure port '%s'"), path);
-    CloseHandle(hPort);
-    hPort = INVALID_HANDLE_VALUE;
-    return false;
-  }
-
-  SetupComm(hPort, 1024, 1024);
-
-  // Direct the port to perform extended functions SETDTR and SETRTS
-  // SETDTR: Sends the DTR (data-terminal-ready) signal.
-  EscapeCommFunction(hPort, SETDTR);
-  // SETRTS: Sends the RTS (request-to-send) signal.
-  EscapeCommFunction(hPort, SETRTS);
-
-  StoppableThread::Start();
-
-  StateChanged();
-
-  return true;
 }
 
 PortState
 SerialPort::GetState() const
 {
-  return hPort != INVALID_HANDLE_VALUE
+  return valid.load(std::memory_order_relaxed)
     ? PortState::READY
     : PortState::FAILED;
 }
@@ -139,186 +77,192 @@ SerialPort::GetState() const
 bool
 SerialPort::Drain()
 {
-  int nbytes = GetDataQueued();
-  if (nbytes < 0)
-    return false;
-  else if (nbytes == 0)
-    return true;
-
-  ::SetCommMask(hPort, EV_ERR|EV_TXEMPTY);
+#ifdef WIN32
+  SetCommMask(serial_port.native_handle(), EV_ERR | EV_TXEMPTY);
   DWORD events;
-  return WaitCommEvent(hPort, &events, nullptr) &&
-    (events & EV_TXEMPTY) != 0;
+  return WaitCommEvent(serial_port.native_handle(), &events, nullptr) &&
+      (events & EV_TXEMPTY) != 0;
+#elif defined(__BIONIC__)
+  /* bionic doesn't have tcdrain() */
+  return true;
+#else
+  return tcdrain(serial_port.native_handle()) == 0;
+#endif
 }
+
+#ifndef WIN32
+gcc_pure
+static bool
+IsCharDev(const char *path)
+{
+  struct stat st;
+  return stat(path, &st) == 0 && S_ISCHR(st.st_mode);
+}
+#endif
+
+bool
+SerialPort::Open(const TCHAR *path, unsigned baud_rate)
+{
+#ifndef WIN32
+  if (IsAndroid() && IsCharDev(path)) {
+    /* attempt to give the XCSoar process permissions to access the
+       USB serial adapter; this is mostly relevant to the Nook */
+    TCHAR command[MAX_PATH];
+    StringFormat(command, MAX_PATH, "su -c 'chmod 666 %s'", path);
+    system(command);
+  }
+#endif
+
+  boost::system::error_code ec;
+  const WideToACPConverter narrow_path(path);
+  serial_port.open(static_cast<const char *>(narrow_path), ec);
+  if (ec) {
+    char error_msg[MAX_PATH + 16];
+    StringFormat(error_msg, sizeof(error_msg),
+                 "Failed to open %s", static_cast<const char *>(narrow_path));
+    throw boost::system::system_error(ec);
+  }
+
+  if (!SetBaudrate(baud_rate))
+    return false;
+
+  serial_port.set_option(boost::asio::serial_port_base::parity(
+                             boost::asio::serial_port_base::parity::none),
+                         ec);
+  if (ec)
+    return false;
+
+  serial_port.set_option(boost::asio::serial_port_base::character_size(
+                             boost::asio::serial_port_base::character_size(8)),
+                         ec);
+  if (ec)
+    return false;
+
+  serial_port.set_option(boost::asio::serial_port_base::stop_bits(
+                             boost::asio::serial_port_base::stop_bits::one),
+                         ec);
+  if (ec)
+    return false;
+
+  serial_port.set_option(boost::asio::serial_port_base::flow_control(
+                             boost::asio::serial_port_base::flow_control::none),
+                         ec);
+  if (ec)
+    return false;
+
+#ifndef WIN32
+  class
+  {
+  public:
+    boost::system::error_code store(
+        termios& attr, boost::system::error_code& ec) const {
+      /* The IGNBRK flag is explicitly cleared by boost::asio::serial_port, and
+         it offers no built-in option to change this.
+         This flag is needed for some setups, to avoid receiving unwanted '\0'
+         charachters, which cannot be detected by weak checksum algorithms. */
+      attr.c_iflag |= IGNBRK;
+
+      /* boost::asio::serial_port leaves the VMIN and VTIME parameters
+         unintialised, which can lead to undesired behaviour. */
+      attr.c_cc[VMIN] = 1;
+      attr.c_cc[VTIME] = 0;
+
+      ec = boost::system::error_code();
+      return ec;
+    }
+  } custom_options;
+  serial_port.set_option(custom_options, ec);
+  if (ec)
+    return false;
+#endif
+
+  valid.store(true, std::memory_order_relaxed);
+
+  AsyncRead();
+
+  StateChanged();
+  return true;
+}
+
+#ifndef WIN32
+const char *
+SerialPort::OpenPseudo()
+{
+  const char *path = "/dev/ptmx";
+
+  FileDescriptor fd;
+  if (!fd.OpenNonBlocking(path))
+    throw FormatErrno("Failed to open %s", path);
+
+  serial_port.assign(fd.Get());
+
+  if (unlockpt(serial_port.native_handle()) < 0)
+    throw FormatErrno("unlockpt('%s') failed", path);
+
+  valid.store(true, std::memory_order_relaxed);
+
+  AsyncRead();
+
+  StateChanged();
+  return ptsname(serial_port.native_handle());
+}
+#endif
 
 void
 SerialPort::Flush()
 {
-  PurgeComm(hPort, PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR);
+  if (!valid.load(std::memory_order_relaxed))
+    return;
+
+#ifdef WIN32
+  PurgeComm(serial_port.native_handle(), PURGE_TXABORT |
+                                         PURGE_RXABORT |
+                                         PURGE_TXCLEAR |
+                                         PURGE_RXCLEAR);
+  BufferedPort::Flush();
+#else
+  tcflush(serial_port.native_handle(), TCIFLUSH);
+#endif
   BufferedPort::Flush();
 }
 
-int
-SerialPort::GetDataQueued() const
-{
-  if (hPort == INVALID_HANDLE_VALUE)
-    return -1;
-
-  COMSTAT com_stat;
-  DWORD errors;
-  return ::ClearCommError(hPort, &errors, &com_stat)
-    ? (int)com_stat.cbOutQue
-    : -1;
-}
-
-int
-SerialPort::GetDataPending() const
-{
-  if (hPort == INVALID_HANDLE_VALUE)
-    return -1;
-
-  COMSTAT com_stat;
-  DWORD errors;
-  return ::ClearCommError(hPort, &errors, &com_stat)
-    ? (int)com_stat.cbInQue
-    : -1;
-}
-
+#ifndef WIN32
 Port::WaitResult
-SerialPort::WaitDataPending(OverlappedEvent &overlapped,
-                            unsigned timeout_ms) const
+SerialPort::WaitWrite(unsigned timeout_ms)
 {
-  int nbytes = GetDataPending();
-  if (nbytes > 0)
-    return WaitResult::READY;
-  else if (nbytes < 0)
+  assert(serial_port.is_open());
+
+  if (!valid.load(std::memory_order_relaxed))
     return WaitResult::FAILED;
 
-  ::SetCommMask(hPort, EV_RXCHAR);
-
-  DWORD dwCommModemStatus;
-  if (!::WaitCommEvent(hPort, &dwCommModemStatus, overlapped.GetPointer())) {
-    if (::GetLastError() != ERROR_IO_PENDING)
-      return WaitResult::FAILED;
-
-    switch (overlapped.Wait(timeout_ms)) {
-    case OverlappedEvent::FINISHED:
-      break;
-
-    case OverlappedEvent::TIMEOUT:
-      /* the operation may still be running, we have to cancel it */
-      ::CancelIo(hPort);
-      ::SetCommMask(hPort, 0);
-      overlapped.Wait();
-      return WaitResult::TIMEOUT;
-
-    case OverlappedEvent::CANCELED:
-      /* the operation may still be running, we have to cancel it */
-      ::CancelIo(hPort);
-      ::SetCommMask(hPort, 0);
-      overlapped.Wait();
-      return WaitResult::CANCELLED;
-    }
-
-    DWORD result;
-    if (!::GetOverlappedResult(hPort, overlapped.GetPointer(), &result, FALSE))
-      return WaitResult::FAILED;
-  }
-
-  if ((dwCommModemStatus & EV_RXCHAR) == 0)
-      return WaitResult::FAILED;
-
-  return GetDataPending() > 0
-    ? WaitResult::READY
-    : WaitResult::FAILED;
+  const FileDescriptor fd(serial_port.native_handle());
+  int ret = fd.WaitWritable(timeout_ms);
+  if (ret > 0)
+    return WaitResult::READY;
+  else if (ret == 0)
+    return WaitResult::TIMEOUT;
+  else
+    return WaitResult::FAILED;
 }
-
-void
-SerialPort::Run()
-{
-  assert(Thread::IsInside());
-
-  DWORD dwBytesTransferred;
-  BYTE inbuf[1024];
-
-  // JMW added purging of port on open to prevent overflow
-  Flush();
-
-  OverlappedEvent osStatus, osReader;
-  if (!osStatus.Defined() || !osReader.Defined())
-     // error creating event; abort
-     return;
-
-  // Specify a set of events to be monitored for the port.
-  ::SetCommMask(hPort, EV_RXCHAR);
-  SetRxTimeout(0);
-
-  while (!CheckStopped()) {
-
-    WaitResult result = WaitDataPending(osStatus, INFINITE);
-    switch (result) {
-    case WaitResult::READY:
-      break;
-
-    case WaitResult::TIMEOUT:
-      continue;
-
-    case WaitResult::FAILED:
-    case WaitResult::CANCELLED:
-      ::Sleep(100);
-      continue;
-    }
-
-    int nbytes = GetDataPending();
-    if (nbytes <= 0) {
-      ::Sleep(100);
-      continue;
-    }
-
-    // Start reading data
-
-    if ((size_t)nbytes > sizeof(inbuf))
-      nbytes = sizeof(inbuf);
-
-    if (!::ReadFile(hPort, inbuf, nbytes, &dwBytesTransferred,
-                    osReader.GetPointer())) {
-      if (::GetLastError() != ERROR_IO_PENDING) {
-        // Error in ReadFile() occured
-        ::Sleep(100);
-        continue;
-      }
-
-      if (osReader.Wait() != OverlappedEvent::FINISHED) {
-        ::CancelIo(hPort);
-        ::SetCommMask(hPort, 0);
-        osReader.Wait();
-        continue;
-      }
-
-      if (!::GetOverlappedResult(hPort, osReader.GetPointer(),
-                                 &dwBytesTransferred, FALSE))
-        continue;
-    }
-
-    DataReceived(inbuf, dwBytesTransferred);
-  }
-
-  Flush();
-}
+#endif
 
 size_t
 SerialPort::Write(const void *data, size_t length)
 {
-  DWORD NumberOfBytesWritten;
+  assert(serial_port.is_open());
 
-  if (hPort == INVALID_HANDLE_VALUE)
+  if (!valid.load(std::memory_order_relaxed))
     return 0;
+
+#ifdef WIN32
+  DWORD nbytes;
 
   OverlappedEvent osWriter;
 
   // Start reading data
-  if (::WriteFile(hPort, data, length, &NumberOfBytesWritten, osWriter.GetPointer()))
-    return NumberOfBytesWritten;
+  if (::WriteFile(serial_port.native_handle(), data, length, &nbytes,
+                  osWriter.GetPointer()))
+    return nbytes;
 
   if (::GetLastError() != ERROR_IO_PENDING)
     return 0;
@@ -328,77 +272,70 @@ SerialPort::Write(const void *data, size_t length)
   switch (osWriter.Wait(timeout_ms)) {
   case OverlappedEvent::FINISHED:
     // Get results
-    ::GetOverlappedResult(hPort, osWriter.GetPointer(), &NumberOfBytesWritten, FALSE);
-    return NumberOfBytesWritten;
+    ::GetOverlappedResult(serial_port.native_handle(), osWriter.GetPointer(),
+                          &nbytes, FALSE);
+    return nbytes;
 
   default:
-    ::CancelIo(hPort);
-    ::SetCommMask(hPort, 0);
+    ::CancelIo(serial_port.native_handle());
+    ::SetCommMask(serial_port.native_handle(), 0);
     osWriter.Wait();
     return 0;
   }
-}
+#else
+  boost::system::error_code ec;
+  auto nbytes = serial_port.write_some(boost::asio::buffer(data, length), ec);
+  if (ec == boost::asio::error::try_again) {
+    /* the output fifo is full; wait until we can write (or until the
+       timeout expires) */
+    if (WaitWrite(5000) != Port::WaitResult::READY)
+      return 0;
 
-bool
-SerialPort::SetRxTimeout(unsigned Timeout)
-{
-  COMMTIMEOUTS CommTimeouts;
-
-  if (hPort == INVALID_HANDLE_VALUE)
-    return false;
-
-  CommTimeouts.ReadIntervalTimeout = MAXDWORD;
-
-  if (Timeout == 0) {
-    // no total timeouts used
-    CommTimeouts.ReadTotalTimeoutMultiplier = 0;
-    CommTimeouts.ReadTotalTimeoutConstant = 0;
-  } else {
-    // only total timeout used
-    CommTimeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
-    CommTimeouts.ReadTotalTimeoutConstant = Timeout;
+    nbytes = serial_port.write_some(boost::asio::buffer(data, length), ec);
   }
+#endif
 
-  CommTimeouts.WriteTotalTimeoutMultiplier = 0;
-  CommTimeouts.WriteTotalTimeoutConstant = 1000;
-
-  // Set the time-out parameters
-  // for all read and write
-  // operations on the port.
-  return SetCommTimeouts(hPort, &CommTimeouts);
+  return nbytes;
 }
 
 unsigned
 SerialPort::GetBaudrate() const
 {
-  if (hPort == INVALID_HANDLE_VALUE)
-    return 0;
+  assert(serial_port.is_open());
 
-  DCB PortDCB;
-  GetCommState(hPort, &PortDCB);
-
-  return PortDCB.BaudRate;
+  boost::asio::serial_port_base::baud_rate baud_rate;
+  boost::system::error_code ec;
+  const_cast<boost::asio::serial_port &>(serial_port).get_option(baud_rate, ec);
+  return ec ? 0 : baud_rate.value();
 }
 
 bool
-SerialPort::SetBaudrate(unsigned BaudRate)
+SerialPort::SetBaudrate(unsigned baud_rate)
 {
-  COMSTAT ComStat;
-  DCB PortDCB;
-  DWORD dwErrors;
+  assert(serial_port.is_open());
 
-  if (hPort == INVALID_HANDLE_VALUE)
-    return false;
+  boost::system::error_code ec;
+  serial_port.set_option(boost::asio::serial_port_base::baud_rate(baud_rate),
+                         ec);
+  return !ec;
+}
 
-  do {
-    ClearCommError(hPort, &dwErrors, &ComStat);
-  } while (ComStat.cbOutQue > 0);
+void
+SerialPort::OnRead(const boost::system::error_code &ec, size_t nbytes)
+{
+  if (ec == boost::asio::error::operation_aborted)
+    /* this object has already been deleted; bail out quickly without
+       touching anything */
+    return;
 
-  Sleep(10);
+  if (ec) {
+    valid.store(false, std::memory_order_relaxed);
+    StateChanged();
+    Error(ec.message().c_str());
+    return;
+  }
 
-  GetCommState(hPort, &PortDCB);
+  DataReceived(input, nbytes);
 
-  PortDCB.BaudRate = BaudRate;
-
-  return SetCommState(hPort, &PortDCB);
+  AsyncRead();
 }
