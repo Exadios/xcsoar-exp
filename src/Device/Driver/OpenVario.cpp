@@ -78,13 +78,29 @@ OpenVarioDevice::POV(NMEAInputLine &line, NMEAInfo &info)
         break;
       }
       case 'P': {
-        AtmosphericPressure pressure = AtmosphericPressure::HectoPascal(value);
-        info.ProvideStaticPressure(pressure);
+	AtmosphericPressure pressure;
+	if (value > double(9998.0))
+	{
+		info.static_pressure_available.Clear();
+	}
+	else
+	{
+		pressure = AtmosphericPressure::HectoPascal(value);
+		info.ProvideStaticPressure(pressure);
+	}
         break;
       }
       case 'Q': {
-        AtmosphericPressure pressure = AtmosphericPressure::Pascal(value);
-        info.ProvideDynamicPressure(pressure);
+	AtmosphericPressure pressure;
+	if (value > double(9998.0))
+	{
+		info.dyn_pressure_available.Clear();
+	}
+	else
+	{
+		pressure = AtmosphericPressure::Pascal(value);
+		info.ProvideDynamicPressure(pressure);
+	}
         break;
       }
       case 'R': {
