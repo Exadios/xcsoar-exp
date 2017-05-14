@@ -125,7 +125,7 @@ OZRenderer::Draw(Canvas &canvas, Layer layer, const Projection &projection,
     if (layer != LAYER_INACTIVE) {
       RasterPoint p_center = projection.GeoToScreen(oz.GetReference());
       canvas.DrawCircle(p_center.x, p_center.y,
-                    projection.GeoToScreenDistance(oz.GetRadius()));
+                        projection.GeoToScreenDistance(oz.GetRadius()));
     }
 
     break;
@@ -167,8 +167,7 @@ OZRenderer::Draw(Canvas &canvas, Layer layer, const Projection &projection,
     break;
   }
 
-  case ObservationZone::Shape::VARIABLE_KEYHOLE:
-    {
+  case ObservationZone::Shape::VARIABLE_KEYHOLE: {
     const VariableKeyholeZone &oz = (const VariableKeyholeZone &)_oz;
     RasterPoint p_center = projection.GeoToScreen(oz.GetReference());
     canvas.DrawKeyhole(p_center.x, p_center.y,
@@ -177,7 +176,7 @@ OZRenderer::Draw(Canvas &canvas, Layer layer, const Projection &projection,
                        oz.GetStartRadial() - projection.GetScreenAngle(),
                        oz.GetEndRadial() - projection.GetScreenAngle());
     break;
-    }
+  }
 
   case ObservationZone::Shape::ANNULAR_SECTOR: {
     const AnnularSectorZone &oz = (const AnnularSectorZone &)_oz;
