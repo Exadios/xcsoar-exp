@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package org.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import java.io.IOException;
 import android.bluetooth.BluetoothSocket;

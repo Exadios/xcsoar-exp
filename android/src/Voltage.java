@@ -21,7 +21,7 @@
   }
 */
 
-package org.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import android.util.Log;
 import ioio.lib.api.IOIO;

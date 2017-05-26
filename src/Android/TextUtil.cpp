@@ -42,7 +42,7 @@ TextUtil::Initialise(JNIEnv *_env)
 {
   env = _env;
 
-  cls.Find(env, "org/xcsoar/TextUtil");
+  cls.Find(env, "org/narroginglidingclub/xcsoar/TextUtil");
 
   midTextUtil = env->GetMethodID(cls, "<init>", "(IIIZ)V");
   midGetFontMetrics = env->GetMethodID(cls, "getFontMetrics", "([I)V");
@@ -95,7 +95,7 @@ TextUtil::create(const FontDescription &d)
     /* 1 = Paint.ANTI_ALIAS_FLAG */
     paint_flags |= 1;
 
-  // construct org.xcsoar.TextUtil object
+  // construct com.xcsoar.xcsoar.TextUtil object
   localObject = env->NewObject(cls, midTextUtil,
                                paramStyle, paramTextSize,
                                paint_flags, d.IsMonospace());

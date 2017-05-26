@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package org.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 /**
  * An #PortListener implementation that passes method calls to native

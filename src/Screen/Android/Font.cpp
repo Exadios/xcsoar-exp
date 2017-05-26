@@ -33,8 +33,8 @@ Copyright_License {
 #include <assert.h>
 
 /*
- * create a new instance of org.xcsoar.TextUtil and store it with a global
- * reference in text_util_object member.
+ * create a new instance of com.xcsoar.xcsoar.TextUtil and store it with a
+ * global reference in text_util_object member.
  */
 bool
 Font::Load(const FontDescription &d)

@@ -22,7 +22,7 @@ Copyright_License {
 */
 
 #include "Hardware/Battery.hpp"
-#include "org_xcsoar_BatteryReceiver.h"
+#include "org_narroginglidingclub_xcsoar_BatteryReceiver.h"
 #include "Compiler.h"
 
 namespace Power {
@@ -38,8 +38,10 @@ namespace Power {
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_org_xcsoar_BatteryReceiver_setBatteryPercent(JNIEnv *env, jclass cls,
-                                                  jint value, jint plugged)
+Java_org_narroginglidingclub_xcsoar_BatteryReceiver_setBatteryPercent(JNIEnv *env,
+                                                          jclass cls,
+                                                          jint value,
+                                                          jint plugged)
 {
   Power::Battery::RemainingPercent = value;
   Power::Battery::RemainingPercentValid = true;

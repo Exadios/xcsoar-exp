@@ -21,7 +21,7 @@
   }
 */
 
-package org.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import ioio.lib.api.Uart;
 

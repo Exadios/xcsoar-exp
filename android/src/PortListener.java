@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package org.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 /**
  * A listener for #AndroidPort objects.

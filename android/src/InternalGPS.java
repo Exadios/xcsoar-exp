@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import android.os.Handler;
 import android.os.Bundle;

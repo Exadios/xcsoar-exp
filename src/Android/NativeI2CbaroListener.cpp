@@ -26,7 +26,7 @@ Copyright_License {
 #include "Atmosphere/Temperature.hpp"
 #include "Atmosphere/Pressure.hpp"
 #include "Java/Class.hxx"
-#include "org_xcsoar_NativeI2CbaroListener.h"
+#include "org_narroginglidingclub_xcsoar_NativeI2CbaroListener.h"
 
 #include <stddef.h>
 
@@ -37,8 +37,10 @@ namespace NativeI2CbaroListener {
 };
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativeI2CbaroListener_onI2CbaroValues(JNIEnv *env, jobject obj,
-                                                    jint sensor, jint pressure)
+Java_org_narroginglidingclub_xcsoar_NativeI2CbaroListener_onI2CbaroValues(JNIEnv *env,
+                                                              jobject obj,
+                                                              jint sensor,
+                                                              jint pressure)
  {
   jlong ptr = env->GetLongField(obj, NativeI2CbaroListener::ptr_field);
   if (ptr == 0)
@@ -49,7 +51,8 @@ Java_org_xcsoar_NativeI2CbaroListener_onI2CbaroValues(JNIEnv *env, jobject obj,
 }
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativeI2CbaroListener_onI2CbaroError(JNIEnv *env, jobject obj)
+Java_org_narroginglidingclub_xcsoar_NativeI2CbaroListener_onI2CbaroError(JNIEnv *env,
+                                                             jobject obj)
 {
   jlong ptr = env->GetLongField(obj, NativeI2CbaroListener::ptr_field);
   if (ptr == 0)
@@ -62,7 +65,7 @@ Java_org_xcsoar_NativeI2CbaroListener_onI2CbaroError(JNIEnv *env, jobject obj)
 void
 NativeI2CbaroListener::Initialise(JNIEnv *env)
 {
-  cls.Find(env, "org/xcsoar/NativeI2CbaroListener");
+  cls.Find(env, "org/narroginglidingclub/xcsoar/NativeI2CbaroListener");
 
   ctor = env->GetMethodID(cls, "<init>", "(J)V");
   ptr_field = env->GetFieldID(cls, "ptr", "J");

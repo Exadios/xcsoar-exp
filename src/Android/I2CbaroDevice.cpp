@@ -35,10 +35,10 @@ static jmethodID i2cbaro_ctor, close_method;
 void
 I2CbaroDevice::Initialise(JNIEnv *env)
 {
-  i2cbaro_class.Find(env, "org/xcsoar/GlueI2Cbaro");
+  i2cbaro_class.Find(env, "org/narroginglidingclub/xcsoar/GlueI2Cbaro");
 
   i2cbaro_ctor = env->GetMethodID(i2cbaro_class, "<init>",
-                                 "(Lorg/xcsoar/IOIOConnectionHolder;IIIILorg/xcsoar/I2Cbaro$Listener;)V");
+                                 "(Lorg/narroginglidingclub/xcsoar/IOIOConnectionHolder;IIIILorg/narroginglidingclub/xcsoar/I2Cbaro$Listener;)V");
   close_method = env->GetMethodID(i2cbaro_class, "close", "()V");
 }
 

@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import java.util.Arrays;
 import java.util.List;

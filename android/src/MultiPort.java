@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package org.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import java.util.Collection;
 import java.util.LinkedList;
