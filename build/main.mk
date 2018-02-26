@@ -247,6 +247,12 @@ XCSOAR_SOURCES := \
 	$(SRC)/FLARM/FlarmComputer.cpp \
 	$(SRC)/FLARM/Global.cpp \
 	$(SRC)/FLARM/Glue.cpp \
+	$(SRC)/ADSB/IcaoId.cpp \
+	$(SRC)/ADSB/Error.cpp \
+	$(SRC)/ADSB/List.cpp \
+	$(SRC)/ADSB/Traffic.cpp \
+	$(SRC)/ADSB/AdsbCalculations.cpp \
+	$(SRC)/ADSB/AdsbComputer.cpp \
 	$(SRC)/Computer/CuComputer.cpp \
 	$(SRC)/Computer/FlyingComputer.cpp \
 	$(SRC)/Computer/CirclingComputer.cpp \
