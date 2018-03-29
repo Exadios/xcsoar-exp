@@ -21,45 +21,26 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_FLARM_STATIC_PARSER_HPP
-#define XCSOAR_FLARM_STATIC_PARSER_HPP
+#ifndef XCSOAR_DUMP1090_STATIC_PARSER_HPP
+#define XCSOAR_DUMP1090_STATIC_PARSER_HPP
 
 class NMEAInputLine;
 struct FlarmError;
 struct FlarmVersion;
 struct FlarmStatus;
 struct TrafficList;
+struct NMEAInfo;
 
 /**
- * Parses a PFLAE sentence (self-test results).
- */
-void
-ParsePFLAE(NMEAInputLine &line, FlarmError &error, double clock);
-
-/**
- * Parses a PFLAV sentence (version information).
- */
-void
-ParsePFLAV(NMEAInputLine &line, FlarmVersion &version, double clock);
-
-/**
- * Parses a PFLAU sentence
- * (Operating status and priority intruder and obstacle data)
+ * Parses a dump1090 JSON output.
  *
- * @param line A NMEAInputLine instance that can be used for parsing
- * @see http://flarm.com/support/manual/FLARM_DataportManual_v5.00E.pdf
- */
-void
-ParsePFLAU(NMEAInputLine &line, FlarmStatus &flarm, double clock);
-
-/**
- * Parses a PFLAA sentence
- * (Data on other moving objects around)
+ * This routine parses JSON data, obtained by http://<host>:8080/aircraft.json
  *
- * @param line A NMEAInputLine instance that can be used for parsing
- * @see http://flarm.com/support/manual/FLARM_DataportManual_v5.00E.pdf
+ * @param line A JSON object.
+ * @param info The current NMEA blackboard.
+ * @param clock The current time.
  */
 void
-ParsePFLAA(NMEAInputLine &line, TrafficList &flarm, double clock);
+ParseDump1090(const char *line, NMEAInfo &info, double clock);
 
-#endif
+#endif  // XCSOAR_DUMP1090_STATIC_PARSER_HPP

@@ -30,6 +30,7 @@ Copyright_License {
 #include "NMEA/InputLine.hpp"
 #include "Units/System.hpp"
 #include "Driver/FLARM/StaticParser.hpp"
+#include "Driver/ADSB/SBS1/StaticParser.hpp"
 #include "Util/CharUtil.hxx"
 
 NMEAParser::NMEAParser()
@@ -112,6 +113,17 @@ NMEAParser::ParseLine(const char *string, NMEAInfo &info)
     if (StringIsEqual(type + 1, "PGRMZ"))
       return RMZ(line, info);
 
+    /* This is not NMEA but coerce into the current structure. Is this the
+     * the best solution?
+     */
+    if (IsAlphaASCII(type[1]) && IsAlphaASCII(type[2]) && IsAlphaASCII(type[3]))
+      {
+      if (StringIsEqual(type + 3, "MSG"))
+        {
+        ParseSBS1(line, info, info.clock);
+        return true;
+        }
+      }
     return false;
   }
 

@@ -604,6 +604,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/FLARM/FlarmDetails.cpp \
 	$(SRC)/FLARM/NameDatabase.cpp \
 	$(SRC)/FLARM/NameFile.cpp \
+  $(SRC)/FLARM/AdsbNameDatabase.cpp \
 	$(SRC)/FLARM/TrafficDatabases.cpp \
 	$(SRC)/UtilsSettings.cpp \
 	$(SRC)/UtilsSystem.cpp \
