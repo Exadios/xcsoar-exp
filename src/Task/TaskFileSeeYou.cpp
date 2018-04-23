@@ -396,6 +396,7 @@ CreateOZ(const  SeeYouTurnpointInformation &turnpoint_infos,
     const Angle RadialEnd = (A12adj + turnpoint_infos.angle1).AsBearing();
 
 // debug
+#ifdef USE_X11  // Use this as a proxy for target UNIX.
     std::fstream db_flag;
     db_flag.open("/home/pfb/XCSoarData/TaskFileSeeYou", std::ios_base::in);
     if (db_flag.is_open())
@@ -409,6 +410,7 @@ CreateOZ(const  SeeYouTurnpointInformation &turnpoint_infos,
                 << "angle2:  " << turnpoint_infos.angle2.AsBearing().Degrees() << std::endl;
       db_flag.close();
       }
+#endif  // USE_X11
 // ~debug
 
     /**
