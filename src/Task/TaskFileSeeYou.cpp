@@ -420,17 +420,17 @@ CreateOZ(const  SeeYouTurnpointInformation &turnpoint_infos,
      */
     if (turnpoint_infos.radius2 > fixed(0) &&
         (turnpoint_infos.angle2.AsBearing().Degrees()) != fixed(0)) {
-      oz = new AnnularSectorZone(wp->location,
-                                 turnpoint_infos.radius1,
-                                 RadialStart,
-                                 RadialEnd,
-                                 turnpoint_infos.radius2);
-    } else {
       oz = VariableKeyholeZone::New(wp->location,
                                     turnpoint_infos.radius1,
                                     turnpoint_infos.radius2,
                                     RadialStart,
                                     RadialEnd);
+    } else {
+      oz = new AnnularSectorZone(wp->location,
+                                 turnpoint_infos.radius1,
+                                 RadialStart,
+                                 RadialEnd,
+                                 turnpoint_infos.radius2);
     }
   } else { // catch-all
     oz = new CylinderZone(wp->location, turnpoint_infos.radius1);
