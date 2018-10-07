@@ -33,6 +33,7 @@ add_dependencies(lib-${T} generate)
 
 set(UTIL_DIR ${XCSOAR_SRC}/Util)
 set(UTIL_SRCS 
+              ${UTIL_DIR}/Exception.cxx
               ${UTIL_DIR}/PrintException.cxx
               ${UTIL_DIR}/Base64.cxx
               ${UTIL_DIR}/CRC.cpp
@@ -703,6 +704,7 @@ set(SCREEN_SRCS
                 ${SCREEN_DIR}/OpenGL/Buffer.cpp
                 ${SCREEN_DIR}/OpenGL/Shapes.cpp
                 ${SCREEN_DIR}/OpenGL/Surface.cpp
+                ${SCREEN_DIR}/OpenGL/Shaders.cpp
                 ${SCREEN_DIR}/OpenGL/Triangulate.cpp
                 ${SCREEN_DIR}/Custom/Files.cpp
                 ${SCREEN_DIR}/Custom/Bitmap.cpp
@@ -742,12 +744,12 @@ add_dependencies(Screen-${T} resources)
 set(LUA_DIR ${XCSOAR_SRC}/Lua)
 set(LUA_SRCS 
              ${LUA_DIR}/Ptr.cpp 
-             ${LUA_DIR}/Error.cpp 
+             ${LUA_DIR}/Error.cxx 
              ${LUA_DIR}/Catch.cpp 
              ${LUA_DIR}/Persistent.cpp 
              ${LUA_DIR}/Background.cpp 
              ${LUA_DIR}/Associate.cpp 
-             ${LUA_DIR}/RunFile.cpp 
+             ${LUA_DIR}/RunFile.cxx 
              ${LUA_DIR}/StartFile.cpp 
              ${LUA_DIR}/Log.cpp 
              ${LUA_DIR}/Timer.cpp 
@@ -768,7 +770,7 @@ set(LUA_SRCS
              ${LUA_DIR}/InputEvent.cpp
    )
 add_library(Lua-${T} ${LUA_SRCS})
-target_link_libraries(Lua-${T} Look-${T})
+target_link_libraries(Lua-${T} Look-${T} Util-${T})
 set_target_properties(Lua-${T}
                       PROPERTIES COMPILE_FLAGS "-isystem /usr/include/lua5.2 -DUSE_FREETYPE -DENABLE_OPENGL -DGL_GLEXT_PROTOTYPES -DUSE_POLL_EVENT")
 
