@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 import android.Manifest;
 import android.app.Activity;

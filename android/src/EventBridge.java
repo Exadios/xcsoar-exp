@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 class EventBridge {
   public static native void onKeyDown(int keyCode);

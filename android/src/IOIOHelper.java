@@ -21,7 +21,7 @@
   }
 */
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 import java.util.Collection;
 import java.util.LinkedList;

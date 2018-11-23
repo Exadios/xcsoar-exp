@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 /**
  * This class manages safe destruction of objects that call native

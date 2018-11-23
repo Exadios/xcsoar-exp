@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 /**
  * The Java interface of the C++ AndroidPort class.

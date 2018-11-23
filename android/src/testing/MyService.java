@@ -20,13 +20,13 @@
 }
 */
 
-package org.xcsoar.testing;
+package com.exadios.xcsoar.testing;
 
 /**
- * Wrapper class to move org.xcsoar.XCSoar forward to package
- * org.xcsoar.testing.
+ * Wrapper class to move com.exadios.xcsoar.XCSoar forward to package
+ * com.exadios.xcsoar.testing.
  */
-public class MyService extends org.xcsoar.MyService {
+public class MyService extends com.exadios.xcsoar.MyService {
   @Override public void onCreate() {
     if (mainActivityClass == null)
       mainActivityClass = XCSoar.class;
