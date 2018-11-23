@@ -1,1 +1,7 @@
 Allow downloading of several targets from Github.
+
+Download a binary from https://github.com/Exadios/xcsoar-exp/raw/ticket_1687/download/<binary>
+
+So, for instance to download the current XCSoar apk point a browser to
+https://github.com/Exadios/xcsoar-exp/raw/ticket_1687/download/XCSoar.apk
+
