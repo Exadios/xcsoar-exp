@@ -36,10 +36,10 @@ static jmethodID voltage_ctor, close_method;
 void
 VoltageDevice::Initialise(JNIEnv *env)
 {
-  voltage_class.Find(env, "org/xcsoar/GlueVoltage");
+  voltage_class.Find(env, "com/exadios/xcsoar/GlueVoltage");
 
   voltage_ctor = env->GetMethodID(voltage_class, "<init>",
-                                 "(Lorg/xcsoar/IOIOConnectionHolder;ILorg/xcsoar/Voltage$Listener;)V");
+                                 "(Lcom/exadios/xcsoar/IOIOConnectionHolder;ILcom/exadios/xcsoar/Voltage$Listener;)V");
   close_method = env->GetMethodID(voltage_class, "close", "()V");
 }
 

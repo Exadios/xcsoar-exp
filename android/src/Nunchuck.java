@@ -30,7 +30,7 @@
  * White	GND
  */
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 import android.util.Log;
 import ioio.lib.api.IOIO;

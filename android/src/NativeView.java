@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -339,10 +339,10 @@ class NativeView extends SurfaceView
    */
   private Bitmap loadResourceBitmap(String name) {
     /* find the resource */
-    int resourceId = resources.getIdentifier(name, "drawable", "org.xcsoar");
+    int resourceId = resources.getIdentifier(name, "drawable", "com.xcsoar.xcsoar");
     if (resourceId == 0) {
       resourceId = resources.getIdentifier(name, "drawable",
-                                           "org.xcsoar.testing");
+                                           "com.xcsoar.xcsoar.testing");
       if (resourceId == 0)
         return null;
     }

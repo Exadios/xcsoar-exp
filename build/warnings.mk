@@ -31,6 +31,13 @@ endif
 ifeq ($(WERROR),y)
 CXXFLAGS += -Werror
 CFLAGS += -Werror
+# clang has problems with some command line arguments for TARGET=ANDROID7
+# Exactly why is not clear. Because, in the debug build all warnings are
+# treated as errors the DEBUG=y build fails. Suppress these errors.
+ifeq ($(CLANG),y)
+CXXFLAGS += -Wno-error=unused-command-line-argument
+CFLAGS   += -Wno-error=unused-command-line-argument
+endif # $(CLANG)
 endif
 
 #CXXFLAGS += -pedantic
