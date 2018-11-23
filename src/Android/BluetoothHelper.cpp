@@ -50,7 +50,7 @@ BluetoothHelper::Initialise(JNIEnv *env)
   assert(env != nullptr);
 
   if (android_api_level < 5 ||
-      !cls.FindOptional(env, "org/xcsoar/BluetoothHelper"))
+      !cls.FindOptional(env, "com/exadios/xcsoar/BluetoothHelper"))
     /* Android < 2.0 doesn't have Bluetooth support */
     return false;
 
@@ -62,9 +62,9 @@ BluetoothHelper::Initialise(JNIEnv *env)
   connect_method = env->GetStaticMethodID(cls, "connect",
                                           "(Landroid/content/Context;"
                                           "Ljava/lang/String;)"
-                                          "Lorg/xcsoar/AndroidPort;");
+                                          "Lcom/exadios/xcsoar/AndroidPort;");
   createServer_method = env->GetStaticMethodID(cls, "createServer",
-                                               "()Lorg/xcsoar/AndroidPort;");
+                                               "()Lcom/exadios/xcsoar/AndroidPort;");
 
   startLeScan_method = env->GetStaticMethodID(cls, "startLeScan",
                                               "(Landroid/bluetooth/BluetoothAdapter$LeScanCallback;)Z");

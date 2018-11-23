@@ -24,7 +24,7 @@ Copyright_License {
 #include "NativeNunchuckListener.hpp"
 #include "NunchuckListener.hpp"
 #include "Java/Class.hxx"
-#include "org_xcsoar_NativeNunchuckListener.h"
+#include "com_exadios_xcsoar_NativeNunchuckListener.h"
 
 #include <stddef.h>
 
@@ -35,8 +35,14 @@ namespace NativeNunchuckListener {
 };
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativeNunchuckListener_onNunchuckValues(JNIEnv *env, jobject obj,
-                       jint joy_x, jint joy_y, jint acc_x, jint acc_y, jint acc_z, jint switches)
+Java_com_exadios_xcsoar_NativeNunchuckListener_onNunchuckValues(JNIEnv *env,
+                                                                jobject obj,
+                                                                jint joy_x,
+                                                                jint joy_y,
+                                                                jint acc_x,
+                                                                jint acc_y,
+                                                                jint acc_z,
+                                                                jint switches)
  {
   jlong ptr = env->GetLongField(obj, NativeNunchuckListener::ptr_field);
   if (ptr == 0)
@@ -47,7 +53,8 @@ Java_org_xcsoar_NativeNunchuckListener_onNunchuckValues(JNIEnv *env, jobject obj
 }
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativeNunchuckListener_onNunchuckError(JNIEnv *env, jobject obj)
+Java_com_exadios_xcsoar_NativeNunchuckListener_onNunchuckError(JNIEnv *env,
+                                                               jobject obj)
 {
   jlong ptr = env->GetLongField(obj, NativeNunchuckListener::ptr_field);
   if (ptr == 0)
@@ -60,7 +67,7 @@ Java_org_xcsoar_NativeNunchuckListener_onNunchuckError(JNIEnv *env, jobject obj)
 void
 NativeNunchuckListener::Initialise(JNIEnv *env)
 {
-  cls.Find(env, "org/xcsoar/NativeNunchuckListener");
+  cls.Find(env, "com/exadios/xcsoar/NativeNunchuckListener");
 
   ctor = env->GetMethodID(cls, "<init>", "(J)V");
   ptr_field = env->GetFieldID(cls, "ptr", "J");
