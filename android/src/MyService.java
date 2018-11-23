@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 import java.lang.reflect.Method;
 import android.app.Service;

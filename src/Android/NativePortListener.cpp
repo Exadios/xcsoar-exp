@@ -24,7 +24,7 @@ Copyright_License {
 #include "NativePortListener.hpp"
 #include "Device/Port/Listener.hpp"
 #include "Java/Class.hxx"
-#include "org_xcsoar_NativePortListener.h"
+#include "com_exadios_xcsoar_NativePortListener.h"
 
 #include <stddef.h>
 
@@ -35,7 +35,8 @@ namespace NativePortListener {
 };
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativePortListener_portStateChanged(JNIEnv *env, jobject obj)
+Java_com_exadios_xcsoar_NativePortListener_portStateChanged(JNIEnv *env,
+                                                            jobject obj)
 {
   jlong ptr = env->GetLongField(obj, NativePortListener::ptr_field);
   if (ptr == 0)
@@ -49,7 +50,7 @@ Java_org_xcsoar_NativePortListener_portStateChanged(JNIEnv *env, jobject obj)
 void
 NativePortListener::Initialise(JNIEnv *env)
 {
-  cls.Find(env, "org/xcsoar/NativePortListener");
+  cls.Find(env, "com/exadios/xcsoar/NativePortListener");
 
   ctor = env->GetMethodID(cls, "<init>", "(J)V");
   ptr_field = env->GetFieldID(cls, "ptr", "J");

@@ -27,7 +27,7 @@
 //   all consumer devices.
 // - Explore new and exotic sensors.
 
-package org.xcsoar;
+package com.exadios.xcsoar;
 
 import android.content.Context;
 import android.os.Handler;
