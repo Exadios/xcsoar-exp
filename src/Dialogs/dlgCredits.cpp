@@ -93,11 +93,6 @@ LogoPageWindow::OnPaint(Canvas &canvas)
   canvas.DrawText(x, y, _T("pfb@exadios.com"));
   y += Layout::FastScale(37);
 
-  canvas.SetTextColor(COLOR_RED);
-  canvas.DrawText(x, y, _T("This version not to be used"));
-  y += Layout::FastScale(11);
-  canvas.DrawText(x, y, _T("for competition!"));
-
 }
 
 static Window *
