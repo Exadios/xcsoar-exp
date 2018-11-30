@@ -1,5 +1,7 @@
 Allow downloading of several targets from Github.
 
+The current binaries are v6.8.11.1.7-Beta.
+
 Download a binary from https://github.com/Exadios/xcsoar-exp/raw/ticket_1687/download/<binary>
 
 So, for instance to download the current XCSoar apk point a browser to
