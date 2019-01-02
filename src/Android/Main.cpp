@@ -58,7 +58,7 @@ Copyright_License {
 #include "Java/InputStream.hxx"
 #include "Java/URL.hxx"
 #include "Compiler.h"
-#include "com_exadios_xcsoar_NativeView.h"
+#include "org_narroginglidingclub_xcsoar_NativeView.h"
 #include "IO/Async/GlobalIOThread.hpp"
 #include "Thread/Debug.hpp"
 
@@ -100,7 +100,7 @@ extern "C" {
 
 gcc_visibility_default
 JNIEXPORT jint JNICALL
-Java_com_exadios_xcsoar_NativeView_getEglContextClientVersion(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_NativeView_getEglContextClientVersion(JNIEnv *env,
                                                               jobject obj)
 {
 #ifdef HAVE_GLES2
@@ -112,7 +112,7 @@ Java_com_exadios_xcsoar_NativeView_getEglContextClientVersion(JNIEnv *env,
 
 gcc_visibility_default
 JNIEXPORT jboolean JNICALL
-Java_com_exadios_xcsoar_NativeView_initializeNative(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_NativeView_initializeNative(JNIEnv *env,
                                                     jobject obj,
                                                     jobject _context,
                                                     jint width,
@@ -194,7 +194,7 @@ Java_com_exadios_xcsoar_NativeView_initializeNative(JNIEnv *env,
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_NativeView_runNative(JNIEnv *env, jobject obj)
+Java_org_narroginglidingclub_xcsoar_NativeView_runNative(JNIEnv *env, jobject obj)
 {
   InitThreadDebug();
 
@@ -205,7 +205,7 @@ Java_com_exadios_xcsoar_NativeView_runNative(JNIEnv *env, jobject obj)
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
+Java_org_narroginglidingclub_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
 {
   Shutdown();
 
@@ -268,7 +268,7 @@ Java_com_exadios_xcsoar_NativeView_deinitializeNative(JNIEnv *env, jobject obj)
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_NativeView_resizedNative(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_NativeView_resizedNative(JNIEnv *env,
                                                  jobject obj,
                                                  jint width,
                                                  jint height)
@@ -287,7 +287,7 @@ Java_com_exadios_xcsoar_NativeView_resizedNative(JNIEnv *env,
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_NativeView_pauseNative(JNIEnv *env, jobject obj)
+Java_org_narroginglidingclub_xcsoar_NativeView_pauseNative(JNIEnv *env, jobject obj)
 {
   if (event_queue == nullptr || CommonInterface::main_window == nullptr)
     /* pause before we have initialized the event subsystem does not
@@ -302,7 +302,7 @@ Java_com_exadios_xcsoar_NativeView_pauseNative(JNIEnv *env, jobject obj)
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_NativeView_resumeNative(JNIEnv *env, jobject obj)
+Java_org_narroginglidingclub_xcsoar_NativeView_resumeNative(JNIEnv *env, jobject obj)
 {
   if (event_queue == nullptr || CommonInterface::main_window == nullptr)
     /* there is nothing here yet which can be resumed */
@@ -313,7 +313,7 @@ Java_com_exadios_xcsoar_NativeView_resumeNative(JNIEnv *env, jobject obj)
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_NativeView_setHapticFeedback(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_NativeView_setHapticFeedback(JNIEnv *env,
                                                      jobject obj,
                                                      jboolean on)
 {
