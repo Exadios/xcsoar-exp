@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package com.exadios.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 /**
  * A #BMP085.Listener implementation that passes method calls to
