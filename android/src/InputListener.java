@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package com.exadios.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 /**
  * A listener that gets called when data is received on a socket.

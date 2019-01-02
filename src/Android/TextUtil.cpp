@@ -41,7 +41,7 @@ TextUtil::Initialise(JNIEnv *_env)
 {
   env = _env;
 
-  cls.Find(env, "com/exadios/xcsoar/TextUtil");
+  cls.Find(env, "org/narroginglidingclub/xcsoar/TextUtil");
 
   midTextUtil = env->GetMethodID(cls, "<init>", "(IIIZ)V");
   midGetFontMetrics = env->GetMethodID(cls, "getFontMetrics", "([I)V");

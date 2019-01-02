@@ -20,7 +20,7 @@
 }
 */
 
-package com.exadios.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import java.lang.reflect.Method;
 import android.app.Service;

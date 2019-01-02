@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package com.exadios.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 /**
  * A an abstract base class for #AndroidPort implementations that act
