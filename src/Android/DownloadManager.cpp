@@ -30,7 +30,7 @@ Copyright_License {
 #include "LocalPath.hpp"
 #include "OS/FileUtil.hpp"
 #include "Util/Macros.hpp"
-#include "com_exadios_xcsoar_DownloadUtil.h"
+#include "org_narroginglidingclub_xcsoar_DownloadUtil.h"
 
 #include <algorithm>
 
@@ -49,7 +49,7 @@ AndroidDownloadManager::Initialise(JNIEnv *env)
   assert(env != nullptr);
 
   if (android_api_level < 9 ||
-      !util_class.FindOptional(env, "com/exadios/xcsoar/DownloadUtil"))
+      !util_class.FindOptional(env, "org/narroginglidingclub/xcsoar/DownloadUtil"))
     return false;
 
   enumerate_method = env->GetStaticMethodID(util_class, "enumerate",
@@ -138,7 +138,7 @@ EraseSuffix(char *p, const char *suffix)
 }
 
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_DownloadUtil_onDownloadAdded(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_DownloadUtil_onDownloadAdded(JNIEnv *env,
                                                      jclass cls,
                                                      jlong j_handler,
                                                      jstring j_path,
@@ -162,7 +162,7 @@ Java_com_exadios_xcsoar_DownloadUtil_onDownloadAdded(JNIEnv *env,
 }
 
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_DownloadUtil_onDownloadComplete(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_DownloadUtil_onDownloadComplete(JNIEnv *env,
                                                         jclass cls,
                                                         jstring j_path,
                                                         jboolean success)

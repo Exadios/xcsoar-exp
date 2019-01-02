@@ -20,7 +20,7 @@
 }
 */
 
-package com.exadios.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import android.app.Service;
 import android.app.Notification;

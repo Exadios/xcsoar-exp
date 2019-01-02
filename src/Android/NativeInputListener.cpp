@@ -24,7 +24,7 @@ Copyright_License {
 #include "NativeInputListener.hpp"
 #include "IO/DataHandler.hpp"
 #include "Java/Class.hxx"
-#include "com_exadios_xcsoar_NativeInputListener.h"
+#include "org_narroginglidingclub_xcsoar_NativeInputListener.h"
 
 #include <stddef.h>
 
@@ -35,7 +35,7 @@ namespace NativeInputListener {
 };
 
 JNIEXPORT void JNICALL
-Java_com_exadios_xcsoar_NativeInputListener_dataReceived(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_NativeInputListener_dataReceived(JNIEnv *env,
                                                          jobject obj,
                                                          jbyteArray data,
                                                          jint length)
@@ -55,7 +55,7 @@ Java_com_exadios_xcsoar_NativeInputListener_dataReceived(JNIEnv *env,
 void
 NativeInputListener::Initialise(JNIEnv *env)
 {
-  cls.Find(env, "com/exadios/xcsoar/NativeInputListener");
+  cls.Find(env, "org/narroginglidingclub/xcsoar/NativeInputListener");
 
   ctor = env->GetMethodID(cls, "<init>", "(J)V");
   ptr_field = env->GetFieldID(cls, "ptr", "J");

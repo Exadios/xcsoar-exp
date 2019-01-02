@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-#include "com_exadios_xcsoar_EventBridge.h"
+#include "org_narroginglidingclub_xcsoar_EventBridge.h"
 #include "Product.hpp"
 #include "Event/Queue.hpp"
 #include "Event/Idle.hpp"
@@ -71,7 +71,7 @@ IsCursorKey(unsigned key_code)
 
 gcc_visibility_default
 void
-Java_com_exadios_xcsoar_EventBridge_onKeyDown(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_EventBridge_onKeyDown(JNIEnv *env,
                                               jclass cls,
                                               jint key_code)
 {
@@ -90,7 +90,7 @@ Java_com_exadios_xcsoar_EventBridge_onKeyDown(JNIEnv *env,
 
 gcc_visibility_default
 void
-Java_com_exadios_xcsoar_EventBridge_onKeyUp(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_EventBridge_onKeyUp(JNIEnv *env,
                                             jclass cls,
                                             jint key_code)
 {
@@ -104,7 +104,7 @@ Java_com_exadios_xcsoar_EventBridge_onKeyUp(JNIEnv *env,
 
 gcc_visibility_default
 void
-Java_com_exadios_xcsoar_EventBridge_onMouseDown(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_EventBridge_onMouseDown(JNIEnv *env,
                                                 jclass cls,
                                                 jint x,
                                                 jint y)
@@ -119,7 +119,7 @@ Java_com_exadios_xcsoar_EventBridge_onMouseDown(JNIEnv *env,
 
 gcc_visibility_default
 void
-Java_com_exadios_xcsoar_EventBridge_onMouseUp(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_EventBridge_onMouseUp(JNIEnv *env,
                                               jclass cls,
                                               jint x,
                                               jint y)
@@ -134,7 +134,7 @@ Java_com_exadios_xcsoar_EventBridge_onMouseUp(JNIEnv *env,
 
 gcc_visibility_default
 void
-Java_com_exadios_xcsoar_EventBridge_onMouseMove(JNIEnv *env,
+Java_org_narroginglidingclub_xcsoar_EventBridge_onMouseMove(JNIEnv *env,
                                                 jclass cls,
                                                 jint x,
                                                 jint y)
@@ -150,7 +150,7 @@ Java_com_exadios_xcsoar_EventBridge_onMouseMove(JNIEnv *env,
 
 gcc_visibility_default
 void
-Java_com_exadios_xcsoar_EventBridge_onPointerDown(JNIEnv *env, jclass cls)
+Java_org_narroginglidingclub_xcsoar_EventBridge_onPointerDown(JNIEnv *env, jclass cls)
 {
   if (event_queue == nullptr)
     /* XCSoar not yet initialised */
@@ -162,7 +162,7 @@ Java_com_exadios_xcsoar_EventBridge_onPointerDown(JNIEnv *env, jclass cls)
 
 gcc_visibility_default
 void
-Java_com_exadios_xcsoar_EventBridge_onPointerUp(JNIEnv *env, jclass cls)
+Java_org_narroginglidingclub_xcsoar_EventBridge_onPointerUp(JNIEnv *env, jclass cls)
 {
   if (event_queue == nullptr)
     /* XCSoar not yet initialised */

@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package com.exadios.xcsoar;
+package org.narroginglidingclub.xcsoar;
 
 import java.io.File;
 import android.app.DownloadManager;
