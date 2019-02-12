@@ -131,7 +131,7 @@ OZRenderer::Draw(Canvas &canvas, Layer layer, const Projection &projection,
     if (layer != LAYER_INACTIVE) {
       auto p_center = projection.GeoToScreen(oz.GetReference());
       canvas.DrawCircle(p_center,
-                    projection.GeoToScreenDistance(oz.GetRadius()));
+                        projection.GeoToScreenDistance(oz.GetRadius()));
     }
 
     break;
