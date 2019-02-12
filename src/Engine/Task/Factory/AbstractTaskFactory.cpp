@@ -31,6 +31,7 @@
 #include "Task/ObservationZones/KeyholeZone.hpp"
 #include "Task/ObservationZones/CylinderZone.hpp"
 #include "Task/ObservationZones/AnnularSectorZone.hpp"
+#include "Task/ObservationZones/VariableKeyholeZone.hpp"
 
 #include <algorithm>
 
@@ -51,6 +52,9 @@ GetOZSize(const ObservationZonePoint &oz)
 
   case ObservationZone::Shape::ANNULAR_SECTOR:
     return ((const AnnularSectorZone &)oz).GetRadius();
+
+  case ObservationZone::Shape::VARIABLE_KEYHOLE:
+    return ((const VariableKeyholeZone &)oz).GetRadius();
 
   default:
     return -1;
@@ -186,6 +190,7 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     case ObservationZone::Shape::BGAFIXEDCOURSE:
     case ObservationZone::Shape::BGAENHANCEDOPTION:
     case ObservationZone::Shape::ANNULAR_SECTOR:
+    case ObservationZone::Shape::VARIABLE_KEYHOLE:
       return TaskPointFactoryType::START_CYLINDER;
 
     case ObservationZone::Shape::BGA_START:
@@ -206,6 +211,8 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
       return TaskPointFactoryType::AAT_SEGMENT;
     case ObservationZone::Shape::ANNULAR_SECTOR:
       return TaskPointFactoryType::AAT_ANNULAR_SECTOR;
+    case ObservationZone::Shape::VARIABLE_KEYHOLE:
+      return TaskPointFactoryType::AAT_VARIABLE_KEYHOLE_SECTOR;
     case ObservationZone::Shape::CYLINDER:
       return TaskPointFactoryType::AAT_CYLINDER;
 
@@ -238,6 +245,7 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     case ObservationZone::Shape::SECTOR:
     case ObservationZone::Shape::LINE:
     case ObservationZone::Shape::ANNULAR_SECTOR:
+    case ObservationZone::Shape::VARIABLE_KEYHOLE:
       return TaskPointFactoryType::AST_CYLINDER;
 
     case ObservationZone::Shape::SYMMETRIC_QUADRANT:
@@ -263,6 +271,7 @@ AbstractTaskFactory::GetType(const OrderedTaskPoint &point) const
     case ObservationZone::Shape::BGAFIXEDCOURSE:
     case ObservationZone::Shape::BGAENHANCEDOPTION:
     case ObservationZone::Shape::ANNULAR_SECTOR:
+    case ObservationZone::Shape::VARIABLE_KEYHOLE:
       return TaskPointFactoryType::FINISH_CYLINDER;
     }
     break;
@@ -364,6 +373,10 @@ AbstractTaskFactory::CreatePoint(const TaskPointFactoryType type,
   case TaskPointFactoryType::AAT_ANNULAR_SECTOR:
     return CreateAATPoint(std::make_unique<AnnularSectorZone>(location,
                                                               turnpoint_radius),
+                          std::move(wp));
+  case TaskPointFactoryType::AAT_VARIABLE_KEYHOLE_SECTOR:
+    return CreateAATPoint(VariableKeyholeZone::New(location,
+                                                   turnpoint_radius),
                           std::move(wp));
   case TaskPointFactoryType::AAT_KEYHOLE:
     return CreateAATPoint(KeyholeZone::CreateCustomKeyholeZone(location,
@@ -661,7 +674,8 @@ AbstractTaskFactory::ValidAbstractType(LegalAbstractPointType type,
       (IsValidIntermediateType(TaskPointFactoryType::AAT_CYLINDER)
        || IsValidIntermediateType(TaskPointFactoryType::MAT_CYLINDER)
        || IsValidIntermediateType(TaskPointFactoryType::AAT_SEGMENT)
-       || IsValidIntermediateType(TaskPointFactoryType::AAT_ANNULAR_SECTOR));
+       || IsValidIntermediateType(TaskPointFactoryType::AAT_ANNULAR_SECTOR)
+       || IsValidIntermediateType(TaskPointFactoryType::AAT_VARIABLE_KEYHOLE_SECTOR));
   };
   return false;
 }
@@ -800,6 +814,7 @@ AbstractTaskFactory::ValidateFAIOZs() const noexcept
     case TaskPointFactoryType::AAT_CYLINDER:
     case TaskPointFactoryType::AAT_SEGMENT:
     case TaskPointFactoryType::AAT_ANNULAR_SECTOR:
+    case TaskPointFactoryType::AAT_VARIABLE_KEYHOLE_SECTOR:
     case TaskPointFactoryType::AAT_KEYHOLE:
     case TaskPointFactoryType::SYMMETRIC_QUADRANT:
       valid = false;
@@ -859,6 +874,7 @@ AbstractTaskFactory::ValidateMATOZs() const noexcept
     case TaskPointFactoryType::BGAENHANCEDOPTION_SECTOR:
     case TaskPointFactoryType::AAT_SEGMENT:
     case TaskPointFactoryType::AAT_ANNULAR_SECTOR:
+    case TaskPointFactoryType::AAT_VARIABLE_KEYHOLE_SECTOR:
     case TaskPointFactoryType::AAT_KEYHOLE:
     case TaskPointFactoryType::FINISH_SECTOR:
     case TaskPointFactoryType::SYMMETRIC_QUADRANT:
