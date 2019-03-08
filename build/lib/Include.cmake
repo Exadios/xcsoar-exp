@@ -447,6 +447,7 @@ set(DRIVER_SRCS
                 ${DRIVER_DIR}/Zander.cpp
                 ${DRIVER_DIR}/Vaulter.cpp
                 ${DRIVER_DIR}/KRT2.cpp
+                ${DRIVER_DIR}/AirControlDisplay.cpp
                 ${DRIVER_DIR}/ATR833.cpp)
 include_directories(${XCSOAR_SRC} ${DRIVER_DIR})
 add_library(Driver-${T} ${DRIVER_SRCS})
