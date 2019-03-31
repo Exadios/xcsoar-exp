@@ -41,6 +41,12 @@ Copyright_License {
 #include "SystemDialog.hpp"
 #include "ToolsDialog.hpp"
 
+#include "Event/Globals.hpp"
+#include "Event/Queue.hpp"
+#include "DisplayOrientation.hpp"
+#include "OS/FileUtil.hpp"
+#include "Hardware/RotateDisplay.hpp"
+
 enum Buttons {
   LAUNCH_NICKEL = 100,
   TOOLS,
@@ -156,6 +162,33 @@ KoboMenuWidget::OnAction(int id)
 static int
 Main(SingleWindow &main_window, const DialogLook &dialog_look)
 {
+  if (File::Exists("/mnt/onboard/XCSoarData/rotate"))
+    {
+    char rb[20];
+
+    if (File::ReadString("/mnt/onboard/XCSoarData/rotate",
+                         rb,
+                         sizeof(rb) / sizeof(char) - 1)
+                        )
+      {
+      std::string rbs(rb);
+      DisplayOrientation orientation = DisplayOrientation::DEFAULT;
+
+      if (rbs == "DEFAULT")
+        orientation = DisplayOrientation::DEFAULT;
+      else if (rbs == "PORTRAIT")
+        orientation = DisplayOrientation::PORTRAIT;
+      else if (rbs == "LANDSCAPE")
+        orientation = DisplayOrientation::LANDSCAPE;
+      else if (rbs == "REVERSE_PORTRAIT")
+        orientation = DisplayOrientation::REVERSE_PORTRAIT;
+      else if (rbs == "REVERSE_LANDSCAPE")
+        orientation = DisplayOrientation::REVERSE_LANDSCAPE;
+
+      if (!Display::Rotate(orientation))
+        ::event_queue->SetMouseRotation(orientation);
+      }
+    }
   WidgetDialog dialog(dialog_look);
   KoboMenuWidget widget(dialog_look, dialog);
   dialog.CreateFull(main_window, _T(""), &widget);
