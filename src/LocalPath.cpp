@@ -101,6 +101,7 @@ SetPrimaryDataPath(const TCHAR *path)
 
   free(data_path);
   data_path = DuplicateString(path);
+  assert(data_path != nullptr);
   data_path_length = StringLength(data_path);
 }
 

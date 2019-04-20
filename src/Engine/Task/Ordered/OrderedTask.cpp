@@ -1265,6 +1265,7 @@ OrderedTask::CheckDuplicateWaypoints(Waypoints& waypoints,
 
     const OrderedTaskPoint *new_tp =
       (*i)->Clone(task_behaviour, ordered_settings, &wp);
+    assert(new_tp != nullptr);
     if (is_task)
       Replace(*new_tp, std::distance(begin, i));
     else

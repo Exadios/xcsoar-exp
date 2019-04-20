@@ -40,6 +40,7 @@ Canvas::CalcTextSize(const TCHAR *text, size_t length) const
   assert(text != nullptr);
 
   TCHAR *duplicated = _tcsdup(text);
+  assert(duplicated != nullptr);
   duplicated[length] = 0;
 
 #ifndef UNICODE

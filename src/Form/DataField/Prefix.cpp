@@ -28,6 +28,7 @@ const TCHAR *
 PrefixDataField::GetAsDisplayString() const
 {
   const TCHAR *s = DataFieldString::GetAsDisplayString();
+  assert(s != nullptr);
   if (StringIsEmpty(s))
     s = _T("*");
   return s;
@@ -72,6 +73,7 @@ PrefixDataField::Dec()
       ? StringFind(chars, current)
       : nullptr;
 
+    assert(p != nullptr);
     if (p > chars)
       next = p[-1];
     else

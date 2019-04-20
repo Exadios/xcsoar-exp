@@ -1041,6 +1041,7 @@ public:
     Leaf *leaf = leaf_allocator.allocate(1);
     leaf_allocator.construct(leaf, Leaf(std::forward<U>(value)));
 
+    assert(leaf != nullptr);
     root.AddHere(leaf);
 
     return leaf->value;
@@ -1080,6 +1081,7 @@ public:
     leaf_allocator.construct(leaf, Leaf(std::forward<U>(value)));
 
     Rectangle bounds = this->bounds;
+    assert(leaf != nullptr);
     root.Add(bounds, leaf, bucket_allocator);
 
     return leaf->value;

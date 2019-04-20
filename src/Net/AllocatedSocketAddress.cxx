@@ -43,6 +43,7 @@ AllocatedSocketAddress::operator=(SocketAddress src)
 		Clear();
 	} else {
 		SetSize(src.GetSize());
+    assert(address != nullptr);
 		memcpy(address, src.GetAddress(), size);
 	}
 
@@ -57,7 +58,9 @@ AllocatedSocketAddress::SetSize(size_type new_size)
 
 	free(address);
 	size = new_size;
+  assert(size > 0);
 	address = (struct sockaddr *)malloc(size);
+  assert(address != nullptr);
 }
 
 #ifdef HAVE_UN

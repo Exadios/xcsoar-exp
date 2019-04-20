@@ -249,6 +249,7 @@ AirspaceListWidget::UpdateList()
     data.cls = (AirspaceClass)dialog_state.type;
 
   const TCHAR *name_filter = filter_widget.GetValueString(NAME);
+  assert(name_filter != nullptr);
   if (!StringIsEmpty(name_filter))
     data.name_prefix = name_filter;
 

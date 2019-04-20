@@ -377,6 +377,7 @@ TrafficListWidget::UpdateList()
   last_update.Clear();
 
   const TCHAR *callsign = filter_widget->GetValueString(CALLSIGN);
+  assert(callsign != nullptr);
   if (!StringIsEmpty(callsign)) {
     FlarmId ids[30];
     unsigned count = FlarmDetails::FindIdsByCallSign(callsign, ids, 30);

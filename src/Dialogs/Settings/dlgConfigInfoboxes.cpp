@@ -320,6 +320,7 @@ InfoBoxesConfigWidget::Save(bool &changed_r)
 {
   if (allow_name_change) {
     const auto *new_name = GetValueString(InfoBoxesConfigWidget::NAME);
+    assert(new_name != nullptr);
     if (!StringIsEqual(new_name, data.name)) {
       data.name = new_name;
       changed = true;
