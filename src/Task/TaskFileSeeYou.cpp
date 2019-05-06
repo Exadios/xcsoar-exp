@@ -30,6 +30,7 @@
 #include "Waypoint/WaypointReaderSeeYou.hpp"
 #include "Task/ObservationZones/LineSectorZone.hpp"
 #include "Task/ObservationZones/AnnularSectorZone.hpp"
+#include "Task/ObservationZones/VariableKeyholeZone.hpp"
 #include "Task/ObservationZones/KeyholeZone.hpp"
 #include "Engine/Task/Ordered/OrderedTask.hpp"
 #include "Engine/Task/Ordered/Points/StartPoint.hpp"
@@ -41,6 +42,11 @@
 #include "Units/System.hpp"
 
 #include <stdlib.h>
+
+// debug
+#include <iostream>
+#include <fstream>
+// ~debug
 
 struct SeeYouTaskInformation {
   /** True = RT, False = AAT */
@@ -189,10 +195,14 @@ ParseOZs(SeeYouTurnpointInformation turnpoint_infos[], const TCHAR *params[],
     return -1;
 
   turnpoint_infos[oz_index].valid = true;
+  // Defaults
+  turnpoint_infos[oz_index].radius2 = fixed(0);
+
   // Iterate through available OZ options
   for (unsigned i = 1; i < n_params; i++) {
     const TCHAR *pair = params[i];
     SeeYouTurnpointInformation &tp_info = turnpoint_infos[oz_index];
+
 
     if (StringIsEqual(pair, _T("Style"), 5)) {
       if (_tcslen(pair) > 6)
@@ -292,9 +302,9 @@ gcc_pure
 static Angle
 CalcIntermediateAngle(const SeeYouTurnpointInformation &turnpoint_infos,
                       const GeoPoint &location,
-                      const GeoPoint &start,
                       const GeoPoint &previous,
-                      const GeoPoint &next)
+                      const GeoPoint &next,
+                      const GeoPoint &start)
 {
     switch (turnpoint_infos.style) {
     case SeeYouTurnpointInformation::FIXED:
@@ -333,7 +343,7 @@ CalcIntermediateAngle(const SeeYouTurnpointInformation &turnpoint_infos,
  * @return the XCSoar OZ
  */
 static ObservationZonePoint*
-CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
+CreateOZ(const  SeeYouTurnpointInformation &turnpoint_infos,
          unsigned pos, unsigned size, const Waypoint *wps[],
          TaskFactoryType factType)
 {
@@ -385,15 +395,43 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
     const Angle RadialStart = (A12adj - turnpoint_infos.angle1).AsBearing();
     const Angle RadialEnd = (A12adj + turnpoint_infos.angle1).AsBearing();
 
-    if (turnpoint_infos.radius2 > fixed(0) &&
-        (turnpoint_infos.angle2.AsBearing().Degrees()) < fixed(1)) {
-      oz = new AnnularSectorZone(wp->location, turnpoint_infos.radius1,
-          RadialStart, RadialEnd, turnpoint_infos.radius2);
-    } else {
-      oz = new SectorZone(wp->location, turnpoint_infos.radius1,
-          RadialStart, RadialEnd);
-    }
+// debug
+#ifdef USE_X11  // Use this as a proxy for target UNIX.
+    std::fstream db_flag;
+    db_flag.open("/home/pfb/XCSoarData/TaskFileSeeYou", std::ios_base::in);
+    if (db_flag.is_open())
+      {
+      std::cout << "A12adj:  " << A12adj.AsBearing().Degrees() << std::endl
+                << "RadialStart: " << RadialStart.AsBearing().Degrees() << std::endl
+                << "RadialEnd:   " << RadialEnd.AsBearing().Degrees() << std::endl
+                << "radius1: " << turnpoint_infos.radius1 << std::endl
+                << "angle1:  " << turnpoint_infos.angle1.AsBearing().Degrees() << std::endl
+                << "radius2: " << turnpoint_infos.radius2 << std::endl
+                << "angle2:  " << turnpoint_infos.angle2.AsBearing().Degrees() << std::endl;
+      db_flag.close();
+      }
+#endif  // USE_X11
+// ~debug
 
+    /**
+     * TODO
+     * \todo Make a number of wimp and annular OZs and discover how CU
+     * differentiates the two.
+     */
+    if (turnpoint_infos.radius2 > fixed(0) &&
+        (turnpoint_infos.angle2.AsBearing().Degrees()) != fixed(0)) {
+      oz = VariableKeyholeZone::New(wp->location,
+                                    turnpoint_infos.radius1,
+                                    turnpoint_infos.radius2,
+                                    RadialStart,
+                                    RadialEnd);
+    } else {
+      oz = new AnnularSectorZone(wp->location,
+                                 turnpoint_infos.radius1,
+                                 RadialStart,
+                                 RadialEnd,
+                                 turnpoint_infos.radius2);
+    }
   } else { // catch-all
     oz = new CylinderZone(wp->location, turnpoint_infos.radius1);
   }

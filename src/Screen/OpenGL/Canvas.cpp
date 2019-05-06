@@ -57,6 +57,8 @@ Copyright_License {
 
 #include <assert.h>
 
+#include <iostream>
+
 AllocatedArray<RasterPoint> Canvas::vertex_buffer;
 
 void

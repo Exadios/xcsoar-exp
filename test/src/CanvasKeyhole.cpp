@@ -1,4 +1,5 @@
-/* Copyright_License {
+/*
+Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
   Copyright (C) 2000-2015 The XCSoar Project
@@ -18,29 +19,36 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
- */
+*/
 
-#ifndef XCSOAR_TASK_FILE_SEEYOU_HPP
-#define XCSOAR_TASK_FILE_SEEYOU_HPP
+#define USE_FREETYPE 1
+#define ENABLE_OPENGL 1
+#include "Screen/OpenGL/Canvas.hpp"
+#include "Math/Angle.hpp"
+#include "Math/FastTrig.hpp"
 
-#include "TaskFile.hpp"
+class Canvas;
 
-/**
- * TODO
- * \todo Remove debugs in code!
- */
+#include <iostream>
 
-class TaskFileSeeYou: public TaskFile
-{
-public:
-  TaskFileSeeYou(const TCHAR* _path):
-    TaskFile(_path) {}
+void Test();
 
-  virtual OrderedTask *GetTask(const TaskBehaviour &task_behaviour,
-                               const Waypoints *waypoints,
-                               unsigned index) const;
+//------------------------------------------------------------------------------
+void
+Test()
+  {
+  Canvas c;
 
-  unsigned Count();
-};
+  c.ClearWhite();
+  c.DrawKeyhole(0, 0, 5000, 10000, Angle::Degrees(350), Angle::Degrees(10));
+  }
 
-#endif
+//------------------------------------------------------------------------------
+int
+main(int argc, const char *argv[])
+  {
+
+  Test();
+
+  return 0;
+  }
