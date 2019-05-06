@@ -1,39 +1,3 @@
-Version 6.8.17 - 2020/09/22
-* tracking
-  - SkyLines: update tracking IP address
-* terrain
-  - fix several crash bugs (JasPer)
-
-Version 6.8.16 - 2020/07/26
-* input events
-  - fix two crash bugs with malformed files
-* user interface
-  - fix crash bug in waypoint editor
-* devices
-  - added ports 8880, 8881, 8882 to tcp-client
-* glide computer
-  - fix crash bug
-* terrain
-  - fix several crash bugs (JasPer)
-* Android
-  - fix several crash bugs
-  - fix rendering errors on very wide text lines
-
-Version 6.8.15 - 2020/06/13
-* user interface
-  - vario: fix overlapping text lines
-* tracking
-  - SkyLines: update tracking IP address
-* support for long-form `DTE` header in IGC files
-* Windows
-  - fix buffer overflow causing crashes in the waypoint dialog
-* Raspberry Pi
-  - support 64 bit kernels
-  - Raspberry Pi 4 support
-  - detect display dimensions and scale user interface accordingly
-* macOS
-  - add macOS Catalina font path
-
 Version 6.8.14 - 2020/05/14
 * user interface
   - fix average needle color in inverted mode
@@ -56,6 +20,12 @@ Version 6.8.13 - 2020/04/08
 * WinCE
   - build with GCC 9
 * allow the hyphen in XCI files
+
+Version 6.8.12.2.1 - 2019/05/06
+* Task
+  - Ticket 1687
+* FLARM
+  - Issue 2
 
 Version 6.8.12 - 2019/04/30
 * weather
