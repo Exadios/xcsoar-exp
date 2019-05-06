@@ -86,11 +86,15 @@ LogoPageWindow::OnPaint(Canvas &canvas)
 #endif
   y += Layout::FastScale(37);
 
-  canvas.DrawText(x, y, _T("more information at"));
+  canvas.DrawText(x, y, _T("more information from"));
   y += Layout::FastScale(22);
 
   canvas.SetTextColor(COLOR_XCSOAR);
-  canvas.DrawText(x, y, _T("http://www.xcsoar.org"));
+  canvas.DrawText(x, y, _T("pfb@exadios.com"));
+  y += Layout::FastScale(22);
+  canvas.DrawText(x, y, _T("Signal: +61 422 348 370"));
+  y += Layout::FastScale(37);
+
 }
 
 static Window *
