@@ -52,7 +52,10 @@ RoughTimeDataField::GetAsString() const
   if (!value.IsValid())
     return _T("");
 
-  _stprintf(buffer, _T("%02u:%02u"), value.GetHour(), value.GetMinute());
+  _stprintf(buffer,
+            _T("%02u:%02u"),
+            value.GetHour() % 24,
+            value.GetMinute() % 60);
   return buffer;
 }
 

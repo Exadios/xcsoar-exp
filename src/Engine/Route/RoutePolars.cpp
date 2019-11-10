@@ -113,7 +113,7 @@ RoutePolars::CheckClearance(const RouteLink &e, const RasterMap* map,
     return true;
 
   GeoPoint int_x;
-  int int_h;
+  int int_h = 0;
   GeoPoint start = proj.Unproject(e.first);
   GeoPoint dest = proj.Unproject(e.second);
 

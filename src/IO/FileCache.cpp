@@ -52,6 +52,8 @@ struct FileInfo {
   uint64_t mtime;
   uint64_t size;
 
+  FileInfo() : mtime(0), size(0) { }
+
   bool operator==(const FileInfo &other) const {
     return mtime == other.mtime && size == other.size;
   }
@@ -117,7 +119,7 @@ FileCache::Load(const TCHAR *name, Path original_path)
     return nullptr;
 
   /* if the original file is newer than the cache, discard the cache -
-     unless the system clock is skewed (origina file's modification
+     unless the system clock is skewed (original file's modification
      time is in the future) */
   if (original_info.mtime > cached_info.mtime && !original_info.IsFuture()) {
     File::Delete(path);

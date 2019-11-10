@@ -192,7 +192,7 @@ bool
 FlarmDevice::GetConfig(const char *setting, char *buffer, size_t length,
                        OperationEnvironment &env)
 {
-  NarrowString<90> request;
+  NarrowString<90> request("");
   request.Format("PFLAC,R,%s", setting);
 
   NarrowString<90> expected_answer(request);
@@ -224,7 +224,7 @@ bool
 FlarmDevice::SetConfig(const char *setting, const char *value,
                        OperationEnvironment &env)
 {
-  NarrowString<90> buffer;
+  NarrowString<90> buffer("");
   buffer.Format("PFLAC,S,%s,%s", setting, value);
 
   NarrowString<90> expected_answer(buffer);
