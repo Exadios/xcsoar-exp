@@ -195,7 +195,7 @@ $(ANDROID_BUILD)/classes.dex: $(JAVA_SOURCES) $(ANDROID_BUILD)/gen/org/narroging
 	@$(NQ)echo "  JAVAC   $(JAVA_CLASSFILES_DIR)"
 	$(Q)$(JAVAC) -source 1.6 -target 1.6 -Xlint:-options \
 		-cp $(ANDROID_SDK_PLATFORM_DIR)/android.jar:$(JAVA_CLASSFILES_DIR) \
-		-d $(JAVA_CLASSFILES_DIR) $(ANDROID_BUILD)/gen/org/xcsoar/R.java \
+		-d $(JAVA_CLASSFILES_DIR) $(ANDROID_BUILD)/gen/org/narroginglidingclub/xcsoar/R.java \
 		-h $(NATIVE_INCLUDE) \
 		$(JAVA_SOURCES)
 	@$(NQ)echo "  DX      $@"
