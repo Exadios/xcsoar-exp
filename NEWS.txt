@@ -13,6 +13,9 @@ Version 6.8.15 - 2020/06/13
 * macOS
   - add macOS Catalina font path
 
+Version 6.8.14.2.2 - 2020/05/20
+* Pull 409 rebased onto NGC-Fork
+
 Version 6.8.14.2.1 - 2020/05/19
 * Branch v6.8.x rebased onto NGC-Fork.
 
