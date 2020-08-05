@@ -1,3 +1,21 @@
+Version 6.8.16.2.2 - 2020/08/06
+* rebase of v6.8.15.2.2 0n to v6.8.16
+
+Version 6.8.16 - 2020/07/26
+* input events
+  - fix two crash bugs with malformed files
+* user interface
+  - fix crash bug in waypoint editor
+* devices
+  - added ports 8880, 8881, 8882 to tcp-client
+* glide computer
+  - fix crash bug
+* terrain
+  - fix several crash bugs (JasPer)
+* Android
+  - fix several crash bugs
+  - fix rendering errors on very wide text lines
+
 Version 6.8.15.2.2 - 2020/06/16
 * rebase of v6.8.14.2.2 on to v6.8.15
 

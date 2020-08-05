@@ -3,7 +3,7 @@
           package="org.narroginglidingclub.xcsoar"
           android:installLocation="auto"
           android:versionCode="8"
-          android:versionName="6.8.17.2.2">
+          android:versionName="6.8.15.2.2">
   <application android:icon="@drawable/icon" android:label="@string/app_name">
     <activity android:name=".XCSoar"
               android:label="@string/app_name"
