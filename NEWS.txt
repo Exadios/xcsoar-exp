@@ -1,3 +1,12 @@
+Version 6.8.17.2.2
+* rebase of v6.8.17 onto v6.8.16.2.2
+
+Version 6.8.17 - 2020/09/22
+* tracking
+  - SkyLines: update tracking IP address
+* terrain
+  - fix several crash bugs (JasPer)
+
 Version 6.8.16.2.2 - 2020/08/06
 * rebase of v6.8.15.2.2 0n to v6.8.16
 
