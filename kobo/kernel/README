@@ -8,3 +8,12 @@ make mrproper
 cp ${XCSOAR}/kobo/kernel/N249.config ${KOBOSRC}/.config
 make -j3 ARCH=arm CROSS_COMPILE=arm-kobo-linux-gnueabihf- zImage ; echo $?
 sudo dd if=./arch/arm/boot/zImage of=/dev/${SDCARD} bs=512 seek=2048 ; sync ; sync
+
+To set the Kobo as "registered":
+
+On the section that will be mounted on /mnt/onboard do
+
+sqlite3 .kobo/KoboReader.sqlite
+
+INSERT INTO user(UserID,UserKey) VALUES('1','');
+
