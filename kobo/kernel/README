@@ -1,2 +1,10 @@
 This branch is a response to Issue 317 on the official XCSoar Github. See
 https://github.com/XCSoar/XCSoar/issues/317
+
+To build kernel:
+
+cd ${KOBOSRC}
+make mrproper
+cp ${XCSOAR}/kobo/kernel/N249.config ${KOBOSRC}/.config
+make -j3 ARCH=arm CROSS_COMPILE=arm-kobo-linux-gnueabihf- zImage ; echo $?
+sudo dd if=./arch/arm/boot/zImage of=/dev/${SDCARD} bs=512 seek=2048 ; sync ; sync
