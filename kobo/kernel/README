@@ -17,3 +17,7 @@ sqlite3 .kobo/KoboReader.sqlite
 
 INSERT INTO user(UserID,UserKey) VALUES('1','');
 
+Kobo reference material:
+
+https://www.yingtongli.me/blog/tag/kobo/
+
