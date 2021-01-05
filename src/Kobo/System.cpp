@@ -144,6 +144,19 @@ KoboExportUSBStorage()
                     "file=/dev/mmcblk0p3", "stall=0", "removable=1",
                     "product_id=Kobo");
     break;
+  case KoboModel::CLARA_HD:
+    /*
+     * // TODO: investigate arcotg_udc on N249.
+     *
+     * There is a module located at /drivers/freescale/usb/gadget/arcotg_udc.ko
+     * which has been supplied by Kobo Reader (the company). However,
+     * attempting to insmod this module results in the error message
+     * "insmod: can't insert '/drivers/freescale/usb/gadget/arcotg_udc.ko':
+     *  invalid module format". There is no other edition of this module.
+     * So, the question is is this module necessary and what does it do?
+     *
+     */
+     break; // Don't do anything until we find out what's going on.
   }
   return result;
 #else
@@ -196,6 +209,11 @@ KoboWifiOn()
   case KoboModel::AURA2:
     InsMod("/drivers/mx6sl-ntx/wifi/sdio_wifi_pwr.ko");
     InsMod("/drivers/mx6sl-ntx/wifi/8189fs.ko");
+    break;
+
+  case KoboModel::CLARA_HD:
+    InsMod("/drivers/mx6sll-ntx/wifi/sdio_wifi_pwr.ko");
+    InsMod("/drivers/mx6sll-ntx/wifi/8189fs.ko");
     break;
   }
 

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ "$STARTUP" == "1" ]; then
+	echo exiting
+	exit;
+fi
+
+if [ "$ACTION" == "offline" ]; then
+	ACTION=remove
+fi
+
+if [ "$ACTION" == "online" ]; then
+	exit;
+fi
+
+echo usb plug $ACTION >> /tmp/nickel-hardware-status &
+
+/opt/XCSoar/bin/usb2eth

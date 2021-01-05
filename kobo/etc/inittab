@@ -8,6 +8,9 @@
 # Kobo software)
 
 ::sysinit:/opt/xcsoar/bin/rcS
+::respawn:/sbin/kobo_getty.sh
 ::ctrlaltdel:/sbin/reboot
-::shutdown:/bin/umount -a -r
+::shutdown:/etc/init.d/rcK
 ::restart:/sbin/init
+::sysinit:/bin/sh /opt/afterinit.sh
+::respawn:/usr/sbin/inetd /opt/inetd.conf

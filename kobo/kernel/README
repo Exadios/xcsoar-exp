@@ -21,3 +21,19 @@ Kobo reference material:
 
 https://www.yingtongli.me/blog/tag/kobo/
 
+Kobo parameters:
+
+Latest Kobo Reader supplied kernel has a uname -a of:
+Linux kobo 4.1.15-00089-ga2737fc02713 #34 SMP PREEMPT Fri Dec 27 17:47:13 CST 2019 armv7l GNU/Linux
+
+The following are the discoverable variables:
+
+'ntx_hwconfig -s -p /dev/mmcblk0 CPU' == mx6sll
+'ntx_hwconfig -s -p /dev/mmcblk0 PCB' == E60K00
+'ntx_hwconfig -s -p /dev/mmcblk0 PCB_LVL' == A
+'ntx_hwconfig -s -p /dev/mmcblk0 PCB_REV' == 0x10
+'ntx_hwconfig -s -p /dev/mmcblk0 RAMType' == LPDDR2
+'ntx_hwconfig -s -p /dev/mmcblk0 RamSize' == 512MB
+'ntx_hwconfig -s -p -d /dev/mmcblk0 FrontLight' == 0x01
+'ntx_hwconfig -s -p /dev/mmcblk0 Wifi' = RTL8189
+'dd if=/dev/mmcblk0 bs=512 skip=1024 count=1 | grep -c "HW CONFIG' == 1

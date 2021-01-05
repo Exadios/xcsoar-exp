@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ "$STARTUP" == "1" ]; then
+	echo exiting
+	exit;
+fi
+
+if [ "$ACTION" == "offline" -o "$ACTION" == "online" ]; then
+	exit;
+fi
+
+echo usb ac $ACTION >> /tmp/nickel-hardware-status &
+
+/opt/XCSoar/bin/usb2eth

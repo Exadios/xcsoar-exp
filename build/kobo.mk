@@ -81,18 +81,35 @@ KOBO_KERNEL_DIR = /opt/kobo/kernel
 $(TARGET_OUTPUT_DIR)/KoboRoot.tgz: $(XCSOAR_BIN) \
 	$(KOBO_MENU_BIN) $(KOBO_POWER_OFF_BIN) \
 	$(BITSTREAM_VERA_FILES) \
-	$(topdir)/kobo/inittab $(topdir)/kobo/rcS
+	$(topdir)/kobo/etc/inittab \
+  $(topdir)/kobo/etc/inetd.conf \
+  $(topdir)/kobo/bin/rcS \
+  $(topdir)/kobo/bin/postinit.sh \
+  $(topdir)/kobo/bin/usb2dsd.sh \
+  $(topdir)/kobo/bin/usb2eth.sh \
+  $(topdir)/kobo/etc/udev/ac \
+  $(topdir)/kobo/etc/udev/plug
 	@$(NQ)echo "  TAR     $@"
 	$(Q)rm -rf $(@D)/KoboRoot
-	$(Q)install -m 0755 -d $(@D)/KoboRoot/etc $(@D)/KoboRoot/opt/xcsoar/bin $(@D)/KoboRoot/opt/xcsoar/lib/kernel $(@D)/KoboRoot/opt/xcsoar/share/fonts
-	$(Q)install -m 0755 $(XCSOAR_BIN) $(KOBO_MENU_BIN) $(KOBO_POWER_OFF_BIN) $(topdir)/kobo/rcS $(@D)/KoboRoot/opt/xcsoar/bin
+	$(Q)install -m 0755 -d $(@D)/KoboRoot/etc $(@D)/KoboRoot/etc/udev $(@D)/KoboRoot/opt/xcsoar/bin $(@D)/KoboRoot/opt/xcsoar/lib/kernel $(@D)/KoboRoot/opt/xcsoar/share/fonts
+	$(Q)install -m 0755 $(XCSOAR_BIN) $(KOBO_MENU_BIN) $(KOBO_POWER_OFF_BIN) $(topdir)/kobo/bin/rcS $(@D)/KoboRoot/opt/xcsoar/bin
+	$(Q)install -m 0755 $(topdir)/kobo/bin/postinit.sh $(@D)/KoboRoot/opt/xcsoar/bin
+	$(Q)install -m 0755 $(topdir)/kobo/opt/afterinit.sh $(@D)/KoboRoot/opt
+	$(Q)install -m 0755 $(topdir)/kobo/opt/inetd.conf $(@D)/KoboRoot/opt
+	$(Q)install -m 0755 $(topdir)/kobo/bin/usb2dsd.sh  $(@D)/KoboRoot/opt/xcsoar/bin
+	$(Q)install -m 0755 $(topdir)/kobo/bin/usb2eth.sh  $(@D)/KoboRoot/opt/xcsoar/bin
 	$(Q)if test -f $(KOBO_KERNEL_DIR)/uImage.kobo; then install -m 0644 $(KOBO_KERNEL_DIR)/uImage.kobo $(@D)/KoboRoot/opt/xcsoar/lib/kernel; fi
 	$(Q)if test -f $(KOBO_KERNEL_DIR)/uImage.otg; then install -m 0644 $(KOBO_KERNEL_DIR)/uImage.otg $(@D)/KoboRoot/opt/xcsoar/lib/kernel; fi
 	$(Q)if test -f $(KOBO_KERNEL_DIR)/uImage.glohd; then install -m 0644 $(KOBO_KERNEL_DIR)/uImage.glohd $(@D)/KoboRoot/opt/xcsoar/lib/kernel; fi
 	$(Q)if test -f $(KOBO_KERNEL_DIR)/uImage.glohd.otg; then install -m 0644 $(KOBO_KERNEL_DIR)/uImage.glohd.otg $(@D)/KoboRoot/opt/xcsoar/lib/kernel; fi
 	$(Q)if test -f $(KOBO_KERNEL_DIR)/uImage.aura2; then install -m 0644 $(KOBO_KERNEL_DIR)/uImage.aura2 $(@D)/KoboRoot/opt/xcsoar/lib/kernel; fi
 	$(Q)if test -f $(KOBO_KERNEL_DIR)/uImage.aura2.otg; then install -m 0644 $(KOBO_KERNEL_DIR)/uImage.aura2.otg $(@D)/KoboRoot/opt/xcsoar/lib/kernel; fi
-	$(Q)install -m 0644 $(topdir)/kobo/inittab $(@D)/KoboRoot/etc
+#	$(Q)if test -f $(KOBO_KERNEL_DIR)/zImage.N249; then install -m 0644 $(KOBO_KERNEL_DIR)/zImage.N249 $(@D)/KoboRoot/opt/xcsoar/lib/kernel; fi
+	$(Q)install -m 0644 $(topdir)/kobo/etc/inittab    $(@D)/KoboRoot/etc
+	$(Q)install -m 0644 $(topdir)/kobo/etc/inetd.conf $(@D)/KoboRoot/etc
+	$(Q)install -m 0755 $(topdir)/kobo/etc/udev/ac    $(@D)/KoboRoot/etc/udev
+	$(Q)install -m 0755 $(topdir)/kobo/etc/udev/plug  $(@D)/KoboRoot/etc/udev
+
 	$(Q)install -m 0644 $(BITSTREAM_VERA_FILES) $(@D)/KoboRoot/opt/xcsoar/share/fonts
 	$(Q)fakeroot tar czfC $@ $(@D)/KoboRoot .
 
