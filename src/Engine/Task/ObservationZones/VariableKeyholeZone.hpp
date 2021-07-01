@@ -53,20 +53,20 @@ public:
    * @param end_radial The most CW radial - radians.
    * @return The life of the object to be managed by the caller.
    */
-  static VariableKeyholeZone *New(const GeoPoint &ref,
-                                  double radius,
-                                  double inner_radius,
-                                  Angle start_radial,
-                                  Angle end_radial)
+  static auto New(const GeoPoint &ref,
+                  double radius,
+                  double inner_radius,
+                  Angle start_radial,
+                  Angle end_radial)
     {
-    return new VariableKeyholeZone(Shape::VARIABLE_KEYHOLE,
+    return std::unique_ptr<VariableKeyholeZone>{new VariableKeyholeZone(Shape::VARIABLE_KEYHOLE,
                                    true,
                                    true,
                                    ref,
                                    radius,
                                    start_radial,
                                    end_radial,
-                                   inner_radius);
+                                   inner_radius)};
     }
 
   /**
@@ -74,12 +74,12 @@ public:
    * @param ref The zone's reference point - phi, lambda.
    * @return The life of the object to be managed by the caller.
    */
-  static VariableKeyholeZone *New(const GeoPoint &ref)
+  static std::unique_ptr<VariableKeyholeZone> New(const GeoPoint &ref)
     {
-    return new VariableKeyholeZone(Shape::VARIABLE_KEYHOLE,
+    return std::unique_ptr<VariableKeyholeZone>{new VariableKeyholeZone(Shape::VARIABLE_KEYHOLE,
                                    true,
                                    true,
-                                   ref);
+                                   ref)};
     }
 
   /**
@@ -88,14 +88,16 @@ public:
    * @param radius The radius of the sector portion of the zone.
    * @return The life of the object to be managed by the caller.
    */
-  static VariableKeyholeZone *New(const GeoPoint &ref,
-                                  double radius)
+  static auto New(const GeoPoint &ref,
+                  double radius)
     {
-    return new VariableKeyholeZone(Shape::VARIABLE_KEYHOLE,
-                                   true,
-                                   true,
-                                   ref,
-                                   radius);
+    return std::unique_ptr<VariableKeyholeZone>
+      {new VariableKeyholeZone(Shape::VARIABLE_KEYHOLE,
+                               true,
+                               true,
+                               ref,
+                               radius)
+      };
     }
 
   /**
@@ -121,9 +123,9 @@ public:
   OZBoundary GetBoundary() const override;
 
   /* virtual methods from class ObservationZonePoint */
-  ObservationZonePoint *Clone(const GeoPoint &reference) const override
+  std::unique_ptr<ObservationZonePoint> Clone(const GeoPoint &reference) const noexcept override
     {
-    return new VariableKeyholeZone(*this, reference);
+    return std::unique_ptr<ObservationZonePoint>{new VariableKeyholeZone(*this, reference)};
     }
 
 protected:

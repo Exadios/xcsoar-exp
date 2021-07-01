@@ -154,7 +154,7 @@ DeserialiseOZ(const Waypoint &wp, const ConstDataNode &node, bool is_turnpoint)
     double radius = 10000, inner_radius = 500;
     Angle start, end;
 
-    VariableKeyholeZone *z = VariableKeyholeZone::New(wp.location);
+    std::unique_ptr<VariableKeyholeZone> z = VariableKeyholeZone::New(wp.location);
     if (node.GetAttribute(_T("radius"), radius) && (radius >= 0))
       z->SetRadius(radius);
     if (node.GetAttribute(_T("inner_radius"), inner_radius) &&

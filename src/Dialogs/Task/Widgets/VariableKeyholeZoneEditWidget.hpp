@@ -38,14 +38,14 @@ public:
    * Ctor.
    * @param oz The observation zone definition.
    */
-  VariableKeyholeZoneEditWidget(VariableKeyholeZone &_oz);
+  VariableKeyholeZoneEditWidget(VariableKeyholeZone &_oz) noexcept;
 
 protected:
   /**
    * The const version of the observation zone.
    * @return The OZ for const operations.
    */
-  const VariableKeyholeZone &GetObject() const
+  const VariableKeyholeZone &GetObject() const noexcept
     {
     return (const VariableKeyholeZone &)ObservationZoneEditWidget::GetObject();
     }
@@ -54,15 +54,15 @@ protected:
    * The non const instance of the observation zone.
    * @return The OZ for non const operations.
    */
-  VariableKeyholeZone &GetObject()
+  VariableKeyholeZone &GetObject() noexcept
     {
     return (VariableKeyholeZone &)ObservationZoneEditWidget::GetObject();
     }
 
 public:
   /* virtual methods from class Widget */
-  void Prepare(ContainerWindow &parent, const PixelRect &rc) override;
-  bool Save(bool &changed) override;
+  void Prepare(ContainerWindow &parent, const PixelRect &rc) noexcept override;
+  bool Save(bool &changed) noexcept override;
   };
 
 #endif  // XCSOAR_VARIABLE_KEYHOLE_ZONE_EDIT_WIDGET_HPP
