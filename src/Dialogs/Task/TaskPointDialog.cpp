@@ -294,7 +294,7 @@ CreateObservationZoneEditWidget(ObservationZonePoint &oz, bool is_fai_general)
     return std::make_unique<KeyholeZoneEditWidget>((KeyholeZone &)oz);
 
   case ObservationZone::Shape::VARIABLE_KEYHOLE:
-    return new VariableKeyholeZoneEditWidget((VariableKeyholeZone &)oz);
+    return std::make_unique<VariableKeyholeZoneEditWidget>((VariableKeyholeZone &)oz);
 
   case ObservationZone::Shape::FAI_SECTOR:
   case ObservationZone::Shape::DAEC_KEYHOLE:

@@ -34,13 +34,13 @@ enum Controls
   };
 
 //------------------------------------------------------------------------------
-VariableKeyholeZoneEditWidget::VariableKeyholeZoneEditWidget(VariableKeyholeZone &_oz)
+VariableKeyholeZoneEditWidget::VariableKeyholeZoneEditWidget(VariableKeyholeZone &_oz) noexcept
   :ObservationZoneEditWidget(_oz) {}
 
 //------------------------------------------------------------------------------
 void
 VariableKeyholeZoneEditWidget::Prepare(ContainerWindow &parent,
-                                         const PixelRect &rc)
+                                         const PixelRect &rc) noexcept
   {
   ObservationZoneEditWidget::Prepare(parent, rc);
 
@@ -85,7 +85,7 @@ VariableKeyholeZoneEditWidget::Prepare(ContainerWindow &parent,
 
 //------------------------------------------------------------------------------
 bool
-VariableKeyholeZoneEditWidget::Save(bool &_changed)
+VariableKeyholeZoneEditWidget::Save(bool &_changed) noexcept
   {
   bool changed = false;
 
