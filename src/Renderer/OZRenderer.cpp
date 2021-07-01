@@ -130,8 +130,8 @@ OZRenderer::Draw(Canvas &canvas, Layer layer, const Projection &projection,
 
     if (layer != LAYER_INACTIVE) {
       auto p_center = projection.GeoToScreen(oz.GetReference());
-      canvas.DrawCircle(p_center.x, p_center.y,
-                        projection.GeoToScreenDistance(oz.GetRadius()));
+      canvas.DrawCircle(p_center,
+                    projection.GeoToScreenDistance(oz.GetRadius()));
     }
 
     break;
@@ -240,6 +240,7 @@ OZRenderer::GetGeoBounds(const ObservationZonePoint &oz) noexcept
   case ObservationZone::Shape::BGAFIXEDCOURSE:
   case ObservationZone::Shape::BGAENHANCEDOPTION:
   case ObservationZone::Shape::ANNULAR_SECTOR:
+  case ObservationZone::Shape::VARIABLE_KEYHOLE:
     break;
   }
 
