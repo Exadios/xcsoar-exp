@@ -68,6 +68,7 @@ protected:
 
   bool enable_north_up = false;
   Angle heading = Angle::Zero();
+  FlarmStatus flarm_status;
   FastRotation fr;
   FastIntegerRotation fir;
   TrafficList data;
@@ -125,6 +126,7 @@ protected:
   void Update(Angle new_direction, const TrafficList &new_data,
               const TeamCodeSettings &new_settings) noexcept;
   void PaintRadarNoTraffic(Canvas &canvas) const noexcept;
+  void PaintRadarNoGo(Canvas &canvas) const noexcept;
   void PaintRadarTarget(Canvas &canvas, const FlarmTraffic &traffic,
                         unsigned i) noexcept;
   void PaintRadarTraffic(Canvas &canvas) noexcept;

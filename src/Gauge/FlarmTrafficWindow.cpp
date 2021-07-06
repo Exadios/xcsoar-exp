@@ -53,6 +53,7 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
 {
   data.Clear();
   data_modified.Clear();
+  this->flarm_status.Clear();
 }
 
 bool
@@ -178,39 +179,50 @@ FlarmTrafficWindow::UpdateWarnings() noexcept
 
 /**
  * This should be called when the radar needs to be repainted
+ * @param new_direction The new aircraft heading or track.
+ * @param new_data The new list of Flarm targets.
+ * @param new_settings The new team codes.
+ * @param flarm_status Present status of the Flarm.
  */
 void
-FlarmTrafficWindow::Update(Angle new_direction, const TrafficList &new_data,
-                           const TeamCodeSettings &new_settings) noexcept
+FlarmTrafficWindow::Update(Angle new_direction,
+                           const TrafficList &new_data,
+                           const TeamCodeSettings &new_settings,
+                           FlarmStatus flarm_status) noexcept
 {
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
-  if (new_data.modified == data_modified &&
-      (heading - new_direction).Absolute() < min_heading_delta)
+  if (new_data.modified == this->data_modified                       &&
+      (this->heading - new_direction).Absolute() < min_heading_delta &&
+      this->flarm_status.gps       == flarm_status.gps)
     /* no change - don't redraw */
     return;
 
   FlarmId selection_id;
   PixelPoint pt;
-  if (!small && selection >= 0) {
+  if (!small && selection >= 0)
+    {
     selection_id = data.list[selection].id;
     pt = sc[selection];
-  } else {
+    }
+  else
+    {
     selection_id.Clear();
     pt.x = -100;
     pt.y = -100;
-  }
+    }
 
-  data_modified = new_data.modified;
-  heading = new_direction;
-  fr = -heading;
-  fir = heading;
-  data = new_data;
-  settings = new_settings;
+  this->data_modified = new_data.modified;
+  this->heading = new_direction;
+  this->fr = -heading;
+  this->fir = heading;
+  this->data = new_data;
+  this->settings = new_settings;
+  this->flarm_status = flarm_status;
 
-  UpdateWarnings();
-  UpdateSelector(selection_id, pt);
+  this->UpdateWarnings();
+  this->UpdateSelector(selection_id, pt);
 
-  Invalidate();
+  this->Invalidate();
 }
 
 /**
@@ -240,6 +252,23 @@ FlarmTrafficWindow::PaintRadarNoTraffic(Canvas &canvas) const noexcept
   canvas.SetTextColor(look.default_color);
   canvas.DrawText(radar_mid - PixelSize{ts.width / 2, radius / 2}, str);
 }
+
+/**
+ * Paints a "No Go" sign on the given canvas
+ * @param canvas The canvas to paint on
+ */
+void
+FlarmTrafficWindow::PaintRadarNoGo(Canvas &canvas) const noexcept
+  {
+  if (small)
+    return;
+
+  const TCHAR* str = _("No Go");
+  canvas.Select(look.no_traffic_font);
+  PixelSize ts = canvas.CalcTextSize(str);
+  canvas.SetTextColor(look.default_color);
+  canvas.DrawText(radar_mid - PixelSize{ts.width / 2, this->radius / 2}, str);
+  }
 
 [[gnu::const]]
 static const Pen *
@@ -531,12 +560,17 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas &canvas,
  * @param canvas The canvas to paint on
  */
 void
-FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
-{
-  if (data.IsEmpty()) {
-    PaintRadarNoTraffic(canvas);
+FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas)
+  {
+  if (data.IsEmpty())
+    {
+    if (this->flarm_status.available == false ||
+        this->flarm_status.gps == FlarmStatus::GPSStatus::NONE)
+      this->PaintRadarNoGo(canvas);
+    else
+      this->PaintRadarNoTraffic(canvas);
     return;
-  }
+    }
 
   // Iterate through the traffic (normal traffic)
   for (unsigned i = 0; i < data.list.size(); ++i) {
