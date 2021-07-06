@@ -27,6 +27,7 @@
 #include "ui/window/PaintWindow.hpp"
 #include "FLARM/List.hpp"
 #include "FLARM/Color.hpp"
+#include "FLARM/Status.hpp"
 #include "TeamCode/Settings.hpp"
 #include "Math/FastRotation.hpp"
 
@@ -67,6 +68,7 @@ protected:
 
   bool enable_north_up;
   Angle heading;
+  FlarmStatus flarm_status;
   FastRotation fr;
   FastIntegerRotation fir;
   TrafficList data;
@@ -119,9 +121,12 @@ protected:
 
   void UpdateSelector(FlarmId id, PixelPoint pt);
   void UpdateWarnings();
-  void Update(Angle new_direction, const TrafficList &new_data,
-              const TeamCodeSettings &new_settings);
+  void Update(Angle new_direction,
+              const TrafficList &new_data,
+              const TeamCodeSettings &new_settings,
+              FlarmStatus flarm_status);
   void PaintRadarNoTraffic(Canvas &canvas) const;
+  void PaintRadarNoGo(Canvas &canvas) const;
   void PaintRadarTarget(Canvas &canvas, const FlarmTraffic &traffic,
                         unsigned i);
   void PaintRadarTraffic(Canvas &canvas);
