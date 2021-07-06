@@ -68,8 +68,18 @@ protected:
   void CalcAutoZoom();
 
 public:
-  void Update(Angle new_direction, const TrafficList &new_data,
-              const TeamCodeSettings &new_settings);
+  /**
+   * Update the Flarm display.
+   * @param new_direction The new aircraft track or heading.
+   * @param new_data The new list of Flarm targets.
+   * @param new_settings The new team codes.
+   * @param flarm_status Present status of the Flarm.
+   */
+  void Update(Angle new_direction,
+              const TrafficList &new_data,
+              const TeamCodeSettings &new_settings,
+              FlarmStatus flarm_status);
+
   void UpdateTaskDirection(bool show_task_direction, Angle bearing);
 
   bool GetNorthUp() const {
@@ -218,11 +228,15 @@ FlarmTrafficControl::CalcAutoZoom()
 }
 
 void
-FlarmTrafficControl::Update(Angle new_direction, const TrafficList &new_data,
-                            const TeamCodeSettings &new_settings)
+FlarmTrafficControl::Update(Angle new_direction,
+                            const TrafficList &new_data,
+                            const TeamCodeSettings &new_settings,
+                            FlarmStatus flarm_status)
 {
-  FlarmTrafficWindow::Update(new_direction, new_data, new_settings);
-
+  FlarmTrafficWindow::Update(new_direction,
+                             new_data,
+                             new_settings,
+                             flarm_status);
   if (enable_auto_zoom || WarningMode())
     CalcAutoZoom();
 }
@@ -771,9 +785,10 @@ TrafficWidget::Update() noexcept
     return;
   }
 
-  windows->view.Update(basic.track,
-               basic.flarm.traffic,
-               CommonInterface::GetComputerSettings().team_code);
+  this->windows->view.Update(basic.track,
+                             basic.flarm.traffic,
+                             CommonInterface::GetComputerSettings().team_code,
+                             basic.flarm.status);
 
   windows->view.UpdateTaskDirection(calculated.task_stats.task_valid &&
                             calculated.task_stats.current_leg.solution_remaining.IsOk(),
