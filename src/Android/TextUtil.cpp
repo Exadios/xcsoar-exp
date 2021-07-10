@@ -41,7 +41,7 @@ TextUtil::Initialise(JNIEnv *_env) noexcept
 {
   env = _env;
 
-  cls.Find(_env, "org/xcsoar/TextUtil");
+  cls.Find(_env, "au/org/narroginglidingclub/xcsoar/TextUtil");
 
   midTextUtil = _env->GetMethodID(cls, "<init>", "(IIIZ)V");
   midGetFontMetrics = _env->GetMethodID(cls, "getFontMetrics", "([I)V");
@@ -94,6 +94,7 @@ TextUtil::create(const FontDescription &d) noexcept
     paint_flags |= 1;
 
   // construct org.xcsoar.TextUtil object
+  // construct au.org.narroginglidingclub.xcsoar.TextUtil object
   auto &e = *env;
   Java::LocalObject localObject{&e,
     e.NewObject(cls, midTextUtil,

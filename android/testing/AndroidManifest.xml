@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.xcsoar.testing"
+          package="au.org.narroginglidingclub.xcsoar.testing"
           android:installLocation="auto"
-          android:versionCode="150"
-          android:versionName="7.24">
+          android:versionCode="15"
+          android:versionName="7.24.0.2.2">
   <application
       android:requestLegacyExternalStorage="true"
       android:preserveLegacyExternalStorage="true"

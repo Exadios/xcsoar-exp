@@ -122,8 +122,9 @@ LogoPageWindow::OnPaint(Canvas &canvas)
   x = middle - (ts2.width / 2);
   y += ts2.height;
   canvas.SetTextColor(COLOR_XCSOAR);
-  canvas.DrawText({x, y}, url);
-
+  canvas.DrawText({x, y}, _T("pfb@exadios.com"));
+  y += Layout::FastScale(22);
+  canvas.DrawText({x, y}, _T("Signal: +61 422 348 370"));
 }
 
 static std::unique_ptr<Window>

@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 import java.io.File;
 import android.util.Log;
@@ -221,10 +221,10 @@ class NativeView extends SurfaceView
    */
   private Bitmap loadResourceBitmap(String name) {
     /* find the resource */
-    int resourceId = resources.getIdentifier(name, "drawable", "org.xcsoar");
+    int resourceId = resources.getIdentifier(name, "drawable", "au.org.narroginglidingclub.xcsoar");
     if (resourceId == 0) {
       resourceId = resources.getIdentifier(name, "drawable",
-                                           "org.xcsoar.testing");
+                                           "au.org.narroginglidingclub.xcsoar.testing");
       if (resourceId == 0)
         return null;
     }

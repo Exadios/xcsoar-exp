@@ -32,10 +32,10 @@ static jmethodID bmp085_ctor;
 void
 BMP085Device::Initialise(JNIEnv *env) noexcept
 {
-  bmp085_class.Find(env, "org/xcsoar/GlueBMP085");
+  bmp085_class.Find(env, "au/org/narroginglidingclub/xcsoar/GlueBMP085");
 
   bmp085_ctor = env->GetMethodID(bmp085_class, "<init>",
-                                 "(Lorg/xcsoar/IOIOConnectionHolder;IIILorg/xcsoar/SensorListener;)V");
+                                 "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;IIILorg/xcsoar/SensorListener;)V");
 }
 
 void

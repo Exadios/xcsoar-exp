@@ -30,7 +30,7 @@
  * White	GND
  */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 import java.io.IOException;
 
