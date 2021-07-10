@@ -37,12 +37,12 @@ IOIOHelper::Initialise(JNIEnv *env)
   assert(!cls.IsDefined());
   assert(env != nullptr);
 
-  if (!cls.FindOptional(env, "org/xcsoar/IOIOHelper"))
+  if (!cls.FindOptional(env, "au/org/narroginglidingclub/xcsoar/IOIOHelper"))
     return false;
 
   ctor = env->GetMethodID(cls, "<init>", "()V");
   openUart_method = env->GetMethodID(cls, "openUart",
-                                     "(II)Lorg/xcsoar/AndroidPort;");
+                                     "(II)Lau/org/narroginglidingclub/xcsoar/AndroidPort;");
   shutdown_method = env->GetMethodID(cls, "shutdown", "()V");
 
   return true;

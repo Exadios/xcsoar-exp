@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 /**
  * An #InputListener implementation that passes method calls to native

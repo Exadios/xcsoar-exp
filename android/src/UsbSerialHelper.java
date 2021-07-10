@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
@@ -43,7 +43,7 @@ import java.util.Map;
 public class UsbSerialHelper extends BroadcastReceiver {
 
   private static final String TAG = "UsbSerialHelper";
-  public static final String ACTION_USB_PERMISSION = "org.xcsoar.otg.action.USB_PERMISSION";
+  public static final String ACTION_USB_PERMISSION = "au.org.narroginglidingclub.xcsoar.otg.action.USB_PERMISSION";
 
   private static UsbSerialHelper _instance;
 

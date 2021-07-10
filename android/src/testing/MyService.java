@@ -20,13 +20,13 @@
 }
 */
 
-package org.xcsoar.testing;
+package au.org.narroginglidingclub.xcsoar.testing;
 
 /**
- * Wrapper class to move org.xcsoar.XCSoar forward to package
- * org.xcsoar.testing.
+ * Wrapper class to move au.org.narroginglidingclub.xcsoar.XCSoar forward to
+ * package au.org.narroginglidingclub.xcsoar.testing.
  */
-public class MyService extends org.xcsoar.MyService {
+public class MyService extends au.org.narroginglidingclub.xcsoar.MyService {
   @Override public void onCreate() {
     if (mainActivityClass == null)
       mainActivityClass = XCSoar.class;

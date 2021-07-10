@@ -24,8 +24,8 @@ Copyright_License {
 #include "InternalSensors.hpp"
 #include "Context.hpp"
 #include "Atmosphere/Pressure.hpp"
-#include "org_xcsoar_InternalGPS.h"
-#include "org_xcsoar_NonGPSSensors.h"
+#include "au_org_narroginglidingclub_xcsoar_InternalGPS.h"
+#include "au_org_narroginglidingclub_xcsoar_NonGPSSensors.h"
 #include "Blackboard/DeviceBlackboard.hpp"
 #include "Components.hpp"
 #include "Math/SelfTimingKalmanFilter1d.hpp"
@@ -49,13 +49,13 @@ InternalSensors::Initialise(JNIEnv *env)
   assert(!sensors_cls.IsDefined());
   assert(env != nullptr);
 
-  gps_cls.Find(env, "org/xcsoar/InternalGPS");
+  gps_cls.Find(env, "au/org/narroginglidingclub/xcsoar/InternalGPS");
 
   gps_ctor_id = env->GetMethodID(gps_cls, "<init>",
                                  "(Landroid/content/Context;I)V");
   close_method = env->GetMethodID(gps_cls, "close", "()V");
 
-  sensors_cls.Find(env, "org/xcsoar/NonGPSSensors");
+  sensors_cls.Find(env, "au/org/narroginglidingclub/xcsoar/NonGPSSensors");
 
   sensors_ctor_id = env->GetMethodID(sensors_cls, "<init>",
                                      "(Landroid/content/Context;I)V");
@@ -192,7 +192,7 @@ getDeviceIndex(JNIEnv *env, jobject obj)
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_org_xcsoar_InternalGPS_setConnected(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_InternalGPS_setConnected(JNIEnv *env, jobject obj,
                                          jint connected)
 {
   unsigned index = getDeviceIndex(env, obj);
@@ -223,7 +223,7 @@ Java_org_xcsoar_InternalGPS_setConnected(JNIEnv *env, jobject obj,
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_org_xcsoar_InternalGPS_setLocation(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_InternalGPS_setLocation(JNIEnv *env, jobject obj,
                                         jlong time, jint n_satellites,
                                         jdouble longitude, jdouble latitude,
                                         jboolean hasAltitude, jdouble altitude,
@@ -293,7 +293,7 @@ Java_org_xcsoar_InternalGPS_setLocation(JNIEnv *env, jobject obj,
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NonGPSSensors_setAcceleration(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_NonGPSSensors_setAcceleration(JNIEnv *env, jobject obj,
                                               jfloat ddx, jfloat ddy,
                                               jfloat ddz)
 {
@@ -307,7 +307,7 @@ Java_org_xcsoar_NonGPSSensors_setAcceleration(JNIEnv *env, jobject obj,
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NonGPSSensors_setRotation(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_NonGPSSensors_setRotation(JNIEnv *env, jobject obj,
                                           jfloat dtheta_x, jfloat dtheta_y,
                                           jfloat dtheta_z)
 {
@@ -321,7 +321,7 @@ Java_org_xcsoar_NonGPSSensors_setRotation(JNIEnv *env, jobject obj,
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NonGPSSensors_setMagneticField(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_NonGPSSensors_setMagneticField(JNIEnv *env, jobject obj,
                                                jfloat h_x, jfloat h_y,
                                                jfloat h_z)
 {
@@ -335,7 +335,7 @@ Java_org_xcsoar_NonGPSSensors_setMagneticField(JNIEnv *env, jobject obj,
 
 /**
  * Helper function for
- * Java_org_xcsoar_NonGPSSensors_setBarometricPressure: Given a
+ * Java_au_org_narroginglidingclub_xcsoar_NonGPSSensors_setBarometricPressure: Given a
  * current measurement of the atmospheric pressure and the rate of
  * change of atmospheric pressure (in millibars and millibars per
  * second), compute the uncompensated vertical speed of the glider in
@@ -359,7 +359,7 @@ ComputeNoncompVario(const double pressure, const double d_pressure)
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NonGPSSensors_setBarometricPressure(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_NonGPSSensors_setBarometricPressure(JNIEnv *env, jobject obj,
                                                     jfloat pressure,
                                                     jfloat sensor_noise_variance)
 {

@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 import android.util.Log;
 import android.graphics.Bitmap;

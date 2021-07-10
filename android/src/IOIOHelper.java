@@ -21,7 +21,7 @@
 }
 */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 import java.util.Collection;
 import java.util.LinkedList;

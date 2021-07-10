@@ -32,7 +32,7 @@ Copyright_License {
 #include "io/CopyFile.hxx"
 #include "util/Macros.hpp"
 #include "util/StringAPI.hxx"
-#include "org_xcsoar_DownloadUtil.h"
+#include "au_org_narroginglidingclub_xcsoar_DownloadUtil.h"
 
 #include <algorithm>
 
@@ -67,7 +67,7 @@ AndroidDownloadManager::Initialise(JNIEnv *env) noexcept
   assert(util_class == nullptr);
   assert(env != nullptr);
 
-  if (!util_class.FindOptional(env, "org/xcsoar/DownloadUtil"))
+  if (!util_class.FindOptional(env, "au/org/narroginglidingclub/xcsoar/DownloadUtil"))
     return false;
 
   ctor = env->GetMethodID(util_class, "<init>",
@@ -135,7 +135,7 @@ AndroidDownloadManager::OnDownloadComplete(Path path_relative,
 }
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_DownloadUtil_onDownloadAdded(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_DownloadUtil_onDownloadAdded(JNIEnv *env, jobject obj,
                                              jlong j_handler, jstring j_path,
                                              jlong size, jlong position)
 {
@@ -146,7 +146,7 @@ Java_org_xcsoar_DownloadUtil_onDownloadAdded(JNIEnv *env, jobject obj,
 }
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_DownloadUtil_onDownloadComplete(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_DownloadUtil_onDownloadComplete(JNIEnv *env, jobject obj,
                                                 jlong ptr,
                                                 jstring j_tmp_path,
                                                 jstring j_relative_path,

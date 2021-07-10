@@ -24,7 +24,7 @@ Copyright_License {
 #include "NativeVoltageListener.hpp"
 #include "VoltageListener.hpp"
 #include "java/Class.hxx"
-#include "org_xcsoar_NativeVoltageListener.h"
+#include "au_org_narroginglidingclub_xcsoar_NativeVoltageListener.h"
 
 #include <cstddef>
 
@@ -35,8 +35,11 @@ static jfieldID ptr_field;
 } // namespace NativeVoltageListener
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativeVoltageListener_onVoltageValues(JNIEnv *env, jobject obj,
-                       jint temp_adc, jint voltage_index, jint volt_adc)
+Java_au_org_narroginglidingclub_xcsoar_NativeVoltageListener_onVoltageValues(JNIEnv *env,
+                                                              jobject obj,
+                                                              jint temp_adc,
+                                                              jint voltage_index,
+                                                              jint volt_adc)
  {
   jlong ptr = env->GetLongField(obj, NativeVoltageListener::ptr_field);
   if (ptr == 0)
@@ -47,7 +50,8 @@ Java_org_xcsoar_NativeVoltageListener_onVoltageValues(JNIEnv *env, jobject obj,
 }
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativeVoltageListener_onVoltageError(JNIEnv *env, jobject obj)
+Java_au_org_narroginglidingclub_xcsoar_NativeVoltageListener_onVoltageError(JNIEnv *env,
+                                                             jobject obj)
 {
   jlong ptr = env->GetLongField(obj, NativeVoltageListener::ptr_field);
   if (ptr == 0)
@@ -60,7 +64,7 @@ Java_org_xcsoar_NativeVoltageListener_onVoltageError(JNIEnv *env, jobject obj)
 void
 NativeVoltageListener::Initialise(JNIEnv *env)
 {
-  cls.Find(env, "org/xcsoar/NativeVoltageListener");
+  cls.Find(env, "au/org/narroginglidingclub/xcsoar/NativeVoltageListener");
 
   ctor = env->GetMethodID(cls, "<init>", "(J)V");
   ptr_field = env->GetFieldID(cls, "ptr", "J");

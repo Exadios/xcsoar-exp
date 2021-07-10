@@ -22,7 +22,7 @@ Copyright_License {
 */
 
 #include "GliderLink.hpp"
-#include "org_xcsoar_GliderLinkReceiver.h"
+#include "au_org_narroginglidingclub_xcsoar_GliderLinkReceiver.h"
 #include "util/Compiler.h"
 #include "Components.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
@@ -38,7 +38,7 @@ GliderLink::Initialise(JNIEnv *env)
   assert(!gl_cls.IsDefined());
   assert(env != nullptr);
 
-  gl_cls.Find(env, "org/xcsoar/GliderLinkReceiver");
+  gl_cls.Find(env, "au/org/narroginglidingclub/xcsoar/GliderLinkReceiver");
 
   gl_ctor_id = env->GetMethodID(gl_cls, "<init>",
                                  "(Landroid/content/Context;I)V");
@@ -79,7 +79,7 @@ GliderLink::~GliderLink() {
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_org_xcsoar_GliderLinkReceiver_setGliderLinkInfo(
+Java_au_org_narroginglidingclub_xcsoar_GliderLinkReceiver_setGliderLinkInfo(
     JNIEnv* env, jclass cls, jint index, jlong gid, jstring callsign,
     jdouble latitude, jdouble longitude, jdouble altitude,
     jdouble gspeed, jdouble vspeed, jint bearing) {

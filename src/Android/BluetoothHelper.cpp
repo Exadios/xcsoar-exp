@@ -53,7 +53,7 @@ BluetoothHelper::Initialise(JNIEnv *env)
   assert(!cls.IsDefined());
   assert(env != nullptr);
 
-  if (!cls.FindOptional(env, "org/xcsoar/BluetoothHelper"))
+  if (!cls.FindOptional(env, "au/org/narroginglidingclub/xcsoar/BluetoothHelper"))
     /* Android < 2.0 doesn't have Bluetooth support */
     return false;
 
@@ -65,9 +65,9 @@ BluetoothHelper::Initialise(JNIEnv *env)
   connect_method = env->GetStaticMethodID(cls, "connect",
                                           "(Landroid/content/Context;"
                                           "Ljava/lang/String;)"
-                                          "Lorg/xcsoar/AndroidPort;");
+                                          "Lau/org/narroginglidingclub/xcsoar/AndroidPort;");
   createServer_method = env->GetStaticMethodID(cls, "createServer",
-                                               "()Lorg/xcsoar/AndroidPort;");
+                                               "()Lau/org/narroginglidingclub/xcsoar/AndroidPort;");
 
   startLeScan_method = env->GetStaticMethodID(cls, "startLeScan",
                                               "(Landroid/bluetooth/BluetoothAdapter$LeScanCallback;)Z");
