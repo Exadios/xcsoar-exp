@@ -87,7 +87,9 @@ LogoPageWindow::OnPaint(Canvas &canvas)
   y += Layout::FastScale(22);
 
   canvas.SetTextColor(COLOR_XCSOAR);
-  canvas.DrawText({x, y}, _T("http://www.xcsoar.org"));
+  canvas.DrawText({x, y}, _T("pfb@exadios.com"));
+  y += Layout::FastScale(22);
+  canvas.DrawText({x, y}, _T("Signal: +61 422 348 370"));
 }
 
 static std::unique_ptr<Window>

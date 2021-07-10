@@ -52,7 +52,7 @@ BluetoothHelper::Initialise(JNIEnv *env) noexcept
 {
   assert(env != nullptr);
 
-  if (!cls.FindOptional(env, "org/xcsoar/BluetoothHelper"))
+  if (!cls.FindOptional(env, "au/org/narroginglidingclub/xcsoar/BluetoothHelper"))
     /* Android < 2.0 doesn't have Bluetooth support */
     return false;
 
@@ -71,23 +71,23 @@ BluetoothHelper::Initialise(JNIEnv *env) noexcept
   getNameFromAddress_method = env->GetMethodID(cls, "getNameFromAddress",
                                                "(Ljava/lang/String;)Ljava/lang/String;");
   connectSensor_method = env->GetMethodID(cls, "connectSensor",
-                                          "(Ljava/lang/String;Lorg/xcsoar/SensorListener;)"
-                                          "Lorg/xcsoar/BluetoothSensor;");
+                                          "(Ljava/lang/String;Lau/org/narroginglidingclub/xcsoar/SensorListener;)"
+                                          "Lau/org/narroginglidingclub/xcsoar/BluetoothSensor;");
   connect_method = env->GetMethodID(cls, "connect",
                                     "(Ljava/lang/String;)"
                                     "Lorg/xcsoar/AndroidPort;");
   createServer_method = env->GetMethodID(cls, "createServer",
-                                         "()Lorg/xcsoar/AndroidPort;");
+                                         "()Lau/org/narroginglidingclub/xcsoar/AndroidPort;");
 
   hm10connect_method = env->GetMethodID(cls, "connectHM10",
                                         "(Ljava/lang/String;)"
-                                        "Lorg/xcsoar/AndroidPort;");
+                                        "Lau/org/narroginglidingclub/xcsoar/AndroidPort;");
   addDetectDeviceListener_method =
     env->GetMethodID(cls, "addDetectDeviceListener",
-                     "(Lorg/xcsoar/DetectDeviceListener;)V");
+                     "(Lau/org/narroginglidingclub/xcsoar/DetectDeviceListener;)V");
   removeDetectDeviceListener_method =
     env->GetMethodID(cls, "removeDetectDeviceListener",
-                     "(Lorg/xcsoar/DetectDeviceListener;)V");
+                     "(Lau/org/narroginglidingclub/xcsoar/DetectDeviceListener;)V");
 
   return true;
 }

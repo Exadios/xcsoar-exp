@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.xcsoar"
+          package="au.org.narroginglidingclub.xcsoar"
           android:installLocation="auto"
-          android:versionCode="142"
-          android:versionName="7.21">
+          android:versionCode="12"
+          android:versionName="7.21.0.0.0">
   <application
       android:requestLegacyExternalStorage="true"
       android:icon="@drawable/icon"

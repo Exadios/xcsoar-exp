@@ -25,7 +25,7 @@ Copyright_License {
 #include "Device/Port/Listener.hpp"
 #include "java/Class.hxx"
 #include "java/String.hxx"
-#include "org_xcsoar_NativePortListener.h"
+#include "au_org_narroginglidingclub_xcsoar_NativePortListener.h"
 
 #include <cstddef>
 
@@ -36,7 +36,8 @@ static jfieldID ptr_field;
 } // namespace NativePortListener
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativePortListener_portStateChanged(JNIEnv *env, jobject obj)
+Java_au_org_narroginglidingclub_xcsoar_NativePortListener_portStateChanged(JNIEnv *env,
+                                                            jobject obj)
 {
   jlong ptr = env->GetLongField(obj, NativePortListener::ptr_field);
   if (ptr == 0)
@@ -48,8 +49,9 @@ Java_org_xcsoar_NativePortListener_portStateChanged(JNIEnv *env, jobject obj)
 }
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativePortListener_portError(JNIEnv *env, jobject obj,
-                                             jstring msg)
+Java_au_org_narroginglidingclub_xcsoar_NativePortListener_portError(JNIEnv *env,
+                                                                    jobject obj,
+                                                                    jstring msg)
 {
   jlong ptr = env->GetLongField(obj, NativePortListener::ptr_field);
   if (ptr == 0)
@@ -63,7 +65,7 @@ Java_org_xcsoar_NativePortListener_portError(JNIEnv *env, jobject obj,
 void
 NativePortListener::Initialise(JNIEnv *env)
 {
-  cls.Find(env, "org/xcsoar/NativePortListener");
+  cls.Find(env, "au/org/narroginglidingclub/xcsoar/NativePortListener");
 
   ctor = env->GetMethodID(cls, "<init>", "(J)V");
   ptr_field = env->GetFieldID(cls, "ptr", "J");

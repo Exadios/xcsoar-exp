@@ -32,10 +32,11 @@ static jmethodID nunchuck_ctor;
 void
 NunchuckDevice::Initialise(JNIEnv *env) noexcept
 {
-  nunchuck_class.Find(env, "org/xcsoar/GlueNunchuck");
+  nunchuck_class.Find(env, "au/org/narroginglidingclub/xcsoar/GlueNunchuck");
 
   nunchuck_ctor = env->GetMethodID(nunchuck_class, "<init>",
-                                 "(Lorg/xcsoar/IOIOConnectionHolder;IILorg/xcsoar/SensorListener;)V");
+                                 "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;IILau/org/narroginglidingclub/xcsoar/Nunchuck$Listener;)V");
+  close_method = env->GetMethodID(nunchuck_class, "close", "()V");
 }
 
 void
