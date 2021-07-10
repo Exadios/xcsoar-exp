@@ -45,12 +45,12 @@ InternalSensors::Initialise(JNIEnv *env)
   assert(!sensors_cls.IsDefined());
   assert(env != nullptr);
 
-  gps_cls.Find(env, "org/xcsoar/InternalGPS");
+  gps_cls.Find(env, "au/org/narroginglidingclub/xcsoar/InternalGPS");
 
   gps_ctor_id = env->GetMethodID(gps_cls, "<init>",
                                  "(Landroid/content/Context;Lorg/xcsoar/SensorListener;)V");
 
-  sensors_cls.Find(env, "org/xcsoar/NonGPSSensors");
+  sensors_cls.Find(env, "au/org/narroginglidingclub/xcsoar/NonGPSSensors");
 
   sensors_ctor_id = env->GetMethodID(sensors_cls, "<init>",
                                      "(Landroid/content/Context;Lorg/xcsoar/SensorListener;)V");

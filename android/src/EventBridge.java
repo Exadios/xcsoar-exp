@@ -20,7 +20,7 @@
 }
 */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 class EventBridge {
   public static native void onKeyDown(int keyCode);

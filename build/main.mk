@@ -703,6 +703,9 @@ endif
 XCSOAR_STRIP = y
 
 ifeq ($(TARGET),ANDROID)
+ifeq ($(DEBUG),y)
+XCSOAR_STRIP = n  # Do not strip Android XCSOAR NDK lib.
+endif # $(DEBUG)
 $(eval $(call link-shared-library,$(PROGRAM_NAME),XCSOAR))
 else
 $(eval $(call link-program,$(PROGRAM_NAME),XCSOAR))
