@@ -75,7 +75,10 @@ void
 SmallTrafficWindow::Update(const NMEAInfo &gps_info,
                            const TeamCodeSettings &settings) noexcept
 {
-  FlarmTrafficWindow::Update(gps_info.track, gps_info.flarm.traffic, settings);
+  this->FlarmTrafficWindow::Update(gps_info.track,
+                                   gps_info.flarm.traffic,
+                                   settings,
+                                   gps_info.flarm.status);
 }
 
 void
