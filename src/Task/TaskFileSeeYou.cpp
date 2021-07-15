@@ -30,6 +30,7 @@
 #include "Waypoint/WaypointReaderSeeYou.hpp"
 #include "Task/ObservationZones/LineSectorZone.hpp"
 #include "Task/ObservationZones/AnnularSectorZone.hpp"
+#include "Task/ObservationZones/VariableKeyholeZone.hpp"
 #include "Task/ObservationZones/KeyholeZone.hpp"
 #include "Engine/Task/Ordered/OrderedTask.hpp"
 #include "Engine/Task/Ordered/Points/StartPoint.hpp"
@@ -41,6 +42,11 @@
 #include "Units/System.hpp"
 
 #include <stdlib.h>
+
+// debug
+#include <iostream>
+#include <fstream>
+// ~debug
 
 struct SeeYouTaskInformation {
   /** True = RT, False = AAT */
@@ -189,6 +195,8 @@ ParseOZs(SeeYouTurnpointInformation turnpoint_infos[], const TCHAR *params[],
     return -1;
 
   turnpoint_infos[oz_index].valid = true;
+  turnpoint_infos[oz_index].radius2 = 0.0;
+
   // Iterate through available OZ options
   for (unsigned i = 1; i < n_params; i++) {
     const TCHAR *pair = params[i];
@@ -380,26 +388,53 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
 
     const Angle A12adj = CalcIntermediateAngle(turnpoint_infos,
                                                wp->location,
+                                               wps[0]->location,
                                                wps[pos - 1]->location,
-                                               wps[pos + 1]->location,
-                                               wps[0]->location);
+                                               wps[pos + 1]->location);
 
     const Angle RadialStart = (A12adj - turnpoint_infos.angle1).AsBearing();
     const Angle RadialEnd = (A12adj + turnpoint_infos.angle1).AsBearing();
 
+// debug
+#ifdef USE_X11  // Use this as a proxy for target UNIX.
+    std::fstream db_flag;
+    db_flag.open("/home/pfb/XCSoarData/TaskFileSeeYou", std::ios_base::in);
+    if (db_flag.is_open())
+      {
+      std::cout << "A12adj:  " << A12adj.AsBearing().Degrees() << std::endl
+                << "RadialStart: " << RadialStart.AsBearing().Degrees() << std::endl
+                << "RadialEnd:   " << RadialEnd.AsBearing().Degrees() << std::endl
+                << "radius1: " << turnpoint_infos.radius1 << std::endl
+                << "angle1:  " << turnpoint_infos.angle1.AsBearing().Degrees() << std::endl
+                << "radius2: " << turnpoint_infos.radius2 << std::endl
+                << "angle2:  " << turnpoint_infos.angle2.AsBearing().Degrees() << std::endl;
+      db_flag.close();
+      }
+#endif  // USE_X11
+// ~debug
+
+    /**
+     * TODO
+     * \todo Make a number of wimp and annular OZs and discover how CU
+     * differentiates the two.
+     */
     if (turnpoint_infos.radius2 > 0 &&
-        (turnpoint_infos.angle2.AsBearing().Degrees()) < 1) {
+        (turnpoint_infos.angle2.AsBearing().Degrees()) != 0) {
+      return VariableKeyholeZone::New(wp->location,
+                                      turnpoint_infos.radius1,
+                                      turnpoint_infos.radius2,
+                                      RadialStart,
+                                      RadialEnd);
+    } else {
       return std::make_unique<AnnularSectorZone>(wp->location,
                                                  turnpoint_infos.radius1,
-                                                 RadialStart, RadialEnd,
+                                                 RadialStart,
+                                                 RadialEnd,
                                                  turnpoint_infos.radius2);
-    } else {
-      return std::make_unique<SectorZone>(wp->location, turnpoint_infos.radius1,
-                                          RadialStart, RadialEnd);
     }
-
   } else { // catch-all
-    return std::make_unique<CylinderZone>(wp->location,turnpoint_infos.radius1);
+    return std::make_unique<CylinderZone>(wp->location,
+                                          turnpoint_infos.radius1);
   }
 }
 
@@ -423,7 +458,7 @@ CreatePoint(unsigned pos, unsigned n_waypoints, WaypointPtr &&wp,
 
   if (pos == 0)
     pt = oz
-      ? fact.CreateStart(std::move(oz), std::move(wp))
+      ? fact.CreateStart(std::move(oz), std::move(wp)) 
       : fact.CreateStart(std::move(wp));
 
   else if (pos == n_waypoints - 1)

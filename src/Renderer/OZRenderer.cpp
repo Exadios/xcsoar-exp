@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "OZRenderer.hpp"
 #include "Task/ObservationZones/KeyholeZone.hpp"
+#include "Task/ObservationZones/VariableKeyholeZone.hpp"
 #include "Task/ObservationZones/CylinderZone.hpp"
 #include "Task/ObservationZones/AnnularSectorZone.hpp"
 #include "Task/ObservationZones/Boundary.hpp"
@@ -66,6 +67,7 @@ OZRenderer::Prepare(Canvas &canvas, Layer layer, int offset) const noexcept
 #endif /* !GDI */
 
     canvas.SelectNullPen();
+
     return;
   }
 
@@ -171,6 +173,17 @@ OZRenderer::Draw(Canvas &canvas, Layer layer, const Projection &projection,
     break;
   }
 
+  case ObservationZone::Shape::VARIABLE_KEYHOLE: {
+    const VariableKeyholeZone &oz = (const VariableKeyholeZone &)_oz;
+    auto p_center = projection.GeoToScreen(oz.GetReference());
+    canvas.DrawKeyhole(p_center,
+                       projection.GeoToScreenDistance(oz.GetInnerRadius()),
+                       projection.GeoToScreenDistance(oz.GetRadius()),
+                       oz.GetStartRadial() - projection.GetScreenAngle(),
+                       oz.GetEndRadial() - projection.GetScreenAngle());
+    break;
+  }
+
   case ObservationZone::Shape::ANNULAR_SECTOR: {
     const AnnularSectorZone &oz = (const AnnularSectorZone &)_oz;
     auto p_center = projection.GeoToScreen(oz.GetReference());
@@ -227,6 +240,7 @@ OZRenderer::GetGeoBounds(const ObservationZonePoint &oz) noexcept
   case ObservationZone::Shape::BGAFIXEDCOURSE:
   case ObservationZone::Shape::BGAENHANCEDOPTION:
   case ObservationZone::Shape::ANNULAR_SECTOR:
+  case ObservationZone::Shape::VARIABLE_KEYHOLE:
     break;
   }
 

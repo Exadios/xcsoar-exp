@@ -806,7 +806,8 @@ DEBUG_PROGRAM_NAMES += \
 	RunVegaSettings \
 	RunFlarmUtils \
 	RunLX1600Utils \
-	IGC2NMEA
+	IGC2NMEA \
+  VariableKeyholeZone
 endif
 
 ifeq ($(TARGET),UNIX)
@@ -985,6 +986,11 @@ DOWNLOAD_FILE_SOURCES = \
 	$(TEST_SRC_DIR)/DownloadFile.cpp
 DOWNLOAD_FILE_DEPENDS = LIBHTTP ASYNC OS LIBNET OS IO THREAD UTIL
 $(eval $(call link-program,DownloadFile,DOWNLOAD_FILE))
+
+VARIABLE_KEYHOLE_ZONE_SOURCES = \
+  $(TEST_SRC_DIR)/VariableKeyholeZone.cpp
+VARIABLE_KEYHOLE_ZONE_DEPENDS = SCREEN TASK GEO FORM OS MATH UTIL
+$(eval $(call link-program,VariableKeyholeZone,VARIABLE_KEYHOLE_ZONE))
 
 RUN_DOWNLOAD_TO_FILE_SOURCES = \
 	$(SRC)/net/SocketError.cxx \
