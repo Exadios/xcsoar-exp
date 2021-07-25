@@ -51,6 +51,11 @@ Version 7.21 - 2021/12/11
 * Android
   - re-enable background location and comply with Google Play Store policy
 
+Version 7.20.0.2.2 - 2021/07/25
+* Created NGC-Fork-on-master
+* Moved ticket_1687 and Issue-2 from branch v6.8.* to NGC-Fork-on-master
+  to produce NGC-Fork-release
+
 Version 7.20 - 2021/10/22
 * map
   - fix crash in the topography loader
