@@ -3,7 +3,7 @@
           package="au.org.narroginglidingclub.xcsoar"
           android:installLocation="auto"
           android:versionCode="1"
-          android:versionName="7.8.0.2.2">
+          android:versionName="7.10.0.2.2">
   <application
       android:requestLegacyExternalStorage="true"
       android:icon="@drawable/icon"
