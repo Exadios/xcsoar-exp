@@ -93,7 +93,6 @@ TextUtil::create(const FontDescription &d) noexcept
     /* 1 = Paint.ANTI_ALIAS_FLAG */
     paint_flags |= 1;
 
-  // construct org.xcsoar.TextUtil object
   // construct au.org.narroginglidingclub.xcsoar.TextUtil object
   auto &e = *env;
   Java::LocalObject localObject{&e,
