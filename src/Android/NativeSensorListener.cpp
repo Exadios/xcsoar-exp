@@ -31,7 +31,7 @@ Copyright_License {
 #include "java/String.hxx"
 #include "time/SystemClock.hxx"
 #include "util/Compiler.h"
-#include "org_xcsoar_NativeSensorListener.h"
+#include "au_org_narroginglidingclub_xcsoar_NativeSensorListener.h"
 
 namespace NativeSensorListener {
 static Java::TrivialClass cls;
@@ -42,7 +42,7 @@ static jfieldID ptr_field;
 void
 NativeSensorListener::Initialise(JNIEnv *env) noexcept
 {
-  cls.Find(env, "org/xcsoar/NativeSensorListener");
+  cls.Find(env, "au/org/marroginglidingclub/xcsoar/NativeSensorListener");
   ctor = env->GetMethodID(cls, "<init>", "(J)V");
   ptr_field = env->GetFieldID(cls, "ptr", "J");
 }

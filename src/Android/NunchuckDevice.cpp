@@ -36,7 +36,6 @@ NunchuckDevice::Initialise(JNIEnv *env) noexcept
 
   nunchuck_ctor = env->GetMethodID(nunchuck_class, "<init>",
                                  "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;IILau/org/narroginglidingclub/xcsoar/Nunchuck$Listener;)V");
-  close_method = env->GetMethodID(nunchuck_class, "close", "()V");
 }
 
 void
