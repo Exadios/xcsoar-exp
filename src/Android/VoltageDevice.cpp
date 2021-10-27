@@ -36,7 +36,6 @@ VoltageDevice::Initialise(JNIEnv *env) noexcept
 
   voltage_ctor = env->GetMethodID(voltage_class, "<init>",
                                   "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;ILau/org/narroginglidingclub/xcsoar/Voltage$Listener;)V");
-  close_method = env->GetMethodID(voltage_class, "close", "()V");
 }
 
 void
