@@ -26,7 +26,7 @@ Copyright_License {
 #include "Main.hpp"
 #include "java/Class.hxx"
 #include "java/String.hxx"
-#include "org_xcsoar_NativeDetectDeviceListener.h"
+#include "au_org_narroginglidingclub_xcsoar_NativeDetectDeviceListener.h"
 
 namespace NativeDetectDeviceListener {
 static Java::TrivialClass cls;
