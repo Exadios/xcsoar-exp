@@ -43,8 +43,8 @@
 
     <service android:name=".MyService" android:foregroundServiceType="location"/>
 
-    <provider android:name="org.xcsoar.FileProvider"
-              android:authorities="org.xcsoar"
+    <provider android:name="au.org.narroginglidingclub.xcsoar.FileProvider"
+              android:authorities="au.org.narroginglidingclub.xcsoar"
               android:exported="false"
               android:grantUriPermissions="true"/>
   </application>

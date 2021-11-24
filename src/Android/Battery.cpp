@@ -21,13 +21,15 @@ Copyright_License {
 }
 */
 
-#include "Hardware/Battery.hpp"
+#include "Hardware/PowerGlobal.hpp"
+#include "Hardware/PowerInfo.hpp"
 #include "au_org_narroginglidingclub_xcsoar_BatteryReceiver.h"
 #include "util/Compiler.h"
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_au_org_narroginglidingclub_xcsoar_BatteryReceiver_setBatteryPercent(JNIEnv *env, jclass cls,
+Java_au_org_narroginglidingclub_xcsoar_BatteryReceiver_setBatteryPercent(JNIEnv *env,
+                                                  jclass cls,
                                                   jint value, jint plugged)
 {
   auto &info = Power::global_info;
