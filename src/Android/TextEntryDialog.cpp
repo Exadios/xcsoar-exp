@@ -30,7 +30,7 @@ Copyright_License {
 #include "java/Closeable.hxx"
 #include "java/Env.hxx"
 #include "java/String.hxx"
-#include "org_xcsoar_TextEntryDialog.h"
+#include "au_org_narroginglidingclub_xcsoar_TextEntryDialog.h"
 #include "UIGlobals.hpp"
 
 #include <cassert>
@@ -59,7 +59,7 @@ AndroidTextEntryDialog::Initialise(JNIEnv *env) noexcept
   assert(text_entry_dialog_class == nullptr);
   assert(env != nullptr);
 
-  text_entry_dialog_class.Find(env, "org/xcsoar/TextEntryDialog");
+  text_entry_dialog_class.Find(env, "au/org/narroginglidingclub/xcsoar/TextEntryDialog");
 
   ctor = env->GetMethodID(text_entry_dialog_class, "<init>",
                           "(JLandroid/content/Context;Ljava/lang/String;Ljava/lang/String;I)V");
@@ -72,7 +72,8 @@ AndroidTextEntryDialog::Deinitialise(JNIEnv *env) noexcept
 }
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_TextEntryDialog_onResult(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_TextEntryDialog_onResult(JNIEnv *env,
+                                         jobject obj,
                                          jlong ptr, jstring value)
 {
   auto &dialog = *(AndroidTextEntryDialog *)(std::size_t)ptr;
