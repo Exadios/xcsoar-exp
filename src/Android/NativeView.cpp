@@ -53,7 +53,7 @@ jmethodID NativeView::bitmapConfigValueOf_method;
 void
 NativeView::Initialise(JNIEnv *env)
 {
-  cls.Find(env, "org/narroginglidingclub/xcsoar/NativeView");
+  cls.Find(env, "au/org/narroginglidingclub/xcsoar/NativeView");
 
   ptr_field = env->GetFieldID(cls, "ptr", "J");
   textureNonPowerOfTwo_field =
