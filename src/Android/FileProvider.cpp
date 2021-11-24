@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-#include "org_xcsoar_FileProvider.h"
+#include "au_org_narroginglidingclub_xcsoar_FileProvider.h"
 #include "Engine/Waypoint/Waypoints.hpp"
 #include "system/Path.hpp"
 #include "java/String.hxx"
@@ -31,7 +31,8 @@ Copyright_License {
 #include <cassert>
 
 JNIEXPORT jstring JNICALL
-Java_org_xcsoar_FileProvider_getWaypointFileForUri(JNIEnv *env, jclass,
+Java_au_org_narroginglidingclub_xcsoar_FileProvider_getWaypointFileForUri(JNIEnv *env,
+                                                   jclass,
                                                    jint id, jstring _filename)
 {
   auto w = way_points.LookupId(id);

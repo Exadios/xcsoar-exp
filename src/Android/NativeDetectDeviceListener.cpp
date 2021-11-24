@@ -35,7 +35,8 @@ static jfieldID ptr_field;
 } // namespace NativeDetectDeviceListener
 
 JNIEXPORT void JNICALL
-Java_org_xcsoar_NativeDetectDeviceListener_onDeviceDetected(JNIEnv *env, jobject obj,
+Java_au_org_narroginglidingclub_xcsoar_NativeDetectDeviceListener_onDeviceDetected(JNIEnv *env,
+                                                            jobject obj,
                                                             jint type,
                                                             jstring _address,
                                                             jstring _name,

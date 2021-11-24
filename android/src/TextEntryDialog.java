@@ -21,7 +21,7 @@
 }
 */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 import java.io.Closeable;
 import android.os.Handler;

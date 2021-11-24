@@ -477,7 +477,7 @@ class NativeView extends SurfaceView
 
       /* this URI is going to be handled by FileProvider */
       Uri uri = new Uri.Builder().scheme("content")
-        .authority("org.xcsoar")
+        .authority("au.org.narroginglidingclub.xcsoar")
         .encodedPath("/waypoints/" + id + "/" + Uri.encode(filename))
         .build();
 
