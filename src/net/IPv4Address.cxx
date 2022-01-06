@@ -32,7 +32,7 @@
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 
 #ifndef _WIN32

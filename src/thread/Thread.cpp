@@ -30,7 +30,7 @@ Copyright_License {
 #include "java/Global.hxx"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 Thread::SetIdlePriority() noexcept

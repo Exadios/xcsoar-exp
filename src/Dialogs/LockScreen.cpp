@@ -29,7 +29,7 @@ Copyright_License {
 #include "ui/window/SingleWindow.hpp"
 #include "UIGlobals.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 ShowLockBox()

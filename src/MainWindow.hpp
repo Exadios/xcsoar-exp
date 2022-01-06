@@ -32,7 +32,7 @@ Copyright_License {
 #include "UIUtil/GestureManager.hpp"
 
 #include <cstdint>
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef KOBO
 #define HAVE_SHOW_MENU_BUTTON

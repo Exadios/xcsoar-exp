@@ -32,7 +32,7 @@ Copyright_License {
 #include "Dynamic.hpp"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdlib.h>
 
 /**

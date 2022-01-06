@@ -24,7 +24,7 @@
 #include "RoutePolar.hpp"
 #include "Geo/Flat/FlatProjection.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdlib.h>
 
 [[gnu::const]]

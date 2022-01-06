@@ -35,7 +35,7 @@ Copyright_License {
 
 #include <set>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 #include <stdio.h>
 #include <windef.h> // for MAX_PATH

@@ -33,7 +33,7 @@
 #include "Ref.hxx"
 #include "Exception.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace Java {
 

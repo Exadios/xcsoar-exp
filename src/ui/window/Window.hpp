@@ -27,7 +27,7 @@ Copyright_License {
 #include "Features.hpp"
 #include "ui/dim/Rect.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef USE_WINUSER
 #include <windef.h> // for HWND (needed by winuser.h)

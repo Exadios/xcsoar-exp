@@ -26,7 +26,7 @@
 
 #include <type_traits>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 struct GlideState;
 struct GlideResult;

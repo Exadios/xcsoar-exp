@@ -30,7 +30,7 @@ Copyright_License {
 #include "Crypto/SHA256.hxx"
 #include "Crypto/DigestOutputStream.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <optional>
 
 namespace Net {

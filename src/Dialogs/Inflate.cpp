@@ -26,7 +26,7 @@ Copyright_License {
 
 #include <zlib.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdint>
 #include <memory>
 

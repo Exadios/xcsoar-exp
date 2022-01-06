@@ -35,7 +35,7 @@
 #include "UniqueHandle.hxx"
 #include "Compat.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <exception>
 #include <optional>
 #include <utility>

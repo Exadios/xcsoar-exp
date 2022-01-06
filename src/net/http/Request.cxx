@@ -34,7 +34,7 @@
 
 #include <curl/curl.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 CurlRequest::CurlRequest(CurlGlobal &_global, CurlEasy _easy,
 			 CurlResponseHandler &_handler)

@@ -33,7 +33,7 @@ Copyright_License {
 #include "util/Compiler.h"
 #include "util/StringView.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <handleapi.h> // for INVALID_HANDLE_VALUE
 #include <tchar.h>

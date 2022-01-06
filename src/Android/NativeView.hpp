@@ -32,7 +32,7 @@ Copyright_License {
 #include "ui/dim/Size.hpp"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class Path;
 

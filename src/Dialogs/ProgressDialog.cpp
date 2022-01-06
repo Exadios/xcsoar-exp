@@ -27,7 +27,7 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Language/Language.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 using namespace UI;
 

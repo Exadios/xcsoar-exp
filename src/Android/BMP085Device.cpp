@@ -35,7 +35,7 @@ BMP085Device::Initialise(JNIEnv *env) noexcept
   bmp085_class.Find(env, "au/org/narroginglidingclub/xcsoar/GlueBMP085");
 
   bmp085_ctor = env->GetMethodID(bmp085_class, "<init>",
-                                 "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;IIILorg/xcsoar/SensorListener;)V");
+                                 "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;IIILau/org/narroginglidingclub/xcsoar/SensorListener;)V");
 }
 
 void

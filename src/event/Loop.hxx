@@ -38,7 +38,7 @@
 #endif
 
 #include <atomic>
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include "io/uring/Features.h"
 #ifdef HAVE_URING

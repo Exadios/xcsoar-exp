@@ -31,7 +31,7 @@
 #include "system/Path.hpp"
 #include "util/ScopeExit.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace Java {
 

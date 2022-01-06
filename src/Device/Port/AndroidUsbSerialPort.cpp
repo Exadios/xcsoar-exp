@@ -8,7 +8,7 @@
 #include "Android/UsbSerialHelper.hpp"
 #include "java/Global.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 std::unique_ptr<Port>
 OpenAndroidUsbSerialPort(const char *name, unsigned baud,

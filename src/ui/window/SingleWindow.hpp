@@ -28,7 +28,7 @@ Copyright_License {
 
 #include <forward_list>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class WndForm;
 

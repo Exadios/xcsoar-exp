@@ -51,7 +51,7 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 
 #ifdef __APPLE__

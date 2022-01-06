@@ -30,7 +30,7 @@ Copyright_License {
 #include "Rough/RoughVSpeed.hpp"
 #include "time/Stamp.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <chrono>
 #include <cstdint>
 

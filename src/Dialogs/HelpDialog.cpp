@@ -28,7 +28,7 @@ Copyright_License {
 #include "UIGlobals.hpp"
 #include "util/StaticString.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 HelpDialog(const TCHAR *Caption, const TCHAR *HelpText)

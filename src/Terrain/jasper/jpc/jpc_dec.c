@@ -88,7 +88,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <xcsoar-assert.h>
 
 // JMW
 #include "jasper/jpc_rtc.h"

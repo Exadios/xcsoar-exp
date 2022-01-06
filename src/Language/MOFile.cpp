@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "MOFile.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 
 MOFile::MOFile(const void *_data, size_t _size)

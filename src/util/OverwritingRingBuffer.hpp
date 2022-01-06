@@ -30,7 +30,7 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * A fixed-size ring buffer which deletes the oldest item when it

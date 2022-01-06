@@ -29,7 +29,7 @@
 #include "Node.hpp"
 #include "util/StringAPI.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 XMLNode
 XMLNode::CreateRoot(const TCHAR *name)

@@ -151,8 +151,8 @@ DeviceDescriptor::OnMagneticFieldSensor(float h_x, float h_y,
 
 /**
  * Helper function for
- * Java_org_xcsoar_NonGPSSensors_setBarometricPressure: Given a
- * current measurement of the atmospheric pressure and the rate of
+ * Java_au_org_narroginglidingclub_xcsoar_NonGPSSensors_setBarometricPressure:
+ * Given a current measurement of the atmospheric pressure and the rate of
  * change of atmospheric pressure (in millibars and millibars per
  * second), compute the uncompensated vertical speed of the glider in
  * meters per second, assuming standard atmospheric conditions

@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "ui/dim/Point.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace UI {
 

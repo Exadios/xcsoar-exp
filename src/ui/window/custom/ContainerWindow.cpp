@@ -26,7 +26,7 @@ Copyright_License {
 #include "Reference.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 ContainerWindow::~ContainerWindow() noexcept
 {

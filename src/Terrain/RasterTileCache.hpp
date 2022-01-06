@@ -31,7 +31,7 @@ Copyright_License {
 #include "util/StaticArray.hxx"
 #include "util/Serial.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdint>
 #include <optional>
 

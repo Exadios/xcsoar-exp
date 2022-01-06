@@ -34,8 +34,8 @@
 #include "WritableBuffer.hxx"
 
 #include <algorithm>
-#include <cassert>
 #include <utility>
+#include <xcsoar-cassert>
 
 /**
  * An array allocated on the heap with a length determined at runtime.

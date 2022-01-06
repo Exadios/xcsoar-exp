@@ -142,7 +142,7 @@ typedef const ms_uint32 *ms_const_bitarray;
 #include "maptree.h" /* quadtree spatial index */
 #include "maphash.h"
 #include "mapio.h"
-#include <assert.h>
+#include <xcsoar-assert.h>
 #include "mapproject.h"
 #include "cgiutil.h"
 #include "mapserv-config.h"

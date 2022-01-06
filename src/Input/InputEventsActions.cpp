@@ -87,7 +87,7 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "Operation/MessageOperationEnvironment.hpp"
 #include "Device/MultipleDevices.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 #include <algorithm>
 

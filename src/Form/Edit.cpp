@@ -31,7 +31,7 @@ Copyright_License {
 #include "Dialogs/DataField.hpp"
 #include "Asset.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 bool
 WndProperty::OnKeyCheck(unsigned key_code) const

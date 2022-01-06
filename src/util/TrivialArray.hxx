@@ -37,7 +37,7 @@
 #include <initializer_list>
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 
 /**

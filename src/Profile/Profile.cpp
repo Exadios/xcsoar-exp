@@ -36,7 +36,7 @@ Copyright_License {
 #include "system/Path.hpp"
 
 #include <windef.h> /* for MAX_PATH */
-#include <cassert>
+#include <xcsoar-cassert>
 
 #define XCSPROFILE "default.prf"
 #define OLDXCSPROFILE "xcsoar-registry.prf"

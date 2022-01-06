@@ -28,7 +28,7 @@ Copyright_License {
 #include "GeoPoint.hpp"
 #include "Math/Util.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 using namespace WGS84;
 

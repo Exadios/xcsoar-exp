@@ -33,7 +33,7 @@ Copyright_License {
 #include "StringPointer.hxx"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef _UNICODE
 

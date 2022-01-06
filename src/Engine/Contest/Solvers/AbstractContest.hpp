@@ -28,7 +28,7 @@
 #include "Trace/Point.hpp"
 #include "PathSolvers/SolverResult.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class TracePoint;
 

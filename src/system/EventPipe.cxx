@@ -21,7 +21,7 @@
 #include "io/FileDescriptor.hxx"
 #include "system/Error.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef _WIN32
 #include "net/IPv4Address.hxx"

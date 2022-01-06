@@ -24,7 +24,7 @@ Copyright_License {
 #include "ui/canvas/Brush.hpp"
 #include "ui/canvas/Bitmap.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 Brush::Create(const Color c)

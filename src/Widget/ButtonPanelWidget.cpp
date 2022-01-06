@@ -27,7 +27,7 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "UIGlobals.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 ButtonPanelWidget::~ButtonPanelWidget() noexcept = default;
 

@@ -78,7 +78,7 @@
 
 #include <jasper/jas_types.h>
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 #include <string.h>
 #include <stdint.h>
 #include <limits.h>

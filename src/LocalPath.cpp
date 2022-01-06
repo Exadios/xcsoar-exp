@@ -46,7 +46,7 @@ Copyright_License {
 #include <algorithm>
 #include <list>
 
-#include <cassert>
+#include "xcsoar-cassert"
 #include <stdlib.h>
 #ifdef _WIN32
 #include <shlobj.h>

@@ -29,7 +29,7 @@ Copyright_License {
 #include "SolverResult.hpp"
 
 #include <unordered_map>
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Abstract class for A* /Dijkstra searches of nav points, managing

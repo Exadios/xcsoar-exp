@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "ui/canvas/VirtualCanvas.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 VirtualCanvas::VirtualCanvas(PixelSize new_size)
   :Canvas(::CreateCompatibleDC(nullptr), new_size)

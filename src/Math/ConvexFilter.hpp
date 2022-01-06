@@ -30,7 +30,7 @@ Copyright_License {
 
 #include "Math/LeastSquares.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <type_traits>
 
 class ConvexFilter: public LeastSquares

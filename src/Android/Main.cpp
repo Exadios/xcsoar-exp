@@ -76,7 +76,7 @@ Copyright_License {
 #include "NunchuckDevice.hpp"
 #include "VoltageDevice.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdlib.h>
 
 using namespace UI;
@@ -103,21 +103,14 @@ Java_au_org_narroginglidingclub_xcsoar_NativeView_initializeNative(JNIEnv *env,
                                             jint xdpi, jint ydpi,
                                             jint sdk_version, jstring product)
 try {
-  const char *p = env->GetStringUTFChars(product, nullptr); /* pfb debug */
-  LogFormat(_T("pfb 1st %s, %d: %d %d %d %d %d %s"), __FILE__, __LINE__, width, height, xdpi, ydpi, sdk_version, p);  /* pfb debug */
-  LogFormat(_T("pfb 1st %s"), p);  /* pfb debug */
-  env->ReleaseStringUTFChars(product, p); /* pfb debug */
-  LogFormat(_T("pfb 2nd %s, %d"), __FILE__, __LINE__);  /* pfb debug */
-  LogFormat(_T("pfb initializeNative")); /* pfb debug */
   Java::Init(env);
-
-  LogFormat(_T("pfb %s, %d"), __FILE__, __LINE__);  /* pfb debug */
 
   android_api_level = sdk_version;
 
   InitThreadDebug();
 
   InitialiseAsioThread();
+
   Net::Initialise(asio_thread->GetEventLoop());
 
   Java::Object::Initialise(env);
@@ -147,8 +140,6 @@ try {
   NunchuckDevice::Initialise(env);
   VoltageDevice::Initialise(env);
   AndroidTextEntryDialog::Initialise(env);
-
-  LogFormat(_T("pfb %s, %d"), __FILE__, __LINE__);  /* pfb debug */
 
   context = new Context(env, _context);
 

@@ -27,7 +27,7 @@
 #include "GlideSolvers/GlideResult.hpp"
 #include "Util/AircraftStateFilter.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  *  Class used for simplified/idealised performace

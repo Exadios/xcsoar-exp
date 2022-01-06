@@ -28,7 +28,7 @@ Copyright_License {
 #include "ui/canvas/Pen.hpp"
 #include "ui/canvas/Brush.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 struct ChartLook {
   enum Style {

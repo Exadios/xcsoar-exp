@@ -47,7 +47,7 @@ Copyright_License {
 #include "Language/Language.hpp"
 
 #include <cstddef>
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * An #InfoBoxContent implementation that invokes a callback.  This is

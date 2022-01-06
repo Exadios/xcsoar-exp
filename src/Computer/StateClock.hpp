@@ -28,7 +28,7 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Track how much time the aircraft was in a certain state
