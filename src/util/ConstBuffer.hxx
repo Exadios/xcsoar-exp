@@ -30,7 +30,7 @@
 #ifndef CONST_BUFFER_HXX
 #define CONST_BUFFER_HXX
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 
 template<typename T>

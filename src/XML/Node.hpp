@@ -36,7 +36,7 @@
 #include <list>
 #include <forward_list>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 
 class BufferedOutputStream;

@@ -31,7 +31,7 @@ Copyright_License {
 #include "thread/Mutex.hxx"
 #include "time/WrapClock.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class MultipleDevices;
 class AtmosphericPressure;

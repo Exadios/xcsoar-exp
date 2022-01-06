@@ -29,7 +29,7 @@ Copyright_License {
 #include <atomic>
 #include <exception>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class Job;
 class OperationEnvironment;

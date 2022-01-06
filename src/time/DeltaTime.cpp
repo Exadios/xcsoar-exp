@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "DeltaTime.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 FloatDuration
 DeltaTime::Update(TimeStamp current_time, FloatDuration min_delta,

@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "event/SocketEvent.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 struct libinput;
 struct libinput_event;

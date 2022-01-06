@@ -36,7 +36,7 @@ Copyright_License {
 #include <SDL.h>
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static constexpr unsigned
 NextPowerOfTwo(unsigned i) noexcept

@@ -32,7 +32,7 @@ Copyright_License {
 
 #include <boost/intrusive/list.hpp>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef HAVE_POSIX
 #include <signal.h>

@@ -31,7 +31,7 @@ Copyright_License {
 #include "Units/System.hpp"
 #include "Math/Util.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdint>
 
 /**

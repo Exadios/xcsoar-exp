@@ -38,7 +38,7 @@ Copyright_License {
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <iterator>
 
 #ifdef MORE_USAGE

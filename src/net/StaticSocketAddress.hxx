@@ -33,7 +33,7 @@
 #include "SocketAddress.hxx" // IWYU pragma: export
 #include "Features.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 struct StringView;
 

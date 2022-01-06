@@ -24,7 +24,7 @@ Copyright_License {
 
 #include "WindEKF.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cmath>
 
 #define WIND_K0 1.0e-2f

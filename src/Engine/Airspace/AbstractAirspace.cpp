@@ -31,7 +31,7 @@
 #include "AirspaceIntersectionVector.hpp"
 #include "util/StringAPI.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 AbstractAirspace::~AbstractAirspace() noexcept = default;
 

@@ -35,7 +35,7 @@ Copyright_License {
 #include <sys/stat.h>
 #include <termios.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 #include <stdio.h>
 #include <stdlib.h>

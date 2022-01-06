@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_EVENT_WINDOWS_EVENT_HPP
 #define XCSOAR_EVENT_WINDOWS_EVENT_HPP
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <windef.h> // for HWND (needed by winuser.h)
 #include <winuser.h>

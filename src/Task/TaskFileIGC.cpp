@@ -33,7 +33,7 @@ Copyright_License {
 #include "Waypoint/Waypoint.hpp"
 
 #include <list>
-#include <cassert>
+#include <xcsoar-cassert>
 
 static bool
 ReadIGCDeclaration(Path path, IGCDeclarationHeader &header,

@@ -30,7 +30,7 @@ Copyright_License {
 #include <fileapi.h>
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 #include <stdio.h>
 

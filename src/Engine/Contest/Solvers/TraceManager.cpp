@@ -24,7 +24,7 @@ Copyright_License {
 #include "TraceManager.hpp"
 #include "Trace/Trace.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 TraceManager::TraceManager(const Trace &_trace) noexcept
   :trace_master(_trace),

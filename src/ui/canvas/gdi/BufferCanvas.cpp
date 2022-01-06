@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "ui/canvas/BufferCanvas.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 BufferCanvas::BufferCanvas(const Canvas &canvas, PixelSize new_size)
   :VirtualCanvas(canvas, new_size)

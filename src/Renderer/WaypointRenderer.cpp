@@ -50,7 +50,7 @@ Copyright_License {
 #include "Engine/Route/ReachResult.hpp"
 #include "Look/WaypointLook.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdio.h>
 
 /**

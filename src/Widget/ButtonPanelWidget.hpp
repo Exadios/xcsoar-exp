@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "Widget.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <memory>
 
 class ButtonPanel;

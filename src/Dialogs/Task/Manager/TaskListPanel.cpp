@@ -45,7 +45,7 @@ Copyright_License {
 #include "util/StringCompare.hxx"
 #include "UIGlobals.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static unsigned task_list_serial;
 

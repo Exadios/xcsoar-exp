@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "BrokenTime.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 BrokenTime
 BrokenTime::FromSecondOfDay(unsigned second_of_day) noexcept

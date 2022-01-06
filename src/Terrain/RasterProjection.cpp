@@ -26,7 +26,7 @@ Copyright_License {
 #include "Geo/FAISphere.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 RasterProjection::Set(const GeoBounds &bounds,

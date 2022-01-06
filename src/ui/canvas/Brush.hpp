@@ -29,7 +29,7 @@ Copyright_License {
 #include "Screen/Debug.hpp"
 #include "util/Compiler.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef USE_GDI
 class Bitmap;

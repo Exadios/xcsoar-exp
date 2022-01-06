@@ -42,7 +42,7 @@
 #include <netinet/tcp.h>
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cerrno>
 
 #include <string.h>

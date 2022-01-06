@@ -29,7 +29,7 @@ using std::min;  // to avoid the missing 'min' in the gdiplush headers
 using std::max;  // to avoid the missing 'max' in the gdiplush headers
 #endif  // _MSC_VER
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 #include <unknwn.h>
 #include <gdiplus.h>
 

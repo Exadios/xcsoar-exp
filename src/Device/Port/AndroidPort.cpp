@@ -24,7 +24,7 @@ Copyright_License {
 #include "AndroidPort.hpp"
 #include "Android/PortBridge.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 AndroidPort::AndroidPort(PortListener *_listener, DataHandler &_handler,
                          PortBridge *_bridge)

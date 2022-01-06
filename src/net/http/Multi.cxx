@@ -29,7 +29,7 @@
 
 #include "Multi.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 CurlMulti::~CurlMulti()
 {

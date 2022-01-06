@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "../../shared/RotatePointer.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace UI {
 

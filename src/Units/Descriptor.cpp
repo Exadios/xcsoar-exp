@@ -26,7 +26,7 @@ Copyright_License {
 #include "Atmosphere/Temperature.hpp"
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 
 //SI to Local Units

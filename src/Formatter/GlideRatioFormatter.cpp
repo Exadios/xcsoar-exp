@@ -24,7 +24,7 @@ Copyright_License {
 #include "GlideRatioFormatter.hpp"
 #include "util/StringFormat.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <math.h>
 
 void

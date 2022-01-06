@@ -25,7 +25,7 @@ Copyright_License {
 #include "FAITriangleRules.hpp"
 #include "util/Compiler.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 double
 FAITriangleSettings::GetThreshold() const

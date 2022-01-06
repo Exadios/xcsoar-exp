@@ -33,7 +33,7 @@
 #include "IPv4Address.hxx"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstring>
 
 #ifdef _WIN32

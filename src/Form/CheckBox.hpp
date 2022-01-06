@@ -27,7 +27,7 @@ Copyright_License {
 #include "ui/window/PaintWindow.hpp"
 #include "util/tstring.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <functional>
 
 struct DialogLook;

@@ -26,7 +26,7 @@
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 GlideState
 GlideState::Remaining(const TaskPoint &tp,

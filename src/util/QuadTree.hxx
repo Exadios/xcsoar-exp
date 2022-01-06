@@ -37,7 +37,7 @@
 #include <limits>
 #include <memory>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * A quad tree implementation.  It provides quick searches on a two

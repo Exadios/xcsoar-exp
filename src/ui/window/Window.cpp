@@ -31,7 +31,7 @@ Copyright_License {
 #include "ui/canvas/opengl/Debug.hpp"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #if defined(USE_WINUSER) && !defined(NDEBUG)
 #include <processthreadsapi.h>

@@ -31,7 +31,7 @@ Copyright_License {
 #include "Android/NativeView.hpp"
 #include "util/ScopeExit.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 
 namespace UI {

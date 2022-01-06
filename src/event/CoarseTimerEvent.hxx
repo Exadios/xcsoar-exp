@@ -69,7 +69,9 @@ class CoarseTimerEvent final : AutoUnlinkIntrusiveListHook
 
 public:
 	CoarseTimerEvent(EventLoop &_loop, Callback _callback) noexcept
-		:loop(_loop), callback(_callback) {}
+		:loop(_loop), callback(_callback)
+    {
+    }
 
 	auto &GetEventLoop() const noexcept {
 		return loop;

@@ -28,7 +28,7 @@ Copyright_License {
 #include "PageActions.hpp"
 #include "Input/InputEvents.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 bool
 IsPanning()

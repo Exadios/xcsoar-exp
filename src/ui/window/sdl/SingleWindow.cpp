@@ -27,7 +27,7 @@ Copyright_License {
 
 #include <SDL_events.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace UI {
 

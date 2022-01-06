@@ -39,7 +39,7 @@ Copyright_License {
 #include "Operation/Operation.hpp"
 #include "util/StaticString.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdio.h>
 
 // Additional sentance for EW support

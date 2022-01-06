@@ -62,7 +62,7 @@ Copyright_License {
 #include "util/Macros.hpp"
 #include "util/StringAPI.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /** nullptr terminated array of available device drivers. */
 static const struct DeviceRegister *const driver_list[] = {

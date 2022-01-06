@@ -31,7 +31,7 @@ Copyright_License {
 #include <limits>
 #include <type_traits>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 #include <cstdint>
 

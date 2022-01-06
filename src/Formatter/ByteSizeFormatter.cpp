@@ -25,7 +25,7 @@ Copyright_License {
 #include "util/Macros.hpp"
 #include "util/StringFormat.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 FormatByteSize(TCHAR *buffer, size_t size, unsigned long bytes, bool simple)

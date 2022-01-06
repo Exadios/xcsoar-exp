@@ -26,7 +26,7 @@
 #include "Flat/FlatGeoPoint.hpp"
 #include "util/TypeTraits.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class FlatProjection;
 

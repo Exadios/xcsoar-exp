@@ -71,7 +71,7 @@ Copyright_License {
 #include <stringapiset.h> // for WideCharToMultiByte()
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * This scope class calls DeviceDescriptor::Return() and

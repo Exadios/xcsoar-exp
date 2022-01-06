@@ -27,7 +27,7 @@
 #include "Geo/GeoBounds.hpp"
 #include "Geo/FAISphere.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 // scaling for flat earth integer representation, gives approximately 50m resolution
 static constexpr int fixed_scale = 57296;

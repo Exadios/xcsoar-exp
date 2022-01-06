@@ -55,7 +55,7 @@ Copyright_License {
 #endif
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifndef ANDROID
   static unsigned forced_x_dpi = 0;

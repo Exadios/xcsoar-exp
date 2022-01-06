@@ -76,7 +76,7 @@
 
 #include "jasper/jas_stream.h"
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 
 #ifdef JAS_ENABLE_DUMP
 #include <stdio.h>

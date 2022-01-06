@@ -29,7 +29,7 @@ Copyright_License {
 #include "FileTime.hxx"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <time.h>
 

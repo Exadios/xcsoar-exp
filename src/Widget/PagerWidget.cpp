@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "PagerWidget.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 PagerWidget::Child::~Child() noexcept
 {

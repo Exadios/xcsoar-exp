@@ -30,7 +30,7 @@
 #ifndef MANUAL_HXX
 #define MANUAL_HXX
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <new>
 #include <utility>
 

@@ -27,7 +27,7 @@ Copyright_License {
 #include "PagerWidget.hpp"
 #include "Form/Button.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <functional>
 #include <memory>
 

@@ -28,7 +28,7 @@
  ****************************************************************************/
 #include "mapserver.h"
 #include "mapprimitive.h"
-#include <assert.h>
+#include <xcsoar-assert.h>
 
 #ifdef SHAPELIB_DISABLED
 #include <locale.h>

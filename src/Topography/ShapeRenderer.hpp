@@ -32,7 +32,7 @@ Copyright_License {
 #include "ui/canvas/Canvas.hpp"
 #include "ui/canvas/Brush.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * A helper class optimized for doing bulk draws on OpenGL.

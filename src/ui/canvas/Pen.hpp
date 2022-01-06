@@ -28,7 +28,7 @@ Copyright_License {
 #include "ui/canvas/Features.hpp"
 #include "Screen/Debug.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef USE_GDI
 #include <wingdi.h>

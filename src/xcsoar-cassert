@@ -21,41 +21,13 @@ Copyright_License {
 }
 */
 
-#include "ui/canvas/Bitmap.hpp"
-#include "ui/canvas/custom/UncompressedImage.hpp"
-#include "Screen/Debug.hpp"
-#include "UncompressedImage.hpp"
+#ifndef ANDROID
+#include <cassert>
+#else // ANDROID
 
-#include <xcsoar-cassert>
+#pragma GCC system_header
 
-Bitmap::Bitmap(Bitmap &&src) noexcept
-  :buffer(std::exchange(src.buffer, WritableImageBuffer<BitmapPixelTraits>::Empty()))
-{
-}
+#include "xcsoar-assert.h"
 
-Bitmap &Bitmap::operator=(Bitmap &&src) noexcept
-{
-  using std::swap;
-  swap(buffer, src.buffer);
-  return *this;
-}
+#endif  // ANDROID
 
-bool
-Bitmap::Load(UncompressedImage &&uncompressed, gcc_unused Type type)
-{
-  assert(IsScreenInitialized());
-  assert(uncompressed.IsDefined());
-
-  Reset();
-
-  ImportSurface(buffer, uncompressed);
-  return true;
-}
-
-void
-Bitmap::Reset() noexcept
-{
-  assert(!IsDefined() || IsScreenInitialized());
-
-  buffer.Free();
-}

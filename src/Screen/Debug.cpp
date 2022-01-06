@@ -25,7 +25,7 @@ Copyright_License {
 
 #ifndef NDEBUG
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static bool screen_initialized = false;
 

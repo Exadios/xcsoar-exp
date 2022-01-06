@@ -34,7 +34,7 @@ Copyright_License {
 #include <winbase.h> // for THREAD_PRIORITY_BELOW_NORMAL
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * This class provides an OS independent view on a thread.

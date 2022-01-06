@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "Geo/GeoClip.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 [[gnu::const]]
 static GeoPoint

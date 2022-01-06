@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "FileHandle.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 #include <cstddef>
 

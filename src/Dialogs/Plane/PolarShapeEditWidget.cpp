@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 PolarShapeEditWidget::PolarShapeEditWidget(const PolarShape &_shape,
                                            DataFieldListener *_listener) noexcept

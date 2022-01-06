@@ -35,7 +35,7 @@ Copyright_License {
 
 #include <boost/container/static_vector.hpp>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <chrono>
 #include <cstdint>
 #include <functional>

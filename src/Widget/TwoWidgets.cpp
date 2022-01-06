@@ -24,7 +24,7 @@ Copyright_License {
 #include "TwoWidgets.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 TwoWidgets::UpdateLayout() noexcept

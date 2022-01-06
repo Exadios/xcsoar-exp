@@ -22,7 +22,7 @@
 #include "util/CharUtil.hxx"
 
 #include <string.h>
-#include <cassert>
+#include <xcsoar-cassert>
 
 DBB::DBB() {
   memset(this,0xff,sizeof *this);

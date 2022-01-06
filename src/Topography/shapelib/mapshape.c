@@ -37,7 +37,7 @@
 #define NEED_IGNORE_RET_VAL
 
 #include <limits.h>
-#include <assert.h>
+#include <xcsoar-assert.h>
 
 #include <zzip/util.h>
 

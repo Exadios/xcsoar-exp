@@ -31,7 +31,7 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 using namespace FAITriangleRules;
 

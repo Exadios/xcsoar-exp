@@ -77,7 +77,7 @@
 #include "jasper/jas_malloc.h"
 #include "jasper/jas_math.h"
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 #if defined(JAS_HAVE_FCNTL_H)
 #include <fcntl.h>
 #endif

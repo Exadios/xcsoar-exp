@@ -26,7 +26,7 @@ Copyright_License {
 #include "Math/Util.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 RasterMap::UpdateProjection() noexcept

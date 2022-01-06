@@ -37,7 +37,7 @@ Copyright_License {
 
 #include <stdio.h>
 #include <string.h>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 #ifdef _UNICODE
 #include <stringapiset.h>
