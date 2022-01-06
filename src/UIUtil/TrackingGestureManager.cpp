@@ -29,7 +29,7 @@
 
 #include "TrackingGestureManager.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 bool
 TrackingGestureManager::Update(PixelPoint p)

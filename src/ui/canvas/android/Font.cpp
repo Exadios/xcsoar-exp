@@ -31,11 +31,11 @@ Copyright_License {
 #include "util/StringCompare.hxx"
 #include "util/TStringView.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /*
- * create a new instance of org.xcsoar.TextUtil and store it with a global
- * reference in text_util_object member.
+ * create a new instance of au.org.narroginglidingclub.xcsoar.TextUtil and
+ * store it with a global reference in text_util_object member.
  */
 void
 Font::Load(const FontDescription &d)

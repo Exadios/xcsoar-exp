@@ -23,7 +23,7 @@
 #include "TaskProjection.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 TaskProjection::TaskProjection(const GeoBounds &_bounds)
   :bounds(_bounds)

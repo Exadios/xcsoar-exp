@@ -77,7 +77,7 @@
 #include "jasper/jas_stream.h"
 
 #include <limits.h>
-#include <assert.h>
+#include <xcsoar-assert.h>
 #include <stdio.h>
 
 /******************************************************************************\

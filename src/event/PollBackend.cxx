@@ -19,7 +19,7 @@
 
 #include "PollBackend.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 PollBackend::PollBackend() noexcept = default;
 PollBackend::~PollBackend() noexcept = default;

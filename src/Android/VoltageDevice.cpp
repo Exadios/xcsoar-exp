@@ -35,7 +35,7 @@ VoltageDevice::Initialise(JNIEnv *env) noexcept
   voltage_class.Find(env, "au/org/narroginglidingclub/xcsoar/GlueVoltage");
 
   voltage_ctor = env->GetMethodID(voltage_class, "<init>",
-                                  "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;ILau/org/narroginglidingclub/xcsoar/Voltage$Listener;)V");
+                                  "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;ILau/org/narroginglidingclub/xcsoar/SensorListener;)V");
 }
 
 void

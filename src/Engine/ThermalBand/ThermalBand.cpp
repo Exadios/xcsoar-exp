@@ -23,7 +23,7 @@
 #include "ThermalBand.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 ThermalBand::Reset() noexcept

@@ -24,7 +24,7 @@ Copyright_License {
 #include "Terrain/RasterBuffer.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdlib.h>
 
 void

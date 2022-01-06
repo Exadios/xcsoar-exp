@@ -40,7 +40,7 @@ Copyright_License {
 #include "ActionInterface.hpp"
 #include "Language/Language.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class AirspaceSettingsListWidget : public ListWidget {
   const bool color_mode;

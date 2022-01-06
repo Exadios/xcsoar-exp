@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <new>
 #include <type_traits>
 #include <utility>

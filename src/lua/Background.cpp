@@ -32,7 +32,7 @@ extern "C" {
 
 #include <boost/intrusive/list.hpp>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static constexpr char background_lua_key[] = "xcsoar.background";
 

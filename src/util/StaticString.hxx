@@ -38,7 +38,7 @@
 #include "UTF8.hpp"
 #include "ASCII.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 
 #ifdef _UNICODE

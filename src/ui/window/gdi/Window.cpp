@@ -28,7 +28,7 @@ Copyright_License {
 #include "ui/event/Idle.hpp"
 #include "Asset.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <windowsx.h>
 
 void

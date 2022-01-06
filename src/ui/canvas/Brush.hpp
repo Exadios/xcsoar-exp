@@ -27,7 +27,7 @@ Copyright_License {
 #include "Features.hpp"
 #include "Screen/Debug.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef USE_GDI
 class Bitmap;

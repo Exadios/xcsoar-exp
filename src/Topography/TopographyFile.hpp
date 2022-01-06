@@ -38,8 +38,8 @@ Copyright_License {
 #include "XShapePoint.hpp"
 #endif
 
-#include <cassert>
 #include <memory>
+#include <xcsoar-cassert>
 
 class WindowProjection;
 class XShape;

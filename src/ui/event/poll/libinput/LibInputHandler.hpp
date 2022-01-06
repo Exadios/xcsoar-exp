@@ -27,7 +27,7 @@ Copyright_License {
 #include "event/PipeEvent.hxx"
 #include "ui/dim/Size.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 struct libinput;
 struct libinput_event;

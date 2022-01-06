@@ -31,7 +31,7 @@
 #include "util/Clamp.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * A Catmull-Rom splines interpolator

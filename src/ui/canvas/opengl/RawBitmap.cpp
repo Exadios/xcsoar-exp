@@ -28,7 +28,7 @@ Copyright_License {
 #include "Shaders.hpp"
 #include "Program.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef USE_RGB565
 static constexpr GLint FORMAT = GL_RGB;

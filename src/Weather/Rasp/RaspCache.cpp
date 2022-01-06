@@ -30,7 +30,7 @@ Copyright_License {
 #include "io/ZipArchive.hpp"
 #include "LogFile.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <windef.h> // for MAX_PATH
 
 RaspCache::RaspCache(const RaspStore &_store, unsigned _parameter) noexcept

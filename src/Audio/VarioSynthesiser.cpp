@@ -27,7 +27,7 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * The minimum and maximum vario range for the constants below [cm/s].

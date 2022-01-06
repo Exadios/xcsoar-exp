@@ -38,7 +38,7 @@ Copyright_License {
 #include "Interface.hpp"
 #include "Language/Language.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdio.h>
 
 /**

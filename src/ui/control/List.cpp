@@ -34,7 +34,7 @@ Copyright_License {
 #include "ui/canvas/WindowCanvas.hpp"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <algorithm>
 

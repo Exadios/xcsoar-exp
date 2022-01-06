@@ -34,7 +34,7 @@ Copyright_License {
 #include "Language/Language.hpp"
 #include "util/TrivialArray.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static TrivialArray<TaskPointFactoryType, LegalPointSet::N> point_types;
 

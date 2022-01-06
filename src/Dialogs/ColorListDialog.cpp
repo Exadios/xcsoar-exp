@@ -30,7 +30,7 @@ Copyright_License {
 #include "Look/AirspaceLook.hpp"
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static void
 OnPaintListItem(Canvas &canvas, const PixelRect rc, unsigned i) noexcept

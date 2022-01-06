@@ -47,7 +47,7 @@ Copyright_License {
 #include "Language/Language.hpp"
 #include "util/StringCompare.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdio.h>
 
 enum Controls {

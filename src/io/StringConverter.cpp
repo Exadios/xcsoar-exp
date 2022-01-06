@@ -25,7 +25,7 @@ Copyright_License {
 #include "util/Compiler.h"
 #include "util/UTF8.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstring>
 #include <stdexcept>
 

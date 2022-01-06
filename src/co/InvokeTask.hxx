@@ -36,7 +36,7 @@
 #include "Compat.hxx"
 #include "util/BindMethod.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <exception>
 #include <utility>
 

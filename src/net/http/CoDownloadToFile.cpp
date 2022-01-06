@@ -30,7 +30,7 @@ Copyright_License {
 #include "system/Path.hpp"
 #include "lib/sodium/SHA256.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <optional>
 
 namespace Net {

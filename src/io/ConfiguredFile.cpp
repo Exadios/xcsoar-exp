@@ -33,7 +33,7 @@ Copyright_License {
 
 #include <zzip/zzip.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 
 std::unique_ptr<NLineReader>

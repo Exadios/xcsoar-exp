@@ -32,7 +32,7 @@ Copyright_License {
 #include "ui/event/Timer.hpp"
 #include "ui/event/PeriodicTimer.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class ListPickerWidget : public ListWidget {
   unsigned num_items;

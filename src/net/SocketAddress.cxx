@@ -31,7 +31,7 @@
 #include "IPv4Address.hxx"
 #include "IPv6Address.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstring>
 
 #ifdef HAVE_UN

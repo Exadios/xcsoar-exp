@@ -24,7 +24,7 @@
 #include "Task/Ordered/Points/OrderedTaskPoint.hpp"
 #include "util/Compiler.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 inline const OrderedTaskPoint *
 TaskLeg::GetOrigin() const

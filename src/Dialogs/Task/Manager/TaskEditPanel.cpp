@@ -50,7 +50,7 @@ Copyright_License {
 #include "util/StringCompare.hxx"
 #include "UIGlobals.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class TaskEditPanel
   : public ListWidget {

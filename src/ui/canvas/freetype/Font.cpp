@@ -50,7 +50,7 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdint>
 
 #ifndef ENABLE_OPENGL

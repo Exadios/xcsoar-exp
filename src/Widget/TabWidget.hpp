@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "PagerWidget.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <memory>
 #include <tchar.h>
 

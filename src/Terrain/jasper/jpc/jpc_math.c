@@ -73,7 +73,7 @@
 
 #include "jpc_math.h"
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 
 /******************************************************************************\
 * Miscellaneous Functions

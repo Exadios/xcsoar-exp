@@ -33,7 +33,7 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 std::string
 Path::ToUTF8() const noexcept

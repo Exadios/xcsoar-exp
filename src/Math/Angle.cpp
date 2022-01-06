@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "Angle.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 Angle::DMS
 Angle::ToDMS() const noexcept

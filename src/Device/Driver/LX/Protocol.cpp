@@ -25,7 +25,7 @@ Copyright_License {
 #include "Device/Error.hpp"
 #include "Operation/Operation.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 LX::CommandMode(Port &port, OperationEnvironment &env)

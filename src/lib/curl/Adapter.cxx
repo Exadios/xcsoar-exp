@@ -36,7 +36,7 @@
 #include "util/StringStrip.hxx"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 using std::string_view_literals::operator""sv;
 

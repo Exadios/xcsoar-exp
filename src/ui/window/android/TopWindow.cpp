@@ -30,7 +30,7 @@ Copyright_License {
 #include "Android/NativeView.hpp"
 #include "LogFile.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace UI {
 

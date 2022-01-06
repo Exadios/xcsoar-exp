@@ -24,7 +24,7 @@ Copyright_License {
 #include "LiveBlackboard.hpp"
 #include "BlackboardListener.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 LiveBlackboard::AddListener(BlackboardListener &listener) noexcept

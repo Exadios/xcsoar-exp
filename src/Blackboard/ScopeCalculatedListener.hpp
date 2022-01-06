@@ -29,7 +29,7 @@ Copyright_License {
 
 #include <functional>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * A dummy class that implements all abstract methods as no-ops.

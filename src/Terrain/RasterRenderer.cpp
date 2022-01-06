@@ -34,7 +34,7 @@ Copyright_License {
 #include "Asset.hpp"
 #include "ui/event/Idle.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdint>
 
 /**

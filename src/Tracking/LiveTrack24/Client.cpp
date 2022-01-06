@@ -33,7 +33,7 @@ Copyright_License {
 #include "util/StringView.hxx"
 #include "Version.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdlib>
 #include <stdexcept>
 

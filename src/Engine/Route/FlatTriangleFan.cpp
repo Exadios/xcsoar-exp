@@ -24,7 +24,7 @@
 #include "FlatTriangleFanVisitor.hpp"
 #include "Math/Line2D.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 const FlatBoundingBox &
 FlatTriangleFan::CalcBoundingBox() noexcept

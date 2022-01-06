@@ -29,7 +29,7 @@ Copyright_License {
 #include <chrono>
 #include <type_traits>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdint>
 
 /**

@@ -30,8 +30,13 @@
 #pragma once
 
 #include <algorithm>
+<<<<<<< HEAD
 #include <array>
 #include <cassert>
+=======
+
+#include <xcsoar-cassert>
+>>>>>>> 2737b7c63c (Use our own assert)
 #include <cstddef>
 #include <initializer_list>
 #include <span>

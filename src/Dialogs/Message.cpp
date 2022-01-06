@@ -33,7 +33,7 @@ Copyright_License {
 
 #include <boost/container/static_vector.hpp>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 int
 ShowMessageBox(const TCHAR *text, const TCHAR *caption,

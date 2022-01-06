@@ -31,7 +31,7 @@ Copyright_License {
 #include "util/Macros.hpp"
 #include "util/StringAPI.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <list>
 
 #if defined(HAVE_EXT_VOLUME_CONTROLLER) && defined(ENABLE_ALSA)

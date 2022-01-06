@@ -30,9 +30,13 @@
 #pragma once
 
 #include <algorithm>
+<<<<<<< HEAD
 #include <cassert>
 #include <span>
+=======
+>>>>>>> 2737b7c63c (Use our own assert)
 #include <utility>
+#include <xcsoar-cassert>
 
 /**
  * An array allocated on the heap with a length determined at runtime.

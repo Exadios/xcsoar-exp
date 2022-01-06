@@ -28,7 +28,7 @@ Copyright_License {
 #include "util/StaticArray.hxx"
 #include "FlarmId.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 
 class FlarmNameDatabase {

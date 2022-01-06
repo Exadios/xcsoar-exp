@@ -78,7 +78,7 @@
 #include "jasper/jas_math.h"
 
 #include <stdlib.h>
-#include <assert.h>
+#include <xcsoar-assert.h>
 #include <math.h>
 
 JAS_ATTRIBUTE_CONST

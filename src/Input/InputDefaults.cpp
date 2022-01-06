@@ -27,7 +27,7 @@ Copyright_License {
 #include "Asset.hpp"
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef _WIN32
 /* we don't need that WIN32 API function, it's a macro that will

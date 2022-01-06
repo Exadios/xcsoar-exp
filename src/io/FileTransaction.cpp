@@ -26,7 +26,7 @@ Copyright_License {
 #include "system/Error.hxx"
 #include "system/FileUtil.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static AllocatedPath
 MakeTemporaryPath(Path path) noexcept

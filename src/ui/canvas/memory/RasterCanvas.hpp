@@ -30,7 +30,7 @@ Copyright_License {
 #include "ui/dim/Point.hpp"
 #include "util/AllocatedArray.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /*
   line_masks:

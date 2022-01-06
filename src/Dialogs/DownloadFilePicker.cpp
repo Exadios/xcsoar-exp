@@ -48,7 +48,7 @@ Copyright_License {
 
 #include <vector>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * This class tracks a download and updates a #ProgressDialog.

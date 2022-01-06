@@ -37,7 +37,7 @@
 #include "FileDescriptor.hxx"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdint>
 
 #ifdef _WIN32

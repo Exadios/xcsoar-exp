@@ -34,7 +34,7 @@
 
 #include <jni.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <utility>
 
 namespace Java {

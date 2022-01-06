@@ -31,7 +31,7 @@ Copyright_License {
 #include "Look/AirspaceLook.hpp"
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /* brush patterns are only available on GDI */
 #ifdef HAVE_HATCHED_BRUSH

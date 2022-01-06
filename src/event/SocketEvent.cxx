@@ -21,7 +21,7 @@
 #include "Loop.hxx"
 #include "event/Features.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <utility>
 
 #ifdef USE_EPOLL

@@ -28,7 +28,7 @@ Copyright_License {
 #include "ui/dim/Rect.hpp"
 #include "FBO.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * This class represents an OpenGL texture.

@@ -75,7 +75,7 @@ BluetoothHelper::Initialise(JNIEnv *env) noexcept
                                           "Lau/org/narroginglidingclub/xcsoar/BluetoothSensor;");
   connect_method = env->GetMethodID(cls, "connect",
                                     "(Ljava/lang/String;)"
-                                    "Lorg/xcsoar/AndroidPort;");
+                                    "Lau/org/narroginglidingclub/xcsoar/AndroidPort;");
   createServer_method = env->GetMethodID(cls, "createServer",
                                          "()Lau/org/narroginglidingclub/xcsoar/AndroidPort;");
 

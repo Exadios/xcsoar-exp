@@ -25,7 +25,7 @@
 
 #include "AirspaceClass.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <chrono>
 
 struct AirspaceWarningConfig

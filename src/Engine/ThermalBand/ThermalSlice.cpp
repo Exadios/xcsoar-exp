@@ -21,7 +21,7 @@
 */
 #include "ThermalSlice.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cmath>
 
 void

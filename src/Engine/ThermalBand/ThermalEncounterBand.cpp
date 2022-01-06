@@ -22,7 +22,7 @@
 
 #include "ThermalEncounterBand.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 ThermalEncounterBand::AddSample(const TimeStamp time,

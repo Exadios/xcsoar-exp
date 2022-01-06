@@ -32,7 +32,7 @@
 
 #include "FileDescriptor.hxx" // IWYU pragma: export
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <utility>
 
 /**

@@ -30,7 +30,7 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 #include <span>
 #include <utility>

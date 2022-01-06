@@ -31,7 +31,7 @@ Copyright_License {
 #include "util/StringFormat.hpp"
 #include "util/TruncateString.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef ENABLE_OPENGL
 #include "ui/canvas/opengl/Scope.hpp"
