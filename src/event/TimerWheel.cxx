@@ -33,7 +33,7 @@
 #include "TimerWheel.hxx"
 #include "CoarseTimerEvent.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 TimerWheel::TimerWheel() noexcept
 {

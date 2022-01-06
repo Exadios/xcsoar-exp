@@ -29,7 +29,7 @@ Copyright_License {
 #include "Math/Util.hpp"
 #include "ui/dim/Point.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * This is a class that can be used for converting geographical into screen

@@ -45,7 +45,7 @@
 #include <list>
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class PortListItemRenderer final {
   TextRowRenderer row_renderer;

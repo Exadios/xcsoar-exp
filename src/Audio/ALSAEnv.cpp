@@ -27,7 +27,7 @@ Copyright_License {
 #include "LogFile.hpp"
 #include "util/NumberParser.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdlib.h>
 
 

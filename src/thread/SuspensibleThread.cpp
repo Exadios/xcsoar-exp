@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "thread/SuspensibleThread.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 SuspensibleThread::Start(bool _suspended)

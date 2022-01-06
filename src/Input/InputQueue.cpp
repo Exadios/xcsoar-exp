@@ -29,7 +29,7 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static Mutex mutexEventQueue;
 

@@ -28,7 +28,7 @@ Copyright_License {
 #include "Shaders.hpp"
 #include "Program.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Returns minimum width that is greater then the given width and

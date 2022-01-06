@@ -30,7 +30,7 @@
 #include "util/DereferenceIterator.hxx"
 #include "util/StaticString.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <memory>
 #include <vector>
 

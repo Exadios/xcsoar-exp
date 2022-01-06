@@ -26,7 +26,7 @@ Copyright_License {
 #include "Settings.hpp"
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /** over this, show INVALID_GR */
 static constexpr double MAXEFFICIENCYSHOW = 200;

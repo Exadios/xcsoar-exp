@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "util/StaticArray.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * A stable reference to a Window.  "Stable" means it notices when the

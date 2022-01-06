@@ -31,7 +31,7 @@
 #include "Features.hxx"
 
 #include <array>
-#include <cassert>
+#include <xcsoar-cassert>
 
 static constexpr auto address_family_ranking = std::array {
 #ifdef HAVE_UN

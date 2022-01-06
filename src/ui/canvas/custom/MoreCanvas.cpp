@@ -29,7 +29,7 @@ Copyright_License {
 #endif
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 #include <winuser.h>
 

@@ -22,7 +22,7 @@
 #include "InjectEvent.hxx"
 #include "thread/AsyncWaiter.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <exception>
 
 class BlockingCallMonitor final

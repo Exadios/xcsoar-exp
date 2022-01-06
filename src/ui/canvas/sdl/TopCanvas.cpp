@@ -53,7 +53,7 @@ Copyright_License {
 #include <alloca.h>
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifndef ENABLE_OPENGL
 

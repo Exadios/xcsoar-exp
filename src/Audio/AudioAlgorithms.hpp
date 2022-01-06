@@ -32,7 +32,7 @@ Copyright_License {
 #include <type_traits>
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 #include <cstdint>
 

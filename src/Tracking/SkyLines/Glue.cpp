@@ -31,7 +31,7 @@ Copyright_License {
 #include "io/async/GlobalAsioThread.hpp"
 #include "util/ByteOrder.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 using namespace std::chrono;
 

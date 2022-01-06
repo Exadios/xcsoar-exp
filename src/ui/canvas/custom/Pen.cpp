@@ -24,7 +24,7 @@ Copyright_License {
 #include "ui/canvas/Pen.hpp"
 #include "Screen/Debug.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 Pen::Create(Style _style, unsigned _width, const Color c)

@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "Ramp.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static constexpr RGB8Color
 Interpolate(RGB8Color c1, RGB8Color c2,

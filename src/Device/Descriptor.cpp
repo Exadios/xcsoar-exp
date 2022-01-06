@@ -68,7 +68,7 @@ Copyright_License {
 #include "Apple/InternalSensors.hpp"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class OpenDeviceJob final : public Job {
   DeviceDescriptor &device;

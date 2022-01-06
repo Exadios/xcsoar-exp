@@ -25,7 +25,7 @@ Copyright_License {
 
 #ifdef USE_TTY
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

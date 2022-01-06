@@ -35,7 +35,7 @@ extern "C" {
 }
 
 #ifndef NDEBUG
-#include <cassert>
+#include <xcsoar-cassert>
 #endif
 
 namespace Lua {

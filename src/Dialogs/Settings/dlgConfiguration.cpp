@@ -84,7 +84,7 @@ Copyright_License {
 
 #include "Panels/WeGlideConfigPanel.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static unsigned current_page;
 

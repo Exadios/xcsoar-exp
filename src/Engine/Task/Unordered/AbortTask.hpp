@@ -28,7 +28,7 @@
 
 #include <vector>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class Waypoints;
 class AbortIntersectionTest;

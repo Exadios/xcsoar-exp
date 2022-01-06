@@ -26,7 +26,7 @@ Copyright_License {
 
 #ifdef HAVE_POSIX
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>

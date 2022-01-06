@@ -30,7 +30,7 @@
 #include "SignalFD.hxx"
 #include "Error.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <sys/signalfd.h>
 

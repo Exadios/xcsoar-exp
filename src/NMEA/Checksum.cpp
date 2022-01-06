@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "NMEA/Checksum.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>

@@ -28,7 +28,7 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 #include <stdio.h>
 

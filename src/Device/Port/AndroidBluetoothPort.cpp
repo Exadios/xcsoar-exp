@@ -27,7 +27,7 @@ Copyright_License {
 #include "Android/BluetoothHelper.hpp"
 #include "java/Global.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 std::unique_ptr<Port>
 OpenAndroidBluetoothPort(const TCHAR *address, PortListener *listener,

@@ -41,7 +41,7 @@ Copyright_License {
 #include "util/StringAPI.hxx"
 #include "util/TruncateString.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 std::unique_ptr<WndProperty>
 RowFormWidget::CreateEdit(const TCHAR *label, const TCHAR *help,

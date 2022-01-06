@@ -30,7 +30,7 @@ Copyright_License {
 #include "Projection/WindowProjection.hpp"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 HeightMatrix::SetSize(size_t _size)

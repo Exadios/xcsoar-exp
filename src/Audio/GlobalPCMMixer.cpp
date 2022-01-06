@@ -25,7 +25,7 @@ Copyright_License {
 #include "PCMPlayerFactory.hpp"
 #include "PCMMixer.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <memory>
 
 PCMMixer *pcm_mixer = nullptr;

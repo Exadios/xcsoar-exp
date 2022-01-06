@@ -33,7 +33,7 @@ Copyright_License {
 
 #include <SLES/OpenSLES_Android.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 AndroidPCMPlayer::~AndroidPCMPlayer()
 {

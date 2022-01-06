@@ -32,7 +32,7 @@ Copyright_License {
 #include "util/TruncateString.hpp"
 #include "util/ConstBuffer.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef ENABLE_OPENGL
 #include "ui/canvas/opengl/Scope.hpp"

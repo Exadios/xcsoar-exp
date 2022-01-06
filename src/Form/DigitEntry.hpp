@@ -27,7 +27,7 @@ Copyright_License {
 #include "ui/window/PaintWindow.hpp"
 #include "Renderer/ButtonRenderer.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstdint>
 #include <functional>
 

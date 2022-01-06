@@ -45,7 +45,9 @@ class DeferEvent final : AutoUnlinkIntrusiveListHook
 
 public:
 	DeferEvent(EventLoop &_loop, Callback _callback) noexcept
-		:loop(_loop), callback(_callback) {}
+		:loop(_loop), callback(_callback) 
+    {
+    }
 
 	DeferEvent(const DeferEvent &) = delete;
 	DeferEvent &operator=(const DeferEvent &) = delete;

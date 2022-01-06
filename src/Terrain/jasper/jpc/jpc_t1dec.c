@@ -81,7 +81,7 @@
 #include "jasper/jas_math.h"
 #include "jasper/jas_debug.h"
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 
 /******************************************************************************\
 *

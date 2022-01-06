@@ -28,7 +28,7 @@ Copyright_License {
 
 #include <png.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdexcept>
 
 #include <string.h>

@@ -22,7 +22,7 @@
 #include "ThermalEncounterCollection.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 ThermalEncounterCollection::Merge(const ThermalBand& tb)

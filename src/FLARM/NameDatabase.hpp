@@ -29,7 +29,7 @@ Copyright_License {
 #include "FlarmId.hpp"
 #include "util/Compiler.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 
 class FlarmNameDatabase {

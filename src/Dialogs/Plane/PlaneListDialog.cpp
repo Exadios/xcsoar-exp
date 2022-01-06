@@ -44,7 +44,7 @@ Copyright_License {
 #include "util/StringAPI.hxx"
 
 #include <vector>
-#include <cassert>
+#include <xcsoar-cassert>
 
 /* this macro exists in the WIN32 API */
 #ifdef DELETE

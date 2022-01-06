@@ -35,7 +35,7 @@
 #include "tstring.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 
 #ifdef PRINT_RADIX_TREE

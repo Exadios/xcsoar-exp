@@ -32,7 +32,7 @@
 #include "Geo/Math.hpp"
 #include "util/Compiler.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 OrderedTaskPoint::OrderedTaskPoint(TaskPointType _type,
                                    std::unique_ptr<ObservationZonePoint> &&_oz,

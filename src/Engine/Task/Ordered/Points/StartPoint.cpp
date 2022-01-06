@@ -26,7 +26,7 @@
 #include "Task/TaskBehaviour.hpp"
 #include "Geo/Math.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 StartPoint::StartPoint(std::unique_ptr<ObservationZonePoint> &&_oz,
                        WaypointPtr &&wp,

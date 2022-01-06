@@ -30,7 +30,7 @@
 #include "InjectTask.hxx"
 #include "event/Call.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace Co {
 

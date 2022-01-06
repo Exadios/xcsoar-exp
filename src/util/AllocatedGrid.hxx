@@ -32,7 +32,7 @@
 
 #include "AllocatedArray.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * A two dimensional array allocated on the heap with a length

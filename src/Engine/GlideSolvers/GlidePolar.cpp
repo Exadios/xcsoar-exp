@@ -31,7 +31,7 @@
 
 #include <algorithm>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 GlidePolar::GlidePolar(const double _mc, const double _bugs, const double _ballast)
   :mc(_mc),

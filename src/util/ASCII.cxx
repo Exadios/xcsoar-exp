@@ -30,7 +30,7 @@
 #include "ASCII.hxx"
 #include "CharUtil.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 CopyASCII(char *dest, const char *src) noexcept

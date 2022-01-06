@@ -29,7 +29,7 @@ Copyright_License {
 #include "util/TStringView.hxx"
 #include "Asset.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 bool
 Font::Load(const FontDescription &d)

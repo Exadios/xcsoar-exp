@@ -26,7 +26,7 @@
 #include "util/StaticArray.hxx"
 
 #include <numeric>
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Average/bucket filter.  When filter is full, can return samples

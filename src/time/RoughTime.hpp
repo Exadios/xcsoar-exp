@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "Stamp.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <chrono>
 #include <cstdint>
 

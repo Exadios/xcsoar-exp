@@ -44,7 +44,7 @@ Copyright_License {
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>

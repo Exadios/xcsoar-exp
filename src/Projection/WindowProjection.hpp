@@ -29,7 +29,7 @@ Copyright_License {
 #include "Geo/GeoBounds.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <optional>
 
 struct GeoQuadrilateral;

@@ -23,7 +23,7 @@ Copyright_License {
 
 #include "ClimbAverageCalculator.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 ClimbAverageCalculator::Reset()

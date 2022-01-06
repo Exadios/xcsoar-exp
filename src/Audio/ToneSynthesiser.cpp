@@ -24,7 +24,7 @@ Copyright_License {
 #include "ToneSynthesiser.hpp"
 #include "Math/FastTrig.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 ToneSynthesiser::SetTone(unsigned tone_hz)

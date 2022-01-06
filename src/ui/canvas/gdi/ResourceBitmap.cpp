@@ -25,7 +25,7 @@ Copyright_License {
 #include "ResourceLoader.hpp"
 #include "ResourceId.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <wingdi.h>
 #include <winuser.h>

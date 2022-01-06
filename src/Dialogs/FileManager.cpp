@@ -58,7 +58,7 @@ Copyright_License {
 #include <vector>
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static AllocatedPath
 LocalPath(const AvailableFile &file)

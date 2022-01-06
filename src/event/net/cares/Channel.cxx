@@ -38,7 +38,7 @@
 #include "time/Convert.hxx"
 #include "util/Cancellable.hxx"
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 #include <string.h>
 
 #ifdef _WIN32

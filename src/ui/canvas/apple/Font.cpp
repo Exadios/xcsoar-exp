@@ -30,7 +30,7 @@ Copyright_License {
 #include "thread/Mutex.hxx"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <math.h>
 #include <string.h>
 

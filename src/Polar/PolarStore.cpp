@@ -26,7 +26,7 @@ Copyright_License {
 #include "Units/System.hpp"
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 PolarShape
 PolarStore::Item::ToPolarShape() const

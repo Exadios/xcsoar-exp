@@ -27,7 +27,7 @@ Copyright_License {
 
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <algorithm>
 

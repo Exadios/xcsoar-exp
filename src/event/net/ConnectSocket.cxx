@@ -36,7 +36,7 @@
 #include "net/AddressInfo.hxx"
 #include "net/SocketError.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <stdexcept>
 
 void

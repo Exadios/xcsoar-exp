@@ -28,7 +28,7 @@ Copyright_License {
 #include "util/CharUtil.hxx"
 #include "Screen/Layout.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 
 static constexpr TCHAR keyboard_letters[] =

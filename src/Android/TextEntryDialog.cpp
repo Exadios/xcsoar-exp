@@ -33,7 +33,7 @@ Copyright_License {
 #include "au_org_narroginglidingclub_xcsoar_TextEntryDialog.h"
 #include "UIGlobals.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static Java::TrivialClass text_entry_dialog_class;
 static jmethodID ctor;

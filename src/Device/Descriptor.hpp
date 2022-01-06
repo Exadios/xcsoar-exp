@@ -55,7 +55,7 @@ Copyright_License {
 #include <chrono>
 #include <memory>
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 #include <stdio.h>
 
