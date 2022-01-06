@@ -28,7 +28,7 @@ Copyright_License {
 #include "Version.hpp"
 #include "system/Path.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 IGCWriter::IGCWriter(Path path)
   :file(path,

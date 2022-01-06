@@ -31,7 +31,7 @@
 #define JAVA_INPUT_STREAM_HXX
 
 #include <jni.h>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 
 namespace Java {

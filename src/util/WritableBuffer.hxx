@@ -32,7 +32,7 @@
 
 #include "ConstBuffer.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 
 template<typename T>

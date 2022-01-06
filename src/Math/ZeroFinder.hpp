@@ -23,7 +23,7 @@
 #ifndef ZERO_FINDER_HPP
 #define ZERO_FINDER_HPP
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Zero finding and minimisation search algorithm

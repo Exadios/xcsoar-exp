@@ -24,7 +24,7 @@
 #include "Task/TaskBehaviour.hpp"
 
 #include <stdlib.h>
-#include <cassert>
+#include <xcsoar-cassert>
 
 FinishPoint::FinishPoint(std::unique_ptr<ObservationZonePoint> &&_oz, WaypointPtr && wp,
                          const TaskBehaviour& tb,

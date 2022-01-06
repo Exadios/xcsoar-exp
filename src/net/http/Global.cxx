@@ -33,7 +33,7 @@
 #include "event/SocketEvent.hxx"
 #include "util/Compiler.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Monitor for one socket created by CURL.

@@ -28,7 +28,7 @@ Copyright_License {
 #include "Components.hpp"
 #include "LocalPath.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 JNIEXPORT jstring JNICALL
 Java_au_org_narroginglidingclub_xcsoar_FileProvider_getWaypointFileForUri(JNIEnv *env,

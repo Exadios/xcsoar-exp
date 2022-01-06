@@ -26,7 +26,7 @@ Copyright_License {
 #include "Math/FastTrig.hpp"
 #include "Math/Point2D.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace OpenGL {
 

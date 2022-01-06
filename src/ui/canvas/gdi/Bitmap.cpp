@@ -27,7 +27,7 @@ Copyright_License {
 #include "Screen/Debug.hpp"
 #include "system/Path.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <wingdi.h>
 #include <winuser.h>

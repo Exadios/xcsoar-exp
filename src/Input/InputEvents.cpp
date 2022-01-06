@@ -67,7 +67,7 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 
 #include "lua/InputEvent.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 #include <stdio.h>
 #include <memory>

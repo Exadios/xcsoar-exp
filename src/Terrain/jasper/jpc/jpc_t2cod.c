@@ -74,7 +74,7 @@
 #include "jasper/jas_math.h"
 #include "jasper/jas_malloc.h"
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 
 static int jpc_pi_nextlrcp(jpc_pi_t *pi);
 static int jpc_pi_nextrlcp(jpc_pi_t *pi);

@@ -24,7 +24,7 @@
 #include "Histogram.hpp"
 #include "Util.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 inline Histogram::size_type
 Histogram::SlotNumber(double x) const noexcept

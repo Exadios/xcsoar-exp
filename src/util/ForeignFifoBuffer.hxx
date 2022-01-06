@@ -33,7 +33,7 @@
 #include "WritableBuffer.hxx"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstddef>
 #include <utility>
 

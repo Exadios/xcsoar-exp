@@ -27,7 +27,7 @@ Copyright_License {
 #include "Math/Util.hpp"
 #include "util/ASCII.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <string.h>
 #include <stdio.h>
 

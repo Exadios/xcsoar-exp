@@ -32,7 +32,7 @@
 #include "XML/DataNode.hpp"
 #include "util/Compiler.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 
 [[gnu::const]]

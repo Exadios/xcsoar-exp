@@ -45,7 +45,7 @@ Copyright_License {
 #include "Audio/Sound.hpp"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <vector>
 
 #include <stdio.h>

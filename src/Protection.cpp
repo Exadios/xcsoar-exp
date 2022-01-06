@@ -30,7 +30,7 @@ Copyright_License {
 #include "MergeThread.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 bool global_running;
 

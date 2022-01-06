@@ -79,7 +79,7 @@
 
 #include "util/Compiler.h"
 
-#include <assert.h>
+#include <xcsoar-assert.h>
 #include <stdio.h>
 
 /******************************************************************************\

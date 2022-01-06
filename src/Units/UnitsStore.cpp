@@ -26,7 +26,7 @@ Copyright_License {
 #include "Language/Language.hpp"
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 struct UnitStoreItem
 {

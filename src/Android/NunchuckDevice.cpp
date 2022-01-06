@@ -35,7 +35,7 @@ NunchuckDevice::Initialise(JNIEnv *env) noexcept
   nunchuck_class.Find(env, "au/org/narroginglidingclub/xcsoar/GlueNunchuck");
 
   nunchuck_ctor = env->GetMethodID(nunchuck_class, "<init>",
-                                 "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;IILau/org/narroginglidingclub/xcsoar/Nunchuck$Listener;)V");
+                                 "(Lau/org/narroginglidingclub/xcsoar/IOIOConnectionHolder;IILau/org/narroginglidingclub/xcsoar/SensorListener;)V");
 }
 
 void

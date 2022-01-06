@@ -24,7 +24,7 @@
 #include "Angle.hpp"
 #include "Util.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 bool
 Filter::Design(const double cutoff_wavelength, const bool bessel) noexcept

@@ -29,8 +29,8 @@ Copyright_License {
 #include "util/TStringView.hxx"
 #include "Asset.hpp"
 
-#include <cassert>
 #include <stdexcept>
+#include <xcsoar-cassert>
 
 void
 Font::Load(const FontDescription &d)

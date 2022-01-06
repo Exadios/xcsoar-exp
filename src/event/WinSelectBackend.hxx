@@ -23,7 +23,7 @@
 #include "PollResultGeneric.hxx"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <unordered_map>
 
 #include <winsock2.h>

@@ -32,7 +32,7 @@ Copyright_License {
 
 #include <windef.h> /* for MAX_PATH */
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

@@ -24,7 +24,7 @@ Copyright_License {
 #include "../RawBitmap.hpp"
 #include "Canvas.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Returns minimum width that is greater then the given width and

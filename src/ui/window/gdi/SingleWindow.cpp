@@ -25,7 +25,7 @@ Copyright_License {
 #include "ui/event/windows/Event.hpp"
 #include "Resources.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <wingdi.h>
 

@@ -26,7 +26,7 @@ Copyright_License {
 
 #include <type_traits>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Derived climb rate history

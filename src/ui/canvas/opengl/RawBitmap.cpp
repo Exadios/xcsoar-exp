@@ -28,7 +28,7 @@ Copyright_License {
 #include "Shaders.hpp"
 #include "Program.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 RawBitmap::RawBitmap(PixelSize _size) noexcept
   :size(_size),

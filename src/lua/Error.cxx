@@ -35,7 +35,7 @@ extern "C" {
 #include <lua.h>
 }
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace Lua {
 

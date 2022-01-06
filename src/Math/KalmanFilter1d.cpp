@@ -23,7 +23,7 @@
 #include "KalmanFilter1d.hpp"
 #include "Util.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 KalmanFilter1d::KalmanFilter1d(const double var_x_accel) noexcept
   :var_x_accel_(var_x_accel)

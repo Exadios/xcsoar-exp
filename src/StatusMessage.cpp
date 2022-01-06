@@ -25,7 +25,7 @@ Copyright_License {
 #include "util/StringAPI.hxx"
 #include "util/Macros.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static constexpr StatusMessage default_status_messages[] = {
 #include "Status_defaults.cpp"

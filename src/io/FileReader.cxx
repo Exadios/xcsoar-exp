@@ -31,7 +31,7 @@
 #include "Open.hxx"
 #include "system/Error.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef _WIN32
 

@@ -36,7 +36,7 @@
 #include "util/StringView.hxx"
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 
 void
 CurlResponseHandlerAdapter::Install(CurlEasy &easy)

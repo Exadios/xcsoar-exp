@@ -39,7 +39,7 @@ Copyright_License {
 #include <windef.h>
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class Path;
 class ResourceId;

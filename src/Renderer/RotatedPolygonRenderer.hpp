@@ -37,8 +37,8 @@ Copyright_License {
 
 #include <algorithm>
 
-#include <cassert>
 #include <span>
+#include <xcsoar-cassert>
 
 class RotatedPolygonRenderer {
 #ifdef ENABLE_OPENGL

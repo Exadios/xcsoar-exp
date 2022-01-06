@@ -38,7 +38,7 @@
 
 #include <algorithm>
 #include <array>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <csignal>
 
 #ifdef USE_SIGNALFD

@@ -40,7 +40,7 @@ Copyright_License {
 #include "util/StringAPI.hxx"
 #include "util/StaticArray.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 using namespace UI;
 

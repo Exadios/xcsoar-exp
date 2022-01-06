@@ -40,7 +40,7 @@ Copyright_License {
 
 #include <vector>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class ProfileListWidget final
   : public TextListWidget {

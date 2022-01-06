@@ -28,7 +28,7 @@
 #include "Form/DataField/Listener.hpp"
 #include "Device/Config.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class DeviceEditWidget : public RowFormWidget, DataFieldListener {
 public:

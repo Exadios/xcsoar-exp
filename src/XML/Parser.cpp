@@ -36,7 +36,7 @@
 
 #include <stdexcept>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace XML {
 

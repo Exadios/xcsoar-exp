@@ -30,7 +30,7 @@
 #include "IPv6Address.hxx"
 #include "IPv4Address.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <string.h>
 

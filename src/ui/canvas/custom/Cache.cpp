@@ -40,7 +40,7 @@ Copyright_License {
 #include "util/ConvertString.hpp"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <memory>
 
 /**

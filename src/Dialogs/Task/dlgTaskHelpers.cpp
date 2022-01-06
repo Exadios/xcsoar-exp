@@ -39,7 +39,7 @@ Copyright_License {
 #include "LocalPath.hpp"
 #include "system/Path.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  *

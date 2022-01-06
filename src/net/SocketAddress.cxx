@@ -33,7 +33,7 @@
 #include "util/ConstBuffer.hxx"
 #include "util/StringView.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <cstring>
 
 #ifdef HAVE_UN

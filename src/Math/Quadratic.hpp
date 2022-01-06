@@ -25,7 +25,7 @@
 
 #include "Util.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 /**
  * Utility class for efficient solution of quadratic equations

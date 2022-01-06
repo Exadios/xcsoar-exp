@@ -39,7 +39,7 @@ Copyright_License {
 #endif
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifndef ANDROID
 static UnsignedPoint2D forced_dpi{};

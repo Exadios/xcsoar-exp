@@ -91,7 +91,7 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "Dialogs/FilePicker.hpp"
 #include "contest/weglide/UploadIGCFile.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 #include <tchar.h>
 #include <algorithm>
 

@@ -25,8 +25,7 @@ Copyright_License {
 #include "Device/Port/Port.hpp"
 #include "NMEA/Checksum.hpp"
 
-#include <cassert>
-
+#include <xcsoar-cassert>
 #include <stdio.h>
 #include <string.h>
 

@@ -31,7 +31,7 @@
 #include "system/Error.hxx"
 #include "util/Compiler.h"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <sys/eventfd.h>
 

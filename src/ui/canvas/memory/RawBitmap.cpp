@@ -24,7 +24,7 @@ Copyright_License {
 #include "../RawBitmap.hpp"
 #include "Canvas.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 RawBitmap::RawBitmap(PixelSize _size) noexcept
   :size(_size),

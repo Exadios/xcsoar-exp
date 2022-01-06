@@ -32,7 +32,7 @@ Copyright_License {
 #include "util/TStringView.hxx"
 
 #include <array>
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <tchar.h>
 

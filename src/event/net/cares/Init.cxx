@@ -41,7 +41,7 @@
 
 #include <ares.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 namespace Cares {
 
@@ -58,7 +58,7 @@ Init::Init()
 
 	ares_library_init_jvm(Java::jvm);
 	const auto env = Java::GetEnv();
-	Java::Class net_util(env, "org/xcsoar/NetUtil");
+	Java::Class net_util(env, "au/org/narroginglidingclub/xcsoar/NetUtil");
 
 	const auto getConnectivityManager =
 		env->GetStaticMethodID(net_util, "getConnectivityManager",

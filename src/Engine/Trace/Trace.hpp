@@ -36,7 +36,7 @@ Copyright_License {
 #include <boost/intrusive/set.hpp>
 
 #include <algorithm>
-#include <cassert>
+#include <xcsoar-cassert>
 #include <type_traits>
 
 #include <stdlib.h>

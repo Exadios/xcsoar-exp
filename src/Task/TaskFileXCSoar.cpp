@@ -25,7 +25,7 @@ Copyright_License {
 #include "LoadFile.hpp"
 #include "Engine/Task/Ordered/OrderedTask.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 std::unique_ptr<OrderedTask>
 TaskFileXCSoar::GetTask(const TaskBehaviour &task_behaviour,

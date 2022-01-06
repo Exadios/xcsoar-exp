@@ -26,7 +26,7 @@ Copyright_License {
 
 #include <libudev.h>
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 static UdevContext *udev_root_context = nullptr;
 static Mutex udev_context_mutex;

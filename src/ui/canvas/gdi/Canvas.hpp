@@ -31,7 +31,7 @@ Copyright_License {
 #include "ui/dim/BulkPoint.hpp"
 #include "util/StringView.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #include <handleapi.h> // for INVALID_HANDLE_VALUE
 #include <tchar.h>

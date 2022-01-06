@@ -26,7 +26,7 @@ Copyright_License {
 
 #include <cstdint>
 #include <stdlib.h>
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef _UNICODE
 #include <wchar.h>

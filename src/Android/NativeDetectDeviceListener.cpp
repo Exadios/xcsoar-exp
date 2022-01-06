@@ -60,7 +60,7 @@ Java_au_org_narroginglidingclub_xcsoar_NativeDetectDeviceListener_onDeviceDetect
 void
 NativeDetectDeviceListener::Initialise(JNIEnv *env) noexcept
 {
-  cls.Find(env, "org/xcsoar/NativeDetectDeviceListener");
+  cls.Find(env, "au/org/narroginglidingclub/xcsoar/NativeDetectDeviceListener");
   ctor = env->GetMethodID(cls, "<init>", "(J)V");
   ptr_field = env->GetFieldID(cls, "ptr", "J");
 }

@@ -29,7 +29,7 @@ Copyright_License {
 #include "system/Path.hpp"
 #include "util/StringCompare.hxx"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 std::unique_ptr<Reader>
 OpenDataFile(const TCHAR *name)

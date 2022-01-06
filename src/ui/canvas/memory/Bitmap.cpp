@@ -26,7 +26,7 @@ Copyright_License {
 #include "Screen/Debug.hpp"
 #include "UncompressedImage.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 Bitmap::Bitmap(Bitmap &&src) noexcept
   :buffer(std::exchange(src.buffer, WritableImageBuffer<BitmapPixelTraits>::Empty()))

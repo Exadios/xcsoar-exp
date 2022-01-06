@@ -36,7 +36,7 @@ Copyright_License {
 #include "UIGlobals.hpp"
 #include "Look/DialogLook.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 class OptionStartsWidget : public ListWidget {
   OrderedTask &task;

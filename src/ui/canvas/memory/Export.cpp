@@ -28,7 +28,7 @@ Copyright_License {
 #include "Dither.hpp"
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 #ifdef GREYSCALE
 

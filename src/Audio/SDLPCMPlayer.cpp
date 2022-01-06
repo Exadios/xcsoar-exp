@@ -25,7 +25,7 @@ Copyright_License {
 
 #include "PCMDataSource.hpp"
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 SDLPCMPlayer::~SDLPCMPlayer()
 {

@@ -52,7 +52,7 @@ Copyright_License {
 #include <alloca.h>
 #endif
 
-#include <cassert>
+#include <xcsoar-cassert>
 
 TopCanvas::TopCanvas(UI::Display &_display, SDL_Window *_window)
   :display(_display), window(_window)
