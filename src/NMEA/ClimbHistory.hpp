@@ -24,15 +24,10 @@ Copyright_License {
 #ifndef XCSOAR_CLIMB_HISTORY_HPP
 #define XCSOAR_CLIMB_HISTORY_HPP
 
-<<<<<<< HEAD
+#include <type_traits>
 #include <array>
-#include <cassert>
-#include <type_traits>
-=======
-#include <type_traits>
-
 #include <xcsoar-cassert>
->>>>>>> 2737b7c63c (Use our own assert)
+#include <type_traits>
 
 /**
  * Derived climb rate history
