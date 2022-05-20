@@ -26,6 +26,7 @@
 
 #include "ui/window/PaintWindow.hpp"
 #include "FLARM/List.hpp"
+#include "FLARM/Status.hpp"
 #include "TeamCode/Settings.hpp"
 #include "Math/FastRotation.hpp"
 
@@ -123,8 +124,10 @@ protected:
 
   void UpdateSelector(FlarmId id, PixelPoint pt) noexcept;
   void UpdateWarnings() noexcept;
-  void Update(Angle new_direction, const TrafficList &new_data,
-              const TeamCodeSettings &new_settings) noexcept;
+  void Update(Angle new_direction,
+              const TrafficList &new_data,
+              const TeamCodeSettings &new_settings,
+              FlarmStatus flarm_status) noexcept;
   void PaintRadarNoTraffic(Canvas &canvas) const noexcept;
   void PaintRadarNoGo(Canvas &canvas) const noexcept;
   void PaintRadarTarget(Canvas &canvas, const FlarmTraffic &traffic,
