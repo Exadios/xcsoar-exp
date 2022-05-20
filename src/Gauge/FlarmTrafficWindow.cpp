@@ -560,7 +560,7 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas &canvas,
  * @param canvas The canvas to paint on
  */
 void
-FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas)
+FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   {
   if (data.IsEmpty())
     {

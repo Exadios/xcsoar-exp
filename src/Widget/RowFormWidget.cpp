@@ -33,12 +33,8 @@ Copyright_License {
 #include "ui/canvas/Font.hpp"
 #include "Asset.hpp"
 
-<<<<<<< HEAD
 #include <algorithm>
-#include <cassert>
-=======
 #include <xcsoar-cassert>
->>>>>>> 2737b7c63c (Use our own assert)
 
 [[gnu::pure]]
 static unsigned

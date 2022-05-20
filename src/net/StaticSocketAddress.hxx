@@ -33,14 +33,8 @@
 #include "SocketAddress.hxx" // IWYU pragma: export
 #include "Features.hxx"
 
-<<<<<<< HEAD
-#include <cassert>
-#include <string_view>
-=======
 #include <xcsoar-cassert>
-
-struct StringView;
->>>>>>> 2737b7c63c (Use our own assert)
+#include <string_view>
 
 /**
  * An OO wrapper for struct sockaddr_storage.
