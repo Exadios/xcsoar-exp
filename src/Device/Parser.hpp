@@ -31,6 +31,11 @@ struct GeoPoint;
 struct BrokenDate;
 struct BrokenTime;
 
+/**
+ * Objects of this class parse NMEA records. The generic record types parsed 
+ * are "GSA", "GLL", "RMC", "GGA", "HDM", "MVW". The proprietary record types
+ * parsed are "PTAS1", "PFLAE", "PFLAV", "PFLAA", "PFLAU", "PGRMZ"
+ */
 class NMEAParser
 {
   TimeStamp last_time;
@@ -44,14 +49,25 @@ public:
   NMEAParser();
 
   /**
-   * Resets the NMEAParser
+   * Resets the NMEAParser. The parser is set to use real input data and 
+   * apply locally calculated geoidal separation (aka "geoidal height")
+   * to GPS altitude.
    */
   void Reset();
 
+  /**
+   * Set the NMEAInfo.gps.real to argument.
+   * @param real The argument to NMEAinfo.gps.real
+   */
   void SetReal(bool _real) {
     real = _real;
   }
 
+  /**
+   * Disable application of locally calculated geoidal seperation to GPS
+   * altitude (because, presumably, it has already been applied by the GPS
+   * device.
+   */
   void DisableGeoid() {
     use_geoid = false;
   }

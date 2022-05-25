@@ -47,6 +47,9 @@ MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
   last_any.Reset();
 }
 
+/**
+ * Process
+ */
 void
 MergeThread::Process()
 {
@@ -63,7 +66,11 @@ MergeThread::Process()
                    device_blackboard.Calculated());
 
   flarm_computer.Process(device_blackboard.SetBasic().flarm,
-                         last_fix.flarm, basic);
+                         last_fix.flarm,
+                         basic);
+  adsb_computer.Process(device_blackboard.SetBasic().adsb,
+                        last_fix.adsb,
+                        basic);
 }
 
 void
@@ -83,12 +90,21 @@ MergeThread::Tick() noexcept
 
     const MoreData &basic = device_blackboard.Basic();
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//    LogFormat("%s, %d: %d, %d", __FILE__, __LINE__,
+//              this->device_blackboard.RealState(0).adsb.traffic.modified.ToInteger(),
+//              ::device_blackboard->RealState(0).adsb.traffic.modified.ToInteger());
+    
+#endif
+
     /* call Driver::OnSensorUpdate() on all devices */
     if (devices != nullptr)
       devices->NotifySensorUpdate(basic);
 
     /* trigger update if gps has become available or dropped out */
     gps_updated = last_any.location_available != basic.location_available;
+
 
     /* trigger a redraw when the connection was just lost, to show the
        new state; when no GPS is connected, no other entity triggers
@@ -120,7 +136,6 @@ MergeThread::Tick() noexcept
 
   if (gps_updated)
     TriggerGPSUpdate();
-
   if (calculated_updated)
     TriggerCalculatedUpdate();
 

@@ -242,6 +242,10 @@ XCSOAR_SOURCES := \
 	$(SRC)/FLARM/FlarmComputer.cpp \
 	$(SRC)/FLARM/Global.cpp \
 	$(SRC)/FLARM/Glue.cpp \
+  $(SRC)/ADSB/List.cpp \
+	$(SRC)/ADSB/Traffic.cpp \
+	$(SRC)/ADSB/AdsbCalculations.cpp \
+	$(SRC)/ADSB/AdsbComputer.cpp \
 	$(SRC)/BallastDumpManager.cpp \
 	$(SRC)/Logger/Settings.cpp \
 	$(SRC)/Logger/Logger.cpp \

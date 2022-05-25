@@ -26,6 +26,7 @@ Copyright_License {
 #include "thread/WorkerThread.hpp"
 #include "Computer/BasicComputer.hpp"
 #include "FLARM/FlarmComputer.hpp"
+#include "ADSB/AdsbComputer.hpp"
 #include "NMEA/MoreData.hpp"
 
 class DeviceBlackboard;
@@ -51,6 +52,7 @@ class MergeThread final : public WorkerThread {
 
   BasicComputer computer;
   FlarmComputer flarm_computer;
+  AdsbComputer  adsb_computer;
 
 public:
   MergeThread(DeviceBlackboard &_device_blackboard);
@@ -74,6 +76,9 @@ public:
   }
 
 private:
+  /**
+   * Process the current data. Start with a DeviceBlackboard Merge.
+   */
   void Process();
 
 protected:

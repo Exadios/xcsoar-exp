@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include "FlarmTrafficWindow.hpp"
 #include "FLARM/Traffic.hpp"
 #include "FLARM/Friends.hpp"
+#include "ADSB/Traffic.hpp"
 #include "ui/canvas/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Formatter/UserUnits.hpp"
@@ -42,6 +43,9 @@
 #include "ui/canvas/opengl/Scope.hpp"
 #endif
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
 
 FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
                                        unsigned _h_padding,
@@ -51,16 +55,19 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
    h_padding(_h_padding), v_padding(_v_padding),
    small(_small)
 {
-  data.Clear();
+  flarm_data.Clear();
+  adsb_data.Clear();
   data_modified.Clear();
+  this->flarm_status.Clear();
+  this->adsb_status.Clear();
 }
 
 bool
 FlarmTrafficWindow::WarningMode() const noexcept
 {
-  assert(warning < (int)data.list.size());
-  assert(warning < 0 || data.list[warning].IsDefined());
-  assert(warning < 0 || data.list[warning].HasAlarm());
+  assert(warning < (int)flarm_data.list.size());
+  assert(warning < 0 || flarm_data.list[warning].IsDefined());
+  assert(warning < 0 || flarm_data.list[warning].HasAlarm());
 
   return warning >= 0;
 }
@@ -82,8 +89,8 @@ FlarmTrafficWindow::OnResize(PixelSize new_size) noexcept
 void
 FlarmTrafficWindow::SetTarget(int i) noexcept
 {
-  assert(i < (int)data.list.size());
-  assert(i < 0 || data.list[i].IsDefined());
+  assert(i < (int)flarm_data.list.size());
+  assert(i < 0 || flarm_data.list[i].IsDefined());
 
   if (selection == i)
     return;
@@ -102,16 +109,16 @@ FlarmTrafficWindow::NextTarget() noexcept
   if (WarningMode())
     return;
 
-  assert(selection < (int)data.list.size());
+  assert(selection < (int)flarm_data.list.size());
 
   const FlarmTraffic *traffic;
   if (selection >= 0)
-    traffic = data.NextTraffic(&data.list[selection]);
+    traffic = flarm_data.NextTraffic(&flarm_data.list[selection]);
   else
     traffic = NULL;
 
   if (traffic == NULL)
-    traffic = data.FirstTraffic();
+    traffic = flarm_data.FirstTraffic();
 
   SetTarget(traffic);
 }
@@ -126,16 +133,16 @@ FlarmTrafficWindow::PrevTarget() noexcept
   if (WarningMode())
     return;
 
-  assert(selection < (int)data.list.size());
+  assert(selection < (int)flarm_data.list.size());
 
   const FlarmTraffic *traffic;
   if (selection >= 0)
-    traffic = data.PreviousTraffic(&data.list[selection]);
+    traffic = flarm_data.PreviousTraffic(&flarm_data.list[selection]);
   else
     traffic = NULL;
 
   if (traffic == NULL)
-    traffic = data.LastTraffic();
+    traffic = flarm_data.LastTraffic();
 
   SetTarget(traffic);
 }
@@ -170,48 +177,91 @@ FlarmTrafficWindow::UpdateSelector(const FlarmId id,
 void
 FlarmTrafficWindow::UpdateWarnings() noexcept
 {
-  const FlarmTraffic *alert = data.FindMaximumAlert();
+  const FlarmTraffic *alert = flarm_data.FindMaximumAlert();
   warning = alert != NULL
-    ? (int)data.TrafficIndex(alert)
+    ? (int)flarm_data.TrafficIndex(alert)
     : - 1;
 }
 
 /**
  * This should be called when the radar needs to be repainted
+ * @param new_direction The new aircraft heading or track.
+ * @param new_flarm_data The new list of Flarm targets.
+ * @param new_adsb_data The list of new ADSB targets.
+ * @param new_settings The new team codes.
+ * @param flarm_status Present status of the Flarm.
+ * @param adsb_status Present status of the ADSB.
  */
 void
-FlarmTrafficWindow::Update(Angle new_direction, const TrafficList &new_data,
-                           const TeamCodeSettings &new_settings) noexcept
-{
+FlarmTrafficWindow::Update(Angle new_direction,
+                           const TrafficList &new_flarm_data,
+                           const AdsbTrafficList &new_adsb_data,
+                           const TeamCodeSettings &new_settings,
+                           FlarmStatus flarm_status,
+                           AdsbStatus  adsb_status) noexcept
+  {
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
-  if (new_data.modified == data_modified &&
-      (heading - new_direction).Absolute() < min_heading_delta)
+  /**
+   * \todo Modify test to include ADSB data for consideration.
+   */
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//  LogFormat("%s, %d: %d", __FILE__, __LINE__, new_adsb_data.modified.ToInteger());
+#endif
+  if ((new_flarm_data.modified == this->data_modified)               &&
+      (new_adsb_data.modified  == this->data_modified)               &&
+      (this->heading - new_direction).Absolute() < min_heading_delta &&
+      this->flarm_status.gps       == flarm_status.gps               &&
+      this->adsb_status.gps        == adsb_status.gps)
+    {
+//#ifndef NDEBUG
+//#include "LogFile.hpp"
+//    LogFormat("%s, %d", __FILE__, __LINE__);
+//#endif
     /* no change - don't redraw */
     return;
+    }
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//    LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
   FlarmId selection_id;
   PixelPoint pt;
-  if (!small && selection >= 0) {
-    selection_id = data.list[selection].id;
+  if (!small && selection >= 0)
+    {
+    selection_id = flarm_data.list[selection].id;
     pt = sc[selection];
-  } else {
+    }
+  else
+    {
     selection_id.Clear();
     pt.x = -100;
     pt.y = -100;
-  }
+    }
 
-  data_modified = new_data.modified;
+  /* \todo pfb: Refactor to avoid this silliness. */
+  if (new_flarm_data.modified == new_adsb_data.modified)
+    this->data_modified = new_flarm_data.modified;
+  else
+    if (new_flarm_data.modified != this->data_modified)
+      this->data_modified = new_flarm_data.modified;
+    else
+      this->data_modified = new_adsb_data.modified;
   heading = new_direction;
-  fr = -heading;
-  fir = heading;
-  data = new_data;
-  settings = new_settings;
+  this->fr = -heading;
+  this->fir = heading;
+  this->flarm_data = new_flarm_data;
+  this->adsb_data  = new_adsb_data;
+  this->settings = new_settings;
+  this->flarm_status = flarm_status;
+  this->adsb_status  = adsb_status;
 
-  UpdateWarnings();
-  UpdateSelector(selection_id, pt);
+  this->UpdateWarnings();
+  this->UpdateSelector(selection_id, pt);
 
-  Invalidate();
-}
+  this->Invalidate();
+  }
 
 /**
  * Returns the distance to the own plane in pixels
@@ -240,6 +290,23 @@ FlarmTrafficWindow::PaintRadarNoTraffic(Canvas &canvas) const noexcept
   canvas.SetTextColor(look.default_color);
   canvas.DrawText(radar_mid - PixelSize{ts.width / 2, radius / 2}, str);
 }
+
+/**
+ * Paints a "No Go" sign on the given canvas
+ * @param canvas The canvas to paint on
+ */
+void
+FlarmTrafficWindow::PaintRadarNoGo(Canvas &canvas) const noexcept
+  {
+  if (small)
+    return;
+
+  const TCHAR* str = _("No Go");
+  canvas.Select(look.no_traffic_font);
+  PixelSize ts = canvas.CalcTextSize(str);
+  canvas.SetTextColor(look.default_color);
+  canvas.DrawText(radar_mid - PixelSize{ts.width / 2, this->radius / 2}, str);
+  }
 
 [[gnu::const]]
 static const Pen *
@@ -532,23 +599,33 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas &canvas,
  */
 void
 FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
-{
-  if (data.IsEmpty()) {
+  {
+  if (flarm_data.IsEmpty() && adsb_data.IsEmpty()) {
     PaintRadarNoTraffic(canvas);
     return;
-  }
+    }
 
-  // Iterate through the traffic (normal traffic)
-  for (unsigned i = 0; i < data.list.size(); ++i) {
-    const FlarmTraffic &traffic = data.list[i];
+  // Iterate through the Flarm traffic (normal traffic)
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
+    const FlarmTraffic &traffic = flarm_data.list[i];
 
     if (!traffic.HasAlarm() &&
         static_cast<unsigned> (selection) != i)
       PaintRadarTarget(canvas, traffic, i);
   }
 
+  // And iterate through the ADSB traffic
+  for (unsigned i = 0; i < this->adsb_data.list.size(); ++i)
+    {
+    /* \todo pfb: Refactor to remove this kludge */
+    const AdsbTraffic &traffic = this->adsb_data.list[i];
+    FlarmTraffic fe;
+    AdsbConvert(traffic, fe);
+    PaintRadarTarget(canvas, fe, i);
+    }
+
   if (selection >= 0) {
-    const FlarmTraffic &traffic = data.list[selection];
+    const FlarmTraffic &traffic = flarm_data.list[selection];
 
     if (!traffic.HasAlarm())
       PaintRadarTarget(canvas, traffic, selection);
@@ -557,9 +634,9 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   if (!WarningMode())
     return;
 
-  // Iterate through the traffic (alarm traffic)
-  for (unsigned i = 0; i < data.list.size(); ++i) {
-    const FlarmTraffic &traffic = data.list[i];
+  // Iterate through the Flarm traffic (alarm traffic)
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
+    const FlarmTraffic &traffic = flarm_data.list[i];
 
     if (traffic.HasAlarm())
       PaintRadarTarget(canvas, traffic, i);
@@ -698,11 +775,11 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const noexcept
 void
 FlarmTrafficWindow::Paint(Canvas &canvas) noexcept
 {
-  assert(selection < (int)data.list.size());
-  assert(selection < 0 || data.list[selection].IsDefined());
-  assert(warning < (int)data.list.size());
-  assert(warning < 0 || data.list[warning].IsDefined());
-  assert(warning < 0 || data.list[warning].HasAlarm());
+  assert(selection < (int)flarm_data.list.size());
+  assert(selection < 0 || flarm_data.list[selection].IsDefined());
+  assert(warning < (int)flarm_data.list.size());
+  assert(warning < 0 || flarm_data.list[warning].IsDefined());
+  assert(warning < 0 || flarm_data.list[warning].HasAlarm());
 
   PaintRadarBackground(canvas);
   PaintRadarTraffic(canvas);
@@ -736,9 +813,9 @@ FlarmTrafficWindow::SelectNearTarget(PixelPoint p, int max_distance) noexcept
   int min_distance = 99999;
   int min_id = -1;
 
-  for (unsigned i = 0; i < data.list.size(); ++i) {
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
     // If FLARM target does not exist -> next one
-    if (!data.list[i].IsDefined())
+    if (!flarm_data.list[i].IsDefined())
       continue;
 
     int distance_sq = (p - sc[i]).MagnitudeSquared();

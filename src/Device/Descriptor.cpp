@@ -785,6 +785,7 @@ DeviceDescriptor::ParseNMEA(const char *line, NMEAInfo &info) noexcept
   info.settings = settings_received;
 
   if (device != nullptr && device->ParseNMEA(line, info)) {
+    /* Device specific parsing. */
     info.alive.Update(info.clock);
 
     if (!config.sync_from_device)
@@ -1340,6 +1341,12 @@ DeviceDescriptor::PortError(const char *msg) noexcept
     port_listener->PortError(msg);
 }
 
+/**
+ * Temporarily substitute the binary stuff for some nav stuff.
+ * \todo pfb: Rewrite to allow binary nav instruments and binary non nav stuff.
+ * pfb debug
+ */
+#if 0
 bool
 DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
 {
@@ -1350,11 +1357,17 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
   if (driver != nullptr && device != nullptr && driver->UsesRawData()) {
     auto basic = device_blackboard->LockGetDeviceDataUpdateClock(index);
 
+    basic.count = 0;
+
     const ExternalSettings old_settings = basic.settings;
 
     /* call Device::DataReceived() without holding
        DeviceBlackboard::mutex to avoid blocking all other threads */
     if (device->DataReceived(s, basic)) {
+#ifndef NDEBUG
+#include <stdio.h>
+      printf("%s, %d: count = %d\n", __FILE__, __LINE__, basic.count);
+#endif
       if (!config.sync_from_device)
         basic.settings = old_settings;
 
@@ -1369,6 +1382,65 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
 
   return true;
 }
+#else
+#if 0
+bool
+DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
+  {
+  const auto e = BeginEdit();
+  e->UpdateClock();     // Update the NMEAInfo clock
+  device->DataReceived(s, *e);
+  e->alive.Update(e->clock);
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d: %s", __FILE__, __LINE__, e->location_available ? "true" : "false");
+  LogFormat("%s, %d: %s", __FILE__, __LINE__, ::device_blackboard->Basic().location_available ? "true" : "false");
+  LogFormat("%s, %d: %s", __FILE__, __LINE__, ::device_blackboard->PerDeviceData(index).location_available ? "true" : "false");
+#endif
+  e.Commit();           // Schedule a merge
+
+  return true;
+  }
+#else
+bool
+DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
+  {
+  // Do monitor first.
+  if (this->monitor != nullptr)
+    this->monitor->DataReceived(s);
+
+  // Pass data directly to drivers that use binary data protocols
+  if (driver != nullptr && device != nullptr && driver->UsesRawData())
+    {
+    if (this->monitor != nullptr)
+      this->monitor->DataReceived(s);
+    NMEAInfo& basic(::device_blackboard->SetRealState(index));
+    basic.UpdateClock();
+    ::device_blackboard->mutex.lock();
+    device->DataReceived(s, ::device_blackboard->SetRealState(index));
+    basic.alive.Update(basic.clock);
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//    LogFormat("%s, %d: %d", __FILE__, __LINE__, 
+//              ::device_blackboard->RealState(index).adsb.traffic.modified.ToInteger());
+#endif
+    ::device_blackboard->ScheduleMerge();
+    ::device_blackboard->mutex.unlock();
+    return true;
+    }
+
+  if (!IsNMEAOut())
+    /**
+     * If its not a NMEA ouput then forward the binary to an object which
+     * will extract the NMEA record and call
+     * \ref DeviceDescriptor::LineReceived
+     */
+    PortLineSplitter::DataReceived(s);
+
+  return true;
+  }
+#endif
+#endif
 
 bool
 DeviceDescriptor::LineReceived(const char *line) noexcept
@@ -1380,9 +1452,9 @@ DeviceDescriptor::LineReceived(const char *line) noexcept
     dispatcher->LineReceived(line);
 
   const auto e = BeginEdit();
-  e->UpdateClock();
+  e->UpdateClock();     // Update the NMEAInfo clock
   ParseNMEA(line, *e);
-  e.Commit();
+  e.Commit();           // Schedule a merge
 
   return true;
 }

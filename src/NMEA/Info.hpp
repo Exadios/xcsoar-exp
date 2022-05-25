@@ -36,6 +36,7 @@ Copyright_License {
 #include "Atmosphere/Temperature.hpp"
 #include "DeviceInfo.hpp"
 #include "FLARM/Data.hpp"
+#include "ADSB/Data.hpp"
 #include "Geo/SpeedVector.hpp"
 
 #ifdef ANDROID
@@ -356,6 +357,9 @@ struct NMEAInfo {
   DeviceInfo secondary_device;
 
   FlarmData flarm;
+  AdsbData  adsb;
+
+  int count;  // Temporary indicator.
 
 #ifdef ANDROID
   GliderLinkData glink_data;
@@ -623,6 +627,7 @@ struct NMEAInfo {
    *
    * Note that this does not copy calculated values which are managed
    * outside of the NMEA parser.
+   * @param add The source to be copied from.
    */
   void Complement(const NMEAInfo &add);
 };
