@@ -25,6 +25,7 @@
 
 #include "ui/window/PaintWindow.hpp"
 #include "FLARM/List.hpp"
+#include "ADSB/List.hpp"
 #include "TeamCode/Settings.hpp"
 #include "Math/FastRotation.hpp"
 
@@ -69,7 +70,8 @@ protected:
   Angle heading = Angle::Zero();
   FastRotation fr;
   FastIntegerRotation fir;
-  TrafficList data;
+  TrafficList flarm_data;
+  AdsbTrafficList adsb_data;
   Validity data_modified;
   TeamCodeSettings settings;
 
@@ -90,18 +92,18 @@ public:
 
   const FlarmTraffic *GetTarget() const noexcept {
     return selection >= 0
-      ? &data.list[selection]
+      ? &flarm_data.list[selection]
       : NULL;
   }
 
   void SetTarget(int i) noexcept;
 
   void SetTarget(const FlarmTraffic *traffic) noexcept {
-    SetTarget(traffic != NULL ? (int)data.TrafficIndex(traffic) : -1);
+    SetTarget(traffic != NULL ? (int)flarm_data.TrafficIndex(traffic) : -1);
   }
 
   void SetTarget(const FlarmId &id) noexcept {
-    SetTarget(data.FindTraffic(id));
+    SetTarget(flarm_data.FindTraffic(id));
   }
 
   void NextTarget() noexcept;
@@ -121,7 +123,9 @@ protected:
 
   void UpdateSelector(FlarmId id, PixelPoint pt) noexcept;
   void UpdateWarnings() noexcept;
-  void Update(Angle new_direction, const TrafficList &new_data,
+  void Update(Angle new_direction,
+              const TrafficList &new_flarm_data,
+              const AdsbTrafficList &new_adsb_data,
               const TeamCodeSettings &new_settings) noexcept;
   void PaintRadarNoTraffic(Canvas &canvas) const noexcept;
   void PaintRadarTarget(Canvas &canvas, const FlarmTraffic &traffic,

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@ Copyright_License {
 #include "Device/Driver/ATR833.hpp"
 #include "Device/Driver/XCTracer.hpp"
 #include "Device/Driver/KRT2.hpp"
+#include "Device/Driver/SkyEcho-2.hpp"
 #include "util/Macros.hpp"
 #include "util/StringAPI.hxx"
 
@@ -103,6 +104,7 @@ static const struct DeviceRegister *const driver_list[] = {
   &xctracer_driver,
   &thermalexpress_driver,
   &acd_driver,
+  &skyecho_driver,
   nullptr
 };
 

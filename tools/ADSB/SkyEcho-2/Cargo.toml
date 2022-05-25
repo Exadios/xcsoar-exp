@@ -1,0 +1,12 @@
+[package]
+
+name = "XCSoar-tools"
+version = "0.0.0"
+description = "A program to dump the operating output of a SkyEcho 2"
+license = "GPL-3.0"
+
+[[bin]]
+
+name = "dumpgdl"
+path = "src/dumpGDL.rs"
+

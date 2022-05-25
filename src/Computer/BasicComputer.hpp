@@ -32,7 +32,7 @@ struct FeaturesSettings;
 struct ComputerSettings;
 
 /**
- * A computer which adds missing values to #NEMAInfo.  It performs
+ * A computer which adds missing values to #NMEAInfo.  It performs
  * simple and fast calculations after every GPS update, cheap enough
  * to run outside of the #CalculationThread.
  */
