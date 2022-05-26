@@ -24,6 +24,9 @@
 use std::net::UdpSocket;
 use std::time::Duration;
 
+/// A command line tool to dump SkyEcho 2 data output to terminal or file.
+///
+
 //------------------------------------------------------------------------------
 fn main() -> std::io::Result<()>
   {
