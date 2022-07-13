@@ -47,6 +47,9 @@ MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
   last_any.Reset();
 }
 
+/**
+ * Process
+ */
 void
 MergeThread::Process()
 {
@@ -64,6 +67,9 @@ MergeThread::Process()
 
   flarm_computer.Process(device_blackboard.SetBasic().flarm,
                          last_fix.flarm, basic);
+  adsb_computer.Process(device_blackboard.SetBasic().adsb,
+                        last_fix.adsb,
+                        basic);
 }
 
 void

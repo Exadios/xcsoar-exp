@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -51,16 +51,16 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
    h_padding(_h_padding), v_padding(_v_padding),
    small(_small)
 {
-  data.Clear();
+  flarm_data.Clear();
   data_modified.Clear();
 }
 
 bool
 FlarmTrafficWindow::WarningMode() const noexcept
 {
-  assert(warning < (int)data.list.size());
-  assert(warning < 0 || data.list[warning].IsDefined());
-  assert(warning < 0 || data.list[warning].HasAlarm());
+  assert(warning < (int)flarm_data.list.size());
+  assert(warning < 0 || flarm_data.list[warning].IsDefined());
+  assert(warning < 0 || flarm_data.list[warning].HasAlarm());
 
   return warning >= 0;
 }
@@ -82,8 +82,8 @@ FlarmTrafficWindow::OnResize(PixelSize new_size)
 void
 FlarmTrafficWindow::SetTarget(int i) noexcept
 {
-  assert(i < (int)data.list.size());
-  assert(i < 0 || data.list[i].IsDefined());
+  assert(i < (int)flarm_data.list.size());
+  assert(i < 0 || flarm_data.list[i].IsDefined());
 
   if (selection == i)
     return;
@@ -102,16 +102,16 @@ FlarmTrafficWindow::NextTarget() noexcept
   if (WarningMode())
     return;
 
-  assert(selection < (int)data.list.size());
+  assert(selection < (int)flarm_data.list.size());
 
   const FlarmTraffic *traffic;
   if (selection >= 0)
-    traffic = data.NextTraffic(&data.list[selection]);
+    traffic = flarm_data.NextTraffic(&flarm_data.list[selection]);
   else
     traffic = NULL;
 
   if (traffic == NULL)
-    traffic = data.FirstTraffic();
+    traffic = flarm_data.FirstTraffic();
 
   SetTarget(traffic);
 }
@@ -126,16 +126,16 @@ FlarmTrafficWindow::PrevTarget() noexcept
   if (WarningMode())
     return;
 
-  assert(selection < (int)data.list.size());
+  assert(selection < (int)flarm_data.list.size());
 
   const FlarmTraffic *traffic;
   if (selection >= 0)
-    traffic = data.PreviousTraffic(&data.list[selection]);
+    traffic = flarm_data.PreviousTraffic(&flarm_data.list[selection]);
   else
     traffic = NULL;
 
   if (traffic == NULL)
-    traffic = data.LastTraffic();
+    traffic = flarm_data.LastTraffic();
 
   SetTarget(traffic);
 }
@@ -170,9 +170,9 @@ FlarmTrafficWindow::UpdateSelector(const FlarmId id,
 void
 FlarmTrafficWindow::UpdateWarnings() noexcept
 {
-  const FlarmTraffic *alert = data.FindMaximumAlert();
+  const FlarmTraffic *alert = flarm_data.FindMaximumAlert();
   warning = alert != NULL
-    ? (int)data.TrafficIndex(alert)
+    ? (int)flarm_data.TrafficIndex(alert)
     : - 1;
 }
 
@@ -192,7 +192,7 @@ FlarmTrafficWindow::Update(Angle new_direction, const TrafficList &new_data,
   FlarmId selection_id;
   PixelPoint pt;
   if (!small && selection >= 0) {
-    selection_id = data.list[selection].id;
+    selection_id = flarm_data.list[selection].id;
     pt = sc[selection];
   } else {
     selection_id.Clear();
@@ -204,7 +204,7 @@ FlarmTrafficWindow::Update(Angle new_direction, const TrafficList &new_data,
   heading = new_direction;
   fr = -heading;
   fir = heading;
-  data = new_data;
+  flarm_data = new_data;
   settings = new_settings;
 
   UpdateWarnings();
@@ -533,14 +533,14 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas &canvas,
 void
 FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
 {
-  if (data.IsEmpty()) {
+  if (flarm_data.IsEmpty() && adsb_data.IsEmpty()) {
     PaintRadarNoTraffic(canvas);
     return;
   }
 
   // Iterate through the traffic (normal traffic)
-  for (unsigned i = 0; i < data.list.size(); ++i) {
-    const FlarmTraffic &traffic = data.list[i];
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
+    const FlarmTraffic &traffic = flarm_data.list[i];
 
     if (!traffic.HasAlarm() &&
         static_cast<unsigned> (selection) != i)
@@ -548,7 +548,7 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   }
 
   if (selection >= 0) {
-    const FlarmTraffic &traffic = data.list[selection];
+    const FlarmTraffic &traffic = flarm_data.list[selection];
 
     if (!traffic.HasAlarm())
       PaintRadarTarget(canvas, traffic, selection);
@@ -558,8 +558,8 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
     return;
 
   // Iterate through the traffic (alarm traffic)
-  for (unsigned i = 0; i < data.list.size(); ++i) {
-    const FlarmTraffic &traffic = data.list[i];
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
+    const FlarmTraffic &traffic = flarm_data.list[i];
 
     if (traffic.HasAlarm())
       PaintRadarTarget(canvas, traffic, i);
@@ -698,11 +698,11 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const noexcept
 void
 FlarmTrafficWindow::Paint(Canvas &canvas) noexcept
 {
-  assert(selection < (int)data.list.size());
-  assert(selection < 0 || data.list[selection].IsDefined());
-  assert(warning < (int)data.list.size());
-  assert(warning < 0 || data.list[warning].IsDefined());
-  assert(warning < 0 || data.list[warning].HasAlarm());
+  assert(selection < (int)flarm_data.list.size());
+  assert(selection < 0 || flarm_data.list[selection].IsDefined());
+  assert(warning < (int)flarm_data.list.size());
+  assert(warning < 0 || flarm_data.list[warning].IsDefined());
+  assert(warning < 0 || flarm_data.list[warning].HasAlarm());
 
   PaintRadarBackground(canvas);
   PaintRadarTraffic(canvas);
@@ -736,9 +736,9 @@ FlarmTrafficWindow::SelectNearTarget(PixelPoint p, int max_distance) noexcept
   int min_distance = 99999;
   int min_id = -1;
 
-  for (unsigned i = 0; i < data.list.size(); ++i) {
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
     // If FLARM target does not exist -> next one
-    if (!data.list[i].IsDefined())
+    if (!flarm_data.list[i].IsDefined())
       continue;
 
     int distance_sq = (p - sc[i]).MagnitudeSquared();

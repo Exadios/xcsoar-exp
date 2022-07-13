@@ -24,12 +24,17 @@ Copyright_License {
 #ifndef XCSOAR_SKYECHO_DEVICE_HPP
 #define XCSOAR_SKYECHO_DEVICE_HPP
 
+/** \file
+ * The uAvionix SkyEcho 2 ADS-B transceiver
+ * @see https://www.uavionix.com.au/skyecho2/
+ */
+
 #include "util/AllocatedArray.hxx"
 #include "util/Compiler.h"
 #include "tchar.h"
 #include "Device/Driver.hpp"
 #include "Device/SettingsMap.hpp"
-#include "GeoPoint.hpp"
+#include "Geo/GeoPoint.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -43,6 +48,10 @@ class RecordedFlightList;
 struct RecordedFlightInfo;
 class NMEAInputLine;
 
+/**
+ * @file
+ * The SkyEcho 2 device.
+ */
 class SkyEchoDevice: public AbstractDevice
   {
     enum class Mode : uint8_t
@@ -55,19 +64,19 @@ class SkyEchoDevice: public AbstractDevice
 
     Port &port;
 
-    Mode mode = Mode::UNKNOWN;
+    Mode mode = Mode::BINARY;
 
     uint16_t sequence_number = 0;
 
-    /**
-     * Settings that were received in PDVSC sentences.
-     */
-    DeviceSettingsMap<std::string> settings;
-
   public:
+    /**
+     * Ctor.
+     * @param port The input port associated with this device.
+     */
     SkyEchoDevice(Port &port)
       :port(port)
       {
+      this->Initfcs();
       }
 
     /**
@@ -79,51 +88,15 @@ class SkyEchoDevice: public AbstractDevice
     bool DataReceived(std::span<const std::byte> s,
                       struct NMEAInfo &info) noexcept;
 
-  protected:
-
-  public:
     /* virtual methods from class Device */
     void LinkTimeout() override;
-    bool EnableNMEA(OperationEnvironment &env) override;
-    bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
-
-    bool Declare(const Declaration &declaration, const Waypoint *home,
-                 OperationEnvironment &env) override;
-    bool PutPilotEvent(OperationEnvironment &env) override;
-
-    bool GetPilot(TCHAR *buffer, size_t length, OperationEnvironment &env);
-    bool SetPilot(const TCHAR *pilot_name, OperationEnvironment &env);
-    bool GetCoPilot(TCHAR *buffer, size_t length, OperationEnvironment &env);
-    bool SetCoPilot(const TCHAR *copilot_name, OperationEnvironment &env);
-    bool GetPlaneType(TCHAR *buffer, size_t length, OperationEnvironment &env);
-    bool SetPlaneType(const TCHAR *plane_type, OperationEnvironment &env);
-    bool GetPlaneRegistration(TCHAR *buffer, size_t length,
-                              OperationEnvironment &env);
-    bool SetPlaneRegistration(const TCHAR *registration,
-                              OperationEnvironment &env);
-    bool GetCompetitionId(TCHAR *buffer, size_t length,
-                          OperationEnvironment &env);
-    bool SetCompetitionId(const TCHAR *competition_id,
-                          OperationEnvironment &env);
-    bool GetCompetitionClass(TCHAR *buffer, size_t length,
-                             OperationEnvironment &env);
-    bool SetCompetitionClass(const TCHAR *competition_class,
-                             OperationEnvironment &env);
-
-    bool GetStealthMode(bool &enabled, OperationEnvironment &env);
-    bool SetStealthMode(bool enabled, OperationEnvironment &env);
-    bool GetRange(unsigned &range, OperationEnvironment &env);
-    bool SetRange(unsigned range, OperationEnvironment &env);
-    bool GetBaudRate(unsigned &baud_id, OperationEnvironment &env);
-    bool SetBaudRate(unsigned baud_id, OperationEnvironment &env);
 
     void Restart(OperationEnvironment &env);
 
   private:
-
-  public:
-
-  private:
+    /**
+     * GDL 90 packet types.
+     */
     enum class MessageID : uint8_t
       {
       HEARTBEAT       = 0,
@@ -135,9 +108,10 @@ class SkyEchoDevice: public AbstractDevice
       TRAFFICREPORT   = 20,
       BASICREPORT     = 30,
       LONGREPORT      = 31,
+      AHRS            = 0x65,
       };
 
-    unsigned int crc16Table[256]; // Table for FCS.
+    uint16_t crc16Table[256]; // Table for FCS.
 
     /**
      * A structure to hold raw own ship and target data for a limited time.
@@ -208,6 +182,15 @@ class SkyEchoDevice: public AbstractDevice
     bool IsPacketConsistent(std::span<const std::byte> s) const;
 
     /**
+     * Cut the UDP packet into a number of ADSB packets. It is assumed that
+     * a single ADSB packet does not traverse across multiple UDP packets.
+     * @param s The UDP packet containing one or more ADSB packets.
+     * @return All the found ADSB packets. There may be zero ADSB packets 
+     *         returned.
+     */
+     std::vector<std::span<const std::byte> >CutPacket(std::span<const std::byte> s) const;
+
+    /**
      * Remove the byte stuffing.
      * @param s The input vector which has been byte stuffed by the transmitter.
      * @return The result with the byte stuffing removed and resolved.
@@ -229,6 +212,12 @@ class SkyEchoDevice: public AbstractDevice
      */
     void Traffic(std::span<const std::byte> s, TrafficStruct &t);
     
+    /**
+     * Time since midnight from HEARTBEAT.
+     */
+    unsigned long int time_of_day;
   };
+
+extern const struct DeviceRegister skyecho_driver;
 
 #endif  //XCSOAR_SKYECHO_DEVICE_HPP

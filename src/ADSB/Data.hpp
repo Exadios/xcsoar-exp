@@ -24,58 +24,62 @@ Copyright_License {
 #ifndef XCSOAR_ADSB_DATA_HPP
 #define XCSOAR_ADSB_DATA_HPP
 
-//#include "FLARM/Error.hpp"
-//#include "FLARM/Version.hpp"
 #include "ADSB/Status.hpp"
 #include "ADSB/List.hpp"
 
 #include <type_traits>
 
 /**
- * A container for all data received by a ADSB receiver.
+ * @file
+ * A container for all data received by an ADSB receiver.
  */
 struct AdsbData
   {
-//  FlarmError error;
-
-//  FlarmVersion version;
-
   AdsbStatus status;
 
-  TrafficList traffic;
+  /**
+   * Current known ADSB targets.
+   */
+  AdsbTrafficList traffic;
 
+  /**
+   * The the ADSB system GO?
+   * @param If true then GO.
+   */
   bool IsDetected() const 
     {
     return this->status.available || !this->traffic.IsEmpty();
     }
 
   /**
-   * Reset all state in this object.
+   * Reset all state in this object. This class will be marked NOGO.
    */
   void Clear()
     {
-//    this->error.Clear();
-//    this->version.Clear();
     this->status.Clear();
     this->traffic.Clear();
     }
 
+  /**
+   * Merge this object with another.
+   * @param add The other object.
+   */
   void Complement(const AdsbData &add)
     {
-//    this->error.Complement(add.error);
-//    this->version.Complement(add.version);
     this->status.Complement(add.status);
     this->traffic.Complement(add.traffic);
     }
 
+  /**
+   * Expire stale targets.
+   * clock Now.
+   */
   void Expire(TimeStamp clock) noexcept
     {
-//    this->error.Expire(clock);
-//    this->version.Expire(clock);
     this->status.Expire(clock);
     this->traffic.Expire(clock);
     }
-};
+  };
 
 static_assert(std::is_trivial<AdsbData>::value, "type is not trivial");
 

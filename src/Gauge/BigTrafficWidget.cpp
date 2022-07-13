@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -197,7 +197,7 @@ FlarmTrafficControl::CalcAutoZoom()
   bool warning_mode = WarningMode();
   RoughDistance zoom_dist = 0;
 
-  for (auto it = data.list.begin(), end = data.list.end();
+  for (auto it = flarm_data.list.begin(), end = flarm_data.list.end();
       it != end; ++it) {
     if (warning_mode && !it->HasAlarm())
       continue;
@@ -493,7 +493,7 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas &canvas) const
     return;
 
   // Shortcut to the selected traffic
-  FlarmTraffic traffic = data.list[WarningMode() ? warning : selection];
+  FlarmTraffic traffic = flarm_data.list[WarningMode() ? warning : selection];
   assert(traffic.IsDefined());
 
   const unsigned padding = Layout::GetTextPadding();

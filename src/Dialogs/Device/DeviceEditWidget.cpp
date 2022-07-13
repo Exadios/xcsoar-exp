@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -68,6 +68,7 @@ FillTCPPorts(DataFieldEnum &dfe) noexcept
   dfe.addEnumText(_T("8880"), 8880);
   dfe.addEnumText(_T("8881"), 8881);
   dfe.addEnumText(_T("8882"), 8882);
+  dfe.addEnumText(_T("4000"), 4000);
 }
 
 static void

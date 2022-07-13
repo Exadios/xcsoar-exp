@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 
 #include "ui/window/PaintWindow.hpp"
 #include "FLARM/List.hpp"
+#include "ADSB/List.hpp"
 #include "TeamCode/Settings.hpp"
 #include "Math/FastRotation.hpp"
 
@@ -70,7 +71,8 @@ protected:
   Angle heading = Angle::Zero();
   FastRotation fr;
   FastIntegerRotation fir;
-  TrafficList data;
+  TrafficList flarm_data;
+  AdsbTrafficList adsb_data;
   Validity data_modified;
   TeamCodeSettings settings;
 
@@ -91,18 +93,18 @@ public:
 
   const FlarmTraffic *GetTarget() const noexcept {
     return selection >= 0
-      ? &data.list[selection]
+      ? &flarm_data.list[selection]
       : NULL;
   }
 
   void SetTarget(int i) noexcept;
 
   void SetTarget(const FlarmTraffic *traffic) noexcept {
-    SetTarget(traffic != NULL ? (int)data.TrafficIndex(traffic) : -1);
+    SetTarget(traffic != NULL ? (int)flarm_data.TrafficIndex(traffic) : -1);
   }
 
   void SetTarget(const FlarmId &id) noexcept {
-    SetTarget(data.FindTraffic(id));
+    SetTarget(flarm_data.FindTraffic(id));
   }
 
   void NextTarget() noexcept;

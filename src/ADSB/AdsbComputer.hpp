@@ -21,50 +21,29 @@ Copyright_License {
 }
 */
 
-#pragma once
+#ifndef XCSOAR_ADSB_COMPUTER_HPP
+#define XCSOAR_ADSB_COMPUTER_HPP
 
-#include "thread/Mutex.hxx"
+#include "ADSB/AdsbCalculations.hpp"
 
-class DeviceBlackboard;
+struct AdsbData;
 struct NMEAInfo;
 
 /**
- * A Utility class for use by the DeviceDescriptor class.
+ * @file
+ * This class supports the calculations necessary to display ADSB targets
+ * on the screen.
  */
-class DeviceDataEditor {
-  DeviceBlackboard &blackboard;
-
-  const std::lock_guard<Mutex> lock;
-
-  NMEAInfo &basic;
+class AdsbComputer 
+  {
+  AdsbCalculations adsb_calculations;
 
 public:
   /**
-   * Ctor.
-   * @param blackboard The blackboard.
-   * @param idx The RealState index.
+   * Calculates location, altitude, average climb speed for each target.
    */
-  DeviceDataEditor(DeviceBlackboard &blackboard,
-                   std::size_t idx) noexcept;
+  void Process(AdsbData &adsb, const AdsbData &last_adsb,
+               const NMEAInfo &basic);
+  };
 
-  /**
-   * Schedule a merge.
-   */
-  void Commit() const noexcept;
-
-  /**
-   * Pointer access.
-   * @return Our NMEAInfo pointer.
-   */
-  NMEAInfo *operator->() const noexcept {
-    return &basic;
-  }
-
-  /**
-   * Dereference access.
-   * @return Our NMEAInfo reference.
-   */
-  NMEAInfo &operator*() const noexcept {
-    return basic;
-  }
-};
+#endif  // XCSOAR_ADSB_COMPUTER_HPP

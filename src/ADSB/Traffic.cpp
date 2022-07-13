@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,40 +21,61 @@ Copyright_License {
 }
 */
 
-#include "FLARM/Traffic.hpp"
+#include "ADSB/Traffic.hpp"
 
-static constexpr const TCHAR* acTypes[16] = {
-  _T("Unknown"), _T("Glider"), _T("TowPlane"),
-    _T("Helicopter"), _T("Parachute"), _T("DropPlane"), _T("HangGlider"),
-    _T("ParaGlider"), _T("PoweredAircraft"), _T("JetAircraft"),
-    _T("FlyingSaucer"), _T("Balloon"), _T("Airship"), _T("UAV"),
-    _T("Unknown"), _T("StaticObject") };
+static constexpr const TCHAR* acTypes[22] =
+  {
+  _T("Unknown"),
+  _T("Light"),
+  _T("Small"),
+  _T("Large"),
+  _T("High Vortex"),
+  _T("Heavy"),
+  _T("Highly Maneuverable"),
+  _T("Rotocraft"),
+  _T("Unassigned"),
+  _T("Glider"),
+  _T("Balloon"),
+  _T("Parachutist"),
+  _T("Ultralight"),
+  _T("Unassigned"),
+  _T("UAV"),
+  _T("SV"),
+  _T("Unassigned"),
+  _T("Emergency Surface Vehicle"),
+  _T("Service Surface Vehicle"),
+  _T("Point Obstacle"),
+  _T("Cluster Obstacle"),
+  _T("Line Obstacle"),
+  };
 
+//------------------------------------------------------------------------------
 const TCHAR *
-FlarmTraffic::GetTypeString(AircraftType type)
-{
-  unsigned index = (unsigned)type;
-  if (index < 16)
+AdsbTraffic::GetTypeString(AircraftType type)
+  {
+  if (type < AircraftType::FENCE)
+    {
+    unsigned index = (unsigned)type;
     return acTypes[index];
+    }
 
   return NULL;
-}
+  }
 
+//------------------------------------------------------------------------------
 void
-FlarmTraffic::Update(const FlarmTraffic &other)
-{
-  alarm_level = other.alarm_level;
-  relative_north = other.relative_north;
-  relative_east = other.relative_east;
-  relative_altitude = other.relative_altitude;
-  track = other.track;
-  track_received = other.track_received;
-  turn_rate = other.turn_rate;
-  turn_rate_received = other.turn_rate_received;
-  speed = other.speed;
-  speed_received = other.speed_received;
-  climb_rate = other.climb_rate;
-  climb_rate_received = other.climb_rate_received;
-  stealth = other.stealth;
-  type = other.type;
-}
+AdsbTraffic::Update(const AdsbTraffic &other)
+  {
+  this->alarm_level = other.alarm_level;
+  this->relative_north = other.relative_north;
+  this->relative_east = other.relative_east;
+  this->relative_altitude = other.relative_altitude;
+  this->track = other.track;
+  this->track_received = other.track_received;
+  this->turn_rate_received = other.turn_rate_received;
+  this->speed = other.speed;
+  this->speed_received = other.speed_received;
+  this->climb_rate = other.climb_rate;
+  this->climb_rate_received = other.climb_rate_received;
+  this->type = other.type;
+  }

@@ -63,6 +63,8 @@ FLARM_SOURCES = \
 	$(DRIVER_SRC_DIR)/FLARM/BinaryProtocol.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/TextProtocol.cpp
 
+ADSB_SOURCES = $(DRIVER_SRC_DIR)/SkyEcho-2/Device.cpp
+
 FLYTEC_SOURCES = \
 	$(DRIVER_SRC_DIR)/Flytec/Register.cpp \
 	$(DRIVER_SRC_DIR)/Flytec/Parser.cpp \
@@ -96,6 +98,7 @@ DRIVER_SOURCES = \
 	$(IMI_SOURCES) \
 	$(LX_SOURCES) \
 	$(FLARM_SOURCES) \
+	$(ADSB_SOURCES) \
 	$(FLYTEC_SOURCES) \
 	$(VEGA_SOURCES) \
 	$(BLUEFLY_SOURCES) \

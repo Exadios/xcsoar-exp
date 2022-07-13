@@ -21,50 +21,12 @@ Copyright_License {
 }
 */
 
-#pragma once
-
-#include "thread/Mutex.hxx"
-
-class DeviceBlackboard;
-struct NMEAInfo;
+#ifndef XCSOAR_DEVICE_DRIVER_SKYECHO_HPP
+#define XCSOAR_DEVICE_DRIVER_SKYECHO_HPP
 
 /**
- * A Utility class for use by the DeviceDescriptor class.
+ * \file
  */
-class DeviceDataEditor {
-  DeviceBlackboard &blackboard;
+extern const struct DeviceRegister skyecho_driver;
 
-  const std::lock_guard<Mutex> lock;
-
-  NMEAInfo &basic;
-
-public:
-  /**
-   * Ctor.
-   * @param blackboard The blackboard.
-   * @param idx The RealState index.
-   */
-  DeviceDataEditor(DeviceBlackboard &blackboard,
-                   std::size_t idx) noexcept;
-
-  /**
-   * Schedule a merge.
-   */
-  void Commit() const noexcept;
-
-  /**
-   * Pointer access.
-   * @return Our NMEAInfo pointer.
-   */
-  NMEAInfo *operator->() const noexcept {
-    return &basic;
-  }
-
-  /**
-   * Dereference access.
-   * @return Our NMEAInfo reference.
-   */
-  NMEAInfo &operator*() const noexcept {
-    return basic;
-  }
-};
+#endif  // XCSOAR_DEVICE_DRIVER_SKYECHO_HPP

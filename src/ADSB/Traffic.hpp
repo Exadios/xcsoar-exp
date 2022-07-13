@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_ADSB_TRAFFIC_HPP
 #define XCSOAR_ADSB_TRAFFIC_HPP
 
-#include "FlarmId.hpp"
+#include "FLARM/FlarmId.hpp"
 #include "Geo/GeoPoint.hpp"
 #include "NMEA/Validity.hpp"
 #include "util/StaticString.hxx"
@@ -36,6 +36,10 @@ Copyright_License {
 #include <type_traits>
 
 #include <tchar.h>
+
+/**
+ * @file
+ */
 
 struct AdsbTraffic
   {
@@ -76,6 +80,7 @@ struct AdsbTraffic
     POINT_OBSTACLE            = 19,
     CLUSTER_OBSTACLE          = 20,
     LINE_OBSTACLE             = 21,
+    FENCE,                          // Number of elements.
     };
 
   /** Has the geographical location been calculated yet? */
@@ -130,7 +135,7 @@ struct AdsbTraffic
   double relative_east;
 
   /** ICAO id of the ADSB target */
-  FlarmId id;
+  unsigned int id;
 
   /** Name of the ADSB target */
   StaticString<8> name;
@@ -168,18 +173,28 @@ struct AdsbTraffic
     name.clear();
     }
 
+  /**
+   * Give the bearing from own ship to target.
+   * @return Target bearing.
+   */
   Angle Bearing() const
     {
     return Angle::FromXY(relative_north, relative_east);
     }
 
+  /**
+   * Is the target powered?
+   * @return If powered then true.
+   */
   bool IsPowered() const
     {
-    return type != AircraftType::GLIDER &&
-           type != AircraftType::HANG_GLIDER &&
-           type != AircraftType::PARA_GLIDER;
+    return type != AircraftType::GLIDER && type != AircraftType::PARACHUTIST;
     }
 
+  /**
+   * Is this a powered but stationary target.
+   * @return If powered and stationary then true.
+   */
   bool IsPassive() const
     {
     return IsPowered() || speed < 4;
@@ -187,7 +202,6 @@ struct AdsbTraffic
 
   /**
    * Clear this object if its data has expired.
-   *
    * @return true if the object is still valid
    */
   bool Refresh(TimeStamp Time) noexcept
@@ -198,7 +212,7 @@ struct AdsbTraffic
 
   static const TCHAR* GetTypeString(AircraftType type);
 
-  void Update(const FlarmTraffic &other);
+  void Update(const AdsbTraffic &other);
   };
 
 static_assert(std::is_trivial<AdsbTraffic>::value, "type is not trivial");

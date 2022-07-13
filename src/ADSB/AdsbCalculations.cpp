@@ -21,50 +21,28 @@ Copyright_License {
 }
 */
 
-#pragma once
+#include "ADSB/AdsbCalculations.hpp"
 
-#include "thread/Mutex.hxx"
-
-class DeviceBlackboard;
-struct NMEAInfo;
-
-/**
- * A Utility class for use by the DeviceDescriptor class.
- */
-class DeviceDataEditor {
-  DeviceBlackboard &blackboard;
-
-  const std::lock_guard<Mutex> lock;
-
-  NMEAInfo &basic;
-
-public:
-  /**
-   * Ctor.
-   * @param blackboard The blackboard.
-   * @param idx The RealState index.
-   */
-  DeviceDataEditor(DeviceBlackboard &blackboard,
-                   std::size_t idx) noexcept;
-
-  /**
-   * Schedule a merge.
-   */
-  void Commit() const noexcept;
-
-  /**
-   * Pointer access.
-   * @return Our NMEAInfo pointer.
-   */
-  NMEAInfo *operator->() const noexcept {
-    return &basic;
+//------------------------------------------------------------------------------
+double
+AdsbCalculations::Average30s(unsigned int id, TimeStamp time,
+                              double altitude) noexcept
+  {
+  ClimbAverageCalculator &item = this->averageCalculatorMap[id];
+  return item.GetAverage(time, altitude, std::chrono::seconds{30});
   }
 
-  /**
-   * Dereference access.
-   * @return Our NMEAInfo reference.
-   */
-  NMEAInfo &operator*() const noexcept {
-    return basic;
+//------------------------------------------------------------------------------
+void
+AdsbCalculations::CleanUp(TimeStamp now) noexcept
+  {
+  constexpr FloatDuration MAX_AGE = std::chrono::minutes{1};
+
+  // Iterate through ClimbAverageCalculators and remove expired ones
+  for (auto it = this->averageCalculatorMap.begin(),
+       it_end = this->averageCalculatorMap.end(); it != it_end;)
+    if (it->second.Expired(now, MAX_AGE))
+      it = this->averageCalculatorMap.erase(it);
+    else
+      ++it;
   }
-};

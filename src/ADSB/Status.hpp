@@ -30,6 +30,7 @@ Copyright_License {
 #include <type_traits>
 
 /**
+ * @file
  * The ADSB operation status.
  */
 struct AdsbStatus
@@ -49,26 +50,34 @@ struct AdsbStatus
   /** GPS status */
   GPSStatus gps;
 
-  /** Alarm level of FLARM (0-3) */
-//  FlarmTraffic::AlarmType alarm_level;
-
   /** Is ADSB information available? */
   Validity available;
 
+  /**
+   * Clear available status.
+   */
   void Clear()
     {
-    available.Clear();
+    this->available.Clear();
     }
 
-  void Complement(const FlarmStatus &add)
+  /**
+   * Merge another status into this one.
+   * @param rhs The status to merge with this one.
+   */
+  void Complement(const AdsbStatus &rhs)
     {
-    if (!available && add.available)
-      *this = add;
+    if (!this->available && rhs.available)
+      *this = rhs;
     }
 
+  /**
+   * Expire a stale entry.
+   * @param clock Now.
+   */
   void Expire(TimeStamp clock) noexcept
     {
-    available.Expire(clock, std::chrono::seconds(10));
+    this->available.Expire(clock, std::chrono::seconds(10));
     }
   };
 

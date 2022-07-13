@@ -21,50 +21,23 @@ Copyright_License {
 }
 */
 
-#pragma once
+#include "List.hpp"
 
-#include "thread/Mutex.hxx"
+//------------------------------------------------------------------------------
+const AdsbTraffic *
+AdsbTrafficList::FindMaximumAlert() const
+  {
+  const AdsbTraffic *alert = NULL;
 
-class DeviceBlackboard;
-struct NMEAInfo;
+  for (const auto &traffic : list)
+    if (traffic.HasAlarm() &&
+        (alert == NULL ||
+         ((unsigned)traffic.alarm_level > (unsigned)alert->alarm_level ||
+          (traffic.alarm_level == alert->alarm_level &&
+           /* if the levels match -> let the distance decide (smaller
+              distance wins) */
+           traffic.distance < alert->distance))))
+      alert = &traffic;
 
-/**
- * A Utility class for use by the DeviceDescriptor class.
- */
-class DeviceDataEditor {
-  DeviceBlackboard &blackboard;
-
-  const std::lock_guard<Mutex> lock;
-
-  NMEAInfo &basic;
-
-public:
-  /**
-   * Ctor.
-   * @param blackboard The blackboard.
-   * @param idx The RealState index.
-   */
-  DeviceDataEditor(DeviceBlackboard &blackboard,
-                   std::size_t idx) noexcept;
-
-  /**
-   * Schedule a merge.
-   */
-  void Commit() const noexcept;
-
-  /**
-   * Pointer access.
-   * @return Our NMEAInfo pointer.
-   */
-  NMEAInfo *operator->() const noexcept {
-    return &basic;
+  return alert;
   }
-
-  /**
-   * Dereference access.
-   * @return Our NMEAInfo reference.
-   */
-  NMEAInfo &operator*() const noexcept {
-    return basic;
-  }
-};

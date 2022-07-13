@@ -21,50 +21,42 @@ Copyright_License {
 }
 */
 
-#pragma once
+#ifndef XCSOAR_ADSB_CALCULATIONS_HPP
+#define XCSOAR_ADSB_CALCULATIONS_HPP
 
-#include "thread/Mutex.hxx"
+#include "Computer/ClimbAverageCalculator.hpp"
 
-class DeviceBlackboard;
-struct NMEAInfo;
+#include <map>
+
+class TimeStamp;
 
 /**
- * A Utility class for use by the DeviceDescriptor class.
+ * @file
+ * A utility class for #AdsbComputer.
  */
-class DeviceDataEditor {
-  DeviceBlackboard &blackboard;
-
-  const std::lock_guard<Mutex> lock;
-
-  NMEAInfo &basic;
+class AdsbCalculations
+  {
+private:
+  typedef std::map<unsigned int, ClimbAverageCalculator> AverageCalculatorMap;
+  AverageCalculatorMap averageCalculatorMap;
 
 public:
   /**
-   * Ctor.
-   * @param blackboard The blackboard.
-   * @param idx The RealState index.
+   * Compute the 30 seconds average climb rate of a particular target.
+   * @param adsbId The id of the target.
+   * @param curTime The time now.
+   * @param curAltitude The current altitude.
+   * @return The average climb rate.
    */
-  DeviceDataEditor(DeviceBlackboard &blackboard,
-                   std::size_t idx) noexcept;
+  double Average30s(unsigned int adsbId,
+                    TimeStamp curTime,
+                    double curAltitude) noexcept;
 
   /**
-   * Schedule a merge.
+   * Remove stale targets.
+   * @param now The time now.
    */
-  void Commit() const noexcept;
+  void CleanUp(TimeStamp now) noexcept;
+  };
 
-  /**
-   * Pointer access.
-   * @return Our NMEAInfo pointer.
-   */
-  NMEAInfo *operator->() const noexcept {
-    return &basic;
-  }
-
-  /**
-   * Dereference access.
-   * @return Our NMEAInfo reference.
-   */
-  NMEAInfo &operator*() const noexcept {
-    return basic;
-  }
-};
+#endif  // XCSOAR_ADSB_CALCULATIONS_HPP
