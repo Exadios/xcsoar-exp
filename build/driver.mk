@@ -63,7 +63,7 @@ FLARM_SOURCES = \
 	$(DRIVER_SRC_DIR)/FLARM/BinaryProtocol.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/TextProtocol.cpp
 
-ADSB_SOURCES = $(DRIVER_SRC_DIR)/SkyEcho-2/Device.cpp
+ADSB_SOURCES = $(DRIVER_SRC_DIR)/SkyEcho-2/SkyEchoDevice.cpp
 
 FLYTEC_SOURCES = \
 	$(DRIVER_SRC_DIR)/Flytec/Register.cpp \

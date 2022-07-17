@@ -191,13 +191,6 @@ class SkyEchoDevice: public AbstractDevice
      std::vector<std::span<const std::byte> >CutPacket(std::span<const std::byte> s) const;
 
     /**
-     * Remove the byte stuffing.
-     * @param s The input vector which has been byte stuffed by the transmitter.
-     * @return The result with the byte stuffing removed and resolved.
-     */
-    std::span<const std::byte> Destuff(std::span<const std::byte> s);
-
-    /**
      * Compute the signed value of a raw unsigned integer.
      * @param x The raw input.
      * @param n the number of significant bits of x.

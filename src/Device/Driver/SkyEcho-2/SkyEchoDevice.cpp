@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-#include "Device.hpp"
+#include "SkyEchoDevice.hpp"
 #include "Device/Port/Port.hpp"
 #include "util/ConvertString.hpp"
 #include "util/StaticString.hxx"
@@ -31,9 +31,6 @@ Copyright_License {
 #include "util/StringCompare.hxx"
 #include "NMEA/Info.hpp"
 #include "NMEA/Checksum.hpp"
-#include "ADSB/Traffic.hpp"
-#include "ADSB/List.hpp"
-#include "ADSB/Traffic.hpp"
 #include "Units/System.hpp"
 
 #ifndef NDEBUG
@@ -153,28 +150,6 @@ SkyEchoDevice::CutPacket(std::span<const std::byte> s) const
       return r;
     }
   return r;
-  }
-
-//------------------------------------------------------------------------------
-std::span<const std::byte>
-SkyEchoDevice::Destuff(std::span<const std::byte> s)
-  {
-  std::vector<std::byte> wv;
-
-  for (unsigned int i = 0; i < s.size(); i++)
-    {
-    if (s[i] == std::byte(0x7d))
-      {
-      i++;
-      assert(i < s.size());
-      wv.push_back(s[i] ^ std::byte(0x20));
-      }
-    else
-      {
-      wv.push_back(s[i]);
-      }
-    }
-  return wv;
   }
 
 //------------------------------------------------------------------------------
