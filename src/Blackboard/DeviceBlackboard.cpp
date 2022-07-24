@@ -29,6 +29,8 @@ Copyright_License {
 
 #include <algorithm>
 
+#include "LogFile.hpp"
+
 /**
  * Initializes the DeviceBlackboard
  */

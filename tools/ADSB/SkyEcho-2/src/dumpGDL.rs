@@ -31,7 +31,7 @@ use std::time::Duration;
 fn main() -> std::io::Result<()>
   {
     {
-    let socket = UdpSocket::bind("192.168.4.2:4000")?;
+    let socket = UdpSocket::bind("0.0.0.0:4000")?;
     socket.set_read_timeout(Some(Duration::new(20, 0))).unwrap();
 
     loop
@@ -43,7 +43,7 @@ fn main() -> std::io::Result<()>
       let t = buf[1];
       match (t, n)
         {
-        (0, (7, _)) => println!("Heartbeat with correct length"),
+        (0, (11, _)) => println!("Heartbeat with correct length"),
         (0, ..) => println!("Heartbeat with incorrect length {:?}", n),
         (7, (436, _)) => println!("Uplink message with correct length"),
         (7, ..) => println!("Uplink message with incorrect length"),
@@ -57,8 +57,6 @@ fn main() -> std::io::Result<()>
         (11, ..) => println!("Altitude with incorrect length"),
         _ => println!("Unknown type {}", t),
         }
-
-      break;
       }
     } // the socket is closed here
 

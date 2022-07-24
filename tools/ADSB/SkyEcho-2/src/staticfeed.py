@@ -3,7 +3,7 @@
 import socket, sched, time
 
 localIP = "127.0.0.1"
-localPort = 20001
+localPort = 4000
 
 UDPSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
@@ -22,15 +22,15 @@ bytearray(b'\x7e\x14\x00\x7c\x17\x61\xe8\x79\x08\x54\x8d\x9f\x4b\x09\x99\x11\x30
 s = sched.scheduler(time.time, time.sleep)
 
 def send_target_heartbeat_ownship_altitude(a = 'buffer'):
-    UDPSocket.sendto(target_heartbeat_ownship_altitude, (localIP, 4000))
+    UDPSocket.sendto(target_heartbeat_ownship_altitude, (localIP, localPort))
 def send_target_target_ahrs(a = 'buffer'):
-    UDPSocket.sendto(target_target_ahrs, (localIP, 4000))
+    UDPSocket.sendto(target_target_ahrs, (localIP, localPort))
 def send_heartbeat_ownship_altitude(a = 'buffer'):
-    UDPSocket.sendto(heartbeat_ownship_altitude, (localIP, 4000))
+    UDPSocket.sendto(heartbeat_ownship_altitude, (localIP, localPort))
 def send_target_ahrs(a = 'buffer'):
-    UDPSocket.sendto(target_ahrs, (localIP, 4000))
+    UDPSocket.sendto(target_ahrs, (localIP, localPort))
 def send_target(a = 'buffer'):
-    UDPSocket.sendto(target, (localIP, 4000))
+    UDPSocket.sendto(target, (localIP, localPort))
 
 def runner():
     t0 = time.time()

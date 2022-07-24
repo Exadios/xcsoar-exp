@@ -35,6 +35,9 @@ AdsbComputer::Process(AdsbData &adsb,
                       const AdsbData &last_adsb,
                       const NMEAInfo &basic)
   {
+#ifndef NDEBUG
+  LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
 
   // Cleanup old calculation instances
   if (basic.time_available)
@@ -49,6 +52,10 @@ AdsbComputer::Process(AdsbData &adsb,
 
   if (basic.location_available)
     {
+#ifndef NDEBUG
+    LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
+
     // Pre-calculate relative east and north projection to lat / lon
     // for Location calculations of each target
     constexpr Angle delta_lat = Angle::Degrees(0.01);

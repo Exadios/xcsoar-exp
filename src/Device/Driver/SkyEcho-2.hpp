@@ -26,6 +26,7 @@ Copyright_License {
 
 /**
  * \file
+ * This decl registers the SkyEcho 2 driver in the XCSoar system.
  */
 extern const struct DeviceRegister skyecho_driver;
 

@@ -55,13 +55,8 @@ PrintHex(std::span<const std::byte> s)
 
 //------------------------------------------------------------------------------
 void
-/**
- * Ctor.
- * @param port The input port associated with this device.
- */
 SkyEchoDevice::LinkTimeout()
   {
-  mode = Mode::UNKNOWN;
   }
 
 //------------------------------------------------------------------------------
@@ -168,6 +163,8 @@ SkyEchoDevice::TwosComplement(unsigned int x, int n)
 void
 SkyEchoDevice::Traffic(std::span<const std::byte> s, TrafficStruct &t)
   {
+  assert(((MessageID)s[1] == MessageID::OWNSHIPREPORT) |
+         ((MessageID)s[1] == MessageID::TRAFFICREPORT));
   t.traffic_alert = (((unsigned char)s[2] & 0xf0 >> 4) == 1) ? true : false;
   t.addr_type     = (unsigned char )s[2] & 0x0f;
   t.address       = ((unsigned int)s[3] << 16) +
@@ -195,7 +192,8 @@ SkyEchoDevice::Traffic(std::span<const std::byte> s, TrafficStruct &t)
   t.track         = (short)this->TwosComplement((unsigned int)s[18], 8);
   t.emitter       = (unsigned int)s[19];
   t.priority      = ((unsigned int)s[28] & 0xf0) >> 4;
-  strncpy(t.call_sign, (const char *)s.data()[20], 8);
+  t.call_sign[0] = '\0';
+  strncpy(t.call_sign, (const char *)&s[20], 8);
   }
 
 //------------------------------------------------------------------------------
@@ -326,7 +324,13 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
       case MessageID::OWNSHIPREPORT:
         {
         if (sd.size() != 28 + 4)
+          {
           break;
+#ifndef NDEBUG
+#include "LogFile.hpp"
+          LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
+          }
 
         this->Traffic(sd, this->own_ship);
   

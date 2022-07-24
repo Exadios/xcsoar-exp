@@ -53,6 +53,10 @@ MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
 void
 MergeThread::Process()
 {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
   assert(!IsDefined() || IsInside());
 
   device_blackboard.Merge();
