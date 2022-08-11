@@ -1340,6 +1340,11 @@ DeviceDescriptor::PortError(const char *msg) noexcept
     port_listener->PortError(msg);
 }
 
+/**
+ * Temporarily substitute the binary stuff for some nav stuff.
+ * \todo Allow binary nav instruments and binary non nav stuff.
+ */
+#if 0
 bool
 DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
 {
@@ -1350,11 +1355,17 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
   if (driver != nullptr && device != nullptr && driver->UsesRawData()) {
     auto basic = device_blackboard->LockGetDeviceDataUpdateClock(index);
 
+    basic.count = 0;
+
     const ExternalSettings old_settings = basic.settings;
 
     /* call Device::DataReceived() without holding
        DeviceBlackboard::mutex to avoid blocking all other threads */
     if (device->DataReceived(s, basic)) {
+#ifndef NDEBUG
+#include <stdio.h>
+      printf("%s, %d: count = %d\n", __FILE__, __LINE__, basic.count);
+#endif
       if (!config.sync_from_device)
         basic.settings = old_settings;
 
@@ -1369,6 +1380,23 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
 
   return true;
 }
+#else
+bool
+DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
+  {
+  const auto e = BeginEdit();
+  e->UpdateClock();     // Update the NMEAInfo clock
+  device->DataReceived(s, *e);
+  e->alive.Update(e->clock);
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d: %s", __FILE__, __LINE__, e->adsb.IsDetected() ? "true" : "false");
+#endif
+  e.Commit();           // Schedule a merge
+
+  return true;
+  }
+#endif
 
 bool
 DeviceDescriptor::LineReceived(const char *line) noexcept
@@ -1380,9 +1408,9 @@ DeviceDescriptor::LineReceived(const char *line) noexcept
     dispatcher->LineReceived(line);
 
   const auto e = BeginEdit();
-  e->UpdateClock();
+  e->UpdateClock();     // Update the NMEAInfo clock
   ParseNMEA(line, *e);
-  e.Commit();
+  e.Commit();           // Schedule a merge
 
   return true;
 }

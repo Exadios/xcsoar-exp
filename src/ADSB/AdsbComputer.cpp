@@ -35,8 +35,10 @@ AdsbComputer::Process(AdsbData &adsb,
                       const AdsbData &last_adsb,
                       const NMEAInfo &basic)
   {
+#if 0
 #ifndef NDEBUG
   LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
 #endif
 
   // Cleanup old calculation instances
@@ -45,15 +47,31 @@ AdsbComputer::Process(AdsbData &adsb,
 
   // if (ADSB data is available)
   if (!adsb.IsDetected())
+    {
+#if 0
+#ifndef NDEBUG
+    LogFormat("%s, %d", __FILE__, __LINE__);
+    if (adsb.status.available)
+      LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
+#endif
     return;
+    }
 
+#if 0
+#ifndef NDEBUG
+    LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
+#endif
   double latitude_to_north(0);
   double longitude_to_east(0);
 
   if (basic.location_available)
     {
+#if 0
 #ifndef NDEBUG
     LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
 #endif
 
     // Pre-calculate relative east and north projection to lat / lon

@@ -228,6 +228,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
  
   auto pkts = this->CutPacket(s);
 
+  bool rtn = false;
   for (auto pkt = pkts.begin(); pkt != pkts.end(); pkt++)
     {
     std::span<const std::byte> cs = *pkt;
@@ -237,7 +238,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
 #ifndef NDEBUG
       LogFormat("%s, %d\n", __FILE__, __LINE__);
 #endif
-      return false; // Failed basic structural tests.
+      break; // Failed basic structural tests.
       }
 
     /*
@@ -272,7 +273,13 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
       case MessageID::HEARTBEAT:
         {
         if (sd.size() != 7 + 4)
+          {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+          LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
           break;
+          }
 
         auto data = sd.data();
         bool go = false;
@@ -293,22 +300,28 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                                AdsbStatus::GPSStatus::NO_GO;
         if (go == false)
           this->own_ship.Reset(); // Clear accumulated position.
+        info.adsb.status.available.Update(info.clock);
+         
+        info.alive.Update(info.clock);
+        rtn = true;
         break;
         }
       case MessageID::INITIALIZATION:
         {
-
+        info.alive.Update(info.clock);
         break;
         }
       case MessageID::UPLINK:
         {
-
-        break;    // Drop UAT uplink data.
+        info.alive.Update(info.clock);
+        break;
         }
       case MessageID::ALTITUDEQFE:
         {
         if (sd.size() != 3 + 4)
+          {
           break;
+          }
       
         auto data = sd.data();
         unsigned int qfe = (unsigned int)data[2] * 256 + (unsigned int)data[3];
@@ -317,19 +330,20 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
 #ifndef NDEBUG
           LogFormat("%s, %d\n", __FILE__, __LINE__);
 #endif
-          return false;
+          break;
           }
+        info.alive.Update(info.clock);
         break;
         }
       case MessageID::OWNSHIPREPORT:
         {
         if (sd.size() != 28 + 4)
           {
-          break;
 #ifndef NDEBUG
 #include "LogFile.hpp"
           LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
+          break;
           }
 
         this->Traffic(sd, this->own_ship);
@@ -341,18 +355,27 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                    Angle::Degrees((double)this->own_ship.lambda));
         info.location = p;
         info.gps.real = true;
-        info.alive.Update(info.clock);
-        info.track = Angle::Degrees((double)own_ship.track);
-        info.ground_speed = (double)own_ship.horiz_vel;
+        info.track = Angle::Degrees((double)this->own_ship.track);
+        info.ground_speed = (double)this->own_ship.horiz_vel;
         info.track_available.Update(info.clock);
         info.ground_speed_available.Update(info.clock);
+
+        info.adsb.status.available.Update(info.clock);
+        info.alive.Update(info.clock);
+        if((this->own_ship.nav_accuracy > 6) &&
+           (this->own_ship.nav_integrity > 8))
+          info.location_available.Update(info.clock);
+        else
+          info.location_available.Clear();
 
         break;
         }
       case MessageID::OWNSHIPALTITUDE:
         {
         if (sd.size() != 5 + 4)
+          {
           break;
+          }
 
         auto data = sd.data();
         info.gps_altitude = Units::ToSysUnit((double)((unsigned int)data[2]  * 256 +
@@ -363,12 +386,15 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                  figure of merit in table 16 of the GDL 90 document are all
                  about.
         */
+        info.alive.Update(info.clock);
         break;
         }
       case MessageID::TRAFFICREPORT:
         {
         if (sd.size() != 28 + 4)
+          {
           break;
+          }
 
         this->Traffic(sd, this->traffic);
         AdsbTraffic report;
@@ -410,18 +436,23 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           }
         slot->valid.Update(info.clock); // The target is valid now.
         slot->Update(report);
+
+        info.alive.Update(info.clock);
         break;
         }
       case MessageID::BASICREPORT:
         {
+        info.alive.Update(info.clock);
         break;
         }
       case MessageID::LONGREPORT:
         {
+        info.alive.Update(info.clock);
         break;
         }
       case MessageID::AHRS:
         {
+        info.alive.Update(info.clock);
         break;
         }
       default:  // Unknown packet type.
@@ -431,7 +462,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
       }
     }
   
-  return true;
+  return rtn;
   }
 
 //------------------------------------------------------------------------------

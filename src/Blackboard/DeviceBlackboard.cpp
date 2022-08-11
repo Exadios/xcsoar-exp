@@ -36,6 +36,11 @@ Copyright_License {
  */
 DeviceBlackboard::DeviceBlackboard()
 {
+#ifndef NDEBUG
+#include <stdio.h>
+  printf("%s, %d\n", __FILE__, __LINE__);
+#endif
+  
   // Clear the gps_info and calculated_info
   gps_info.Reset();
   calculated_info.Reset();
@@ -235,6 +240,10 @@ DeviceBlackboard::Merge()
     if (!per_device_data[i].alive)
       continue;
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+    LogFormat("%s, %d: %u", __FILE__, __LINE__, i);
+#endif
     per_device_data[i].UpdateClock();
     per_device_data[i].Expire();
     real_data.Complement(per_device_data[i]);
@@ -255,6 +264,12 @@ DeviceBlackboard::Merge()
     simulator_data.Expire();
     basic = simulator_data;
   } else {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+    LogFormat("%s, %d: %s", __FILE__, __LINE__, (real_data.adsb.IsDetected()) ? "true" : "false");
+    LogFormat("%s, %d: %s", __FILE__, __LINE__, (real_data.adsb.status.available) ? "true" : "false");
+    LogFormat("%s, %d: %s", __FILE__, __LINE__, (real_data.adsb.traffic.IsEmpty()) ? "true" : "false");
+#endif
     basic = real_data;
   }
 }

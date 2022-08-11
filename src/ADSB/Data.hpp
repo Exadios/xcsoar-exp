@@ -33,8 +33,17 @@ Copyright_License {
  * @file
  * A container for all data received by an ADSB receiver.
  */
+
+/**
+ * A container for all data received by an ADSB receiver.
+ */
+
 struct AdsbData
   {
+  /**
+   * The status of the ADS-B system. Whether it has been detected and is GO
+   * and so on.
+   */
   AdsbStatus status;
 
   /**

@@ -59,8 +59,15 @@ struct MoreData : public NMEAInfo {
 
   Validity brutto_vario_available;
 
+  /**
+   * Resets this class and the base NMEAInfo class.
+   */
   void Reset();
 
+  /**
+   * Any altitude.
+   * @return If either baro or gps altitude is available then true.
+   */
   bool NavAltitudeAvailable() const {
     return baro_altitude_available || gps_altitude_available;
   }

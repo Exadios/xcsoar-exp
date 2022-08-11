@@ -53,9 +53,11 @@ MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
 void
 MergeThread::Process()
 {
+#if 0
 #ifndef NDEBUG
 #include "LogFile.hpp"
   LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
 #endif
   assert(!IsDefined() || IsInside());
 
@@ -69,6 +71,13 @@ MergeThread::Process()
   computer.Compute(device_blackboard.SetMoreData(), last_any, last_fix,
                    device_blackboard.Calculated());
 
+#if 0
+  if (!device_blackboard.SetBasic().adsb.status.available)
+#ifndef NDEBUG
+#include "LogFile.hpp"
+      LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
+#endif
   flarm_computer.Process(device_blackboard.SetBasic().flarm,
                          last_fix.flarm, basic);
   adsb_computer.Process(device_blackboard.SetBasic().adsb,

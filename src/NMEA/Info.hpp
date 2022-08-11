@@ -360,6 +360,8 @@ struct NMEAInfo {
   FlarmData flarm;
   AdsbData  adsb;
 
+  int count;  // Temporary indicator.
+
 #ifdef ANDROID
   GliderLinkData glink_data;
 #endif
