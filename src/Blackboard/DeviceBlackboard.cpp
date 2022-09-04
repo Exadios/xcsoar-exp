@@ -233,27 +233,54 @@ DeviceBlackboard::ScheduleMerge()
 void
 DeviceBlackboard::Merge()
 {
+  /*
+   * The system wide DeviceBlackboard object is pointed to by
+   * ::device_blackboard.
+   * First merge the data from the devices present in the
+   * ::device_blackboard \ref per_device_data into
+   * ::device_blackboard \ref real_data.
+   * Then, if ::device_blackboard \ref replay_data is alive,
+   * copy that data to ::device_blackboard \ref gps_info.
+   * If ::device_blackboard \ref simulator_data is alive 
+   * then copy that data to ::device_blackboard \ref gps_info.
+   * Otherwise copy the \ref real_data gathered above to \ref gps_info.
+   *
+   * With respect to the semantics of the \ref real_data being processed
+   * the merge from the \per_device_info is done from lowest configured 
+   * device to the highest using NMEAInfo::Complement. This has the effect
+   * of selecting the value of each domain from the lowest number device
+   * for further processing.
+   */
+
+  /*
+   * The output of this function is ::device_blackboard->gps_info.
+   */
   NMEAInfo &basic = SetBasic();
 
-  real_data.Reset();
+  real_data.Reset();  // Start with no data in real_data.
   for (unsigned i = 0; i < unsigned(NUMDEV); ++i) {
     if (!per_device_data[i].alive)
       continue;
 
-#ifndef NDEBUG
-#include "LogFile.hpp"
-    LogFormat("%s, %d: %u", __FILE__, __LINE__, i);
-#endif
+    /*
+     * Merge input data to real_data. By the semantics of NMEAInfo::Complement
+     * each variable of a domain is taken from the first available device
+     * that provides variables of that domain.
+     */
     per_device_data[i].UpdateClock();
     per_device_data[i].Expire();
-    real_data.Complement(per_device_data[i]);
+    real_data.Complement(per_device_data[i]); 
   }
 
   real_clock.Normalise(real_data);
 
+  /*
+   * Select one of replay, simulator or real data to pass on for further
+   * processing.
+   */
   if (replay_data.alive) {
     replay_data.Expire();
-    basic = replay_data;
+    basic = replay_data;    // Copy replay_data to gps_info
 
     /* WrapClock operates on the replay_data copy to avoid feeding
        back BrokenDate modifications to the NMEA parser, as this would
@@ -262,15 +289,9 @@ DeviceBlackboard::Merge()
   } else if (simulator_data.alive) {
     simulator_data.UpdateClock();
     simulator_data.Expire();
-    basic = simulator_data;
+    basic = simulator_data;   // Copy simulator_data to gps_info
   } else {
-#ifndef NDEBUG
-#include "LogFile.hpp"
-    LogFormat("%s, %d: %s", __FILE__, __LINE__, (real_data.adsb.IsDetected()) ? "true" : "false");
-    LogFormat("%s, %d: %s", __FILE__, __LINE__, (real_data.adsb.status.available) ? "true" : "false");
-    LogFormat("%s, %d: %s", __FILE__, __LINE__, (real_data.adsb.traffic.IsEmpty()) ? "true" : "false");
-#endif
-    basic = real_data;
+    basic = real_data;    // Copy real_data to gps_info
   }
 }
 

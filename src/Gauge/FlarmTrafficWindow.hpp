@@ -124,7 +124,9 @@ protected:
 
   void UpdateSelector(FlarmId id, PixelPoint pt) noexcept;
   void UpdateWarnings() noexcept;
-  void Update(Angle new_direction, const TrafficList &new_data,
+  void Update(Angle new_direction,
+              const TrafficList &new_flarm_data,
+              const AdsbTrafficList &new_adsb_data,
               const TeamCodeSettings &new_settings) noexcept;
   void PaintRadarNoTraffic(Canvas &canvas) const noexcept;
   void PaintRadarTarget(Canvas &canvas, const FlarmTraffic &traffic,

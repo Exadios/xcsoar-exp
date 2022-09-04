@@ -90,6 +90,10 @@ MergeThread::Tick() noexcept
 {
   bool gps_updated, calculated_updated;
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d", __FILE__, __LINE__);   
+#endif
 #ifdef HAVE_PCM_PLAYER
   bool vario_available;
   double vario;
@@ -108,6 +112,7 @@ MergeThread::Tick() noexcept
 
     /* trigger update if gps has become available or dropped out */
     gps_updated = last_any.location_available != basic.location_available;
+
 
     /* trigger a redraw when the connection was just lost, to show the
        new state; when no GPS is connected, no other entity triggers
@@ -138,8 +143,13 @@ MergeThread::Tick() noexcept
 #endif
 
   if (gps_updated)
+    {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+    LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
     TriggerGPSUpdate();
-
+    }
   if (calculated_updated)
     TriggerCalculatedUpdate();
 

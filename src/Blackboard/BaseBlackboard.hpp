@@ -28,7 +28,8 @@ Copyright_License {
 #include "NMEA/Derived.hpp"
 
 /**
- * Base class for blackboards, providing read access to NMEA_INFO and DERIVED_INFO
+ * Base class for blackboards, providing read access to \ref NMEAInfo and
+ * \ref DerivedInfo
  */
 class BaseBlackboard
 {
@@ -37,11 +38,18 @@ protected:
   DerivedInfo calculated_info;
 
 public:
-  // all blackboards can be read as const
+  /**
+   * Give a reference to this blackboard's GPS data (i.e. input data)
+   * @return A const reference to the input data.
+   */
   constexpr const MoreData &Basic() const noexcept {
     return gps_info;
   }
 
+  /**
+   * Give a reference to this blackboard's calculated data.
+   * @return A const reference to the calculated_data.
+   */
   constexpr const DerivedInfo& Calculated() const noexcept {
     return calculated_info;
   }

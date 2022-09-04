@@ -785,6 +785,7 @@ DeviceDescriptor::ParseNMEA(const char *line, NMEAInfo &info) noexcept
   info.settings = settings_received;
 
   if (device != nullptr && device->ParseNMEA(line, info)) {
+    /* Device specific parsing. */
     info.alive.Update(info.clock);
 
     if (!config.sync_from_device)
@@ -1343,6 +1344,7 @@ DeviceDescriptor::PortError(const char *msg) noexcept
 /**
  * Temporarily substitute the binary stuff for some nav stuff.
  * \todo Allow binary nav instruments and binary non nav stuff.
+ * pfb debug
  */
 #if 0
 bool
@@ -1381,6 +1383,7 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
   return true;
 }
 #else
+#if 0
 bool
 DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
   {
@@ -1390,12 +1393,28 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
   e->alive.Update(e->clock);
 #ifndef NDEBUG
 #include "LogFile.hpp"
-  LogFormat("%s, %d: %s", __FILE__, __LINE__, e->adsb.IsDetected() ? "true" : "false");
+  LogFormat("%s, %d: %s", __FILE__, __LINE__, e->location_available ? "true" : "false");
+  LogFormat("%s, %d: %s", __FILE__, __LINE__, ::device_blackboard->Basic().location_available ? "true" : "false");
+  LogFormat("%s, %d: %s", __FILE__, __LINE__, ::device_blackboard->PerDeviceData(index).location_available ? "true" : "false");
 #endif
   e.Commit();           // Schedule a merge
 
   return true;
   }
+#else
+bool
+DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
+  {
+  NMEAInfo& basic(::device_blackboard->SetRealState(index));
+  basic.UpdateClock();
+  ::device_blackboard->mutex.lock();
+  device->DataReceived(s, ::device_blackboard->SetRealState(index));
+  basic.alive.Update(basic.clock);
+  ::device_blackboard->ScheduleMerge();
+  ::device_blackboard->mutex.unlock();
+  return true;
+  }
+#endif
 #endif
 
 bool

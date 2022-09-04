@@ -221,6 +221,13 @@ protected:
   virtual bool OnKeyDown(unsigned key_code) override;
   virtual void OnCancelMode() override;
   virtual void OnPaint(Canvas &canvas) override;
+
+  /**
+   * Render the canvas.
+   * If the rendering uses OpenGL the switch to the Draw Thread first and
+   * return to this thread last.
+   * @param canvas The drawing surface.
+   */
   virtual void OnPaintBuffer(Canvas& canvas) noexcept override;
 
   /**

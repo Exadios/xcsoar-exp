@@ -691,6 +691,10 @@ MainWindow::RunTimer() noexcept
 void
 MainWindow::OnGpsNotify() noexcept
 {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
   UIReceiveSensorData();
 }
 

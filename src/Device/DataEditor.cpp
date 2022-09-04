@@ -34,7 +34,7 @@ DeviceDataEditor::Commit() const noexcept
 {
 #ifndef NDEBUG
 #include "LogFile.hpp"
-  LogFormat("%s, %d: %s", __FILE__, __LINE__, (blackboard.RealState().adsb.IsDetected() ? "true" : "false"));
+  //LogFormat("%s, %d: %s", __FILE__, __LINE__, (blackboard.RealState().adsb.IsDetected() ? "true" : "false"));
 #endif
   blackboard.ScheduleMerge();
 }

@@ -48,11 +48,11 @@ AdsbComputer::Process(AdsbData &adsb,
   // if (ADSB data is available)
   if (!adsb.IsDetected())
     {
-#if 0
+#if 1
 #ifndef NDEBUG
-    LogFormat("%s, %d", __FILE__, __LINE__);
+    //LogFormat("%s, %d", __FILE__, __LINE__);
     if (adsb.status.available)
-      LogFormat("%s, %d", __FILE__, __LINE__);
+      //LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
 #endif
     return;
@@ -68,9 +68,9 @@ AdsbComputer::Process(AdsbData &adsb,
 
   if (basic.location_available)
     {
-#if 0
+#if 1
 #ifndef NDEBUG
-    LogFormat("%s, %d", __FILE__, __LINE__);
+    //LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
 #endif
 
@@ -98,7 +98,7 @@ AdsbComputer::Process(AdsbData &adsb,
     }
 
 #ifndef NDEBUG
-  LogFormat("%s, %d: %lu\n", __FILE__, __LINE__, adsb.traffic.list.size());
+  //LogFormat("%s, %d: %lu\n", __FILE__, __LINE__, adsb.traffic.list.size());
 #endif
 
   // for each item in traffic

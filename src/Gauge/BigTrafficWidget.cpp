@@ -65,7 +65,9 @@ protected:
   void CalcAutoZoom();
 
 public:
-  void Update(Angle new_direction, const TrafficList &new_data,
+  void Update(Angle new_direction,
+              const TrafficList &new_flarm_data,
+              const AdsbTrafficList &new_adsb_data,
               const TeamCodeSettings &new_settings);
   void UpdateTaskDirection(bool show_task_direction, Angle bearing);
 
@@ -215,10 +217,15 @@ FlarmTrafficControl::CalcAutoZoom()
 }
 
 void
-FlarmTrafficControl::Update(Angle new_direction, const TrafficList &new_data,
+FlarmTrafficControl::Update(Angle new_direction,
+                            const TrafficList &new_flarm_data,
+                            const AdsbTrafficList &new_adsb_data,
                             const TeamCodeSettings &new_settings)
 {
-  FlarmTrafficWindow::Update(new_direction, new_data, new_settings);
+  FlarmTrafficWindow::Update(new_direction,
+                             new_flarm_data,
+                             new_adsb_data,
+                             new_settings);
 
   if (enable_auto_zoom || WarningMode())
     CalcAutoZoom();
@@ -753,6 +760,10 @@ TrafficWidget::ToggleNorthUp() noexcept
 void
 TrafficWidget::Update() noexcept
 {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
   const NMEAInfo &basic = CommonInterface::Basic();
   const DerivedInfo &calculated = CommonInterface::Calculated();
 
@@ -769,8 +780,9 @@ TrafficWidget::Update() noexcept
   }
 
   windows->view.Update(basic.track,
-               basic.flarm.traffic,
-               CommonInterface::GetComputerSettings().team_code);
+                       basic.flarm.traffic,
+                       basic.adsb.traffic,
+                       CommonInterface::GetComputerSettings().team_code);
 
   windows->view.UpdateTaskDirection(calculated.task_stats.task_valid &&
                             calculated.task_stats.current_leg.solution_remaining.IsOk(),

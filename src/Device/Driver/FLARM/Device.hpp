@@ -99,6 +99,14 @@ public:
   /* virtual methods from class Device */
   void LinkTimeout() override;
   bool EnableNMEA(OperationEnvironment &env) override;
+
+  /**
+   * Parse the Flarm "PFLAC" NMEA record.
+   * @param line The pointer to the const NMEA record.
+   * @param info A writable reference to the NMEA info class.
+   * @return If line is a "PFLAC" record and it is parsed correctly 
+   *         then return true.
+   */
   bool ParseNMEA(const char *line, struct NMEAInfo &info) override;
 
   bool Declare(const Declaration &declaration, const Waypoint *home,

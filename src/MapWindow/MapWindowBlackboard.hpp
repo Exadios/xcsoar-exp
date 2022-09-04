@@ -43,6 +43,10 @@ class MapWindowBlackboard:
   UIState ui_state;
 
 protected:
+  /**
+   * Give a reference to the GPS data (i.e. the input data)
+   * @return A const reference to the GPS data.
+   */
   gcc_const
   const MoreData &Basic() const {
     assert(InDrawThread());
@@ -50,6 +54,10 @@ protected:
     return BaseBlackboard::Basic();
   }
 
+  /**
+   * Give a reference to the calculated data.
+   * @return A const reference to the calculated data.
+   */
   gcc_const
   const DerivedInfo &Calculated() const {
     assert(InDrawThread());
@@ -78,6 +86,11 @@ protected:
     return ui_state;
   }
 
+  /**
+   * Set internal variables.
+   * @param nmea_info Input data from a device. Sets gps_data.
+   * @param derived_info Calculated data. Sets calculated_info.
+   */
   void ReadBlackboard(const MoreData &nmea_info,
                       const DerivedInfo &derived_info);
   void ReadComputerSettings(const ComputerSettings &settings);

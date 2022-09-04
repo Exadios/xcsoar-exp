@@ -76,7 +76,7 @@ public:
    *             the traffic list.
    */
   bool DataReceived(std::span<const std::byte> s,
-                    struct NMEAInfo &info) noexcept;
+                    struct NMEAInfo &info) noexcept override;
 
   /* virtual methods from class Device */
   void LinkTimeout() override;

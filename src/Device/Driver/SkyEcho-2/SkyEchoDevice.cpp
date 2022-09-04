@@ -39,6 +39,7 @@ Copyright_License {
 
 #include <vector>
 #include <span>
+#include <math.h>
 
 //------------------------------------------------------------------------------
 #ifndef DEBUG
@@ -151,12 +152,26 @@ SkyEchoDevice::CutPacket(std::span<const std::byte> s) const
 int
 SkyEchoDevice::TwosComplement(unsigned int x, int n)
   {
+#if 0
   int s = 0;
-  unsigned int sign = 2 ^ (n - 1);
+  unsigned int sign = (1 << n);
   unsigned int mask = sign - 1;
   s = mask & x;
   s -= sign & x;
   return s;
+#else
+  unsigned int sign = 1 << (n - 1);
+ 
+  if ((x & sign) != 0)
+    {
+    unsigned int mask = sign - 1;
+    unsigned int acc  = ~mask;
+    acc |= x;
+    return (int)acc;
+    }
+  else
+    return (int)x;
+#endif
   }
 
 //------------------------------------------------------------------------------
@@ -268,6 +283,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
       return false;   // FCS bad.
       }
  
+    info.alive.Update(info.clock);
     switch ((MessageID)sd[1])
       {
       case MessageID::HEARTBEAT:
@@ -302,18 +318,15 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           this->own_ship.Reset(); // Clear accumulated position.
         info.adsb.status.available.Update(info.clock);
          
-        info.alive.Update(info.clock);
         rtn = true;
         break;
         }
       case MessageID::INITIALIZATION:
         {
-        info.alive.Update(info.clock);
         break;
         }
       case MessageID::UPLINK:
         {
-        info.alive.Update(info.clock);
         break;
         }
       case MessageID::ALTITUDEQFE:
@@ -332,7 +345,6 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
 #endif
           break;
           }
-        info.alive.Update(info.clock);
         break;
         }
       case MessageID::OWNSHIPREPORT:
@@ -349,10 +361,8 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         this->Traffic(sd, this->own_ship);
   
         FloatDuration t((double)this->time_of_day);
-        info.clock = TimeStamp(t);
-        info.alive.Update(info.clock);
-        GeoPoint p(Angle::Degrees((double)this->own_ship.phi),
-                   Angle::Degrees((double)this->own_ship.lambda));
+        GeoPoint p(Angle::Degrees((double)this->own_ship.lambda * 180.0 / pow(2, 23)),
+                   Angle::Degrees((double)this->own_ship.phi * 180.0 / pow(2, 23)));
         info.location = p;
         info.gps.real = true;
         info.track = Angle::Degrees((double)this->own_ship.track);
@@ -361,13 +371,11 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         info.ground_speed_available.Update(info.clock);
 
         info.adsb.status.available.Update(info.clock);
-        info.alive.Update(info.clock);
         if((this->own_ship.nav_accuracy > 6) &&
-           (this->own_ship.nav_integrity > 8))
+           (this->own_ship.nav_integrity > 5))
+          {
           info.location_available.Update(info.clock);
-        else
-          info.location_available.Clear();
-
+          }
         break;
         }
       case MessageID::OWNSHIPALTITUDE:
@@ -386,7 +394,6 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                  figure of merit in table 16 of the GDL 90 document are all
                  about.
         */
-        info.alive.Update(info.clock);
         break;
         }
       case MessageID::TRAFFICREPORT:
@@ -412,8 +419,8 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           report.type = AdsbTraffic::AircraftType::UNKNOWN;
         else
           report.type               = (AdsbTraffic::AircraftType)this->traffic.emitter;
-        Angle phi    = Angle::Degrees((double)this->traffic.phi);
-        Angle lambda = Angle::Degrees((double)this->traffic.lambda);
+        Angle phi    = Angle::Degrees((double)this->traffic.phi * 180.0 / pow(2, 23));
+        Angle lambda = Angle::Degrees((double)this->traffic.lambda * 180.0 / pow(2, 23));
         report.location.latitude  = phi;
         report.location.longitude = lambda;
         report.altitude = Units::ToSysUnit((double)this->traffic.altitude * 25 - 1000,                                  // See section 3.5.1.4 of GDL 90 document.
@@ -437,22 +444,18 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         slot->valid.Update(info.clock); // The target is valid now.
         slot->Update(report);
 
-        info.alive.Update(info.clock);
         break;
         }
       case MessageID::BASICREPORT:
         {
-        info.alive.Update(info.clock);
         break;
         }
       case MessageID::LONGREPORT:
         {
-        info.alive.Update(info.clock);
         break;
         }
       case MessageID::AHRS:
         {
-        info.alive.Update(info.clock);
         break;
         }
       default:  // Unknown packet type.

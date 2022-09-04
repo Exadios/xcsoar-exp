@@ -52,6 +52,7 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
    small(_small)
 {
   flarm_data.Clear();
+  adsb_data.Clear();
   data_modified.Clear();
 }
 
@@ -180,11 +181,13 @@ FlarmTrafficWindow::UpdateWarnings() noexcept
  * This should be called when the radar needs to be repainted
  */
 void
-FlarmTrafficWindow::Update(Angle new_direction, const TrafficList &new_data,
+FlarmTrafficWindow::Update(Angle new_direction,
+                           const TrafficList &new_flarm_data,
+                           const AdsbTrafficList &new_adsb_data,
                            const TeamCodeSettings &new_settings) noexcept
 {
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
-  if (new_data.modified == data_modified &&
+  if (new_flarm_data.modified == data_modified &&
       (heading - new_direction).Absolute() < min_heading_delta)
     /* no change - don't redraw */
     return;
@@ -200,12 +203,17 @@ FlarmTrafficWindow::Update(Angle new_direction, const TrafficList &new_data,
     pt.y = -100;
   }
 
-  data_modified = new_data.modified;
+  data_modified = new_flarm_data.modified;
   heading = new_direction;
   fr = -heading;
   fir = heading;
-  flarm_data = new_data;
+  flarm_data = new_flarm_data;
+  adsb_data  = new_adsb_data;
   settings = new_settings;
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d: %s", __FILE__, __LINE__, adsb_data.IsEmpty() ? "true" : "false");
+#endif
 
   UpdateWarnings();
   UpdateSelector(selection_id, pt);

@@ -132,6 +132,12 @@ public:
             now > last + max_age); /* expired? */
   }
 
+  /**
+   * Test if the status is valid.
+   * @return If the state has not expired or \ref Clear has not been called
+   *         for some other reason and \ref Update has been called to
+   *         validate the state then true.
+   */
   constexpr bool IsValid() const {
     return last > Duration::zero();
   }
