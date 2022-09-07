@@ -3,7 +3,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,8 +22,7 @@ Copyright_License {
 }
 */
 
-#ifndef TOPOGRAPHY_XSHAPE_HPP
-#define TOPOGRAPHY_XSHAPE_HPP
+#pragma once
 
 #include "util/AllocatedString.hxx"
 #include "Geo/GeoBounds.hpp"
@@ -65,12 +64,18 @@ class XShape {
    */
   std::array<uint16_t, MAX_LINES> lines;
 
+#ifdef ENABLE_OPENGL
+  using Point = ShapePoint;
+#else
+  using Point = GeoPoint;
+#endif
+
   /**
    * All points of all lines.
    */
-#ifdef ENABLE_OPENGL
-  std::unique_ptr<ShapePoint[]> points;
+  std::unique_ptr<Point[]> points;
 
+#ifdef ENABLE_OPENGL
   /**
    * Indices of polygon triangles or lines with reduced number of vertices.
    */
@@ -89,8 +94,6 @@ class XShape {
    * It is managed by #TopographyFileRenderer.
    */
   mutable unsigned offset;
-#else // !ENABLE_OPENGL
-  std::unique_ptr<GeoPoint[]> points;
 #endif
 
   BasicAllocatedString<TCHAR> label;
@@ -143,11 +146,7 @@ public:
     return { lines.data(), num_lines };
   }
 
-#ifdef ENABLE_OPENGL
-  const ShapePoint *GetPoints() const noexcept {
-#else
-  const GeoPoint *GetPoints() const noexcept {
-#endif
+  const Point *GetPoints() const noexcept {
     return points.get();
   }
 
@@ -155,5 +154,3 @@ public:
     return label.c_str();
   }
 };
-
-#endif

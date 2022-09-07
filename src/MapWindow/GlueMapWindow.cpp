@@ -59,10 +59,7 @@ GlueMapWindow::SetTopography(TopographyStore *_topography)
 
   if (_topography != nullptr)
     topography_thread =
-      new TopographyThread(*_topography,
-                           [this](){
-                             redraw_notify.SendNotification();
-                           });
+      new TopographyThread(*_topography, [this](){ InjectRedraw(); });
 }
 
 void
@@ -78,10 +75,7 @@ GlueMapWindow::SetTerrain(RasterTerrain *_terrain)
 
   if (_terrain != nullptr)
     terrain_thread =
-      new TerrainThread(*_terrain,
-                        [this](){
-                          redraw_notify.SendNotification();
-                        });
+      new TerrainThread(*_terrain, [this](){ InjectRedraw(); });
 }
 
 void
@@ -171,7 +165,7 @@ GlueMapWindow::FullRedraw()
   UpdateMapScale();
   UpdateScreenBounds();
 
-  PartialRedraw();
+  DeferRedraw();
 }
 
 void
@@ -209,7 +203,6 @@ GlueMapWindow::QuickRedraw()
 #ifndef ENABLE_OPENGL
   /* we suppose that the operation will need a full redraw later, so
      trigger that now */
-  if (draw_thread != nullptr)
-    draw_thread->TriggerRedraw();
+  DeferRedraw();
 #endif
 }

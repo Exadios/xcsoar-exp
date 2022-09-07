@@ -144,6 +144,9 @@ ifeq ($(TARGET),FUZZER)
   FUZZER = y
   CLANG = y
   VFB = y
+
+  # Debian builds libfuzzer with GCC's libstdc++ instead of LLVM's libc++
+  LIBCXX = n
 endif
 
 ifeq ($(TARGET),UNIX)
@@ -241,7 +244,7 @@ ifeq ($(TARGET),IOS32)
   override TARGET = UNIX
   TARGET_IS_DARWIN = y
   TARGET_IS_IOS = y
-  IOS_MIN_SUPPORTED_VERSION = 9.0
+  IOS_MIN_SUPPORTED_VERSION = 10.0
   HOST_TRIPLET = armv7-apple-darwin
   LLVM_TARGET = $(HOST_TRIPLET)
   ifeq ($(HOST_IS_DARWIN),y)
@@ -255,7 +258,7 @@ ifeq ($(TARGET),IOS64)
   override TARGET = UNIX
   TARGET_IS_DARWIN = y
   TARGET_IS_IOS = y
-  IOS_MIN_SUPPORTED_VERSION = 9.0
+  IOS_MIN_SUPPORTED_VERSION = 10.0
   HOST_TRIPLET = aarch64-apple-darwin
   LLVM_TARGET = $(HOST_TRIPLET)
   ifeq ($(HOST_IS_DARWIN),y)

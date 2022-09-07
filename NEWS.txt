@@ -1,3 +1,36 @@
+Version 7.26 - 2022/09/03
+* user interface
+  - fix pressed InfoBox colors in inverted mode
+* task
+  - add custom keyhole support
+* Android
+  - improve native serial port enumeration
+  - fix UsbSerial/FTDI crash bug
+  - fix UsbSerial/FT4232 data corruption
+* Kobo
+  - fix crash bug
+
+Version 7.25 - 2022/08/24
+* stricter airspace parser
+* user interface
+  - add radio frequency buttons to airspace dialogs
+  - fix the airspace warning "Enable" button
+  - fix thermalmap.info icon display
+  - show thermalmap.info thermals in the map item list dialog
+* devices
+  - IMI: fix task declaration bug
+* Android
+  - prompt before deleting data when uninstalling XCSoar
+  - support USB serial adapters with more than one port
+  - support multiple USB serial adapters of the same kind
+  - auto-start XCSoar when USB serial adapter gets connected
+  - fix crash when GPS access was rejected by user
+  - fix deadlock while quitting XCSoar
+  - add U-BLOX 7 USB GPS into 'white list' of USB devices
+* Kobo
+  - display XCSoarData/kobo/poweroff.txt at the bottom
+  - fix crash in waypoint dialog
+
 Version 7.24 - 2022/07/22
 * user interface
   - padding in fields

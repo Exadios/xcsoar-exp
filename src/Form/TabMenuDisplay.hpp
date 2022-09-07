@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,8 +21,7 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_FORM_TABMENU_DISPLAY_HPP
-#define XCSOAR_FORM_TABMENU_DISPLAY_HPP
+#pragma once
 
 #include "ui/window/PaintWindow.hpp"
 #include "Renderer/TabRenderer.hpp"
@@ -286,23 +285,23 @@ private:
   void DragEnd() noexcept;
 
 protected:
-  void OnResize(PixelSize new_size) override;
+  void OnResize(PixelSize new_size) noexcept override;
 
-  bool OnMouseMove(PixelPoint p, unsigned keys) override;
-  bool OnMouseUp(PixelPoint p) override;
-  bool OnMouseDown(PixelPoint p) override;
-  bool OnKeyCheck(unsigned key_code) const override;
-  bool OnKeyDown(unsigned key_code) override;
+  bool OnMouseMove(PixelPoint p, unsigned keys) noexcept override;
+  bool OnMouseUp(PixelPoint p) noexcept override;
+  bool OnMouseDown(PixelPoint p) noexcept override;
+  bool OnKeyCheck(unsigned key_code) const noexcept override;
+  bool OnKeyDown(unsigned key_code) noexcept override;
 
   /**
    * canvas is the tabmenu which is the full content window, no content
    * @param canvas
    * Todo: support icons and "ButtonOnly" style
    */
-  void OnPaint(Canvas &canvas) override;
+  void OnPaint(Canvas &canvas) noexcept override;
 
-  void OnKillFocus() override;
-  void OnSetFocus() override;
+  void OnKillFocus() noexcept override;
+  void OnSetFocus() noexcept override;
 
 private:
   void InvalidateButton(MenuTabIndex i) noexcept {
@@ -321,5 +320,3 @@ private:
                           const MainMenuButton &main_button) const noexcept;
   void PaintSubMenuItems(Canvas &canvas) const noexcept;
 };
-
-#endif

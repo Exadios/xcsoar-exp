@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,11 +21,9 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_PROFILE_MAP_HPP
-#define XCSOAR_PROFILE_MAP_HPP
+#pragma once
 
 #include "util/StringBuffer.hxx"
-#include "util/Compiler.h"
 
 #include <chrono>
 #include <cstdint>
@@ -39,7 +37,7 @@ namespace Profile {
    * Has the in-memory profile been modified since the last
    * SetModified(false) call?
    */
-  gcc_pure
+  [[gnu::pure]]
   bool IsModified();
 
   /**
@@ -55,7 +53,7 @@ namespace Profile {
    * @return the value (gets Invalidated by any write access to the
    * profile), or default_value if the key does not exist
    */
-  gcc_pure
+  [[gnu::pure]]
   const char *Get(const char *key, const char *default_value=nullptr);
 
   /**
@@ -128,5 +126,3 @@ Set(const char *key, std::chrono::duration<unsigned> value) noexcept
   bool Exists(const char *key);
   void Clear();
 }
-
-#endif

@@ -21,11 +21,26 @@ Copyright_License {
 }
 */
 
-#include "Font.hpp"
-#include "util/TStringView.hxx"
+#include "ShapeFile.hpp"
 
-PixelSize
-Font::TextSize(const TCHAR *text) const noexcept
+#include <stdexcept>
+
+ShapeFile::ShapeFile(zzip_dir *dir, const char *filename)
 {
-  return TextSize(TStringView(text));
+  if (msShapefileOpen(&obj, "rb", dir, filename, 0) == -1)
+    throw std::runtime_error{"Failed to open shapefile"};
+}
+
+void
+ShapeFile::ReadShape(shapeObj &shape, std::size_t i)
+{
+  msSHPReadShape(obj.hSHP, i, &shape);
+  if (shape.type == MS_SHAPE_NULL)
+    throw std::runtime_error{"Failed to read shape"};
+}
+
+const char *
+ShapeFile::ReadLabel(std::size_t i, unsigned field) noexcept
+{
+  return msDBFReadStringAttribute(obj.hDBF, i, field);
 }

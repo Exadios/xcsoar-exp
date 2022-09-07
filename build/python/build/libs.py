@@ -12,9 +12,9 @@ from build.lua import LuaProject
 from .musl import MuslProject
 
 binutils = BinutilsProject(
-    'https://ftp.gnu.org/gnu/binutils/binutils-2.38.tar.xz',
-    'http://mirrors.ibiblio.org/gnu/ftp/gnu/binutils/binutils-2.38.tar.xz',
-    'e316477a914f567eccc34d5d29785b8b0f5a10208d36bbacedcc39048ecfe024',
+    'https://ftp.gnu.org/gnu/binutils/binutils-2.39.tar.xz',
+    'http://mirrors.ibiblio.org/gnu/ftp/gnu/binutils/binutils-2.39.tar.xz',
+    '645c25f563b8adc0a81dbd6a41cffbf4d37083a382e02d5d3df4f65c09516d00',
     'bin/as',
     [
         '--with-system-zlib',
@@ -34,9 +34,9 @@ linux_headers = SabotageLinuxHeadersProject(
 )
 
 gcc = GccProject(
-    'https://ftp.gnu.org/gnu/gcc/gcc-12.1.0/gcc-12.1.0.tar.xz',
-    'http://mirrors.ibiblio.org/gnu/ftp/gnu/gcc/gcc-12.1.0/gcc-12.1.0.tar.xz',
-    '62fd634889f31c02b64af2c468f064b47ad1ca78411c45abe6ac4b5f8dd19c7b',
+    'https://ftp.gnu.org/gnu/gcc/gcc-12.2.0/gcc-12.2.0.tar.xz',
+    'http://mirrors.ibiblio.org/gnu/ftp/gnu/gcc/gcc-12.2.0/gcc-12.2.0.tar.xz',
+    'e549cf9cf3594a00e27b6589d4322d70e0720cdd213f39beb4181e06926230ff',
     'lib/libstdc++.a',
     [
         # GCC fails to build if we disable the shared libstdc++
@@ -149,9 +149,9 @@ zlib = ZlibProject(
 )
 
 freetype = MesonProject(
-    'http://download.savannah.gnu.org/releases/freetype/freetype-2.11.0.tar.xz',
-    'http://downloads.sourceforge.net/project/freetype/freetype2/2.11.0/freetype-2.11.0.tar.xz',
-    '8bee39bd3968c4804b70614a0a3ad597299ad0e824bc8aad5ce8aaf48067bde7',
+    'http://download.savannah.gnu.org/releases/freetype/freetype-2.12.1.tar.xz',
+    'http://downloads.sourceforge.net/project/freetype/freetype2/2.12.1/freetype-2.12.1.tar.xz',
+    '4766f20157cc4cf0cd292f80bf917f92d1c439b243ac3018debf6b9140c41a7f',
     'lib/libfreetype.a',
     [
         '-Dbrotli=disabled',
@@ -163,9 +163,9 @@ freetype = MesonProject(
 )
 
 cares = CmakeProject(
-    'https://c-ares.haxx.se/download/c-ares-1.17.1.tar.gz',
-    'https://c-ares.haxx.se/download/c-ares-1.17.1.tar.gz',
-    'd73dd0f6de824afd407ce10750ea081af47eba52b8a6cb307d220131ad93fc40',
+    'https://c-ares.haxx.se/download/c-ares-1.18.1.tar.gz',
+    'https://c-ares.haxx.se/download/c-ares-1.18.1.tar.gz',
+    '1a7d52a8a84a9fbffb1be9133c0f6e17217d91ea5a6fa61f6b4729cda78ebbcf',
     'lib/libcares.a',
     [
         '-DCARES_STATIC=ON',
@@ -173,7 +173,6 @@ cares = CmakeProject(
         '-DCARES_STATIC_PIC=ON',
         '-DCARES_BUILD_TOOLS=OFF',
     ],
-    patches=abspath('lib/c-ares/patches'),
 )
 
 curl = CmakeProject(
@@ -209,20 +208,34 @@ curl = CmakeProject(
     patches=abspath('lib/curl/patches'),
 )
 
+# Needed by proj
+sqlite3 = AutotoolsProject(
+    'https://sqlite.org/2022/sqlite-autoconf-3390200.tar.gz',
+    'https://fossies.org/linux/misc/sqlite-autoconf-3390200.tar.gz',
+    'f00711818d0afc18f4b1b3b7207176f4',
+    'lib/libsqlite3.a',
+    [
+        '--disable-shared', '--enable-static',
+    ],
+)
+
 proj = CmakeProject(
-    'http://download.osgeo.org/proj/proj-5.2.0.tar.gz',
-    'https://fossies.org/linux/privat/proj-5.2.0.tar.gz',
-    'ef919499ffbc62a4aae2659a55e2b25ff09cccbbe230656ba71c6224056c7e60',
+    'http://download.osgeo.org/proj/proj-9.0.1.tar.gz',
+    'https://fossies.org/linux/privat/proj-9.0.1.tar.gz',
+    '737eaacbe7906d0d6ff43f0d9ebedc5c734cccc9e6b8d7beefdec3ab22d9a6a3',
     'lib/libproj.a',
     [
-        '-DPROJ_TESTS=OFF',
+        '-DBUILD_TESTING=OFF',
+        '-DENABLE_TIFF=OFF',
+        '-DENABLE_CURL=OFF',
         '-DBUILD_CCT=OFF',
         '-DBUILD_CS2CS=OFF',
         '-DBUILD_GEOD=OFF',
         '-DBUILD_GIE=OFF',
-        '-DBUILD_NAD2BIN=OFF',
         '-DBUILD_PROJ=OFF',
-        '-DBUILD_LIBPROJ_SHARED=OFF',
+        '-DBUILD_PROJINFO=OFF',
+        '-DBUILD_PROJSYNC=OFF',
+        '-DBUILD_SHARED_LIBS=OFF',
         '-DUSE_THREAD=OFF',
     ],
     patches=abspath('lib/proj/patches'),
@@ -236,18 +249,28 @@ libpng = CmakeProject(
     [
         '-DPNG_SHARED=OFF',
         '-DPNG_TESTS=OFF',
-    ]
+    ],
+    env={
+        # unwind tables are needed for throwing C++ exceptions from C
+        # error callbacks
+        'CFLAGS': '-funwind-tables',
+    },
 )
 
-libjpeg = AutotoolsProject(
-    'http://downloads.sourceforge.net/project/libjpeg-turbo/1.5.3/libjpeg-turbo-1.5.3.tar.gz',
-    'http://sourceforge.mirrorservice.org/l/li/libjpeg-turbo/1.5.3/libjpeg-turbo-1.5.3.tar.gz',
-    'b24890e2bb46e12e72a79f7e965f409f4e16466d00e1dd15d93d73ee6b592523',
+libjpeg = CmakeProject(
+    'http://downloads.sourceforge.net/project/libjpeg-turbo/2.1.4/libjpeg-turbo-2.1.4.tar.gz',
+    'http://sourceforge.mirrorservice.org/l/li/libjpeg-turbo/2.1.4/libjpeg-turbo-2.1.4.tar.gz',
+    'd3ed26a1131a13686dfca4935e520eb7c90ae76fbc45d98bb50a8dc86230342b',
     'lib/libjpeg.a',
     [
-        '--disable-shared', '--enable-static',
-        '--without-turbojpeg',
-    ]
+        '-DENABLE_STATIC=ON',
+        '-DENABLE_SHARED=OFF',
+    ],
+    env={
+        # unwind tables are needed for throwing C++ exceptions from C
+        # error callbacks
+        'CFLAGS': '-funwind-tables',
+    },
 )
 
 libusb = AutotoolsProject(
@@ -270,9 +293,9 @@ simple_usbmodeswitch = AutotoolsProject(
 )
 
 libtiff = CmakeProject(
-    'http://download.osgeo.org/libtiff/tiff-4.3.0.tar.gz',
-    'https://fossies.org/linux/misc/tiff-4.3.0.tar.gz',
-    '0e46e5acb087ce7d1ac53cf4f56a09b221537fc86dfc5daaad1c2e89e1b37ac8',
+    'http://download.osgeo.org/libtiff/tiff-4.4.0.tar.gz',
+    'https://fossies.org/linux/misc/tiff-4.4.0.tar.gz',
+    '917223b37538959aca3b790d2d73aa6e626b688e02dcda272aec24c2f498abed',
     'lib/libtiff.a',
     [
         '-DBUILD_SHARED_LIBS=OFF',
@@ -305,9 +328,9 @@ libtiff = CmakeProject(
 )
 
 libgeotiff = CmakeProject(
-    'http://download.osgeo.org/geotiff/libgeotiff/libgeotiff-1.4.3.tar.gz',
-    'https://fossies.org/linux/privat/libgeotiff-1.4.3.tar.gz',
-    'b8510d9b968b5ee899282cdd5bef13fd02d5a4c19f664553f81e31127bc47265',
+    'http://download.osgeo.org/geotiff/libgeotiff/libgeotiff-1.7.1.tar.gz',
+    'https://fossies.org/linux/privat/libgeotiff-1.7.1.tar.gz',
+    '05ab1347aaa471fc97347d8d4269ff0c00f30fa666d956baba37948ec87e55d6',
     'lib/libgeotiff.a',
     [
         '-DWITH_UTILITIES=OFF',
@@ -317,20 +340,33 @@ libgeotiff = CmakeProject(
 )
 
 sdl2 = SDL2Project(
-    'http://www.libsdl.org/release/SDL2-2.0.12.tar.gz',
-    'https://fossies.org/linux/misc/SDL2-2.0.12.tar.gz',
-    '349268f695c02efbc9b9148a70b85e58cefbbf704abd3e91be654db7f1e2c863',
+    'http://www.libsdl.org/release/SDL2-2.0.22.tar.gz',
+    'https://fossies.org/linux/misc/SDL2-2.0.22.tar.gz',
+    'fe7cbf3127882e3fc7259a75a0cb585620272c51745d3852ab9dd87960697f2e',
     'lib/libSDL2.a',
     [
         '--disable-shared', '--enable-static',
+        '--disable-joystick',
+        '--disable-haptic',
+        '--disable-sensor',
+        '--disable-power',
+        '--disable-filesystem',
+        '--disable-timers',
+        '--disable-file',
+        '--disable-misc',
+        '--disable-locale',
+        '--disable-loadso',
+        '--disable-diskaudio',
+        '--disable-dummyaudio',
+        '--disable-video-dummy',
     ],
     patches=abspath('lib/sdl2/patches'),
 )
 
 lua = LuaProject(
-    'http://www.lua.org/ftp/lua-5.4.3.tar.gz',
-    'https://github.com/lua/lua/releases/download/v5-3-5/lua-5.4.3.tar.gz',
-    '1dda2ef23a9828492b4595c0197766de6e784bc7',
+    'http://www.lua.org/ftp/lua-5.4.4.tar.gz',
+    'https://fossies.org/linux/misc/lua-5.4.4.tar.gz',
+    '164c7849653b80ae67bec4b7473b884bf5cc8d2dca05653475ec2ed27b9ebf61',
     'lib/liblua.a',
     patches=abspath('lib/lua/patches'),
 )

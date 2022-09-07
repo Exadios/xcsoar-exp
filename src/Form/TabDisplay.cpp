@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -192,7 +192,7 @@ TabDisplay::GetButtonIndexAt(PixelPoint p) const noexcept
 }
 
 void
-TabDisplay::OnResize(PixelSize new_size)
+TabDisplay::OnResize(PixelSize new_size) noexcept
 {
   PaintWindow::OnResize(new_size);
 
@@ -200,7 +200,7 @@ TabDisplay::OnResize(PixelSize new_size)
 }
 
 void
-TabDisplay::OnPaint(Canvas &canvas)
+TabDisplay::OnPaint(Canvas &canvas) noexcept
 {
   canvas.Clear(COLOR_BLACK);
 
@@ -216,28 +216,28 @@ TabDisplay::OnPaint(Canvas &canvas)
 }
 
 void
-TabDisplay::OnKillFocus()
+TabDisplay::OnKillFocus() noexcept
 {
   Invalidate();
   PaintWindow::OnKillFocus();
 }
 
 void
-TabDisplay::OnSetFocus()
+TabDisplay::OnSetFocus() noexcept
 {
   Invalidate();
   PaintWindow::OnSetFocus();
 }
 
 void
-TabDisplay::OnCancelMode()
+TabDisplay::OnCancelMode() noexcept
 {
   PaintWindow::OnCancelMode();
   EndDrag();
 }
 
 bool
-TabDisplay::OnKeyCheck(unsigned key_code) const
+TabDisplay::OnKeyCheck(unsigned key_code) const noexcept
 {
   switch (key_code) {
 
@@ -268,7 +268,7 @@ TabDisplay::OnKeyCheck(unsigned key_code) const
 }
 
 bool
-TabDisplay::OnKeyDown(unsigned key_code)
+TabDisplay::OnKeyDown(unsigned key_code) noexcept
 {
   switch (key_code) {
 
@@ -314,7 +314,7 @@ TabDisplay::OnKeyDown(unsigned key_code)
 }
 
 bool
-TabDisplay::OnMouseDown(PixelPoint p)
+TabDisplay::OnMouseDown(PixelPoint p) noexcept
 {
   EndDrag();
 
@@ -335,7 +335,7 @@ TabDisplay::OnMouseDown(PixelPoint p)
 }
 
 bool
-TabDisplay::OnMouseUp(PixelPoint p)
+TabDisplay::OnMouseUp(PixelPoint p) noexcept
 {
   if (dragging) {
     EndDrag();
@@ -350,7 +350,7 @@ TabDisplay::OnMouseUp(PixelPoint p)
 }
 
 bool
-TabDisplay::OnMouseMove(PixelPoint p, unsigned keys)
+TabDisplay::OnMouseMove(PixelPoint p, [[maybe_unused]] unsigned keys) noexcept
 {
   if (!dragging)
     return false;

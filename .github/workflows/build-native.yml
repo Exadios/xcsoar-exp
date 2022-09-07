@@ -28,15 +28,18 @@ on:
       - master
 
 env:
-  TARGET: UNIX
-  TARGET_BIN: xcsoar
-  TARGET_FINAL: xcsoar-debug
-  TARGET_EXT: ''
   DEBUG: y
 
 jobs:
   build-ubuntu:
     runs-on: ubuntu-22.04
+
+    env:
+      TARGET: UNIX
+      TARGET_BIN: xcsoar
+      TARGET_FINAL: xcsoar-debug
+      TARGET_EXT: ''
+
     steps:
       - name: set vars for push
         if: github.event_name == 'push'
@@ -88,6 +91,20 @@ jobs:
           name: ${{ env.TARGET_FINAL }}-${{ env.git_hash }}${{ env.TARGET_EXT }}
           path: output/${{ env.TARGET }}/bin/${{ env.TARGET_BIN }}${{ env.TARGET_EXT }}
 
+      - name: Deploy to Staging server
+        if: |
+          github.repository == 'XCSoar/XCSoar' &&
+          github.ref == 'ref/head/master' &&
+          github.event == 'push'
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.REPOSITORY_SSH_KEY }}
+          ARGS: "-rltgoDzvO"
+          SOURCE: output/${{ env.TARGET }}/bin/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
+          REMOTE_HOST: ${{ secrets.REPOSITORY_HOST }}
+          REMOTE_USER: ${{ secrets.REPOSITORY_SSH_USER }}
+          TARGET: ${{ secrets.REPOSITORY_REMOTE_PATH }}/testing/${{ env.TARGET }}/
+
   build-kobo:
     runs-on: ubuntu-22.04
 
@@ -118,8 +135,8 @@ jobs:
         with:
           key: ${{ runner.os }}-libs-${{ env.TARGET }}-${{ hashFiles('build/**') }}
           path: |
-            ${{ github.workspace }}/output/${{ env.TARGET }}/lib/lib
-            !${{ github.workspace }}/output/${{ env.TARGET }}/lib/lib/build
+            ${{ github.workspace }}/output/${{ env.TARGET }}/lib
+            !${{ github.workspace }}/output/${{ env.TARGET }}/lib/build
 
       - name: find githash
         run: |
@@ -155,6 +172,20 @@ jobs:
         with:
           name: ${{ env.TARGET_FINAL }}-${{ env.git_hash }}.${{ env.TARGET_EXT }}
           path: output/${{env.TARGET}}/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
+
+      - name: Deploy to Staging server
+        if: |
+          github.repository == 'XCSoar/XCSoar' &&
+          github.ref == 'ref/head/master' &&
+          github.event == 'push'
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.REPOSITORY_SSH_KEY }}
+          ARGS: "-rltgoDzvO"
+          SOURCE: output/${{ env.TARGET }}/bin/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
+          REMOTE_HOST: ${{ secrets.REPOSITORY_HOST }}
+          REMOTE_USER: ${{ secrets.REPOSITORY_SSH_USER }}
+          TARGET: ${{ secrets.REPOSITORY_REMOTE_PATH }}/testing/${{ env.TARGET }}/
 
   build-android:
     runs-on: ubuntu-22.04
@@ -223,14 +254,18 @@ jobs:
           path: output/ANDROID/bin/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
 
       - name: Deploy to Staging server
+        if: |
+          github.repository == 'XCSoar/XCSoar' &&
+          github.ref == 'ref/head/master' &&
+          github.event == 'push'
         uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.REPOSITORY_SSH_KEY }}
           ARGS: "-rltgoDzvO"
-          SOURCE: output/ANDROID/bin/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
+          SOURCE: output/${{ env.TARGET }}/bin/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
           REMOTE_HOST: ${{ secrets.REPOSITORY_HOST }}
           REMOTE_USER: ${{ secrets.REPOSITORY_SSH_USER }}
-          TARGET: ${{ secrets.REPOSITORY_REMOTE_PATH }}/testing/android/
+          TARGET: ${{ secrets.REPOSITORY_REMOTE_PATH }}/testing/${{ env.TARGET }}/
 
   build-windows:
     runs-on: ubuntu-22.04
@@ -261,8 +296,8 @@ jobs:
         with:
           key: ${{ runner.os }}-libs-${{ env.TARGET }}-${{ hashFiles('build/**') }}
           path: |
-            ${{ github.workspace }}/output/${{ env.TARGET }}/lib/lib
-            !${{ github.workspace }}/output/${{ env.TARGET }}/lib/lib/build
+            ${{ github.workspace }}/output/${{ env.TARGET }}/lib
+            !${{ github.workspace }}/output/${{ env.TARGET }}/lib/build
 
       - name: find githash
         run: |
@@ -301,6 +336,20 @@ jobs:
             !**.d
           retention-days: 1
 
+      - name: Deploy to Staging server
+        if: |
+          github.repository == 'XCSoar/XCSoar' &&
+          github.ref == 'ref/head/master' &&
+          github.event == 'push'
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.REPOSITORY_SSH_KEY }}
+          ARGS: "-rltgoDzvO"
+          SOURCE: output/${{ env.TARGET }}/bin/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
+          REMOTE_HOST: ${{ secrets.REPOSITORY_HOST }}
+          REMOTE_USER: ${{ secrets.REPOSITORY_SSH_USER }}
+          TARGET: ${{ secrets.REPOSITORY_REMOTE_PATH }}/testing/${{ env.TARGET }}/
+
   test-windows:
     runs-on: windows-latest
 
@@ -309,16 +358,16 @@ jobs:
 
     needs: build-windows
     steps:
-    - id: checkout
-      uses: actions/checkout@v2
-    - name: fetch artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: xcsoar-${{ env.TARGET }}-artifact
-        path: ${{ github.workspace }}/output/${{ env.TARGET }}
-    - name: XCSoar run checks on ${{ env.TARGET }}
-      run: make check-no-build
-      working-directory: ${{ github.workspace }}
+      - id: checkout
+        uses: actions/checkout@v2
+      - name: fetch artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: xcsoar-${{ env.TARGET }}-artifact
+          path: ${{ github.workspace }}/output/${{ env.TARGET }}
+      - name: XCSoar run checks on ${{ env.TARGET }}
+        run: make check-no-build
+        working-directory: ${{ github.workspace }}
 
   build-macos:
     runs-on: macos-12
@@ -371,3 +420,74 @@ jobs:
             OSX_MIN_SUPPORTED_VERSION=12.0 \
             V=2 \
             everything check
+
+      - name: Deploy to Staging server
+        if: |
+          github.repository == 'XCSoar/XCSoar' &&
+          github.ref == 'ref/head/master' &&
+          github.event == 'push'
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.REPOSITORY_SSH_KEY }}
+          ARGS: "-rltgoDzvO"
+          SOURCE: output/${{ env.TARGET }}/bin/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
+          REMOTE_HOST: ${{ secrets.REPOSITORY_HOST }}
+          REMOTE_USER: ${{ secrets.REPOSITORY_SSH_USER }}
+          TARGET: ${{ secrets.REPOSITORY_REMOTE_PATH }}/testing/${{ env.TARGET }}/
+
+  build-ios:
+    runs-on: macos-12
+
+    env:
+      TARGET: IOS64
+
+    steps:
+      - id: checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: "Cache third-party libraries"
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-libs-${{ env.TARGET }}-${{ hashFiles('build/**') }}
+          path: |
+            ${{ github.workspace }}/output/${{ env.TARGET }}/lib
+            !${{ github.workspace }}/output/${{ env.TARGET }}/lib/build
+
+      - id: cache-ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ios
+
+      - name: Install dependencies
+        run: |
+          brew install \
+            make \
+            quilt \
+            librsvg \
+            imagemagick gettext sox \
+            cmake ninja
+
+      - name: Compile XCSoar
+        # TODO: remove the "||true" as soon as the remaining SDL2
+        # linker failure ("Undefined symbols: _SDL_IsIPad, _main") is
+        # fixed.
+        run: |
+          gmake -j$(sysctl -n hw.logicalcpu) TARGET=${{env.TARGET }} USE_CCACHE=y \
+            OPTIMIZE="-O0" \
+            V=2 ||true
+
+      - name: Deploy to Staging server
+        if: |
+          github.repository == 'XCSoar/XCSoar' &&
+          github.ref == 'ref/head/master' &&
+          github.event == 'push'
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.REPOSITORY_SSH_KEY }}
+          ARGS: "-rltgoDzvO"
+          SOURCE: output/${{ env.TARGET }}/bin/${{ env.TARGET_BIN }}.${{ env.TARGET_EXT }}
+          REMOTE_HOST: ${{ secrets.REPOSITORY_HOST }}
+          REMOTE_USER: ${{ secrets.REPOSITORY_SSH_USER }}
+          TARGET: ${{ secrets.REPOSITORY_REMOTE_PATH }}/testing/${{ env.TARGET }}/

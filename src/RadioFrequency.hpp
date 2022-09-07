@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,12 +21,13 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_RADIO_FREQUENCY_HPP
-#define XCSOAR_RADIO_FREQUENCY_HPP
+#pragma once
 
 #include <xcsoar-cassert>
 #include <cstdint>
+#include <compare>
 #include <cstddef>
+
 #include <tchar.h>
 
 /**
@@ -57,6 +58,22 @@ public:
   static constexpr RadioFrequency Null() noexcept {
     return { 0 };
   }
+
+  static constexpr RadioFrequency FromKiloHertz(unsigned khz) noexcept {
+    RadioFrequency f;
+    f.SetKiloHertz(khz);
+    return f;
+  }
+
+  static constexpr RadioFrequency FromMegaKiloHertz(unsigned mhz,
+                                                    unsigned khz) noexcept {
+    RadioFrequency f;
+    f.SetKiloHertz(mhz * 1000 + khz);
+    return f;
+  }
+
+  friend constexpr auto operator<=>(RadioFrequency,
+                                    RadioFrequency) noexcept = default;
 
   constexpr bool IsDefined() const noexcept {
     return value != 0;
@@ -102,5 +119,3 @@ public:
   [[gnu::pure]]
   static RadioFrequency Parse(const TCHAR *p) noexcept;
 };
-
-#endif

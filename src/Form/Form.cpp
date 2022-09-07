@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -147,7 +147,7 @@ WndForm::OnCreate()
 }
 
 void
-WndForm::OnResize(PixelSize new_size)
+WndForm::OnResize(PixelSize new_size) noexcept
 {
   ContainerWindow::OnResize(new_size);
   UpdateLayout();
@@ -155,7 +155,7 @@ WndForm::OnResize(PixelSize new_size)
 }
 
 void
-WndForm::OnDestroy()
+WndForm::OnDestroy() noexcept
 {
   if (modal_result == 0)
     modal_result = mrCancel;
@@ -164,7 +164,7 @@ WndForm::OnDestroy()
 }
 
 bool
-WndForm::OnMouseMove(PixelPoint p, unsigned keys)
+WndForm::OnMouseMove(PixelPoint p, unsigned keys) noexcept
 {
   if (ContainerWindow::OnMouseMove(p, keys))
     return true;
@@ -213,7 +213,7 @@ WndForm::OnMouseMove(PixelPoint p, unsigned keys)
 }
 
 bool
-WndForm::OnMouseDown(PixelPoint p)
+WndForm::OnMouseDown(PixelPoint p) noexcept
 {
   if (ContainerWindow::OnMouseDown(p))
     return true;
@@ -233,7 +233,7 @@ WndForm::OnMouseDown(PixelPoint p)
 }
 
 bool
-WndForm::OnMouseUp(PixelPoint p)
+WndForm::OnMouseUp(PixelPoint p) noexcept
 {
   if (ContainerWindow::OnMouseUp(p))
     return true;
@@ -249,7 +249,7 @@ WndForm::OnMouseUp(PixelPoint p)
 }
 
 void
-WndForm::OnCancelMode()
+WndForm::OnCancelMode() noexcept
 {
   ContainerWindow::OnCancelMode();
 
@@ -263,7 +263,7 @@ WndForm::OnCancelMode()
 #ifdef _WIN32
 
 bool
-WndForm::OnCommand(unsigned id, unsigned code)
+WndForm::OnCommand(unsigned id, unsigned code) noexcept
 {
   switch (id) {
   case IDCANCEL:
@@ -282,9 +282,9 @@ WndForm::OnCommand(unsigned id, unsigned code)
  * Is this key handled by the focused control? (bypassing the dialog
  * manager)
  */
-gcc_pure
+[[gnu::pure]]
 static bool
-CheckKey(ContainerWindow *container, const Event &event)
+CheckKey([[maybe_unused]] ContainerWindow *container, const Event &event)
 {
 #ifdef USE_WINUSER
   const MSG &msg = event.msg;
@@ -433,10 +433,10 @@ WndForm::ShowModal()
 }
 
 void
-WndForm::OnPaint(Canvas &canvas)
+WndForm::OnPaint(Canvas &canvas) noexcept
 {
   const SingleWindow &main_window = GetMainWindow();
-  gcc_unused const bool is_active = main_window.IsTopDialog(*this);
+  [[maybe_unused]] const bool is_active = main_window.IsTopDialog(*this);
 
 #ifdef ENABLE_OPENGL
   if (!IsDithered() && !IsMaximised() && is_active) {
@@ -559,7 +559,7 @@ WndForm::SetCaption(const TCHAR *_caption)
 }
 
 void
-WndForm::ReinitialiseLayout(const PixelRect &parent_rc)
+WndForm::ReinitialiseLayout(const PixelRect &parent_rc) noexcept
 {
   const unsigned parent_width = parent_rc.GetWidth();
   const unsigned parent_height = parent_rc.GetHeight();
@@ -588,14 +588,14 @@ WndForm::ReinitialiseLayout(const PixelRect &parent_rc)
 }
 
 void
-WndForm::SetDefaultFocus()
+WndForm::SetDefaultFocus() noexcept
 {
   SetFocus();
   client_area.FocusFirstControl();
 }
 
 bool
-WndForm::OnAnyKeyDown(unsigned key_code)
+WndForm::OnAnyKeyDown(unsigned key_code) noexcept
 {
   return key_down_function && key_down_function(key_code);
 }

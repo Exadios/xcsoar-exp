@@ -26,6 +26,7 @@ Copyright_License {
 #include "../Queue.hpp"
 
 #include <xcsoar-cassert>
+#include <utility>
 
 namespace UI {
 

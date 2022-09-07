@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -411,8 +411,8 @@ KRT2Device::HandleSTXCommand(const struct stx_msg * msg, struct NMEAInfo & info)
     return;
   }
 
-  RadioFrequency freq;
-  freq.SetKiloHertz((msg->mhz * 1000) + (msg->khz * 5));
+  const auto freq = RadioFrequency::FromMegaKiloHertz(msg->mhz, msg->khz * 5);
+
   StaticString<MAX_NAME_LENGTH> freq_name;
   freq_name.SetASCII(&(msg->station[0]), &(msg->station[MAX_NAME_LENGTH - 1]));
 
@@ -468,7 +468,7 @@ KRT2Device::PutStandbyFrequency(RadioFrequency frequency,
 }
 
 static Device *
-KRT2CreateOnPort(const DeviceConfig &config, Port &comPort)
+KRT2CreateOnPort([[maybe_unused]] const DeviceConfig &config, Port &comPort)
 {
   Device *dev = new KRT2Device(comPort);
 

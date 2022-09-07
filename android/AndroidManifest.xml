@@ -2,11 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="au.org.narroginglidingclub.xcsoar"
           android:installLocation="auto"
-          android:versionCode="15"
-          android:versionName="7.24.0.2.2">
+          android:versionCode="16"
+          android:versionName="7.26.0.2.2">
   <application
       android:requestLegacyExternalStorage="true"
       android:preserveLegacyExternalStorage="true"
+      android:hasFragileUserData="true"
       android:appCategory="maps"
       android:icon="@drawable/icon"
       android:label="@string/app_name">
@@ -79,6 +80,9 @@
   <uses-feature android:name="android.hardware.location.network" android:required="false"/>
   <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
   <uses-feature android:name="android.hardware.usb.accessory" android:required="false"/>
+
+  <!-- enable USB host mode -->
+  <uses-feature android:name="android.hardware.usb.host" android:required="false" />
 
   <!-- Allow installation on faked touchscreen -->
   <uses-feature android:name="android.hardware.faketouch" android:required="false"/>

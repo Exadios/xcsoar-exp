@@ -22,6 +22,8 @@ Copyright_License {
 */
 
 #include "RadioFrequency.hpp"
+#include "Math/Util.hpp"
+#include "util/CharUtil.hxx"
 #include "util/StringFormat.hpp"
 #include "util/NumberParser.hpp"
 
@@ -46,9 +48,10 @@ RadioFrequency::Parse(const TCHAR *p) noexcept
   double mhz = ParseDouble(p, &endptr);
 
   RadioFrequency frequency;
-  if (mhz < 100 || *endptr != _T('\0'))
-    frequency.Clear();
+  if (mhz >= MIN_KHZ / 1000. && mhz <= MAX_KHZ / 1000. &&
+      IsWhitespaceOrNull(*endptr))
+    frequency.SetKiloHertz(uround(mhz * 1000));
   else
-    frequency.SetKiloHertz((unsigned)(mhz * 1000 + 0.5));
+    frequency.Clear();
   return frequency;
 }

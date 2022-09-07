@@ -500,9 +500,6 @@ Startup(UI::Display &display)
   // Create the calculation thread
   CreateCalculationThread();
 
-  // Find unique ID of this PDA
-  ReadAssetNumber();
-
   glide_computer_events = new GlideComputerEvents();
   glide_computer_events->Reset();
   live_blackboard.AddListener(*glide_computer_events);
@@ -602,6 +599,9 @@ Shutdown()
 
   operation.SetText(_("Shutdown, please wait..."));
 
+  // Close any device connections
+  devShutdown();
+
   // Stop threads
   LogFormat("Stop threads");
 #ifdef HAVE_DOWNLOAD_MANAGER
@@ -675,9 +675,6 @@ Shutdown()
   terrain = nullptr;
   delete topography;
   topography = nullptr;
-
-  // Close any device connections
-  devShutdown();
 
   delete nmea_logger;
   nmea_logger = nullptr;

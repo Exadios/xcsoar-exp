@@ -27,8 +27,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SLICE_ALLOCATOR_HXX
-#define SLICE_ALLOCATOR_HXX
+#pragma once
 
 #include "Compiler.h"
 
@@ -156,7 +155,7 @@ public:
 		}
 	}
 
-	T *allocate(const size_type n) {
+	T *allocate([[maybe_unused]] const size_type n) {
 		assert(n == 1);
 
 		/* try to allocate in one of the existing areas */
@@ -184,7 +183,7 @@ public:
 		return static_cast<T *>(static_cast<void *>(i));
 	}
 
-	void deallocate(T *t, const size_type n) {
+	void deallocate(T *t, [[maybe_unused]] const size_type n) {
 		assert(n == 1);
 
 		Item *i = static_cast<Item *>(static_cast<void *>(t));
@@ -269,6 +268,4 @@ public:
 
 #if CLANG_CHECK_VERSION(3,9)
 #pragma GCC diagnostic pop
-#endif
-
 #endif

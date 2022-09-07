@@ -27,8 +27,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef JAVA_REF_HXX
-#define JAVA_REF_HXX
+#pragma once
 
 #include "Global.hxx"
 
@@ -200,5 +199,3 @@ public:
 };
 
 } // namespace Java
-
-#endif

@@ -34,12 +34,12 @@
 #endif
 
 bool
-CopyUTF8(char *dest, size_t dest_size, const char *src)
+CopyUTF8(char *dest, size_t dest_size, const char *src) noexcept
 {
 	if (!::ValidateUTF8(src))
 		return false;
 
-	CopyString(dest, src, dest_size);
+	CopyString(dest, dest_size, src);
 	CropIncompleteUTF8(dest);
 	return true;
 }
@@ -47,7 +47,7 @@ CopyUTF8(char *dest, size_t dest_size, const char *src)
 #ifdef _UNICODE
 
 bool
-CopyUTF8(wchar_t *dest, size_t dest_size, const char *src)
+CopyUTF8(wchar_t *dest, size_t dest_size, const char *src) noexcept
 {
 	int result = MultiByteToWideChar(CP_UTF8, 0, src, -1, dest, dest_size);
 	return result > 0;

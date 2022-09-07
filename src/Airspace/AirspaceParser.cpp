@@ -128,7 +128,7 @@ struct TempAirspaceType
 
   // General
   tstring name;
-  tstring radio;
+  RadioFrequency radio_frequency;
   AirspaceClass type;
   AirspaceAltitude base;
   AirspaceAltitude top;
@@ -148,7 +148,8 @@ struct TempAirspaceType
   Reset() noexcept
   {
     days_of_operation.SetAll();
-    radio = _T("");
+    name.clear();
+    radio_frequency = RadioFrequency::Null();
     type = OTHER;
     base = top = AirspaceAltitude::Invalid();
     points.clear();
@@ -161,21 +162,46 @@ struct TempAirspaceType
   ResetTNP() noexcept
   {
     // Preserve type, radio and days_of_operation for next airspace blocks
+    name.clear();
     points.clear();
     center = GeoPoint::Invalid();
     radius = -1;
     rotation = 1;
   }
 
+  /**
+   * If there is an airspace, add it to the #Airspaces and return
+   * true.  Returns false if no airspace was being constructed.
+   * Throws if the airspace is bad.
+   */
+  bool Commit(Airspaces &airspace_database) {
+    if (!points.empty()) {
+      AddPolygon(airspace_database);
+      return true;
+    } else
+      return false;
+  }
+
+  /**
+   * Perform common checks before an airspace is committed to
+   * #Airspaces.  Throws on error.
+   */
+  void Check() {
+    if (type == OTHER && name.empty())
+      throw std::runtime_error{"Airspace has no name"};
+  }
+
   void
-  AddPolygon(Airspaces &airspace_database) noexcept
+  AddPolygon(Airspaces &airspace_database)
   {
+    Check();
+
     if (points.size() < 3)
-      return;
+      throw std::runtime_error{"Not enough polygon points"};
 
     auto as = std::make_shared<AirspacePolygon>(points);
     as->SetProperties(std::move(name), type, base, top);
-    as->SetRadio(radio);
+    as->SetRadioFrequency(radio_frequency);
     as->SetDays(days_of_operation);
     airspace_database.Add(std::move(as));
   }
@@ -195,10 +221,15 @@ struct TempAirspaceType
   void
   AddCircle(Airspaces &airspace_database)
   {
+    Check();
+
+    if (!points.empty())
+      throw std::runtime_error{"Airspace is a mix of polygon and circle"};
+
     auto as = std::make_shared<AirspaceCircle>(RequireCenter(),
                                                RequireRadius());
     as->SetProperties(std::move(name), type, base, top);
-    as->SetRadio(radio);
+    as->SetRadioFrequency(radio_frequency);
     as->SetDays(days_of_operation);
     airspace_database.Add(std::move(as));
   }
@@ -588,8 +619,8 @@ ParseLine(Airspaces &airspace_database, StringParser<TCHAR> &&input,
       if (!input.SkipWhitespace())
         break;
 
-      temp_area.AddPolygon(airspace_database);
-      temp_area.Reset();
+      if (temp_area.Commit(airspace_database))
+        temp_area.Reset();
 
       temp_area.type = ParseType(input.c_str());
       break;
@@ -618,7 +649,7 @@ ParseLine(Airspaces &airspace_database, StringParser<TCHAR> &&input,
     case _T('F'):
     case _T('f'):
       if (input.SkipWhitespace())
-        temp_area.radio = input.c_str();
+        temp_area.radio_frequency = RadioFrequency::Parse(input.c_str());
       break;
     }
 
@@ -819,13 +850,13 @@ ParseLineTNP(Airspaces &airspace_database, StringParser<TCHAR> &input,
     temp_area.rotation = -1;
     ParseArcTNP(input, temp_area);
   } else if (input.SkipMatchIgnoreCase(_T("TITLE="), 6)) {
-    temp_area.AddPolygon(airspace_database);
-    temp_area.ResetTNP();
+    if (temp_area.Commit(airspace_database))
+      temp_area.ResetTNP();
 
     temp_area.name = input.c_str();
   } else if (input.SkipMatchIgnoreCase(_T("TYPE="), 5)) {
-    temp_area.AddPolygon(airspace_database);
-    temp_area.ResetTNP();
+    if (temp_area.Commit(airspace_database))
+      temp_area.ResetTNP();
 
     temp_area.type = ParseTypeTNP(input.c_str());
   } else if (input.SkipMatchIgnoreCase(_T("CLASS="), 6)) {
@@ -835,7 +866,7 @@ ParseLineTNP(Airspaces &airspace_database, StringParser<TCHAR> &input,
   } else if (input.SkipMatchIgnoreCase(_T("BASE="), 5)) {
     ReadAltitude(input, temp_area.base);
   } else if (input.SkipMatchIgnoreCase(_T("RADIO="), 6)) {
-    temp_area.radio = input.c_str();
+    temp_area.radio_frequency = RadioFrequency::Parse(input.c_str());
   } else if (input.SkipMatchIgnoreCase(_T("ACTIVE="), 7)) {
     if (input.MatchAllIgnoreCase(_T("WEEKEND")))
       temp_area.days_of_operation.SetWeekend();
@@ -918,7 +949,13 @@ ParseAirspaceFile(Airspaces &airspaces,
   }
 
   // Process final area (if any)
-  temp_area.AddPolygon(airspaces);
+  try {
+    temp_area.Commit(airspaces);
+  } catch (...) {
+    const auto msg = GetFullMessage(std::current_exception());
+    operation.SetErrorMessage(UTF8ToWideConverter(msg.c_str()));
+    return false;
+  }
 
   return true;
 }

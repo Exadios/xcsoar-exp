@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ Copyright_License {
 #include <xcsoar-cassert>
 
 bool
-WndProperty::OnKeyCheck(unsigned key_code) const
+WndProperty::OnKeyCheck(unsigned key_code) const noexcept
 {
   switch (key_code) {
   case KEY_RETURN:
@@ -50,7 +50,7 @@ WndProperty::OnKeyCheck(unsigned key_code) const
 }
 
 bool
-WndProperty::OnKeyDown(unsigned key_code)
+WndProperty::OnKeyDown(unsigned key_code) noexcept
 {
   // If return key pressed (Compaq uses VKF23)
   if (key_code == KEY_RETURN) {
@@ -77,7 +77,7 @@ WndProperty::OnKeyDown(unsigned key_code)
 }
 
 void
-WndProperty::OnSetFocus()
+WndProperty::OnSetFocus() noexcept
 {
   WindowControl::OnSetFocus();
 
@@ -85,7 +85,7 @@ WndProperty::OnSetFocus()
 }
 
 void
-WndProperty::OnKillFocus()
+WndProperty::OnKillFocus() noexcept
 {
   WindowControl::OnKillFocus();
 
@@ -186,14 +186,14 @@ WndProperty::UpdateLayout() noexcept
 }
 
 void
-WndProperty::OnResize(PixelSize new_size)
+WndProperty::OnResize(PixelSize new_size) noexcept
 {
   WindowControl::OnResize(new_size);
   UpdateLayout();
 }
 
 bool
-WndProperty::OnMouseDown(PixelPoint p)
+WndProperty::OnMouseDown([[maybe_unused]] PixelPoint p) noexcept
 {
   if (!IsReadOnly() || HasHelp()) {
     dragging = true;
@@ -207,7 +207,7 @@ WndProperty::OnMouseDown(PixelPoint p)
 }
 
 bool
-WndProperty::OnMouseUp(PixelPoint p)
+WndProperty::OnMouseUp([[maybe_unused]] PixelPoint p) noexcept
 {
   if (dragging) {
     dragging = false;
@@ -226,7 +226,7 @@ WndProperty::OnMouseUp(PixelPoint p)
 }
 
 bool
-WndProperty::OnMouseMove(PixelPoint p, unsigned keys)
+WndProperty::OnMouseMove(PixelPoint p, [[maybe_unused]] unsigned keys) noexcept
 {
   if (dragging) {
     const bool inside = IsInside(p);
@@ -242,7 +242,7 @@ WndProperty::OnMouseMove(PixelPoint p, unsigned keys)
 }
 
 void
-WndProperty::OnCancelMode()
+WndProperty::OnCancelMode() noexcept
 {
   if (dragging) {
     dragging = false;
@@ -275,7 +275,7 @@ WndProperty::DecValue() noexcept
 }
 
 void
-WndProperty::OnPaint(Canvas &canvas)
+WndProperty::OnPaint(Canvas &canvas) noexcept
 {
   const bool focused = HasCursorKeys() && HasFocus();
 
@@ -292,7 +292,7 @@ WndProperty::OnPaint(Canvas &canvas)
   }
 
   if (!caption.empty()) {
-    canvas.SetTextColor(focused
+    canvas.SetTextColor(focused && !pressed
                           ? look.focused.text_color
                           : look.text_color);
     canvas.SetBackgroundTransparent();

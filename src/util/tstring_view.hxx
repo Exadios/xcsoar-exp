@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2017 Max Kellermann <max.kellermann@gmail.com>
+ * Copyright 2022 Max Kellermann <max.kellermann@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,31 +27,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef TSTRING_VIEW_HXX
-#define TSTRING_VIEW_HXX
+#pragma once
+
+#include <string_view>
 
 #ifdef _UNICODE
-#include "WStringView.hxx"
-
-struct TStringView : WStringView {
-	using WStringView::WStringView;
-
-	TStringView() = default;
-	constexpr TStringView(WStringView src) noexcept
-		:WStringView(src) {}
-};
-
+using tstring_view = std::wstring_view;
 #else
-#include "StringView.hxx"
-
-struct TStringView : StringView {
-	using StringView::StringView;
-
-	TStringView() = default;
-	constexpr TStringView(StringView src) noexcept
-		:StringView(src) {}
-};
-
-#endif
-
+using tstring_view = std::string_view;
 #endif
