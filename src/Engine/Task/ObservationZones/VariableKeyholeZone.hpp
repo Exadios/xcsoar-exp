@@ -119,8 +119,8 @@ public:
     }
 
   /* virtual methods from class ObservationZone */
-  bool IsInSector(const GeoPoint &location) const override;
-  OZBoundary GetBoundary() const override;
+  bool IsInSector(const GeoPoint &location) const noexcept override;
+  OZBoundary GetBoundary() const noexcept override;
 
   /* virtual methods from class ObservationZonePoint */
   std::unique_ptr<ObservationZonePoint> Clone(const GeoPoint &reference) const noexcept override

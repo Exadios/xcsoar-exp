@@ -377,24 +377,6 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
     const Angle RadialStart = (A12adj - turnpoint_infos.angle1).AsBearing();
     const Angle RadialEnd = (A12adj + turnpoint_infos.angle1).AsBearing();
 
-// debug
-#ifdef USE_X11  // Use this as a proxy for target UNIX.
-    std::fstream db_flag;
-    db_flag.open("/home/pfb/XCSoarData/TaskFileSeeYou", std::ios_base::in);
-    if (db_flag.is_open())
-      {
-      std::cout << "A12adj:  " << A12adj.AsBearing().Degrees() << std::endl
-                << "RadialStart: " << RadialStart.AsBearing().Degrees() << std::endl
-                << "RadialEnd:   " << RadialEnd.AsBearing().Degrees() << std::endl
-                << "radius1: " << turnpoint_infos.radius1 << std::endl
-                << "angle1:  " << turnpoint_infos.angle1.AsBearing().Degrees() << std::endl
-                << "radius2: " << turnpoint_infos.radius2 << std::endl
-                << "angle2:  " << turnpoint_infos.angle2.AsBearing().Degrees() << std::endl;
-      db_flag.close();
-      }
-#endif  // USE_X11
-// ~debug
-
     /**
      * TODO
      * \todo Make a number of wimp and annular OZs and discover how CU

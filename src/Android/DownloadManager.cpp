@@ -134,7 +134,7 @@ AndroidDownloadManager::OnDownloadComplete(Path path_relative,
 
 JNIEXPORT void JNICALL
 Java_au_org_narroginglidingclub_xcsoar_DownloadUtil_onDownloadAdded(JNIEnv *env,
-                              maybe_unused]] jobject obj,
+                            [[maybe_unused]] jobject obj,
                                              jlong j_handler, jstring j_path,
                                              jlong size, jlong position)
 {

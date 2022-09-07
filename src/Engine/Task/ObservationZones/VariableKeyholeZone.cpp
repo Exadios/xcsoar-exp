@@ -26,7 +26,7 @@
 
 //------------------------------------------------------------------------------
 OZBoundary
-VariableKeyholeZone::GetBoundary() const
+VariableKeyholeZone::GetBoundary() const noexcept
 {
   OZBoundary boundary;
   boundary.push_front(this->GetSectorStart());
@@ -53,7 +53,7 @@ VariableKeyholeZone::GetBoundary() const
 
 //------------------------------------------------------------------------------
 bool
-VariableKeyholeZone::IsInSector(const GeoPoint &location) const
+VariableKeyholeZone::IsInSector(const GeoPoint &location) const noexcept
 {
   GeoVector f(GetReference(), location);
 
