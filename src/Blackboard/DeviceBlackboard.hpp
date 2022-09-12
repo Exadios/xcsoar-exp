@@ -104,11 +104,21 @@ protected:
   MoreData &SetMoreData() { return gps_info; }
 
 public:
+  /**
+   * Give a non writable reference to a selected device data.
+   * @param i The index of the device.
+   * @return The non writable reference to the device data.
+   */
   const NMEAInfo &RealState(unsigned i) const {
     assert(i < NUMDEV);
     return per_device_data[i];
   }
 
+  /**
+   * Give a writable reference to a selected device data.
+   * @param i The index of the device.
+   * @return The writable reference to the device data.
+   */
   NMEAInfo &SetRealState(unsigned i) {
     assert(i < NUMDEV);
     return per_device_data[i];

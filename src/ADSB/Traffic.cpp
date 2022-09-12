@@ -66,16 +66,20 @@ AdsbTraffic::GetTypeString(AircraftType type)
 void
 AdsbTraffic::Update(const AdsbTraffic &other)
   {
-  this->alarm_level = other.alarm_level;
-  this->relative_north = other.relative_north;
-  this->relative_east = other.relative_east;
-  this->relative_altitude = other.relative_altitude;
-  this->track = other.track;
-  this->track_received = other.track_received;
-  this->turn_rate_received = other.turn_rate_received;
-  this->speed = other.speed;
-  this->speed_received = other.speed_received;
-  this->climb_rate = other.climb_rate;
+  this->valid               = other.valid;
+  this->alarm_level         = other.alarm_level;
+  this->relative_north      = other.relative_north;
+  this->relative_east       = other.relative_east;
+  this->relative_altitude   = other.relative_altitude;
+  this->location            = other.location;
+  this->location_available  = other.location_available;
+  this->track               = other.track;
+  this->track_received      = other.track_received;
+  this->turn_rate_received  = other.turn_rate_received;
+  this->speed               = other.speed;
+  this->speed_received      = other.speed_received;
+  this->climb_rate          = other.climb_rate;
   this->climb_rate_received = other.climb_rate_received;
-  this->type = other.type;
+  this->type                = other.type;
+  this->name                = other.name;
   }

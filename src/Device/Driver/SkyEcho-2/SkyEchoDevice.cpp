@@ -403,7 +403,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           break;
           }
 
-        this->Traffic(sd, this->traffic);
+        this->Traffic(sd, this->target);
         AdsbTraffic report;
       
         report.alarm_level = AdsbTraffic::AlarmType::NONE; /* ADSB does not
@@ -411,27 +411,37 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         report.location_available  = true;
         report.turn_rate_received  = false;   // Not in ADSB.
         report.climb_rate_received = true;
-        report.climb_rate          = this->traffic.vert_vel;
+        report.climb_rate          = this->target.vert_vel;
         report.speed_received      = true;
-        report.speed               = this->traffic.horiz_vel;
-        if((AdsbTraffic::AircraftType)this->traffic.emitter >=
+        report.speed               = this->target.horiz_vel;
+        if((AdsbTraffic::AircraftType)this->target.emitter >=
             AdsbTraffic::AircraftType::FENCE)
           report.type = AdsbTraffic::AircraftType::UNKNOWN;
         else
-          report.type               = (AdsbTraffic::AircraftType)this->traffic.emitter;
-        Angle phi    = Angle::Degrees((double)this->traffic.phi * 180.0 / pow(2, 23));
-        Angle lambda = Angle::Degrees((double)this->traffic.lambda * 180.0 / pow(2, 23));
+          report.type               = (AdsbTraffic::AircraftType)this->target.emitter;
+        Angle phi    = Angle::Degrees((double)this->target.phi * 180.0 / pow(2, 23));
+        Angle lambda = Angle::Degrees((double)this->target.lambda * 180.0 / pow(2, 23));
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//        LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
+//                  (double)this->target.phi * 180.0 / pow(2, 23),
+//                  (double)this->target.lambda * 180.0 / pow(2, 23));
+#endif
         report.location.latitude  = phi;
         report.location.longitude = lambda;
-        report.altitude = Units::ToSysUnit((double)this->traffic.altitude * 25 - 1000,                                  // See section 3.5.1.4 of GDL 90 document.
+        report.altitude = Units::ToSysUnit((double)this->target.altitude * 25 - 1000,                                  // See section 3.5.1.4 of GDL 90 document.
                                           Unit::FEET);
-        report.id = this->traffic.address;
+        report.id = this->target.address;
+        for (unsigned i = 0;
+             i < sizeof(TrafficStruct::call_sign) / sizeof (char);
+             i++)
+          report.name.push_back(target.call_sign[i]);
 
         /*
          * Update the traffic list. Make a new entry if required.
          */
-        AdsbTrafficList adsb = info.adsb.traffic;
-        AdsbTraffic* slot    = adsb.FindTraffic(report.id);
+        AdsbTrafficList &adsb = info.adsb.traffic;
+        AdsbTraffic *slot     = adsb.FindTraffic(report.id);
         if (slot == nullptr)
           {
           slot = adsb.AllocateTraffic();
@@ -444,6 +454,17 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         slot->valid.Update(info.clock); // The target is valid now.
         slot->Update(report);
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+        LogFormat("%s, %d: %lu", __FILE__, __LINE__, info.adsb.traffic.list.size());
+        for (auto &traffic : info.adsb.traffic.list)
+          {
+          LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
+                    traffic.location.latitude.Degrees(),
+                    traffic.location.longitude.Degrees());
+
+          }
+#endif
         break;
         }
       case MessageID::BASICREPORT:

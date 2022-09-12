@@ -37,6 +37,11 @@ Copyright_License {
 
 #include <tchar.h>
 
+struct AdsbTraffic;   /* This is a kludge to reuse some of the Flarm
+                         infrastructure in the \ref FlarmTrafficWindow
+                         class */
+                      /* \todo Remove \ref AdsbTraffic -> \ref FlarmTraffic
+                        kludge. */
 struct FlarmTraffic {
   enum class AlarmType: uint8_t {
     NONE = 0,
@@ -187,8 +192,23 @@ struct FlarmTraffic {
 
   static const TCHAR* GetTypeString(AircraftType type);
 
+  /**
+   * Do an item for item copy to this object.
+   * @param other The source target.
+   */
   void Update(const FlarmTraffic &other);
 };
+
+/**
+ * Create an equivalent \ref FlarmTraffic object from an \ref AdsbTraffic
+ * object. This is a temporary kludge to reuse some Flarm infrastructure 
+ * in \ref FlarmTrafficWindow. Do it this way rather than a ctor to preserve
+ * the triviality of \ref FlarmTraffic.
+ * \todo Remove AdsbConvert - pfb.
+ * @param target The ADSB target source.
+ * @param eqv The FLARM equivalent destination.
+ */
+void AdsbConvert(const AdsbTraffic &target, FlarmTraffic &eqv);
 
 static_assert(std::is_trivial<FlarmTraffic>::value, "type is not trivial");
 

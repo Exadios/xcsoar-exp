@@ -270,6 +270,11 @@ DeviceBlackboard::Merge()
     per_device_data[i].UpdateClock();
     per_device_data[i].Expire();
     real_data.Complement(per_device_data[i]); 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+              per_device_data[i].adsb.traffic.list.size());
+#endif
   }
 
   real_clock.Normalise(real_data);

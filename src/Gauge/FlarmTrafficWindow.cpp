@@ -24,6 +24,7 @@
 #include "FlarmTrafficWindow.hpp"
 #include "FLARM/Traffic.hpp"
 #include "FLARM/Friends.hpp"
+#include "ADSB/Traffic.hpp"
 #include "ui/canvas/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Formatter/UserUnits.hpp"
@@ -42,6 +43,9 @@
 #include "ui/canvas/opengl/Scope.hpp"
 #endif
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
 
 FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
                                        unsigned _h_padding,
@@ -187,11 +191,14 @@ FlarmTrafficWindow::Update(Angle new_direction,
                            const TeamCodeSettings &new_settings) noexcept
 {
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
-  if (new_flarm_data.modified == data_modified &&
+  if ((new_flarm_data.modified == this->data_modified) &&
+      (new_adsb_data.modified  == this->data_modified) &&
       (heading - new_direction).Absolute() < min_heading_delta)
     /* no change - don't redraw */
-    return;
-
+//    return;
+    {
+    ;
+    }
   FlarmId selection_id;
   PixelPoint pt;
   if (!small && selection >= 0) {
@@ -203,17 +210,20 @@ FlarmTrafficWindow::Update(Angle new_direction,
     pt.y = -100;
   }
 
-  data_modified = new_flarm_data.modified;
+  /* \todo write classes to avoid this silliness - pfb. */
+  if (new_flarm_data.modified == new_adsb_data.modified)
+    this->data_modified = new_flarm_data.modified;
+  else
+    if (new_flarm_data.modified != this->data_modified)
+      this->data_modified = new_flarm_data.modified;
+    else
+      this->data_modified = new_adsb_data.modified;
   heading = new_direction;
   fr = -heading;
   fir = heading;
   flarm_data = new_flarm_data;
   adsb_data  = new_adsb_data;
   settings = new_settings;
-#ifndef NDEBUG
-#include "LogFile.hpp"
-  LogFormat("%s, %d: %s", __FILE__, __LINE__, adsb_data.IsEmpty() ? "true" : "false");
-#endif
 
   UpdateWarnings();
   UpdateSelector(selection_id, pt);
@@ -546,7 +556,7 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
     return;
   }
 
-  // Iterate through the traffic (normal traffic)
+  // Iterate through the Flarm traffic (normal traffic)
   for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
     const FlarmTraffic &traffic = flarm_data.list[i];
 
@@ -554,6 +564,16 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
         static_cast<unsigned> (selection) != i)
       PaintRadarTarget(canvas, traffic, i);
   }
+
+  // And iterate through the ADSB traffic
+  for (unsigned i = 0; i < this->adsb_data.list.size(); ++i)
+    {
+    /* \todo remove this kludge - pfb */
+    const AdsbTraffic &traffic = this->adsb_data.list[i];
+    FlarmTraffic fe;
+    AdsbConvert(traffic, fe);
+    PaintRadarTarget(canvas, fe, i);
+    }
 
   if (selection >= 0) {
     const FlarmTraffic &traffic = flarm_data.list[selection];
@@ -565,7 +585,7 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   if (!WarningMode())
     return;
 
-  // Iterate through the traffic (alarm traffic)
+  // Iterate through the Flarm traffic (alarm traffic)
   for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
     const FlarmTraffic &traffic = flarm_data.list[i];
 

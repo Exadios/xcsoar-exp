@@ -46,6 +46,10 @@
 #include "Interface.hpp"
 #include "Asset.hpp"
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
+
 /**
  * A Window which renders FLARM traffic, with user interaction.
  */
@@ -760,10 +764,6 @@ TrafficWidget::ToggleNorthUp() noexcept
 void
 TrafficWidget::Update() noexcept
 {
-#ifndef NDEBUG
-#include "LogFile.hpp"
-  LogFormat("%s, %d", __FILE__, __LINE__);
-#endif
   const NMEAInfo &basic = CommonInterface::Basic();
   const DerivedInfo &calculated = CommonInterface::Calculated();
 

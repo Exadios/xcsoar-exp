@@ -146,7 +146,7 @@ struct AdsbTrafficList
    * Looks up an item in the traffic list.
    *
    * @param name the name or call sign
-   * @return the ADSB_TRAFFIC pointer, NULL if not found
+   * @return the AdsbTraffic pointer, NULL if not found
    */
   AdsbTraffic *FindTraffic(const TCHAR *name)
     {

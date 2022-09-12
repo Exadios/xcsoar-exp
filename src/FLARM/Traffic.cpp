@@ -22,6 +22,7 @@ Copyright_License {
 */
 
 #include "FLARM/Traffic.hpp"
+#include "ADSB/Traffic.hpp"
 
 static constexpr const TCHAR* acTypes[16] = {
   _T("Unknown"), _T("Glider"), _T("TowPlane"),
@@ -58,3 +59,90 @@ FlarmTraffic::Update(const FlarmTraffic &other)
   stealth = other.stealth;
   type = other.type;
 }
+
+//-----------------------------------------------------------------------------
+void
+AdsbConvert(const AdsbTraffic &target, FlarmTraffic &eqv)
+  {
+  eqv.valid               = target.valid;
+  eqv.alarm_level         = FlarmTraffic::AlarmType::NONE;
+  eqv.relative_north      = target.relative_north;
+  eqv.relative_east       = target.relative_east;
+  eqv.relative_altitude   = target.relative_altitude;
+  eqv.track               = target.track;
+  eqv.track_received      = target.track_received;
+  eqv.turn_rate           = 0.0;
+  eqv.turn_rate_received  = false;
+  eqv.speed               = target.speed;
+  eqv.speed_received      = target.speed_received;
+  eqv.climb_rate          = target.climb_rate;
+  eqv.climb_rate_received = target.climb_rate_received;
+  eqv.stealth             = false;
+
+  switch (target.type)
+    {
+    case AdsbTraffic::AircraftType::UNKNOWN:
+    case AdsbTraffic::AircraftType::EIGHT:
+    case AdsbTraffic::AircraftType::THIRTEEN:
+    case AdsbTraffic::AircraftType::SV:
+    case AdsbTraffic::AircraftType::SIXTEEN:
+    case AdsbTraffic::AircraftType::POINT_OBSTACLE: 
+    case AdsbTraffic::AircraftType::CLUSTER_OBSTACLE: 
+    case AdsbTraffic::AircraftType::LINE_OBSTACLE:
+    case AdsbTraffic::AircraftType::FENCE:
+      {
+      eqv.type = FlarmTraffic::AircraftType::UNKNOWN;
+      break;
+      }
+    case AdsbTraffic::AircraftType::LIGHT:
+    case AdsbTraffic::AircraftType::SMALL:
+      {
+      eqv.type = FlarmTraffic::AircraftType::POWERED_AIRCRAFT; 
+      break;
+      }
+    case AdsbTraffic::AircraftType::LARGE:
+    case AdsbTraffic::AircraftType::HIGH_VORTEX_LARGE:
+    case AdsbTraffic::AircraftType::HEAVY:
+    case AdsbTraffic::AircraftType::HIGHLY_MANEUVERABLE:
+      {
+      eqv.type = FlarmTraffic::AircraftType::JET_AIRCRAFT;
+      break;
+      }
+    case AdsbTraffic::AircraftType::ROTORCRAFT:
+      {
+      eqv.type = FlarmTraffic::AircraftType::HELICOPTER;
+      break;
+      }
+    case AdsbTraffic::AircraftType::GLIDER:
+      {
+      eqv.type = FlarmTraffic::AircraftType::GLIDER;
+      break;
+      }
+    case AdsbTraffic::AircraftType::LIGHTER_THAN_AIR:
+      {
+      eqv.type = FlarmTraffic::AircraftType::BALLOON;
+      break;
+      }
+    case AdsbTraffic::AircraftType::PARACHUTIST:
+      {
+      eqv.type = FlarmTraffic::AircraftType::PARACHUTE;
+      break;
+      }
+    case AdsbTraffic::AircraftType::ULTRALIGHT:
+      {
+      eqv.type = FlarmTraffic::AircraftType::POWERED_AIRCRAFT;
+      break;
+      }
+    case AdsbTraffic::AircraftType::UAV:
+      {
+      eqv.type = FlarmTraffic::AircraftType::FLYING_SAUCER;
+      break;
+      }
+    case AdsbTraffic::AircraftType::EMERGENCY_SURFACE_VEHICLE:
+    case AdsbTraffic::AircraftType::SERVICE_SURFACE_VEHICLE:
+      {
+      eqv.type = FlarmTraffic::AircraftType::UNKNOWN;
+      break;
+      }
+    }
+  }

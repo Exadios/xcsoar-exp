@@ -212,6 +212,10 @@ struct AdsbTraffic
 
   static const TCHAR* GetTypeString(AircraftType type);
 
+  /**
+   * Do an item for item copy to this object.
+   * @param other The source target.
+   */
   void Update(const AdsbTraffic &other);
   };
 

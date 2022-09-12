@@ -35,45 +35,32 @@ AdsbComputer::Process(AdsbData &adsb,
                       const AdsbData &last_adsb,
                       const NMEAInfo &basic)
   {
-#if 0
 #ifndef NDEBUG
+#include "LogFile.hpp"
   LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
-#endif
-
   // Cleanup old calculation instances
   if (basic.time_available)
     this->adsb_calculations.CleanUp(basic.time);
 
   // if (ADSB data is available)
   if (!adsb.IsDetected())
-    {
-#if 1
-#ifndef NDEBUG
-    //LogFormat("%s, %d", __FILE__, __LINE__);
-    if (adsb.status.available)
-      //LogFormat("%s, %d", __FILE__, __LINE__);
-#endif
-#endif
     return;
-    }
 
-#if 0
 #ifndef NDEBUG
-    LogFormat("%s, %d", __FILE__, __LINE__);
+#include "LogFile.hpp"
+  LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
-#endif
+
   double latitude_to_north(0);
   double longitude_to_east(0);
 
   if (basic.location_available)
     {
-#if 1
 #ifndef NDEBUG
-    //LogFormat("%s, %d", __FILE__, __LINE__);
+#include "LogFile.hpp"
+    LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
-#endif
-
     // Pre-calculate relative east and north projection to lat / lon
     // for Location calculations of each target
     constexpr Angle delta_lat = Angle::Degrees(0.01);
@@ -98,19 +85,31 @@ AdsbComputer::Process(AdsbData &adsb,
     }
 
 #ifndef NDEBUG
-  //LogFormat("%s, %d: %lu\n", __FILE__, __LINE__, adsb.traffic.list.size());
+#include "LogFile.hpp"
+  LogFormat(":%s, %d: %lu", __FILE__, __LINE__, adsb.traffic.list.size());
 #endif
-
   // for each item in traffic
   for (auto &traffic : adsb.traffic.list) 
     {
 
+#ifndef NDEBUG
+    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
+                                  basic.location.latitude.Degrees(),
+                                  traffic.location.latitude.Degrees());
+    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
+                                  basic.location.longitude.Degrees(),
+                                  traffic.location.longitude.Degrees());
+#endif
     // Calculate distance
     Angle delta_phi    = traffic.location.latitude  - basic.location.latitude;
     Angle delta_lambda = traffic.location.longitude - basic.location.longitude;
     traffic.distance = hypot(delta_phi.Degrees()    * latitude_to_north,
                              delta_lambda.Degrees() * longitude_to_east);
 
+#ifndef NDEBUG
+    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
+                                 delta_phi.Degrees(), delta_lambda.Degrees());
+#endif
     // Calculate absolute altitude
     traffic.altitude_available = basic.gps_altitude_available;
     if (traffic.altitude_available)

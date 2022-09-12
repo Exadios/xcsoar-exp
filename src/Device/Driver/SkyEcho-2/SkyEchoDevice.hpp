@@ -227,7 +227,7 @@ private:
   /**
    * The current temporary target data;
    */
-  TrafficStruct traffic;
+  TrafficStruct target;
 
   /**
    * Decoded own ship.
