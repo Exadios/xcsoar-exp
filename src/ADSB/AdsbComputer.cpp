@@ -37,7 +37,7 @@ AdsbComputer::Process(AdsbData &adsb,
   {
 #ifndef NDEBUG
 #include "LogFile.hpp"
-  LogFormat("%s, %d", __FILE__, __LINE__);
+//  LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
   // Cleanup old calculation instances
   if (basic.time_available)
@@ -49,7 +49,7 @@ AdsbComputer::Process(AdsbData &adsb,
 
 #ifndef NDEBUG
 #include "LogFile.hpp"
-  LogFormat("%s, %d", __FILE__, __LINE__);
+//  LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
 
   double latitude_to_north(0);
@@ -59,7 +59,7 @@ AdsbComputer::Process(AdsbData &adsb,
     {
 #ifndef NDEBUG
 #include "LogFile.hpp"
-    LogFormat("%s, %d", __FILE__, __LINE__);
+//    LogFormat("%s, %d", __FILE__, __LINE__);
 #endif
     // Pre-calculate relative east and north projection to lat / lon
     // for Location calculations of each target
@@ -86,19 +86,19 @@ AdsbComputer::Process(AdsbData &adsb,
 
 #ifndef NDEBUG
 #include "LogFile.hpp"
-  LogFormat(":%s, %d: %lu", __FILE__, __LINE__, adsb.traffic.list.size());
+//  LogFormat(":%s, %d: %lu", __FILE__, __LINE__, adsb.traffic.list.size());
 #endif
   // for each item in traffic
   for (auto &traffic : adsb.traffic.list) 
     {
 
 #ifndef NDEBUG
-    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
-                                  basic.location.latitude.Degrees(),
-                                  traffic.location.latitude.Degrees());
-    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
-                                  basic.location.longitude.Degrees(),
-                                  traffic.location.longitude.Degrees());
+//    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
+//                                  basic.location.latitude.Degrees(),
+//                                  traffic.location.latitude.Degrees());
+//    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
+//                                  basic.location.longitude.Degrees(),
+//                                  traffic.location.longitude.Degrees());
 #endif
     // Calculate distance
     Angle delta_phi    = traffic.location.latitude  - basic.location.latitude;
@@ -107,8 +107,8 @@ AdsbComputer::Process(AdsbData &adsb,
                              delta_lambda.Degrees() * longitude_to_east);
 
 #ifndef NDEBUG
-    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
-                                 delta_phi.Degrees(), delta_lambda.Degrees());
+//    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
+//                                 delta_phi.Degrees(), delta_lambda.Degrees());
 #endif
     // Calculate absolute altitude
     traffic.altitude_available = basic.gps_altitude_available;

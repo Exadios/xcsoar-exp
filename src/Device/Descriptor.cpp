@@ -1410,13 +1410,13 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
   ::device_blackboard->mutex.lock();
   device->DataReceived(s, ::device_blackboard->SetRealState(index));
   basic.alive.Update(basic.clock);
-  ::device_blackboard->ScheduleMerge();
-  ::device_blackboard->mutex.unlock();
 #ifndef NDEBUG
 #include "LogFile.hpp"
   LogFormat("%s, %d: %lu", __FILE__, __LINE__,
             ::device_blackboard->RealState(0).adsb.traffic.list.size());
 #endif
+  ::device_blackboard->ScheduleMerge();
+  ::device_blackboard->mutex.unlock();
   return true;
   }
 #endif

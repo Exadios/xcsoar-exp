@@ -37,6 +37,11 @@ bool global_running;
 void
 TriggerMergeThread()
 {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+#endif
   if (merge_thread != nullptr)
     merge_thread->Trigger();
 }

@@ -432,15 +432,19 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         report.altitude = Units::ToSysUnit((double)this->target.altitude * 25 - 1000,                                  // See section 3.5.1.4 of GDL 90 document.
                                           Unit::FEET);
         report.id = this->target.address;
+        // There's got to be a better way to do this.
         for (unsigned i = 0;
              i < sizeof(TrafficStruct::call_sign) / sizeof (char);
              i++)
           report.name.push_back(target.call_sign[i]);
 
+        info.location_available.Update(info.clock);
+
         /*
          * Update the traffic list. Make a new entry if required.
          */
         AdsbTrafficList &adsb = info.adsb.traffic;
+        adsb.modified.Update(info.clock);
         AdsbTraffic *slot     = adsb.FindTraffic(report.id);
         if (slot == nullptr)
           {

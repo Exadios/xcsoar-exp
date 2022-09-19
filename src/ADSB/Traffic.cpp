@@ -66,7 +66,7 @@ AdsbTraffic::GetTypeString(AircraftType type)
 void
 AdsbTraffic::Update(const AdsbTraffic &other)
   {
-  this->valid               = other.valid;
+//  this->valid               = other.valid;
   this->alarm_level         = other.alarm_level;
   this->relative_north      = other.relative_north;
   this->relative_east       = other.relative_east;

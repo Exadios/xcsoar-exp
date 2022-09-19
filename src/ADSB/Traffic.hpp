@@ -202,6 +202,7 @@ struct AdsbTraffic
 
   /**
    * Clear this object if its data has expired.
+   * @param Time Now.
    * @return true if the object is still valid
    */
   bool Refresh(TimeStamp Time) noexcept
