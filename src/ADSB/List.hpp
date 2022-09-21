@@ -118,7 +118,8 @@ struct AdsbTrafficList
    * @return the ADSB_TRAFFIC pointer, NULL if not found
    */
   AdsbTraffic *FindTraffic(unsigned int id)
-    // \todo Using unsigned int for convenience but should we be using "AdsbId"?
+    // \todo pfb: Using unsigned int for convenience but should we be
+    //       using "AdsbId"?
     {
     for (auto &traffic : this->list)
       if (traffic.id == id)

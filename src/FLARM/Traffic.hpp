@@ -40,8 +40,9 @@ Copyright_License {
 struct AdsbTraffic;   /* This is a kludge to reuse some of the Flarm
                          infrastructure in the \ref FlarmTrafficWindow
                          class */
-                      /* \todo Remove \ref AdsbTraffic -> \ref FlarmTraffic
-                        kludge. */
+                      /* \todo pfb: Remove
+                                    \ref AdsbTraffic -> \ref FlarmTraffic
+                                    kludge. */
 struct FlarmTraffic {
   enum class AlarmType: uint8_t {
     NONE = 0,
@@ -204,7 +205,7 @@ struct FlarmTraffic {
  * object. This is a temporary kludge to reuse some Flarm infrastructure 
  * in \ref FlarmTrafficWindow. Do it this way rather than a ctor to preserve
  * the triviality of \ref FlarmTraffic.
- * \todo Remove AdsbConvert - pfb.
+ * \todo pfb: Refactor a traffic class to remove AdsbConvert.
  * @param target The ADSB target source.
  * @param eqv The FLARM equivalent destination.
  */

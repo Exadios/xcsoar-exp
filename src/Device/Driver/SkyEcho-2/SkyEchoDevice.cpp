@@ -363,6 +363,12 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         FloatDuration t((double)this->time_of_day);
         GeoPoint p(Angle::Degrees((double)this->own_ship.lambda * 180.0 / pow(2, 23)),
                    Angle::Degrees((double)this->own_ship.phi * 180.0 / pow(2, 23)));
+#ifndef NDEBUG
+#include "LogFile.hpp"
+        LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__, 
+                                     this->own_ship.phi * 180 / pow(2, 23),
+                                     this->own_ship.lambda * 180 / pow(2, 23));
+#endif
         info.location = p;
         info.gps.real = true;
         info.track = Angle::Degrees((double)this->own_ship.track);
@@ -390,9 +396,9 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                                                       (unsigned int)data[3]) * 5,
                                               Unit::FEET);
         info.gps_altitude_available.Update(info.clock);
-        /* \todo Figure out what "vertical warning indicator" and "vertical
-                 figure of merit in table 16 of the GDL 90 document are all
-                 about.
+        /* \todo pfb: Figure out what "vertical warning indicator" and
+                 "vertical figure of merit" in table 16 of the GDL 90
+                 document are all about.
         */
         break;
         }
@@ -411,9 +417,13 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         report.location_available  = true;
         report.turn_rate_received  = false;   // Not in ADSB.
         report.climb_rate_received = true;
-        report.climb_rate          = this->target.vert_vel;
+        /* \todo pfb: Find the XCSoar wide conversion from feet to
+                 meters / second.  */
+        report.climb_rate          = (this->target.vert_vel * 64 / 3.2808) / 60;
         report.speed_received      = true;
-        report.speed               = this->target.horiz_vel;
+        /* \todo pfb: Find the XCSoar wide conversion from knots to
+                 meters / second.  */
+        report.speed               = this->target.horiz_vel * 1852 / 3600;
         if((AdsbTraffic::AircraftType)this->target.emitter >=
             AdsbTraffic::AircraftType::FENCE)
           report.type = AdsbTraffic::AircraftType::UNKNOWN;

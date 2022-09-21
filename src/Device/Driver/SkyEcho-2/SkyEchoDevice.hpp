@@ -107,7 +107,7 @@ private:
 
   /**
    * The CRC table computed at ctor time.
-   * \todo Investigate generating this table at compile time.
+   * \todo pfb: Investigate generating this table at compile time.
    */
   uint16_t crc16Table[256]; // Table for FCS.
 

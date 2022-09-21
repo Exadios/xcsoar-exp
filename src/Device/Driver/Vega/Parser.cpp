@@ -209,7 +209,7 @@ PDTSM(NMEAInputLine &line, gcc_unused NMEAInfo &info)
   StaticString<256> buffer;
   buffer.SetASCII(message.begin(), message.end());
 
-  // todo duration handling
+  // \todo duration handling
   Message::AddMessage(_T("VEGA:"), buffer);
 
   return true;

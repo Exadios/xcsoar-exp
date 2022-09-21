@@ -210,7 +210,7 @@ FlarmTrafficWindow::Update(Angle new_direction,
     pt.y = -100;
   }
 
-  /* \todo write classes to avoid this silliness - pfb. */
+  /* \todo pfb: Refactor to avoid this silliness. */
   if (new_flarm_data.modified == new_adsb_data.modified)
     this->data_modified = new_flarm_data.modified;
   else
@@ -568,7 +568,7 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   // And iterate through the ADSB traffic
   for (unsigned i = 0; i < this->adsb_data.list.size(); ++i)
     {
-    /* \todo remove this kludge - pfb */
+    /* \todo pfb: Refactor to remove this kludge */
     const AdsbTraffic &traffic = this->adsb_data.list[i];
     FlarmTraffic fe;
     AdsbConvert(traffic, fe);

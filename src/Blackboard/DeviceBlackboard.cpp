@@ -232,9 +232,9 @@ void
 DeviceBlackboard::ScheduleMerge()
 {
 #ifndef NDEBUG
-#include "LogFile.hpp"
-  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+//#include "LogFile.hpp"
+//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
 #endif
   TriggerMergeThread();
 }
@@ -267,9 +267,9 @@ DeviceBlackboard::Merge()
   NMEAInfo &basic = SetBasic();
 
 #ifndef NDEBUG
-#include "LogFile.hpp"
-  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+//#include "LogFile.hpp"
+//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
 #endif
 
   real_data.Reset();  // Start with no data in real_data.
@@ -283,22 +283,22 @@ DeviceBlackboard::Merge()
      * that provides variables of that domain.
      */
 #ifndef NDEBUG
-#include "LogFile.hpp"
-    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-              per_device_data[0].adsb.traffic.list.size());
+//#include "LogFile.hpp"
+//    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+//              per_device_data[0].adsb.traffic.list.size());
 #endif
     per_device_data[i].UpdateClock();
     per_device_data[i].Expire();
 #ifndef NDEBUG
-#include "LogFile.hpp"
-    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-              per_device_data[0].adsb.traffic.list.size());
+//#include "LogFile.hpp"
+//    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+//              per_device_data[0].adsb.traffic.list.size());
 #endif
     real_data.Complement(per_device_data[i]); 
 #ifndef NDEBUG
-#include "LogFile.hpp"
-    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-              real_data.adsb.traffic.list.size());
+//#include "LogFile.hpp"
+//    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+//              real_data.adsb.traffic.list.size());
 #endif
   }
 

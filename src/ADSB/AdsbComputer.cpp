@@ -35,10 +35,6 @@ AdsbComputer::Process(AdsbData &adsb,
                       const AdsbData &last_adsb,
                       const NMEAInfo &basic)
   {
-#ifndef NDEBUG
-#include "LogFile.hpp"
-//  LogFormat("%s, %d", __FILE__, __LINE__);
-#endif
   // Cleanup old calculation instances
   if (basic.time_available)
     this->adsb_calculations.CleanUp(basic.time);
@@ -47,20 +43,11 @@ AdsbComputer::Process(AdsbData &adsb,
   if (!adsb.IsDetected())
     return;
 
-#ifndef NDEBUG
-#include "LogFile.hpp"
-//  LogFormat("%s, %d", __FILE__, __LINE__);
-#endif
-
   double latitude_to_north(0);
   double longitude_to_east(0);
 
   if (basic.location_available)
     {
-#ifndef NDEBUG
-#include "LogFile.hpp"
-//    LogFormat("%s, %d", __FILE__, __LINE__);
-#endif
     // Pre-calculate relative east and north projection to lat / lon
     // for Location calculations of each target
     constexpr Angle delta_lat = Angle::Degrees(0.01);
@@ -84,10 +71,6 @@ AdsbComputer::Process(AdsbData &adsb,
       }
     }
 
-#ifndef NDEBUG
-#include "LogFile.hpp"
-//  LogFormat(":%s, %d: %lu", __FILE__, __LINE__, adsb.traffic.list.size());
-#endif
   // for each item in traffic
   for (auto &traffic : adsb.traffic.list) 
     {
@@ -103,12 +86,15 @@ AdsbComputer::Process(AdsbData &adsb,
     // Calculate distance
     Angle delta_phi    = traffic.location.latitude  - basic.location.latitude;
     Angle delta_lambda = traffic.location.longitude - basic.location.longitude;
-    traffic.distance = hypot(delta_phi.Degrees()    * latitude_to_north,
-                             delta_lambda.Degrees() * longitude_to_east);
+    traffic.relative_north = delta_phi.Degrees()    * latitude_to_north;
+    traffic.relative_east  = delta_lambda.Degrees() * longitude_to_east;
+    traffic.distance = hypot(traffic.relative_north, traffic.relative_east);
 
 #ifndef NDEBUG
 //    LogFormat("%s, %d: %lf, %lf", __FILE__, __LINE__,
 //                                 delta_phi.Degrees(), delta_lambda.Degrees());
+    double s = traffic.distance;
+    LogFormat("%s, %d: %lf", __FILE__, __LINE__, s);
 #endif
     // Calculate absolute altitude
     traffic.altitude_available = basic.gps_altitude_available;

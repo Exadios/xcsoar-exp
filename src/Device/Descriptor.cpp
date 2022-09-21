@@ -1343,7 +1343,7 @@ DeviceDescriptor::PortError(const char *msg) noexcept
 
 /**
  * Temporarily substitute the binary stuff for some nav stuff.
- * \todo Allow binary nav instruments and binary non nav stuff.
+ * \todo pfb: Rewrite to allow binary nav instruments and binary non nav stuff.
  * pfb debug
  */
 #if 0
@@ -1411,9 +1411,9 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
   device->DataReceived(s, ::device_blackboard->SetRealState(index));
   basic.alive.Update(basic.clock);
 #ifndef NDEBUG
-#include "LogFile.hpp"
-  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+//#include "LogFile.hpp"
+//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
 #endif
   ::device_blackboard->ScheduleMerge();
   ::device_blackboard->mutex.unlock();

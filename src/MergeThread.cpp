@@ -60,9 +60,9 @@ MergeThread::Process()
   assert(!IsDefined() || IsInside());
 
 #ifndef NDEBUG
-#include "LogFile.hpp"
-  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+//#include "LogFile.hpp"
+//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
 #endif
 
   device_blackboard.Merge();
@@ -88,9 +88,9 @@ MergeThread::Tick() noexcept
   bool gps_updated, calculated_updated;
 
 #ifndef NDEBUG
-#include "LogFile.hpp"
-  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+//#include "LogFile.hpp"
+//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
 #endif
 
 #ifdef HAVE_PCM_PLAYER
