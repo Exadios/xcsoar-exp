@@ -53,11 +53,6 @@ class NMEAInputLine;
  */
 class SkyEchoDevice: public AbstractDevice
   {
-  /**
-   * The Port device receiving our data.
-   */
-  Port &port;
-
 public:
   /**
    * Ctor.
@@ -286,6 +281,11 @@ private:
    * Time since midnight from HEARTBEAT.
    */
   unsigned long int time_of_day;
+
+  /**
+   * The Port device receiving our data.
+   */
+  Port &port;
   };
 
 /**
