@@ -1405,18 +1405,38 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
 bool
 DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
   {
-  NMEAInfo& basic(::device_blackboard->SetRealState(index));
-  basic.UpdateClock();
-  ::device_blackboard->mutex.lock();
-  device->DataReceived(s, ::device_blackboard->SetRealState(index));
-  basic.alive.Update(basic.clock);
+  // Do monitor first.
+  if (this->monitor != nullptr)
+    this->monitor->DataReceived(s);
+
+  // Pass data directly to drivers that use binary data protocols
+  if (driver != nullptr && device != nullptr && driver->UsesRawData())
+    {
+    if (this->monitor != nullptr)
+      this->monitor->DataReceived(s);
+    NMEAInfo& basic(::device_blackboard->SetRealState(index));
+    basic.UpdateClock();
+    ::device_blackboard->mutex.lock();
+    device->DataReceived(s, ::device_blackboard->SetRealState(index));
+    basic.alive.Update(basic.clock);
 #ifndef NDEBUG
-//#include "LogFile.hpp"
-//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+#include "LogFile.hpp"
+    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+              ::device_blackboard->RealState(0).adsb.traffic.list.size());
 #endif
-  ::device_blackboard->ScheduleMerge();
-  ::device_blackboard->mutex.unlock();
+    ::device_blackboard->ScheduleMerge();
+    ::device_blackboard->mutex.unlock();
+    return true;
+    }
+
+  if (!IsNMEAOut())
+    /**
+     * If its not a NMEA ouput then forward the binary to an object which
+     * will extract the NMEA record and call
+     * \ref DeviceDescriptor::LineReceived
+     */
+    PortLineSplitter::DataReceived(s);
+
   return true;
   }
 #endif

@@ -80,6 +80,9 @@ class OperationEnvironment;
 class OpenDeviceJob;
 class DeviceDataEditor;
 
+/**
+ * Provide general access to a device.
+ */
 class DeviceDescriptor final
   : PortListener,
 #ifdef HAVE_INTERNAL_GPS
