@@ -254,7 +254,7 @@ OrderedTaskSave(OrderedTask &task)
   const auto tasks_path = MakeLocalPath(_T("tasks"));
 
   _tcscat(fname, _T(".tsk"));
-  task.SetName(StaticString<64>(fname));
+  task.SetName(fname);
   SaveTask(AllocatedPath::Build(tasks_path, fname), task);
   return true;
 }

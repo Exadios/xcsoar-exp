@@ -809,6 +809,7 @@ DEBUG_PROGRAM_NAMES += DownloadFile \
 	RunDownloadToFile \
 	UploadFile \
 	RunWeGlideUploadFlight \
+	RunWeGlideDownloadTask \
 	RunTimClient \
 	RunNOAADownloader RunSkyLinesTracking RunLiveTrack24
 endif
@@ -968,21 +969,35 @@ $(eval $(call link-program,UploadFile,UPLOAD_FILE))
 
 RUN_TIM_CLIENT_SOURCES = \
 	$(SRC)/Version.cpp \
-	$(SRC)/net/client/tim/Client.cpp \
 	$(TEST_SRC_DIR)/RunTimClient.cpp
-RUN_TIM_CLIENT_DEPENDS = JSON LIBHTTP ASYNC OS LIBNET IO UTIL
+RUN_TIM_CLIENT_DEPENDS = LIBCLIENT JSON LIBHTTP ASYNC OS LIBNET IO UTIL
 $(eval $(call link-program,RunTimClient,RUN_TIM_CLIENT))
 
 RUN_WEGLIDE_UPLOAD_FLIGHT_SOURCES = \
 	$(SRC)/Version.cpp \
-	$(SRC)/Cloud/weglide/UploadFlight.cpp \
 	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
 	$(SRC)/Formatter/TimeFormatter.cpp \
 	$(SRC)/net/SocketError.cxx \
 	$(TEST_SRC_DIR)/FakeLogFile.cpp \
 	$(TEST_SRC_DIR)/RunWeGlideUploadFlight.cpp
-RUN_WEGLIDE_UPLOAD_FLIGHT_DEPENDS = JSON LIBHTTP ASYNC LIBNET OPERATION OS IO UTIL TIME
+RUN_WEGLIDE_UPLOAD_FLIGHT_DEPENDS = LIBCLIENT JSON LIBHTTP ASYNC LIBNET OPERATION OS IO UTIL TIME
 $(eval $(call link-program,RunWeGlideUploadFlight,RUN_WEGLIDE_UPLOAD_FLIGHT))
+
+RUN_WEGLIDE_DOWNLOAD_TASK_SOURCES = \
+	$(SRC)/Version.cpp \
+	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
+	$(SRC)/XML/Node.cpp \
+	$(SRC)/XML/Parser.cpp \
+	$(SRC)/XML/Writer.cpp \
+	$(SRC)/XML/DataNode.cpp \
+	$(SRC)/XML/DataNodeXML.cpp \
+	$(SRC)/Task/Serialiser.cpp \
+	$(SRC)/Task/Deserialiser.cpp \
+	$(SRC)/Engine/Util/Gradient.cpp \
+	$(SRC)/net/SocketError.cxx \
+	$(TEST_SRC_DIR)/RunWeGlideDownloadTask.cpp
+RUN_WEGLIDE_DOWNLOAD_TASK_DEPENDS = LIBCLIENT TASK ROUTE GLIDE WAYPOINT GEO TIME MATH LIBHTTP ASYNC LIBNET OPERATION IO OS UTIL
+$(eval $(call link-program,RunWeGlideDownloadTask,RUN_WEGLIDE_DOWNLOAD_TASK))
 
 RUN_NOAA_DOWNLOADER_SOURCES = \
 	$(SRC)/net/SocketError.cxx \
@@ -1749,7 +1764,6 @@ RUN_MAP_WINDOW_SOURCES = \
 	$(SRC)/Computer/Wind/Settings.cpp \
 	$(SRC)/TeamCode/Settings.cpp \
 	$(SRC)/Logger/Settings.cpp \
-	$(SRC)/Cloud/weglide/WeGlideSettings.cpp \
 	$(SRC)/Computer/TraceComputer.cpp \
 	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/Task/ProtectedRoutePlanner.cpp \
@@ -2200,7 +2214,6 @@ RUN_ANALYSIS_SOURCES = \
 	$(SRC)/TeamCode/TeamCode.cpp \
 	$(SRC)/TeamCode/Settings.cpp \
 	$(SRC)/Logger/Settings.cpp \
-	$(SRC)/Cloud/weglide/WeGlideSettings.cpp \
 	$(SRC)/IGC/IGCParser.cpp \
 	$(SRC)/MapSettings.cpp \
 	$(SRC)/Blackboard/InterfaceBlackboard.cpp \

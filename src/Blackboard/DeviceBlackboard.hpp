@@ -31,8 +31,8 @@ Copyright_License {
 #include "time/WrapClock.hpp"
 
 #include <xcsoar-cassert>
+#include <array>
 
-class MultipleDevices;
 class AtmosphericPressure;
 class OperationEnvironment;
 class RadioFrequency;
@@ -51,12 +51,10 @@ class DeviceBlackboard
 
   Simulator simulator;
 
-  MultipleDevices *devices = nullptr;
-
   /**
    * Data from each physical device.
    */
-  NMEAInfo per_device_data[NUMDEV];
+  std::array<NMEAInfo, NUMDEV> per_device_data;
 
   /**
    * Merged data from the physical devices.
@@ -82,29 +80,38 @@ public:
   Mutex mutex;
 
 public:
-  DeviceBlackboard();
+  DeviceBlackboard() noexcept;
 
-  void SetDevices(MultipleDevices &_devices) {
-    assert(devices == nullptr);
-
-    devices = &_devices;
+  /**
+   * Reads the given derived_info usually provided by the
+   * GlideComputerBlackboard and saves it to the own Blackboard
+   * @param derived_info Calculated information usually provided
+   * by the GlideComputerBlackboard
+   */
+  void ReadBlackboard(const DerivedInfo &derived_info) noexcept {
+    calculated_info = derived_info;
   }
 
-  void ReadBlackboard(const DerivedInfo &derived_info);
-  void ReadComputerSettings(const ComputerSettings &settings);
+  /**
+   * Reads the given settings usually provided by the InterfaceBlackboard
+   * and saves it to the own Blackboard
+   * @param settings ComputerSettings usually provided by the
+   * InterfaceBlackboard
+   */
+  void ReadComputerSettings(const ComputerSettings &settings) noexcept {
+    computer_settings = settings;
+  }
 
 protected:
-  NMEAInfo &SetBasic() { return gps_info; }
-  MoreData &SetMoreData() { return gps_info; }
+  NMEAInfo &SetBasic() noexcept { return gps_info; }
+  MoreData &SetMoreData() noexcept { return gps_info; }
 
 public:
-  const NMEAInfo &RealState(unsigned i) const {
-    assert(i < NUMDEV);
+  const NMEAInfo &RealState(unsigned i) const noexcept {
     return per_device_data[i];
   }
 
-  NMEAInfo &SetRealState(unsigned i) {
-    assert(i < NUMDEV);
+  NMEAInfo &SetRealState(unsigned i) noexcept {
     return per_device_data[i];
   }
 
@@ -114,9 +121,7 @@ public:
    * unlocking the mutex.
    */
   NMEAInfo LockGetDeviceDataUpdateClock(unsigned i) noexcept {
-    assert(i < NUMDEV);
-
-    const std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
     per_device_data[i].UpdateClock();
     return per_device_data[i];
   }
@@ -126,21 +131,19 @@ public:
    * method takes care for locking and unlocking the mutex.
    */
   void LockSetDeviceDataScheuduleMerge(unsigned i, const NMEAInfo &src) noexcept {
-    assert(i < NUMDEV);
-
     {
-      const std::lock_guard<Mutex> lock(mutex);
+      const std::lock_guard lock{mutex};
       per_device_data[i] = src;
     }
 
     ScheduleMerge();
   }
 
-  NMEAInfo &SetSimulatorState() { return simulator_data; }
-  NMEAInfo &SetReplayState() { return replay_data; }
+  NMEAInfo &SetSimulatorState() noexcept { return simulator_data; }
+  NMEAInfo &SetReplayState() noexcept { return replay_data; }
 
 public:
-  const NMEAInfo &RealState() const { return real_data; }
+  const NMEAInfo &RealState() const noexcept { return real_data; }
 
   /**
    * Is the specified device a FLARM?
@@ -150,31 +153,18 @@ public:
    * proper locking.
    */
   [[gnu::pure]]
-  bool IsFLARM(unsigned i) const {
+  bool IsFLARM(unsigned i) const noexcept {
     return RealState(i).flarm.IsDetected();
   }
 
-  void SetStartupLocation(const GeoPoint &loc, double alt);
-  void ProcessSimulation();
-  void StopReplay();
+  void SetStartupLocation(const GeoPoint &loc, double alt) noexcept;
+  void ProcessSimulation() noexcept;
+  void StopReplay() noexcept;
 
-  void SetSimulatorLocation(const GeoPoint &location);
-  void SetTrack(Angle val);
-  void SetSpeed(double val);
-  void SetAltitude(double alt);
-
-  void SetBallast(double fraction, double overload,
-                  OperationEnvironment &env);
-  void SetBugs(double bugs, OperationEnvironment &env);
-  void SetQNH(AtmosphericPressure qnh, OperationEnvironment &env);
-  void SetMC(double mc, OperationEnvironment &env);
-
-  void SetActiveFrequency(RadioFrequency frequency,
-                          const TCHAR *name,
-                          OperationEnvironment &env);
-  void SetStandbyFrequency(RadioFrequency frequency,
-                           const TCHAR *name,
-                           OperationEnvironment &env);
+  void SetSimulatorLocation(const GeoPoint &location) noexcept;
+  void SetTrack(Angle val) noexcept;
+  void SetSpeed(double val) noexcept;
+  void SetAltitude(double alt) noexcept;
 
   /**
    * Check the expiry time of the device connection with the wall
@@ -184,17 +174,17 @@ public:
    * @return true if the connection has just expired, false if the
    * connection status has not changed
    */
-  void ExpireWallClock();
+  void ExpireWallClock() noexcept;
 
   /**
    * Trigger the MergeThread, which will call Merge().  Call this
    * after a modification.  The caller doesn't need to hold the lock.
    */
-  void ScheduleMerge();
+  void ScheduleMerge() noexcept;
 
   /**
    * Copy real_data or simulator_data or replay_data to gps_info.
    * Caller must lock the blackboard.
    */
-  void Merge();
+  void Merge() noexcept;
 };

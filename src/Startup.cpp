@@ -342,7 +342,6 @@ Startup(UI::Display &display)
   // Initialize DeviceBlackboard
   device_blackboard = new DeviceBlackboard();
   devices = new MultipleDevices(*asio_thread, *global_cares_channel);
-  device_blackboard->SetDevices(*devices);
 
   // Initialize main blackboard data
   task_events = new GlideComputerTaskEvents();
@@ -576,8 +575,13 @@ Shutdown()
 
   // Stop logger and save igc file
   operation.SetText(_("Shutdown, saving logs..."));
-  if (logger != nullptr)
-    logger->GUIStopLogger(CommonInterface::Basic(), true);
+  if (logger != nullptr) {
+    try {
+      logger->GUIStopLogger(CommonInterface::Basic(), true);
+    } catch (...) {
+      LogError(std::current_exception());
+    }
+  }
 
   delete flight_logger;
   flight_logger = nullptr;

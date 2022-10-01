@@ -21,17 +21,37 @@ Copyright_License {
 }
 */
 
-#pragma once
+#include "Glue.hpp"
+#include "ButtonLabel.hpp"
+#include "MenuBar.hpp"
+#include "MenuData.hpp"
+#include "util/Macros.hpp"
 
-#include <tchar.h>
+namespace MenuGlue {
 
-struct RaspProvider {
-  const TCHAR *name;
-  const char *url;
-};
+void
+SetLabelText(MenuBar &bar, unsigned index,
+             const TCHAR *text, unsigned event) noexcept
+{
+  TCHAR buffer[100];
+  const auto expanded = ButtonLabel::Expand(text, buffer, ARRAY_SIZE(buffer));
+  if (expanded.visible)
+    bar.ShowButton(index, expanded.enabled, expanded.text, event);
+  else
+    bar.HideButton(index);
+}
 
-/**
- * List of well-known RASP providers.  The list ends with a sentinel
- * item with nullptr values.
- */
-extern const RaspProvider rasp_providers[];
+void
+Set(MenuBar &bar, const Menu &menu, const Menu *overlay, bool full) noexcept
+{
+  for (unsigned i = 0; i < menu.MAX_ITEMS; ++i) {
+    const MenuItem &item = overlay != nullptr && (*overlay)[i].IsDefined()
+      ? (*overlay)[i]
+      : menu[i];
+
+    if (full || item.IsDynamic())
+      SetLabelText(bar, i, item.label, item.event);
+  }
+}
+
+} // namespace MenuGlue

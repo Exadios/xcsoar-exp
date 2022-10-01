@@ -71,7 +71,7 @@ LocalPath(const AvailableFile &file)
 
 #ifdef HAVE_DOWNLOAD_MANAGER
 
-gcc_pure
+[[gnu::pure]]
 static const AvailableFile *
 FindRemoteFile(const FileRepository &repository, const char *name)
 {
@@ -79,7 +79,7 @@ FindRemoteFile(const FileRepository &repository, const char *name)
 }
 
 #ifdef _UNICODE
-gcc_pure
+[[gnu::pure]]
 static const AvailableFile *
 FindRemoteFile(const FileRepository &repository, const TCHAR *name)
 {
@@ -91,7 +91,7 @@ FindRemoteFile(const FileRepository &repository, const TCHAR *name)
 }
 #endif
 
-gcc_pure
+[[gnu::pure]]
 static bool
 CanDownload(const FileRepository &repository, const TCHAR *name)
 {
@@ -185,7 +185,7 @@ class ManagedFileListWidget
    * The list of file names (base names) that are currently being
    * downloaded.
    */
-  std::map<std::string, DownloadStatus> downloads;
+  std::map<std::string, DownloadStatus, std::less<>> downloads;
 
   /**
    * Each item in this set is a failed download.
@@ -214,17 +214,17 @@ public:
   void CreateButtons(WidgetDialog &dialog) noexcept;
 
 protected:
-  gcc_pure
+  [[gnu::pure]]
   bool IsDownloading(const char *name) const noexcept {
 #ifdef HAVE_DOWNLOAD_MANAGER
-    std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
     return downloads.find(name) != downloads.end();
 #else
     return false;
 #endif
   }
 
-  gcc_pure
+  [[gnu::pure]]
   bool IsDownloading(const AvailableFile &file) const noexcept {
     return IsDownloading(file.GetName());
   }
@@ -232,7 +232,7 @@ protected:
   bool IsDownloading(const char *name,
                      DownloadStatus &status_r) const noexcept {
 #ifdef HAVE_DOWNLOAD_MANAGER
-    std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
     auto i = downloads.find(name);
     if (i == downloads.end())
       return false;
@@ -249,22 +249,22 @@ protected:
     return IsDownloading(file.GetName(), status_r);
   }
 
-  gcc_pure
+  [[gnu::pure]]
   bool HasFailed(const char *name) const noexcept {
 #ifdef HAVE_DOWNLOAD_MANAGER
-    std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
     return failures.find(name) != failures.end();
 #else
     return false;
 #endif
   }
 
-  gcc_pure
+  [[gnu::pure]]
   bool HasFailed(const AvailableFile &file) const noexcept {
     return HasFailed(file.GetName());
   }
 
-  gcc_pure
+  [[gnu::pure]]
   int FindItem(const TCHAR *name) const noexcept;
 
   void LoadRepositoryFile();
@@ -348,7 +348,7 @@ ManagedFileListWidget::LoadRepositoryFile()
 try {
 #ifdef HAVE_DOWNLOAD_MANAGER
   {
-    const std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
     repository_modified = false;
     repository_failed = false;
   }
@@ -631,7 +631,7 @@ ManagedFileListWidget::OnTimer()
   bool download_active;
 
   {
-    const std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
     download_active = !downloads.empty();
   }
 
@@ -658,7 +658,7 @@ ManagedFileListWidget::OnDownloadAdded(Path path_relative,
   const std::string name3(name2);
 
   {
-    const std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
     downloads[name3] = DownloadStatus{size, position};
     failures.erase(name3);
   }
@@ -680,7 +680,7 @@ ManagedFileListWidget::OnDownloadComplete(Path path_relative) noexcept
   const std::string name3(name2);
 
   {
-    const std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
 
     downloads.erase(name3);
 
@@ -708,7 +708,7 @@ ManagedFileListWidget::OnDownloadError(Path path_relative,
   const std::string name3(name2);
 
   {
-    const std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
 
     downloads.erase(name3);
 
@@ -728,7 +728,7 @@ ManagedFileListWidget::OnDownloadNotification() noexcept
   bool repository_modified2, repository_failed2;
 
   {
-    const std::lock_guard<Mutex> lock(mutex);
+    const std::lock_guard lock{mutex};
     repository_modified2 = std::exchange(repository_modified, false);
     repository_failed2 = std::exchange(repository_failed, false);
   }

@@ -29,37 +29,20 @@ Copyright_License {
 #include <cstddef>
 
 struct PixelRect;
-struct ButtonLook;
-class Font;
-class ContainerWindow;
 class Menu;
 
 namespace ButtonLabel {
-  struct Expanded {
-    bool visible, enabled;
-    const TCHAR *text;
-  };
 
-  void CreateButtonLabels(ContainerWindow &parent, ButtonLook &look);
-  void Destroy();
-
-  gcc_pure
-  Expanded Expand(const TCHAR *text, TCHAR *buffer, size_t size);
-
-  void SetLabelText(unsigned i, const TCHAR *text, unsigned event);
-
-  gcc_pure
-  bool IsEnabled(unsigned i);
-
-  bool ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size);
-
-  void OnResize(const PixelRect &rc);
-
-  /**
-   * Show the specified menu.
-   *
-   * @param full do a full update; if false, then only dynamic buttons
-   * are updated (to reduce flickering)
-   */
-  void Set(const Menu &menu, const Menu *overlay=nullptr, bool full=true);
+struct Expanded {
+  bool visible, enabled;
+  const TCHAR *text;
 };
+
+[[gnu::pure]]
+Expanded
+Expand(const TCHAR *text, TCHAR *buffer, size_t size);
+
+bool
+ExpandMacros(const TCHAR *In, TCHAR *OutBuffer, size_t Size);
+
+} // namespace ButtonLabel

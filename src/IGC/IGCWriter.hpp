@@ -28,6 +28,8 @@ Copyright_License {
 #include "io/FileOutputStream.hxx"
 #include "io/BufferedOutputStream.hxx"
 
+#include <string_view>
+
 #include <tchar.h>
 
 class Path;
@@ -64,21 +66,9 @@ public:
 
 private:
   /**
-   * Begin writing a new line.  The returned buffer has #MAX_IGC_BUFF
-   * bytes.  Call CommitLine() when you are done writing to the buffer.
-   *
-   * @return nullptr on error
-   */
-  char *BeginLine() {
-    return buffer;
-  }
-
-  /**
    * Finish writing the line.
-   *
-   * @param line the buffer obtained with BeginLine()
    */
-  void CommitLine(char *line);
+  void CommitLine(std::string_view line);
 
   void WriteLine(const char *line);
   void WriteLine(const char *a, const TCHAR *b);

@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include "RoutePlanner.hpp"
+#include "TerrainRoute.hpp"
 #include "Airspace/Airspaces.hpp"
 
-class AirspaceRoute : public RoutePlanner {
+class AirspaceRoute : public TerrainRoute {
   Airspaces m_airspaces;
 
   struct RouteAirspaceIntersection {
@@ -66,11 +66,11 @@ protected:
     return m_airspaces.IsEmpty() && RoutePlanner::IsTrivial();
   }
 
-private:
   std::optional<RoutePoint> CheckClearance(const RouteLink &e) const noexcept override;
   void AddNearby(const RouteLink &e) noexcept override;
   bool CheckSecondary(const RouteLink &e) noexcept override;
 
+private:
   void AddNearbyAirspace(const RouteAirspaceIntersection &inx,
                          const RouteLink &e) noexcept;
 

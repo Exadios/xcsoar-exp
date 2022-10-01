@@ -228,8 +228,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Atmosphere/Pressure.cpp \
 	$(SRC)/Atmosphere/AirDensity.cpp \
 	$(SRC)/Atmosphere/CuSonde.cpp \
-	$(SRC)/Cloud/weglide/WeGlideSettings.cpp \
-	$(SRC)/contest/weglide/UploadIGCFile.cpp \
+	$(SRC)/net/client/WeGlide/UploadIGCFile.cpp \
 	$(SRC)/Plane/PlaneGlue.cpp \
 	$(SRC)/Plane/PlaneFileGlue.cpp \
 	$(SRC)/FLARM/FlarmId.cpp \
@@ -314,6 +313,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Waypoint/WaypointDetailsReader.cpp \
 	$(SRC)/Menu/MenuData.cpp \
 	$(SRC)/Menu/MenuBar.cpp \
+	$(SRC)/Menu/Glue.cpp \
 	$(SRC)/Menu/ButtonLabel.cpp \
 	$(SRC)/Menu/ExpandMacros.cpp \
 	$(SRC)/Menu/ShowMenuButton.cpp \
@@ -390,7 +390,6 @@ XCSOAR_SOURCES := \
 	$(SRC)/Weather/Rasp/RaspCache.cpp \
 	$(SRC)/Weather/Rasp/RaspRenderer.cpp \
 	$(SRC)/Weather/Rasp/RaspStyle.cpp \
-	$(SRC)/Weather/Rasp/Providers.cpp \
 	\
 	$(SRC)/Blackboard/BlackboardListener.cpp \
 	$(SRC)/Blackboard/ProxyBlackboardListener.cpp \
@@ -651,9 +650,7 @@ XCSOAR_SOURCES += \
 endif
 
 XCSOAR_SOURCES += \
-	$(SRC)/net/client/tim/Client.cpp \
 	$(SRC)/net/client/tim/Glue.cpp \
-	$(SRC)/Cloud/weglide/UploadFlight.cpp \
 	$(SRC)/Tracking/SkyLines/Client.cpp \
 	$(SRC)/Tracking/SkyLines/Assemble.cpp \
 	$(SRC)/Tracking/SkyLines/Key.cpp \
@@ -682,6 +679,7 @@ XCSOAR_DEPENDS = \
 	LUA \
 	ZZIP \
 	OPERATION \
+	LIBCLIENT \
 	JSON \
 	LIBNET TIME OS THREAD \
 	UTIL GEO MATH

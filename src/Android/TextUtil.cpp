@@ -29,6 +29,8 @@ Copyright_License {
 #include "Look/FontDescription.hpp"
 #include "Asset.hpp"
 
+#include <array>
+
 JNIEnv *TextUtil::env;
 static Java::TrivialClass cls;
 jmethodID TextUtil::midTextUtil;
@@ -67,13 +69,12 @@ TextUtil::TextUtil(const Java::LocalObject &_obj) noexcept
   Java::LocalRef<jintArray> metricsArray{&e, e.NewIntArray(5)};
   e.CallVoidMethod(Get(), midGetFontMetrics, metricsArray.Get());
 
-  jint metrics[5];
-  e.GetIntArrayRegion(metricsArray, 0, 5, metrics);
+  std::array<jint, 5> metrics;
+  e.GetIntArrayRegion(metricsArray, 0, metrics.size(), metrics.data());
   height = metrics[0];
-  style = metrics[1];
-  ascent_height = metrics[2];
-  capital_height = metrics[3];
-  line_spacing = metrics[4];
+  ascent_height = metrics[1];
+  capital_height = metrics[2];
+  line_spacing = metrics[3];
 }
 
 TextUtil *

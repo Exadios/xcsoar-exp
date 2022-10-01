@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="au.org.narroginglidingclub.xcsoar"
           android:installLocation="auto"
-          android:versionCode="16"
-          android:versionName="7.26.0.2.2">
+          android:versionCode="17"
+          android:versionName="7.27.0.2.2">
   <application
       android:requestLegacyExternalStorage="true"
       android:preserveLegacyExternalStorage="true"
@@ -48,6 +48,18 @@
               android:authorities="au.org.narroginglidingclub.xcsoar"
               android:exported="false"
               android:grantUriPermissions="true"/>
+
+    <provider
+        android:name=".AllFilesDocumentsProvider"
+        android:authorities="org.xcsoar.allfiles"
+        android:exported="true"
+        android:grantUriPermissions="true"
+        android:permission="android.permission.MANAGE_DOCUMENTS">
+      <intent-filter>
+        <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+      </intent-filter>
+    </provider>
+
   </application>
 
   <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="30"/>

@@ -144,7 +144,7 @@ public:
     if (combo_list.empty())
       return true;
 
-    const int old_value = df.GetAsInteger();
+    const int old_value = df.GetValue();
     const auto &item = GetSelectedItem();
     if (item.int_value == old_value)
       /* no change */
@@ -270,7 +270,7 @@ PortPickerWidget::OnDeviceDetected(Type type, const char *address,
   }
 
   {
-    const std::lock_guard<Mutex> lock{detected_mutex};
+    const std::lock_guard lock{detected_mutex};
     detected_list.emplace_back(DetectedPort{port_type, address, name});
   }
 
@@ -288,7 +288,7 @@ inline void
 PortPickerWidget::OnDetectedNotification() noexcept
 {
   {
-    const std::lock_guard<Mutex> lock(detected_mutex);
+    const std::lock_guard lock{detected_mutex};
 
     while (!detected_list.empty()) {
       UpdateItem(std::move(detected_list.front()));

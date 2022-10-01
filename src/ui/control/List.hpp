@@ -90,8 +90,7 @@ public:
  * A ListControl implements a scrollable list control based on the
  * WindowControl class.
  */
-class ListControl : public PaintWindow {
-protected:
+class ListControl final : public PaintWindow {
   const DialogLook &look;
 
   /** The ScrollBar object */
@@ -170,6 +169,10 @@ public:
   void Create(ContainerWindow &parent,
               PixelRect rc, const WindowStyle style,
               unsigned _item_height) noexcept;
+
+  const auto &GetLook() const noexcept {
+    return look;
+  }
 
   void SetItemRenderer(ListItemRenderer *_item_renderer) noexcept {
     assert(_item_renderer != nullptr);
@@ -263,13 +266,13 @@ public:
    */
   void MoveOrigin(int delta) noexcept;
 
-protected:
+private:
   [[gnu::pure]]
   bool CanActivateItem() const noexcept;
   void ActivateItem() noexcept;
 
   /** Checks whether a ScrollBar is needed and shows/hides it */
-  void show_or_hide_scroll_bar() noexcept;
+  void ShowOrHideScrollBar() noexcept;
 
   /**
    * Scroll to the ListItem defined by i
@@ -288,7 +291,7 @@ protected:
   }
 
   [[gnu::pure]]
-  PixelRect item_rect(unsigned i) const noexcept {
+  PixelRect GetItemRect(unsigned i) const noexcept {
     PixelRect rc;
     rc.left = 0;
     rc.top = (int)(i - origin) * item_height - pixel_pan;
@@ -297,8 +300,8 @@ protected:
     return rc;
   }
 
-  void Invalidate_item(unsigned i) noexcept {
-    Invalidate(item_rect(i));
+  void InvalidateItem(unsigned i) noexcept {
+    Invalidate(GetItemRect(i));
   }
 
   void drag_end() noexcept;

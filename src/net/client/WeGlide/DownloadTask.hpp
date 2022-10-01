@@ -21,14 +21,29 @@ Copyright_License {
 }
 */
 
-#include "WeGlideSettings.hpp"
+#pragma once
 
-void
-WeGlideSettings::SetDefaults() noexcept
-{
-  pilot_id = 0;
-  pilot_birthdate.Clear();
+#include "co/Task.hxx"
 
-  enabled = false;
-  automatic_upload = true;  // after enabling WeGlide!
-}
+#include <memory>
+
+class OrderedTask;
+class CurlGlobal;
+struct WeGlideSettings;
+struct TaskBehaviour;
+class Waypoints;
+class ProgressListener;
+
+namespace WeGlide {
+
+/**
+ * Download the task declared in WeGlide.  Returns nullptr if no task
+ * is declared and throws on error.
+ */
+Co::Task<std::unique_ptr<OrderedTask>>
+DownloadDeclaredTask(CurlGlobal &curl, const WeGlideSettings &settings,
+                     const TaskBehaviour &task_behaviour,
+                     const Waypoints *waypoints,
+                     ProgressListener &progress);
+
+} // namespace WeGlide

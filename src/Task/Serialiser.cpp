@@ -233,7 +233,6 @@ GetHeightRef(AltitudeReference height_ref)
     return _T("MSL");
 
   case AltitudeReference::STD:
-  case AltitudeReference::NONE:
     /* not applicable here */
     break;
   }
