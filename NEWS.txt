@@ -1,3 +1,6 @@
+Version 7.27.0.3.0 - 2022/10/02 - NGC Fork
+* devices
+  - first pass at SkyEcho 2 ADSB transceiver
 Version 7.27 - 2022/09/23
 * user interface
   - vertical scroll bar in some modal dialogs
