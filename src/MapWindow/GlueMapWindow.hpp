@@ -247,6 +247,13 @@ protected:
   bool OnKeyDown(unsigned key_code) noexcept override;
   void OnCancelMode() noexcept override;
   void OnPaint(Canvas &canvas) noexcept override;
+
+  /**
+   * Render the canvas.
+   * If the rendering uses OpenGL the switch to the Draw Thread first and
+   * return to this thread last.
+   * @param canvas The drawing surface.
+   */
   void OnPaintBuffer(Canvas& canvas) noexcept override;
 
   /**

@@ -79,6 +79,9 @@ class OperationEnvironment;
 class OpenDeviceJob;
 class DeviceDataEditor;
 
+/**
+ * Provide general access to a device.
+ */
 class DeviceDescriptor final
   : PortListener,
 #ifdef HAVE_INTERNAL_GPS
@@ -606,10 +609,22 @@ private:
   void PortStateChanged() noexcept override;
   void PortError(const char *msg) noexcept override;
 
-  /* virtual methods from DataHandler  */
+  /**
+   * This function implements DataHandler::DataReceived.
+   * @param s The binary input data which may consist of one or more 
+   *          records from the device. However a record may not span across
+   *          multiple s objects.
+   * @return Always true.
+   */
   bool DataReceived(std::span<const std::byte> s) noexcept override;
 
-  /* virtual methods from PortLineHandler */
+  /**
+   * This function implements PortLineHandler::LineReceived.
+   * If a nmea logger is set then log this record, then if NMEA record
+   * is in progress do that. Then parse the record and merge the data.
+   * @param line The input from the port.
+   * @return Always true.
+   */
   bool LineReceived(const char *line) noexcept override;
 
 #ifdef HAVE_INTERNAL_GPS

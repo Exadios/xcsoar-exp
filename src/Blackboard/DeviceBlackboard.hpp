@@ -107,11 +107,23 @@ protected:
   MoreData &SetMoreData() noexcept { return gps_info; }
 
 public:
-  const NMEAInfo &RealState(unsigned i) const noexcept {
+  /**
+   * Give a non writable reference to a selected device data.
+   * @param i The index of the device.
+   * @return The non writable reference to the device data.
+   */
+  const NMEAInfo &RealState(unsigned i) const {
+    assert(i < NUMDEV);
     return per_device_data[i];
   }
 
-  NMEAInfo &SetRealState(unsigned i) noexcept {
+  /**
+   * Give a writable reference to a selected device data.
+   * @param i The index of the device.
+   * @return The writable reference to the device data.
+   */
+  NMEAInfo &SetRealState(unsigned i) {
+    assert(i < NUMDEV);
     return per_device_data[i];
   }
 
@@ -183,7 +195,20 @@ public:
   void ScheduleMerge() noexcept;
 
   /**
-   * Copy real_data or simulator_data or replay_data to gps_info.
+   * This is where the source of the data being processed in pseudo real time
+   * by XCSoar is selected.
+   *
+   * Select one of replay, simulator or real data to pass on for further
+   * processing.
+   *
+   * If we model the data from n input devices as n vectors having m
+   * orthogonal elements then this function will create an m element 
+   * output vector which will be a merge of the n vectors. The
+   * semantics of the merge is such that values of each domain are
+   * selected from the lowest number device possible. The selection of 
+   * values in each domain is independent of the selection in any other
+   * domain.
+   * 
    * Caller must lock the blackboard.
    */
   void Merge() noexcept;

@@ -45,6 +45,10 @@
 #include "Interface.hpp"
 #include "Asset.hpp"
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
+
 /**
  * A Window which renders FLARM traffic, with user interaction.
  */
@@ -67,12 +71,14 @@ public:
   /**
    * Update the Flarm display.
    * @param new_direction The new aircraft track or heading.
-   * @param new_data The new list of Flarm targets.
+   * @param new_flarm_data The new list of Flarm targets.
+   * @param new_adsb_data The new list of ADSB targets.
    * @param new_settings The new team codes.
    * @param flarm_status Present status of the Flarm.
    */
   void Update(Angle new_direction,
-              const TrafficList &new_data,
+              const TrafficList &new_flarm_data,
+              const AdsbTrafficList &new_adsb_data,
               const TeamCodeSettings &new_settings,
               FlarmStatus flarm_status);
 
@@ -206,7 +212,7 @@ FlarmTrafficControl::CalcAutoZoom()
   bool warning_mode = WarningMode();
   RoughDistance zoom_dist = 0;
 
-  for (auto it = data.list.begin(), end = data.list.end();
+  for (auto it = flarm_data.list.begin(), end = flarm_data.list.end();
       it != end; ++it) {
     if (warning_mode && !it->HasAlarm())
       continue;
@@ -225,12 +231,14 @@ FlarmTrafficControl::CalcAutoZoom()
 
 void
 FlarmTrafficControl::Update(Angle new_direction,
-                            const TrafficList &new_data,
+                            const TrafficList &new_flarm_data,
+                            const AdsbTrafficList &new_adsb_data,
                             const TeamCodeSettings &new_settings,
                             FlarmStatus flarm_status)
 {
   FlarmTrafficWindow::Update(new_direction,
-                             new_data,
+                             new_flarm_data,
+                             new_adsb_data,
                              new_settings,
                              flarm_status);
   if (enable_auto_zoom || WarningMode())
@@ -506,7 +514,7 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas &canvas) const
     return;
 
   // Shortcut to the selected traffic
-  FlarmTraffic traffic = data.list[WarningMode() ? warning : selection];
+  FlarmTraffic traffic = flarm_data.list[WarningMode() ? warning : selection];
   assert(traffic.IsDefined());
 
   const unsigned padding = Layout::GetTextPadding();
@@ -783,6 +791,7 @@ TrafficWidget::Update() noexcept
 
   this->windows->view.Update(basic.track,
                              basic.flarm.traffic,
+                             basic.adsb.traffic,
                              CommonInterface::GetComputerSettings().team_code,
                              basic.flarm.status);
 

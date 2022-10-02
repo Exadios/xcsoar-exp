@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include "FlarmTrafficWindow.hpp"
 #include "FLARM/Traffic.hpp"
 #include "FLARM/Friends.hpp"
+#include "ADSB/Traffic.hpp"
 #include "ui/canvas/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Formatter/UserUnits.hpp"
@@ -42,6 +43,9 @@
 #include "ui/canvas/opengl/Scope.hpp"
 #endif
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
 
 FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
                                        unsigned _h_padding,
@@ -51,7 +55,8 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
    h_padding(_h_padding), v_padding(_v_padding),
    small(_small)
 {
-  data.Clear();
+  flarm_data.Clear();
+  adsb_data.Clear();
   data_modified.Clear();
   this->flarm_status.Clear();
 }
@@ -59,9 +64,9 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
 bool
 FlarmTrafficWindow::WarningMode() const noexcept
 {
-  assert(warning < (int)data.list.size());
-  assert(warning < 0 || data.list[warning].IsDefined());
-  assert(warning < 0 || data.list[warning].HasAlarm());
+  assert(warning < (int)flarm_data.list.size());
+  assert(warning < 0 || flarm_data.list[warning].IsDefined());
+  assert(warning < 0 || flarm_data.list[warning].HasAlarm());
 
   return warning >= 0;
 }
@@ -83,8 +88,8 @@ FlarmTrafficWindow::OnResize(PixelSize new_size) noexcept
 void
 FlarmTrafficWindow::SetTarget(int i) noexcept
 {
-  assert(i < (int)data.list.size());
-  assert(i < 0 || data.list[i].IsDefined());
+  assert(i < (int)flarm_data.list.size());
+  assert(i < 0 || flarm_data.list[i].IsDefined());
 
   if (selection == i)
     return;
@@ -103,16 +108,16 @@ FlarmTrafficWindow::NextTarget() noexcept
   if (WarningMode())
     return;
 
-  assert(selection < (int)data.list.size());
+  assert(selection < (int)flarm_data.list.size());
 
   const FlarmTraffic *traffic;
   if (selection >= 0)
-    traffic = data.NextTraffic(&data.list[selection]);
+    traffic = flarm_data.NextTraffic(&flarm_data.list[selection]);
   else
     traffic = NULL;
 
   if (traffic == NULL)
-    traffic = data.FirstTraffic();
+    traffic = flarm_data.FirstTraffic();
 
   SetTarget(traffic);
 }
@@ -127,16 +132,16 @@ FlarmTrafficWindow::PrevTarget() noexcept
   if (WarningMode())
     return;
 
-  assert(selection < (int)data.list.size());
+  assert(selection < (int)flarm_data.list.size());
 
   const FlarmTraffic *traffic;
   if (selection >= 0)
-    traffic = data.PreviousTraffic(&data.list[selection]);
+    traffic = flarm_data.PreviousTraffic(&flarm_data.list[selection]);
   else
     traffic = NULL;
 
   if (traffic == NULL)
-    traffic = data.LastTraffic();
+    traffic = flarm_data.LastTraffic();
 
   SetTarget(traffic);
 }
@@ -171,27 +176,33 @@ FlarmTrafficWindow::UpdateSelector(const FlarmId id,
 void
 FlarmTrafficWindow::UpdateWarnings() noexcept
 {
-  const FlarmTraffic *alert = data.FindMaximumAlert();
+  const FlarmTraffic *alert = flarm_data.FindMaximumAlert();
   warning = alert != NULL
-    ? (int)data.TrafficIndex(alert)
+    ? (int)flarm_data.TrafficIndex(alert)
     : - 1;
 }
 
 /**
  * This should be called when the radar needs to be repainted
  * @param new_direction The new aircraft heading or track.
- * @param new_data The new list of Flarm targets.
+ * @param new_flarm_data The new list of Flarm targets.
+ * @param new_adsb_data The list of new ADSB targets.
  * @param new_settings The new team codes.
  * @param flarm_status Present status of the Flarm.
  */
 void
 FlarmTrafficWindow::Update(Angle new_direction,
-                           const TrafficList &new_data,
+                           const TrafficList &new_flarm_data,
+                           const AdsbTrafficList &new_adsb_data,
                            const TeamCodeSettings &new_settings,
                            FlarmStatus flarm_status) noexcept
 {
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
-  if (new_data.modified == this->data_modified                       &&
+  /**
+   * \todo Modify test to include ADSB data for consideration.
+   */
+  if ((new_flarm_data.modified == this->data_modified)               &&
+      (new_adsb_data.modified  == this->data_modified)               &&
       (this->heading - new_direction).Absolute() < min_heading_delta &&
       this->flarm_status.gps       == flarm_status.gps)
     /* no change - don't redraw */
@@ -201,7 +212,7 @@ FlarmTrafficWindow::Update(Angle new_direction,
   PixelPoint pt;
   if (!small && selection >= 0)
     {
-    selection_id = data.list[selection].id;
+    selection_id = flarm_data.list[selection].id;
     pt = sc[selection];
     }
   else
@@ -211,11 +222,19 @@ FlarmTrafficWindow::Update(Angle new_direction,
     pt.y = -100;
     }
 
-  this->data_modified = new_data.modified;
-  this->heading = new_direction;
+  /* \todo pfb: Refactor to avoid this silliness. */
+  if (new_flarm_data.modified == new_adsb_data.modified)
+    this->data_modified = new_flarm_data.modified;
+  else
+    if (new_flarm_data.modified != this->data_modified)
+      this->data_modified = new_flarm_data.modified;
+    else
+      this->data_modified = new_adsb_data.modified;
+  heading = new_direction;
   this->fr = -heading;
   this->fir = heading;
-  this->data = new_data;
+  this->flarm_data = new_flarm_data;
+  this->adsb_data  = new_adsb_data;
   this->settings = new_settings;
   this->flarm_status = flarm_status;
 
@@ -562,8 +581,11 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas &canvas,
 void
 FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   {
-  if (data.IsEmpty())
+  if (this->flarm_data.IsEmpty() && this->adsb_data.IsEmpty())
     {
+    /**
+     * \todo Include ADSB in the "No Go" test.
+     */
     if (this->flarm_status.available == false ||
         this->flarm_status.gps == FlarmStatus::GPSStatus::NONE)
       this->PaintRadarNoGo(canvas);
@@ -572,17 +594,27 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
     return;
     }
 
-  // Iterate through the traffic (normal traffic)
-  for (unsigned i = 0; i < data.list.size(); ++i) {
-    const FlarmTraffic &traffic = data.list[i];
+  // Iterate through the Flarm traffic (normal traffic)
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
+    const FlarmTraffic &traffic = flarm_data.list[i];
 
     if (!traffic.HasAlarm() &&
         static_cast<unsigned> (selection) != i)
       PaintRadarTarget(canvas, traffic, i);
   }
 
+  // And iterate through the ADSB traffic
+  for (unsigned i = 0; i < this->adsb_data.list.size(); ++i)
+    {
+    /* \todo pfb: Refactor to remove this kludge */
+    const AdsbTraffic &traffic = this->adsb_data.list[i];
+    FlarmTraffic fe;
+    AdsbConvert(traffic, fe);
+    PaintRadarTarget(canvas, fe, i);
+    }
+
   if (selection >= 0) {
-    const FlarmTraffic &traffic = data.list[selection];
+    const FlarmTraffic &traffic = flarm_data.list[selection];
 
     if (!traffic.HasAlarm())
       PaintRadarTarget(canvas, traffic, selection);
@@ -591,9 +623,9 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   if (!WarningMode())
     return;
 
-  // Iterate through the traffic (alarm traffic)
-  for (unsigned i = 0; i < data.list.size(); ++i) {
-    const FlarmTraffic &traffic = data.list[i];
+  // Iterate through the Flarm traffic (alarm traffic)
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
+    const FlarmTraffic &traffic = flarm_data.list[i];
 
     if (traffic.HasAlarm())
       PaintRadarTarget(canvas, traffic, i);
@@ -732,11 +764,11 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const noexcept
 void
 FlarmTrafficWindow::Paint(Canvas &canvas) noexcept
 {
-  assert(selection < (int)data.list.size());
-  assert(selection < 0 || data.list[selection].IsDefined());
-  assert(warning < (int)data.list.size());
-  assert(warning < 0 || data.list[warning].IsDefined());
-  assert(warning < 0 || data.list[warning].HasAlarm());
+  assert(selection < (int)flarm_data.list.size());
+  assert(selection < 0 || flarm_data.list[selection].IsDefined());
+  assert(warning < (int)flarm_data.list.size());
+  assert(warning < 0 || flarm_data.list[warning].IsDefined());
+  assert(warning < 0 || flarm_data.list[warning].HasAlarm());
 
   PaintRadarBackground(canvas);
   PaintRadarTraffic(canvas);
@@ -770,9 +802,9 @@ FlarmTrafficWindow::SelectNearTarget(PixelPoint p, int max_distance) noexcept
   int min_distance = 99999;
   int min_id = -1;
 
-  for (unsigned i = 0; i < data.list.size(); ++i) {
+  for (unsigned i = 0; i < flarm_data.list.size(); ++i) {
     // If FLARM target does not exist -> next one
-    if (!data.list[i].IsDefined())
+    if (!flarm_data.list[i].IsDefined())
       continue;
 
     int distance_sq = (p - sc[i]).MagnitudeSquared();

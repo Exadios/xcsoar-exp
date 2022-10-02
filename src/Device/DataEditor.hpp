@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,6 +28,9 @@ Copyright_License {
 class DeviceBlackboard;
 struct NMEAInfo;
 
+/**
+ * A Utility class for use by the DeviceDescriptor class.
+ */
 class DeviceDataEditor {
   DeviceBlackboard &blackboard;
 
@@ -36,15 +39,31 @@ class DeviceDataEditor {
   NMEAInfo &basic;
 
 public:
+  /**
+   * Ctor.
+   * @param blackboard The blackboard.
+   * @param idx The RealState index.
+   */
   DeviceDataEditor(DeviceBlackboard &blackboard,
                    std::size_t idx) noexcept;
 
+  /**
+   * Schedule a merge.
+   */
   void Commit() const noexcept;
 
+  /**
+   * Pointer access.
+   * @return Our NMEAInfo pointer.
+   */
   NMEAInfo *operator->() const noexcept {
     return &basic;
   }
 
+  /**
+   * Dereference access.
+   * @return Our NMEAInfo reference.
+   */
   NMEAInfo &operator*() const noexcept {
     return basic;
   }

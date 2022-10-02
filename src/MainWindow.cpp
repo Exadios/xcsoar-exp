@@ -37,7 +37,6 @@ Copyright_License {
 #include "Audio/Sound.hpp"
 #include "Components.hpp"
 #include "ProcessTimer.hpp"
-#include "LogFile.hpp"
 #include "Gauge/GaugeFLARM.hpp"
 #include "Gauge/GaugeThermalAssistant.hpp"
 #include "Gauge/GlueGaugeVario.hpp"

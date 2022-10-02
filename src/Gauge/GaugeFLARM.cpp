@@ -77,6 +77,7 @@ SmallTrafficWindow::Update(const NMEAInfo &gps_info,
 {
   this->FlarmTrafficWindow::Update(gps_info.track,
                                    gps_info.flarm.traffic,
+                                   gps_info.adsb.traffic,
                                    settings,
                                    gps_info.flarm.status);
 }
@@ -185,6 +186,10 @@ GaugeFLARM::Hide() noexcept
 void
 GaugeFLARM::OnGPSUpdate(const MoreData &basic)
 {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
   Update(basic);
 }
 

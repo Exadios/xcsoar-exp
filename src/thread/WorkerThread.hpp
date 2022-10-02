@@ -38,21 +38,23 @@ class WorkerThread : public SuspensibleThread {
 
 public:
   /**
+   * Ctor.
+   * @param _name The arbitrary name of this thread.
    * @param period_min the minimum duration of one period [ms].  If
    * tick() is faster than that, then the thread will sleep for the
    * rest of the time.  This is can be used for rate-limiting.
    * @param idle_min the minimum sleep time after each tick().  This
    * can be used to reduce overload and lock contention on a very busy
    * and slow machine.
-   * @param delay an artificial delay between Trigger() and Tick(), to
-   * allow grouping consecutive Trigger() calls into one Tick()
+   * @param delay an artificial delay between \ref Trigger() and \ref Tick(),
+   * to allow grouping consecutive \ref Trigger() calls into one \ref Tick().
    */
   WorkerThread(const char *_name,
                Duration period_min={}, Duration idle_min={},
                Duration delay={}) noexcept;
 
   /**
-   * Wakes up the thread to do work, calls tick().
+   * Wakes up the thread to do work, calls \ref Tick().
    */
   void Trigger() noexcept {
     const std::lock_guard lock{mutex};
