@@ -29,10 +29,6 @@ Copyright_License {
 #include "Audio/VarioGlue.hpp"
 #include "Device/MultipleDevices.hpp"
 
-#ifndef NDEBUG
-#include "LogFile.hpp"
-#endif
-
 MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
   :WorkerThread("MergeThread",
 #ifdef KOBO
@@ -59,12 +55,6 @@ MergeThread::Process()
 {
   assert(!IsDefined() || IsInside());
 
-#ifndef NDEBUG
-//#include "LogFile.hpp"
-//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
-#endif
-
   device_blackboard.Merge();
 
   const MoreData &basic = device_blackboard.Basic();
@@ -76,7 +66,8 @@ MergeThread::Process()
                    device_blackboard.Calculated());
 
   flarm_computer.Process(device_blackboard.SetBasic().flarm,
-                         last_fix.flarm, basic);
+                         last_fix.flarm,
+                         basic);
   adsb_computer.Process(device_blackboard.SetBasic().adsb,
                         last_fix.adsb,
                         basic);
@@ -86,12 +77,6 @@ void
 MergeThread::Tick() noexcept
 {
   bool gps_updated, calculated_updated;
-
-#ifndef NDEBUG
-//#include "LogFile.hpp"
-//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
-#endif
 
 #ifdef HAVE_PCM_PLAYER
   bool vario_available;

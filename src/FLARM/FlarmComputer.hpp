@@ -28,7 +28,8 @@ Copyright_License {
 struct FlarmData;
 struct NMEAInfo;
 
-class FlarmComputer {
+class FlarmComputer
+  {
   FlarmCalculations flarm_calculations;
 
 public:
@@ -38,4 +39,4 @@ public:
    */
   void Process(FlarmData &flarm, const FlarmData &last_flarm,
                const NMEAInfo &basic);
-};
+  };

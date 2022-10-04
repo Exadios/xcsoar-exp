@@ -68,10 +68,22 @@ protected:
   void CalcAutoZoom();
 
 public:
+  /**
+   * Update the Flarm display.
+   * @param new_direction The new aircraft track or heading.
+   * @param new_flarm_data The new list of Flarm targets.
+   * @param new_adsb_data The new list of ADSB targets.
+   * @param new_settings The new team codes.
+   * @param flarm_status Present status of the Flarm.
+   * @param adsb_status  Present status of the ADSB.
+   */
   void Update(Angle new_direction,
               const TrafficList &new_flarm_data,
               const AdsbTrafficList &new_adsb_data,
-              const TeamCodeSettings &new_settings);
+              const TeamCodeSettings &new_settings,
+              FlarmStatus flarm_status,
+              AdsbStatus  adsb_status);
+
   void UpdateTaskDirection(bool show_task_direction, Angle bearing);
 
   bool GetNorthUp() const {
@@ -223,13 +235,16 @@ void
 FlarmTrafficControl::Update(Angle new_direction,
                             const TrafficList &new_flarm_data,
                             const AdsbTrafficList &new_adsb_data,
-                            const TeamCodeSettings &new_settings)
+                            const TeamCodeSettings &new_settings,
+                            FlarmStatus flarm_status,
+                            AdsbStatus  adsb_status)
 {
   FlarmTrafficWindow::Update(new_direction,
                              new_flarm_data,
                              new_adsb_data,
-                             new_settings);
-
+                             new_settings,
+                             flarm_status,
+                             adsb_status);
   if (enable_auto_zoom || WarningMode())
     CalcAutoZoom();
 }
@@ -778,10 +793,12 @@ TrafficWidget::Update() noexcept
     return;
   }
 
-  windows->view.Update(basic.track,
-                       basic.flarm.traffic,
-                       basic.adsb.traffic,
-                       CommonInterface::GetComputerSettings().team_code);
+  this->windows->view.Update(basic.track,
+                             basic.flarm.traffic,
+                             basic.adsb.traffic,
+                             CommonInterface::GetComputerSettings().team_code,
+                             basic.flarm.status,
+                             basic.adsb.status);
 
   windows->view.UpdateTaskDirection(calculated.task_stats.task_valid &&
                             calculated.task_stats.current_leg.solution_remaining.IsOk(),
