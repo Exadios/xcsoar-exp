@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-#include <xcsoar-cassert>
+#include <cassert>
 #include <stdio.h>
 
 #ifdef ENABLE_OPENGL
