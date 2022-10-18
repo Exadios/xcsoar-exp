@@ -387,6 +387,10 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         {
         if (sd.size() != 28 + 4)
           {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+          LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
           break;
           }
 
@@ -405,6 +409,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         /* \todo pfb: Find the XCSoar wide conversion from knots to
                  meters / second.  */
         report.speed               = this->target.horiz_vel * 1852 / 3600;
+        report.track = Angle::Degrees((double)this->target.track);
         if((AdsbTraffic::AircraftType)this->target.emitter >=
             AdsbTraffic::AircraftType::FENCE)
           report.type = AdsbTraffic::AircraftType::UNKNOWN;
@@ -441,6 +446,10 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           adsb.new_traffic.Update(info.clock);
           }
         slot->valid.Update(info.clock); // The target is valid now.
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//          LogFormat("%s, %d: %d", __FILE__, __LINE__, adsb.modified.ToInteger());
+#endif
         slot->Update(report);
         break;
         }

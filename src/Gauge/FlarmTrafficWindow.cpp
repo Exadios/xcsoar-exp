@@ -204,14 +204,28 @@ FlarmTrafficWindow::Update(Angle new_direction,
   /**
    * \todo Modify test to include ADSB data for consideration.
    */
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//  LogFormat("%s, %d: %d", __FILE__, __LINE__, new_adsb_data.modified.ToInteger());
+#endif
   if ((new_flarm_data.modified == this->data_modified)               &&
       (new_adsb_data.modified  == this->data_modified)               &&
       (this->heading - new_direction).Absolute() < min_heading_delta &&
       this->flarm_status.gps       == flarm_status.gps               &&
       this->adsb_status.gps        == adsb_status.gps)
+    {
+//#ifndef NDEBUG
+//#include "LogFile.hpp"
+//    LogFormat("%s, %d", __FILE__, __LINE__);
+//#endif
     /* no change - don't redraw */
     return;
+    }
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//    LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
   FlarmId selection_id;
   PixelPoint pt;
   if (!small && selection >= 0)
@@ -276,23 +290,6 @@ FlarmTrafficWindow::PaintRadarNoTraffic(Canvas &canvas) const noexcept
   canvas.SetTextColor(look.default_color);
   canvas.DrawText(radar_mid - PixelSize{ts.width / 2, radius / 2}, str);
 }
-
-/**
- * Paints a "No Go" sign on the given canvas
- * @param canvas The canvas to paint on
- */
-void
-FlarmTrafficWindow::PaintRadarNoGo(Canvas &canvas) const noexcept
-  {
-  if (small)
-    return;
-
-  const TCHAR* str = _("No Go");
-  canvas.Select(look.no_traffic_font);
-  PixelSize ts = canvas.CalcTextSize(str);
-  canvas.SetTextColor(look.default_color);
-  canvas.DrawText(radar_mid - PixelSize{ts.width / 2, this->radius / 2}, str);
-  }
 
 [[gnu::const]]
 static const Pen *
@@ -586,15 +583,8 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas &canvas,
 void
 FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   {
-  if (this->flarm_data.IsEmpty() && this->adsb_data.IsEmpty())
-    {
-    if ((this->flarm_status.available == false &&
-         this->adsb_status.available  == false) || 
-        (this->flarm_status.gps == FlarmStatus::GPSStatus::NONE &&
-         this->adsb_status.gps  == AdsbStatus::GPSStatus::NO_GO))
-      this->PaintRadarNoGo(canvas);
-    else
-      this->PaintRadarNoTraffic(canvas);
+  if (flarm_data.IsEmpty() && adsb_data.IsEmpty()) {
+    PaintRadarNoTraffic(canvas);
     return;
     }
 

@@ -90,6 +90,14 @@ MergeThread::Tick() noexcept
 
     const MoreData &basic = device_blackboard.Basic();
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//    LogFormat("%s, %d: %d, %d", __FILE__, __LINE__,
+//              this->device_blackboard.RealState(0).adsb.traffic.modified.ToInteger(),
+//              ::device_blackboard->RealState(0).adsb.traffic.modified.ToInteger());
+    
+#endif
+
     /* call Driver::OnSensorUpdate() on all devices */
     if (devices != nullptr)
       devices->NotifySensorUpdate(basic);

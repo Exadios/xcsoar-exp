@@ -75,6 +75,8 @@ struct AdsbTrafficList
    */
   void Complement(const AdsbTrafficList &add)
     {
+    this->modified.Complement(add.modified);  // Don't know where this is done
+                                              // for the FLARM merge.
     // Add unique traffic from 'add' list
     for (auto &traffic : add.list)
       {
