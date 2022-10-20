@@ -76,7 +76,8 @@ MergeThread::Process()
                    device_blackboard.Calculated());
 
   flarm_computer.Process(device_blackboard.SetBasic().flarm,
-                         last_fix.flarm, basic);
+                         last_fix.flarm,
+                         basic);
   adsb_computer.Process(device_blackboard.SetBasic().adsb,
                         last_fix.adsb,
                         basic);
@@ -104,6 +105,14 @@ MergeThread::Tick() noexcept
     Process();
 
     const MoreData &basic = device_blackboard.Basic();
+
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//    LogFormat("%s, %d: %d, %d", __FILE__, __LINE__,
+//              this->device_blackboard.RealState(0).adsb.traffic.modified.ToInteger(),
+//              ::device_blackboard->RealState(0).adsb.traffic.modified.ToInteger());
+    
+#endif
 
     /* call Driver::OnSensorUpdate() on all devices */
     if (devices != nullptr)

@@ -209,9 +209,11 @@ void
 DeviceBlackboard::ScheduleMerge() noexcept
 {
 #ifndef NDEBUG
-//#include "LogFile.hpp"
+#include "LogFile.hpp"
 //  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
 //            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+//  LogFormat("%s, %d: %d", __FILE__, __LINE__,
+//            ::device_blackboard->RealState(0).adsb.traffic.modified.ToInteger());
 #endif
   TriggerMergeThread();
 }
@@ -243,6 +245,11 @@ DeviceBlackboard::Merge() noexcept
    */
   NMEAInfo &basic = SetBasic();
 
+#ifndef NDEBUG
+//  LogFormat("%s, %d: %d", __FILE__, __LINE__,
+//            per_device_data[0].adsb.traffic.modified.ToInteger());
+#endif
+
   real_data.Reset();
   for (auto &basic : per_device_data) {
     if (!basic.alive)
@@ -257,6 +264,11 @@ DeviceBlackboard::Merge() noexcept
     basic.Expire();
     real_data.Complement(basic);
   }
+
+#ifndef NDEBUG
+//  LogFormat("%s, %d: %d", __FILE__, __LINE__,
+//            real_data.adsb.traffic.modified.ToInteger());
+#endif
 
   real_clock.Normalise(real_data);
 

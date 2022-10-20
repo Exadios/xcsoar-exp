@@ -59,6 +59,7 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
   adsb_data.Clear();
   data_modified.Clear();
   this->flarm_status.Clear();
+  this->adsb_status.Clear();
 }
 
 bool
@@ -189,25 +190,42 @@ FlarmTrafficWindow::UpdateWarnings() noexcept
  * @param new_adsb_data The list of new ADSB targets.
  * @param new_settings The new team codes.
  * @param flarm_status Present status of the Flarm.
+ * @param adsb_status Present status of the ADSB.
  */
 void
 FlarmTrafficWindow::Update(Angle new_direction,
                            const TrafficList &new_flarm_data,
                            const AdsbTrafficList &new_adsb_data,
                            const TeamCodeSettings &new_settings,
-                           FlarmStatus flarm_status) noexcept
-{
+                           FlarmStatus flarm_status,
+                           AdsbStatus  adsb_status) noexcept
+  {
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
   /**
    * \todo Modify test to include ADSB data for consideration.
    */
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//  LogFormat("%s, %d: %d", __FILE__, __LINE__, new_adsb_data.modified.ToInteger());
+#endif
   if ((new_flarm_data.modified == this->data_modified)               &&
       (new_adsb_data.modified  == this->data_modified)               &&
       (this->heading - new_direction).Absolute() < min_heading_delta &&
-      this->flarm_status.gps       == flarm_status.gps)
+      this->flarm_status.gps       == flarm_status.gps               &&
+      this->adsb_status.gps        == adsb_status.gps)
+    {
+//#ifndef NDEBUG
+//#include "LogFile.hpp"
+//    LogFormat("%s, %d", __FILE__, __LINE__);
+//#endif
     /* no change - don't redraw */
     return;
+    }
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//    LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
   FlarmId selection_id;
   PixelPoint pt;
   if (!small && selection >= 0)
@@ -237,12 +255,13 @@ FlarmTrafficWindow::Update(Angle new_direction,
   this->adsb_data  = new_adsb_data;
   this->settings = new_settings;
   this->flarm_status = flarm_status;
+  this->adsb_status  = adsb_status;
 
   this->UpdateWarnings();
   this->UpdateSelector(selection_id, pt);
 
   this->Invalidate();
-}
+  }
 
 /**
  * Returns the distance to the own plane in pixels

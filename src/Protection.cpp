@@ -38,9 +38,11 @@ void
 TriggerMergeThread() noexcept
 {
 #ifndef NDEBUG
-//#include "LogFile.hpp"
+#include "LogFile.hpp"
 //  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
 //            ::device_blackboard->RealState(0).adsb.traffic.list.size());
+//  LogFormat("%s, %d: %d", __FILE__, __LINE__,
+//            ::device_blackboard->RealState(0).adsb.traffic.modified.ToInteger());
 #endif
   if (merge_thread != nullptr)
     merge_thread->Trigger();

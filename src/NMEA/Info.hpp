@@ -627,6 +627,7 @@ struct NMEAInfo {
    *
    * Note that this does not copy calculated values which are managed
    * outside of the NMEA parser.
+   * @param add The source to be copied from.
    */
   void Complement(const NMEAInfo &add);
 };

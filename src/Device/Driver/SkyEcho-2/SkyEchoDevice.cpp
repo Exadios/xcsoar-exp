@@ -298,9 +298,13 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         info.gps.satellite_ids_available.Clear();   // Nope.
         info.gps.satellites_used_available.Clear(); // Likewise
         info.gps.fix_quality_available.Clear();
+        /**
+         * This 'go' status does not represent the status of the actual GPS.
+         * Use the status derived in the OWNSHIP instead.
         info.adsb.status.gps = (go == true) ?
                                AdsbStatus::GPSStatus::GO :
                                AdsbStatus::GPSStatus::NO_GO;
+         */
         if (go == false)
           this->own_ship.Reset(); // Clear accumulated position.
         info.adsb.status.available.Update(info.clock);
@@ -348,21 +352,34 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         this->Traffic(sd, this->own_ship);
   
         FloatDuration t((double)this->time_of_day);
-        GeoPoint p(Angle::Degrees((double)this->own_ship.lambda * 180.0 / pow(2, 23)),
-                   Angle::Degrees((double)this->own_ship.phi * 180.0 / pow(2, 23)));
-        info.location = p;
-        info.gps.real = true;
-        info.track = Angle::Degrees((double)this->own_ship.track);
-        info.ground_speed = (double)this->own_ship.horiz_vel;
-        info.track_available.Update(info.clock);
-        info.ground_speed_available.Update(info.clock);
 
-        info.adsb.status.available.Update(info.clock);
-        if((this->own_ship.nav_accuracy > 6) &&
-           (this->own_ship.nav_integrity > 5))
+#ifndef NDEBUG
+//          LogFormat("%s, %d: %u, %u", __FILE__, __LINE__,
+//                    this->own_ship.nav_accuracy,
+//                    this->own_ship.nav_integrity);
+#endif
+
+        if (this->own_ship.nav_accuracy > 6) 
           {
+          /**
+           * this->own_ship.nav_accuracy > 6 seems to be a reliable indication
+           * of whether the SkyEcho has a GPS position.
+           */
+          GeoPoint p(Angle::Degrees((double)this->own_ship.lambda * 180.0 / pow(2, 23)),
+                     Angle::Degrees((double)this->own_ship.phi * 180.0 / pow(2, 23)));
+          info.location = p;
+          info.gps.real = true;
+          info.track = Angle::Degrees((double)this->own_ship.track);
+          info.ground_speed = (double)this->own_ship.horiz_vel;
+          info.track_available.Update(info.clock);
+          info.ground_speed_available.Update(info.clock);
+
           info.location_available.Update(info.clock);
+          info.adsb.status.gps = AdsbStatus::GPSStatus::GO;
+          info.adsb.status.available.Update(info.clock);
           }
+        else
+          info.adsb.status.gps = AdsbStatus::GPSStatus::NO_GO;
         break;
         }
       case MessageID::OWNSHIPALTITUDE:
@@ -373,10 +390,20 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           }
 
         auto data = sd.data();
-        info.gps_altitude = Units::ToSysUnit((double)((unsigned int)data[2]  * 256 +
-                                                      (unsigned int)data[3]) * 5,
-                                              Unit::FEET);
-        info.gps_altitude_available.Update(info.clock);
+        /**
+         * I have observed that, on rare occasions, the SkyEcho-2 puts out
+         * an altitude corresponding to {data[2], data[3]} equal to
+         * {0x7f, 0xff}. This is plainly some status indicator which is
+         * meant to report some state.
+         */
+        if (((unsigned int)data[2] != 0x7f) && ((unsigned int)data[3] != 0xff))
+          {
+          info.gps_altitude = Units::ToSysUnit((double)((unsigned int)data[2]  * 256 +
+                                                        (unsigned int)data[3]) * 5,
+                                                Unit::FEET);
+          info.gps_altitude_available.Update(info.clock);
+          }
+
         /* \todo pfb: Figure out what "vertical warning indicator" and
                  "vertical figure of merit" in table 16 of the GDL 90
                  document are all about.
@@ -387,6 +414,10 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         {
         if (sd.size() != 28 + 4)
           {
+#ifndef NDEBUG
+#include "LogFile.hpp"
+          LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
           break;
           }
 
@@ -395,7 +426,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
       
         report.alarm_level = AdsbTraffic::AlarmType::NONE; /* ADSB does not
                                                             * support alarm.*/
-        report.location_available  = true;
+//        report.location_available  = true;
         report.turn_rate_received  = false;   // Not in ADSB.
         report.climb_rate_received = true;
         /* \todo pfb: Find the XCSoar wide conversion from feet to
@@ -405,6 +436,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         /* \todo pfb: Find the XCSoar wide conversion from knots to
                  meters / second.  */
         report.speed               = this->target.horiz_vel * 1852 / 3600;
+        report.track = Angle::Degrees((double)this->target.track);
         if((AdsbTraffic::AircraftType)this->target.emitter >=
             AdsbTraffic::AircraftType::FENCE)
           report.type = AdsbTraffic::AircraftType::UNKNOWN;
@@ -441,6 +473,10 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           adsb.new_traffic.Update(info.clock);
           }
         slot->valid.Update(info.clock); // The target is valid now.
+#ifndef NDEBUG
+#include "LogFile.hpp"
+//          LogFormat("%s, %d: %d", __FILE__, __LINE__, adsb.modified.ToInteger());
+#endif
         slot->Update(report);
         break;
         }

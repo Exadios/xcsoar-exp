@@ -79,7 +79,8 @@ SmallTrafficWindow::Update(const NMEAInfo &gps_info,
                                    gps_info.flarm.traffic,
                                    gps_info.adsb.traffic,
                                    settings,
-                                   gps_info.flarm.status);
+                                   gps_info.flarm.status,
+                                   gps_info.adsb.status);
 }
 
 void

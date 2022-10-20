@@ -77,7 +77,7 @@ public:
 
 private:
   /**
-   * Process
+   * Process the current data. Start with a DeviceBlackboard Merge.
    */
   void Process();
 
