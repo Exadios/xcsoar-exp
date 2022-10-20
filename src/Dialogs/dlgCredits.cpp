@@ -111,18 +111,12 @@ LogoPageWindow::OnPaint(Canvas &canvas) noexcept
 #endif
 
   y += Layout::FastScale(8);
-  const TCHAR *visit = _T("Vist us at:");
-  const TCHAR *url = _T("https://xcsoar.org");
-  ts = canvas.CalcTextSize(visit);
-  ts2 = canvas.CalcTextSize(url);
   x = middle - (ts.width / 2);
   y += ts.height;
   canvas.SetTextColor(COLOR_BLACK);
-  canvas.DrawText({x, y}, visit);
   x = middle - (ts2.width / 2);
   y += ts2.height;
   canvas.SetTextColor(COLOR_XCSOAR);
-  canvas.DrawText({x, y}, _T("pfb@exadios.com"));
   y += Layout::FastScale(22);
 //  canvas.DrawText({x, y}, _T("Signal: +61 422 348 370"));
   canvas.DrawText({x, y}, _T("Signal: +61 493 122 651"));
