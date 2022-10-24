@@ -602,11 +602,10 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   {
   if (this->flarm_data.IsEmpty() && this->adsb_data.IsEmpty())
     {
-    /**
-     * \todo Include ADSB in the "No Go" test.
-     */
-    if (this->flarm_status.available == false ||
-        this->flarm_status.gps == FlarmStatus::GPSStatus::NONE)
+    if ((this->flarm_status.available == false ||
+         this->flarm_status.gps == FlarmStatus::GPSStatus::NONE) &&
+        (this->adsb_status.available == false ||
+         this->adsb_status.gps == AdsbStatus::GPSStatus::NO_GO))
       this->PaintRadarNoGo(canvas);
     else
       this->PaintRadarNoTraffic(canvas);
