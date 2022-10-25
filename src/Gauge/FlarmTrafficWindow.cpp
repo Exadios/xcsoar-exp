@@ -621,7 +621,9 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
     const AdsbTraffic &traffic = this->adsb_data.list[i];
     FlarmTraffic fe;
     AdsbConvert(traffic, fe);
-    PaintRadarTarget(canvas, fe, i);
+    if ((double)fe.distance < 15000.0) /* As a temporary measure do not paint
+                                          distant targets. */
+      PaintRadarTarget(canvas, fe, i);
     }
 
   if (selection >= 0) {
