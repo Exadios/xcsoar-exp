@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "FLARM/Traffic.hpp"
 #include "ADSB/Traffic.hpp"
+#include <math.h>
 
 static constexpr const TCHAR* acTypes[16] = {
   _T("Unknown"), _T("Glider"), _T("TowPlane"),
@@ -78,6 +79,8 @@ AdsbConvert(const AdsbTraffic &target, FlarmTraffic &eqv)
   eqv.climb_rate          = target.climb_rate;
   eqv.climb_rate_received = target.climb_rate_received;
   eqv.stealth             = false;
+  eqv.distance            = sqrt(target.relative_east * target.relative_east +
+                                 target.relative_north * target.relative_north);
 
   switch (target.type)
     {
