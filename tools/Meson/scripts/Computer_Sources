@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/computer_sources ] || mkdir subprojects/computer_sources
+echo "project('Computer_Sources')" > subprojects/computer_sources/meson.build
+echo "computer_sources = [" >> subprojects/computer_sources/meson.build
+echo -n "'" >> subprojects/computer_sources/meson.build
+grep "^LIBCOMPUTER_SOURCES = " | \
+sed -e 's/LIBCOMPUTER_SOURCES = //' | \
+sed -e 's:\$(SRC)/Computer/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/computer_sources/meson.build
+echo " ]" >> subprojects/computer_sources/meson.build

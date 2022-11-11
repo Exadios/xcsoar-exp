@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/thread_sources ] || mkdir subprojects/thread_sources
+echo "project('Thread_Sources')" > subprojects/thread_sources/meson.build
+echo "thread_sources = [" >> subprojects/thread_sources/meson.build
+echo -n "'" >> subprojects/thread_sources/meson.build
+grep "^THREAD_SOURCES" | \
+sed -e 's/THREAD_SOURCES = //' | \
+sed -e 's:\$(THREAD_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/thread_sources/meson.build
+echo " ]" >> subprojects/thread_sources/meson.build

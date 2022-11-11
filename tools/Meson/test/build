@@ -1,0 +1,4 @@
+#!/bin/bash
+
+antlr4 -Dlanguage=Cpp Expression.g4 && \
+g++ -g main.cpp ExpressionBaseListener.cpp ExpressionLexer.cpp ExpressionListener.cpp ExpressionParser.cpp ExpHooks.cpp -I/usr/include/antlr4-runtime -lantlr4-runtime -o Main

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/operation_sources ] || mkdir subprojects/operation_sources
+echo "project('Operation_Sources')" > subprojects/operation_sources/meson.build
+echo "operation_sources = [" >> subprojects/operation_sources/meson.build
+echo -n "'" >> subprojects/operation_sources/meson.build
+grep "^OPERATION_SOURCES" | \
+sed -e 's/OPERATION_SOURCES := //' | \
+sed -e 's:\./src/Operation/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/operation_sources/meson.build
+echo " ]" >> subprojects/operation_sources/meson.build

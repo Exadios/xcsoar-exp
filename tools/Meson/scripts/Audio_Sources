@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/audio_sources ] || mkdir subprojects/audio_sources
+echo "project('Audio_Sources')" > subprojects/audio_sources/meson.build
+echo "audio_sources = [" >> subprojects/audio_sources/meson.build
+echo -n "'" >> subprojects/audio_sources/meson.build
+grep "^AUDIO_SOURCES = " | xargs | \
+sed -e 's/AUDIO_SOURCES = //' | \
+sed -e 's:\$(AUDIO_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//g" |
+sed -e "s:cpp$:cpp':g" >> subprojects/audio_sources/meson.build
+echo " ]" >> subprojects/audio_sources/meson.build

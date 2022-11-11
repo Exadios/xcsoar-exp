@@ -1,0 +1,20 @@
+project('Nmea_Sources')
+nmea_sources = [
+'Info.cpp',
+'MoreData.cpp',
+'GPSState.cpp',
+'Acceleration.cpp',
+'Attitude.cpp',
+'ExternalSettings.cpp',
+'FlyingState.cpp',
+'Derived.cpp',
+'VarioInfo.cpp',
+'ClimbInfo.cpp',
+'CirclingInfo.cpp',
+'ThermalLocator.cpp',
+'ClimbHistory.cpp',
+'SwitchState.cpp',
+'InputLine.cpp',
+'Checksum.cpp',
+'Aircraft.cpp'
+ ]

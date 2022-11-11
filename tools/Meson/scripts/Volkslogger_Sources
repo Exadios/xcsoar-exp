@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/volkslogger_sources ] || mkdir subprojects/volkslogger_sources
+echo "project('Volkslogger_Sources')" > subprojects/volkslogger_sources/meson.build
+echo "volkslogger_sources = [" >> subprojects/volkslogger_sources/meson.build
+echo -n "'" >> subprojects/volkslogger_sources/meson.build
+grep "^VOLKSLOGGER_SOURCES" | \
+sed -e 's/VOLKSLOGGER_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/Volkslogger/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/volkslogger_sources/meson.build
+echo " ]" >> subprojects/volkslogger_sources/meson.build

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/topo_sources ] || mkdir subprojects/topo_sources
+echo "project('Topo_Sources')" > subprojects/topo_sources/meson.build
+echo "topo_sources = [" >> subprojects/topo_sources/meson.build
+echo -n "'" >> subprojects/topo_sources/meson.build
+grep "^TOPO_SOURCES" | \
+sed -e 's/TOPO_SOURCES = //' | \
+sed -e 's:\$(SRC)/Topography/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s:'$::g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/topo_sources/meson.build
+echo " ]" >> subprojects/topo_sources/meson.build

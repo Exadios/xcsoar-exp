@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/mapwindow_sources ] || mkdir subprojects/mapwindow_sources
+echo "project('MapWindow_Sources')" > subprojects/mapwindow_sources/meson.build
+echo "mapwindow_sources = [" >> subprojects/mapwindow_sources/meson.build
+echo -n "'" >> subprojects/mapwindow_sources/meson.build
+grep "^LIBMAPWINDOW_SOURCES" | \
+sed -e 's/LIBMAPWINDOW_SOURCES = //' | \
+sed -e 's:\$(SRC)/MapWindow/::g' | \
+sed -e 's:\$(SRC)/Projection:../Projection:' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/mapwindow_sources/meson.build
+echo " ]" >> subprojects/mapwindow_sources/meson.build

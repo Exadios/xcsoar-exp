@@ -1,0 +1,15 @@
+#!/bin/bash
+
+[ -d subprojects/driver_sources ] || mkdir subprojects/driver_sources
+echo "project('Driver_Sources')" > subprojects/driver_sources/meson.build
+echo "driver_sources = [" >> subprojects/driver_sources/meson.build
+echo -n "'" >> subprojects/driver_sources/meson.build
+grep "^DRIVER_SOURCES" | \
+sed -e 's/DRIVER_SOURCES = //' | \
+sed -e 's:\$(SRC)/Device:..:g' | \
+sed -e 's:\$(VOLKSLOGGER_SOURCES) $(CAI302_SOURCES) $(IMI_SOURCES) $(LX_SOURCES) $(FLARM_SOURCES) $(ADSB_SOURCES) $(FLYTEC_SOURCES) $(VEGA_SOURCES) $(BLUEFLY_SOURCES) $(XCTRACER_SOURCES) $(THERMALEXPRESS_SOURCES)::' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s:'',::" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/driver_sources/meson.build
+echo " ]" >> subprojects/driver_sources/meson.build

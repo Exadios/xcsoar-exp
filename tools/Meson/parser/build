@@ -1,0 +1,13 @@
+#!/bin/bash
+
+antlr4 -Dlanguage=Cpp Make.g4
+if [ $? == 0 ]
+then
+  g++ -g -std=gnu++17 MakeMain.cpp MakeParser.cpp MakeLexer.cpp MakeListener.cpp MakeHooks.cpp -I/usr/include/antlr4-runtime -lantlr4-runtime -o MakeMain
+fi
+
+antlr4 Make.g4
+if [ $? == 0 ]
+then
+  javac -cp .:/usr/share/java/antlr4.jar:/usr/share/java/antlr4-runtime.jar MakeBaseListener.java MakeLexer.java MakeListener.java MakeParser.java
+fi

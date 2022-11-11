@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/route_sources ] || mkdir subprojects/route_sources
+echo "project('Route_Sources')" > subprojects/route_sources/meson.build
+echo "route_sources = [" >> subprojects/route_sources/meson.build
+echo -n "'" >> subprojects/route_sources/meson.build
+grep "^ROUTE_SOURCES" | \
+sed -e 's/ROUTE_SOURCES = //' | \
+sed -e 's:\$(ROUTE_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s:'$::g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/route_sources/meson.build
+echo " ]" >> subprojects/route_sources/meson.build

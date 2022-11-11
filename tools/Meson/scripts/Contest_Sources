@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/contest_sources ] || mkdir subprojects/contest_sources
+echo "project('Contest_Sources')" > subprojects/contest_sources/meson.build
+echo "contest_sources = [" >> subprojects/contest_sources/meson.build
+echo -n "'" >> subprojects/contest_sources/meson.build
+grep "^CONTEST_SOURCES" | \
+sed -e 's/CONTEST_SOURCES = //' | \
+sed -e 's:\$(CONTEST_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s:'$::g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/contest_sources/meson.build
+echo " ]" >> subprojects/contest_sources/meson.build

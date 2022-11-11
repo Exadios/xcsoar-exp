@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/port_sources ] || mkdir subprojects/port_sources
+echo "project('Port_Sources')" > subprojects/port_sources/meson.build
+echo "port_sources = [" >> subprojects/port_sources/meson.build
+echo -n "'" >> subprojects/port_sources/meson.build
+grep "^PORT_SOURCES = " | \
+sed -e 's/PORT_SOURCES = //' | \
+sed -e 's:\$(SRC)/Device/Port/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/port_sources/meson.build
+echo " ]" >> subprojects/port_sources/meson.build

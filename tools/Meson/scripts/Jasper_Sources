@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/jasper_sources ] || mkdir subprojects/jasper_sources
+echo "project('Jasper_Sources')" > subprojects/jasper_sources/meson.build
+echo "jasper_sources = [" >> subprojects/jasper_sources/meson.build
+echo -n "'" >> subprojects/jasper_sources/meson.build
+grep "^JASPER_SOURCES = " | xargs | \
+sed -e 's/JASPER_SOURCES = //' | \
+sed -e 's:\$(JASSRC)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:c$:c':g" >> subprojects/jasper_sources/meson.build
+echo " ]" >> subprojects/jasper_sources/meson.build

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/bluefly_sources ] || mkdir subprojects/bluefly_sources
+echo "project('Bluefly_Sources')" > subprojects/bluefly_sources/meson.build
+echo "bluefly_sources = [" >> subprojects/bluefly_sources/meson.build
+echo -n "'" >> subprojects/bluefly_sources/meson.build
+grep "^BLUEFLY_SOURCES" | \
+sed -e 's/BLUEFLY_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/BlueFly/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/bluefly_sources/meson.build
+echo " ]" >> subprojects/bluefly_sources/meson.build

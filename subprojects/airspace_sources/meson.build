@@ -1,0 +1,21 @@
+project('Airspace_Sources')
+airspace_sources = [
+'../Util/AircraftStateFilter.cpp',
+'AirspacesTerrain.cpp',
+'Airspace.cpp',
+'AirspaceAltitude.cpp',
+'AirspaceAircraftPerformance.cpp',
+'AbstractAirspace.cpp',
+'AirspaceCircle.cpp',
+'AirspacePolygon.cpp',
+'Airspaces.cpp',
+'AirspaceIntersectSort.cpp',
+'SoonestAirspace.cpp',
+'Predicate/AirspacePredicateHeightRange.cpp',
+'Predicate/OutsideAirspacePredicate.cpp',
+'AirspaceIntersectionVisitor.cpp',
+'AirspaceWarningConfig.cpp',
+'AirspaceWarningManager.cpp',
+'AirspaceWarning.cpp',
+'AirspaceSorter.cpp'
+ ]

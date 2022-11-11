@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/math_sources ] || mkdir subprojects/math_sources
+echo "project('Math_Sources')" > subprojects/math_sources/meson.build
+echo "math_sources = [" >> subprojects/math_sources/meson.build
+echo -n "'" >> subprojects/math_sources/meson.build
+grep "^MATH_SOURCES = " | \
+sed -e 's/MATH_SOURCES = //' | \
+sed -e 's:\$(MATH_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/math_sources/meson.build
+echo " ]" >> subprojects/math_sources/meson.build

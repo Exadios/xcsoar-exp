@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/flarm_sources ] || mkdir subprojects/flarm_sources
+echo "project('Flarm_Sources')" > subprojects/flarm_sources/meson.build
+echo "flarm_sources = [" >> subprojects/flarm_sources/meson.build
+echo -n "'" >> subprojects/flarm_sources/meson.build
+grep "^FLARM_SOURCES =" | \
+sed -e 's/FLARM_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/FLARM/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/flarm_sources/meson.build
+echo " ]" >> subprojects/flarm_sources/meson.build

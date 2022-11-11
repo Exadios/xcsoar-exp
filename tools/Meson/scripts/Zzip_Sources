@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/zzip_sources ] || mkdir subprojects/zzip_sources
+echo "project('Zzip_Sources')" > subprojects/zzip_sources/meson.build
+echo "zzip_sources = [" >> subprojects/zzip_sources/meson.build
+echo -n "'" >> subprojects/zzip_sources/meson.build
+grep "^ZZIP_SOURCES = " | \
+sed -e 's/ZZIP_SOURCES = //' | \
+sed -e 's:\$(ZZIPSRC)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:c$:c':g" >> subprojects/zzip_sources/meson.build
+echo " ]" >> subprojects/zzip_sources/meson.build

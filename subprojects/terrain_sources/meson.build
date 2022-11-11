@@ -1,0 +1,20 @@
+project('Terrain_Sources')
+terrain_sources = [
+'AsyncLoader.cpp',
+'RasterBuffer.cpp',
+'RasterProjection.cpp',
+'RasterMap.cpp',
+'RasterTile.cpp',
+'RasterTileCache.cpp',
+'ZzipStream.cpp',
+'Loader.cpp',
+'WorldFile.cpp',
+'Intersection.cpp',
+'ScanLine.cpp',
+'RasterTerrain.cpp',
+'Thread.cpp',
+'HeightMatrix.cpp',
+'RasterRenderer.cpp',
+'TerrainRenderer.cpp',
+'TerrainSettings.cpp'
+ ]

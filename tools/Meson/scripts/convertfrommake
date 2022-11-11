@@ -1,0 +1,20 @@
+#!/bin/bash
+
+TARGET_DIR=$PWD
+pushd ../../../ > /dev/null
+make -np > $TARGET_DIR/make-np
+popd > /dev/null
+
+[ -d subprojects ] || rm -fr subprojects
+[ -d subprojects ] || mkdir subprojects
+
+for Source in `ls *_Sources`
+do
+  cat make-np | ./$Source
+done
+
+rm ./make-np
+
+(tar -cvpf - subprojects/) | (cd ../../../ && tar -xpf -)
+
+rm -fr subprojects

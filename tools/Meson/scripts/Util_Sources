@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/util_sources ] || mkdir subprojects/util_sources
+echo "project('Util_Sources')" > subprojects/util_sources/meson.build
+echo "util_sources = [" >> subprojects/util_sources/meson.build
+echo -n "'" >> subprojects/util_sources/meson.build
+grep "^UTIL_SOURCES = " | \
+sed -e 's/UTIL_SOURCES = //' | \
+sed -e 's:\$(UTIL_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/util_sources/meson.build
+echo " ]" >> subprojects/util_sources/meson.build

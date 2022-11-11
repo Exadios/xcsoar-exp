@@ -1,0 +1,19 @@
+project('Datafield_Sources')
+datafield_sources = [
+'Base.cpp',
+'Boolean.cpp',
+'ComboList.cpp',
+'Enum.cpp',
+'File.cpp',
+'Number.cpp',
+'Float.cpp',
+'Angle.cpp',
+'GeoPoint.cpp',
+'RoughTime.cpp',
+'Time.cpp',
+'Integer.cpp',
+'String.cpp',
+'Prefix.cpp',
+'Date.cpp',
+'Password.cpp'
+ ]

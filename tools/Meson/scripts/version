@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cat $MESON_SOURCE_ROOT/VERSION.txt
+
+exit 0

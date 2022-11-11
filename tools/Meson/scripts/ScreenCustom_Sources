@@ -1,0 +1,15 @@
+#!/bin/bash
+
+[ -d subprojects/screencustom_sources ] || mkdir subprojects/screencustom_sources
+echo "project('Screencustom_Sources')" > subprojects/screencustom_sources/meson.build
+echo "screencustom_sources = [" >> subprojects/screencustom_sources/meson.build
+echo -n "'" >> subprojects/screencustom_sources/meson.build
+grep "^SCREEN_CUSTOM_SOURCES = " | \
+sed -e 's/SCREEN_CUSTOM_SOURCES = //' | \
+sed -e 's:\$(WINDOW_SRC_DIR)/custom/::g' | \
+sed -e 's:\$(CANVAS_SRC_DIR)/custom/:../../canvas/custom/:g' | \
+sed -e 's:\$(CONTROL_SRC_DIR)/custom/:../../control/custom/:g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s:'$::g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/screencustom_sources/meson.build
+echo " ]" >> subprojects/screencustom_sources/meson.build

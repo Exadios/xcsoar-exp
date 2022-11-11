@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/adsb_sources ] || mkdir subprojects/adsb_sources
+echo "project('Adsb_Sources')" > subprojects/adsb_sources/meson.build
+echo "adsb_sources = [" >> subprojects/adsb_sources/meson.build
+echo -n "'" >> subprojects/adsb_sources/meson.build
+grep "^ADSB_SOURCES = " | \
+sed -e 's/ADSB_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/SkyEcho-2/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/adsb_sources/meson.build
+echo " ]" >> subprojects/adsb_sources/meson.build

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/http_sources ] || mkdir subprojects/http_sources
+echo "project('Http_Sources')" > subprojects/http_sources/meson.build
+echo "http_sources = [" >> subprojects/http_sources/meson.build
+echo -n "'" >> subprojects/http_sources/meson.build
+grep "^LIBHTTP_SOURCES" | \
+sed -e 's/LIBHTTP_SOURCES = //' | \
+sed -e 's:\$(SRC)/net/http/::g' | \
+sed -e 's:\$(SRC)/lib/curl/:../../lib/curl/:g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/http_sources/meson.build
+echo " ]" >> subprojects/http_sources/meson.build

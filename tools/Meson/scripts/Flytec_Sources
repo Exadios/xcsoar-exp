@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/flytec_sources ] || mkdir subprojects/flytec_sources
+echo "project('Flytec_Sources')" > subprojects/flytec_sources/meson.build
+echo "flytec_sources = [" >> subprojects/flytec_sources/meson.build
+echo -n "'" >> subprojects/flytec_sources/meson.build
+grep "^FLYTEC_SOURCES" | \
+sed -e 's/FLYTEC_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/Flytec/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/flytec_sources/meson.build
+echo " ]" >> subprojects/flytec_sources/meson.build

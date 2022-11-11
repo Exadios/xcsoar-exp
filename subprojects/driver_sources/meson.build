@@ -1,0 +1,32 @@
+project('Driver_Sources')
+driver_sources = [
+'../Driver.cpp',
+'../Register.cpp',
+
+'AltairPro.cpp',
+'BorgeltB50.cpp',
+'XCVario.cpp',
+'CaiGpsNav.cpp',
+'CaiLNav.cpp',
+'Condor.cpp',
+'CProbe.cpp',
+'EW.cpp',
+'EWMicroRecorder.cpp',
+'Eye.cpp',
+'FlymasterF1.cpp',
+'FlyNet.cpp',
+'Generic.cpp',
+'LevilAHRS_G.cpp',
+'Leonardo.cpp',
+'NmeaOut.cpp',
+'OpenVario.cpp',
+'PosiGraph.cpp',
+'XCOM760.cpp',
+'ILEC.cpp',
+'Westerboer.cpp',
+'Zander.cpp',
+'Vaulter.cpp',
+'KRT2.cpp',
+'AirControlDisplay.cpp',
+'ATR833.cpp'
+ ]

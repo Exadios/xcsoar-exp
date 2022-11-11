@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/imi_sources ] || mkdir subprojects/imi_sources
+echo "project('Imi_Sources')" > subprojects/imi_sources/meson.build
+echo "imi_sources = [" >> subprojects/imi_sources/meson.build
+echo -n "'" >> subprojects/imi_sources/meson.build
+grep "^IMI_SOURCES" | \
+sed -e 's/IMI_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/IMI/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/imi_sources/meson.build
+echo " ]" >> subprojects/imi_sources/meson.build
