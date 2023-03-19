@@ -23,13 +23,16 @@ Copyright_License {
 
 #include "TeamActions.hpp"
 #include "Interface.hpp"
+#include "Surveillance/TargetId.hpp"
 #include "FLARM/FlarmDetails.hpp"
 #include "FLARM/TrafficDatabases.hpp"
 #include "FLARM/Global.hpp"
 
+//------------------------------------------------------------------------------
+#ifdef ENABLE_TEAM_FLYING
 void
-TeamActions::TrackFlarm(FlarmId id, const TCHAR *callsign)
-{
+TeamActions::TrackFlarm(TargetId id, const TCHAR* callsign)
+  {
   TeamCodeSettings &settings =
     CommonInterface::SetComputerSettings().team_code;
 
@@ -40,4 +43,10 @@ TeamActions::TrackFlarm(FlarmId id, const TCHAR *callsign)
 
   if (traffic_databases != nullptr)
     traffic_databases->team_flarm_id = id;
-}
+  }
+#else
+void
+TeamActions::TrackFlarm(TargetId, const TCHAR* )
+ {
+ }
+#endif  // ENABLE_TEAM_FLYING

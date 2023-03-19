@@ -25,8 +25,9 @@ Copyright_License {
 #include "NMEA/InputLine.hpp"
 #include "FLARM/Error.hpp"
 #include "FLARM/Version.hpp"
-#include "FLARM/Status.hpp"
-#include "FLARM/List.hpp"
+#include "Surveillance/TargetStatus.hpp"
+#include "Surveillance/TargetList.hpp"
+#include "Surveillance/Flarm/FlarmTarget.hpp"
 #include "util/Macros.hpp"
 #include "util/StringAPI.hxx"
 
@@ -70,7 +71,7 @@ ParsePFLAV(NMEAInputLine &line, FlarmVersion &version,
 }
 
 void
-ParsePFLAU(NMEAInputLine &line, FlarmStatus &flarm, TimeStamp clock) noexcept
+ParsePFLAU(NMEAInputLine& line, TargetStatus& flarm, TimeStamp clock) noexcept
 {
   flarm.available.Update(clock);
 
@@ -78,12 +79,12 @@ ParsePFLAU(NMEAInputLine &line, FlarmStatus &flarm, TimeStamp clock) noexcept
   //   <RelativeVertical>,<RelativeDistance>(,<ID>)
   flarm.rx = line.Read(0);
   flarm.tx = line.Read(false);
-  flarm.gps = (FlarmStatus::GPSStatus)
-    line.Read((int)FlarmStatus::GPSStatus::NONE);
+  flarm.gps = 
+    (TargetStatus::GPSStatus)line.Read((int)TargetStatus::GPSStatus::NONE);
 
   line.Skip();
-  flarm.alarm_level = (FlarmTraffic::AlarmType)
-    line.Read((int)FlarmTraffic::AlarmType::NONE);
+  flarm.alarm_level = 
+    (RemoteTarget::AlarmType)line.Read((int)RemoteTarget::AlarmType::NONE);
 }
 
 /**
@@ -104,15 +105,15 @@ ReadBearing(NMEAInputLine &line, Angle &value_r)
 }
 
 void
-ParsePFLAA(NMEAInputLine &line, TrafficList &flarm, TimeStamp clock) noexcept
+ParsePFLAA(NMEAInputLine& line, TargetList& flarm, TimeStamp clock) noexcept
 {
   flarm.modified.Update(clock);
 
   // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,
   //   <IDType>,<ID>,<Track>,<TurnRate>,<GroundSpeed>,<ClimbRate>,<AcftType>
-  FlarmTraffic traffic;
-  traffic.alarm_level = (FlarmTraffic::AlarmType)
-    line.Read((int)FlarmTraffic::AlarmType::NONE);
+  FlarmTarget traffic;
+  traffic.alarm_level = 
+    (RemoteTarget::AlarmType)line.Read((int)RemoteTarget::AlarmType::NONE);
 
   double value;
   bool stealth = false;
@@ -137,7 +138,7 @@ ParsePFLAA(NMEAInputLine &line, TrafficList &flarm, TimeStamp clock) noexcept
   // 5 id, 6 digit hex
   char id_string[16];
   line.Read(id_string, 16);
-  traffic.id = FlarmId::Parse(id_string, nullptr);
+  traffic.id = TargetId::Parse(id_string, nullptr);
 
   Angle track;
   traffic.track_received = ReadBearing(line, track);
@@ -175,13 +176,13 @@ ParsePFLAA(NMEAInputLine &line, TrafficList &flarm, TimeStamp clock) noexcept
 
   unsigned type = line.Read(0);
   if (type > 15 || type == 14)
-    traffic.type = FlarmTraffic::AircraftType::UNKNOWN;
+    traffic.type.Type(FlarmAircraftType::AircraftType_t::UNKNOWN);
   else
-    traffic.type = (FlarmTraffic::AircraftType)type;
+    traffic.type.Type(type);
 
-  FlarmTraffic *flarm_slot = flarm.FindTraffic(traffic.id);
+  FlarmPtr flarm_slot = std::dynamic_pointer_cast<FlarmTarget>(flarm.FindTraffic(traffic.id));
   if (flarm_slot == nullptr) {
-    flarm_slot = flarm.AllocateTraffic();
+    flarm_slot = std::dynamic_pointer_cast<FlarmTarget>(flarm.AllocateTraffic());
     if (flarm_slot == nullptr)
       // no more slots available
       return;

@@ -42,6 +42,8 @@ Copyright_License {
 #include "Look/GestureLook.hpp"
 #include "Input/InputEvents.hpp"
 #include "Renderer/MapScaleRenderer.hpp"
+#include "Surveillance/TargetData.hpp"
+#include "Surveillance/TargetStatus.hpp"
 
 #include <stdio.h>
 
@@ -221,20 +223,20 @@ GlueMapWindow::DrawFlightMode(Canvas &canvas, const PixelRect &rc) const
     // Don't show indicator when the gauge is indicating the traffic anyway
     return;
 
-  const FlarmStatus &flarm = Basic().flarm.status;
-  if (!flarm.available)
+  const TargetStatus &target = Basic().target_data.status;
+  if (!target.available)
     return;
 
-  switch (flarm.alarm_level) {
-  case FlarmTraffic::AlarmType::NONE:
+  switch (target.alarm_level) {
+  case RemoteTarget::AlarmType::NONE:
     bmp = &look.traffic_safe_icon;
     break;
-  case FlarmTraffic::AlarmType::LOW:
-  case FlarmTraffic::AlarmType::INFO_ALERT:
+  case RemoteTarget::AlarmType::LOW:
+  case RemoteTarget::AlarmType::INFO_ALERT:
     bmp = &look.traffic_warning_icon;
     break;
-  case FlarmTraffic::AlarmType::IMPORTANT:
-  case FlarmTraffic::AlarmType::URGENT:
+  case RemoteTarget::AlarmType::IMPORTANT:
+  case RemoteTarget::AlarmType::URGENT:
     bmp = &look.traffic_alarm_icon;
     break;
   };

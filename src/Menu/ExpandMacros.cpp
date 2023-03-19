@@ -279,7 +279,7 @@ LookupMacro(const TCHAR *name, bool &invalid)
     return value;
 
   if (StringIsEqual(name, _T("CheckFLARM"))) {
-    invalid |= !Basic().flarm.status.available;
+    invalid |= !Basic().target_data.status.available;
     return nullptr;
   } else if (StringIsEqual(name, _T("CheckWeather"))) {
     const auto rasp = DataGlobals::GetRasp();

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,24 +23,24 @@ Copyright_License {
 
 #include "FlarmProfile.hpp"
 #include "Map.hpp"
-#include "FLARM/ColorDatabase.hpp"
+#include "Surveillance/ColorDatabase.hpp"
 
 #include <string>
 
 #include <string.h>
 
 static void
-LoadColor(const ProfileMap &map,FlarmColorDatabase &db,
-          const char *key, FlarmColor color)
+LoadColor(const ProfileMap& map, TargetColorDatabase& db,
+          const char* key, TargetColor color)
 {
-  const char *ids = map.Get(key);
+  const char* ids = map.Get(key);
   if (ids == nullptr)
     return;
 
-  const char *p = ids;
+  const char* p = ids;
   while (true) {
-    char *endptr;
-    FlarmId id = FlarmId::Parse(p, &endptr);
+    char* endptr;
+    TargetId id = TargetId::Parse(p, &endptr);
     if (id.IsDefined())
       db.Set(id, color);
 
@@ -53,24 +53,24 @@ LoadColor(const ProfileMap &map,FlarmColorDatabase &db,
 }
 
 void
-Profile::Load(const ProfileMap &map, FlarmColorDatabase &db)
+Profile::Load(const ProfileMap& map, TargetColorDatabase& db)
 {
-  LoadColor(map, db, "FriendsGreen", FlarmColor::GREEN);
-  LoadColor(map, db, "FriendsBlue", FlarmColor::BLUE);
-  LoadColor(map, db, "FriendsYellow", FlarmColor::YELLOW);
-  LoadColor(map, db, "FriendsMagenta", FlarmColor::MAGENTA);
+  LoadColor(map, db, "FriendsGreen", TargetColor::GREEN);
+  LoadColor(map, db, "FriendsBlue", TargetColor::BLUE);
+  LoadColor(map, db, "FriendsYellow", TargetColor::YELLOW);
+  LoadColor(map, db, "FriendsMagenta", TargetColor::MAGENTA);
 }
 
 void
-Profile::Save(ProfileMap &map, const FlarmColorDatabase &db)
+Profile::Save(ProfileMap& map, const TargetColorDatabase& db)
 {
   std::string ids[4];
 
   for (const auto &i : db) {
     assert(i.first.IsDefined());
-    assert((int)i.second < (int)FlarmColor::COUNT);
+    assert((int)i.second < (int)TargetColor::COUNT);
 
-    if (i.second == FlarmColor::NONE)
+    if (i.second == TargetColor::NONE)
       continue;
 
     unsigned color_index = (int)i.second - 1;

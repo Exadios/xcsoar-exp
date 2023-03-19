@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -48,10 +48,11 @@ Copyright_License {
 #include "Math/Screen.hpp"
 #include "Look/FinalGlideBarLook.hpp"
 #include "Renderer/TrafficRenderer.hpp"
-#include "FLARM/FlarmDetails.hpp"
+#include "Surveillance/Flarm/FlarmDetails.hpp"
 #include "FLARM/FlarmNetRecord.hpp"
 #include "Weather/Features.hpp"
-#include "FLARM/List.hpp"
+#include "Surveillance/TargetList.hpp"
+#include "Surveillance/AircraftType.hpp"
 #include "time/RoughTime.hpp"
 #include "time/BrokenDateTime.hpp"
 
@@ -323,14 +324,14 @@ Draw(Canvas &canvas, PixelRect rc,
      const TrafficMapItem &item,
      const TwoTextRowsRenderer &row_renderer,
      const TrafficLook &traffic_look,
-     const TrafficList *traffic_list)
+     const TargetList *target_list)
 {
   const unsigned line_height = rc.GetHeight();
   const unsigned text_padding = Layout::GetTextPadding();
 
-  const FlarmTraffic *traffic = traffic_list == nullptr
-    ? nullptr
-    : traffic_list->FindTraffic(item.id);
+  const TargetPtr traffic = (target_list == nullptr) ?
+                            nullptr :
+                            target_list->FindTraffic(item.id);
 
   const PixelPoint pt(rc.left + line_height / 2, rc.top + line_height / 2);
 
@@ -363,7 +364,7 @@ Draw(Canvas &canvas, PixelRect rc,
   if (record && !StringIsEmpty(record->plane_type))
     info_string = record->plane_type;
   else if (traffic != nullptr)
-    info_string = FlarmTraffic::GetTypeString(traffic->type);
+    info_string = AircraftType::TypeName(traffic->type.Type());
   else
     info_string = _("Unknown");
 
@@ -450,7 +451,7 @@ Draw(Canvas &canvas, PixelRect rc,
 void
 MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
                           const MapItem &item,
-                          const TrafficList *traffic_list)
+                          const TargetList *target_list)
 {
   switch (item.type) {
   case MapItem::Type::LOCATION:
@@ -489,7 +490,7 @@ MapItemListRenderer::Draw(Canvas &canvas, const PixelRect rc,
 
   case MapItem::Type::TRAFFIC:
     ::Draw(canvas, rc, (const TrafficMapItem &)item,
-           row_renderer, traffic_look, traffic_list);
+           row_renderer, traffic_look, target_list);
     break;
 
 #ifdef HAVE_SKYLINES_TRACKING

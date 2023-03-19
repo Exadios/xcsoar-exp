@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,27 +21,29 @@ Copyright_License {
 }
 */
 
-#include "Settings.hpp"
+#include "TeamCode/Settings.hpp"
 
+//------------------------------------------------------------------------------
 void
 TeamCodeSettings::SetDefaults()
-{
-  team_code_reference_waypoint = -1;
-  team_flarm_callsign.clear();
-  team_flarm_id.Clear();
-}
+  {
+  this->team_code_reference_waypoint = -1;
+  this->team_flarm_callsign.clear();
+  this->team_flarm_id.Clear();
+  }
 
+//------------------------------------------------------------------------------
 void
-TeamCodeSettings::TrackFlarm(FlarmId id, const TCHAR *name)
-{
+TeamCodeSettings::TrackFlarm(TargetId id, const TCHAR* name)
+  {
   // Start tracking
-  team_flarm_id = id;
-  team_code.Clear();
+  this->team_flarm_id = id;
+  this->team_code.Clear();
 
   // Set the Teammate callsign
   if (name != nullptr)
     // copy the 3 first chars from the name
-    team_flarm_callsign = name;
+    this->team_flarm_callsign = name;
   else
-    team_flarm_callsign.clear();
-}
+    this->team_flarm_callsign.clear();
+  }

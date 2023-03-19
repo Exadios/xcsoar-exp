@@ -1055,20 +1055,20 @@ MainWindow::UpdateGaugeVisibility() noexcept
 void
 MainWindow::UpdateTrafficGaugeVisibility() noexcept
 {
-  const FlarmData &flarm = CommonInterface::Basic().flarm;
+  const TargetData& target_data = CommonInterface::Basic().target_data;
 
   bool traffic_visible =
     (force_traffic_gauge ||
      (CommonInterface::GetUISettings().traffic.enable_gauge &&
-      !flarm.traffic.IsEmpty())) &&
+      !target_data.traffic.IsEmpty())) &&
     !CommonInterface::GetUIState().screen_blanked &&
     /* hide the traffic gauge while the traffic widget is visible, to
        avoid showing the same information twice */
     !InputEvents::IsFlavour(_T("Traffic"));
 
   if (traffic_visible && suppress_traffic_gauge) {
-    if (flarm.status.available &&
-        flarm.status.alarm_level != FlarmTraffic::AlarmType::NONE)
+    if (target_data.status.available &&
+        target_data.status.alarm_level != RemoteTarget::AlarmType::NONE)
       suppress_traffic_gauge = false;
     else
       traffic_visible = false;

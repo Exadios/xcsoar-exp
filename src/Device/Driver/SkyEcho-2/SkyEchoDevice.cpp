@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,6 +31,8 @@ Copyright_License {
 #include "util/StringCompare.hxx"
 #include "NMEA/Info.hpp"
 #include "NMEA/Checksum.hpp"
+#include "Surveillance/Adsb/AdsbTarget.hpp"
+#include "Surveillance/AircraftType.hpp"
 #include "Units/System.hpp"
 
 #include <vector>
@@ -307,7 +309,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
          */
         if (go == false)
           this->own_ship.Reset(); // Clear accumulated position.
-        info.adsb.status.available.Update(info.clock);
+        info.target_data.status.available.Update(info.clock);
          
         rtn = true;
         break;
@@ -375,11 +377,11 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           info.ground_speed_available.Update(info.clock);
 
           info.location_available.Update(info.clock);
-          info.adsb.status.gps = AdsbStatus::GPSStatus::GO;
-          info.adsb.status.available.Update(info.clock);
+          info.target_data.status.gps = TargetStatus::GPSStatus::GPS_3D;
+          info.target_data.status.available.Update(info.clock);
           }
         else
-          info.adsb.status.gps = AdsbStatus::GPSStatus::NO_GO;
+          info.target_data.status.gps = TargetStatus::GPSStatus::NONE;
         break;
         }
       case MessageID::OWNSHIPALTITUDE:
@@ -422,12 +424,11 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           }
 
         this->Traffic(sd, this->target);
-        AdsbTraffic report;
+        AdsbTarget report;
       
-        report.alarm_level = AdsbTraffic::AlarmType::NONE; /* ADSB does not
-                                                            * support alarm.*/
+        report.alarm_level = RemoteTarget::AlarmType::NONE; /* ADSB does not
+                                                             * support alarm.*/
 //        report.location_available  = true;
-        report.turn_rate_received  = false;   // Not in ADSB.
         report.climb_rate_received = true;
         /* \todo pfb: Find the XCSoar wide conversion from feet to
                  meters / second.  */
@@ -437,18 +438,14 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                  meters / second.  */
         report.speed               = this->target.horiz_vel * 1852 / 3600;
         report.track = Angle::Degrees((double)this->target.track);
-        if((AdsbTraffic::AircraftType)this->target.emitter >=
-            AdsbTraffic::AircraftType::FENCE)
-          report.type = AdsbTraffic::AircraftType::UNKNOWN;
-        else
-          report.type               = (AdsbTraffic::AircraftType)this->target.emitter;
+        report.type.Type(this->target.emitter);
         Angle phi    = Angle::Degrees((double)this->target.phi * 180.0 / pow(2, 23));
         Angle lambda = Angle::Degrees((double)this->target.lambda * 180.0 / pow(2, 23));
         report.location.latitude  = phi;
         report.location.longitude = lambda;
         report.altitude = Units::ToSysUnit((double)this->target.altitude * 25 - 1000,                                  // See section 3.5.1.4 of GDL 90 document.
                                           Unit::FEET);
-        report.id = this->target.address;
+        report.id.Arg(this->target.address);
         // There's got to be a better way to do this.
         for (unsigned i = 0;
              i < sizeof(TrafficStruct::call_sign) / sizeof (char);
@@ -460,24 +457,24 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         /*
          * Update the traffic list. Make a new entry if required.
          */
-        AdsbTrafficList &adsb = info.adsb.traffic;
-        adsb.modified.Update(info.clock);
-        AdsbTraffic *slot     = adsb.FindTraffic(report.id);
+        TargetList& target_list = info.target_data.traffic;
+        target_list.modified.Update(info.clock);
+        TargetPtr slot = target_list.FindTraffic(report.id);
         if (slot == nullptr)
           {
-          slot = adsb.AllocateTraffic();
+          slot = target_list.AllocateTraffic();
           if (slot == nullptr)
             return true;  // No space left in the list.
           slot->Clear();
           slot->id = report.id;
-          adsb.new_traffic.Update(info.clock);
+          target_list.new_traffic.Update(info.clock);
           }
         slot->valid.Update(info.clock); // The target is valid now.
 #ifndef NDEBUG
 #include "LogFile.hpp"
-//          LogFormat("%s, %d: %d", __FILE__, __LINE__, adsb.modified.ToInteger());
+//          LogFormat("%s, %d: %d", __FILE__, __LINE__, target_list.modified.ToInteger());
 #endif
-        slot->Update(report);
+        slot->Update(report); // Add or update this target to the list.
         break;
         }
       case MessageID::BASICREPORT:

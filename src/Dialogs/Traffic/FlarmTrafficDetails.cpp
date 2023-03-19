@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,10 +35,12 @@
 #include "Dialogs/Message.hpp"
 #include "Dialogs/WidgetDialog.hpp"
 #include "Widget/RowFormWidget.hpp"
-#include "FLARM/FlarmNetRecord.hpp"
-#include "FLARM/Traffic.hpp"
-#include "FLARM/FlarmDetails.hpp"
-#include "FLARM/Friends.hpp"
+#include "Surveillance/Flarm/FlarmNetRecord.hpp"
+#include "Surveillance/RemoteTarget.hpp"
+#include "Surveillance/AircraftType.hpp"
+#include "Surveillance/Flarm/FlarmDetails.hpp"
+#include "Surveillance/Flarm/FlarmFriends.hpp"
+#include "Surveillance/TargetFriends.hpp"
 #include "FLARM/Glue.hpp"
 #include "Renderer/ColorButtonRenderer.hpp"
 #include "UIGlobals.hpp"
@@ -72,12 +74,12 @@ class FlarmTrafficDetailsWidget final
 
   WndForm &dialog;
 
-  const FlarmId target_id;
+  const TargetId target_id;
 
 public:
-  FlarmTrafficDetailsWidget(WndForm &_dialog, FlarmId _target_id)
+  FlarmTrafficDetailsWidget(WndForm &_dialog, TargetId target_id)
     :RowFormWidget(_dialog.GetLook()), dialog(_dialog),
-     target_id(_target_id) {}
+     target_id(target_id) {}
 
   void CreateButtons(WidgetDialog &buttons);
 
@@ -92,7 +94,7 @@ private:
 
   void OnCallsignClicked();
   void OnTeamClicked();
-  void OnFriendColorClicked(FlarmColor color);
+  void OnFriendColorClicked(TargetColor color);
 
   /* virtual methods from BlackboardListener */
   void OnGPSUpdate(const MoreData &basic) override {
@@ -107,21 +109,21 @@ FlarmTrafficDetailsWidget::CreateButtons(WidgetDialog &buttons)
 
   buttons.AddButton(std::make_unique<ColorButtonRenderer>(button_look,
                                                           TrafficLook::team_color_green),
-                    [this](){ OnFriendColorClicked(FlarmColor::GREEN); });
+                    [this](){ OnFriendColorClicked(TargetColor::GREEN); });
 
   buttons.AddButton(std::make_unique<ColorButtonRenderer>(button_look,
                                                           TrafficLook::team_color_blue),
-                    [this](){ OnFriendColorClicked(FlarmColor::BLUE); });
+                    [this](){ OnFriendColorClicked(TargetColor::BLUE); });
 
   buttons.AddButton(std::make_unique<ColorButtonRenderer>(button_look,
                                                           TrafficLook::team_color_yellow),
-                    [this](){ OnFriendColorClicked(FlarmColor::YELLOW); });
+                    [this](){ OnFriendColorClicked(TargetColor::YELLOW); });
 
   buttons.AddButton(std::make_unique<ColorButtonRenderer>(button_look,
                                                           TrafficLook::team_color_magenta),
-                    [this](){ OnFriendColorClicked(FlarmColor::MAGENTA); });
+                    [this](){ OnFriendColorClicked(TargetColor::MAGENTA); });
 
-  buttons.AddButton(_("Clear"), [this](){ OnFriendColorClicked(FlarmColor::NONE); });
+  buttons.AddButton(_("Clear"), [this](){ OnFriendColorClicked(TargetColor::NONE); });
   buttons.AddButton(_("Team"), [this](){ OnTeamClicked(); });
 }
 
@@ -169,10 +171,10 @@ FlarmTrafficDetailsWidget::UpdateChanging(const MoreData &basic)
   TCHAR tmp[40];
   const TCHAR *value;
 
-  const FlarmTraffic* target =
-    basic.flarm.traffic.FindTraffic(target_id);
+  const TargetPtr target =
+    basic.target_data.traffic.FindTraffic(target_id);
 
-  bool target_ok = target && target->IsDefined();
+  bool target_ok = (target != nullptr) && target->IsDefined();
 
   // Fill distance/direction field
   if (target_ok) {
@@ -260,14 +262,14 @@ FlarmTrafficDetailsWidget::Update()
     SetText(AIRPORT, _T("--"));
 
     // Fill the plane type field
-    const FlarmTraffic* target =
-      CommonInterface::Basic().flarm.traffic.FindTraffic(target_id);
+    const TargetPtr target =
+      CommonInterface::Basic().target_data.traffic.FindTraffic(target_id);
 
     const TCHAR* actype;
-    if (target == nullptr ||
-        (actype = FlarmTraffic::GetTypeString(target->type)) == nullptr)
+    if (target == nullptr)
       actype = _T("--");
-
+    else
+      actype = AircraftType::TypeName(target->type);
     SetText(PLANE, actype);
   }
 
@@ -326,7 +328,7 @@ FlarmTrafficDetailsWidget::OnCallsignClicked()
 }
 
 void
-FlarmTrafficDetailsWidget::OnFriendColorClicked(FlarmColor color)
+FlarmTrafficDetailsWidget::OnFriendColorClicked(TargetColor color)
 {
   FlarmFriends::SetFriendColor(target_id, color);
   dialog.SetModalResult(mrOK);
@@ -336,7 +338,7 @@ FlarmTrafficDetailsWidget::OnFriendColorClicked(FlarmColor color)
  * The function opens the FLARM Traffic Details dialog
  */
 void
-dlgFlarmTrafficDetailsShowModal(FlarmId id)
+dlgFlarmTrafficDetailsShowModal(TargetId id)
 {
   const DialogLook &look = UIGlobals::GetDialogLook();
 

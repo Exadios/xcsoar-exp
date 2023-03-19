@@ -25,8 +25,8 @@ Copyright_License {
 
 #include "thread/WorkerThread.hpp"
 #include "Computer/BasicComputer.hpp"
-#include "FLARM/FlarmComputer.hpp"
-#include "ADSB/AdsbComputer.hpp"
+#include "Surveillance/Flarm/FlarmComputer.hpp"
+#include "Surveillance/Adsb/AdsbComputer.hpp"
 #include "NMEA/MoreData.hpp"
 
 class DeviceBlackboard;

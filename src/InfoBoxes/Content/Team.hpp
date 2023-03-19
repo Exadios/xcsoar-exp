@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,19 @@ Copyright_License {
 
 #pragma once
 
+/**
+ * \file
+ */
+
 #include "InfoBoxes/Content/Base.hpp"
+
+/**
+ * Presently this functionality is not implemented due to ADS-B not being
+ * supported.
+ * \todo Investigate the utility of Flarm Traffic Details (Users Manual,
+ *       section 8.6) and make a decision of whether to implement it with
+ *       the addition of ADS-B data. (Issue 5) (COMPILE_TEAM_CODE).
+ */
 
 class InfoBoxContentTeamCode : public InfoBoxContent
 {

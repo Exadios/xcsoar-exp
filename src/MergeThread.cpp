@@ -55,22 +55,22 @@ MergeThread::Process()
 {
   assert(!IsDefined() || IsInside());
 
-  device_blackboard.Merge();
+  this->device_blackboard.Merge();
 
-  const MoreData &basic = device_blackboard.Basic();
+  const MoreData& basic = this->device_blackboard.Basic();
   const ComputerSettings &settings_computer =
-    device_blackboard.GetComputerSettings();
+    this->device_blackboard.GetComputerSettings();
 
   computer.Fill(device_blackboard.SetMoreData(), settings_computer);
   computer.Compute(device_blackboard.SetMoreData(), last_any, last_fix,
                    device_blackboard.Calculated());
 
-  flarm_computer.Process(device_blackboard.SetBasic().flarm,
-                         last_fix.flarm,
-                         basic);
-  adsb_computer.Process(device_blackboard.SetBasic().adsb,
-                        last_fix.adsb,
-                        basic);
+  this->flarm_computer.Process(device_blackboard.SetBasic().target_data,
+                               last_fix.target_data,
+                               basic);
+  this->adsb_computer.Process(device_blackboard.SetBasic().target_data,
+                              last_fix.target_data,
+                              basic);
 }
 
 void

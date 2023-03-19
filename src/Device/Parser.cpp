@@ -3,7 +3,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -89,22 +89,22 @@ NMEAParser::ParseLine(const char *string, NMEAInfo &info)
 
     // FLARM sentences
     if (StringIsEqual(type + 1, "PFLAE")) {
-      ParsePFLAE(line, info.flarm.error, info.clock);
+      ParsePFLAE(line, info.target_data.flarm_status.error, info.clock);
       return true;
     }
 
     if (StringIsEqual(type + 1, "PFLAV")) {
-      ParsePFLAV(line, info.flarm.version, info.clock);
+      ParsePFLAV(line, info.target_data.flarm_status.version, info.clock);
       return true;
     }
 
     if (StringIsEqual(type + 1, "PFLAA")) {
-      ParsePFLAA(line, info.flarm.traffic, info.clock);
+      ParsePFLAA(line, info.target_data.traffic, info.clock);
       return true;
     }
 
     if (StringIsEqual(type + 1, "PFLAU")) {
-      ParsePFLAU(line, info.flarm.status, info.clock);
+      ParsePFLAU(line, info.target_data.status, info.clock);
       return true;
     }
 
@@ -667,7 +667,7 @@ NMEAParser::RMZ(NMEAInputLine &line, NMEAInfo &info)
   double value;
   if (ReadAltitude(line, value)) {
     // JMW no in-built baro sources, so use this generic one
-    if (info.flarm.IsDetected()) {
+    if (info.target_data.flarm_status.IsDetected()) {
       /* FLARM emulates the Garmin $PGRMZ sentence, but emits the
          altitude above 1013.25 hPa - since the don't have a "FLARM"
          device driver, we use the auto-detected "isFlarm" flag

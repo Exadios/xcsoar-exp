@@ -32,8 +32,8 @@ class TimeStamp;
 class NMEAInputLine;
 struct FlarmError;
 struct FlarmVersion;
-struct FlarmStatus;
-struct TrafficList;
+struct TargetStatus;
+struct TargetList;
 
 /**
  * Parses a PFLAE sentence (self-test results).
@@ -67,7 +67,7 @@ ParsePFLAV(NMEAInputLine &line, FlarmVersion &version,
  * @param clock The time now.
  */
 void
-ParsePFLAU(NMEAInputLine &line, FlarmStatus &flarm, TimeStamp clock) noexcept;
+ParsePFLAU(NMEAInputLine& line, TargetStatus& flarm, TimeStamp clock) noexcept;
 
 /**
  * Parses a PFLAA sentence
@@ -79,4 +79,4 @@ ParsePFLAU(NMEAInputLine &line, FlarmStatus &flarm, TimeStamp clock) noexcept;
  * @param clock The time now.
  */
 void
-ParsePFLAA(NMEAInputLine &line, TrafficList &flarm, TimeStamp clock) noexcept;
+ParsePFLAA(NMEAInputLine &line, TargetList &flarm, TimeStamp clock) noexcept;

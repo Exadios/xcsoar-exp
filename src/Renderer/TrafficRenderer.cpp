@@ -25,7 +25,8 @@
 #include "ui/canvas/Canvas.hpp"
 #include "Screen/Layout.hpp"
 #include "Look/TrafficLook.hpp"
-#include "FLARM/Traffic.hpp"
+#include "Surveillance/RemoteTarget.hpp"
+#include "Surveillance/Color.hpp"
 #include "GliderLink/Traffic.hpp"
 #include "Math/Screen.hpp"
 #include "util/Macros.hpp"
@@ -33,28 +34,28 @@
 
 void
 TrafficRenderer::Draw(Canvas &canvas, const TrafficLook &traffic_look,
-                      const FlarmTraffic &traffic, const Angle angle,
-                      const FlarmColor color, const PixelPoint pt) noexcept
+                      const RemoteTarget &traffic, const Angle angle,
+                      const TargetColor color, const PixelPoint pt) noexcept
 {
   // Create point array that will form that arrow polygon
   BulkPixelPoint arrow[] = {
-    { -4, 6 },
-    { 0, -8 },
-    { 4, 6 },
-    { 0, 3 },
+    { -4,  6 },
+    {  0, -8 },
+    {  4,  6 },
+    {  0,  3 },
   };
 
   // Select brush depending on AlarmLevel
   switch (traffic.alarm_level) {
-  case FlarmTraffic::AlarmType::LOW:
-  case FlarmTraffic::AlarmType::INFO_ALERT:
+  case RemoteTarget::AlarmType::LOW:
+  case RemoteTarget::AlarmType::INFO_ALERT:
     canvas.Select(traffic_look.warning_brush);
     break;
-  case FlarmTraffic::AlarmType::IMPORTANT:
-  case FlarmTraffic::AlarmType::URGENT:
+  case RemoteTarget::AlarmType::IMPORTANT:
+  case RemoteTarget::AlarmType::URGENT:
     canvas.Select(traffic_look.alarm_brush);
     break;
-  case FlarmTraffic::AlarmType::NONE:
+  case RemoteTarget::AlarmType::NONE:
     if (traffic.relative_altitude > (const RoughAltitude)50) {
       canvas.Select(traffic_look.safe_above_brush);
     } else if (traffic.relative_altitude > (const RoughAltitude)-50) {
@@ -75,16 +76,16 @@ TrafficRenderer::Draw(Canvas &canvas, const TrafficLook &traffic_look,
   canvas.DrawPolygon(arrow, ARRAY_SIZE(arrow));
 
   switch (color) {
-  case FlarmColor::GREEN:
+  case TargetColor::GREEN:
     canvas.Select(traffic_look.team_pen_green);
     break;
-  case FlarmColor::BLUE:
+  case TargetColor::BLUE:
     canvas.Select(traffic_look.team_pen_blue);
     break;
-  case FlarmColor::YELLOW:
+  case TargetColor::YELLOW:
     canvas.Select(traffic_look.team_pen_yellow);
     break;
-  case FlarmColor::MAGENTA:
+  case TargetColor::MAGENTA:
     canvas.Select(traffic_look.team_pen_magenta);
     break;
   default:

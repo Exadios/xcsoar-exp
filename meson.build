@@ -371,6 +371,7 @@ subdir('src/Engine/Waypoint')
 subdir('src/zzip')
 subdir('src/json')
 subdir('src/Terrain/jasper')
+subdir('src/Surveillance')
 
 cxx = meson.get_compiler('cpp')
 
@@ -454,6 +455,7 @@ xcsoar = executable('xcsoar', xcsoar_sources,
                                   jasper_lib,
                                   resources_lib,
                                   resource_lib,
+                                  surveillance_lib,
                                 ],
                     include_directories : common_includes,
                     dependencies: [ lua5_4,

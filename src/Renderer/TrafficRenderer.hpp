@@ -23,12 +23,13 @@
 
 #pragma once
 
-#include "FLARM/Color.hpp"
+#include "Surveillance/Color.hpp"
 
 struct PixelPoint;
 class Canvas;
 struct TrafficLook;
 struct FlarmTraffic;
+struct RemoteTarget;
 struct GliderLinkTraffic;
 class Angle;
 
@@ -36,8 +37,8 @@ namespace TrafficRenderer
 {
 void
 Draw(Canvas &canvas, const TrafficLook &traffic_look,
-     const FlarmTraffic &traffic, Angle angle,
-     FlarmColor color, PixelPoint pt) noexcept;
+     const RemoteTarget &traffic, Angle angle,
+     TargetColor color, PixelPoint pt) noexcept;
 
 void
 Draw(Canvas &canvas, const TrafficLook &traffic_look,

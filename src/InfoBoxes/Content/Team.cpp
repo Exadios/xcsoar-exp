@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,6 +24,9 @@ Copyright_License {
 #include "InfoBoxes/Content/Team.hpp"
 #include "InfoBoxes/Panel/Panel.hpp"
 #include "InfoBoxes/Data.hpp"
+#include "Surveillance/Flarm/FlarmTarget.hpp"
+#include "Surveillance/Flarm/FlarmListConstDecorator.hpp"
+#include "Surveillance/Flarm/FlarmListDecorator.hpp"
 #include "Interface.hpp"
 #include "TeamActions.hpp"
 #include "Dialogs/Traffic/TrafficDialogs.hpp"
@@ -51,6 +54,7 @@ static constexpr InfoBoxPanel team_code_infobox_panels[] = {
   { nullptr, nullptr }
 };
 
+#ifdef COMPILE_TEAM_CODE  // Enable when we have sorted out this functionality!
 const InfoBoxPanel *
 InfoBoxContentTeamCode::GetDialogContent() noexcept
 {
@@ -89,18 +93,20 @@ InfoBoxContentTeamCode::HandleKey(const InfoBoxKeyCodes keycode) noexcept
 {
   TeamCodeSettings &settings =
     CommonInterface::SetComputerSettings().team_code;
-  const TrafficList &flarm = CommonInterface::Basic().flarm.traffic;
-  const FlarmTraffic *traffic =
-    settings.team_flarm_id.IsDefined()
-    ? flarm.FindTraffic(settings.team_flarm_id)
-    : NULL;
+  const TargetList& remote = CommonInterface::Basic().target_data.traffic;
+  FlarmListConstDecorator flarm(remote);
+  const FlarmPtr traffic = settings.team_flarm_id.IsDefined() ?
+                           std::dynamic_pointer_cast<FlarmTarget>(flarm.FindTraffic(settings.team_flarm_id))
+                           : NULL;
 
   if (keycode == ibkUp)
     traffic = (traffic == NULL ?
-               flarm.FirstTraffic() : flarm.NextTraffic(traffic));
+              flarm.FirstTraffic() :
+              flarm.NextTraffic(traffic));
   else if (keycode == ibkDown)
     traffic = (traffic == NULL ?
-               flarm.LastTraffic() : flarm.PreviousTraffic(traffic));
+              flarm.LastTraffic() :
+              flarm.PreviousTraffic(traffic));
   else
     return false;
 
@@ -196,3 +202,44 @@ UpdateInfoBoxTeamDistance(InfoBoxData &data) noexcept
 
   data.SetCommentColor(teamcode_info.flarm_teammate_code_current ? 2 : 1);
 }
+
+#else
+
+//------------------------------------------------------------------------------
+void
+InfoBoxContentTeamCode::Update(InfoBoxData&) noexcept
+  {
+  }
+
+//------------------------------------------------------------------------------
+bool
+InfoBoxContentTeamCode::HandleKey(const InfoBoxKeyCodes) noexcept
+  {
+  return false;
+  }
+
+//------------------------------------------------------------------------------
+const InfoBoxPanel *
+InfoBoxContentTeamCode::GetDialogContent() noexcept
+  {
+  return nullptr; // ??
+  }
+
+//------------------------------------------------------------------------------
+void
+UpdateInfoBoxTeamBearing(InfoBoxData&) noexcept
+  {
+  }
+
+//------------------------------------------------------------------------------
+void
+UpdateInfoBoxTeamBearingDiff(InfoBoxData&) noexcept
+  {
+  }
+
+//------------------------------------------------------------------------------
+void
+UpdateInfoBoxTeamDistance(InfoBoxData&) noexcept
+  {
+  }
+#endif

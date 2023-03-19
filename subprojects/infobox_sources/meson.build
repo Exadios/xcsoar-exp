@@ -12,7 +12,7 @@ infobox_sources = [
 'Content/Task.cpp',
 'Content/Places.cpp',
 'Content/Contest.cpp',
-'Content/Team.cpp',
+'Content/Team.cpp', 
 'Content/Terrain.cpp',
 'Content/Thermal.cpp',
 'Content/Time.cpp',

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -1410,14 +1410,16 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
     this->monitor->DataReceived(s);
 
   // Pass data directly to drivers that use binary data protocols
-  if (driver != nullptr && device != nullptr && driver->UsesRawData())
+  if (this->driver != nullptr && 
+      this->device != nullptr &&
+      this->driver->UsesRawData())
     {
     if (this->monitor != nullptr)
       this->monitor->DataReceived(s);
     NMEAInfo& basic(::device_blackboard->SetRealState(index));
     basic.UpdateClock();
     ::device_blackboard->mutex.lock();
-    device->DataReceived(s, ::device_blackboard->SetRealState(index));
+    this->device->DataReceived(s, ::device_blackboard->SetRealState(index));
     basic.alive.Update(basic.clock);
 #ifndef NDEBUG
 #include "LogFile.hpp"

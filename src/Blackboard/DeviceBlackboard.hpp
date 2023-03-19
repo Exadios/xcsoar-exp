@@ -165,7 +165,7 @@ public:
    */
   [[gnu::pure]]
   bool IsFLARM(unsigned i) const noexcept {
-    return RealState(i).flarm.IsDetected();
+    return RealState(i).target_data.IsDetected();
   }
 
   void SetStartupLocation(const GeoPoint &loc, double alt) noexcept;

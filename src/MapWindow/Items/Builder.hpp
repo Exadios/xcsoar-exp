@@ -38,6 +38,7 @@ struct MoreData;
 struct DerivedInfo;
 class ProtectedTaskManager;
 struct TrafficList;
+struct TargetList;
 struct ThermalLocatorInfo;
 struct NMEAInfo;
 class RasterTerrain;
@@ -66,7 +67,7 @@ public:
                           const AirspaceRendererSettings &renderer_settings,
                           const MoreData &basic, const DerivedInfo &calculated);
   void AddTaskOZs(const ProtectedTaskManager &task);
-  void AddTraffic(const TrafficList &flarm);
+  void AddTraffic(const TargetList &remote_targets);
   void AddSkyLinesTraffic();
   void AddThermals(const ThermalLocatorInfo &thermals,
                    const MoreData &basic, const DerivedInfo &calculated);

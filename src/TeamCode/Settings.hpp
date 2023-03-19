@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,14 +25,15 @@ Copyright_License {
 
 #include "util/StaticString.hxx"
 #include "TeamCode.hpp"
-#include "FLARM/FlarmId.hpp"
+#include "Surveillance/TargetId.hpp"
 
 #include <type_traits>
 
 /**
  * Settings for teamcode calculations
  */
-struct TeamCodeSettings {
+struct TeamCodeSettings 
+  {
   /** Reference waypoint id for code origin */
   int team_code_reference_waypoint;
 
@@ -45,20 +46,23 @@ struct TeamCodeSettings {
   TeamCode team_code;
 
   /**
-   * FlarmId of the glider to track.  Check FlarmId::IsDefined()
+   * \ref TargetId of the glider to track.  Check \ref Target::IsDefined()
    * before using this attribute.
    */
-  FlarmId team_flarm_id;
+  TargetId team_flarm_id;
 
   void SetDefaults();
 
   /**
    * Track a specific FLARM.
    *
-   * Don't use this method directory, use TeamActions::TrackFlarm()
+   * Don't use this method directory, use \ref TeamActions::TrackFlarm()
    * instead.
    */
-  void TrackFlarm(FlarmId id, const TCHAR *callsign);
-};
+  void TrackFlarm(TargetId id, const TCHAR* callsign);
+  };
 
+static_assert(std::is_trivially_copyable<TeamCodeSettings>::value, "type is not travially copyable");
+static_assert(std::is_trivially_constructible<TeamCodeSettings>::value, "type is not trivially constructible");
+static_assert(std::is_trivially_copy_assignable<TeamCodeSettings>::value, "type is not trivially assignable");
 static_assert(std::is_trivial<TeamCodeSettings>::value, "type is not trivial");
