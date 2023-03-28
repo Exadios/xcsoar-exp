@@ -1,2 +1,0 @@
-#!/bin/sh
-exec java -cp .:/usr/share/java/antlr4.jar:/usr/share/java/antlr4-runtime.jar org.antlr.v4.gui.TestRig $*
