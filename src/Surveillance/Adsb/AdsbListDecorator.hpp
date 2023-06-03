@@ -46,7 +46,7 @@ struct AdsbListDecorator : public TargetListDecorator
    * Ctor
    * @param target_list The \ref TargetList to decorate.
    */
-  AdsbListDecorate(TargetList& target_list)
+  AdsbListDecorator(TargetList& target_list)
     : TargetListDecorator(target_list)
     {
     }
@@ -54,63 +54,48 @@ struct AdsbListDecorator : public TargetListDecorator
   /**
    * Looks up an item in the traffic list.
    * @param id Target id
-   * @return the \ref RemoteTarget pointer, NULL if not found
+   * @return The \ref AdsbTarget pointer, NULL if not found at all or,
+   *         if found, is not an \ref AdsbTarget.
    */
   AdsbPtr FindTraffic(TargetId id)
     {
-    for (auto &traffic : this->list)
-      if (traffic->id == id)
-        {
-        traffic = std::make_shared<RemoteTarget>(*traffic);
-        return traffic;
-        }
-
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return AdsbListDecorator::AdsbCast(this->target_list.FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
    *
    * @param id Target id
-   * @return the \ref RemoteTarget pointer, NULL if not found
+   * @return The \ref AdsbTarget pointer, NULL if not found at all or,
+   *         if found, is not an \ref AdsbTarget.
    */
-  const TargetPtr FindTraffic(TargetId id) const
+  const AdsbPtr FindTraffic(TargetId id) const
     {
-    for (const auto &traffic : this->list)
-      if (traffic->id == id)
-        return std::make_shared<RemoteTarget>(*traffic);
-
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return AdsbListDecorator::AdsbCast(this->target_list.FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
    *
    * @param name The name or call sign
-   * @return The RemoteTarget pointer, NULL if not found
+   * @return The \ref AdsbTarget pointer, NULL if not found at all or,
+   *         if found, is not an \ref AdsbTarget.
    */
-  AdsbPtr FindTraffic(const TCHAR *name)
+  AdsbPtr FindTraffic(const TCHAR* name)
     {
-    for (auto &traffic : this->list)
-      if (traffic->name.equals(name))
-        return std::make_shared<RemoteTarget>(*traffic);
-
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return AdsbListDecorator::AdsbCast(this->target_list.FindTraffic(name));
     }
 
   /**
    * Looks up an item in the traffic list.
    *
    * @param name The name or call sign
-   * @return The \ref RemoteTarget pointer, NULL if not found
+   * @return The \ref AdsbTarget pointer, NULL if not found at all or,
+   *         if found, is not an \ref AdsbTarget.
    */
   const AdsbPtr FindTraffic(const TCHAR *name) const
     {
-    for (const auto &traffic : this->list)
-      if (traffic->name.equals(name))
-        return std::make_shared<RemoteTarget>(*traffic);
-
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return AdsbListDecorator::AdsbCast(this->target_list.FindTraffic(name));
     }
 
   /**
@@ -121,105 +106,46 @@ struct AdsbListDecorator : public TargetListDecorator
    */
   AdsbPtr AllocateTraffic()
     {
-    if (!this->list.full())
+    if (!this->target_list.list.full())
       {
-      TargetPtr ptr = std::make_shared<RemoteTarget>(*new RemoteTarget);
-      this->list.append(ptr);
+      AdsbPtr ptr = std::make_shared<AdsbTarget>(*new AdsbTarget);
+      this->target_list.list.append(ptr);
       return ptr;
       }
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return std::shared_ptr<AdsbTarget>(nullptr);
     }
 
   /**
-   * Inserts a new \ref RemoteTarget object to the list.
+   * Inserts a new \ref AdsbTarget object to the list.
    * @param The target.
    * @return A pointer to the new element that has been added or nullptr
    *         if the list is full.
    */
-  AdsbPtr AddTarget(RemoteTarget& target)
+  AdsbPtr AddTarget(AdsbTarget& target)
     {
-    if (this->list.full())
-      return std::shared_ptr<RemoteTarget>(nullptr);   // Too bad.
+    if (this->target_list.list.full())
+      return std::shared_ptr<AdsbTarget>(nullptr);   // Too bad.
 
-    TargetPtr ptr = std::make_shared<RemoteTarget>(target);
-    this->list.append(ptr);
+    AdsbPtr ptr = std::make_shared<AdsbTarget>(target);
+#ifndef NDEBUG
+    printf("%s, %d: %p\n", __FILE__, __LINE__, ptr.get());
+    printf("%s, %d: %d\n", __FILE__, __LINE__, target.DebugType());
+    printf("%s, %d: %d\n", __FILE__, __LINE__, ptr->DebugType());
+#endif
+    this->target_list.list.append(ptr);
     return ptr;
     }
-
   /**
-   * Reference the previous traffic in the ordered list.
-   * @param i The reference entry.
-   * @return The entry previous to t or null if is already at begin().
+   * Cast a \ref TargetPtr to a \ref AdsbPtr.
+   * @param t The \ref TargetPtr to cast.
+   * @return If the argument can be cast to a \ref AdsbPtr (because it really
+   *         is one) then return it, otherwise return nullptr.
    */
-  const AdsbPtr PreviousTraffic(size_t i) const
+  static AdsbPtr AdsbCast(TargetPtr t)
     {
-    return i > 0 ?
-           this->list[i - 1] :
-           nullptr;
+    return std::dynamic_pointer_cast<AdsbTarget>(t);
     }
-
-  /**
-   * Reference the previous traffic in the ordered list.
-   * @param target The reference target.
-   * @return The entry previous to target or null if is already at begin().
-   */
-  const AdsbPtr PreviousTraffic(const TargetPtr target) const
-    {
-    return this->PreviousTraffic(this->FindIndex(target));
-    }
-
-  /**
-   * Reference the next traffic in the ordered list.
-   * @param i The reference entry.
-   * @return The entry after i or nullptr if is already at end() - 1.
-   */
-  AdsbPtr NextTraffic(size_t i) const
-    {
-    return (i + 1) < this->list.size() ?
-           this->list[i + 1] :
-           nullptr;
-    }
-
-  /**
-   * Reference the next traffic in the ordered list.
-   * @param target The reference entry.
-   * @return The entry after target or nullptr if is already at end() - 1.
-   */
-  AdsbPtr NextTraffic(const TargetPtr target) const
-    {
-    return this->NextTraffic(this->FindIndex(target));
-    }
-
-  /**
-   * Reference the first traffic in the ordered list.
-   * @return The first target pointer or nullptr if the list is empty.
-   */
-  const AdsbPtr FirstTraffic() const
-    {
-    return this->list.empty() ?
-           nullptr :
-           *this->list.begin();
-    }
-
-  /**
-   * Reference the last traffic in the ordered list.
-   * @return The last target pointer or nullptr if the list is empty.
-   */
-  const AdsbPtr LastTraffic() const
-    {
-    return this->list.empty() ?
-           nullptr :
-           *(this->list.end() - 1);
-    }
-
-  /**
-   * Finds the most critical alert.  Returns NULL if there is no
-   * alert.
-   */
-  const AdsbPtr FindMaximumAlert() const;
   };
-
-typedef std::dynamic_pointer_cast<AdsbList> AdsbCast;
 
 /**
  * \}

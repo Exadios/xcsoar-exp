@@ -28,8 +28,12 @@ Copyright_License {
 #include "Surveillance/TargetStatus.hpp"
 #include "Surveillance/TargetList.hpp"
 #include "Surveillance/Flarm/FlarmTarget.hpp"
+#include "Surveillance/Flarm/FlarmListDecorator.hpp"
 #include "util/Macros.hpp"
 #include "util/StringAPI.hxx"
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
 
 void
 ParsePFLAE(NMEAInputLine &line, FlarmError &error, TimeStamp clock) noexcept
@@ -107,6 +111,9 @@ ReadBearing(NMEAInputLine &line, Angle &value_r)
 void
 ParsePFLAA(NMEAInputLine& line, TargetList& flarm, TimeStamp clock) noexcept
 {
+#ifndef NDEBUG
+//  LogFormat("%s, %d", __FILE__, __LINE__);
+#endif
   flarm.modified.Update(clock);
 
   // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,
@@ -180,9 +187,10 @@ ParsePFLAA(NMEAInputLine& line, TargetList& flarm, TimeStamp clock) noexcept
   else
     traffic.type.Type(type);
 
-  FlarmPtr flarm_slot = std::dynamic_pointer_cast<FlarmTarget>(flarm.FindTraffic(traffic.id));
+  FlarmListDecorator fd(flarm);
+  FlarmPtr flarm_slot = fd.FindTraffic(traffic.id);
   if (flarm_slot == nullptr) {
-    flarm_slot = std::dynamic_pointer_cast<FlarmTarget>(flarm.AllocateTraffic());
+    flarm_slot = fd.AllocateTraffic();
     if (flarm_slot == nullptr)
       // no more slots available
       return;

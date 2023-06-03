@@ -76,6 +76,13 @@ struct AdsbTarget : public RemoteTarget
     {
     return true;
     }
+
+#ifndef NDEBUG
+    virtual int DebugType() const override
+      {
+      return 2;
+      }
+#endif
   };
 
 typedef std::shared_ptr<AdsbTarget> AdsbPtr;

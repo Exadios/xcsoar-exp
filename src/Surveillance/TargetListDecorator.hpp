@@ -51,6 +51,74 @@ public:
     {
     }
 
+  /**
+   * Reference the previous traffic in the ordered list.
+   * @param i The reference entry.
+   * @return The entry previous to t or null if is already at begin().
+   */
+  const TargetPtr PreviousTraffic(size_t i) const
+    {
+    return this->target_list.PreviousTraffic(i);
+    }
+
+  /**
+   * Reference the previous traffic in the ordered list.
+   * @param target The reference target.
+   * @return The entry previous to target or null if is already at begin().
+   */
+  const TargetPtr PreviousTraffic(const TargetPtr target) const
+    {
+    return this->target_list.PreviousTraffic(target);
+    }
+
+  /**
+   * Reference the next traffic in the ordered list.
+   * @param i The reference entry.
+   * @return The entry after i or nullptr if is already at end() - 1.
+   */
+  TargetPtr NextTraffic(size_t i) const
+    {
+    return this->target_list.NextTraffic(i);
+    }
+
+  /**
+   * Reference the next traffic in the ordered list.
+   * @param target The reference entry.
+   * @return The entry after target or nullptr if is already at end() - 1.
+   */
+  TargetPtr NextTraffic(const TargetPtr target) const
+    {
+    return this->target_list.NextTraffic(target);
+    }
+
+  /**
+   * Reference the first traffic in the ordered list.
+   * @return The first target pointer or nullptr if the list is empty.
+   */
+  const TargetPtr FirstTraffic() const
+    {
+    return this->target_list.FirstTraffic();
+    }
+
+  /**
+   * Reference the last traffic in the ordered list.
+   * @return The last target pointer or nullptr if the list is empty.
+   */
+  const TargetPtr LastTraffic() const
+    {
+    return this->target_list.LastTraffic();
+    }
+
+  /**
+   * Finds the most critical alert irrespective of target type.
+   * @return Returns the maximum alert target of NULL if there is no
+   * alert.
+   */
+  const TargetPtr FindMaximumAlert() const
+    {
+    return this->target_list.FindMaximumAlert();
+    }
+
 protected:
   TargetList& target_list;
   };

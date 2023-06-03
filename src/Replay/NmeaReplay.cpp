@@ -38,6 +38,11 @@ NmeaReplay::NmeaReplay(std::unique_ptr<NLineReader> &&_reader,
 {
   parser->SetReal(false);
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+  LogFormat("%s, %d: %s", __FILE__, __LINE__,
+            config.driver_name.c_str());
+#endif
   const struct DeviceRegister *driver = FindDriverByName(config.driver_name);
   assert(driver != nullptr);
   if (driver->CreateOnPort != nullptr) {

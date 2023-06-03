@@ -43,6 +43,10 @@ Copyright_License {
 #include <tchar.h>
 #include <memory>
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
+
 /**
  * The purpose of this struct is to define the total domain of remote targets.
  * Methods on the domain may be implemented in this struct or derived
@@ -288,6 +292,14 @@ public:
     {
     return false;
     }
+
+#ifndef NDEBUG
+  virtual int DebugType() const
+    {
+    return 0;
+    }
+#endif
+
 };
 
 typedef std::shared_ptr<RemoteTarget> TargetPtr;

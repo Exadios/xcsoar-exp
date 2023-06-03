@@ -470,10 +470,6 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           target_list.new_traffic.Update(info.clock);
           }
         slot->valid.Update(info.clock); // The target is valid now.
-#ifndef NDEBUG
-#include "LogFile.hpp"
-//          LogFormat("%s, %d: %d", __FILE__, __LINE__, target_list.modified.ToInteger());
-#endif
         slot->Update(report); // Add or update this target to the list.
         break;
         }

@@ -145,6 +145,14 @@ struct FlarmTarget : public RemoteTarget
     {
     return false;
     }
+
+#ifndef NDEBUG
+  virtual int DebugType() const override
+    {
+    return 1;
+    }
+#endif
+
   };
 
 /**

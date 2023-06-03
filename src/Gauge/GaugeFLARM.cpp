@@ -185,10 +185,6 @@ GaugeFLARM::Hide() noexcept
 void
 GaugeFLARM::OnGPSUpdate(const MoreData &basic)
 {
-#ifndef NDEBUG
-#include "LogFile.hpp"
-  LogFormat("%s, %d", __FILE__, __LINE__);
-#endif
   Update(basic);
 }
 

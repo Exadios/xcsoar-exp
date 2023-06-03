@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -93,11 +93,11 @@ FlarmTrafficWindow::NextTarget() noexcept
   if (WarningMode())
     return;
 
-  assert(selection < (int)this->traffic.list.size());
+  assert(this->selection < (int)this->traffic.list.size());
 
   TargetPtr target;
-  if (selection >= 0)
-    target = this->traffic.NextTraffic(selection);
+  if (this->selection >= 0)
+    target = this->traffic.NextTraffic(this->selection);
   else
     {
     target = nullptr;
@@ -111,6 +111,13 @@ FlarmTrafficWindow::NextTarget() noexcept
     }
 
   this->SetTarget(target);
+#ifndef NDEBUG
+  if ((this->selection >= 0) && (target != nullptr))
+    LogFormat("%s, %d: %d, %s, %x", __FILE__, __LINE__,
+              this->selection,
+              (target->IsDefined()) ? "true" : "false",
+              target->id.Arg());
+#endif
   }
 
 /**
@@ -123,11 +130,11 @@ FlarmTrafficWindow::PrevTarget() noexcept
   if (WarningMode())
     return;
 
-  assert(selection < (int)this->traffic.list.size());
+  assert(this->selection < (int)this->traffic.list.size());
 
   TargetPtr target;
-  if (selection >= 0)
-    target = this->traffic.PreviousTraffic(selection);
+  if (this->selection >= 0)
+    target = this->traffic.PreviousTraffic(this->selection);
   else
     {
     target = nullptr;
@@ -141,6 +148,12 @@ FlarmTrafficWindow::PrevTarget() noexcept
     }
 
   this->SetTarget(target);
+#ifndef NDEBUG
+  LogFormat("%s, %d: %d, %s, %x", __FILE__, __LINE__,
+            this->selection,
+            (target->IsDefined()) ? "true" : "false",
+            target->id.Arg());
+#endif
   }
 
 /**
@@ -153,6 +166,11 @@ void
 FlarmTrafficWindow::UpdateSelector(const TargetId id,
                                    const PixelPoint pt) noexcept
   {
+#ifndef NDEBUG
+  LogFormat("%s %d: %d, %s", __FILE__, __LINE__,
+            this->selection,
+            (id.IsDefined()) ? "true" : "false");
+#endif
   // Update #selection
   if (!id.IsDefined())
     this->SetTarget(nullptr);
@@ -162,7 +180,7 @@ FlarmTrafficWindow::UpdateSelector(const TargetId id,
   // If we don't have a valid selection and we can't find
   // a target close to to the PixelPoint we select the next one
   // on the internal list
-  if (selection < 0 && (
+  if (this->selection < 0 && (
         pt.x < 0 || pt.y < 0 ||
         !SelectNearTarget(pt, radius * 2)) )
     NextTarget();
@@ -181,6 +199,21 @@ FlarmTrafficWindow::UpdateWarnings() noexcept
             - 1;
   }
 
+#ifndef NDEBUG
+//------------------------------------------------------------------------------
+void
+FlarmTrafficWindow::WalkTheList() const noexcept
+  {
+  unsigned long li;
+
+  for (li = 0; li < this->traffic.list.size(); li++)
+    {
+    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+              li);
+    }
+  }
+#endif
+
 /**
  * This should be called when the radar needs to be repainted
  * @param new_direction The new aircraft heading or track.
@@ -194,21 +227,43 @@ FlarmTrafficWindow::Update(Angle new_direction,
                            const TeamCodeSettings &new_settings,
                            TargetStatus target_status) noexcept
   {
+#ifndef NDEBUG
+  if (this->selection >= 0)
+    LogFormat("%s, %d: %lu, %d, %s, %x, %d, %p", __FILE__, __LINE__,
+              new_traffic.list.size(),
+              this->selection,
+              new_traffic.list[this->selection]->IsDefined() ? "true" : "false",
+              new_traffic.list[this->selection]->id.Arg(),
+              new_traffic.list[this->selection]->valid.ToInteger(),
+              &new_traffic.list
+             );
+  else
+    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
+              new_traffic.list.size());
+  
+#endif
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
   if ((new_traffic.modified == this->data_modified)                  &&
       (this->heading - new_direction).Absolute() < min_heading_delta &&
       this->target_status.gps       == target_status.gps)
     {
+#ifndef NDEBUG
+    LogFormat("%s, %d: %s, %lf, %s", __FILE__, __LINE__,
+              new_traffic.modified ? "true" : "false",
+              (this->heading - new_direction).Degrees(),
+              target_status.gps == TargetStatus::GPSStatus::NONE    ? "NONE" : 
+                target_status.gps == TargetStatus::GPSStatus::GPS_2D ? "GPS 2D" : "GPS 3D");
+#endif
     /* no change - don't redraw */
     return;
     }
 
   TargetId selection_id;
   PixelPoint pt;
-  if (!small && selection >= 0)
+  if (!small && this->selection >= 0)
     {
-    selection_id = this->traffic.list[selection]->id;
-    pt = sc[selection];
+    selection_id = this->traffic.list[this->selection]->id;
+    pt = sc[this->selection];
     }
   else
     {
@@ -227,6 +282,10 @@ FlarmTrafficWindow::Update(Angle new_direction,
 
   this->UpdateWarnings();
   this->UpdateSelector(selection_id, pt);
+
+#ifndef NDEBUG
+  this->WalkTheList();
+#endif
 
   this->Invalidate();
   }
@@ -395,7 +454,7 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
           circle_pen = &look.default_pen;
           }
 
-        if (!small && static_cast<unsigned> (selection) == i)
+        if (!small && static_cast<unsigned> (this->selection) == i)
           {
           text_color = &look.selection_color;
           target_brush = arrow_brush = &look.selection_brush;
@@ -606,6 +665,9 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
 
     if (!traffic->HasAlarm() &&
         static_cast<unsigned> (this->selection) != i)
+      /*
+       * \todo Remove arbitrary target range limitation. (Issue 5)
+       */
       if (traffic->distance < RoughDistance(15000.0)) /* As a temporary measure
                                                          do not paint
                                                          distant targets. */
@@ -614,10 +676,10 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
 
   if (this->selection >= 0)
     {
-    const TargetPtr& traffic = this->traffic.list[selection];
+    const TargetPtr& traffic = this->traffic.list[this->selection];
 
     if (!traffic->HasAlarm())
-      PaintRadarTarget(canvas, *traffic, selection);
+      PaintRadarTarget(canvas, *traffic, this->selection);
     }
 
   if (!WarningMode())
@@ -769,14 +831,39 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const noexcept
 void
 FlarmTrafficWindow::Paint(Canvas& canvas) noexcept
   {
-  assert(selection < (int)this->traffic.list.size());
-  assert(selection < 0 || this->traffic.list[selection]->IsDefined());
-  assert(warning < (int)this->traffic.list.size());
-  assert(warning < 0 || this->traffic.list[warning]->IsDefined());
-  assert(warning < 0 || this->traffic.list[warning]->HasAlarm());
+  if (this->selection >= 0)
+    if (!this->traffic.list[this->selection]->IsDefined())
+      {
+#ifndef NDEBUG
+      LogFormat("%s, %d: %s %x, %u, %p, %d", __FILE__, __LINE__,
+                (this->traffic.list[this->selection]->IsDefined()) ?
+                  "true" :
+                  "false",
+                this->traffic.list[this->selection]->id.Arg(),
+                this->traffic.list[this->selection]->valid.ToInteger(),
+                &this->traffic.list,
+                this->selection);
+      }
+#endif
+  assert(this->selection < (int)this->traffic.list.size());
+  assert(this->selection < 0 || this->traffic.list[this->selection]->IsDefined());
+  assert(this->warning < (int)this->traffic.list.size());
+  assert(this->warning < 0 || this->traffic.list[this->warning]->IsDefined());
+  assert(this->warning < 0 || this->traffic.list[this->warning]->HasAlarm());
 
-  PaintRadarBackground(canvas);
-  PaintRadarTraffic(canvas);
+#ifndef NDEBUG
+  if (this->selection >= 0)
+    LogFormat("%s, %d: %s %x, %u, %p, %d", __FILE__, __LINE__,
+              (this->traffic.list[this->selection]->IsDefined()) ?
+                "true" :
+                "false",
+              this->traffic.list[this->selection]->id.Arg(),
+              this->traffic.list[this->selection]->valid.ToInteger(),
+              &this->traffic.list,
+              this->selection);
+#endif
+  this->PaintRadarBackground(canvas);
+  this->PaintRadarTraffic(canvas);
   }
 
 /**

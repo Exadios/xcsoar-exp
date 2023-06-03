@@ -32,6 +32,10 @@ Copyright_License {
 #include <list>
 #include <memory>
 
+#ifndef NDEBUG
+#include <stdio.h>
+#endif
+
 /**
  * \file
  * \addtogroup Surveillance
@@ -52,6 +56,9 @@ public:
    */
   TargetList()
     {
+#ifndef NDEBUG
+    printf("%s, %d\n", __FILE__, __LINE__);
+#endif
     this->Clear();
     }
 
@@ -130,9 +137,6 @@ public:
     this->modified.Expire(clock, std::chrono::minutes(5));
     this->new_traffic.Expire(clock, std::chrono::minutes(1));
 
-    for (auto traffic : this->list)
-      if (!traffic->Refresh(clock))
-        
     for (unsigned i = this->list.size(); i-- > 0;)
       if (!this->list[i]->Refresh(clock))
         this->list.quick_remove(i);
@@ -212,6 +216,11 @@ public:
 
   /**
    * Allocates a new target object on the list.
+   *
+   * @note This is probably not the function that you want to use. You
+   *       probably want to attach one of the decorators and use the 
+   *       equivalent function in that decorator.
+   *
    * @return If an object can be allocated on the this then a 
    *         \ref RemoteTarget pointer to that element. Otherwise
    *         nullptr.
@@ -229,6 +238,11 @@ public:
 
   /**
    * Inserts a new \ref RemoteTarget object to the list.
+   *
+   * @note This is probably not the function that you want to use. You
+   *       probably want to attach one of the decorators and use the 
+   *       equivalent function in that decorator.
+   *
    * @param The target.
    * @return A pointer to the new element that has been added or nullptr
    *         if the list is full.
@@ -239,6 +253,11 @@ public:
       return std::shared_ptr<RemoteTarget>(nullptr);   // Too bad.
 
     TargetPtr ptr = std::make_shared<RemoteTarget>(target);
+#ifndef NDEBUG
+    printf("%s, %d: %p\n", __FILE__, __LINE__, ptr.get());
+    printf("%s, %d: %d\n", __FILE__, __LINE__, target.DebugType());
+    printf("%s, %d: %d\n", __FILE__, __LINE__, ptr->DebugType());
+#endif
     this->list.append(ptr);
     return ptr;
     }

@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -95,6 +95,10 @@ class FlarmTrafficWindow : public PaintWindow
     [[gnu::pure]]
     bool WarningMode() const noexcept;
 
+    /**
+     * Give the currently selected target.
+     * @return The currently selected target.
+     */
     const TargetPtr GetTarget() const noexcept
       {
       return this->traffic.list[selection];
@@ -118,9 +122,17 @@ class FlarmTrafficWindow : public PaintWindow
         }
       }
 
+    /**
+     * Set the quick access to the currently selected target.
+     * @param id The id of the current target. If no target having id is
+     *           currently in the list then the \ref RemoteTarget currently
+     *           pointed to is released here and may, if conditions elsewhere
+     *           allow, cause the \ref RemoteTarget previously reference to
+     *           destruct.
+     */
     void SetTarget(const TargetId& id) noexcept
       {
-      SetTarget(traffic.FindTraffic(id));
+      SetTarget(this->traffic.FindTraffic(id));
       }
 
     void NextTarget() noexcept;
@@ -202,4 +214,11 @@ class FlarmTrafficWindow : public PaintWindow
 
     /* virtual methods from class PaintWindow */
     void OnPaint(Canvas &canvas) noexcept override;
+
+  /* Temporary debug routines. */
+  private:
+#ifndef NDEBUG
+    void WalkTheList() const noexcept;
+#endif
+
   };
