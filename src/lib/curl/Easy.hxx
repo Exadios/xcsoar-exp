@@ -193,10 +193,6 @@ public:
 		SetOption(CURLOPT_POSTFIELDSIZE, (long)size);
 	}
 
-	void SetHttpPost(const struct curl_httppost *post) {
-		SetOption(CURLOPT_HTTPPOST, post);
-	}
-
 	void SetMimePost(const curl_mime *mime) {
 		SetOption(CURLOPT_MIMEPOST, mime);
 	}
@@ -211,9 +207,9 @@ public:
 	 */
 	[[gnu::pure]]
 	int64_t GetContentLength() const noexcept {
-		double value;
-		return GetInfo(CURLINFO_CONTENT_LENGTH_DOWNLOAD, &value)
-			? (int64_t)value
+		curl_off_t value;
+		return GetInfo(CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &value)
+			? value
 			: -1;
 	}
 

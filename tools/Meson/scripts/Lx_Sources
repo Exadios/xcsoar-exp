@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/lx_sources ] || mkdir subprojects/lx_sources
+echo "project('Lx_Sources')" > subprojects/lx_sources/meson.build
+echo "lx_sources = [" >> subprojects/lx_sources/meson.build
+echo -n "'" >> subprojects/lx_sources/meson.build
+grep "^LX_SOURCES" | \
+sed -e 's/LX_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/LX/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/lx_sources/meson.build
+echo " ]" >> subprojects/lx_sources/meson.build

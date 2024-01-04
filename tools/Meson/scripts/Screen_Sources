@@ -1,0 +1,22 @@
+#!/bin/bash
+
+[ -d subprojects/screen_sources ] || mkdir subprojects/screen_sources
+echo "project('Screen_Sources')" > subprojects/screen_sources/meson.build
+echo "screen_sources = [" >> subprojects/screen_sources/meson.build
+echo -n "'" >> subprojects/screen_sources/meson.build
+grep "^SCREEN_SOURCES = " | \
+sed -e 's/SCREEN_SOURCES = //' | \
+sed -e 's:\$(SCREEN_SRC_DIR)/::g' | \
+sed -e 's:\$(WINDOW_SRC_DIR)/:../ui/window/:g' | \
+sed -e 's:\$(CANVAS_SRC_DIR)/:../ui/canvas/:g' | \
+sed -e 's:\$(CONTROL_SRC_DIR)/:../ui/control/:g' | \
+sed -e 's:\$(SRC)/ui/linux/:../ui/linux/:g' | \
+sed -e 's:\$(SRC)/ui/display/:../ui/display/:g' | \
+sed -e 's:\$(SRC)/Renderer/:../Renderer/:g' | \
+sed -e 's:\$(SCREEN_CUSTOM_SOURCES_IMG)::g' | \
+sed -e 's:\$(SCREEN_CUSTOM_SOURCES)::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//g" | \
+sed -e "s/'',$//g" | \
+sed -e "s:cpp$:cpp':g" >> subprojects/screen_sources/meson.build
+echo " ]" >> subprojects/screen_sources/meson.build

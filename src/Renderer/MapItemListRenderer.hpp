@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,10 @@ Copyright_License {
 
 #pragma once
 
+/**
+ * \file
+ */
+
 #include "time/RoughTime.hpp"
 #include "Renderer/TwoTextRowsRenderer.hpp"
 
@@ -34,7 +38,7 @@ struct MapLook;
 struct TrafficLook;
 struct FinalGlideBarLook;
 struct MapSettings;
-struct TrafficList;
+struct TargetList;
 
 class MapItemListRenderer {
   const MapLook &look;
@@ -58,5 +62,5 @@ public:
   unsigned CalculateLayout(const DialogLook &dialog_look);
 
   void Draw(Canvas &canvas, const PixelRect rc, const MapItem &item,
-            const TrafficList *traffic_list=nullptr);
+            const TargetList *target_list = nullptr);
 };

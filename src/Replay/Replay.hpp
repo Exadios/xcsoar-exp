@@ -35,6 +35,17 @@ class AbstractReplay;
 class CatmullRomInterpolator;
 class Error;
 
+/**
+ * \todo
+ *
+ * At the moment replay of NMEA files fails. The problem is that the 
+ * time of the data in this thread (main) and the time of the data in the
+ * Merge thread are different. The time in this thread appears to be ahead
+ * of that of the Merge thread causing FLARM data to be thrown away.
+ *
+ * Investigate and fix.
+ */
+
 class Replay final
 {
   UI::Timer timer{[this]{ OnTimer(); }};

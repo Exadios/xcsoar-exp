@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,7 +34,10 @@
 #include "PageActions.hpp"
 #include "Look/Look.hpp"
 #include "Profile/Profile.hpp"
-#include "FLARM/Friends.hpp"
+#ifdef ENABLE_TEAM_FLYING
+#include "Surveillance/Flarm/Friends.hpp"
+#endif  // ENABLE_TEAM_FLYING
+#include "Surveillance/Color.hpp"
 #include "Look/FlarmTrafficLook.hpp"
 #include "Gauge/FlarmTrafficWindow.hpp"
 #include "Language/Language.hpp"
@@ -45,124 +48,128 @@
 #include "Interface.hpp"
 #include "Asset.hpp"
 
-#ifndef NDEBUG
-#include "LogFile.hpp"
-#endif
-
 /**
  * A Window which renders FLARM traffic, with user interaction.
  */
-class FlarmTrafficControl : public FlarmTrafficWindow {
-protected:
-  bool enable_auto_zoom = true, dragging = false;
-  unsigned zoom = 2;
-  Angle task_direction = Angle::Degrees(-1);
-  GestureManager gestures;
+class FlarmTrafficControl : public FlarmTrafficWindow
+  {
+  protected:
+    bool enable_auto_zoom = true, dragging = false;
+    unsigned zoom = 2;
+    Angle task_direction = Angle::Degrees(-1);
+    GestureManager gestures;
 
-public:
-  FlarmTrafficControl(const FlarmTrafficLook &look)
-    :FlarmTrafficWindow(look, Layout::Scale(10),
-                        Layout::GetMinimumControlHeight() + Layout::Scale(2)) {}
+  public:
+    FlarmTrafficControl(const FlarmTrafficLook &look)
+      :FlarmTrafficWindow(look, Layout::Scale(10),
+                          Layout::GetMinimumControlHeight() + Layout::Scale(2)) {}
 
-protected:
-  void CalcAutoZoom();
+  protected:
+    void CalcAutoZoom();
 
-public:
-  /**
-   * Update the Flarm display.
-   * @param new_direction The new aircraft track or heading.
-   * @param new_flarm_data The new list of Flarm targets.
-   * @param new_adsb_data The new list of ADSB targets.
-   * @param new_settings The new team codes.
-   * @param flarm_status Present status of the Flarm.
-   * @param adsb_status  Present status of the ADSB.
-   */
-  void Update(Angle new_direction,
-              const TrafficList &new_flarm_data,
-              const AdsbTrafficList &new_adsb_data,
-              const TeamCodeSettings &new_settings,
-              FlarmStatus flarm_status,
-              AdsbStatus  adsb_status);
+  public:
+    /**
+     * Update the Flarm display.
+     * @param new_direction The new aircraft track or heading.
+     * @param new_traffic_data The new list of remote targets.
+     * @param new_settings The new team codes.
+     * @param flarm_status Present status of the remote target system.
+     */
+    void Update(Angle new_direction,
+                const TargetList& new_traffic_data,
+                const TeamCodeSettings& new_settings,
+                TargetStatus traffic_status);
 
-  void UpdateTaskDirection(bool show_task_direction, Angle bearing);
+    void UpdateTaskDirection(bool show_task_direction, Angle bearing);
 
-  bool GetNorthUp() const {
-    return enable_north_up;
-  }
+    bool GetNorthUp() const
+      {
+      return enable_north_up;
+      }
 
-  void SetNorthUp(bool enabled);
+    void SetNorthUp(bool enabled);
 
-  void ToggleNorthUp() {
-    SetNorthUp(!GetNorthUp());
-  }
+    void ToggleNorthUp()
+      {
+      SetNorthUp(!GetNorthUp());
+      }
 
-  bool GetAutoZoom() const {
-    return enable_auto_zoom;
-  }
+    bool GetAutoZoom() const
+      {
+      return enable_auto_zoom;
+      }
 
-  static unsigned GetZoomDistance(unsigned zoom);
+    static unsigned GetZoomDistance(unsigned zoom);
 
-  void SetZoom(unsigned _zoom) {
-    zoom = _zoom;
-    SetDistance(GetZoomDistance(_zoom));
-  }
+    void SetZoom(unsigned _zoom)
+      {
+      zoom = _zoom;
+      SetDistance(GetZoomDistance(_zoom));
+      }
 
-  void SetAutoZoom(bool enabled);
+    void SetAutoZoom(bool enabled);
 
-  void ToggleAutoZoom() {
-    SetAutoZoom(!GetAutoZoom());
-  }
+    void ToggleAutoZoom()
+      {
+      SetAutoZoom(!GetAutoZoom());
+      }
 
-  bool CanZoomOut() const {
-    return zoom < 4;
-  }
+    bool CanZoomOut() const
+      {
+      return zoom < 4;
+      }
 
-  bool CanZoomIn() const {
-    return zoom > 0;
-  }
+    bool CanZoomIn() const
+      {
+      return zoom > 0;
+      }
 
-  void ZoomOut();
-  void ZoomIn();
+    void ZoomOut();
+    void ZoomIn();
 
-  void SwitchData();
-  void OpenDetails();
+    void SwitchData();
+    void OpenDetails();
 
-protected:
-  void PaintTrafficInfo(Canvas &canvas) const;
-  void PaintClimbRate(Canvas &canvas, PixelRect rc, double climb_rate) const;
-  void PaintDistance(Canvas &canvas, PixelRect rc, double distance) const;
-  void PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
-                             double relative_altitude) const;
-  void PaintID(Canvas &canvas, PixelRect rc, const FlarmTraffic &traffic) const;
-  void PaintTaskDirection(Canvas &canvas) const;
+  protected:
+    void PaintTrafficInfo(Canvas &canvas) const;
+    void PaintClimbRate(Canvas &canvas, PixelRect rc, double climb_rate) const;
+    void PaintDistance(Canvas &canvas, PixelRect rc, double distance) const;
+    void PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
+                               double relative_altitude) const;
+    void PaintID(Canvas& canvas,
+                 PixelRect rc,
+                 const TargetPtr& traffic) const;
+    void PaintTaskDirection(Canvas &canvas) const;
 
-  void StopDragging() {
-    if (!dragging)
-      return;
+    void StopDragging()
+      {
+      if (!dragging)
+        return;
 
-    dragging = false;
-    ReleaseCapture();
-  }
+      dragging = false;
+      ReleaseCapture();
+      }
 
-protected:
-  bool OnMouseGesture(const TCHAR* gesture);
+  protected:
+    bool OnMouseGesture(const TCHAR* gesture);
 
-  /* virtual methods from class Window */
-  void OnCreate() noexcept override;
-  bool OnMouseMove(PixelPoint p, unsigned keys) noexcept override;
-  bool OnMouseDown(PixelPoint p) noexcept override;
-  bool OnMouseUp(PixelPoint p) noexcept override;
-  bool OnMouseDouble(PixelPoint p) noexcept override;
-  bool OnKeyDown(unsigned key_code) noexcept override;
-  void OnCancelMode() noexcept override;
+    /* virtual methods from class Window */
+    void OnCreate() noexcept override;
+    bool OnMouseMove(PixelPoint p, unsigned keys) noexcept override;
+    bool OnMouseDown(PixelPoint p) noexcept override;
+    bool OnMouseUp(PixelPoint p) noexcept override;
+    bool OnMouseDouble(PixelPoint p) noexcept override;
+    bool OnKeyDown(unsigned key_code) noexcept override;
+    void OnCancelMode() noexcept override;
 
-  /* virtual methods from class PaintWindow */
-  void OnPaint(Canvas &canvas) noexcept override;
-};
+    /* virtual methods from class PaintWindow */
+    void OnPaint(Canvas &canvas) noexcept override;
+  };
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::OnCreate() noexcept
-{
+  {
   FlarmTrafficWindow::OnCreate();
 
   const TrafficSettings &settings = CommonInterface::GetUISettings().traffic;
@@ -170,100 +177,107 @@ FlarmTrafficControl::OnCreate() noexcept
   Profile::GetEnum(ProfileKeys::FlarmSideData, side_display_type);
   enable_auto_zoom = settings.auto_zoom;
   enable_north_up = settings.north_up;
-}
+  }
 
+//------------------------------------------------------------------------------
 unsigned
 FlarmTrafficControl::GetZoomDistance(unsigned zoom)
-{
-  switch (zoom) {
-  case 0:
-    return 500;
-  case 1:
-    return 1000;
-  case 3:
-    return 5000;
-  case 4:
-    return 10000;
-  case 2:
-  default:
-    return 2000;
+  {
+  switch (zoom)
+    {
+    case 0:
+      return 500;
+    case 1:
+      return 1000;
+    case 3:
+      return 5000;
+    case 4:
+      return 10000;
+    case 2:
+    default:
+      return 2000;
+    }
   }
-}
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::SetNorthUp(bool enabled)
-{
+  {
   TrafficSettings &settings = CommonInterface::SetUISettings().traffic;
   settings.north_up = enable_north_up = enabled;
   Profile::Set(ProfileKeys::FlarmNorthUp, enabled);
   //north_up->SetState(enabled);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::SetAutoZoom(bool enabled)
-{
+  {
   TrafficSettings &settings = CommonInterface::SetUISettings().traffic;
   settings.auto_zoom = enable_auto_zoom = enabled;
   Profile::Set(ProfileKeys::FlarmAutoZoom, enabled);
   //auto_zoom->SetState(enabled);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::CalcAutoZoom()
-{
+  {
   bool warning_mode = WarningMode();
   RoughDistance zoom_dist = 0;
 
-  for (auto it = flarm_data.list.begin(), end = flarm_data.list.end();
-      it != end; ++it) {
-    if (warning_mode && !it->HasAlarm())
+  for (auto it = this->traffic.list.begin(), end = this->traffic.list.end();
+       it != end; ++it)
+    {
+    if (warning_mode && !(*it)->HasAlarm())
       continue;
 
-    zoom_dist = std::max(it->distance, zoom_dist);
-  }
+    zoom_dist = std::max((*it)->distance, zoom_dist);
+    }
 
   double zoom_dist2 = zoom_dist;
-  for (unsigned i = 0; i <= 4; i++) {
-    if (i == 4 || GetZoomDistance(i) >= zoom_dist2) {
+  for (unsigned i = 0; i <= 4; i++)
+    {
+    if (i == 4 || GetZoomDistance(i) >= zoom_dist2)
+      {
       SetZoom(i);
       break;
+      }
     }
   }
-}
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::Update(Angle new_direction,
-                            const TrafficList &new_flarm_data,
-                            const AdsbTrafficList &new_adsb_data,
+                            const TargetList& new_traffic_data,
                             const TeamCodeSettings &new_settings,
-                            FlarmStatus flarm_status,
-                            AdsbStatus  adsb_status)
-{
+                            TargetStatus traffic_status)
+  {
   FlarmTrafficWindow::Update(new_direction,
-                             new_flarm_data,
-                             new_adsb_data,
+                             new_traffic_data,
                              new_settings,
-                             flarm_status,
-                             adsb_status);
+                             traffic_status);
   if (enable_auto_zoom || WarningMode())
     CalcAutoZoom();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::UpdateTaskDirection(bool show_task_direction, Angle bearing)
-{
+  {
   if (!show_task_direction)
     task_direction = Angle::Degrees(-1);
   else
     task_direction = bearing.AsBearing();
-}
+  }
 
 /**
  * Zoom out one step
  */
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::ZoomOut()
-{
+  {
   if (WarningMode())
     return;
 
@@ -271,14 +285,15 @@ FlarmTrafficControl::ZoomOut()
     SetZoom(zoom + 1);
 
   SetAutoZoom(false);
-}
+  }
 
 /**
  * Zoom in one step
  */
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::ZoomIn()
-{
+  {
   if (WarningMode())
     return;
 
@@ -286,15 +301,16 @@ FlarmTrafficControl::ZoomIn()
     SetZoom(zoom - 1);
 
   SetAutoZoom(false);
-}
+  }
 
 /**
  * Paints an arrow into the direction of the current task leg
  * @param canvas The canvas to paint on
  */
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::PaintTaskDirection(Canvas &canvas) const
-{
+  {
   if (task_direction.IsNegative())
     return;
 
@@ -316,12 +332,13 @@ FlarmTrafficControl::PaintTaskDirection(Canvas &canvas) const
 
   // Draw the arrow
   canvas.DrawPolygon(triangle, 3);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::PaintClimbRate(Canvas &canvas, PixelRect rc,
                                     double climb_rate) const
-{
+  {
   // Paint label
   canvas.Select(look.info_labels_font);
   const unsigned label_width = canvas.CalcTextSize(_("Vario")).width;
@@ -336,7 +353,7 @@ FlarmTrafficControl::PaintClimbRate(Canvas &canvas, PixelRect rc,
   canvas.Select(look.info_units_font);
   const unsigned unit_width = UnitSymbolRenderer::GetSize(canvas, unit).width;
   const unsigned unit_height =
-      UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
+    UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
 
   unsigned space_width = unit_width / 3;
 
@@ -362,12 +379,13 @@ FlarmTrafficControl::PaintClimbRate(Canvas &canvas, PixelRect rc,
   canvas.Select(look.info_units_font);
   UnitSymbolRenderer::Draw(canvas, {unit_x, unit_y},
                            unit, look.unit_fraction_pen);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::PaintDistance(Canvas &canvas, PixelRect rc,
                                    double distance) const
-{
+  {
   // Format distance
   TCHAR buffer[20];
   Unit unit = FormatUserDistanceSmart(distance, buffer, false, 1000);
@@ -376,7 +394,7 @@ FlarmTrafficControl::PaintDistance(Canvas &canvas, PixelRect rc,
   canvas.Select(look.info_units_font);
   const unsigned unit_width = UnitSymbolRenderer::GetSize(canvas, unit).width;
   const unsigned unit_height =
-      UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
+    UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
 
   const unsigned space_width = unit_width / 3;
 
@@ -405,12 +423,13 @@ FlarmTrafficControl::PaintDistance(Canvas &canvas, PixelRect rc,
   canvas.Select(look.info_labels_font);
   canvas.DrawText(p0.At(0, -int(max_height + look.info_labels_font.GetHeight())),
                   _("Distance"));
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
-                                           double relative_altitude) const
-{
+    double relative_altitude) const
+  {
   // Format relative altitude
   TCHAR buffer[20];
   Unit unit = Units::GetUserAltitudeUnit();
@@ -420,7 +439,7 @@ FlarmTrafficControl::PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
   canvas.Select(look.info_units_font);
   const unsigned unit_width = UnitSymbolRenderer::GetSize(canvas, unit).width;
   const unsigned unit_height =
-      UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
+    UnitSymbolRenderer::GetAscentHeight(look.info_units_font, unit);
 
   const unsigned space_width = unit_width / 3;
 
@@ -451,75 +470,88 @@ FlarmTrafficControl::PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
   const unsigned label_width = canvas.CalcTextSize(_("Rel. Alt.")).width;
   canvas.DrawText(p0.At(-(int)label_width,  -int(max_height + look.info_labels_font.GetHeight())),
                   _("Rel. Alt."));
-}
+  }
 
+//------------------------------------------------------------------------------
 void
-FlarmTrafficControl::PaintID(Canvas &canvas, PixelRect rc,
-                             const FlarmTraffic &traffic) const
-{
+FlarmTrafficControl::PaintID(Canvas& canvas,
+                             PixelRect rc,
+                             const TargetPtr& traffic) const
+  {
   TCHAR buffer[20];
 
   unsigned font_size;
-  if (traffic.HasName()) {
+  if (traffic->HasName())
+    {
     canvas.Select(look.call_sign_font);
     font_size = look.call_sign_font.GetHeight();
 
-    _tcscpy(buffer, traffic.name);
-  } else {
+    _tcscpy(buffer, traffic->name);
+    }
+  else
+    {
     canvas.Select(look.info_labels_font);
     font_size = look.info_labels_font.GetHeight();
 
-    traffic.id.Format(buffer);
-  }
+    traffic->id.Format(buffer);
+    }
 
-  if (!WarningMode()) {
+  if (!WarningMode())
+    {
+#ifdef ENABLE_TEAM_FLYING
     // Team color dot
-    FlarmColor team_color = FlarmFriends::GetFriendColor(traffic.id);
+    TargetColor team_color = FlarmFriends::GetFriendColor(traffic->id);
+#else
+    TargetColor team_color = TargetColor::NONE;
+#endif  // ENABLE_TEAM_FLYING
 
     // If team color found -> draw a colored circle in front of the name
-    if (team_color != FlarmColor::NONE) {
-      switch (team_color) {
-      case FlarmColor::GREEN:
-        canvas.Select(look.team_brush_green);
-        break;
-      case FlarmColor::BLUE:
-        canvas.Select(look.team_brush_blue);
-        break;
-      case FlarmColor::YELLOW:
-        canvas.Select(look.team_brush_yellow);
-        break;
-      case FlarmColor::MAGENTA:
-        canvas.Select(look.team_brush_magenta);
-        break;
-      default:
-        break;
-      }
+    if (team_color != TargetColor::NONE)
+      {
+      switch (team_color)
+        {
+        case TargetColor::GREEN:
+          canvas.Select(look.team_brush_green);
+          break;
+        case TargetColor::BLUE:
+          canvas.Select(look.team_brush_blue);
+          break;
+        case TargetColor::YELLOW:
+          canvas.Select(look.team_brush_yellow);
+          break;
+        case TargetColor::MAGENTA:
+          canvas.Select(look.team_brush_magenta);
+          break;
+        default:
+          break;
+        }
 
       canvas.SelectNullPen();
       canvas.DrawCircle(rc.GetTopLeft().At(Layout::FastScale(7u), (font_size / 2)),
                         Layout::FastScale(7u));
 
       rc.left += Layout::FastScale(16);
+      }
     }
-  }
 
   canvas.DrawText(rc.GetTopLeft(), buffer);
-}
+  }
 
 /**
  * Paints the basic info for the selected target on the given canvas
  * @param canvas The canvas to paint on
  */
+//------------------------------------------------------------------------------
 void
-FlarmTrafficControl::PaintTrafficInfo(Canvas &canvas) const
-{
+FlarmTrafficControl::PaintTrafficInfo(Canvas& canvas) const
+  {
   // Don't paint numbers if no plane selected
   if (selection == -1 && !WarningMode())
     return;
 
   // Shortcut to the selected traffic
-  FlarmTraffic traffic = flarm_data.list[WarningMode() ? warning : selection];
-  assert(traffic.IsDefined());
+  TargetPtr target = this->traffic.list[WarningMode() ? warning : selection];
+  assert(target->IsDefined());
 
   const unsigned padding = Layout::GetTextPadding();
   PixelRect rc;
@@ -529,77 +561,82 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas &canvas) const
   rc.bottom = canvas.GetHeight() - padding;
 
   // Set the text color and background
-  switch (traffic.alarm_level) {
-  case FlarmTraffic::AlarmType::LOW:
-  case FlarmTraffic::AlarmType::INFO_ALERT:
-    canvas.SetTextColor(look.warning_color);
-    break;
-  case FlarmTraffic::AlarmType::IMPORTANT:
-  case FlarmTraffic::AlarmType::URGENT:
-    canvas.SetTextColor(look.alarm_color);
-    break;
-  case FlarmTraffic::AlarmType::NONE:
-    canvas.SetTextColor(look.default_color);
-    break;
-  }
+  switch (target->alarm_level)
+    {
+    case RemoteTarget::AlarmType::LOW:
+    case RemoteTarget::AlarmType::INFO_ALERT:
+      canvas.SetTextColor(look.warning_color);
+      break;
+    case RemoteTarget::AlarmType::IMPORTANT:
+    case RemoteTarget::AlarmType::URGENT:
+      canvas.SetTextColor(look.alarm_color);
+      break;
+    case RemoteTarget::AlarmType::NONE:
+      canvas.SetTextColor(look.default_color);
+      break;
+    }
 
   canvas.SetBackgroundTransparent();
 
   // Climb Rate
-  if (!WarningMode() && traffic.climb_rate_avg30s_available)
-    PaintClimbRate(canvas, rc, traffic.climb_rate_avg30s);
+  if (!WarningMode() && target->climb_rate_avg30s_available)
+    PaintClimbRate(canvas, rc, target->climb_rate_avg30s);
 
   // Distance
-  PaintDistance(canvas, rc, traffic.distance);
+  PaintDistance(canvas, rc, target->distance);
 
   // Relative Height
-  PaintRelativeAltitude(canvas, rc, traffic.relative_altitude);
+  PaintRelativeAltitude(canvas, rc, target->relative_altitude);
 
   // ID / Name
-  if (!traffic.HasAlarm())
+  if (!target->HasAlarm())
     canvas.SetTextColor(look.selection_color);
 
-  PaintID(canvas, rc, traffic);
-}
+  this->PaintID(canvas, rc, target);
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::OnPaint(Canvas &canvas) noexcept
-{
+  {
   canvas.ClearWhite();
 
   PaintTaskDirection(canvas);
   FlarmTrafficWindow::Paint(canvas);
   PaintTrafficInfo(canvas);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::OpenDetails()
-{
+  {
   // If warning is displayed -> prevent from opening details dialog
   if (WarningMode())
     return;
 
   // Don't open the details dialog if no plane selected
-  const FlarmTraffic *traffic = GetTarget();
-  if (traffic == NULL)
+  const TargetPtr target = this->GetTarget();
+  if (target == NULL)
     return;
 
   // Show the details dialog
-  dlgFlarmTrafficDetailsShowModal(traffic->id);
-}
+  dlgFlarmTrafficDetailsShowModal(target->id);
+  }
 
+//------------------------------------------------------------------------------
 static Button
 MakeSymbolButton(ContainerWindow &parent, const ButtonLook &look,
-                const TCHAR *caption,
-                const PixelRect &rc,
-                Button::Callback callback) noexcept
-{
+                 const TCHAR *caption,
+                 const PixelRect &rc,
+                 Button::Callback callback) noexcept
+  {
   return Button(parent, rc, WindowStyle(),
                 std::make_unique<SymbolButtonRenderer>(look, caption),
                 std::move(callback));
-}
+  }
 
-struct TrafficWidget::Windows {
+struct TrafficWidget::Windows
+  {
   Button zoom_in_button, zoom_out_button;
   Button previous_item_button, next_item_button;
   Button details_button;
@@ -610,34 +647,53 @@ struct TrafficWidget::Windows {
   Windows(TrafficWidget &widget, ContainerWindow &parent, const PixelRect &r,
           const ButtonLook &button_look, const FlarmTrafficLook &flarm_look)
     :zoom_in_button(MakeSymbolButton(parent, button_look, _T("+"), r,
-                                     [&widget](){ widget.ZoomIn(); })),
-     zoom_out_button(MakeSymbolButton(parent, button_look,
-                                    _T("-"), r,
-                                      [&widget](){ widget.ZoomOut(); })),
-     previous_item_button(MakeSymbolButton(parent, button_look,
-                                           _T("<"), r,
-                                           [&widget](){ widget.PreviousTarget(); })),
-     next_item_button(MakeSymbolButton(parent, button_look,
-                                       _T(">"), r,
-                                       [&widget](){ widget.NextTarget(); })),
-     details_button(parent, button_look,
-                    _("Details"), r, WindowStyle(),
-                    [&widget](){ widget.OpenDetails(); }),
-     close_button(parent, button_look,
-                  _("Close"), r, WindowStyle(),
-                  [](){ PageActions::Restore(); }),
-     view(flarm_look)
-  {
+                                     [&widget]()
+    {
+    widget.ZoomIn();
+    })),
+  zoom_out_button(MakeSymbolButton(parent, button_look,
+                                   _T("-"), r,
+                                   [&widget]()
+    {
+    widget.ZoomOut();
+    })),
+  previous_item_button(MakeSymbolButton(parent, button_look,
+                                        _T("<"), r,
+                                        [&widget]()
+    {
+    widget.PreviousTarget();
+    })),
+  next_item_button(MakeSymbolButton(parent, button_look,
+                                    _T(">"), r,
+                                    [&widget]()
+    {
+    widget.NextTarget();
+    })),
+  details_button(parent, button_look,
+                 _("Details"), r, WindowStyle(),
+                 [&widget]()
+    {
+    widget.OpenDetails();
+    }),
+  close_button(parent, button_look,
+               _("Close"), r, WindowStyle(),
+               []()
+    {
+    PageActions::Restore();
+    }),
+  view(flarm_look)
+    {
     view.Create(parent, r);
     UpdateLayout(r);
-  }
+    }
 
   void UpdateLayout(const PixelRect &rc) noexcept;
-};
+  };
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::Windows::UpdateLayout(const PixelRect &rc) noexcept
-{
+  {
   view.Move(rc);
 
   const unsigned margin = Layout::Scale(1);
@@ -685,244 +741,274 @@ TrafficWidget::Windows::UpdateLayout(const PixelRect &rc) noexcept
   button_rc.right = rc.right - margin;
   button_rc.left = button_rc.right - Layout::Scale(50);
   close_button.Move(button_rc);
-}
+  }
 
 TrafficWidget::TrafficWidget() noexcept = default;
 TrafficWidget::~TrafficWidget() noexcept = default;
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::OpenDetails() noexcept
-{
+  {
   windows->view.OpenDetails();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::ZoomIn() noexcept
-{
+  {
   windows->view.ZoomIn();
   UpdateButtons();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::ZoomOut() noexcept
-{
+  {
   windows->view.ZoomOut();
   UpdateButtons();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::PreviousTarget() noexcept
-{
+  {
   windows->view.PrevTarget();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::NextTarget() noexcept
-{
+  {
   windows->view.NextTarget();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficControl::SwitchData()
-{
+  {
   if (side_display_type == FlarmTrafficWindow::SideInfoType::VARIO)
     side_display_type = FlarmTrafficWindow::SideInfoType::RELATIVE_ALTITUDE;
   else
     side_display_type = FlarmTrafficWindow::SideInfoType::VARIO;
 
   Profile::SetEnum(ProfileKeys::FlarmSideData, side_display_type);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::SwitchData() noexcept
-{
+  {
   windows->view.SwitchData();
-}
+  }
 
+//------------------------------------------------------------------------------
 bool
 TrafficWidget::GetAutoZoom() const noexcept
-{
+  {
   return windows->view.GetAutoZoom();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::SetAutoZoom(bool value) noexcept
-{
+  {
   windows->view.SetAutoZoom(value);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::ToggleAutoZoom() noexcept
-{
+  {
   windows->view.ToggleAutoZoom();
-}
+  }
 
+//------------------------------------------------------------------------------
 bool
 TrafficWidget::GetNorthUp() const noexcept
-{
+  {
   return windows->view.GetNorthUp();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::SetNorthUp(bool value) noexcept
-{
+  {
   windows->view.SetAutoZoom(value);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::ToggleNorthUp() noexcept
-{
+  {
   windows->view.ToggleNorthUp();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::Update() noexcept
-{
+  {
   const NMEAInfo &basic = CommonInterface::Basic();
   const DerivedInfo &calculated = CommonInterface::Calculated();
 
   if (CommonInterface::GetUISettings().traffic.auto_close_dialog &&
-      basic.flarm.traffic.IsEmpty() &&
+      basic.target_data.traffic.IsEmpty()                        &&
       /* auto-close only really closes the FLARM radar if the
          "restored" page has no FLARM radar */
-      PageActions::GetConfiguredLayout().main != PageLayout::Main::FLARM_RADAR) {
+      PageActions::GetConfiguredLayout().main != PageLayout::Main::FLARM_RADAR)
+    {
     /* this must be deferred, because this method is called from
        within the BlackboardListener, and we must not unregister the
        listener in this context */
     PageActions::DeferredRestore();
     return;
-  }
+    }
 
   this->windows->view.Update(basic.track,
-                             basic.flarm.traffic,
-                             basic.adsb.traffic,
+                             basic.target_data.traffic,
                              CommonInterface::GetComputerSettings().team_code,
-                             basic.flarm.status,
-                             basic.adsb.status);
+                             basic.target_data.status);
 
   windows->view.UpdateTaskDirection(calculated.task_stats.task_valid &&
-                            calculated.task_stats.current_leg.solution_remaining.IsOk(),
-                            calculated.task_stats.
-                            current_leg.solution_remaining.cruise_track_bearing);
+                                    calculated.task_stats.current_leg.solution_remaining.IsOk(),
+                                    calculated.task_stats.
+                                    current_leg.solution_remaining.cruise_track_bearing);
 
   UpdateButtons();
-}
+  }
 
+//------------------------------------------------------------------------------
 bool
 FlarmTrafficControl::OnMouseMove(PixelPoint p,
                                  [[maybe_unused]] unsigned keys) noexcept
-{
+  {
   if (dragging)
     gestures.Update(p);
 
   return true;
-}
+  }
 
+//------------------------------------------------------------------------------
 bool
 FlarmTrafficControl::OnMouseDown(PixelPoint p) noexcept
-{
-  if (!dragging) {
+  {
+  if (!dragging)
+    {
     dragging = true;
     SetCapture();
     gestures.Start(p, Layout::Scale(20));
-  }
+    }
 
   return true;
-}
+  }
 
+//------------------------------------------------------------------------------
 bool
 FlarmTrafficControl::OnMouseUp(PixelPoint p) noexcept
-{
-  if (dragging) {
+  {
+  if (dragging)
+    {
     StopDragging();
 
     const TCHAR *gesture = gestures.Finish();
     if (gesture && OnMouseGesture(gesture))
       return true;
-  }
+    }
 
   if (!WarningMode())
     SelectNearTarget(p, Layout::Scale(15));
 
   return true;
-}
+  }
 
+//------------------------------------------------------------------------------
 bool
 FlarmTrafficControl::OnMouseDouble([[maybe_unused]] PixelPoint p) noexcept
-{
+  {
   StopDragging();
   InputEvents::ShowMenu();
   return true;
-}
+  }
 
+//------------------------------------------------------------------------------
 bool
 FlarmTrafficControl::OnMouseGesture(const TCHAR* gesture)
-{
-  if (StringIsEqual(gesture, _T("U"))) {
+  {
+  if (StringIsEqual(gesture, _T("U")))
+    {
     ZoomIn();
     return true;
-  }
-  if (StringIsEqual(gesture, _T("D"))) {
+    }
+  if (StringIsEqual(gesture, _T("D")))
+    {
     ZoomOut();
     return true;
-  }
-  if (StringIsEqual(gesture, _T("UD"))) {
+    }
+  if (StringIsEqual(gesture, _T("UD")))
+    {
     SetAutoZoom(true);
     return true;
-  }
-  if (StringIsEqual(gesture, _T("DR"))) {
+    }
+  if (StringIsEqual(gesture, _T("DR")))
+    {
     OpenDetails();
     return true;
-  }
-  if (StringIsEqual(gesture, _T("RL"))) {
+    }
+  if (StringIsEqual(gesture, _T("RL")))
+    {
     SwitchData();
     return true;
-  }
+    }
 
   return InputEvents::processGesture(gesture);
-}
-
-void
-FlarmTrafficControl::OnCancelMode() noexcept
-{
-  FlarmTrafficWindow::OnCancelMode();
-  StopDragging();
-}
-
-bool
-FlarmTrafficControl::OnKeyDown(unsigned key_code) noexcept
-{
-  switch (key_code) {
-  case KEY_UP:
-    if (!HasPointer())
-      break;
-
-    ZoomIn();
-    return true;
-
-  case KEY_DOWN:
-    if (!HasPointer())
-      break;
-
-    ZoomOut();
-    return true;
   }
 
-  return FlarmTrafficWindow::OnKeyDown(key_code) ||
-    InputEvents::processKey(key_code);
-}
+//------------------------------------------------------------------------------
+void
+FlarmTrafficControl::OnCancelMode() noexcept
+  {
+  FlarmTrafficWindow::OnCancelMode();
+  StopDragging();
+  }
 
+//------------------------------------------------------------------------------
+bool
+FlarmTrafficControl::OnKeyDown(unsigned key_code) noexcept
+  {
+  switch (key_code)
+    {
+    case KEY_UP:
+      if (!HasPointer())
+        break;
+
+      ZoomIn();
+      return true;
+
+    case KEY_DOWN:
+      if (!HasPointer())
+        break;
+
+      ZoomOut();
+      return true;
+    }
+
+  return FlarmTrafficWindow::OnKeyDown(key_code) ||
+         InputEvents::processKey(key_code);
+  }
+
+//------------------------------------------------------------------------------
 void
 TrafficWidget::UpdateLayout() noexcept
-{
+  {
   windows->UpdateLayout(GetContainer().GetClientRect());
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::UpdateButtons() noexcept
-{
+  {
   const bool unlocked = !windows->view.WarningMode();
-  const TrafficList &traffic = CommonInterface::Basic().flarm.traffic;
+  const TargetList& traffic = CommonInterface::Basic().target_data.traffic;
   const bool not_empty = !traffic.IsEmpty();
   const bool two_or_more = traffic.GetActiveTrafficCount() >= 2;
 
@@ -931,11 +1017,12 @@ TrafficWidget::UpdateButtons() noexcept
   windows->previous_item_button.SetEnabled(unlocked && two_or_more);
   windows->next_item_button.SetEnabled(unlocked && two_or_more);
   windows->details_button.SetEnabled(unlocked && not_empty);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::Prepare(ContainerWindow &parent, const PixelRect &_rc) noexcept
-{
+  {
   ContainerWidget::Prepare(parent, _rc);
 
   const Look &look = UIGlobals::GetLook();
@@ -944,11 +1031,12 @@ TrafficWidget::Prepare(ContainerWindow &parent, const PixelRect &_rc) noexcept
                                       GetContainer().GetClientRect(),
                                       look.dialog.button, look.flarm_dialog);
   UpdateLayout();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::Show(const PixelRect &rc) noexcept
-{
+  {
   // Update Radar and Selection for the first time
   Update();
 
@@ -959,33 +1047,37 @@ TrafficWidget::Show(const PixelRect &rc) noexcept
   windows->close_button.SetVisible(CommonInterface::GetUIState().pages.special_page.IsDefined());
 
   CommonInterface::GetLiveBlackboard().AddListener(*this);
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::Hide() noexcept
-{
+  {
   CommonInterface::GetLiveBlackboard().RemoveListener(*this);
   ContainerWidget::Hide();
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::Move(const PixelRect &rc) noexcept
-{
+  {
   ContainerWidget::Move(rc);
 
   UpdateLayout();
-}
+  }
 
 
+//------------------------------------------------------------------------------
 bool
 TrafficWidget::SetFocus() noexcept
-{
+  {
   windows->view.SetFocus();
   return true;
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 TrafficWidget::OnGPSUpdate([[maybe_unused]] const MoreData &basic)
-{
+  {
   Update();
-}
+  }

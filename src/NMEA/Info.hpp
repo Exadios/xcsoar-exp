@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -35,8 +35,7 @@ Copyright_License {
 #include "Atmosphere/Pressure.hpp"
 #include "Atmosphere/Temperature.hpp"
 #include "DeviceInfo.hpp"
-#include "FLARM/Data.hpp"
-#include "ADSB/Data.hpp"
+#include "Surveillance/TargetData.hpp"
 #include "Geo/SpeedVector.hpp"
 
 #ifdef ANDROID
@@ -50,6 +49,35 @@ Copyright_License {
  * A struct that holds all the parsed data read from the connected devices
  */
 struct NMEAInfo {
+public:
+
+  /**
+   * Default ctor.
+   */
+  NMEAInfo()
+    {
+    }
+
+  /**
+   * Copy an object of this type via a copy ctor.
+   * @param src The source object.
+   */
+  NMEAInfo(const NMEAInfo& src)
+    {
+    this->Copy(src);
+    }
+
+  /**
+   * Copy an object of this type via an assignment operator.
+   * @param rhs The RHS of the equal operator.
+   * @return This object as copied from rhs.
+   */
+  NMEAInfo& operator=(const NMEAInfo& rhs)
+    {
+    this->Copy(rhs);
+    return *this;
+    }
+
   /**
    * A monotonic wall clock time, in seconds, with an undefined
    * reference.  This may get updated even if the device doesn't send
@@ -356,8 +384,10 @@ struct NMEAInfo {
    */
   DeviceInfo secondary_device;
 
-  FlarmData flarm;
-  AdsbData  adsb;
+  /**
+   * The data about the targets tracked.
+   */
+  TargetData target_data;
 
   int count;  // Temporary indicator.
 
@@ -630,6 +660,11 @@ struct NMEAInfo {
    * @param add The source to be copied from.
    */
   void Complement(const NMEAInfo &add);
+
+private:
+  void Copy(const NMEAInfo& src);
+
 };
 
-static_assert(std::is_trivial<NMEAInfo>::value, "type is not trivial");
+//static_assert(std::is_trivially_copyable<NMEAInfo>::value, "type is not trivial");
+//static_assert(std::is_trivial<NMEAInfo>::value, "type is not trivial");

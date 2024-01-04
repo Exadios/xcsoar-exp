@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/cai302_sources ] || mkdir subprojects/cai302_sources
+echo "project('Cai302_Sources')" > subprojects/cai302_sources/meson.build
+echo "cai302_sources = [" >> subprojects/cai302_sources/meson.build
+echo -n "'" >> subprojects/cai302_sources/meson.build
+grep "^CAI302_SOURCES" | \
+sed -e 's/CAI302_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/CAI302/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/cai302_sources/meson.build
+echo " ]" >> subprojects/cai302_sources/meson.build

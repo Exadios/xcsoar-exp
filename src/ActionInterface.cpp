@@ -60,7 +60,7 @@ XCSoarInterface::ReceiveGPS() noexcept
 
   BroadcastGPSUpdate();
 
-  if (!Basic().flarm.traffic.IsEmpty())
+  if (!Basic().target_data.traffic.IsEmpty())
     /* auto-load FlarmNet when traffic is seen */
     LoadFlarmDatabases();
 }

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/datafield_sources ] || mkdir subprojects/datafield_sources
+echo "project('Datafield_Sources')" > subprojects/datafield_sources/meson.build
+echo "datafield_sources = [" >> subprojects/datafield_sources/meson.build
+echo -n "'" >> subprojects/datafield_sources/meson.build
+grep "^DATA_FIELD_SOURCES" | \
+sed -e 's/DATA_FIELD_SOURCES = //' | \
+sed -e 's:\$(DATA_FIELD_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/datafield_sources/meson.build
+echo " ]" >> subprojects/datafield_sources/meson.build

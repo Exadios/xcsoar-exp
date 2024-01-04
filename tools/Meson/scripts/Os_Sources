@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/os_sources ] || mkdir subprojects/os_sources
+echo "project('Os_Sources')" > subprojects/os_sources/meson.build
+echo "os_sources = [" >> subprojects/os_sources/meson.build
+echo -n "'" >> subprojects/os_sources/meson.build
+grep "^OS_SOURCES" | \
+sed -e 's/OS_SOURCES := //' | \
+sed -e 's:\./src/system/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cxx$/cxx'/" >> subprojects/os_sources/meson.build
+echo " ]" >> subprojects/os_sources/meson.build

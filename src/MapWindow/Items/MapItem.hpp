@@ -25,8 +25,8 @@ Copyright_License {
 
 #include "Geo/GeoPoint.hpp"
 #include "Geo/GeoVector.hpp"
-#include "FLARM/FlarmId.hpp"
-#include "FLARM/Color.hpp"
+#include "Surveillance/TargetId.hpp"
+#include "Surveillance/Color.hpp"
 #include "NMEA/ThermalLocator.hpp"
 #include "Weather/Features.hpp"
 #include "Engine/Waypoint/Ptr.hpp"
@@ -195,10 +195,10 @@ struct WeatherStationMapItem: public MapItem
 
 struct TrafficMapItem: public MapItem
 {
-  FlarmId id;
-  FlarmColor color;
+  TargetId id;
+  TargetColor color;
 
-  TrafficMapItem(FlarmId _id, FlarmColor _color)
+  TrafficMapItem(TargetId _id, TargetColor _color)
     :MapItem(Type::TRAFFIC), id(_id), color(_color) {}
 };
 

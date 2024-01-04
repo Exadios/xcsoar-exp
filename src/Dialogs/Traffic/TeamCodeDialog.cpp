@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "Dialogs/Message.hpp"
 #include "Widget/RowFormWidget.hpp"
 #include "UIGlobals.hpp"
-#include "FLARM/FlarmDetails.hpp"
+#include "Surveillance/Flarm/FlarmDetails.hpp"
 #include "FLARM/Glue.hpp"
 #include "Computer/Settings.hpp"
 #include "Profile/Profile.hpp"
@@ -198,7 +198,7 @@ TeamCodeWidget::OnFlarmLockClicked()
 
   LoadFlarmDatabases();
 
-  FlarmId ids[30];
+  TargetId ids[30];
   unsigned count =
     FlarmDetails::FindIdsByCallSign(newTeamFlarmCNTarget, ids, 30);
 
@@ -208,7 +208,7 @@ TeamCodeWidget::OnFlarmLockClicked()
     return;
   }
 
-  const FlarmId id = PickFlarmTraffic(_("Set new teammate"), ids, count);
+  const TargetId id = PickFlarmTraffic(_("Set new teammate"), ids, count);
   if (!id.IsDefined())
     return;
 

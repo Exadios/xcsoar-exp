@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/thermalexpress_sources ] || mkdir subprojects/thermalexpress_sources
+echo "project('ThermalExpress_Sources')" > subprojects/thermalexpress_sources/meson.build
+echo "thermalexpress_sources = [" >> subprojects/thermalexpress_sources/meson.build
+echo -n "'" >> subprojects/thermalexpress_sources/meson.build
+grep "^THERMALEXPRESS_SOURCES = " | \
+sed -e 's/THERMALEXPRESS_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/ThermalExpress/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/thermalexpress_sources/meson.build
+echo " ]" >> subprojects/thermalexpress_sources/meson.build

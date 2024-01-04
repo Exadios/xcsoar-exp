@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/shapelib_sources ] || mkdir subprojects/shapelib_sources
+echo "project('Shapelib_Sources')" > subprojects/shapelib_sources/meson.build
+echo "shapelib_sources = [" >> subprojects/shapelib_sources/meson.build
+echo -n "'" >> subprojects/shapelib_sources/meson.build
+grep "^SHAPELIB_SOURCES = " | xargs | \
+sed -e 's/SHAPELIB_SOURCES = //' | \
+sed -e 's:\$(SHPSRC)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//g" |
+sed -e "s:c$:c':g" >> subprojects/shapelib_sources/meson.build
+echo " ]" >> subprojects/shapelib_sources/meson.build

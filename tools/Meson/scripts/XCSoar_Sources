@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/xcsoar_sources ] || mkdir subprojects/xcsoar_sources
+echo "project('XCSoar_Sources')" > subprojects/xcsoar_sources/meson.build
+echo "xcsoar_sources = [" >> subprojects/xcsoar_sources/meson.build
+echo -n "'" >> subprojects/xcsoar_sources/meson.build
+grep "^XCSOAR_SOURCES" | \
+sed -e 's/XCSOAR_SOURCES := //' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" |
+sed -e "s/'',$//" >> subprojects/xcsoar_sources/meson.build
+echo " ]" >> subprojects/xcsoar_sources/meson.build

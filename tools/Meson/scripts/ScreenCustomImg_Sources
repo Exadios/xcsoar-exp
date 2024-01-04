@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/screencustomimg_sources ] || mkdir subprojects/screencustomimg_sources
+echo "project('Screencustomimg_Sources')" > subprojects/screencustomimg_sources/meson.build
+echo "screencustomimg_sources = [" >> subprojects/screencustomimg_sources/meson.build
+echo -n "'" >> subprojects/screencustomimg_sources/meson.build
+grep "^SCREEN_CUSTOM_SOURCES_IMG = " | \
+sed -e 's/SCREEN_CUSTOM_SOURCES_IMG = //' | \
+sed -e 's:\$(CANVAS_SRC_DIR)/custom/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s:'$::g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/screencustomimg_sources/meson.build
+echo " ]" >> subprojects/screencustomimg_sources/meson.build

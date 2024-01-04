@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,11 +31,14 @@ Copyright_License {
 #include "Screen/Layout.hpp"
 #include "Form/DataField/Prefix.hpp"
 #include "Form/DataField/Listener.hpp"
-#include "FLARM/FlarmNetRecord.hpp"
-#include "FLARM/FlarmDetails.hpp"
-#include "FLARM/FlarmId.hpp"
+#include "Surveillance/Flarm/FlarmNetRecord.hpp"
+#include "Surveillance/Flarm/FlarmDetails.hpp"
+#include "Surveillance/TargetId.hpp"
+#include "Surveillance/TargetList.hpp"
+#include "Surveillance/Flarm/FlarmTarget.hpp"
 #include "FLARM/Global.hpp"
-#include "FLARM/TrafficDatabases.hpp"
+#include "Surveillance/TrafficDatabases.hpp"
+#include "Surveillance/Color.hpp"
 #include "util/StaticString.hxx"
 #include "Language/Language.hpp"
 #include "UIGlobals.hpp"
@@ -71,7 +74,7 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
      * The FLARM traffic id.  If this is "undefined", then this object
      * does not refer to FLARM traffic.
      */
-    FlarmId id;
+    TargetId id;
 
 #ifdef HAVE_SKYLINES_TRACKING
     /**
@@ -83,10 +86,10 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
 #endif
 
     /**
-     * The color that was assigned by the user to this FLARM peer.  It
+     * The color that was assigned by the user to this FLARM peer. It
      * is FlarmColor::COUNT if the color has not yet been determined.
      */
-    FlarmColor color = FlarmColor::COUNT;
+    TargetColor color = TargetColor::COUNT;
 
     /**
      * Were the attributes below already lazy-loaded from the
@@ -121,7 +124,7 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
     int altitude;
 #endif
 
-    explicit Item(FlarmId _id)
+    explicit Item(TargetId _id)
       :id(_id) {
       assert(id.IsDefined());
       assert(IsFlarm());
@@ -135,9 +138,9 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
     explicit Item(uint32_t _id, SkyLinesTracking::Data::Time _time_of_day,
                   const GeoPoint &_location, int _altitude,
                   tstring &&_name)
-      :id(FlarmId::Undefined()), skylines_id(_id),
+      :id(TargetId::Undefined()), skylines_id(_id),
        time_of_day(_time_of_day),
-       color(FlarmColor::COUNT),
+       color(TargetColor::COUNT),
        loaded(false),
        location(_location),
        vector(GeoVector::Invalid()), name(std::move(_name)),
@@ -149,7 +152,7 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
 #endif
 
     /**
-     * Does this object describe a FLARM?
+     * Does this object describe a FLARM or ADS-B target?
      */
     bool IsFlarm() const {
       return id.IsDefined();
@@ -166,8 +169,8 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
 
     void Load() {
       if (IsFlarm()) {
-        record = traffic_databases->flarm_net.FindRecordById(id);
-        callsign = traffic_databases->FindNameById(id);
+        record = ::traffic_databases->flarm_net.FindRecordById(id);
+        callsign = ::traffic_databases->FindNameById(id);
 #ifdef HAVE_SKYLINES_TRACKING
       } else if (IsSkyLines()) {
         record = nullptr;
@@ -181,8 +184,8 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
     }
 
     void AutoLoad() {
-      if (IsFlarm() && color == FlarmColor::COUNT)
-        color = traffic_databases->GetColor(id);
+      if (IsFlarm() && color == TargetColor::COUNT)
+        color = ::traffic_databases->GetColor(id);
 
       if (!loaded)
         Load();
@@ -209,7 +212,7 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
 
 public:
   TrafficListWidget(WndForm &_dialog,
-                    const FlarmId *array, size_t count)
+                    const TargetId *array, size_t count)
     :dialog(_dialog), filter_widget(nullptr),
      buttons(nullptr) {
     items.reserve(count);
@@ -226,9 +229,9 @@ public:
   }
 
   [[gnu::pure]]
-  FlarmId GetCursorId() const {
+  TargetId GetCursorId() const {
     return items.empty()
-      ? FlarmId::Undefined()
+      ? TargetId::Undefined()
       : items[GetList().GetCursorIndex()].id;
   }
 
@@ -238,7 +241,7 @@ private:
    * search that doesn't scale well with a large list.
    */
   [[gnu::pure]]
-  ItemList::iterator FindItem(FlarmId id) {
+  ItemList::iterator FindItem(TargetId id) {
     assert(id.IsDefined());
 
     return std::find_if(items.begin(), items.end(),
@@ -249,7 +252,7 @@ private:
    * Add a new item to the list, unless the given FLARM id already
    * exists.
    */
-  Item &AddItem(FlarmId id) {
+  Item &AddItem(TargetId id) {
     auto existing = FindItem(id);
     if (existing != items.end())
       return *existing;
@@ -376,7 +379,7 @@ TrafficListWidget::UpdateList()
 
   const TCHAR *callsign = filter_widget->GetValueString(CALLSIGN);
   if (!StringIsEmpty(callsign)) {
-    FlarmId ids[30];
+    TargetId ids[30];
     unsigned count = FlarmDetails::FindIdsByCallSign(callsign, ids, 30);
 
     for (unsigned i = 0; i < count; ++i)
@@ -386,18 +389,18 @@ TrafficListWidget::UpdateList()
        traffic */
 
     /* add live FLARM traffic */
-    for (const auto &i : CommonInterface::Basic().flarm.traffic.list) {
-      AddItem(i.id);
+    for (const auto &i : CommonInterface::Basic().target_data.traffic.list) {
+      AddItem(i->id);
     }
 
     /* add FLARM peers that have a user-defined color */
-    for (const auto &i : traffic_databases->flarm_colors) {
+    for (const auto &i : ::traffic_databases->target_colors) {
       Item &item = AddItem(i.first);
       item.color = i.second;
     }
 
     /* add FLARM peers that have a user-defined name */
-    for (const auto &i : traffic_databases->flarm_names) {
+    for (const auto &i : ::traffic_databases->flarm_names) {
       AddItem(i.id);
     }
 
@@ -443,21 +446,24 @@ TrafficListWidget::UpdateList()
 
 void
 TrafficListWidget::UpdateVolatile()
-{
-  const TrafficList &live_list = CommonInterface::Basic().flarm.traffic;
+  {
+  const TargetList& live_list = CommonInterface::Basic().target_data.traffic;
 
   bool modified = false;
 
-  /* determine the most recent time stamp in the #TrafficList; this is
+  /* determine the most recent time stamp in the #TargetList; this is
      used to set the new last_update value */
   Validity max_time;
   max_time.Clear();
 
-  for (auto &i : items) {
-    if (i.IsFlarm()) {
-      const FlarmTraffic *live = live_list.FindTraffic(i.id);
+  for (auto &i : items)
+    {
+    if (i.IsFlarm())
+      {
+      const FlarmPtr live = std::dynamic_pointer_cast<FlarmTarget>(live_list.FindTraffic(i.id));
 
-      if (live != nullptr) {
+      if (live != nullptr)
+        {
         if (live->valid.Modified(last_update))
           /* if this #FlarmTraffic is newer than #last_update, then we
              need to redraw the list */
@@ -470,7 +476,9 @@ TrafficListWidget::UpdateVolatile()
 
         i.location = live->location;
         i.vector = GeoVector(live->distance, live->track);
-      } else {
+        }
+      else
+        {
         if (i.location.IsValid() || i.vector.IsValid())
           /* this item has disappeared from our FLARM: redraw the
              list */
@@ -478,14 +486,17 @@ TrafficListWidget::UpdateVolatile()
 
         i.location.SetInvalid();
         i.vector.SetInvalid();
-      }
+        }
 #ifdef HAVE_SKYLINES_TRACKING
-    } else if (i.IsSkyLines()) {
+      }
+    else if (i.IsSkyLines())
+      {
       const auto &data = tracking->GetSkyLinesData();
       const std::lock_guard lock{data.mutex};
 
       auto live = data.traffic.find(i.skylines_id);
-      if (live != data.traffic.end()) {
+      if (live != data.traffic.end())
+        {
         if (live->second.location != i.location)
           modified = true;
 
@@ -495,23 +506,25 @@ TrafficListWidget::UpdateVolatile()
             CommonInterface::Basic().location_available)
           i.vector = GeoVector(CommonInterface::Basic().location,
                                i.location);
-      } else {
+        }
+      else
+        {
         if (i.location.IsValid() || i.vector.IsValid())
           /* this item has disappeared: redraw the list */
           modified = true;
 
         i.location.SetInvalid();
         i.vector.SetInvalid();
-      }
+        }
 #endif
+      }
     }
-  }
 
   last_update = max_time;
 
   if (modified)
     GetList().Invalidate();
-}
+  }
 
 void
 TrafficListWidget::UpdateButtons()
@@ -621,24 +634,24 @@ TrafficListWidget::OnPaintItem(Canvas &canvas, PixelRect rc,
     tmp = _T("?");
   }
 
-  if (item.color != FlarmColor::NONE) {
+  if (item.color != TargetColor::NONE) {
     const TrafficLook &traffic_look = UIGlobals::GetLook().traffic;
 
     switch (item.color) {
-    case FlarmColor::NONE:
-    case FlarmColor::COUNT:
+    case TargetColor::NONE:
+    case TargetColor::COUNT:
       gcc_unreachable();
 
-    case FlarmColor::GREEN:
+    case TargetColor::GREEN:
       canvas.Select(traffic_look.team_pen_green);
       break;
-    case FlarmColor::BLUE:
+    case TargetColor::BLUE:
       canvas.Select(traffic_look.team_pen_blue);
       break;
-    case FlarmColor::YELLOW:
+    case TargetColor::YELLOW:
       canvas.Select(traffic_look.team_pen_yellow);
       break;
-    case FlarmColor::MAGENTA:
+    case TargetColor::MAGENTA:
       canvas.Select(traffic_look.team_pen_magenta);
       break;
     }
@@ -779,8 +792,8 @@ TrafficListDialog()
   dialog.ShowModal();
 }
 
-FlarmId
-PickFlarmTraffic(const TCHAR *title, FlarmId array[], unsigned count)
+TargetId
+PickFlarmTraffic(const TCHAR *title, TargetId array[], unsigned count)
 {
   assert(count > 0);
 
@@ -799,5 +812,5 @@ PickFlarmTraffic(const TCHAR *title, FlarmId array[], unsigned count)
 
   return dialog.ShowModal() == mrOK
     ? list_widget->GetCursorId()
-    : FlarmId::Undefined();
+    : TargetId::Undefined();
 }

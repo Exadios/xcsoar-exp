@@ -1,0 +1,15 @@
+#!/bin/bash
+
+[ -d subprojects/form_sources ] || mkdir subprojects/form_sources
+echo "project('Form_Sources')" > subprojects/form_sources/meson.build
+echo "form_sources = [" >> subprojects/form_sources/meson.build
+echo -n "'" >> subprojects/form_sources/meson.build
+grep "^FORM_SOURCES" | \
+sed -e 's/FORM_SOURCES = //' | \
+sed -e 's:\$(FORM_SRC_DIR)/::g' | \
+sed -e 's:\$(SRC)/Renderer:../Renderer:g' | \
+sed -e 's:\$(SRC)/UIUtil:../UIUtil:' | \
+sed -e 's:\$(SRC)/ui:../ui:g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/form_sources/meson.build
+echo " ]" >> subprojects/form_sources/meson.build

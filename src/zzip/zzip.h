@@ -13,6 +13,10 @@
 
 #pragma once
 
+/**
+ * \file
+ */
+
 #include <zzip/types.h>
 
 #ifdef __cplusplus

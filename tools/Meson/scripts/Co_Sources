@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/co_sources ] || mkdir subprojects/co_sources
+echo "project('Co_Sources')" > subprojects/co_sources/meson.build
+echo "co_sources = [" >> subprojects/co_sources/meson.build
+echo -n "'" >> subprojects/co_sources/meson.build
+grep "^CO_SOURCES = " | \
+sed -e 's/CO_SOURCES = //' | \
+sed -e 's:\$(SRC)/co/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cxx$:cxx':g" >> subprojects/co_sources/meson.build
+echo " ]" >> subprojects/co_sources/meson.build

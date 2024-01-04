@@ -32,6 +32,10 @@ Copyright_License {
 #include "Topography/Thread.hpp"
 #include "Terrain/Thread.hpp"
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
+
 GlueMapWindow::GlueMapWindow(const Look &look)
   :MapWindow(look.map, look.traffic),
    thermal_band_renderer(look.thermal_band, look.chart),
@@ -120,12 +124,18 @@ GlueMapWindow::SetUIState(const UIState &new_value)
 void
 GlueMapWindow::ExchangeBlackboard()
 {
+#ifndef NDEBUG
+//  LogFormat("%s, %d: %s", __FILE__, __LINE__,
+//            ::device_blackboard->Basic().target_data.traffic.IsEmpty() ? 
+//              "true" :
+//              "false");
+#endif
   /* copy device_blackboard to MapWindow */
 
   {
     const std::lock_guard lock{device_blackboard->mutex};
-    ReadBlackboard(device_blackboard->Basic(),
-                   device_blackboard->Calculated());
+    ReadBlackboard(::device_blackboard->Basic(),
+                   ::device_blackboard->Calculated());
   }
 
 #ifndef ENABLE_OPENGL

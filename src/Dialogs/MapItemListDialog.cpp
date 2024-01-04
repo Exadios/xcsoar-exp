@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -202,7 +202,7 @@ MapItemListWidget::OnPaintItem(Canvas &canvas, const PixelRect rc,
 {
   const MapItem &item = *list[idx];
   renderer.Draw(canvas, rc, item,
-                &CommonInterface::Basic().flarm.traffic);
+                &CommonInterface::Basic().target_data.traffic);
 
   if ((settings.item_list.add_arrival_altitude &&
        item.type == MapItem::Type::ARRIVAL_ALTITUDE) ||

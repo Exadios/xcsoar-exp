@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -47,6 +47,7 @@ Copyright_License {
 #include "Input/InputQueue.hpp"
 #include "LogFile.hpp"
 #include "Job/Job.hpp"
+#include "Surveillance/Flarm/FlarmListDecorator.hpp"
 
 #ifdef ANDROID
 #include "java/Object.hxx"
@@ -1410,22 +1411,20 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
     this->monitor->DataReceived(s);
 
   // Pass data directly to drivers that use binary data protocols
-  if (driver != nullptr && device != nullptr && driver->UsesRawData())
+  if (this->driver != nullptr && 
+      this->device != nullptr &&
+      this->driver->UsesRawData())
     {
     if (this->monitor != nullptr)
       this->monitor->DataReceived(s);
     NMEAInfo& basic(::device_blackboard->SetRealState(index));
     basic.UpdateClock();
     ::device_blackboard->mutex.lock();
-    device->DataReceived(s, ::device_blackboard->SetRealState(index));
+    this->device->DataReceived(s, ::device_blackboard->SetRealState(index));
     basic.alive.Update(basic.clock);
-#ifndef NDEBUG
-#include "LogFile.hpp"
-//    LogFormat("%s, %d: %d", __FILE__, __LINE__, 
-//              ::device_blackboard->RealState(index).adsb.traffic.modified.ToInteger());
-#endif
     ::device_blackboard->ScheduleMerge();
     ::device_blackboard->mutex.unlock();
+
     return true;
     }
 
@@ -1454,7 +1453,15 @@ DeviceDescriptor::LineReceived(const char *line) noexcept
   const auto e = BeginEdit();
   e->UpdateClock();     // Update the NMEAInfo clock
   ParseNMEA(line, *e);
+
   e.Commit();           // Schedule a merge
 
+#ifndef NDEBUG
+  // Flarm data OK here.
+//  FlarmListDecorator fd(&(e->target_data.traffic));
+//  TargetList fl = fd.FlarmTargets();
+//  auto n = fl.GetActiveTrafficCount();
+//  std::cout << __FILE__ << ", " << __LINE__ << ": " << n << "\n";
+#endif
   return true;
 }

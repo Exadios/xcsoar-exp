@@ -1,0 +1,14 @@
+#!/bin/bash
+
+[ -d subprojects/io_sources ] || mkdir subprojects/io_sources
+echo "project('Io_Sources')" > subprojects/io_sources/meson.build
+echo "io_sources = [" >> subprojects/io_sources/meson.build
+echo -n "'" >> subprojects/io_sources/meson.build
+grep "^IO_SOURCES = " | xargs | \
+sed -e 's/IO_SOURCES = //' | \
+sed -e 's:\$(IO_SRC_DIR)/::g' | \
+sed -e 's:\$(SRC)/lib/zlib/:../lib/zlib/:g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//g" |
+sed -e "s:cpp$:cpp':g" >> subprojects/io_sources/meson.build
+echo " ]" >> subprojects/io_sources/meson.build

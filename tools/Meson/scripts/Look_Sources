@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/look_sources ] || mkdir subprojects/look_sources
+echo "project('Look_Sources')" > subprojects/look_sources/meson.build
+echo "look_sources = [" >> subprojects/look_sources/meson.build
+echo -n "'" >> subprojects/look_sources/meson.build
+grep "^LOOK_SOURCES" | \
+sed -e 's/LOOK_SOURCES := //' | \
+sed -e 's:\./src/Look/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/look_sources/meson.build
+echo " ]" >> subprojects/look_sources/meson.build

@@ -1,0 +1,28 @@
+project('Geo_Sources')
+geo_sources = [
+'Boost/RangeBox.cpp',
+'ConvexHull/GrahamScan.cpp',
+'ConvexHull/PolygonInterior.cpp',
+'Memento/DistanceMemento.cpp',
+'Memento/GeoVectorMemento.cpp',
+'Flat/FlatProjection.cpp',
+'Flat/TaskProjection.cpp',
+'Flat/FlatBoundingBox.cpp',
+'Flat/FlatGeoPoint.cpp',
+'Flat/FlatRay.cpp',
+'Flat/FlatPoint.cpp',
+'Flat/FlatEllipse.cpp',
+'Flat/FlatLine.cpp',
+'Math.cpp',
+'SimplifiedMath.cpp',
+'Quadrilateral.cpp',
+'GeoPoint.cpp',
+'GeoVector.cpp',
+'GeoBounds.cpp',
+'GeoClip.cpp',
+'Quadrilateral.cpp',
+'SearchPoint.cpp',
+'SearchPointVector.cpp',
+'GeoEllipse.cpp',
+'UTM.cpp'
+ ]

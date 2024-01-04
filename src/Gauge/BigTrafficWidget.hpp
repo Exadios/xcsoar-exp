@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,14 @@
 
 #pragma once
 
+/**
+ * \file
+ */
+
+/**
+ * \todo Implement ENABLE_TEAM_FLYING in build. (Issue 5)
+ */
+
 #include "Widget/ContainerWidget.hpp"
 #include "Blackboard/BlackboardListener.hpp"
 
@@ -31,48 +39,53 @@
 class Button;
 class FlarmTrafficControl;
 
+/**
+ * Class to present and manage a PPI radar widget for the display of
+ * remote targets - e.g. FLARM and ADS-B targets.
+ */
 class TrafficWidget : public ContainerWidget,
-                      private NullBlackboardListener {
-  struct Windows;
+  private NullBlackboardListener
+  {
+    struct Windows;
 
-  std::unique_ptr<Windows> windows;
+    std::unique_ptr<Windows> windows;
 
-public:
-  TrafficWidget() noexcept;
-  ~TrafficWidget() noexcept;
+  public:
+    TrafficWidget() noexcept;
+    ~TrafficWidget() noexcept;
 
-protected:
-  void UpdateLayout() noexcept;
-  void UpdateButtons() noexcept;
+  protected:
+    void UpdateLayout() noexcept;
+    void UpdateButtons() noexcept;
 
-public:
-  void Update() noexcept;
-  void OpenDetails() noexcept;
-  void ZoomIn() noexcept;
-  void ZoomOut() noexcept;
-  void PreviousTarget() noexcept;
-  void NextTarget() noexcept;
-  void SwitchData() noexcept;
+  public:
+    void Update() noexcept;
+    void OpenDetails() noexcept;
+    void ZoomIn() noexcept;
+    void ZoomOut() noexcept;
+    void PreviousTarget() noexcept;
+    void NextTarget() noexcept;
+    void SwitchData() noexcept;
 
-  [[gnu::pure]]
-  bool GetAutoZoom() const noexcept;
-  void SetAutoZoom(bool value) noexcept;
-  void ToggleAutoZoom() noexcept;
+    [[gnu::pure]]
+    bool GetAutoZoom() const noexcept;
+    void SetAutoZoom(bool value) noexcept;
+    void ToggleAutoZoom() noexcept;
 
-  [[gnu::pure]]
-  bool GetNorthUp() const noexcept;
-  void SetNorthUp(bool value) noexcept;
-  void ToggleNorthUp() noexcept;
+    [[gnu::pure]]
+    bool GetNorthUp() const noexcept;
+    void SetNorthUp(bool value) noexcept;
+    void ToggleNorthUp() noexcept;
 
-  /* virtual methods from class Widget */
-  void Prepare(ContainerWindow &parent,
-               const PixelRect &rc) noexcept override;
-  void Show(const PixelRect &rc) noexcept override;
-  void Hide() noexcept override;
-  void Move(const PixelRect &rc) noexcept override;
-  bool SetFocus() noexcept override;
+    /* virtual methods from class Widget */
+    void Prepare(ContainerWindow &parent,
+                 const PixelRect &rc) noexcept override;
+    void Show(const PixelRect &rc) noexcept override;
+    void Hide() noexcept override;
+    void Move(const PixelRect &rc) noexcept override;
+    bool SetFocus() noexcept override;
 
-private:
-  /* virtual methods from class BlackboardListener */
-  virtual void OnGPSUpdate(const MoreData &basic) override;
-};
+  private:
+    /* virtual methods from class BlackboardListener */
+    virtual void OnGPSUpdate(const MoreData &basic) override;
+  };

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/waypoint_sources ] || mkdir subprojects/waypoint_sources
+echo "project('Waypoint_Sources')" > subprojects/waypoint_sources/meson.build
+echo "waypoint_sources = [" >> subprojects/waypoint_sources/meson.build
+echo -n "'" >> subprojects/waypoint_sources/meson.build
+grep "^WAYPOINT_SOURCES = " | xargs | \
+sed -e 's/WAYPOINT_SOURCES = //' | \
+sed -e 's:\$(WAYPOINT_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//g" |
+sed -e "s:cpp$:cpp':g" >> subprojects/waypoint_sources/meson.build
+echo " ]" >> subprojects/waypoint_sources/meson.build

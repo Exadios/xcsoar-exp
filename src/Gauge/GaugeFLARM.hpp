@@ -26,6 +26,10 @@ Copyright_License {
 #include "Widget/OverlappedWidget.hpp"
 #include "Blackboard/BlackboardListener.hpp"
 
+/**
+ * \file
+ */
+
 class LiveBlackboard;
 struct FlarmTrafficLook;
 struct NMEAInfo;

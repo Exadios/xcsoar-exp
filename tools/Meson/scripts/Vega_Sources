@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/vega_sources ] || mkdir subprojects/vega_sources
+echo "project('Vega_Sources')" > subprojects/vega_sources/meson.build
+echo "vega_sources = [" >> subprojects/vega_sources/meson.build
+echo -n "'" >> subprojects/vega_sources/meson.build
+grep "^VEGA_SOURCES" | \
+sed -e 's/VEGA_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/Vega/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/vega_sources/meson.build
+echo " ]" >> subprojects/vega_sources/meson.build

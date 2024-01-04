@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/xctracer_sources ] || mkdir subprojects/xctracer_sources
+echo "project('Xctracer_Sources')" > subprojects/xctracer_sources/meson.build
+echo "xctracer_sources = [" >> subprojects/xctracer_sources/meson.build
+echo -n "'" >> subprojects/xctracer_sources/meson.build
+grep "^XCTRACER_SOURCES = " | \
+sed -e 's/XCTRACER_SOURCES = //' | \
+sed -e 's:\$(DRIVER_SRC_DIR)/XCTracer/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/xctracer_sources/meson.build
+echo " ]" >> subprojects/xctracer_sources/meson.build

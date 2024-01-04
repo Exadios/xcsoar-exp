@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/task_sources ] || mkdir subprojects/task_sources
+echo "project('Task_Sources')" > subprojects/task_sources/meson.build
+echo "task_sources = [" >> subprojects/task_sources/meson.build
+echo -n "'" >> subprojects/task_sources/meson.build
+grep "^TASK_SOURCES" | \
+sed -e 's/TASK_SOURCES = //' | \
+sed -e 's:\$(TASK_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" >> subprojects/task_sources/meson.build
+echo " ]" >> subprojects/task_sources/meson.build

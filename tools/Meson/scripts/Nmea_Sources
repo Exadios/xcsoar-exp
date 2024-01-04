@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/nmea_sources ] || mkdir subprojects/nmea_sources
+echo "project('Nmea_Sources')" > subprojects/nmea_sources/meson.build
+echo "nmea_sources = [" >> subprojects/nmea_sources/meson.build
+echo -n "'" >> subprojects/nmea_sources/meson.build
+grep "^LIBNMEA_SOURCES" | \
+sed -e 's/LIBNMEA_SOURCES = //' | \
+sed -e 's:\$(SRC)/NMEA/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/nmea_sources/meson.build
+echo " ]" >> subprojects/nmea_sources/meson.build

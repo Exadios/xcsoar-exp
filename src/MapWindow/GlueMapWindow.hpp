@@ -45,6 +45,10 @@ struct GestureLook;
 class TopographyThread;
 class TerrainThread;
 
+/**
+ * \file
+ */
+
 class OffsetHistory
 {
   unsigned int pos;

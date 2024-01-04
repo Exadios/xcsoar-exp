@@ -48,6 +48,10 @@ Copyright_License {
 #include "io/async/AsioThread.hpp"
 #include "util/PrintException.hxx"
 
+#ifndef NDEBUG
+#include "thread/Thread.hpp"
+#endif
+
 #ifdef ENABLE_SDL
 /* this is necessary on Mac OS X, to let libSDL bootstrap Quartz
    before entering our main() */
@@ -69,11 +73,16 @@ static const char *const Usage = "\n"
   "  -simulator      bypass startup-screen, use simulator mode directly\n"
   "  -fly            bypass startup-screen, use fly mode directly\n"
 #endif
+#ifdef HAVE_CMDLINE_REPLAY
+  "  -replay=        playback IGC or NMEA file from the FQPN given\n"
+#endif
   "  -profile=fname  load profile from file fname\n"
   "  -WIDTHxHEIGHT   use screen resolution WIDTH x HEIGHT\n"
   "  -portrait       use a 480x640 screen resolution\n"
   "  -square         use a 480x480 screen resolution\n"
   "  -small          use a 320x240 screen resolution\n"
+  "  XRESxYRES       use an XRESxYRES screen resolution (where XRES and YRES\n\
+                  are positive integers)\n"
 #if !defined(ANDROID)
   "  -dpi=DPI        force usage of DPI for pixel density\n"
   "  -dpi=XDPIxYDPI  force usage of XDPI and YDPI for pixel density\n"
@@ -141,7 +150,17 @@ WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance,
         [[maybe_unused]] LPSTR lpCmdLine2,
         [[maybe_unused]] int nCmdShow)
 #endif
+
 try {
+#ifdef HAVE_POSIX
+#ifndef NDEBUG
+  CommonInterface::thread_register.AddThisThread(pthread_self(), "main");
+//  LogFormat("%s, %d: %s = %lu", __FILE__, __LINE__, 
+//            CommonInterface::thread_register.ThreadName(pthread_self()).c_str(),
+//            pthread_self());
+#endif  // NDEBUG
+#endif  // HAVE_POSIX
+
 #ifdef USE_WIN32_RESOURCES
   ResourceLoader::Init(hInstance);
 #endif
@@ -162,6 +181,12 @@ try {
   }
 
   int ret = Main();
+
+#ifdef HAVE_POSIX
+#ifndef NDEBUG
+  CommonInterface::thread_register.RemoveThread(pthread_self());
+#endif  // NDEBUG
+#endif  // HAVE_POSIX
 
 #if defined(__APPLE__) && TARGET_OS_IPHONE
   /* For some reason, the app process does not exit on iOS, but a black

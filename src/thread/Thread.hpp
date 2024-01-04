@@ -35,6 +35,77 @@ Copyright_License {
 
 #include <xcsoar-cassert>
 
+
+#ifdef HAVE_POSIX
+#ifndef NDEBUG
+#include <thread>
+#include <string>
+#include <map>
+#include <utility>
+
+/**
+ * Class to maintain a register of the current threads.
+ */
+class ThreadRegister
+  {
+public:
+  ThreadRegister() = default;
+  
+  //----------------------------------------------------------------------------
+  void AddThisThread(pthread_t handle, const std::string name)
+    {
+    std::pair<pthread_t, const std::string> elem{ handle, name };
+    this->mapper.insert(elem);
+//    this->mapper[id] = name;
+    }
+
+  //----------------------------------------------------------------------------
+  void RemoveThread(const pthread_t handle)
+    {
+    this->mapper.erase(handle);
+    }
+
+  //----------------------------------------------------------------------------
+  const std::string ThreadName(const pthread_t handle) const
+    {
+    if (auto r = this->mapper.find(handle); r != this->mapper.end())
+      return r->second;
+    else
+      {
+      char b[23]; // Max digits of unsigned long
+
+      sprintf(b, "#%lu", pthread_self());
+      return std::string(b);
+      }
+    }
+
+  //----------------------------------------------------------------------------
+  const std::string ThreadName() const
+    {
+    if (auto r = this->mapper.find(pthread_self()); r != this->mapper.end())
+      return r->second;
+    else
+      {
+      char b[23]; // Max digits of unsigned long
+
+      sprintf(b, "#%lu", pthread_self());
+      return std::string(b);
+      }
+    }
+
+private:
+  std::map<pthread_t, const std::string> mapper;
+  };
+
+
+namespace CommonInterface
+  {
+  extern ThreadRegister thread_register;
+  };
+
+#endif  // NDEBUG
+#endif  // HAVE_POSIX
+
 /**
  * This class provides an OS independent view on a thread.
  */
@@ -62,10 +133,26 @@ class Thread {
 public:
 
 #ifdef HAVE_POSIX
+  Thread(const char *_name=nullptr) noexcept
+    :name(_name)
+    {
+#ifndef NDEBUG
+#include <stdio.h>
+    if (this->name != nullptr)
+      ::CommonInterface::thread_register.AddThisThread(pthread_self(), this->name);
+    else
+      {
+      char b[22]; // Max digits of unsigned long
+
+      sprintf(b, "%lu", pthread_self());
+      ::CommonInterface::thread_register.AddThisThread(pthread_self(), std::string(b));
+      }
+#endif  // NDEBUG
+    
+    }
+#else // HAVE_POSIX
   Thread(const char *_name=nullptr) noexcept:name(_name) {}
-#else
-  Thread(const char *_name=nullptr) noexcept:name(_name) {}
-#endif
+#endif  // HAVE_POSIX
 
 #ifndef NDEBUG
   ~Thread() noexcept {

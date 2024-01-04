@@ -1,0 +1,14 @@
+#!/bin/bash
+
+[ -d subprojects/async_sources ] || mkdir subprojects/async_sources
+echo "project('Async_Sources')" > subprojects/async_sources/meson.build
+echo "async_sources = [" >> subprojects/async_sources/meson.build
+echo -n "'" >> subprojects/async_sources/meson.build
+grep "^ASYNC_SOURCES =" | \
+sed -e 's/ASYNC_SOURCES = //' | \
+sed -e 's:\$(SRC)/event/::g' | \
+sed -e 's:\$(SRC)/io/async/:../io/async/:g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/async_sources/meson.build
+echo " ]" >> subprojects/async_sources/meson.build

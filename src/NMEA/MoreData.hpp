@@ -72,4 +72,4 @@ struct MoreData : public NMEAInfo {
   }
 };
 
-static_assert(std::is_trivial<MoreData>::value, "type is not trivial");
+//static_assert(std::is_trivial<MoreData>::value, "type is not trivial");

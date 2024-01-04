@@ -1,0 +1,21 @@
+project('Jasper_Sources')
+jasper_sources = [
+'base/jas_malloc.c',
+'base/jas_seq.c',
+'base/jas_stream.c',
+'jp2/jp2_cod.c',
+'jpc/jpc_bs.c',
+'jpc/jpc_cs.c',
+'jpc/jpc_dec.c',
+'jpc/jpc_math.c',
+'jpc/jpc_mqdec.c',
+'jpc/jpc_mqcod.c',
+'jpc/jpc_qmfb.c',
+'jpc/jpc_rtc.cpp',
+'jpc/jpc_t1dec.c',
+'jpc/jpc_t1cod.c',
+'jpc/jpc_t2dec.c',
+'jpc/jpc_t2cod.c',
+'jpc/jpc_tagtree.c',
+'jpc/jpc_tsfb.c'
+ ]

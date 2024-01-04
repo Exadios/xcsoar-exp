@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/geo_sources ] || mkdir subprojects/geo_sources
+echo "project('Geo_Sources')" > subprojects/geo_sources/meson.build
+echo "geo_sources = [" >> subprojects/geo_sources/meson.build
+echo -n "'" >> subprojects/geo_sources/meson.build
+grep "^GEO_SOURCES :=" | \
+sed -e 's/GEO_SOURCES := //' | \
+sed -e 's:\./src/Geo/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/geo_sources/meson.build
+echo " ]" >> subprojects/geo_sources/meson.build

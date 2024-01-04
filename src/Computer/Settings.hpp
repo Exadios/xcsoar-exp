@@ -240,5 +240,8 @@ struct ComputerSettings {
   void SetDefaults();
 };
 
+static_assert(std::is_trivially_copyable<ComputerSettings>::value, "type is not travially copyable");
+static_assert(std::is_trivially_constructible<ComputerSettings>::value, "type is not trivially constructible");
+static_assert(std::is_trivially_copy_assignable<ComputerSettings>::value, "type is not trivially assignable");
 static_assert(std::is_trivial<ComputerSettings>::value,
               "type is not trivial");

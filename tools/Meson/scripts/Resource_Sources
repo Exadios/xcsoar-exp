@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/resource_sources ] || mkdir subprojects/resource_sources
+echo "project('Resource_Sources')" > subprojects/resource_sources/meson.build
+echo "resource_sources = [" >> subprojects/resource_sources/meson.build
+echo -n "'" >> subprojects/resource_sources/meson.build
+grep "^RESOURCE_SOURCES := " | xargs | \
+sed -e 's/RESOURCE_SOURCES := //' | \
+sed -e 's:\./src/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/resource_sources/meson.build
+echo " ]" >> subprojects/resource_sources/meson.build

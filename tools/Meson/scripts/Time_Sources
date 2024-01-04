@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/time_sources ] || mkdir subprojects/time_sources
+echo "project('Time_Sources')" > subprojects/time_sources/meson.build
+echo "time_sources = [" >> subprojects/time_sources/meson.build
+echo -n "'" >> subprojects/time_sources/meson.build
+grep "^TIME_SOURCES = " | \
+sed -e 's/TIME_SOURCES = //' | \
+sed -e 's:\$(TIME_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//" |
+sed -e "s:cpp$:cpp':g" >> subprojects/time_sources/meson.build
+echo " ]" >> subprojects/time_sources/meson.build

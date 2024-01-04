@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,25 +28,33 @@ Copyright_License {
 #include "Look/TrafficLook.hpp"
 #include "Renderer/TextInBox.hpp"
 #include "Renderer/TrafficRenderer.hpp"
-#include "FLARM/Friends.hpp"
+#include "Surveillance/TargetFriends.hpp"
 #include "Tracking/SkyLines/Data.hpp"
 #include "util/StringCompare.hxx"
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
+
 /**
- * Draws the FLARM traffic icons onto the given canvas
+ * Draws the surveillance traffic icons onto the given canvas
  * @param canvas Canvas for drawing
  */
 void
 MapWindow::DrawFLARMTraffic(Canvas &canvas,
                             const PixelPoint aircraft_pos) const
 {
-  // Return if FLARM icons on moving map are disabled
+  // Return if surveillance icons on moving map are disabled
   if (!GetMapSettings().show_flarm_on_map)
     return;
 
-  // Return if FLARM data is not available
-  const TrafficList &flarm = Basic().flarm.traffic;
-  if (flarm.IsEmpty())
+  // Return if surveillance data is not available
+  const TargetList &targets = Basic().target_data.traffic;
+#ifndef NDEBUG
+//  LogFormat("%s, %d: %s", __FILE__, __LINE__,
+//                          (targets.IsEmpty()) ? "true" : "false");
+#endif
+  if (targets.IsEmpty())
     return;
 
   const WindowProjection &projection = render_projection;
@@ -59,21 +67,21 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
 
   canvas.Select(*traffic_look.font);
 
-  // Circle through the FLARM targets
-  for (auto it = flarm.list.begin(), end = flarm.list.end();
+  // Circle through the surveillance targets
+  for (auto it = targets.list.begin(), end = targets.list.end();
       it != end; ++it) {
-    const FlarmTraffic &traffic = *it;
+    const std::shared_ptr<RemoteTarget>target = *it;
 
-    if (!traffic.location_available)
+    if (!target->location_available)
       continue;
 
-    // Save the location of the FLARM target
-    GeoPoint target_loc = traffic.location;
+    // Save the location of the surveillance target
+    GeoPoint target_loc = target->location;
 
     // Points for the screen coordinates for the icon, name and average climb
     PixelPoint sc, sc_name, sc_av;
 
-    // If FLARM target not on the screen, move to the next one
+    // If surveillance target not on the screen, move to the next one
     if (auto p = projection.GeoToScreenIfVisible(target_loc))
       sc = *p;
     else
@@ -90,30 +98,30 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
     TextInBoxMode mode;
     mode.shape = LabelShape::OUTLINED;
 
-    // JMW TODO enhancement: decluttering of FLARM altitudes (sort by max lift)
+    // JMW TODO enhancement: decluttering of target altitudes (sort by max lift)
 
     int dx = sc_av.x - aircraft_pos.x;
     int dy = sc_av.y - aircraft_pos.y;
 
     // only draw labels if not close to aircraft
     if (dx * dx + dy * dy > Layout::Scale(30 * 30)) {
-      // If FLARM callsign/name available draw it to the canvas
-      if (traffic.HasName() && !StringIsEmpty(traffic.name))
-        TextInBox(canvas, traffic.name, sc_name,
+      // If target callsign/name available draw it to the canvas
+      if (target->HasName() && !StringIsEmpty(target->name))
+        TextInBox(canvas, target->name, sc_name,
                   mode, GetClientRect());
 
-      if (traffic.climb_rate_avg30s >= 0.1) {
+      if (target->climb_rate_avg30s >= 0.1) {
         // If average climb data available draw it to the canvas
         TCHAR label_avg[100];
-        FormatUserVerticalSpeed(traffic.climb_rate_avg30s,
-                                       label_avg, false);
+        FormatUserVerticalSpeed(target->climb_rate_avg30s,
+                                label_avg, false);
         TextInBox(canvas, label_avg, sc_av, mode, GetClientRect());
       }
     }
 
-    auto color = FlarmFriends::GetFriendColor(traffic.id);
-    TrafficRenderer::Draw(canvas, traffic_look, traffic,
-                          traffic.track - projection.GetScreenAngle(),
+    auto color = TargetFriends::GetFriendColor(target->id);
+    TrafficRenderer::Draw(canvas, traffic_look, *target,
+                          target->track - projection.GetScreenAngle(),
                           color, sc);
   }
 }
@@ -129,7 +137,7 @@ MapWindow::DrawGLinkTraffic([[maybe_unused]] Canvas &canvas,
 {
 #ifdef ANDROID
 
-  // Return if FLARM icons on moving map are disabled
+  // Return if surveillance icons on moving map are disabled
   if (!GetMapSettings().show_flarm_on_map)
     return;
 

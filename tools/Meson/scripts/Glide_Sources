@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/glide_sources ] || mkdir subprojects/glide_sources
+echo "project('Glide_Sources')" > subprojects/glide_sources/meson.build
+echo "glide_sources = [" >> subprojects/glide_sources/meson.build
+echo -n "'" >> subprojects/glide_sources/meson.build
+grep "^GLIDE_SOURCES" | \
+sed -e 's/GLIDE_SOURCES = //' | \
+sed -e 's:\$(GLIDE_SRC_DIR)/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/glide_sources/meson.build
+echo " ]" >> subprojects/glide_sources/meson.build

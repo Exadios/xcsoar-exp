@@ -1,0 +1,13 @@
+#!/bin/bash
+
+[ -d subprojects/json_sources ] || mkdir subprojects/json_sources
+echo "project('Json_Sources')" > subprojects/json_sources/meson.build
+echo "json_sources = [" >> subprojects/json_sources/meson.build
+echo -n "'" >> subprojects/json_sources/meson.build
+grep "^JSON_SOURCES = " | xargs | \
+sed -e 's/JSON_SOURCES = //' | \
+sed -e 's:\$(SRC)/json/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/'$//g" |
+sed -e "s:cxx$:cxx':g" >> subprojects/json_sources/meson.build
+echo " ]" >> subprojects/json_sources/meson.build

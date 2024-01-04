@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -64,19 +64,19 @@ GlideComputerEvents::OnCalculatedUpdate(const MoreData &basic,
 
   /* check for new traffic */
 
-  const FlarmData &flarm = basic.flarm;
-  if (flarm.status.available) {
-    if (flarm.status.rx > 0 && last_traffic == 0)
+  const TargetData &target_data = basic.target_data;
+  if (target_data.status.available) {
+    if (target_data.status.rx > 0 && last_traffic == 0)
       // traffic has appeared..
       InputEvents::processGlideComputer(GCE_FLARM_TRAFFIC);
-    else if (flarm.status.rx == 0 && last_traffic > 0)
+    else if (target_data.status.rx == 0 && last_traffic > 0)
       // traffic has disappeared..
       InputEvents::processGlideComputer(GCE_FLARM_NOTRAFFIC);
-    last_traffic = flarm.status.rx;
+    last_traffic = target_data.status.rx;
 
-    if (flarm.traffic.new_traffic.Modified(last_new_traffic)) {
+    if (target_data.traffic.new_traffic.Modified(last_new_traffic)) {
       // new traffic has appeared
-      last_new_traffic = flarm.traffic.new_traffic;
+      last_new_traffic = target_data.traffic.new_traffic;
       InputEvents::processGlideComputer(GCE_FLARM_NEWTRAFFIC);
     }
   } else
@@ -111,8 +111,11 @@ GlideComputerEvents::OnCalculatedUpdate(const MoreData &basic,
 }
 
 void
-GlideComputerEvents::OnComputerSettingsUpdate(const ComputerSettings &settings)
+GlideComputerEvents::OnComputerSettingsUpdate([[maybe_unused]] const ComputerSettings &settings)
 {
+// \todo Implement ENABLE_TEAM_FLYING in build. (Issue 5)
+#ifdef ENABLE_TEAM_FLYING
   enable_team = settings.team_code.team_flarm_id.IsDefined() ||
     settings.team_code.team_code.IsDefined();
+#endif // ENABLE_TEAM_FLYING
 }

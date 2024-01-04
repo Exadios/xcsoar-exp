@@ -24,6 +24,10 @@ Copyright_License {
 #pragma once
 
 /**
+ * \file
+ */
+
+/**
  * Notify the #MergeThread that new data has arrived in the
  * #DeviceBlackboard.
  */

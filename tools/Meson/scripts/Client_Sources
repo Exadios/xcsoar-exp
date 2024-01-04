@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[ -d subprojects/client_sources ] || mkdir subprojects/client_sources
+echo "project('Client_Sources')" > subprojects/client_sources/meson.build
+echo "client_sources = [" >> subprojects/client_sources/meson.build
+echo -n "'" >> subprojects/client_sources/meson.build
+grep "^LIBCLIENT_SOURCES" | \
+sed -e 's/LIBCLIENT_SOURCES = //' | \
+sed -e 's:\$(SRC)/net/client/::g' | \
+sed -e "s/ /',\n'/g" | \
+sed -e "s/cpp$/cpp'/" >> subprojects/client_sources/meson.build
+echo " ]" >> subprojects/client_sources/meson.build

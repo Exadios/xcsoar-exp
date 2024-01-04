@@ -25,6 +25,10 @@ Copyright_License {
 #include "Atmosphere/AirDensity.hpp"
 #include "time/Cast.hxx"
 
+#ifndef NDEBUG
+#include "Surveillance/Flarm/FlarmListConstDecorator.hpp"
+#endif
+
 void
 NMEAInfo::UpdateClock()
 {
@@ -172,8 +176,7 @@ NMEAInfo::Reset()
 
   device.Clear();
   secondary_device.Clear();
-  flarm.Clear();
-  adsb.Clear();
+  this->target_data.Clear();
 
 #ifdef ANDROID
   glink_data.Clear();
@@ -198,7 +201,7 @@ NMEAInfo::ExpireWallClock()
   if (!alive) {
     time_available.Clear();
     gps.Reset();
-    flarm.Clear();
+    this->target_data.Clear();
 
 #ifdef ANDROID
     glink_data.Clear();
@@ -241,8 +244,7 @@ NMEAInfo::Expire()
   engine_noise_level_available.Expire(clock, std::chrono::seconds(30));
   voltage_available.Expire(clock, std::chrono::minutes(5));
   battery_level_available.Expire(clock, std::chrono::minutes(5));
-  flarm.Expire(clock);
-  adsb.Expire(clock);
+  this->target_data.Expire(clock);
 #ifdef ANDROID
   glink_data.Expire(clock);
 #endif
@@ -360,10 +362,80 @@ NMEAInfo::Complement(const NMEAInfo &add)
   if (!stall_ratio_available && add.stall_ratio_available)
     stall_ratio = add.stall_ratio;
 
-  flarm.Complement(add.flarm);
-  adsb.Complement(add.adsb);
+  target_data.Complement(add.target_data);
 
 #ifdef ANDROID
   glink_data.Complement(add.glink_data);
 #endif
 }
+
+//------------------------------------------------------------------------------
+void
+NMEAInfo::Copy(const NMEAInfo& rhs)
+  {
+  this->clock                        = rhs.clock;
+  this->alive                        = rhs.alive;
+  this->gps                          = rhs.gps;
+  this->acceleration                 = rhs.acceleration;
+  this->attitude                     = rhs.attitude;
+  this->location_available           = rhs.location_available;
+  this->location                     = rhs.location;
+  this->track_available              = rhs.track_available;
+  this->track                        = rhs.track;
+  this->airspeed_real                = rhs.airspeed_real;
+  this->ground_speed_available       = rhs.ground_speed_available;
+  this->airspeed_available           = rhs.airspeed_available;
+  this->ground_speed                 = rhs.ground_speed;
+  this->true_airspeed                = rhs.true_airspeed;
+  this->indicated_airspeed           = rhs.indicated_airspeed;
+  this->gps_altitude_available       = rhs.gps_altitude_available;
+  this->gps_altitude                 = rhs.gps_altitude;
+  this->static_pressure              = rhs.static_pressure;
+  this->static_pressure_available    = rhs.static_pressure_available;
+  this->pitot_pressure               = rhs.pitot_pressure;
+  this->pitot_pressure_available     = rhs.pitot_pressure_available;
+  this->dyn_pressure                 = rhs.dyn_pressure;
+  this->dyn_pressure_available       = rhs.dyn_pressure_available;
+  this->sensor_calibration_offset    = rhs.sensor_calibration_offset;
+  this->sensor_calibration_factor    = rhs.sensor_calibration_factor;
+  this->sensor_calibration_available = rhs.sensor_calibration_available;
+  this->baro_altitude_available      = rhs.baro_altitude_available;
+  this->baro_altitude                = rhs.baro_altitude;
+  this->pressure_altitude            = rhs.pressure_altitude;
+  this->pressure_altitude_available  = rhs.pressure_altitude_available;
+  this->baro_altitude_weak           = rhs.baro_altitude_weak;
+  this->pressure_altitude_weak       = rhs.pressure_altitude_weak;
+  this->time_available               = rhs.time_available;
+  this->time                         = rhs.time;
+  this->date_time_utc                = rhs.date_time_utc;
+  this->noncomp_vario_available      = rhs.noncomp_vario_available;
+  this->total_energy_vario_available = rhs.total_energy_vario_available;
+  this->netto_vario_available        = rhs.netto_vario_available;
+  this->noncomp_vario                = rhs.noncomp_vario;
+  this->total_energy_vario           = rhs.total_energy_vario;
+  this->netto_vario                  = rhs.netto_vario;
+  this->settings                     = rhs.settings;
+  this->external_wind_available      = rhs.external_wind_available;
+  this->external_wind                = rhs.external_wind;
+  this->temperature_available        = rhs.temperature_available;
+  this->temperature                  = rhs.temperature;
+  this->variation_available          = rhs.variation_available;
+  this->variation                    = rhs.variation;
+  this->humidity_available           = rhs.humidity_available;
+  this->humidity                     = rhs.humidity;
+  this->heart_rate_available         = rhs.heart_rate_available;
+  this->heart_rate                   = rhs.heart_rate;
+  this->engine_noise_level_available = rhs.engine_noise_level_available;
+  this->engine_noise_level           = rhs.engine_noise_level;
+  this->voltage_available            = rhs.voltage_available;
+  this->voltage                      = rhs.voltage;
+  this->battery_level_available      = rhs.battery_level_available;
+  this->battery_level                = rhs.battery_level;
+  this->switch_state                 = rhs.switch_state;
+  this->stall_ratio                  = rhs.stall_ratio;
+  this->stall_ratio_available        = rhs.stall_ratio_available;
+  this->device                       = rhs.device;
+  this->secondary_device             = rhs.secondary_device;
+  this->target_data                  = rhs.target_data;
+  this->count                        = rhs.count;
+  }

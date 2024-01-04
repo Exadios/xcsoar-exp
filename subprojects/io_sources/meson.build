@@ -1,0 +1,25 @@
+project('Io_Sources')
+io_sources = [
+'../lib/zlib/Error.cxx',
+'../lib/zlib/GunzipReader.cxx',
+'CopyFile.cxx',
+'Open.cxx',
+'MemoryReader.cxx',
+'BufferedReader.cxx',
+'BufferedLineReader.cpp',
+'FileDescriptor.cxx',
+'FileReader.cxx',
+'BufferedOutputStream.cxx',
+'FileOutputStream.cxx',
+'FileTransaction.cpp',
+'FileCache.cpp',
+'ZipArchive.cpp',
+'ZipReader.cpp',
+'StringConverter.cpp',
+'ConvertLineReader.cpp',
+'FileLineReader.cpp',
+'KeyValueFileReader.cpp',
+'KeyValueFileWriter.cpp',
+'ZipLineReader.cpp',
+'CSVLine.cpp'
+ ]

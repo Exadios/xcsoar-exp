@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -26,20 +26,23 @@ Copyright_License {
 #include "List.hpp"
 #include "FLARM/List.hpp"
 #include "FLARM/Friends.hpp"
+#include "Surveillance/TargetList.hpp"
+#include "Surveillance/TargetFriends.hpp"
 #include "Tracking/SkyLines/Data.hpp"
 #include "Tracking/TrackingGlue.hpp"
 #include "Components.hpp"
 
 void
-MapItemListBuilder::AddTraffic(const TrafficList &flarm)
+MapItemListBuilder::AddTraffic(const TargetList &remote_targets)
+
 {
-  for (const auto &t : flarm.list) {
+  for (const auto &t : remote_targets.list) {
     if (list.full())
       break;
 
-    if (location.DistanceS(t.location) < range) {
-      auto color = FlarmFriends::GetFriendColor(t.id);
-      list.append(new TrafficMapItem(t.id, color));
+    if (location.DistanceS(t->location) < this->range) {
+      auto color = TargetFriends::GetFriendColor(t->id);
+      list.append(new TrafficMapItem(t->id, color));
     }
   }
 }
