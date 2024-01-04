@@ -32,6 +32,17 @@ Copyright_License {
 
 #include <cassert>
 
+#ifdef HAVE_POSIX
+#ifndef NDEBUG
+
+namespace CommonInterface
+  {
+  ThreadRegister thread_register;
+  };
+
+#endif  // NDEBUG
+#endif  // HAVE_POSIX
+
 void
 Thread::SetIdlePriority() noexcept
 {
@@ -92,6 +103,9 @@ Thread::Join() noexcept
 
 #ifdef HAVE_POSIX
   pthread_join(handle, nullptr);
+#ifndef NDEBUG
+  ::CommonInterface::thread_register.RemoveThread(this->handle);
+#endif
   defined = false;
 #else
   ::WaitForSingleObject(handle, INFINITE);

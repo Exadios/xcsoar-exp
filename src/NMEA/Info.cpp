@@ -25,6 +25,10 @@ Copyright_License {
 #include "Atmosphere/AirDensity.hpp"
 #include "time/Cast.hxx"
 
+#ifndef NDEBUG
+#include "Surveillance/Flarm/FlarmListConstDecorator.hpp"
+#endif
+
 void
 NMEAInfo::UpdateClock()
 {

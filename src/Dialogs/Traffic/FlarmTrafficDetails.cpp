@@ -40,6 +40,8 @@
 #include "Surveillance/AircraftType.hpp"
 #include "Surveillance/Flarm/FlarmDetails.hpp"
 #include "Surveillance/Flarm/FlarmFriends.hpp"
+#include "Surveillance/Flarm/FlarmTarget.hpp"
+#include "Surveillance/Flarm/FlarmListDecorator.hpp"
 #include "Surveillance/TargetFriends.hpp"
 #include "FLARM/Glue.hpp"
 #include "Renderer/ColorButtonRenderer.hpp"
@@ -264,12 +266,12 @@ FlarmTrafficDetailsWidget::Update()
     // Fill the plane type field
     const TargetPtr target =
       CommonInterface::Basic().target_data.traffic.FindTraffic(target_id);
-
+    const FlarmPtr  flarm = FlarmTarget::Cast2FlarmPtr(target);
     const TCHAR* actype;
-    if (target == nullptr)
+    if (flarm == nullptr)
       actype = _T("--");
     else
-      actype = AircraftType::TypeName(target->type);
+      actype = AircraftType::TypeName(flarm->type);
     SetText(PLANE, actype);
   }
 

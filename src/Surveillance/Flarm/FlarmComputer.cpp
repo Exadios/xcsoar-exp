@@ -23,6 +23,7 @@ Copyright_License {
 
 #include "Surveillance/Flarm/FlarmComputer.hpp"
 #include "Surveillance/Flarm/FlarmTarget.hpp"
+#include "Surveillance/Flarm/FlarmListDecorator.hpp"
 #include "Surveillance/TargetData.hpp"
 #include "NMEA/Info.hpp"
 #include "Surveillance/Flarm/FlarmCalculations.hpp"
@@ -45,6 +46,7 @@ FlarmComputer::Process(TargetData& flarm,
                        TargetData& last_flarm,
                        const NMEAInfo& basic)
   {
+
   // Cleanup old calculation instances
   if (basic.time_available)
     flarm_calculations.CleanUp(basic.time);
@@ -79,9 +81,11 @@ FlarmComputer::Process(TargetData& flarm,
     }
 
   // for each item in traffic
+  FlarmListDecorator fld(&flarm.traffic);
+  TargetList flarm_targets = fld.FlarmTargets();
   for (auto &target : flarm.traffic.list)
     {
-    FlarmPtr flarm_target = std::dynamic_pointer_cast<FlarmTarget>(target);
+      FlarmPtr flarm_target = FlarmTarget::Cast2FlarmPtr(target);
     if (flarm_target == nullptr)
       continue; // This is not a FLARM target.
 

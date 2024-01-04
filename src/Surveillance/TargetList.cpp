@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,12 +24,25 @@ Copyright_License {
 #include "Surveillance/TargetList.hpp"
 
 //------------------------------------------------------------------------------
-TargetList&
-TargetList::operator=(const TargetList& rhs)
+TargetList::TargetList(const TargetList& rhs)
+  : TargetListBase(rhs)
   {
+  this->Clear();
   this->modified    = rhs.modified;
   this->new_traffic = rhs.new_traffic;
   this->list        = rhs.list;
+  this->type        = rhs.type;
+  }
+
+//------------------------------------------------------------------------------
+TargetList&
+TargetList::operator=(const TargetList& rhs)
+  {
+  this->Clear();
+  this->modified    = rhs.modified;
+  this->new_traffic = rhs.new_traffic;
+  this->list        = rhs.list;
+  this->type        = rhs.type;
   return *this;
   }
 
@@ -39,7 +52,7 @@ TargetList::FindMaximumAlert() const
   {
   TargetPtr alert = nullptr;
 
-  for (const auto traffic : list)
+  for (const auto& traffic : list)
     if (traffic->HasAlarm() &&
         (alert == nullptr ||
          ((unsigned)traffic->alarm_level > (unsigned)(alert)->alarm_level ||

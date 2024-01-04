@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,10 +28,15 @@ Copyright_License {
 void
 FlarmTarget::Update(const FlarmTarget& other)
   {
-  this->type               = other.type;
   this->stealth            = other.stealth;
   this->turn_rate_received = other.turn_rate_received;
   this->turn_rate          = other.turn_rate;
+  this->relative_north     = other.relative_north;
+  this->relative_east      = other.relative_east;
+  this->relative_altitude  = other.relative_altitude;
+  this->type               = other.type;  /* Do it here and not in 
+                                             \ref RemoteTarget to preserve
+                                             the \ref FlarmTarget type. */
   RemoteTarget::Update(other);
   }
 

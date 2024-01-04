@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,10 +30,11 @@ Copyright_License {
  */
 
 #include "Surveillance/TargetListDecorator.hpp"
+#include "Surveillance/Adsb/AdsbListConstDecorator.hpp"
 #include "Surveillance/Adsb/AdsbTarget.hpp"
 
 /**
- * A decorator used to manage a \ref TargetList as a FlarmList.
+ * A decorator used to manage a \ref TargetList as a AdsbList.
  */
 struct AdsbListDecorator : public TargetListDecorator
   {
@@ -46,56 +47,67 @@ struct AdsbListDecorator : public TargetListDecorator
    * Ctor
    * @param target_list The \ref TargetList to decorate.
    */
-  AdsbListDecorator(TargetList& target_list)
+  AdsbListDecorator(TargetList* target_list)
     : TargetListDecorator(target_list)
     {
     }
 
   /**
+   * Dtor.
+   */
+  virtual ~AdsbListDecorator()
+    {
+    }
+
+  /**
+   * Adds data from the specified object, unless already present in
+   * this one.
+   * @param add Source list.
+   */
+  void Complement(const TargetList& add);
+
+  /**
    * Looks up an item in the traffic list.
    * @param id Target id
    * @return The \ref AdsbTarget pointer, NULL if not found at all or,
    *         if found, is not an \ref AdsbTarget.
    */
-  AdsbPtr FindTraffic(TargetId id)
+  AdsbPtr FindAdsb(TargetId id)
     {
-    return AdsbListDecorator::AdsbCast(this->target_list.FindTraffic(id));
+    return AdsbListDecorator::AdsbCast(this->target_list->FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
-   *
    * @param id Target id
    * @return The \ref AdsbTarget pointer, NULL if not found at all or,
    *         if found, is not an \ref AdsbTarget.
    */
-  const AdsbPtr FindTraffic(TargetId id) const
+  const AdsbPtr FindAdsb(TargetId id) const
     {
-    return AdsbListDecorator::AdsbCast(this->target_list.FindTraffic(id));
+    return AdsbListDecorator::AdsbCast(this->target_list->FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
-   *
    * @param name The name or call sign
    * @return The \ref AdsbTarget pointer, NULL if not found at all or,
    *         if found, is not an \ref AdsbTarget.
    */
-  AdsbPtr FindTraffic(const TCHAR* name)
+  AdsbPtr FindAdsb(const TCHAR* name)
     {
-    return AdsbListDecorator::AdsbCast(this->target_list.FindTraffic(name));
+    return AdsbListDecorator::AdsbCast(this->target_list->FindTraffic(name));
     }
 
   /**
    * Looks up an item in the traffic list.
-   *
    * @param name The name or call sign
    * @return The \ref AdsbTarget pointer, NULL if not found at all or,
    *         if found, is not an \ref AdsbTarget.
    */
-  const AdsbPtr FindTraffic(const TCHAR *name) const
+  const AdsbPtr FindAdsb(const TCHAR *name) const
     {
-    return AdsbListDecorator::AdsbCast(this->target_list.FindTraffic(name));
+    return AdsbListDecorator::AdsbCast(this->target_list->FindTraffic(name));
     }
 
   /**
@@ -104,12 +116,12 @@ struct AdsbListDecorator : public TargetListDecorator
    *         \ref RemoteTarget pointer to that element. Otherwise
    *         nullptr.
    */
-  AdsbPtr AllocateTraffic()
+  AdsbPtr AllocateAdsb()
     {
-    if (!this->target_list.list.full())
+    if (!this->target_list->List()->full())
       {
-      AdsbPtr ptr = std::make_shared<AdsbTarget>(*new AdsbTarget);
-      this->target_list.list.append(ptr);
+      AdsbPtr ptr = std::make_shared<AdsbTarget>();
+      this->target_list->List()->append(ptr);
       return ptr;
       }
     return std::shared_ptr<AdsbTarget>(nullptr);
@@ -117,24 +129,27 @@ struct AdsbListDecorator : public TargetListDecorator
 
   /**
    * Inserts a new \ref AdsbTarget object to the list.
-   * @param The target.
+   * @param target The target to be added (using the \ref AdsbTarget 
+   *               copy operator).
    * @return A pointer to the new element that has been added or nullptr
    *         if the list is full.
    */
-  AdsbPtr AddTarget(AdsbTarget& target)
+  AdsbPtr AddAdsb(const AdsbTarget& target)
     {
-    if (this->target_list.list.full())
-      return std::shared_ptr<AdsbTarget>(nullptr);   // Too bad.
+    AdsbPtr ptr = this->AllocateAdsb();
+    if (ptr == nullptr)
+      return ptr;   // Too bad.
 
-    AdsbPtr ptr = std::make_shared<AdsbTarget>(target);
-#ifndef NDEBUG
-    printf("%s, %d: %p\n", __FILE__, __LINE__, ptr.get());
-    printf("%s, %d: %d\n", __FILE__, __LINE__, target.DebugType());
-    printf("%s, %d: %d\n", __FILE__, __LINE__, ptr->DebugType());
-#endif
-    this->target_list.list.append(ptr);
+    *ptr = target;
     return ptr;
     }
+
+  /**
+   * Returns a \ref TargetList of ADSB targets.
+   * @return The list of ADSB targets.
+   */
+  TargetList AdsbTargets() const;
+
   /**
    * Cast a \ref TargetPtr to a \ref AdsbPtr.
    * @param t The \ref TargetPtr to cast.

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,10 +23,12 @@ Copyright_License {
 
 #pragma once
 
+#include "Surveillance/TargetListBase.hpp"
 #include "Surveillance/RemoteTarget.hpp"
 #include "Surveillance/TargetId.hpp"
 #include "NMEA/Validity.hpp"
-#include "util/TrivialArray.hxx"
+//#include "util/TrivialArray.hxx"
+#include "Surveillance/TrivialArrayExtender.hpp"
 
 #include <type_traits>
 #include <list>
@@ -34,6 +36,7 @@ Copyright_License {
 
 #ifndef NDEBUG
 #include <stdio.h>
+#include "thread/Thread.hpp"
 #endif
 
 /**
@@ -46,7 +49,7 @@ Copyright_License {
  *This class keeps track of the target objects received from a
  * remote sensing device.
  */
-struct TargetList
+struct TargetList : public TargetListBase
   {
 public:
   static constexpr size_t MAX_COUNT = 50;
@@ -56,17 +59,15 @@ public:
    */
   TargetList()
     {
-#ifndef NDEBUG
-    printf("%s, %d\n", __FILE__, __LINE__);
-#endif
     this->Clear();
+    this->type = TargetType::MIXED;
     }
 
   /**
-   * Do not allow object copies by copy ctor.
+   * Allow object copies by copy ctor.
    * @param src The source object.
    */
-  TargetList(const TargetList& src) = delete;
+  TargetList(const TargetList& src);
 
   /**
    * Allow object copies by copy operator.
@@ -86,7 +87,7 @@ public:
   Validity new_traffic;
 
   /** Target information */
-  TrivialArray<std::shared_ptr<RemoteTarget>, MAX_COUNT> list;
+  TrivialArrayExtender<std::shared_ptr<RemoteTarget>, MAX_COUNT> list;
 //  std::list<std::shared_ptr<RemoteTarget>> list;
 
   /**
@@ -112,8 +113,16 @@ public:
    * Adds data from the specified object, unless already present in
    * this one.
    * @param add Source list.
+   *
+   * \bug
+   * Adding \ref traffic here should not happen because the object 
+   * added is a generic \RemoteTarget - that is not a specific 
+   * \ref FlarmTarget or \ref AdsbTarget. The processing done in the
+   * merge and calculation threads requires a specific target because
+   * the processing is invariably difference for each.
    */
-  constexpr void Complement(const TargetList &add)
+
+  constexpr void Complement(const TargetList& add) override
     {
     this->modified.Complement(add.modified);  // Don't know where this is done
                                               // for the FLARM merge.
@@ -122,6 +131,14 @@ public:
       {
       if (this->FindTraffic(traffic->id) == nullptr)
         {
+        /**
+         * \bug
+         * Adding \ref traffic here should not happen because the object 
+         * added is a generic \RemoteTarget - that is not a specific 
+         * \ref FlarmTarget or \ref AdsbTarget. The processing done in the
+         * merge and calculation threads requires a specific target because
+         * the processing is invariably difference for each.
+         */
         if (this->AddTarget(*traffic) == nullptr)
           return;
         }
@@ -162,7 +179,6 @@ public:
     for (auto &traffic : this->list)
       if (traffic->id == id)
         {
-        traffic = std::make_shared<RemoteTarget>(*traffic);
         return traffic;
         }
 
@@ -179,8 +195,7 @@ public:
     {
     for (const auto &traffic : this->list)
       if (traffic->id == id)
-        return std::make_shared<RemoteTarget>(*traffic);
-
+        return traffic;
     return std::shared_ptr<RemoteTarget>(nullptr);
     }
 
@@ -190,12 +205,11 @@ public:
    * @param name The name or call sign
    * @return The RemoteTarget pointer, NULL if not found
    */
-  TargetPtr FindTraffic(const TCHAR *name)
+  TargetPtr FindTraffic(const TCHAR* name)
     {
     for (auto &traffic : this->list)
       if (traffic->name.equals(name))
-        return std::make_shared<RemoteTarget>(*traffic);
-
+        return traffic;
     return std::shared_ptr<RemoteTarget>(nullptr);
     }
 
@@ -205,12 +219,11 @@ public:
    * @param name The name or call sign
    * @return The \ref RemoteTarget pointer, NULL if not found
    */
-  const TargetPtr FindTraffic(const TCHAR *name) const
+  const TargetPtr FindTraffic(const TCHAR* name) const
     {
     for (const auto &traffic : this->list)
       if (traffic->name.equals(name))
-        return std::make_shared<RemoteTarget>(*traffic);
-
+        return traffic;
     return std::shared_ptr<RemoteTarget>(nullptr);
     }
 
@@ -229,7 +242,7 @@ public:
     {
     if (!this->list.full())
       {
-      TargetPtr ptr = std::make_shared<RemoteTarget>(*new RemoteTarget);
+      TargetPtr ptr = std::make_shared<RemoteTarget>();
       this->list.append(ptr);
       return ptr;
       }
@@ -247,18 +260,13 @@ public:
    * @return A pointer to the new element that has been added or nullptr
    *         if the list is full.
    */
-  TargetPtr AddTarget(RemoteTarget& target)
+  TargetPtr AddTarget(const RemoteTarget& target)
     {
-    if (this->list.full())
-      return std::shared_ptr<RemoteTarget>(nullptr);   // Too bad.
+    TargetPtr ptr = this->AllocateTraffic();
+    if (ptr == nullptr)
+      return ptr;
 
-    TargetPtr ptr = std::make_shared<RemoteTarget>(target);
-#ifndef NDEBUG
-    printf("%s, %d: %p\n", __FILE__, __LINE__, ptr.get());
-    printf("%s, %d: %d\n", __FILE__, __LINE__, target.DebugType());
-    printf("%s, %d: %d\n", __FILE__, __LINE__, ptr->DebugType());
-#endif
-    this->list.append(ptr);
+    *ptr = target;
     return ptr;
     }
 
@@ -289,7 +297,7 @@ public:
    * @param i The reference entry.
    * @return The entry after i or nullptr if is already at end() - 1.
    */
-  TargetPtr NextTraffic(size_t i) const
+  const TargetPtr NextTraffic(size_t i) const
     {
     return (i + 1) < this->list.size() ?
            this->list[i + 1] :
@@ -301,7 +309,7 @@ public:
    * @param target The reference entry.
    * @return The entry after target or nullptr if is already at end() - 1.
    */
-  TargetPtr NextTraffic(const TargetPtr target) const
+  const TargetPtr NextTraffic(const TargetPtr target) const
     {
     return this->NextTraffic(this->FindIndex(target));
     }
@@ -343,6 +351,66 @@ public:
   unsigned TrafficIndex(const TargetPtr* t) const
     {
     return t - this->list.begin();
+    }
+
+  /**
+   * Give a reference to the modified variable.
+   * @return This reference may be used to manipulate the implementations 
+   *         modified variable;
+   */
+  virtual Validity* Modified()
+    {
+    return &this->modified;
+    }
+
+  /**
+   * Give a reference to the modified variable.
+   * @return This reference may be used to read the implementations 
+   *         modified variable;
+   */
+  virtual const Validity* Modified() const
+    {
+    return &this->modified;
+    }
+
+  /**
+   * Give a reference to the new_traffic variable.
+   * @return This reference may be used to manipulate the implementations 
+   *         new_traffic variable;
+   */
+  virtual Validity* NewTraffic()
+    {
+    return &this->new_traffic;
+    }
+
+  /**
+   * Give a reference to the new_traffic variable.
+   * @return This reference may be used to read the implementations 
+   *         new_traffic variable;
+   */
+  virtual const Validity* NewTraffic() const
+    {
+    return &this->new_traffic;
+    }
+
+  /**
+   * Give a reference to the list variable.
+   * @return This reference may be used to manipulate the implementations 
+   *         List variable;
+   */
+  virtual TrivialArrayExtender< std::shared_ptr< RemoteTarget >, MAX_COUNT >* List()
+    {
+    return &this->list;
+    }
+
+  /**
+   * Give a reference to the list variable.
+   * @return This reference may be used to read the implementations 
+   *         List variable;
+   */
+  virtual const TrivialArrayExtender< std::shared_ptr< RemoteTarget >, MAX_COUNT >* List() const
+    {
+    return &this->list;
     }
 
 private:

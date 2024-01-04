@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -34,6 +34,9 @@ Copyright_License {
 
 #include <type_traits>
 #include <memory>
+
+struct FlarmTarget;
+typedef std::shared_ptr<FlarmTarget> FlarmPtr;
 
 struct FlarmTarget : public RemoteTarget
   {
@@ -146,16 +149,35 @@ struct FlarmTarget : public RemoteTarget
     return false;
     }
 
+  /**
+   * Cast from \ref FlarmPtr to \ref TargetPtr.
+   * @param ptr The \ref FlarmPtr to cast.
+   * @return The resultant \ref TargetPtr.
+   */
+  static TargetPtr Cast2TargetPtr(FlarmPtr ptr)
+    {
+    return std::dynamic_pointer_cast<RemoteTarget>(ptr);
+    }
+    
+  /**
+   * Cast from \ref TargetPtr to \ref FlarmPtr.
+   * @param ptr The \ref TargetPtr to cast.
+   * @return The resultant \ref FlarmPtr or nullptr if the cast is
+   *         impossible (because ptr was not created as a \ref FlarmPtr).
+   */
+  static FlarmPtr Cast2FlarmPtr(TargetPtr ptr)
+    {
+    return std::dynamic_pointer_cast<FlarmTarget>(ptr);
+    }
+
 #ifndef NDEBUG
   virtual int DebugType() const override
     {
     return 1;
     }
 #endif
-
   };
 
 /**
  * \}
  */
-typedef std::shared_ptr<FlarmTarget> FlarmPtr;

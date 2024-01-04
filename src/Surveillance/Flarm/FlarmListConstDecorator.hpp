@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ struct FlarmListConstDecorator : public TargetListConstDecorator
    * Ctor
    * @param target_list The \ref TargetList to decorate.
    */
-  FlarmListConstDecorator(const TargetList& target_list)
+  FlarmListConstDecorator(const TargetList* target_list)
     : TargetListConstDecorator(target_list)
     {
     }
@@ -56,9 +56,9 @@ struct FlarmListConstDecorator : public TargetListConstDecorator
    * @param id Target id
    * @return the \ref FlarmTarget pointer, NULL if not found
    */
-  FlarmPtr FindTraffic(TargetId id)
+  FlarmPtr FindFlarm(TargetId id)
     {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.FindTraffic(id));
+    return FlarmListConstDecorator::FlarmCast(this->target_list->FindTraffic(id));
     }
 
   /**
@@ -67,105 +67,63 @@ struct FlarmListConstDecorator : public TargetListConstDecorator
    * @param id Target id
    * @return the \ref FlarmTarget pointer, NULL if not found
    */
-  const FlarmPtr FindTraffic(TargetId id) const
+  const FlarmPtr FindFlarm(TargetId id) const
     {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.FindTraffic(id));
+    return FlarmListConstDecorator::FlarmCast(this->target_list->FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
    *
    * @param name The name or call sign
-   * @return The RemoteTarget pointer, NULL if not found
+   * @return The \ref FlarmTarget pointer, NULL if not found
    */
-  FlarmPtr FindTraffic(const TCHAR *name)
+  FlarmPtr FindFlarm(const TCHAR *name)
     {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.FindTraffic(name));
+    return FlarmListConstDecorator::FlarmCast(this->target_list->FindTraffic(name));
     }
+
+#if 1
+  /**
+   * Returns a \ref TargetList of FLARM targets.
+   * @return The list of FLARM targets.
+   */
+  TargetList FlarmTargets() const;
 
   /**
    * Looks up an item in the traffic list.
    *
    * @param name The name or call sign
-   * @return The \ref RemoteTarget pointer, NULL if not found
+   * @return The \ref FlarmTarget pointer, NULL if not found
    */
-  const FlarmPtr FindTraffic(const TCHAR *name) const
+  const FlarmPtr FindFlarm(const TCHAR *name) const
     {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.FindTraffic(name));
+    return FlarmListConstDecorator::FlarmCast(this->target_list->FindTraffic(name));
     }
-
-  /**
-   * Reference the previous traffic in the ordered list.
-   * @param i The reference entry.
-   * @return The entry previous to t or null if is already at begin().
-   */
-  const FlarmPtr PreviousTraffic(size_t i) const
-    {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.PreviousTraffic(i));
-    }
-
-  /**
-   * Reference the previous traffic in the ordered list.
-   * @param target The reference target.
-   * @return The entry previous to target or null if is already at begin().
-   */
-  const FlarmPtr PreviousTraffic(const TargetPtr target) const
-    {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.PreviousTraffic(target));
-    }
-
-  /**
-   * Reference the next traffic in the ordered list.
-   * @param i The reference entry.
-   * @return The entry after i or nullptr if is already at end() - 1.
-   */
-  FlarmPtr NextTraffic(size_t i) const
-    {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.NextTraffic(i));
-    }
-
-  /**
-   * Reference the next traffic in the ordered list.
-   * @param target The reference entry.
-   * @return The entry after target or nullptr if is already at end() - 1.
-   */
-  FlarmPtr NextTraffic(const TargetPtr target) const
-    {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.NextTraffic(target));
-    }
-
-  /**
-   * Reference the first traffic in the ordered list.
-   * @return The first target pointer or nullptr if the list is empty.
-   */
-  const FlarmPtr FirstTraffic() const
-    {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.FirstTraffic());
-    }
-
-  /**
-   * Reference the last traffic in the ordered list.
-   * @return The last target pointer or nullptr if the list is empty.
-   */
-  const FlarmPtr LastTraffic() const
-    {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.LastTraffic());
-    }
-
-  /**
-   * Finds the most critical alert.  Returns NULL if there is no
-   * alert.
-   */
-  const FlarmPtr FindMaximumAlert() const
-    {
-    return FlarmListConstDecorator::FlarmCast(this->target_list.FindMaximumAlert());
-    }
+#endif
 
 private:
   static const FlarmPtr FlarmCast(const TargetPtr t)
     {
     return std::dynamic_pointer_cast<FlarmTarget>(t);
     }
+  
+#if 0
+  /**
+   * Inserts a new \ref FlarmTarget object to the list.
+   * @param target A pointer to the target.
+   * @return A pointer to the new element that has been added or nullptr
+   *         if the list is full.
+   */
+  FlarmPtr AddFlarm(FlarmPtr target)
+    {
+    if (this->target_list->List()->full())
+      return std::shared_ptr<FlarmTarget>(nullptr);   // Too bad.
+
+    this->target_list->List()->append(target);
+    return target;
+    }
+#endif
   };
 
 /**

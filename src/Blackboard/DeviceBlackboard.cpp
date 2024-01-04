@@ -32,6 +32,8 @@ Copyright_License {
 
 #ifndef NDEBUG
 #include "Components.hpp"
+#include <iostream>
+#include <string>
 #endif
 
 /**
@@ -234,6 +236,7 @@ DeviceBlackboard::Merge() noexcept
   NMEAInfo &basic = SetBasic();
 
   real_data.Reset();
+
   for (auto &basic : per_device_data) {
     if (!basic.alive)
       continue;
@@ -246,6 +249,16 @@ DeviceBlackboard::Merge() noexcept
     basic.UpdateClock();
     basic.Expire();
     real_data.Complement(basic);
+#ifndef NDEBUG
+    // Flarm is OK here.
+//    FlarmListDecorator fld = FlarmListDecorator(&basic.target_data.traffic);
+//    TargetList ftl = fld.FlarmTargets();
+//    std::cout << __FILE__ << ", " << __LINE__ << ": " << ftl.GetActiveTrafficCount() << "\n";
+    // Flarm is not OK here!
+//    FlarmListDecorator rdd = FlarmListDecorator(&real_data.target_data.traffic);
+//    TargetList rtl = rdd.FlarmTargets();
+//    std::cout << __FILE__ << ", " << __LINE__ << ": " << rtl.GetActiveTrafficCount() << "\n";
+#endif
   }
 
   real_clock.Normalise(real_data);

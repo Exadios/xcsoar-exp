@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,11 +30,12 @@ Copyright_License {
  */
 
 #include "Surveillance/TargetList.hpp"
+#include "Surveillance/TargetListBase.hpp"
 
 /**
  * This is the decorator class for \ref TargetList.
  */
-struct TargetListDecorator : public TargetList
+struct TargetListDecorator : public TargetListBase
   {
 public:
   /**
@@ -46,9 +47,51 @@ public:
    * Ctor.
    * @param target_list The \ref TargetList to decorate.
    */
-  TargetListDecorator(TargetList& target_list)
+  TargetListDecorator(TargetList* target_list)
     : target_list(target_list)
     {
+    }
+
+  /**
+   * Virtual dtor for derived classes.
+   */
+  virtual ~TargetListDecorator()
+    {
+    }
+
+  /**
+   * Clear everything!
+   */
+  constexpr void Clear()
+    {
+    this->target_list->Clear();
+    }
+
+  /**
+   * Check whether the list is empty.
+   * @return If true thens it is empty.
+   */
+  constexpr bool IsEmpty() const
+    {
+    return this->target_list->IsEmpty();
+    }
+
+  /**
+   * Delete stale targets.
+   * @param clock Now.
+   */
+  void Expire(TimeStamp clock) noexcept
+    {
+    this->target_list->Expire(clock);
+    }
+
+  /**
+   * Number of items currently in the list.
+   * @return Number of targets in the list.
+   */
+  unsigned GetActiveTrafficCount() const
+    {
+    return this->target_list->GetActiveTrafficCount();
     }
 
   /**
@@ -58,7 +101,7 @@ public:
    */
   const TargetPtr PreviousTraffic(size_t i) const
     {
-    return this->target_list.PreviousTraffic(i);
+    return this->target_list->PreviousTraffic(i);
     }
 
   /**
@@ -68,7 +111,7 @@ public:
    */
   const TargetPtr PreviousTraffic(const TargetPtr target) const
     {
-    return this->target_list.PreviousTraffic(target);
+    return this->target_list->PreviousTraffic(target);
     }
 
   /**
@@ -76,9 +119,9 @@ public:
    * @param i The reference entry.
    * @return The entry after i or nullptr if is already at end() - 1.
    */
-  TargetPtr NextTraffic(size_t i) const
+  const TargetPtr NextTraffic(size_t i) const
     {
-    return this->target_list.NextTraffic(i);
+    return this->target_list->NextTraffic(i);
     }
 
   /**
@@ -86,9 +129,9 @@ public:
    * @param target The reference entry.
    * @return The entry after target or nullptr if is already at end() - 1.
    */
-  TargetPtr NextTraffic(const TargetPtr target) const
+  const TargetPtr NextTraffic(const TargetPtr target) const
     {
-    return this->target_list.NextTraffic(target);
+    return this->target_list->NextTraffic(target);
     }
 
   /**
@@ -97,7 +140,7 @@ public:
    */
   const TargetPtr FirstTraffic() const
     {
-    return this->target_list.FirstTraffic();
+    return this->target_list->FirstTraffic();
     }
 
   /**
@@ -106,7 +149,7 @@ public:
    */
   const TargetPtr LastTraffic() const
     {
-    return this->target_list.LastTraffic();
+    return this->target_list->LastTraffic();
     }
 
   /**
@@ -116,11 +159,51 @@ public:
    */
   const TargetPtr FindMaximumAlert() const
     {
-    return this->target_list.FindMaximumAlert();
+    return this->target_list->FindMaximumAlert();
     }
 
+  /**
+   * Convert a pointer to a element in the ordered list into an index into
+   * the ordered list.
+   * @param t The pointer to the element
+   * @return The index corresponding to t.
+   */
+  virtual unsigned TrafficIndex(const TargetPtr* t) const
+    {
+    return this->target_list->TrafficIndex(t);
+    }
+
+  /**
+   * Give a reference to the list variable.
+   * @return This reference may be used to manipulate the implementations 
+   *         List variable;
+   */
+  virtual TrivialArrayExtender< std::shared_ptr< RemoteTarget >, MAX_COUNT >* List() override
+    {
+    return this->target_list->List();
+    }
+
+  /**
+   * Give a reference to the list variable.
+   * @return This reference may not be used to manipulate the implementations 
+   *         List variable;
+   */
+
+  virtual TrivialArrayExtender< std::shared_ptr< RemoteTarget >, MAX_COUNT >* List() const override
+    {    
+    return this->target_list->List();
+    }
+
+  /**
+   * Give a reference to the modified variable.
+   * @return This reference may be used to manipulate the implementations 
+   *         modified variable;
+   */
+  virtual Validity* Modified() override;
+  virtual const Validity* Modified() const override;
+
 protected:
-  TargetList& target_list;
+  TargetList* target_list;
   };
 
   /**

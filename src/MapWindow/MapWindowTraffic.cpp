@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -32,6 +32,10 @@ Copyright_License {
 #include "Tracking/SkyLines/Data.hpp"
 #include "util/StringCompare.hxx"
 
+#ifndef NDEBUG
+#include "LogFile.hpp"
+#endif
+
 /**
  * Draws the surveillance traffic icons onto the given canvas
  * @param canvas Canvas for drawing
@@ -46,6 +50,10 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
 
   // Return if surveillance data is not available
   const TargetList &targets = Basic().target_data.traffic;
+#ifndef NDEBUG
+//  LogFormat("%s, %d: %s", __FILE__, __LINE__,
+//                          (targets.IsEmpty()) ? "true" : "false");
+#endif
   if (targets.IsEmpty())
     return;
 

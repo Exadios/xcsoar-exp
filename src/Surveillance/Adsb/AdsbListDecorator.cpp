@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,3 +22,48 @@ Copyright_License {
 */
 
 #include "Surveillance/Adsb/AdsbListDecorator.hpp"
+
+//------------------------------------------------------------------------------
+TargetList
+AdsbListDecorator::AdsbTargets() const
+  {
+  TargetList rtn;
+  AdsbListDecorator fld(&rtn);
+
+  rtn.Clear();
+  fld.Clear();
+  for (TargetPtr tp = this->target_list->FirstTraffic();
+       tp != nullptr;
+       tp = this->target_list->NextTraffic(tp)
+      )
+    {
+    AdsbPtr fp = AdsbListDecorator::AdsbCast(tp);
+    if (fp == nullptr)
+      continue;
+    fld.AddAdsb(*fp);
+    }
+  return rtn;
+  }
+
+//------------------------------------------------------------------------------
+void
+AdsbListDecorator::Complement(const TargetList& add)
+  {
+  AdsbListConstDecorator aadd(&add);
+  this->target_list->Modified()->Complement(*(aadd.Modified()));
+  TargetList tl = aadd.AdsbTargets();
+
+  // Add unique Adsb traffic from 'add' list.
+  for (auto& at : *(tl.List()))
+    {
+    AdsbPtr adsb_target = AdsbTarget::Cast2AdsbPtr(at);
+    if (adsb_target == nullptr)
+      continue;   // Not an ADSB target
+    TargetId id = adsb_target->id;
+    AdsbPtr local = this->FindAdsb(id);
+    if (local == nullptr)
+      this->AddAdsb(*adsb_target);  // We do not have this target at this time.
+    else
+      local->Update(*adsb_target);  // We have this target already. Update.
+    }
+  }

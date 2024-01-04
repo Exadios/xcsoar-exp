@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -176,9 +176,8 @@ class FlarmTrafficWindow : public PaintWindow
                 const TeamCodeSettings& new_settings,
                 TargetStatus target_status) noexcept;
     void PaintRadarNoTraffic(Canvas& canvas) const noexcept;
-    void PaintRadarNoGo(Canvas& canvas) const noexcept;
     void PaintRadarTarget(Canvas& canvas,
-                          const RemoteTarget& traffic,
+                          const RemoteTarget& target,
                           unsigned i) noexcept;
     void PaintRadarTraffic(Canvas& canvas) noexcept;
 
@@ -186,13 +185,13 @@ class FlarmTrafficWindow : public PaintWindow
      * Paint a single remote target onto a canvas which is small - smaller
      * that the full screen canvas.
      * @param canvas The small canvas
-     * @param traffic The remote target
+     * @param target The remote target
      * @param i
      * @param text_color
      * @param arrow_brush The brush to use to paint the target outline.
      */
     void PaintTargetInfoSmall(Canvas& canvas,
-                              const RemoteTarget& traffic,
+                              const RemoteTarget& target,
                               unsigned i,
                               const Color& text_color,
                               const Brush& arrow_brush) noexcept;

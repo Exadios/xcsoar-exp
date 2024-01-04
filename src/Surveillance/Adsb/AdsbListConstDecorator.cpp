@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,4 +21,27 @@ Copyright_License {
 }
 */
 
-#include "Surveillance/Flarm/FlarmListConstDecorator.hpp"
+#include "Surveillance/Adsb/AdsbListConstDecorator.hpp"
+#include "Surveillance/Adsb/AdsbListDecorator.hpp"
+
+//------------------------------------------------------------------------------
+TargetList
+AdsbListConstDecorator::AdsbTargets() const
+  {
+  TargetList rtn;
+  AdsbListDecorator fld(&rtn);
+
+  rtn.Clear();
+  fld.Clear();
+  for (TargetPtr tp = this->target_list->FirstTraffic();
+       tp != nullptr;
+       tp = this->target_list->NextTraffic(tp)
+      )
+    {
+    AdsbPtr fp = AdsbListDecorator::AdsbCast(tp);
+    if (fp == nullptr)
+      continue;
+    fld.AddAdsb(*fp);
+    }
+  return rtn;
+  }

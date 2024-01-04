@@ -504,7 +504,6 @@ xcsoar_sources = [
 './src/Dialogs/Weather/RASPDialog.cpp',
 './src/Dialogs/dlgCredits.cpp',
 './src/Dialogs/dlgQuickMenu.cpp',
-
 './src/Dialogs/Settings/Panels/AudioVarioConfigPanel.cpp',
 './src/Dialogs/Settings/Panels/AudioConfigPanel.cpp',
 './src/Dialogs/Weather/PCMetDialog.cpp',
@@ -520,7 +519,6 @@ xcsoar_sources = [
 './src/Hardware/Battery.cpp',
 './src/Dialogs/Weather/MapOverlayWidget.cpp',
 './src/CommandLine.cpp',
-'./src/XCSoar.cpp',
 './src/Dialogs/DownloadFilePicker.cpp',
 './src/Repository/Glue.cpp',
 './src/Renderer/NOAAListRenderer.cpp',
@@ -543,3 +541,7 @@ xcsoar_sources = [
 './src/Tracking/TrackingGlue.cpp',
 './src/Audio/VarioGlue.cpp'
  ]
+xcsoar_cpp_args = [
+'-Wno-error=redundant-decls',
+'-Wno-redundant-decls',
+ ]  # This is necessary for boost. I do not understand fully why!

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,12 @@ Copyright_License {
 #include "Audio/VarioGlue.hpp"
 #include "Device/MultipleDevices.hpp"
 
+/**
+ * Ctor. The object of this class is created early after program is run up.
+ * See \ref CreateCalculationThread().
+ * @param device_blackboard A reference to the ::device_blackboard.
+ *                          See \ref CreateCalculationThread().
+ */
 MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
   :WorkerThread("MergeThread",
 #ifdef KOBO
@@ -61,8 +67,8 @@ MergeThread::Process()
   const ComputerSettings &settings_computer =
     this->device_blackboard.GetComputerSettings();
 
-  computer.Fill(device_blackboard.SetMoreData(), settings_computer);
-  computer.Compute(device_blackboard.SetMoreData(), last_any, last_fix,
+  this->computer.Fill(device_blackboard.SetMoreData(), settings_computer);
+  this->computer.Compute(device_blackboard.SetMoreData(), last_any, last_fix,
                    device_blackboard.Calculated());
 
   this->flarm_computer.Process(device_blackboard.SetBasic().target_data,
@@ -89,14 +95,6 @@ MergeThread::Tick() noexcept
     Process();
 
     const MoreData &basic = device_blackboard.Basic();
-
-#ifndef NDEBUG
-#include "LogFile.hpp"
-//    LogFormat("%s, %d: %d, %d", __FILE__, __LINE__,
-//              this->device_blackboard.RealState(0).adsb.traffic.modified.ToInteger(),
-//              ::device_blackboard->RealState(0).adsb.traffic.modified.ToInteger());
-    
-#endif
 
     /* call Driver::OnSensorUpdate() on all devices */
     if (devices != nullptr)

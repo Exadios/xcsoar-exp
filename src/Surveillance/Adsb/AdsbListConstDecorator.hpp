@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ struct AdsbListConstDecorator : public TargetListConstDecorator
    * Ctor
    * @param target_list The \ref TargetList to decorate.
    */
-  AdsbListConstDecorate(const TargetList& target_list)
+  AdsbListConstDecorator(const TargetList* target_list)
     : TargetListConstDecorator(target_list)
     {
     }
@@ -54,139 +54,59 @@ struct AdsbListConstDecorator : public TargetListConstDecorator
   /**
    * Looks up an item in the traffic list.
    * @param id Target id
-   * @return the \ref RemoteTarget pointer, NULL if not found
+   * @return the \ref AdsbTarget pointer, NULL if not found
    */
-  AdsbPtr FindTraffic(TargetId id)
+  AdsbPtr FindAdsb(TargetId id)
     {
-    for (auto &traffic : this->list)
-      if (traffic->id == id)
-        {
-        traffic = std::make_shared<RemoteTarget>(*traffic);
-        return traffic;
-        }
-
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return AdsbListConstDecorator::AdsbCast(this->target_list->FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
    *
    * @param id Target id
-   * @return the \ref RemoteTarget pointer, NULL if not found
+   * @return the \ref AdsbTarget pointer, NULL if not found
    */
-  const TargetPtr FindTraffic(TargetId id) const
+  const TargetPtr FindAdsb(TargetId id) const
     {
-    for (const auto &traffic : this->list)
-      if (traffic->id == id)
-        return std::make_shared<RemoteTarget>(*traffic);
-
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return AdsbListConstDecorator::AdsbCast(this->target_list->FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
    *
    * @param name The name or call sign
-   * @return The RemoteTarget pointer, NULL if not found
+   * @return The \ref AdsbTarget pointer, NULL if not found
    */
-  AdsbPtr FindTraffic(const TCHAR *name)
+  AdsbPtr FindAdsb(const TCHAR *name)
     {
-    for (auto &traffic : this->list)
-      if (traffic->name.equals(name))
-        return std::make_shared<RemoteTarget>(*traffic);
-
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return AdsbListConstDecorator::AdsbCast(this->target_list->FindTraffic(name));
     }
 
   /**
    * Looks up an item in the traffic list.
    *
    * @param name The name or call sign
-   * @return The \ref RemoteTarget pointer, NULL if not found
+   * @return The \ref AdsbTarget pointer, NULL if not found
    */
-  const AdsbPtr FindTraffic(const TCHAR *name) const
+  const AdsbPtr FindAdsb(const TCHAR *name) const
     {
-    for (const auto &traffic : this->list)
-      if (traffic->name.equals(name))
-        return std::make_shared<RemoteTarget>(*traffic);
-
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return AdsbListConstDecorator::AdsbCast(this->target_list->FindTraffic(name));
     }
 
   /**
-   * Reference the previous traffic in the ordered list.
-   * @param i The reference entry.
-   * @return The entry previous to t or null if is already at begin().
+   * Returns a \ref TargetList of ADSB targets.
+   * @return The list of ADSB targets.
    */
-  const AdsbPtr PreviousTraffic(size_t i) const
-    {
-    return i > 0 ?
-           this->list[i - 1] :
-           nullptr;
-    }
+  TargetList AdsbTargets() const;
 
-  /**
-   * Reference the previous traffic in the ordered list.
-   * @param target The reference target.
-   * @return The entry previous to target or null if is already at begin().
-   */
-  const AdsbPtr PreviousTraffic(const TargetPtr target) const
+private:
+  static const AdsbPtr AdsbCast(const TargetPtr t)
     {
-    return this->PreviousTraffic(this->FindIndex(target));
+    return std::dynamic_pointer_cast<AdsbTarget>(t);
     }
-
-  /**
-   * Reference the next traffic in the ordered list.
-   * @param i The reference entry.
-   * @return The entry after i or nullptr if is already at end() - 1.
-   */
-  AdsbPtr NextTraffic(size_t i) const
-    {
-    return (i + 1) < this->list.size() ?
-           this->list[i + 1] :
-           nullptr;
-    }
-
-  /**
-   * Reference the next traffic in the ordered list.
-   * @param target The reference entry.
-   * @return The entry after target or nullptr if is already at end() - 1.
-   */
-  AdsbPtr NextTraffic(const TargetPtr target) const
-    {
-    return this->NextTraffic(this->FindIndex(target));
-    }
-
-  /**
-   * Reference the first traffic in the ordered list.
-   * @return The first target pointer or nullptr if the list is empty.
-   */
-  const AdsbPtr FirstTraffic() const
-    {
-    return this->list.empty() ?
-           nullptr :
-           *this->list.begin();
-    }
-
-  /**
-   * Reference the last traffic in the ordered list.
-   * @return The last target pointer or nullptr if the list is empty.
-   */
-  const AdsbPtr LastTraffic() const
-    {
-    return this->list.empty() ?
-           nullptr :
-           *(this->list.end() - 1);
-    }
-
-  /**
-   * Finds the most critical alert.  Returns NULL if there is no
-   * alert.
-   */
-  const AdsbPtr FindMaximumAlert() const;
   };
 
-typedef std::dynamic_pointer_cast<AdsbList> AdsbCast;
 
 /**
  * \}

@@ -415,13 +415,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
       case MessageID::TRAFFICREPORT:
         {
         if (sd.size() != 28 + 4)
-          {
-#ifndef NDEBUG
-#include "LogFile.hpp"
-          LogFormat("%s, %d", __FILE__, __LINE__);
-#endif
           break;
-          }
 
         this->Traffic(sd, this->target);
         AdsbTarget report;
@@ -430,7 +424,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                                                              * support alarm.*/
 //        report.location_available  = true;
         report.climb_rate_received = true;
-        /* \todo pfb: Find the XCSoar wide conversion from feet to
+        /* \todo pfb: Find the XCSoar wide conversion from feet / second to
                  meters / second.  */
         report.climb_rate          = (this->target.vert_vel * 64 / 3.2808) / 60;
         report.speed_received      = true;
@@ -471,6 +465,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           }
         slot->valid.Update(info.clock); // The target is valid now.
         slot->Update(report); // Add or update this target to the list.
+        target_list.type = TargetList::TargetType::ADSB;
         break;
         }
       case MessageID::BASICREPORT:

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -63,6 +63,18 @@ public:
   RoughAngle operator-(RoughAngle other) const {
     return RoughAngle(value - other.value);
   }
+ 
+  constexpr
+  bool operator==(const RoughAngle rhs)
+    {
+    return this->value == rhs.value;
+    }
+
+  constexpr
+  bool operator!=(const RoughAngle rhs)
+    {
+    return this->value != rhs.value;
+    }
 };
 
 static_assert(std::is_trivial<RoughAngle>::value, "type is not trivial");

@@ -49,6 +49,7 @@ Copyright_License {
 #include "Look/FinalGlideBarLook.hpp"
 #include "Renderer/TrafficRenderer.hpp"
 #include "Surveillance/Flarm/FlarmDetails.hpp"
+#include "Surveillance/Flarm/FlarmTarget.hpp"
 #include "FLARM/FlarmNetRecord.hpp"
 #include "Weather/Features.hpp"
 #include "Surveillance/TargetList.hpp"
@@ -332,6 +333,7 @@ Draw(Canvas &canvas, PixelRect rc,
   const TargetPtr traffic = (target_list == nullptr) ?
                             nullptr :
                             target_list->FindTraffic(item.id);
+  const FlarmPtr  fptr    = FlarmTarget::Cast2FlarmPtr(traffic);
 
   const PixelPoint pt(rc.left + line_height / 2, rc.top + line_height / 2);
 
@@ -363,8 +365,8 @@ Draw(Canvas &canvas, PixelRect rc,
   StaticString<256> info_string;
   if (record && !StringIsEmpty(record->plane_type))
     info_string = record->plane_type;
-  else if (traffic != nullptr)
-    info_string = AircraftType::TypeName(traffic->type.Type());
+  else if (fptr != nullptr)
+    info_string = AircraftType::TypeName(fptr->type.Type());
   else
     info_string = _("Unknown");
 

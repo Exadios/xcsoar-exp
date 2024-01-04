@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,10 +23,6 @@ Copyright_License {
 
 #pragma once
 
-#ifndef NDEBUG
-#include <stdio.h>
-#endif
-
 /**
  * \file
  * \addtogroup Surveillance
@@ -34,6 +30,7 @@ Copyright_License {
  */
 
 #include "Surveillance/TargetListDecorator.hpp"
+#include "Surveillance/Flarm/FlarmListConstDecorator.hpp"
 #include "Surveillance/Flarm/FlarmTarget.hpp"
 
 /**
@@ -50,10 +47,24 @@ struct FlarmListDecorator : public TargetListDecorator
    * Ctor
    * @param target_list The \ref TargetList to decorate.
    */
-  FlarmListDecorator(TargetList& target_list)
+  FlarmListDecorator(TargetList* target_list)
     : TargetListDecorator(target_list)
     {
     }
+
+  /**
+   * Dtor.
+   */
+  virtual ~FlarmListDecorator()
+    {
+    }
+
+  /**
+   * Adds data from the specified object, unless already present in
+   * this one.
+   * @param add Source list.
+   */
+  void Complement(const TargetList& add);
 
   /**
    * Looks up an item in the traffic list.
@@ -61,45 +72,44 @@ struct FlarmListDecorator : public TargetListDecorator
    * @return the \ref FlarmTarget pointer, NULL if not found at all or,
    *         if found, is not an \ref FlarmTarget.`
    */
-  FlarmPtr FindTraffic(TargetId id)
+  FlarmPtr FindFlarm(TargetId id) 
     {
-    return FlarmListDecorator::FlarmCast(this->target_list.FindTraffic(id));
+    return FlarmListDecorator::FlarmCast(this->target_list->FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
-   *
    * @param id Target id
    * @return the \ref FlarmTarget pointer, NULL if not found at all, or
    *         if found, is not an \ref FlarmTarget.
    */
-  const FlarmPtr FindTraffic(TargetId id) const
+  const FlarmPtr FindFlarm(TargetId id) const
     {
-    return FlarmListDecorator::FlarmCast(this->target_list.FindTraffic(id));
+    return FlarmListDecorator::FlarmCast(this->target_list->FindTraffic(id));
     }
 
   /**
    * Looks up an item in the traffic list.
-   *
    * @param name The name or call sign
-   * @return The RemoteTarget pointer, NULL if not found at all or,
+   * @return The \ref FlarmTarget pointer, NULL if not found at all or,
    *         if found, is not an \ref FlarmTarget.
    */
-  FlarmPtr FindTraffic(const TCHAR *name)
+  FlarmPtr FindFlarm(const TCHAR *name)
     {
-    return FlarmListDecorator::FlarmCast(this->target_list.FindTraffic(name));
+    return FlarmListDecorator::FlarmCast(this->target_list->FindTraffic(name));
     }
 
   /**
    * Looks up an item in the traffic list.
-   *
    * @param name The name or call sign
-   * @return The \ref RemoteTarget pointer, NULL if not found at all or,
+   * @return The \ref FlarmTarget pointer, NULL if not found at all or,
    *         if found, is not an \ref FlarmTarget.
    */
-  const FlarmPtr FindTraffic(const TCHAR *name) const
+  const FlarmPtr FindFlarm(const TCHAR *name) const
     {
-    return FlarmListDecorator::FlarmCast(this->target_list.FindTraffic(name));
+    TargetPtr tptr = this->target_list->FindTraffic(name);
+    FlarmPtr ptr = FlarmListDecorator::FlarmCast(tptr);
+    return ptr;
     }
 
   /**
@@ -108,38 +118,39 @@ struct FlarmListDecorator : public TargetListDecorator
    *         \ref RemoteTarget pointer to that element. Otherwise
    *         nullptr.
    */
-  FlarmPtr AllocateTraffic()
+  FlarmPtr AllocateFlarm()
     {
-    if (!this->target_list.list.full())
+    if (!this->target_list->List()->full())
       {
-      FlarmPtr ptr = std::make_shared<FlarmTarget>(*new FlarmTarget);
-      this->target_list.list.append(ptr);
+      FlarmPtr ptr = std::make_shared<FlarmTarget>();
+      this->target_list->List()->append(ptr);
       return ptr;
       }
     return std::shared_ptr<FlarmTarget>(nullptr);
     }
 
   /**
-   * Inserts a new \ref RemoteTarget object to the list.
-   * @param The target.
+   * Inserts a new \ref FlarmTarget object to the list.
+   * @param target The target to be added (using the \ref FlarmTarget 
+   *               copy operator).
    * @return A pointer to the new element that has been added or nullptr
    *         if the list is full.
    */
-  FlarmPtr AddTarget(FlarmTarget& target)
+  FlarmPtr AddFlarm(const FlarmTarget& target)
     {
-    if (this->target_list.list.full())
-      return std::shared_ptr<FlarmTarget>(nullptr);   // Too bad.
+    FlarmPtr ptr = this->AllocateFlarm();
+    if (ptr == nullptr)
+      return ptr;   // Too bad.
 
-    FlarmPtr ptr = std::make_shared<FlarmTarget>(target);
-#ifndef NDEBUG
-    printf("%s, %d: %p\n", __FILE__, __LINE__, ptr.get());
-    printf("%s, %d: %d\n", __FILE__, __LINE__, target.DebugType());
-    printf("%s, %d: %d\n", __FILE__, __LINE__, ptr->DebugType());
-#endif
-    this->target_list.list.append(ptr);
+    *ptr = target;
     return ptr;
-
     }
+
+  /**
+   * Returns a \ref TargetList of FLARM targets.
+   * @return The list of FLARM targets.
+   */
+  TargetList FlarmTargets() const;
 
   /**
    * Cast a \ref TargetPtr to a \ref FlarmPtr.

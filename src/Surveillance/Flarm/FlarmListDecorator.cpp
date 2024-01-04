@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,4 +22,49 @@ Copyright_License {
 */
 
 #include "Surveillance/Flarm/FlarmListDecorator.hpp"
+
+//------------------------------------------------------------------------------
+TargetList
+FlarmListDecorator::FlarmTargets() const
+  {
+  TargetList rtn;
+  FlarmListDecorator fld(&rtn);
+
+  rtn.Clear();
+  fld.Clear();
+  for (TargetPtr tp = this->target_list->FirstTraffic();
+       tp != nullptr;
+       tp = this->target_list->NextTraffic(tp)
+      )
+    {
+    FlarmPtr fp = FlarmListDecorator::FlarmCast(tp);
+    if (fp == nullptr)
+      continue;
+    fld.AddFlarm(*fp);
+    }
+  return rtn;
+  }
+
+//------------------------------------------------------------------------------
+void
+FlarmListDecorator::Complement(const TargetList& add)
+  {
+  FlarmListConstDecorator fadd(&add);
+  this->target_list->Modified()->Complement(*(fadd.Modified()));
+  TargetList tl = fadd.FlarmTargets();
+
+  // Add unique Flarm traffic from 'add' list.
+  for (auto& ft : *(tl.List()))
+    {
+    FlarmPtr flarm_target = FlarmTarget::Cast2FlarmPtr(ft);
+    if (flarm_target == nullptr)
+      continue;   // Not a FLARM target
+    TargetId id = flarm_target->id;
+    FlarmPtr local = this->FindFlarm(id);
+    if (local == nullptr)
+      this->AddFlarm(*flarm_target); // We do not have this target at this time.
+    else
+      local->Update(*flarm_target);  // We have this target already. Update.
+    }
+  }
 

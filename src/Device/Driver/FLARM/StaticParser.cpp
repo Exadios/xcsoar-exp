@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2023 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@ Copyright_License {
 #include "Surveillance/Flarm/FlarmListDecorator.hpp"
 #include "util/Macros.hpp"
 #include "util/StringAPI.hxx"
+
 #ifndef NDEBUG
 #include "LogFile.hpp"
 #endif
@@ -111,9 +112,6 @@ ReadBearing(NMEAInputLine &line, Angle &value_r)
 void
 ParsePFLAA(NMEAInputLine& line, TargetList& flarm, TimeStamp clock) noexcept
 {
-#ifndef NDEBUG
-//  LogFormat("%s, %d", __FILE__, __LINE__);
-#endif
   flarm.modified.Update(clock);
 
   // PFLAA,<AlarmLevel>,<RelativeNorth>,<RelativeEast>,<RelativeVertical>,
@@ -187,10 +185,10 @@ ParsePFLAA(NMEAInputLine& line, TargetList& flarm, TimeStamp clock) noexcept
   else
     traffic.type.Type(type);
 
-  FlarmListDecorator fd(flarm);
-  FlarmPtr flarm_slot = fd.FindTraffic(traffic.id);
+  FlarmListDecorator fd(&flarm);
+  FlarmPtr flarm_slot = fd.FindFlarm(traffic.id);
   if (flarm_slot == nullptr) {
-    flarm_slot = fd.AllocateTraffic();
+    flarm_slot = fd.AllocateFlarm();
     if (flarm_slot == nullptr)
       // no more slots available
       return;
@@ -205,4 +203,8 @@ ParsePFLAA(NMEAInputLine& line, TargetList& flarm, TimeStamp clock) noexcept
   flarm_slot->valid.Update(clock);
 
   flarm_slot->Update(traffic);
+  flarm.type = TargetList::TargetType::FLARM; /* So it is necessary to set
+                                               * flarm.type, not fd.type, for
+                                               * the value to be passed back.
+                                               */
 }

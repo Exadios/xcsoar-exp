@@ -1,5 +1,6 @@
 json = subproject('json_sources')
 json_sources = json.get_variable('json_sources')
+json_cpp_args = json.get_variable('json_cpp_args')
 
 json_lib = library('json', json_sources,
                    cpp_args            :
@@ -39,7 +40,7 @@ json_lib = library('json', json_sources,
                                            '-DBOOST_SYSTEM_NO_DEPRECATED',
                                            '-DBOOST_NO_STD_LOCALE',
                                            '-DBOOST_LEXICAL_CAST_ASSUME_C_LOCALE',
-                                           '-DBOOST_NO_CXX98_FUNCTION_BASE',
+                                     #     '-DBOOST_NO_CXX98_FUNCTION_BASE',
                                      #      '-I../../src',
                                      #      '-I../../src/Engine',
                                      #      '-I../../output/UNIX/include',
@@ -48,6 +49,7 @@ json_lib = library('json', json_sources,
                                      #      '-DEYE_CANDY',
                                      #      '-D_GLIBCXX_ASSERTIONS',
                                            '-DBOOST_JSON_STANDALONE',
+                                           json_cpp_args,
                                          ],
                    include_directories : common_includes,
                   )

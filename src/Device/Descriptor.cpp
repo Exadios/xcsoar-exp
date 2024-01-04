@@ -47,6 +47,7 @@ Copyright_License {
 #include "Input/InputQueue.hpp"
 #include "LogFile.hpp"
 #include "Job/Job.hpp"
+#include "Surveillance/Flarm/FlarmListDecorator.hpp"
 
 #ifdef ANDROID
 #include "java/Object.hxx"
@@ -1421,13 +1422,9 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
     ::device_blackboard->mutex.lock();
     this->device->DataReceived(s, ::device_blackboard->SetRealState(index));
     basic.alive.Update(basic.clock);
-#ifndef NDEBUG
-#include "LogFile.hpp"
-//    LogFormat("%s, %d: %d", __FILE__, __LINE__, 
-//              ::device_blackboard->RealState(index).adsb.traffic.modified.ToInteger());
-#endif
     ::device_blackboard->ScheduleMerge();
     ::device_blackboard->mutex.unlock();
+
     return true;
     }
 
@@ -1456,7 +1453,15 @@ DeviceDescriptor::LineReceived(const char *line) noexcept
   const auto e = BeginEdit();
   e->UpdateClock();     // Update the NMEAInfo clock
   ParseNMEA(line, *e);
+
   e.Commit();           // Schedule a merge
 
+#ifndef NDEBUG
+  // Flarm data OK here.
+//  FlarmListDecorator fd(&(e->target_data.traffic));
+//  TargetList fl = fd.FlarmTargets();
+//  auto n = fl.GetActiveTrafficCount();
+//  std::cout << __FILE__ << ", " << __LINE__ << ": " << n << "\n";
+#endif
   return true;
 }

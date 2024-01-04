@@ -35,8 +35,12 @@ Copyright_License {
 #include <type_traits>
 #include <memory>
 
+struct AdsbTarget;
+typedef std::shared_ptr<AdsbTarget> AdsbPtr;
+
 struct AdsbTarget : public RemoteTarget
   {
+  AdsbAircraftType type;
 
 #if 0
   /**
@@ -60,6 +64,12 @@ struct AdsbTarget : public RemoteTarget
     }
 
   /**
+   * Do an item by item update for this derived class.
+   * @param other The source target.
+   */
+  void Update(const AdsbTarget& other);
+
+  /**
    * The data from this target is not from a collision avoidance system.
    * @return Always false.
    */
@@ -77,15 +87,34 @@ struct AdsbTarget : public RemoteTarget
     return true;
     }
 
+  /**
+     * Cast from \ref AdsbPtr to \ref TargetPtr.
+     * @param ptr The \ref AdsbPtr to cast.
+     * @return The resultant \ref TargetPtr.
+     */
+  static TargetPtr Cast2TargetPtr(AdsbPtr ptr)
+    {
+    return std::dynamic_pointer_cast<RemoteTarget>(ptr);
+    }
+    
+  /**
+   * Cast from \ref TargetPtr to \ref AdsbPtr.
+   * @param ptr The \ref TargetPtr to cast.
+   * @return The resultant \ref AdsbPtr or nullptr if the cast is
+   *         impossible (because ptr was not created as a \ref AdsbPtr).
+   */
+  static AdsbPtr Cast2AdsbPtr(TargetPtr ptr)
+    {
+    return std::dynamic_pointer_cast<AdsbTarget>(ptr);
+    }
+
 #ifndef NDEBUG
-    virtual int DebugType() const override
-      {
-      return 2;
-      }
+  virtual int DebugType() const override
+    {
+    return 2;
+    }
 #endif
   };
-
-typedef std::shared_ptr<AdsbTarget> AdsbPtr;
 
 /**
  * \}

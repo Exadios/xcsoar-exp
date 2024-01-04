@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -42,10 +42,7 @@
 #include "ui/canvas/opengl/Scope.hpp"
 #endif
 
-#ifndef NDEBUG
-#include "LogFile.hpp"
-#endif
-
+//------------------------------------------------------------------------------
 FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
                                        unsigned _h_padding,
                                        unsigned _v_padding,
@@ -59,6 +56,7 @@ FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
   this->target_status.Clear();
   }
 
+//------------------------------------------------------------------------------
 bool
 FlarmTrafficWindow::WarningMode() const noexcept
   {
@@ -69,6 +67,7 @@ FlarmTrafficWindow::WarningMode() const noexcept
   return warning >= 0;
   }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficWindow::OnResize(PixelSize new_size) noexcept
   {
@@ -111,13 +110,6 @@ FlarmTrafficWindow::NextTarget() noexcept
     }
 
   this->SetTarget(target);
-#ifndef NDEBUG
-  if ((this->selection >= 0) && (target != nullptr))
-    LogFormat("%s, %d: %d, %s, %x", __FILE__, __LINE__,
-              this->selection,
-              (target->IsDefined()) ? "true" : "false",
-              target->id.Arg());
-#endif
   }
 
 /**
@@ -148,12 +140,6 @@ FlarmTrafficWindow::PrevTarget() noexcept
     }
 
   this->SetTarget(target);
-#ifndef NDEBUG
-  LogFormat("%s, %d: %d, %s, %x", __FILE__, __LINE__,
-            this->selection,
-            (target->IsDefined()) ? "true" : "false",
-            target->id.Arg());
-#endif
   }
 
 /**
@@ -166,11 +152,6 @@ void
 FlarmTrafficWindow::UpdateSelector(const TargetId id,
                                    const PixelPoint pt) noexcept
   {
-#ifndef NDEBUG
-  LogFormat("%s %d: %d, %s", __FILE__, __LINE__,
-            this->selection,
-            (id.IsDefined()) ? "true" : "false");
-#endif
   // Update #selection
   if (!id.IsDefined())
     this->SetTarget(nullptr);
@@ -199,21 +180,6 @@ FlarmTrafficWindow::UpdateWarnings() noexcept
             - 1;
   }
 
-#ifndef NDEBUG
-//------------------------------------------------------------------------------
-void
-FlarmTrafficWindow::WalkTheList() const noexcept
-  {
-  unsigned long li;
-
-  for (li = 0; li < this->traffic.list.size(); li++)
-    {
-    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-              li);
-    }
-  }
-#endif
-
 /**
  * This should be called when the radar needs to be repainted
  * @param new_direction The new aircraft heading or track.
@@ -227,33 +193,11 @@ FlarmTrafficWindow::Update(Angle new_direction,
                            const TeamCodeSettings &new_settings,
                            TargetStatus target_status) noexcept
   {
-#ifndef NDEBUG
-  if (this->selection >= 0)
-    LogFormat("%s, %d: %lu, %d, %s, %x, %d, %p", __FILE__, __LINE__,
-              new_traffic.list.size(),
-              this->selection,
-              new_traffic.list[this->selection]->IsDefined() ? "true" : "false",
-              new_traffic.list[this->selection]->id.Arg(),
-              new_traffic.list[this->selection]->valid.ToInteger(),
-              &new_traffic.list
-             );
-  else
-    LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-              new_traffic.list.size());
-  
-#endif
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
   if ((new_traffic.modified == this->data_modified)                  &&
       (this->heading - new_direction).Absolute() < min_heading_delta &&
       this->target_status.gps       == target_status.gps)
     {
-#ifndef NDEBUG
-    LogFormat("%s, %d: %s, %lf, %s", __FILE__, __LINE__,
-              new_traffic.modified ? "true" : "false",
-              (this->heading - new_direction).Degrees(),
-              target_status.gps == TargetStatus::GPSStatus::NONE    ? "NONE" : 
-                target_status.gps == TargetStatus::GPSStatus::GPS_2D ? "GPS 2D" : "GPS 3D");
-#endif
     /* no change - don't redraw */
     return;
     }
@@ -282,10 +226,6 @@ FlarmTrafficWindow::Update(Angle new_direction,
 
   this->UpdateWarnings();
   this->UpdateSelector(selection_id, pt);
-
-#ifndef NDEBUG
-  this->WalkTheList();
-#endif
 
   this->Invalidate();
   }
@@ -318,23 +258,7 @@ FlarmTrafficWindow::PaintRadarNoTraffic(Canvas &canvas) const noexcept
   canvas.DrawText(radar_mid - PixelSize{ts.width / 2, radius / 2}, str);
   }
 
-/**
- * Paints a "No Go" sign on the given canvas
- * @param canvas The canvas to paint on
- */
-void
-FlarmTrafficWindow::PaintRadarNoGo(Canvas &canvas) const noexcept
-  {
-  if (small)
-    return;
-
-  const TCHAR* str = _("No Go");
-  canvas.Select(look.no_traffic_font);
-  PixelSize ts = canvas.CalcTextSize(str);
-  canvas.SetTextColor(look.default_color);
-  canvas.DrawText(radar_mid - PixelSize{ts.width / 2, this->radius / 2}, str);
-  }
-
+//------------------------------------------------------------------------------
 [[gnu::const]]
 static const Pen *
 FlarmColorPen(const FlarmTrafficLook &look, TargetColor color) noexcept
@@ -366,28 +290,30 @@ FlarmColorPen(const FlarmTrafficLook &look, TargetColor color) noexcept
 
 /**
  * Paints the traffic symbols on the given canvas
- * @param canvas The canvas to paint on
+ * @param canvas The canvas to paint on.
+ * @param traffic The target datum to paint.
+ * @param i 
  */
 void
 FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
-                                     const RemoteTarget& traffic,
+                                     const RemoteTarget& target,
                                      unsigned i) noexcept
   {
   // Save relative East/North
-  DoublePoint2D p(traffic.relative_east, -traffic.relative_north);
+  DoublePoint2D p(target.relative_east, -target.relative_north);
 
   // Calculate the distance in pixels
-  double scale = RangeScale(traffic.distance);
+  double scale = this->RangeScale(target.distance);
 
   // Don't display distracting, far away targets in WarningMode
-  if (WarningMode() && !traffic.HasAlarm() && scale == radius)
+  if (this->WarningMode() && !target.HasAlarm() && scale == radius)
     return;
 
   // x and y are not between 0 and 1 (distance will be handled via scale)
-  if (!traffic.distance.IsZero())
+  if (!target.distance.IsZero())
     {
-    p.x /= traffic.distance;
-    p.y /= traffic.distance;
+    p.x /= target.distance;
+    p.y /= target.distance;
     }
   else
     {
@@ -405,13 +331,13 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
   sc[i].x = radar_mid.x + iround(p.x * scale);
   sc[i].y = radar_mid.y + iround(p.y * scale);
 
-  const Color *text_color;
-  const Pen *target_pen, *circle_pen;
-  const Brush *target_brush = nullptr, *arrow_brush;
+  const Color* text_color;
+  const Pen* target_pen, * circle_pen;
+  const Brush* target_brush = nullptr, * arrow_brush;
   unsigned circles = 0;
 
   // Set the arrow color depending on alarm level
-  switch (traffic.alarm_level)
+  switch (target.alarm_level)
     {
     case RemoteTarget::AlarmType::LOW:
     case RemoteTarget::AlarmType::INFO_ALERT:
@@ -440,7 +366,7 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
       else
         {
         // Search for team color
-        const TargetColor team_color = TargetFriends::GetFriendColor(traffic.id);
+        const TargetColor team_color = TargetFriends::GetFriendColor(target.id);
 
         // If team color found -> draw a colored circle around the target
         if (team_color != TargetColor::NONE)
@@ -462,7 +388,7 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
           }
         else
           {
-          if (traffic.IsPassive())
+          if (target.IsPassive())
             {
             text_color = &look.passive_color;
             target_pen = &look.passive_pen;
@@ -515,7 +441,7 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
 
   // Rotate and shift the arrow
   PolygonRotateShift(Arrow, sc[i],
-                     traffic.track - (enable_north_up ?
+                     target.track - (enable_north_up ?
                                       Angle::Zero() : heading),
                      Layout::Scale(100u));
 
@@ -531,8 +457,8 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
 
   if (small)
     {
-    if (!WarningMode() || traffic.HasAlarm())
-      PaintTargetInfoSmall(canvas, traffic, i, *text_color, *arrow_brush);
+    if (!WarningMode() || target.HasAlarm())
+      PaintTargetInfoSmall(canvas, target, i, *text_color, *arrow_brush);
 
     return;
     }
@@ -543,9 +469,9 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
 
   // if vertical speed to small or negative -> skip this one
   if (side_display_type == SideInfoType::VARIO &&
-      (!traffic.climb_rate_avg30s_available ||
-       traffic.climb_rate_avg30s < 0.5 ||
-       traffic.IsPowered()))
+      (!target.climb_rate_avg30s_available ||
+       target.climb_rate_avg30s < 0.5 ||
+       target.IsPowered()))
     return;
 
   // Select font
@@ -556,9 +482,9 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
   TCHAR tmp[10];
 
   if (side_display_type == SideInfoType::VARIO)
-    FormatUserVerticalSpeed(traffic.climb_rate_avg30s, tmp, false);
+    FormatUserVerticalSpeed(target.climb_rate_avg30s, tmp, false);
   else
-    FormatRelativeUserAltitude(traffic.relative_altitude, tmp, true);
+    FormatRelativeUserAltitude(target.relative_altitude, tmp, true);
 
   PixelSize sz = canvas.CalcTextSize(tmp);
   const PixelPoint tp
@@ -579,15 +505,16 @@ FlarmTrafficWindow::PaintRadarTarget(Canvas &canvas,
   canvas.DrawText(tp, tmp);
   }
 
+//------------------------------------------------------------------------------
 void
 FlarmTrafficWindow::PaintTargetInfoSmall(Canvas& canvas,
-                                         const RemoteTarget& traffic,
+                                         const RemoteTarget& target,
                                          unsigned i,
                                          const Color& text_color,
                                          const Brush& arrow_brush) noexcept
   {
   const short relalt =
-    iround(Units::ToUserAltitude(traffic.relative_altitude) / 100);
+    iround(Units::ToUserAltitude(target.relative_altitude) / 100);
 
   // if (relative altitude is other than zero)
   if (relalt == 0)
@@ -605,7 +532,7 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas& canvas,
   // Calculate size of the output string
   PixelSize tsize = canvas.CalcTextSize(relalt_s);
 
-  unsigned dist = Layout::FastScale(traffic.HasAlarm() ? 12 : 8);
+  unsigned dist = Layout::FastScale(target.HasAlarm() ? 12 : 8);
 
   // Draw string
   canvas.DrawText(sc[i].At(dist, -int(tsize.height / 2)), relalt_s);
@@ -661,25 +588,25 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   // Iterate through the remote traffic (normal traffic)
   for (unsigned i = 0; i < this->traffic.list.size(); ++i)
     {
-    const TargetPtr& traffic = this->traffic.list[i];
+    const TargetPtr& target = this->traffic.list[i];
 
-    if (!traffic->HasAlarm() &&
+    if (!target->HasAlarm() &&
         static_cast<unsigned> (this->selection) != i)
       /*
        * \todo Remove arbitrary target range limitation. (Issue 5)
        */
-      if (traffic->distance < RoughDistance(15000.0)) /* As a temporary measure
+      if (target->distance < RoughDistance(15000.0)) /* As a temporary measure
                                                          do not paint
                                                          distant targets. */
-        PaintRadarTarget(canvas, *traffic, i);
+        PaintRadarTarget(canvas, *target, i);
     }
 
   if (this->selection >= 0)
     {
-    const TargetPtr& traffic = this->traffic.list[this->selection];
+    const TargetPtr& target = this->traffic.list[this->selection];
 
-    if (!traffic->HasAlarm())
-      PaintRadarTarget(canvas, *traffic, this->selection);
+    if (!target->HasAlarm())
+      PaintRadarTarget(canvas, *target, this->selection);
     }
 
   if (!WarningMode())
@@ -688,10 +615,10 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   // Iterate through the Flarm traffic (alarm traffic)
   for (unsigned i = 0; i < this->traffic.list.size(); ++i)
     {
-    const TargetPtr& traffic = this->traffic.list[i];
+    const TargetPtr& target = this->traffic.list[i];
 
-    if (traffic->HasAlarm())
-      PaintRadarTarget(canvas, *traffic, i);
+    if (target->HasAlarm())
+      PaintRadarTarget(canvas, *target, i);
     }
   }
 
@@ -831,37 +758,12 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const noexcept
 void
 FlarmTrafficWindow::Paint(Canvas& canvas) noexcept
   {
-  if (this->selection >= 0)
-    if (!this->traffic.list[this->selection]->IsDefined())
-      {
-#ifndef NDEBUG
-      LogFormat("%s, %d: %s %x, %u, %p, %d", __FILE__, __LINE__,
-                (this->traffic.list[this->selection]->IsDefined()) ?
-                  "true" :
-                  "false",
-                this->traffic.list[this->selection]->id.Arg(),
-                this->traffic.list[this->selection]->valid.ToInteger(),
-                &this->traffic.list,
-                this->selection);
-      }
-#endif
   assert(this->selection < (int)this->traffic.list.size());
   assert(this->selection < 0 || this->traffic.list[this->selection]->IsDefined());
   assert(this->warning < (int)this->traffic.list.size());
   assert(this->warning < 0 || this->traffic.list[this->warning]->IsDefined());
   assert(this->warning < 0 || this->traffic.list[this->warning]->HasAlarm());
 
-#ifndef NDEBUG
-  if (this->selection >= 0)
-    LogFormat("%s, %d: %s %x, %u, %p, %d", __FILE__, __LINE__,
-              (this->traffic.list[this->selection]->IsDefined()) ?
-                "true" :
-                "false",
-              this->traffic.list[this->selection]->id.Arg(),
-              this->traffic.list[this->selection]->valid.ToInteger(),
-              &this->traffic.list,
-              this->selection);
-#endif
   this->PaintRadarBackground(canvas);
   this->PaintRadarTraffic(canvas);
   }
@@ -890,6 +792,7 @@ FlarmTrafficWindow::OnPaint(Canvas &canvas) noexcept
   Paint(canvas);
   }
 
+//------------------------------------------------------------------------------
 bool
 FlarmTrafficWindow::SelectNearTarget(PixelPoint p, int max_distance) noexcept
   {

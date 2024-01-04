@@ -3,15 +3,16 @@ project('XCSoar', [ 'cpp', 'c' ],
         license        : 'GPL2+',
         version        : ('v7.27.0.3.1'),
         default_options: [
-                          'buildtype=debugoptimized',
+                          'buildtype=debug',
+                          'debug=true',
                           'b_lundef=false',
                           'c_std=gnu11',
 #                          'cpp_std=c++17',
                           'warning_level=0',
                           'default_library=static',
                           'werror=false',
-                          'wno-error=non-virtual-dtor',
-                          'optimization=g',
+#                          'wno-error=non-virtual-dtor',
+                          'optimization=0',
                          ])
 
 vs = find_program('tools/Meson/scripts/version')
@@ -139,11 +140,12 @@ add_project_arguments([
                        '-isystem /usr/include/x86_6-linux-gnu',
                        '-isystem /usr/include/lua5.4',
                        '-isystem /usr/include/freetype2/',
+                       '-O0',
+                       '-g3',
                        version_define,
                       ],
                       language : 'cpp')
 add_project_arguments([
-                       '-Og',
                        '-funit-at-a-time',
                        '-ffast-math',
                        '-g',
@@ -260,6 +262,8 @@ add_project_arguments([
                        '-isystem /usr/include/x86_6-linux-gnu',
                        '-isystem /usr/include/lua5.4',
                        '-isystem /usr/include/freetype2/',
+                       '-O0',
+                       '-g3',
                        version_define,
                       ],
                       language : 'c')
@@ -377,6 +381,7 @@ cxx = meson.get_compiler('cpp')
 
 xs = subproject('xcsoar_sources')
 xcsoar_sources = xs.get_variable('xcsoar_sources')
+xcsoar_cpp_args = xs.get_variable('xcsoar_cpp_args')
 
 lua5_4          = dependency('lua5.4-c++')
 glu1_mesa_dev   = dependency('glu')
@@ -396,9 +401,15 @@ libz            = cxx.find_library('libz', required : true)
 libgeotiff_dev  = cxx.find_library('geotiff', required : true)
 x11             = cxx.find_library('X11', required : true)
 glx             = cxx.find_library('GLX', required : true)
+gl              = cxx.find_library('GL', required : true)
+glu             = cxx.find_library('GLU', required : true)
 
-xcsoar = executable('xcsoar', xcsoar_sources,
-                    link_with : [ task_lib,
+xcsoar_lib = library('xcsoar', xcsoar_sources,
+                     include_directories : common_includes,
+                    )
+xcsoar = executable('xcsoar', 'src/XCSoar.cpp',
+                    link_with : [ xcsoar_lib,
+                                  task_lib,
                                   geo_lib,
                                   lua_lib,
                                   vega_lib,
@@ -475,7 +486,13 @@ xcsoar = executable('xcsoar', xcsoar_sources,
                                     libz,
                                     x11,
                                     glx,
+                                    gl,
+                                    glu,
                                     libpthread,
                                   ],
+                      cpp_args : xcsoar_cpp_args,
                     )
+
+test_includes = include_directories(['src', 'src/unix'])
+subdir('test/src')
 

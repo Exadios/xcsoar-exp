@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -55,12 +55,8 @@ void
 RemoteTarget::Update(const RemoteTarget &other)
   {
   this->alarm_level         = other.alarm_level;
-  this->relative_north      = other.relative_north;
-  this->relative_east       = other.relative_east;
-  this->relative_altitude   = other.relative_altitude;
   this->track               = other.track;
   this->track_received      = other.track_received;
-  this->turn_rate           = other.turn_rate;
   this->speed               = other.speed;
   this->speed_received      = other.speed_received;
   this->climb_rate          = other.climb_rate;
@@ -83,8 +79,11 @@ RemoteTarget::RankScore() const
                               (double)this->alarm_level;
   return (unsigned int)(dist_score + alarm_score);
   }
+
 //------------------------------------------------------------------------------
 RemoteTarget::RemoteTarget()
+  : location_available(false),
+    distance(-1)
   {
   }
 
