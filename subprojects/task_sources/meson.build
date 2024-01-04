@@ -49,6 +49,7 @@ task_sources = [
 'ObservationZones/SectorZone.cpp',
 'ObservationZones/LineSectorZone.cpp',
 'ObservationZones/SymmetricSectorZone.cpp',
+'ObservationZones/VariableKeyholeZone.cpp',
 'ObservationZones/KeyholeZone.cpp',
 'ObservationZones/AnnularSectorZone.cpp',
 'PathSolvers/TaskDijkstra.cpp',

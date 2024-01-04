@@ -496,3 +496,4 @@ xcsoar = executable('xcsoar', 'src/XCSoar.cpp',
 test_includes = include_directories(['src', 'src/unix'])
 subdir('test/src')
 
+subdir('tools/ADSB/NMEA')

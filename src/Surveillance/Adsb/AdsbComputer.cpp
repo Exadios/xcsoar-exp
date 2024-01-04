@@ -69,99 +69,107 @@ AdsbComputer::Process(TargetData& adsb,
     double latitude_to_north(0);
     double longitude_to_east(0);
 
-    if (fabs(dlat) > 0 && fabs(dlon) > 0)
+    /* Meters per degree for phi, lambda at our current location. */
+    latitude_to_north = dlat / delta_lat.Degrees();
+    longitude_to_east = dlon / delta_lon.Degrees();
+    // for each item in traffic
+    for (size_t i = 0; i < adsb.traffic.adsb_list.size(); i++)
       {
-      /* Meters per degree for phi, lambda at our current location. */
-      latitude_to_north = dlat / delta_lat.Degrees();
-      longitude_to_east = dlon / delta_lon.Degrees();
-      }
-    else
-      {
-      // for each item in traffic
-      for (auto &target : adsb.traffic.list) 
+      AdsbTarget& target = adsb.traffic.adsb_list[i];
+//    for (auto& target : adsb.traffic.adsb_list) 
+//      {
+      // Calculate distance
+      Angle delta_phi    = target.location.latitude  -
+                           basic.location.latitude;
+      Angle delta_lambda = target.location.longitude -
+                           basic.location.longitude;
+      target.relative_north = delta_phi.Degrees()    * latitude_to_north;
+      target.relative_east  = delta_lambda.Degrees() * longitude_to_east;
+      target.distance = hypot(target.relative_north, target.relative_east);
+
+      /* Cut out this target if the range is too great.
+       *
+       * Too great a distance is arbitrarily defined here as twice the 
+       * maximum range of the surveillance radar.
+       *
+       * \todo Somehow more closely connect this check here to the
+       *       maximum range on the radar so that this value is a function
+       *       of that code.
+      */
+      if (target.distance > RoughDistance(20000))  // 20kM
         {
-        AdsbPtr adsb_target = std::dynamic_pointer_cast<AdsbTarget>(target);
-        if (adsb_target == nullptr)
-          continue; // This is not an ADSB target.
+        adsb.traffic.adsb_list.quick_remove(i);
+        continue;
+        }
 
-        // Calculate distance
-        Angle delta_phi    = target->location.latitude  -
-                             basic.location.latitude;
-        Angle delta_lambda = target->location.longitude -
-                             basic.location.longitude;
-        adsb_target->relative_north = delta_phi.Degrees()    * latitude_to_north;
-        adsb_target->relative_east  = delta_lambda.Degrees() * longitude_to_east;
-        adsb_target->distance = hypot(target->relative_north, target->relative_east);
+      // Calculate absolute altitude
+      target.altitude_available = basic.gps_altitude_available;
+      if (target.altitude_available)
+        target.altitude = target.relative_altitude +
+                           RoughAltitude(basic.gps_altitude);
 
-        // Calculate absolute altitude
-        adsb_target->altitude_available = basic.gps_altitude_available;
-        if (adsb_target->altitude_available)
-          adsb_target->altitude = target->relative_altitude +
-                             RoughAltitude(basic.gps_altitude);
+      // Calculate average climb rate
+      target.climb_rate_avg30s_available = target.altitude_available;
+      if (target.climb_rate_avg30s_available)
+        target.climb_rate_avg30s =
+            this->adsb_calculations.Average30s(target.id,
+                                               basic.time,
+                                               target.altitude);
 
-        // Calculate average climb rate
-        adsb_target->climb_rate_avg30s_available = adsb_target->altitude_available;
-        if (adsb_target->climb_rate_avg30s_available)
-          adsb_target->climb_rate_avg30s =
-              this->adsb_calculations.Average30s(adsb_target->id,
-                                                 basic.time,
-                                                 adsb_target->altitude);
+      // The following calculations are only relevant for targets
+      // where information is missing
+      if (target.track_received && 
+          target.speed_received &&
+          target.climb_rate_received)
+        continue;
 
-        // The following calculations are only relevant for targets
-        // where information is missing
-        if (adsb_target->track_received && 
-            adsb_target->speed_received &&
-            adsb_target->climb_rate_received)
-          continue;
+      // Check if the target has been seen before in the last seconds
+      const AdsbTarget* last_target = 
+                last_adsb.traffic.FindAdsbTraffic(target.id);
+      if (last_target == nullptr || !last_target->valid)
+        continue; // last_target is either not ADSB or not valid.
 
-        // Check if the target has been seen before in the last seconds
-        const AdsbPtr last_target = std::dynamic_pointer_cast<AdsbTarget>(
-                  last_adsb.traffic.FindTraffic(adsb_target->id));
-        if (last_target == nullptr || !last_target->valid)
-          continue; // last_target is either not ADSB or not valid.
+      // Calculate the time difference between now and the last contact
+      const auto dt = target.valid.GetTimeDifference(last_target->valid);
+      if (dt.count() > 0)
+        {
+        // Calculate the immediate climb rate
+        if (!target.climb_rate_received)
+          target.climb_rate =
+            (target.relative_altitude - last_target->relative_altitude) /
+            dt.count();
+        }
+      else
+        {
+        // Since the time difference is zero (or negative)
+        // we can just copy the old values
+        if (!target.climb_rate_received)
+          target.climb_rate = last_target->climb_rate;
+        }
 
-        // Calculate the time difference between now and the last contact
-        const auto dt = target->valid.GetTimeDifference(last_target->valid);
-        if (dt.count() > 0)
-          {
-          // Calculate the immediate climb rate
-          if (!adsb_target->climb_rate_received)
-            adsb_target->climb_rate =
-              (adsb_target->relative_altitude - last_target->relative_altitude) /
-              dt.count();
-          }
-        else
-          {
-          // Since the time difference is zero (or negative)
-          // we can just copy the old values
-          if (!adsb_target->climb_rate_received)
-            adsb_target->climb_rate = last_target->climb_rate;
-          }
+      if (dt.count() > 0            &&
+          target.location_available &&
+          last_target->location_available) 
+        {
+        // Calculate the GeoVector between now and the last contact
+        GeoVector vec = last_target->location.DistanceBearing(target.location);
 
-        if (dt.count() > 0             &&
-            adsb_target->location_available &&
-            last_target->location_available) 
-          {
-          // Calculate the GeoVector between now and the last contact
-          GeoVector vec = last_target->location.DistanceBearing(target->location);
+        if (!target.track_received)
+          target.track = vec.bearing;
 
-          if (!target->track_received)
-            adsb_target->track = vec.bearing;
+        // Calculate the speed [m/s]
+        if (!target.speed_received)
+          target.speed = vec.distance / dt.count();
+        }
+      else
+        {
+        // Since the time difference is zero (or negative)
+        // we can just copy the old values
+        if (!target.track_received)
+          target.track = last_target->track;
 
-          // Calculate the speed [m/s]
-          if (!target->speed_received)
-            adsb_target->speed = vec.distance / dt.count();
-          }
-        else
-          {
-          // Since the time difference is zero (or negative)
-          // we can just copy the old values
-          if (!adsb_target->track_received)
-            adsb_target->track = last_target->track;
-
-          if (!adsb_target->speed_received)
-            adsb_target->speed = last_target->speed;
-          }
+        if (!target.speed_received)
+          target.speed = last_target->speed;
         }
       }
     }

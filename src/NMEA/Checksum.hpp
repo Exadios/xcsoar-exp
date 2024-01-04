@@ -79,6 +79,9 @@ NMEAChecksum(const char *p, unsigned length)
 /**
  * Verify the NMEA checksum at the end of the specified string,
  * separated with an asterisk ('*').
+ * @param p NULL terminated string starting with a '$' and ending with the
+ *          three character checksum field ('*cc'). Do not forget to lose 
+ *          any '\n' that may be after the checksum field.
  */
 [[gnu::pure]]
 bool

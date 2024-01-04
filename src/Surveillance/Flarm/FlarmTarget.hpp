@@ -126,7 +126,8 @@ struct FlarmTarget : public RemoteTarget
     }
 
   /**
-   * Do an item by item update for this derived class.
+   * Do an item by item update for this derived class and then for the
+   * parent class.
    * @param other The source target.
    */
   void Update(const FlarmTarget& other);

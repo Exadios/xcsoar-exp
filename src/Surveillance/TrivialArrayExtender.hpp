@@ -78,19 +78,40 @@ public:
               value);
     }
 
-  /**
-   * Copy operator for \ref TrivialArray class.
-   * @param rhs The source \ref TrivialArray object.
-   * @return This object.
-   */
-  TrivialArrayExtender<T, max>& operator=(const TrivialArrayExtender<T, max>& rhs)
-    {
-    this->the_size = rhs.the_size;
-    this->array    = rhs.array;
-    return *this;
-    }
-  };
+//  /**
+//   * Copy operator for \ref TrivialArray class.
+//   * @param rhs The source \ref TrivialArray object.
+//   * @return This object.
+//   */
+//  TrivialArrayExtender<T, max>& operator=(const TrivialArrayExtender<T, max>& rhs)
+//    {
+//    this->the_size = rhs.the_size;
+//#ifndef NDEBUG
+//    std::cout << __FILE__ << ", " << __LINE__ << ": "
+//              << this->the_size << ", " << rhs.the_size << "\n";
+//#endif
+//    this->array    = rhs.array;
+//#ifndef NDEBUG
+//    std::cout << __FILE__ << ", " << __LINE__ << ": "
+//              << this->the_size << ", " << rhs.the_size << "\n";
+//#endif
+//    return *this;
+//    }
 
+  /**
+   * Quickly remove the indexed item by copying the last item over it. If
+   * the index is the last item then just drop the indexed item.
+   * \note This member function does not override 
+   * \ref TrivialArray::quick_remove.
+   * @param i The index to the item to remove.
+   */
+   constexpr void quick_remove(size_type i) noexcept
+     {
+     assert(i < this->size());
+     TrivialArray<T, max>::quick_remove(i);
+     }
+
+  };
 /**
  * \}
  */

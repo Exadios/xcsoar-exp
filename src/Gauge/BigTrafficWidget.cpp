@@ -138,7 +138,7 @@ class FlarmTrafficControl : public FlarmTrafficWindow
                                double relative_altitude) const;
     void PaintID(Canvas& canvas,
                  PixelRect rc,
-                 const TargetPtr& traffic) const;
+                 const FlarmTarget& traffic) const;
     void PaintTaskDirection(Canvas &canvas) const;
 
     void StopDragging()
@@ -223,16 +223,18 @@ FlarmTrafficControl::SetAutoZoom(bool enabled)
 void
 FlarmTrafficControl::CalcAutoZoom()
   {
+  /* \ todo Include ADSB in calculation of auto zoom */
   bool warning_mode = WarningMode();
   RoughDistance zoom_dist = 0;
 
-  for (auto it = this->traffic.list.begin(), end = this->traffic.list.end();
+  for (auto it = this->traffic.flarm_list.begin(),
+       end = this->traffic.flarm_list.end();
        it != end; ++it)
     {
-    if (warning_mode && !(*it)->HasAlarm())
+    if (warning_mode && !it->HasAlarm())
       continue;
 
-    zoom_dist = std::max((*it)->distance, zoom_dist);
+    zoom_dist = std::max(it->distance, zoom_dist);
     }
 
   double zoom_dist2 = zoom_dist;
@@ -476,31 +478,31 @@ FlarmTrafficControl::PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
 void
 FlarmTrafficControl::PaintID(Canvas& canvas,
                              PixelRect rc,
-                             const TargetPtr& traffic) const
+                             const FlarmTarget& traffic) const
   {
   TCHAR buffer[20];
 
   unsigned font_size;
-  if (traffic->HasName())
+  if (traffic.HasName())
     {
     canvas.Select(look.call_sign_font);
     font_size = look.call_sign_font.GetHeight();
 
-    _tcscpy(buffer, traffic->name);
+    _tcscpy(buffer, traffic.name);
     }
   else
     {
     canvas.Select(look.info_labels_font);
     font_size = look.info_labels_font.GetHeight();
 
-    traffic->id.Format(buffer);
+    traffic.id.Format(buffer);
     }
 
   if (!WarningMode())
     {
 #ifdef ENABLE_TEAM_FLYING
     // Team color dot
-    TargetColor team_color = FlarmFriends::GetFriendColor(traffic->id);
+    TargetColor team_color = FlarmFriends::GetFriendColor(traffic.id);
 #else
     TargetColor team_color = TargetColor::NONE;
 #endif  // ENABLE_TEAM_FLYING
@@ -550,8 +552,8 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas& canvas) const
     return;
 
   // Shortcut to the selected traffic
-  TargetPtr target = this->traffic.list[WarningMode() ? warning : selection];
-  assert(target->IsDefined());
+  FlarmTarget target = this->traffic.flarm_list[WarningMode() ? warning : selection];
+  assert(target.IsDefined());
 
   const unsigned padding = Layout::GetTextPadding();
   PixelRect rc;
@@ -561,7 +563,7 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas& canvas) const
   rc.bottom = canvas.GetHeight() - padding;
 
   // Set the text color and background
-  switch (target->alarm_level)
+  switch (target.alarm_level)
     {
     case RemoteTarget::AlarmType::LOW:
     case RemoteTarget::AlarmType::INFO_ALERT:
@@ -579,17 +581,17 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas& canvas) const
   canvas.SetBackgroundTransparent();
 
   // Climb Rate
-  if (!WarningMode() && target->climb_rate_avg30s_available)
-    PaintClimbRate(canvas, rc, target->climb_rate_avg30s);
+  if (!WarningMode() && target.climb_rate_avg30s_available)
+    PaintClimbRate(canvas, rc, target.climb_rate_avg30s);
 
   // Distance
-  PaintDistance(canvas, rc, target->distance);
+  PaintDistance(canvas, rc, target.distance);
 
   // Relative Height
-  PaintRelativeAltitude(canvas, rc, target->relative_altitude);
+  PaintRelativeAltitude(canvas, rc, target.relative_altitude);
 
   // ID / Name
-  if (!target->HasAlarm())
+  if (!target.HasAlarm())
     canvas.SetTextColor(look.selection_color);
 
   this->PaintID(canvas, rc, target);
@@ -615,7 +617,7 @@ FlarmTrafficControl::OpenDetails()
     return;
 
   // Don't open the details dialog if no plane selected
-  const TargetPtr target = this->GetTarget();
+  const FlarmTarget* target = this->GetTarget();
   if (target == NULL)
     return;
 
@@ -646,46 +648,46 @@ struct TrafficWidget::Windows
 
   Windows(TrafficWidget &widget, ContainerWindow &parent, const PixelRect &r,
           const ButtonLook &button_look, const FlarmTrafficLook &flarm_look)
-    :zoom_in_button(MakeSymbolButton(parent, button_look, _T("+"), r,
+    : zoom_in_button(MakeSymbolButton(parent, button_look, _T("+"), r,
                                      [&widget]()
-    {
-    widget.ZoomIn();
-    })),
-  zoom_out_button(MakeSymbolButton(parent, button_look,
-                                   _T("-"), r,
-                                   [&widget]()
-    {
-    widget.ZoomOut();
-    })),
-  previous_item_button(MakeSymbolButton(parent, button_look,
-                                        _T("<"), r,
+        {
+        widget.ZoomIn();
+        })),
+      zoom_out_button(MakeSymbolButton(parent, button_look,
+                                       _T("-"), r,
+                                       [&widget]()
+        {
+        widget.ZoomOut();
+        })),
+      previous_item_button(MakeSymbolButton(parent, button_look,
+                                            _T("<"), r,
+                                            [&widget]()
+        {
+        widget.PreviousTarget();
+        })),
+      next_item_button(MakeSymbolButton(parent, button_look,
+                                        _T(">"), r,
                                         [&widget]()
-    {
-    widget.PreviousTarget();
-    })),
-  next_item_button(MakeSymbolButton(parent, button_look,
-                                    _T(">"), r,
-                                    [&widget]()
-    {
-    widget.NextTarget();
-    })),
-  details_button(parent, button_look,
-                 _("Details"), r, WindowStyle(),
-                 [&widget]()
-    {
-    widget.OpenDetails();
-    }),
-  close_button(parent, button_look,
-               _("Close"), r, WindowStyle(),
-               []()
-    {
-    PageActions::Restore();
-    }),
-  view(flarm_look)
-    {
-    view.Create(parent, r);
-    UpdateLayout(r);
-    }
+        {
+        widget.NextTarget();
+        })),
+      details_button(parent, button_look,
+                     _("Details"), r, WindowStyle(),
+                     [&widget]()
+        {
+        widget.OpenDetails();
+        }),
+      close_button(parent, button_look,
+                   _("Close"), r, WindowStyle(),
+                   []()
+        {
+        PageActions::Restore();
+        }),
+      view(flarm_look)
+        {
+        view.Create(parent, r);
+        UpdateLayout(r);
+        }
 
   void UpdateLayout(const PixelRect &rc) noexcept;
   };

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -38,10 +38,25 @@ AsyncTerrainOverviewLoader *terrain_loader;
 DrawThread *draw_thread;
 #endif
 
+/**
+ * All the configured devices.
+ */
 MultipleDevices *devices;
+
+/**
+ * The blackboard that manages the I/O data.
+ */
 DeviceBlackboard *device_blackboard;
 
+/**
+ * The merge thread used to collect new input data and to initial processing.
+ */
 MergeThread *merge_thread;
+
+/**
+ * The calculation thread used to do long running data processing in input
+ * data.
+ */
 CalculationThread *calculation_thread;
 
 Logger *logger;
@@ -57,8 +72,14 @@ TrackingGlue *tracking;
 TIM::Glue *tim_glue;
 #endif
 
+/**
+ * Waypoint container.
+ */
 Waypoints way_points;
 
+/**
+ * Task manager facade.
+ */
 ProtectedTaskManager *protected_task_manager;
 
 Airspaces airspace_database;

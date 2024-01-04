@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,15 +29,16 @@ Copyright_License {
  * \{
  */
 
-#include "Surveillance/RemoteTargetComputer.hpp"
 #include "Surveillance/Flarm/FlarmCalculations.hpp"
 
+struct TargetData;
+struct NMEAInfo;
 /**
- * The purpose of this class is to provide a base class for a computer
- * process  \ref FlarmTarget data. This processing is low cost and occurs
+ * The purpose of this class is to provide a base class for a computer to
+ * process \ref FlarmTarget data. This processing is low cost and occurs
  * in the merge thread.
  */
-class FlarmComputer final : public RemoteTargetComputer
+class FlarmComputer 
   {
 public:
   /**
@@ -48,7 +49,7 @@ public:
   /**
    * Dtor.
    */
-  virtual ~FlarmComputer() override;
+  ~FlarmComputer();
 
     /**
    * Process each target to produce the vital variables for those targets.
@@ -56,9 +57,9 @@ public:
    * @param last_traffic Targets of the previous interval.
    * @param basic The data corresponding to this particular device.
    */
-  virtual void Process(TargetData& traffic,
-                       TargetData& last_traffic,
-                       const NMEAInfo&   basic);
+  void Process(TargetData& traffic,
+               TargetData& last_traffic,
+               const NMEAInfo&   basic);
 
 protected:
 

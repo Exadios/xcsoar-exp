@@ -25,13 +25,12 @@ Copyright_License {
 
 //------------------------------------------------------------------------------
 TargetList::TargetList(const TargetList& rhs)
-  : TargetListBase(rhs)
   {
   this->Clear();
   this->modified    = rhs.modified;
   this->new_traffic = rhs.new_traffic;
-  this->list        = rhs.list;
-  this->type        = rhs.type;
+  this->flarm_list  = rhs.flarm_list;
+  this->adsb_list   = rhs.adsb_list;
   }
 
 //------------------------------------------------------------------------------
@@ -41,26 +40,28 @@ TargetList::operator=(const TargetList& rhs)
   this->Clear();
   this->modified    = rhs.modified;
   this->new_traffic = rhs.new_traffic;
-  this->list        = rhs.list;
-  this->type        = rhs.type;
+  this->flarm_list  = rhs.flarm_list;
+  this->adsb_list   = rhs.adsb_list;
   return *this;
   }
 
 //------------------------------------------------------------------------------
-const TargetPtr
+const FlarmTarget*
 TargetList::FindMaximumAlert() const
   {
-  TargetPtr alert = nullptr;
+  const FlarmTarget* alert = nullptr;
 
-  for (const auto& traffic : list)
-    if (traffic->HasAlarm() &&
-        (alert == nullptr ||
-         ((unsigned)traffic->alarm_level > (unsigned)(alert)->alarm_level ||
-          (traffic->alarm_level == (alert)->alarm_level &&
+  for (const auto& traffic : this->flarm_list)
+    {
+    if (traffic.HasAlarm() && 
+        (alert == nullptr                                                ||
+         ((unsigned)traffic.alarm_level > (unsigned)(alert)->alarm_level ||
+          (traffic.alarm_level == (alert)->alarm_level                   &&
            /* if the levels match -> let the distance decide (smaller
               distance wins) */
-           traffic->distance < (alert)->distance))))
-      alert = traffic;
+           traffic.distance < (alert)->distance))))
+      alert = &traffic;
+    }
 
   return alert;
   }

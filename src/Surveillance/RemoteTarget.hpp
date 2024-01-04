@@ -190,11 +190,12 @@ public:
 
   /**
    * Clear this object if its data has expired.
+   * @param time Current seconds since midnight * 64.
    * @return true if the object is still valid
    */
-  bool Refresh(TimeStamp Time) noexcept
+  bool Refresh(TimeStamp time) noexcept
     {
-    this->valid.Expire(Time, std::chrono::seconds(2));
+    this->valid.Expire(time, std::chrono::seconds(2));
     return this->valid;
     }
 
@@ -202,7 +203,7 @@ public:
    * Do an item for item copy to this object.
    * @param other The source target.
    */
-  virtual void Update(const RemoteTarget& other);
+  void Update(const RemoteTarget& other);
 
   /**
    * Ctor

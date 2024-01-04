@@ -24,6 +24,7 @@ Copyright_License {
 #include "Surveillance/RemoteTarget.hpp"
 #include <math.h>
 
+#if 0
 /**
  * Text representations of the \ref AircraftType enum. Plainly the number
  * entries in this array must equal the number of enum types.
@@ -49,6 +50,7 @@ static constexpr const TCHAR* acTypes[18] =
   _T("Emergency Surface Vehicle"),
   _T("Service Surface Vehicle"),
   };
+#endif
 
 //------------------------------------------------------------------------------
 void

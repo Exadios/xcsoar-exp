@@ -1,0 +1,86 @@
+Main()                                                         |
+TopWindow::RunEventLoop()                                      |
+EventLoop(Event& )                                             |
+TopWindow::Refresh()                                           |
+TopWindow::Expose()                                            |
+MainWindow::OnPaint(Canvas& )                                  | "main" thread
+ContainerWindow::OnPaint(Canvas& )                             |
+WindowList::Paint(Canvas& )                                    |
+SmallTrafficWindow::OnPaint(Canvas& )                          |
+FlarmTrafficWindow::OnPaint(Canvas& )                          |
+FlarmTrafficWindow::Paint(Canvas& )                            |
+
+Main()                                                         |
+TopWindow::RunEventLoop()                                      |
+EventLoop::Get(...)                                            |
+EventQueue::Wait()                                             |
+EventQueue::Poll()                                             |
+EventLoop::Run()                                               |
+EventLoop::HandleTimers()                                      |
+TimerList::Run(...)                                            |
+FineTimerEvent::Run()                                          | "main" thread
+UI::Timer::OnTimer()                                           |
+PeriodicTimer::Timer                                           |
+UI::Invoke()                                                   |
+MainWindow::PeriodicTimer                                      |
+MainWindow::RunTimer()                                         |
+MainWindow::UpdateGaugeVisibility()                            |
+MainWindow::UpdateTrafficGaugeVisiblility()                    |
+ManageWidget::Show()                                           |
+BaseBlackboard::Basic()                                ??      |
+GaugeFLARM::Update(NMEAInfo& basic)                            |
+SmallTrafficWindow::Update(...)                                |
+FlarmTrafficWindow::Update(...)                                |
+
+
+Device to Merge thread
+----------------------
+
+DeviceDataEditor(DeviceBlackboard&, idx)::Commit()            | device thread
+DeviceBlackboard::ScheduleMerge()                             |
+::TriggerMergeThread()                                        -
+MergeThread(WorkerThread)::Trigger()                          | merge thread
+MergeThread::Tick()                                           | 
+MergeThread::Process()                                        |
+DeviceBlackboard::Merge()                                     |
+.
+.
+.
+
+
+Data input processing with NMEA via TCP/IP port.
+------------------------------------------------
+.
+.
+.
+OnSocketPort::OnSocketReady()
+BufferedPort::DataReceived()
+DeviceDescriptor::DataReceived()
+PortLineSplitter::DataReceived()
+DeviceDescriptor::LineReceived()
+DeviceDescriptor::ParseNMEA()
+NMEAParser::ParseLine()
+ParsePFLAA()
+
+TrafficList this
+-----------------
+0x55beb7693060
+0x55beb750a1e8
+0x55beb75128b0
+0x55beb75161d0
+0x55beb7519af0
+0x55beb751d410
+0x55beb7520d30
+0x55beb7524650
+0x55beb7527f70
+0x55beb752b890
+0x55beb752f1b0
+0x55beb7709f98
+0x55beb75461a8
+0x55beb7cf4500
+0x55beb7cf7e60
+0x55beb7d35060
+
+Targets added to 0x55beb7527f70
+
+Targets expired to 0x55beb7524650

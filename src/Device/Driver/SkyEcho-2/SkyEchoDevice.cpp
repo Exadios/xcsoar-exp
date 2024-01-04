@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ SkyEchoDevice::LinkTimeout()
   }
 
 //------------------------------------------------------------------------------
-void
+constexpr void
 SkyEchoDevice::Initfcs()
   {
   /* This code comes from GDL 90 specification document 
@@ -167,7 +167,7 @@ SkyEchoDevice::TwosComplement(unsigned int x, int n)
 void
 SkyEchoDevice::Traffic(std::span<const std::byte> s, TrafficStruct &t)
   {
-  assert(((MessageID)s[1] == MessageID::OWNSHIPREPORT) |
+  assert(((MessageID)s[1] == MessageID::OWNSHIPREPORT) ||
          ((MessageID)s[1] == MessageID::TRAFFICREPORT));
   t.traffic_alert = (((unsigned char)s[2] & 0xf0 >> 4) == 1) ? true : false;
   t.addr_type     = (unsigned char )s[2] & 0x0f;
@@ -193,7 +193,7 @@ SkyEchoDevice::Traffic(std::span<const std::byte> s, TrafficStruct &t)
   t.vert_vel      = (short)this->TwosComplement((((unsigned int)s[16] & 0x0f) << 8) +
                                                 ((unsigned int)s[17]),
                                                 12);
-  t.track         = (short)this->TwosComplement((unsigned int)s[18], 8);
+  t.track         = (unsigned short)s[18];
   t.emitter       = (unsigned int)s[19];
   t.priority      = ((unsigned int)s[28] & 0xf0) >> 4;
   t.call_sign[0] = '\0';
@@ -225,7 +225,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
   if (s.empty() == true)
     {
 #ifndef NDEBUG
-    LogFormat("%s, %d\n", __FILE__, __LINE__);
+    std::cout << __FILE__ << ", " << __LINE__ << "\n";
 #endif
     return false;
     }
@@ -240,7 +240,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
     if (this->IsPacketConsistent(cs) == false)
       {
 #ifndef NDEBUG
-      LogFormat("%s, %d\n", __FILE__, __LINE__);
+      std::cout << __FILE__ << ", " << __LINE__ << "\n";
 #endif
       break; // Failed basic structural tests.
       }
@@ -267,7 +267,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
     if (this->Checkfcs(sd) == false)
       {
 #ifndef NDEBUG
-      LogFormat("%s, %d\n", __FILE__, __LINE__);
+      std::cout << __FILE__ << ", " << __LINE__ << "\n";
 #endif
       return false;   // FCS bad.
       }
@@ -280,8 +280,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         if (sd.size() != 7 + 4)
           {
 #ifndef NDEBUG
-#include "LogFile.hpp"
-          LogFormat("%s, %d", __FILE__, __LINE__);
+          std::cout << __FILE__ << ", " << __LINE__ << "\n";
 #endif
           break;
           }
@@ -296,6 +295,8 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
               true : false;
         this->time_of_day = ((unsigned int)data[3] & 0x80) << 8;
         this->time_of_day += (unsigned int)data[4] + ((unsigned int)data[5] << 8);
+
+        info.time = TimeStamp{FloatDuration(this->time_of_day)};
 
         info.gps.satellite_ids_available.Clear();   // Nope.
         info.gps.satellites_used_available.Clear(); // Likewise
@@ -345,8 +346,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         if (sd.size() != 28 + 4)
           {
 #ifndef NDEBUG
-#include "LogFile.hpp"
-          LogFormat("%s, %d", __FILE__, __LINE__);
+          std::cout << __FILE__ << ", " << __LINE__ << "\n";
 #endif
           break;
           }
@@ -354,12 +354,6 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         this->Traffic(sd, this->own_ship);
   
         FloatDuration t((double)this->time_of_day);
-
-#ifndef NDEBUG
-//          LogFormat("%s, %d: %u, %u", __FILE__, __LINE__,
-//                    this->own_ship.nav_accuracy,
-//                    this->own_ship.nav_integrity);
-#endif
 
         if (this->own_ship.nav_accuracy > 6) 
           {
@@ -371,8 +365,9 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                      Angle::Degrees((double)this->own_ship.phi * 180.0 / pow(2, 23)));
           info.location = p;
           info.gps.real = true;
-          info.track = Angle::Degrees((double)this->own_ship.track);
-          info.ground_speed = (double)this->own_ship.horiz_vel;
+          info.track = Angle::Degrees((double)(this->own_ship.track) * 360.0 / 256.0);
+          info.ground_speed = Units::ToSysUnit((double)this->own_ship.horiz_vel,
+                                               Unit::KNOTS);
           info.track_available.Update(info.clock);
           info.ground_speed_available.Update(info.clock);
 
@@ -428,9 +423,8 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                  meters / second.  */
         report.climb_rate          = (this->target.vert_vel * 64 / 3.2808) / 60;
         report.speed_received      = true;
-        /* \todo pfb: Find the XCSoar wide conversion from knots to
-                 meters / second.  */
-        report.speed               = this->target.horiz_vel * 1852 / 3600;
+        report.speed               = Units::ToSysUnit((double )this->target.horiz_vel,
+                                                      Unit::KNOTS);
         report.track = Angle::Degrees((double)this->target.track);
         report.type.Type(this->target.emitter);
         Angle phi    = Angle::Degrees((double)this->target.phi * 180.0 / pow(2, 23));
@@ -453,10 +447,10 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
          */
         TargetList& target_list = info.target_data.traffic;
         target_list.modified.Update(info.clock);
-        TargetPtr slot = target_list.FindTraffic(report.id);
+        AdsbTarget* slot = target_list.FindAdsbTraffic(report.id);
         if (slot == nullptr)
           {
-          slot = target_list.AllocateTraffic();
+          slot = target_list.AllocateAdsbTraffic();
           if (slot == nullptr)
             return true;  // No space left in the list.
           slot->Clear();
@@ -465,7 +459,6 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           }
         slot->valid.Update(info.clock); // The target is valid now.
         slot->Update(report); // Add or update this target to the list.
-        target_list.type = TargetList::TargetType::ADSB;
         break;
         }
       case MessageID::BASICREPORT:

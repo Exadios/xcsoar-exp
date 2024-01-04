@@ -330,10 +330,12 @@ Draw(Canvas &canvas, PixelRect rc,
   const unsigned line_height = rc.GetHeight();
   const unsigned text_padding = Layout::GetTextPadding();
 
-  const TargetPtr traffic = (target_list == nullptr) ?
-                            nullptr :
-                            target_list->FindTraffic(item.id);
-  const FlarmPtr  fptr    = FlarmTarget::Cast2FlarmPtr(traffic);
+//  const FlarmTarget* traffic = (target_list == nullptr) ?
+//                            nullptr :
+//                            target_list->FindFlarmTraffic(item.id);
+  const FlarmTarget* traffic = nullptr;
+  if (target_list != nullptr)
+    traffic = target_list->FindFlarmTraffic(item.id);
 
   const PixelPoint pt(rc.left + line_height / 2, rc.top + line_height / 2);
 
@@ -365,8 +367,8 @@ Draw(Canvas &canvas, PixelRect rc,
   StaticString<256> info_string;
   if (record && !StringIsEmpty(record->plane_type))
     info_string = record->plane_type;
-  else if (fptr != nullptr)
-    info_string = AircraftType::TypeName(fptr->type.Type());
+  else if (traffic != nullptr)
+    info_string = AircraftType::TypeName(traffic->type.Type());
   else
     info_string = _("Unknown");
 

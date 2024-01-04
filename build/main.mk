@@ -231,22 +231,36 @@ XCSOAR_SOURCES := \
 	$(SRC)/net/client/WeGlide/UploadIGCFile.cpp \
 	$(SRC)/Plane/PlaneGlue.cpp \
 	$(SRC)/Plane/PlaneFileGlue.cpp \
-	$(SRC)/FLARM/FlarmId.cpp \
-	$(SRC)/FLARM/Error.cpp \
-	$(SRC)/FLARM/List.cpp \
-	$(SRC)/FLARM/FlarmNetRecord.cpp \
-	$(SRC)/FLARM/FlarmNetDatabase.cpp \
+	$(SRC)/Surveillance/TargetId.cpp \
+	$(SRC)/Surveillance/AircraftType.cpp \
+	$(SRC)/Surveillance/TargetList.cpp \
+	$(SRC)/Surveillance/TrivialArrayExtender.cpp \
+	$(SRC)/Surveillance/TargetFriends.cpp \
+	$(SRC)/Surveillance/TrafficDatabases.cpp \
+	$(SRC)/Surveillance/RemoteTargetComputer.cpp \
+	$(SRC)/Surveillance/RemoteTargetComputerFactory.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmTarget.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmAircraftType.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmList.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmNetRecord.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmNetDatabase.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmNameDatabase.cpp \
+	$(SRC)/Surveillance/Flarm/NameFile.cpp \
 	$(SRC)/FLARM/FlarmNetReader.cpp \
-	$(SRC)/FLARM/Traffic.cpp \
-	$(SRC)/FLARM/FlarmCalculations.cpp \
-	$(SRC)/FLARM/Friends.cpp \
-	$(SRC)/FLARM/FlarmComputer.cpp \
+	$(SRC)/Surveillance/RemoteTarget.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmCalculations.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmDetails.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmFriends.cpp \
+	$(SRC)/Surveillance/Flarm/FlarmComputer.cpp \
 	$(SRC)/FLARM/Global.cpp \
-	$(SRC)/FLARM/Glue.cpp \
-  $(SRC)/ADSB/List.cpp \
-	$(SRC)/ADSB/Traffic.cpp \
-	$(SRC)/ADSB/AdsbCalculations.cpp \
-	$(SRC)/ADSB/AdsbComputer.cpp \
+	$(SRC)/Surveillance/Glue.cpp \
+	$(SRC)/Surveillance/Adsb/AdsbTarget.cpp \
+	$(SRC)/Surveillance/Adsb/AdsbAircraftType.cpp \
+  $(SRC)/Surveillance/Adsb/AdsbList.cpp \
+	$(SRC)/Surveillance/Adsb/AdsbTarget.cpp \
+	$(SRC)/Surveillance/Adsb/AdsbCalculations.cpp \
+	$(SRC)/Surveillance/Adsb/AdsbComputer.cpp \
+	$(SRC)/Surveillance/Adsb/AdsbSystemStatus.cpp \
 	$(SRC)/BallastDumpManager.cpp \
 	$(SRC)/Logger/Settings.cpp \
 	$(SRC)/Logger/Logger.cpp \
@@ -472,10 +486,6 @@ XCSOAR_SOURCES := \
 	$(SRC)/Units/Settings.cpp \
 	$(SRC)/Units/Temperature.cpp \
 	$(SRC)/Formatter/AngleFormatter.cpp \
-	$(SRC)/FLARM/FlarmDetails.cpp \
-	$(SRC)/FLARM/NameDatabase.cpp \
-	$(SRC)/FLARM/NameFile.cpp \
-	$(SRC)/FLARM/TrafficDatabases.cpp \
 	$(SRC)/UtilsSettings.cpp \
 	$(SRC)/UtilsSystem.cpp \
 	$(SRC)/Version.cpp \

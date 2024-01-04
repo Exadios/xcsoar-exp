@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,36 +30,44 @@ Copyright_License {
 
 #include <algorithm>
 
+//------------------------------------------------------------------------------
 PixelPoint
 ScreenClosestPoint(const PixelPoint &p1, const PixelPoint &p2,
                    const PixelPoint &p3, int offset) noexcept
-{
+  {
   const PixelPoint v12 = p2 - p1;
   const PixelPoint v13 = p3 - p1;
 
   const int mag = v12.MagnitudeSquared();
-  if (mag > 1) {
+  if (mag > 1) 
+    {
     const int mag12 = isqrt4(mag);
     // projection of v13 along v12 = v12.v13/|v12|
     int proj = DotProduct(v12, v13) / mag12;
     // fractional distance
-    if (offset > 0) {
-      if (offset * 2 < mag12) {
+    if (offset > 0) 
+      {
+      if (offset * 2 < mag12) 
+        {
         proj = std::max(0, std::min(proj, mag12));
         proj = std::max(offset, std::min(mag12 - offset, proj + offset));
-      } else {
+        }
+      else
+        {
         proj = mag12 / 2;
+        }
       }
-    }
 
     const auto f = std::clamp(double(proj) / mag12, 0., 1.);
     // location of 'closest' point
     return PixelPoint(lround(v12.x * f) + p1.x,
                       lround(v12.y * f) + p1.y);
-  } else {
+    }
+  else
+    {
     return p1;
+    }
   }
-}
 
 /*
  * Divide x by 2^12, rounded to nearest integer.
@@ -67,31 +75,36 @@ ScreenClosestPoint(const PixelPoint &p1, const PixelPoint &p2,
 template<int SHIFT>
 static constexpr int
 roundshift(int x) noexcept
-{
+  {
   constexpr int ONE = 1 << SHIFT;
   constexpr int HALF = ONE / 2;
 
-  if (x > 0) {
+  if (x > 0)
+    {
     x += HALF;
-  } else if (x < 0) {
+    }
+  else if (x < 0)
+    {
     x -= HALF;
-  }
+    }
   return x >> SHIFT;
-}
+  }
 
+//------------------------------------------------------------------------------
 template<int SHIFT>
 static constexpr PixelPoint
 roundshift(PixelPoint p) noexcept
-{
+  {
   return {roundshift<SHIFT>(p.x), roundshift<SHIFT>(p.y)};
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 PolygonRotateShift(std::span<BulkPixelPoint> poly,
                    const PixelPoint shift,
                    Angle angle,
                    int scale) noexcept
-{
+  {
   constexpr int SCALE_SHIFT = 2;
   constexpr int TOTAL_SHIFT = FastIntegerRotation::SHIFT + SCALE_SHIFT;
 
@@ -110,6 +123,17 @@ PolygonRotateShift(std::span<BulkPixelPoint> poly,
   FastIntegerRotation fr(angle);
   fr.Scale(scale / (100 >> SCALE_SHIFT));
 
-  for (auto &p : poly)
+  for (auto& p : poly)
     p = roundshift<TOTAL_SHIFT>(fr.RotateRaw(p)) + shift;
-}
+  }
+
+//------------------------------------------------------------------------------
+void
+PointRotateShift(PixelPoint& p, const PixelPoint shift, Angle angle, int scale)
+  {
+  constexpr int SCALE_SHIFT = 2;
+  constexpr int TOTAL_SHIFT = FastIntegerRotation::SHIFT + SCALE_SHIFT;
+  FastIntegerRotation fr(angle);
+  fr.Scale(scale / (100 >> SCALE_SHIFT));
+  p = roundshift<TOTAL_SHIFT>(fr.RotateRaw(p)) + shift;
+  }

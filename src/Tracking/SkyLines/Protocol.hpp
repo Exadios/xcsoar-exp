@@ -305,7 +305,7 @@ static_assert(sizeof(TrafficRequestPacket) == 24, "Wrong struct size");
 #endif
 
 /**
- * The responds to #TrafficRequestPacket.  This packet has a dynamic
+ * The responds to \ref TrafficRequestPacket.  This packet has a dynamic
  * length.  If there are many records being sent, the packet should
  * be split at a reasonable size, to avoid implicit UDP datagram
  * fragmentation.
@@ -493,8 +493,8 @@ struct WaveSubmitPacket {
 };
 
 /**
- * The client wishes to receive wave information.  The server will
- * send #WAVE_RESPONSE / #WaveResponsePacket.
+ * The client wishes to receive wave information. The server will
+ * send \ref WaveResponsePacket.
  */
 struct WaveRequestPacket {
   Header header;
@@ -508,7 +508,7 @@ struct WaveRequestPacket {
 };
 
 /**
- * Reply to #WAVE_REQUEST / #WaveRequestPacket.
+ * Reply to \ref WaveRequestPacket.
  */
 struct WaveResponsePacket {
   Header header;
@@ -582,7 +582,7 @@ struct ThermalSubmitPacket {
 
 /**
  * The client wishes to receive thermal information.  The server will
- * send #THERMAL_RESPONSE / #ThermalResponsePacket.
+ * send \ref ThermalResponsePacket.
  */
 struct ThermalRequestPacket {
   Header header;
@@ -596,7 +596,7 @@ struct ThermalRequestPacket {
 };
 
 /**
- * Reply to #THERMAL_REQUEST / #ThermalRequestPacket.
+ * Reply to \ref ThermalRequestPacket.
  */
 struct ThermalResponsePacket {
   Header header;

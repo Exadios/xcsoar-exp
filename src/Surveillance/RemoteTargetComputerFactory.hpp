@@ -32,8 +32,8 @@ Copyright_License {
  * \{
  */
 
-class RemoteTarget;
-class RemoteTargetComputer;
+struct RemoteTarget;
+class  RemoteTargetComputer;
 
 typedef std::unique_ptr<RemoteTargetComputer> RemoteTargetComputerPtr;
 

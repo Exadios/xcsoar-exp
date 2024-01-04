@@ -23,12 +23,12 @@ Copyright_License {
 
 #pragma once
 
-#include "Surveillance/TargetListBase.hpp"
 #include "Surveillance/RemoteTarget.hpp"
 #include "Surveillance/TargetId.hpp"
 #include "NMEA/Validity.hpp"
-//#include "util/TrivialArray.hxx"
 #include "Surveillance/TrivialArrayExtender.hpp"
+#include "Surveillance/Flarm/FlarmTarget.hpp"
+#include "Surveillance/Adsb/AdsbTarget.hpp"
 
 #include <type_traits>
 #include <list>
@@ -37,6 +37,7 @@ Copyright_License {
 #ifndef NDEBUG
 #include <stdio.h>
 #include "thread/Thread.hpp"
+#include <iostream>
 #endif
 
 /**
@@ -46,10 +47,10 @@ Copyright_License {
  */
 
 /**
- *This class keeps track of the target objects received from a
+ * This class keeps track of the target objects received from a
  * remote sensing device.
  */
-struct TargetList : public TargetListBase
+struct TargetList 
   {
 public:
   static constexpr size_t MAX_COUNT = 50;
@@ -60,7 +61,6 @@ public:
   TargetList()
     {
     this->Clear();
-    this->type = TargetType::MIXED;
     }
 
   /**
@@ -87,8 +87,8 @@ public:
   Validity new_traffic;
 
   /** Target information */
-  TrivialArrayExtender<std::shared_ptr<RemoteTarget>, MAX_COUNT> list;
-//  std::list<std::shared_ptr<RemoteTarget>> list;
+  TrivialArrayExtender<FlarmTarget, MAX_COUNT> flarm_list;
+  TrivialArrayExtender<AdsbTarget,  MAX_COUNT> adsb_list;
 
   /**
    * Clear everything!
@@ -97,7 +97,8 @@ public:
     {
     this->modified.Clear();
     this->new_traffic.Clear();
-    this->list.clear();
+    this->flarm_list.clear();
+    this->adsb_list.clear();
     }
 
   /**
@@ -106,41 +107,36 @@ public:
    */
   constexpr bool IsEmpty() const
     {
-    return this->list.empty();
+    return ((this->flarm_list.empty() == true) && (this->adsb_list.empty()))
+             ? true : false;
     }
 
   /**
    * Adds data from the specified object, unless already present in
    * this one.
    * @param add Source list.
-   *
-   * \bug
-   * Adding \ref traffic here should not happen because the object 
-   * added is a generic \RemoteTarget - that is not a specific 
-   * \ref FlarmTarget or \ref AdsbTarget. The processing done in the
-   * merge and calculation threads requires a specific target because
-   * the processing is invariably difference for each.
    */
 
-  constexpr void Complement(const TargetList& add) override
+  constexpr void Complement(const TargetList& add) 
     {
+    if (this->IsEmpty() && !add.IsEmpty())
+      *this = add;  // Just initialize this list.
     this->modified.Complement(add.modified);  // Don't know where this is done
                                               // for the FLARM merge.
-    // Add unique traffic from 'add' list
-    for (auto &traffic : add.list)
+    // Add unique FLARM traffic from 'add' list
+    for (auto &traffic : add.flarm_list)
       {
-      if (this->FindTraffic(traffic->id) == nullptr)
+      if (this->FindFlarmTraffic(traffic.id) == nullptr)
+        if (this->AddFlarmTarget(traffic) == nullptr)
+          break;
+      }
+    // Add unique ADSB traffic from 'add' list.
+    for (auto &traffic : add.adsb_list)
+      {
+      if ( this->FindAdsbTraffic(traffic.id) == nullptr)
         {
-        /**
-         * \bug
-         * Adding \ref traffic here should not happen because the object 
-         * added is a generic \RemoteTarget - that is not a specific 
-         * \ref FlarmTarget or \ref AdsbTarget. The processing done in the
-         * merge and calculation threads requires a specific target because
-         * the processing is invariably difference for each.
-         */
-        if (this->AddTarget(*traffic) == nullptr)
-          return;
+        if (this->AddAdsbTarget(traffic) == nullptr)
+          break;
         }
       }
     }
@@ -149,120 +145,217 @@ public:
    * Delete stale targets.
    * @param clock Time now.
    */
-  void Expire(TimeStamp clock) noexcept
+  constexpr void Expire(TimeStamp clock) noexcept
     {
     this->modified.Expire(clock, std::chrono::minutes(5));
     this->new_traffic.Expire(clock, std::chrono::minutes(1));
 
-    for (unsigned i = this->list.size(); i-- > 0;)
-      if (!this->list[i]->Refresh(clock))
-        this->list.quick_remove(i);
+    // Do Flarm first ...
+    for (unsigned i = this->flarm_list.size(); i-- > 0;)
+      if (!this->flarm_list[i].Refresh(clock))
+        this->flarm_list.quick_remove(i);
+
+    // ... and then ADSB
+    for (unsigned i = this->adsb_list.size(); i-- > 0;)
+      if (!this->adsb_list[i].Refresh(clock))
+        this->adsb_list.quick_remove(i);
     }
 
   /**
-   * Give the number of items in this list.
+   * Give the number of Flarm items in this list.
+   * @return Number of Flarm targets in the list.
+   */
+  constexpr unsigned GetActiveFlarmTrafficCount() const
+    {
+    return this->flarm_list.size();
+    }
+
+  /**
+   * Give the number of Adsb items in this list.
+   * @return Number of Adsb targets in the list.
+   */
+  constexpr unsigned GetActiveAdsbTrafficCount() const
+    {
+    return this->adsb_list.size();
+    }
+
+  /**
+   * Give the total number of items in this list.
    * @return Number of targets in the list.
    */
   constexpr unsigned GetActiveTrafficCount() const
     {
-    return this->list.size();
+    return this->GetActiveFlarmTrafficCount() +
+           this->GetActiveAdsbTrafficCount();
     }
 
   /**
-   * Looks up an item in the traffic list.
+   * Looks up a Flarm item in the traffic list.
    *
    * @param id Target id
-   * @return the \ref RemoteTarget pointer, NULL if not found
+   * @return the \ref FlarmTarget pointer, nullptr if not found
    */
-  TargetPtr FindTraffic(TargetId id)
+  constexpr FlarmTarget* FindFlarmTraffic(TargetId id) noexcept
     {
-    for (auto &traffic : this->list)
-      if (traffic->id == id)
-        {
-        return traffic;
-        }
+    for (auto& traffic : this->flarm_list)
+      if (traffic.id == id)
+        return &traffic;
 
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    return nullptr;
     }
 
   /**
-   * Looks up an item in the traffic list.
+   * Looks up a Flarm item in the traffic list.
    *
    * @param id Target id
-   * @return the \ref RemoteTarget pointer, NULL if not found
+   * @return the \ref FlarmTarget pointer, nullptr if not found
    */
-  const TargetPtr FindTraffic(TargetId id) const
+  constexpr const FlarmTarget* FindFlarmTraffic(TargetId id) const
     {
-    for (const auto &traffic : this->list)
-      if (traffic->id == id)
-        return traffic;
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    for (const auto& traffic : this->flarm_list)
+      if (traffic.id == id)
+        return &traffic;
+    return nullptr;
     }
 
   /**
-   * Looks up an item in the traffic list.
+   * Looks up a Flarm item in the traffic list.
    *
    * @param name The name or call sign
-   * @return The RemoteTarget pointer, NULL if not found
+   * @return The \ref FlarmTarget pointer, nullptr if not found
    */
-  TargetPtr FindTraffic(const TCHAR* name)
+  constexpr FlarmTarget* FindFlarmTraffic(const TCHAR* name)
     {
-    for (auto &traffic : this->list)
-      if (traffic->name.equals(name))
-        return traffic;
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    for (auto& traffic : this->flarm_list)
+      if (traffic.name.equals(name))
+        return &traffic;
+    return nullptr;
     }
 
   /**
-   * Looks up an item in the traffic list.
+   * Looks up a Flarm item in the traffic list.
    *
    * @param name The name or call sign
-   * @return The \ref RemoteTarget pointer, NULL if not found
+   * @return The \ref FlarmTarget pointer, nullptr if not found
    */
-  const TargetPtr FindTraffic(const TCHAR* name) const
+  constexpr const FlarmTarget* FindFlarmTraffic(const TCHAR* name) const
     {
-    for (const auto &traffic : this->list)
-      if (traffic->name.equals(name))
-        return traffic;
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    for (const auto& traffic : this->flarm_list)
+      if (traffic.name.equals(name))
+        return &traffic;
+    return nullptr;
     }
 
   /**
-   * Allocates a new target object on the list.
+   * Looks up a Adsb item in the traffic list.
    *
-   * @note This is probably not the function that you want to use. You
-   *       probably want to attach one of the decorators and use the 
-   *       equivalent function in that decorator.
+   * @param id Target id
+   * @return the \ref AdsbTarget pointer, nullptr if not found
+   */
+  constexpr AdsbTarget* FindAdsbTraffic(TargetId id) 
+    {
+    for (auto& traffic : this->adsb_list)
+      if (traffic.id == id)
+        return &traffic;
+
+    return nullptr;
+    }
+
+  /**
+   * Looks up a Adsb item in the traffic list.
    *
+   * @param id Target id
+   * @return the \ref AdsbTarget pointer, nullptr if not found
+   */
+  constexpr const AdsbTarget* FindAdsbTraffic(TargetId id) const
+    {
+    for (const auto& traffic : this->adsb_list)
+      if (traffic.id == id)
+        return &traffic;
+    return nullptr;
+    }
+
+  /**
+   * Looks up a Adsb item in the traffic list.
+   *
+   * @param name The name or call sign
+   * @return The \ref AdsbTarget pointer, nullptr if not found
+   */
+  const AdsbTarget* FindAdsbTraffic(const TCHAR* name)
+    {
+    for (auto& traffic : this->adsb_list)
+      if (traffic.name.equals(name))
+        return &traffic;
+    return nullptr;
+    }
+
+  /**
+   * Looks up a Adsb item in the traffic list.
+   *
+   * @param name The name or call sign
+   * @return The \ref AdsbTarget pointer, nullptr if not found
+   */
+  constexpr const AdsbTarget* FindAdsbTraffic(const TCHAR* name) const
+    {
+    for (const auto& traffic : this->adsb_list)
+      if (traffic.name.equals(name))
+        return &traffic;
+    return nullptr;
+    }
+
+  /**
+   * Allocates a new \ref FlarmTarget object on the list.
    * @return If an object can be allocated on the this then a 
-   *         \ref RemoteTarget pointer to that element. Otherwise
+   *         \ref FlarmTarget pointer to that element. Otherwise
    *         nullptr.
    */
-  TargetPtr AllocateTraffic()
+  constexpr FlarmTarget* AllocateFlarmTraffic()
     {
-    if (!this->list.full())
-      {
-      TargetPtr ptr = std::make_shared<RemoteTarget>();
-      this->list.append(ptr);
-      return ptr;
-      }
-    return std::shared_ptr<RemoteTarget>(nullptr);
+    if (!this->flarm_list.full())
+      return &flarm_list.append();
+    else
+      return nullptr;
     }
 
   /**
-   * Inserts a new \ref RemoteTarget object to the list.
-   *
-   * @note This is probably not the function that you want to use. You
-   *       probably want to attach one of the decorators and use the 
-   *       equivalent function in that decorator.
-   *
+   * Allocates a new \ref AdsbTarget object on the list.
+   * @return If an object can be allocated on the this then a 
+   *         \ref AdsbTarget pointer to that element. Otherwise
+   *         nullptr.
+   */
+  constexpr AdsbTarget* AllocateAdsbTraffic()
+    {
+    if (!this->adsb_list.full())
+      return &adsb_list.append();
+    else
+      return nullptr;
+    }
+
+  /**
+   * Inserts a new \ref FlarmTarget object to the list.
    * @param The target.
    * @return A pointer to the new element that has been added or nullptr
    *         if the list is full.
    */
-  TargetPtr AddTarget(const RemoteTarget& target)
+  constexpr FlarmTarget* AddFlarmTarget(const FlarmTarget& target)
     {
-    TargetPtr ptr = this->AllocateTraffic();
+    FlarmTarget* ptr = this->AllocateFlarmTraffic();
+    if (ptr == nullptr)
+      return ptr;
+
+    *ptr = target;
+    return ptr;
+    }
+
+  /**
+   * Inserts a new \ref FlarmTarget object to the list.
+   * @param The target.
+   * @return A pointer to the new element that has been added or nullptr
+   *         if the list is full.
+   */
+  constexpr AdsbTarget* AddAdsbTarget(const AdsbTarget& target)
+    {
+    AdsbTarget* ptr = this->AllocateAdsbTraffic();
     if (ptr == nullptr)
       return ptr;
 
@@ -272,36 +365,14 @@ public:
 
   /**
    * Reference the previous traffic in the ordered list.
-   * @param i The reference entry.
-   * @return The entry previous to t or null if is already at begin().
-   */
-  const TargetPtr PreviousTraffic(size_t i) const
-    {
-    return i > 0 ?
-           this->list[i - 1] :
-           nullptr;
-    }
-
-  /**
-   * Reference the previous traffic in the ordered list.
    * @param target The reference target.
-   * @return The entry previous to target or null if is already at begin().
+   * @return The entry previous to target or nullptr if is already at begin().
    */
-  const TargetPtr PreviousTraffic(const TargetPtr target) const
+  constexpr const FlarmTarget* PreviousFlarmTraffic(const FlarmTarget* target) const
     {
-    return this->PreviousTraffic(this->FindIndex(target));
-    }
-
-  /**
-   * Reference the next traffic in the ordered list.
-   * @param i The reference entry.
-   * @return The entry after i or nullptr if is already at end() - 1.
-   */
-  const TargetPtr NextTraffic(size_t i) const
-    {
-    return (i + 1) < this->list.size() ?
-           this->list[i + 1] :
-           nullptr;
+    return target > this->flarm_list.begin()
+      ? target - 1
+      : NULL;
     }
 
   /**
@@ -309,38 +380,44 @@ public:
    * @param target The reference entry.
    * @return The entry after target or nullptr if is already at end() - 1.
    */
-  const TargetPtr NextTraffic(const TargetPtr target) const
+  constexpr const FlarmTarget* NextFlarmTraffic(const FlarmTarget* target) const
     {
-    return this->NextTraffic(this->FindIndex(target));
+    return target + 1 < this->flarm_list.end()
+      ? target + 1
+      : nullptr;
     }
 
   /**
    * Reference the first traffic in the ordered list.
    * @return The first target pointer or nullptr if the list is empty.
    */
-  const TargetPtr FirstTraffic() const
+  constexpr const FlarmTarget* FirstFlarmTraffic() const
     {
-    return this->list.empty() ?
+    return this->flarm_list.empty() ?
            nullptr :
-           *this->list.begin();
+           (this->flarm_list.begin());
     }
 
   /**
    * Reference the last traffic in the ordered list.
    * @return The last target pointer or nullptr if the list is empty.
    */
-  const TargetPtr LastTraffic() const
+  constexpr const FlarmTarget* LastFlarmTraffic() const
     {
-    return this->list.empty() ?
+    return this->flarm_list.empty() ?
            nullptr :
-           *(this->list.end() - 1);
+           (this->flarm_list.end() - 1);
     }
 
   /**
-   * Finds the most critical alert.  Returns NULL if there is no
-   * alert.
+   * Finds the most critical alert.
+   * @return Pointer to the maximum alert, nullptr if no alert.
+   *
+   * \bug
+   * What stops the object pointed to from disappearing because of, for
+   * instance, it exipres.
    */
-  const TargetPtr FindMaximumAlert() const;
+  const FlarmTarget* FindMaximumAlert() const;
 
   /**
    * Convert a pointer to a element in the ordered list into an index into
@@ -348,9 +425,9 @@ public:
    * @param t The pointer to the element
    * @return The index corresponding to t.
    */
-  unsigned TrafficIndex(const TargetPtr* t) const
+  constexpr unsigned FlarmTrafficIndex(const FlarmTarget* t) const
     {
-    return t - this->list.begin();
+    return t - this->flarm_list.begin();
     }
 
   /**
@@ -358,7 +435,7 @@ public:
    * @return This reference may be used to manipulate the implementations 
    *         modified variable;
    */
-  virtual Validity* Modified()
+  constexpr Validity* Modified()
     {
     return &this->modified;
     }
@@ -368,7 +445,7 @@ public:
    * @return This reference may be used to read the implementations 
    *         modified variable;
    */
-  virtual const Validity* Modified() const
+  constexpr const Validity* Modified() const
     {
     return &this->modified;
     }
@@ -378,7 +455,7 @@ public:
    * @return This reference may be used to manipulate the implementations 
    *         new_traffic variable;
    */
-  virtual Validity* NewTraffic()
+  constexpr Validity* NewTraffic()
     {
     return &this->new_traffic;
     }
@@ -388,42 +465,53 @@ public:
    * @return This reference may be used to read the implementations 
    *         new_traffic variable;
    */
-  virtual const Validity* NewTraffic() const
+  constexpr const Validity* NewTraffic() const
     {
     return &this->new_traffic;
     }
 
   /**
-   * Give a reference to the list variable.
+   * Give a reference to the Flarm list variable.
    * @return This reference may be used to manipulate the implementations 
-   *         List variable;
+   *         \ref flarm_list variable;
    */
-  virtual TrivialArrayExtender< std::shared_ptr< RemoteTarget >, MAX_COUNT >* List()
+  constexpr TrivialArrayExtender<FlarmTarget, MAX_COUNT >* FlarmList()
     {
-    return &this->list;
+    return &this->flarm_list;
     }
 
   /**
-   * Give a reference to the list variable.
-   * @return This reference may be used to read the implementations 
-   *         List variable;
+   * Give a reference to the ADSB list variable.
+   * @return This reference may be used to manipulate the implementations 
+   *         \ref adsb_list variable;
    */
-  virtual const TrivialArrayExtender< std::shared_ptr< RemoteTarget >, MAX_COUNT >* List() const
+  constexpr TrivialArrayExtender<AdsbTarget, MAX_COUNT >* AdsbList()
     {
-    return &this->list;
+    return &this->adsb_list;
+    }
+
+  /**
+   * Give a reference to the Flarm list variable.
+   * @return This reference may be used to read the implementations 
+   *         \ref flarm_list variable;
+   */
+  constexpr const TrivialArrayExtender<FlarmTarget, MAX_COUNT>* FlarmList() const
+    {
+    return &this->flarm_list;
+    }
+
+  /**
+   * Give a reference to the ADSB list variable.
+   * @return This reference may be used to read the implementations 
+   *         \ref adsb_list variable;
+   */
+  constexpr const TrivialArrayExtender<AdsbTarget, MAX_COUNT>* AdsbList() const
+    {
+    return &this->adsb_list;
     }
 
 private:
-  size_t FindIndex(const TargetPtr target) const
-    {
-    size_t i;
 
-    // We don't need no fancy search algorithm!
-    for (i = 0; i < this->list.size(); i++)
-      if (list[i] == target)
-        return i;
-    return -1;
-    }
   };
 
 /**

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -194,7 +194,7 @@ private:
      * Either target track or heading. See 3.5.1.9 of the GDL Data Interface
      * Specification.
      */
-    short track;
+    unsigned short track;
 
     /**
      * Target type. See 3.5.1.10 of the GDL Data Interface Specification.
@@ -237,7 +237,7 @@ private:
   /**
    * Generate the FCS table.
    */
-  void Initfcs();
+  constexpr void Initfcs();
 
   /**
    * Calculate the CRC of the input vector and compare.

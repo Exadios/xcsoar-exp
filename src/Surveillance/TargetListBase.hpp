@@ -119,9 +119,9 @@ public:
    * @return The \ref RemoteTarget pointer, NULL if not found.
    */
   #ifdef NDEBUG
-  virtual TargetPtr FindTraffic(TargetId id);
+  virtual FlarmTarget* FindTraffic(TargetId id);
   #else
-  [[noreturn]] virtual TargetPtr FindTraffic(TargetId id);
+  [[noreturn]] virtual FlarmTarget* FindTraffic(TargetId id);
   #endif
 
   /**
@@ -130,9 +130,9 @@ public:
    * @return The \ref RemoteTarget pointer, NULL if not found.
    */
   #ifdef NDEBUG
-  virtual const TargetPtr FindTraffic(TargetId id) const;
+  virtual const FlarmTarget* FindTraffic(TargetId id) const;
   #else
-  [[noreturn]] virtual const TargetPtr FindTraffic(TargetId id) const;
+  [[noreturn]] virtual const FlarmTarget* FindTraffic(TargetId id) const;
   #endif
 
   /**
@@ -142,9 +142,9 @@ public:
    *         instance of a named will be returned. Which one, who knows?
    */
   #ifdef NDEBUG
-  virtual TargetPtr FindTraffic(const TCHAR* name);
+  virtual FlarmTarget* FindTraffic(const TCHAR* name);
   #else
-  [[noreturn]] virtual TargetPtr FindTraffic(const TCHAR* name);
+  [[noreturn]] virtual FlarmTarget* FindTraffic(const TCHAR* name);
   #endif
    
   /**
@@ -154,9 +154,9 @@ public:
    *         instance of a named will be returned. Which one, who knows?
    */
   #ifdef NDEBUG
-  virtual const TargetPtr FindTraffic(const TCHAR* name) const;
+  virtual const FlarmTarget* FindTraffic(const TCHAR* name) const;
   #else
-  [[noreturn]] virtual const TargetPtr FindTraffic(const TCHAR* name) const;
+  [[noreturn]] virtual const FlarmTarget* FindTraffic(const TCHAR* name) const;
   #endif
 
   /**

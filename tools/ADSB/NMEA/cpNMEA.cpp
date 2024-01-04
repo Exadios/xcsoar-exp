@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,14 +21,32 @@ Copyright_License {
 }
 */
 
-#include "FormData.hpp"
-#include "system/Path.hpp"
-#include "system/ConvertPathName.hpp"
+#include <iostream>
 
-Net::MultiPartFormData &
-Net::MultiPartFormData::AddFile([[maybe_unused]] const char *name, Path path)
-{
-  return Add(CURLFORM_COPYNAME, "name",
-             CURLFORM_FILE,
-             (const char *)NarrowPathName(path));
-}
+#include <string.h>
+
+char read_buffer[1024];
+
+//------------------------------------------------------------------------------
+void Usage(const char* argv0)
+  {
+  std::cout << argv0 << " -t <target id> -t <target id> ... \n";
+  }
+
+//------------------------------------------------------------------------------
+int main(int /*argc*/, const char** /* * argv[]*/)
+  {
+  while ((std::cin.good() == true) && (std::cout.good() == true))
+    {
+    if ((std::cin.getline(::read_buffer, 1024)).good() != true)
+      continue;
+    if (strstr(::read_buffer, "$PFLAA") != NULL)
+      {
+      ;
+      }
+    else
+      std::cout << ::read_buffer << "\n";
+    }
+
+  return 0;
+  }

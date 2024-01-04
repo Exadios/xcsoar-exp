@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,17 +29,11 @@ Copyright_License {
  * \{
  */
 
-/**
- * \todo
- * Make a Flarm and Adsb spinoff of the class (possibly decorators) to use
- * the \ref FlarmListDecorator and the \ref AdsbListDecorator.
- */
 #include "Surveillance/TargetStatus.hpp"
 #include "Surveillance/TargetList.hpp"
 #include "Surveillance/Flarm/FlarmSystemStatus.hpp"
 #include "Surveillance/Adsb/AdsbSystemStatus.hpp"
-#include "Surveillance/Flarm/FlarmListDecorator.hpp"
-#include "Surveillance/Adsb/AdsbListDecorator.hpp"
+#include "FLARM/Error.hpp"
 
 #include <type_traits>
 
@@ -48,6 +42,8 @@ Copyright_License {
  */
 struct TargetData
   {
+  FlarmError flarm_error;
+
   TargetStatus status;
 
   TargetList traffic;
@@ -55,6 +51,16 @@ struct TargetData
   FlarmSystemStatus flarm_status;
   
   AdsbSystemStatus  adsb_status;
+
+#ifndef NDEBUG
+  /**
+   * Temporary ctor.
+   */
+  TargetData()
+    {
+    }
+
+#endif
 
   /**
    * Copy an object of this type via an assignment operator.
@@ -82,20 +88,17 @@ struct TargetData
    */
   /* constexpr */ void Clear() noexcept
     {
-//    this->status.Clear();
-//    this->traffic.Clear();
+    this->flarm_error.Clear();
+    this->flarm_status.Clear();
+    this->adsb_status.Clear();
+    this->traffic.Clear();
     }
 
   /* constexpr */ void Complement(const TargetData& add) noexcept
     {
     this->status.Complement(add.status);
 
-    // Try all the Complement variations.
-    FlarmListDecorator fd(&this->traffic);
-    AdsbListDecorator  ad(&this->traffic);
-
-    fd.Complement(add.traffic);
-    ad.Complement(add.traffic);
+    this->traffic.Complement(add.traffic);
     }
 
   /**

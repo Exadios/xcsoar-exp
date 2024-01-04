@@ -23,6 +23,13 @@ Copyright_License {
 
 #include "BlackboardListener.hpp"
 
+#ifndef NDEBUG
+#include "Components.hpp"
+#include "Blackboard/DeviceBlackboard.hpp"
+
+#include <iostream>
+#endif
+
 void
 NullBlackboardListener::OnGPSUpdate([[maybe_unused]] const MoreData &basic)
 {

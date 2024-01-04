@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -48,54 +48,50 @@ MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
 #endif
                 std::chrono::milliseconds{10}),
    device_blackboard(_device_blackboard)
-{
+  {
   last_fix.Reset();
   last_any.Reset();
-}
+  }
 
 /**
  * Process
  */
 void
 MergeThread::Process()
-{
+  {
   assert(!IsDefined() || IsInside());
 
-  this->device_blackboard.Merge();
+  device_blackboard.Merge();
 
-  const MoreData& basic = this->device_blackboard.Basic();
+  const MoreData& basic = device_blackboard.Basic();
   const ComputerSettings &settings_computer =
-    this->device_blackboard.GetComputerSettings();
+    device_blackboard.GetComputerSettings();
 
-  this->computer.Fill(device_blackboard.SetMoreData(), settings_computer);
-  this->computer.Compute(device_blackboard.SetMoreData(), last_any, last_fix,
-                   device_blackboard.Calculated());
+  this->computer.Fill(this->device_blackboard.SetMoreData(), settings_computer);
+  this->computer.Compute(this->device_blackboard.SetMoreData(),
+                         last_any, 
+                         last_fix,
+                         this->device_blackboard.Calculated());
 
-  this->flarm_computer.Process(device_blackboard.SetBasic().target_data,
+  this->flarm_computer.Process(this->device_blackboard.SetBasic().target_data,
                                last_fix.target_data,
                                basic);
-  this->adsb_computer.Process(device_blackboard.SetBasic().target_data,
+  this->adsb_computer.Process(this->device_blackboard.SetBasic().target_data,
                               last_fix.target_data,
                               basic);
-}
+  }
 
 void
 MergeThread::Tick() noexcept
-{
+  {
   bool gps_updated, calculated_updated;
-
-#ifndef NDEBUG
-//#include "LogFile.hpp"
-//  LogFormat("%s, %d: %lu", __FILE__, __LINE__,
-//            ::device_blackboard->RealState(0).adsb.traffic.list.size());
-#endif
 
 #ifdef HAVE_PCM_PLAYER
   bool vario_available;
   double vario;
 #endif
 
-  {
+    {
     const std::lock_guard lock{device_blackboard.mutex};
 
     Process();
@@ -129,7 +125,7 @@ MergeThread::Tick() noexcept
          (!last_fix.time_available || basic.time != last_fix.time)) ||
         basic.location_available != last_fix.location_available)
       last_fix = basic;
-  }
+    }
 
 #ifdef HAVE_PCM_PLAYER
   if (vario_available)
@@ -144,4 +140,4 @@ MergeThread::Tick() noexcept
     TriggerCalculatedUpdate();
 
   TriggerVarioUpdate();
-}
+  }

@@ -48,7 +48,7 @@ namespace Cares {
 class Handler;
 
 /**
- * C++ wrapper for #ares_channel with #EventLoop integration.
+ * C++ wrapper for ares_channel with \ref EventLoop integration.
  */
 class Channel {
 	Init init;
@@ -74,7 +74,7 @@ public:
 	}
 
 	/**
-	 * Look up a host name and call a #Handler method upon
+	 * Look up a host name and call a \ref Handler method upon
 	 * completion.
 	 */
 	void Lookup(const char *name, int family, Handler &handler,

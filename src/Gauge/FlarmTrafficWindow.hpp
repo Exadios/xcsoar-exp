@@ -44,7 +44,8 @@ class FlarmTrafficWindow : public PaintWindow
     const FlarmTrafficLook &look;
 
     /**
-     * The distance of the biggest circle in meters.
+     * The distance of the biggest circle in meters. That is to say the
+     * maximum distance that can be currently plotted on the radar.
      */
     double distance = 2000;
 
@@ -93,15 +94,21 @@ class FlarmTrafficWindow : public PaintWindow
 
   public:
     [[gnu::pure]]
+    /**
+     * Test if at least one target is issuing a warning.
+     * @return If there is at least one target issuing a warning then true.
+     */
     bool WarningMode() const noexcept;
 
     /**
      * Give the currently selected target.
-     * @return The currently selected target.
+     * @return The currently selected target or nullptr if none selected.
      */
-    const TargetPtr GetTarget() const noexcept
+    const FlarmTarget* GetTarget() const noexcept
       {
-      return this->traffic.list[selection];
+      return (this->selection >= 0) ? 
+        &this->traffic.flarm_list[selection] :
+        nullptr;
       }
 
     /**
@@ -111,7 +118,7 @@ class FlarmTrafficWindow : public PaintWindow
      *               and may, if conditions elsewhere allow, cause the 
      *               \ref RemoteTarget previously reference to destruct.
      */
-    void SetTarget(const TargetPtr target) noexcept
+    void SetTarget(const FlarmTarget* target) noexcept
       {
       if (target == nullptr)
         this->selection = -1;
@@ -132,26 +139,45 @@ class FlarmTrafficWindow : public PaintWindow
      */
     void SetTarget(const TargetId& id) noexcept
       {
-      SetTarget(this->traffic.FindTraffic(id));
+      SetTarget(this->traffic.FindFlarmTraffic(id));
       }
 
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * advance the index, \ref this->selection, to the next FLARM target
+     * wrapping around if necessary. If the FLARM list is empty then
+     * \ref this->selection is set to -1.
+     */
     void NextTarget() noexcept;
+
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * retard the index, \ref this->selection, to the previous FLARM target
+     * wrapping around if necessary. If the FLARM list is empty then
+     * \ref this->selection is set to -1.
+     */
     void PrevTarget() noexcept;
+
     bool SelectNearTarget(PixelPoint p, int max_distance) noexcept;
 
-    void SetDistance(double _distance) noexcept
+    void SetDistance(double distance) noexcept
       {
-      distance = _distance;
+      this->distance = distance;
       this->Invalidate();
       }
 
     /**
      * This function paints the TrafficRadar onto the given canvas
-     * @param canvas The canvas to paint on
+     * @param canvas The \ref Canvas representing the radar.
      */
     void Paint(Canvas& canvas) noexcept;
 
   protected:
+    /**
+     * The distance to the own plane.
+     * @param d Distance in meters to the own plane.
+     * @return The distance to own plane in pixels.
+     */
     [[gnu::pure]]
     double RangeScale(double d) const noexcept;
 
@@ -162,6 +188,13 @@ class FlarmTrafficWindow : public PaintWindow
      * @param pt The point at which we think the target might be at.
      */
     void UpdateSelector(TargetId id, PixelPoint pt) noexcept;
+
+    /**
+     * Iterates through the FLARM traffic list, finds the target with 
+     * the highest alarm level and saves it to \ref this->warning. If
+     * no warnings sre currently active then \ref this->warning is set
+     * to -1.
+     */
     void UpdateWarnings() noexcept;
 
     /**
@@ -175,10 +208,47 @@ class FlarmTrafficWindow : public PaintWindow
                 const TargetList& new_traffic,
                 const TeamCodeSettings& new_settings,
                 TargetStatus target_status) noexcept;
+
+    /**
+     * Paints the text "No Traffic" on the large radar display.
+     * @param canvas The canvas representing the large FLARM window.
+     */
     void PaintRadarNoTraffic(Canvas& canvas) const noexcept;
-    void PaintRadarTarget(Canvas& canvas,
-                          const RemoteTarget& target,
-                          unsigned i) noexcept;
+
+    /**
+     * Paints the text "No Go" on the large radar display.
+     * @param canvas The canvas representing the large FLARM window.
+     */
+    void PaintRadarNoGo(Canvas& canvas) const noexcept;
+
+    /**
+     * Paint a FLARM target with warning and alert properties.
+     * @param canvas The radar canvas.
+     * @param target The FLARM target to paint. No check is made to check
+     *               that this is really a FLARM target. It is up to the
+     *               caller to make sure that it is.
+     * @param i The index in the FLARM target list.
+     */
+    void PaintRadarFlarmTarget(Canvas& canvas,
+                               const RemoteTarget& target,
+                               unsigned i) noexcept;
+
+    /**
+     * Paint an ADSB target.
+     * @param canvas The radar canvas.
+     * @param target The ADSB target to paint. No check is made to check
+     *               that this is really a ADSB target. It is up to the
+     *               caller to make sure that it is.
+     * @param i The index in the ADSB target list.
+     */
+    void PaintRadarAdsbTarget(Canvas& canvas,
+                              const RemoteTarget& target,
+                              unsigned i) noexcept;
+
+    /**
+     * Paint all targets on a radar display
+     * @param canvas The canavas representing the radar display.
+     */
     void PaintRadarTraffic(Canvas& canvas) noexcept;
 
     /**
@@ -196,8 +266,23 @@ class FlarmTrafficWindow : public PaintWindow
                               const Color& text_color,
                               const Brush& arrow_brush) noexcept;
 
+    /**
+     * Paint a plane symbol in the middle of the radar on the given canvas
+     * @param canvas The \ref Canvas representing the radar.
+     */
     void PaintRadarPlane(Canvas& canvas) const noexcept;
+
+
+    /**
+     * Paint the radar's fixed furnature.
+     * @param canvas The \ref Canvas representing the radar.
+     */
     void PaintRadarBackground(Canvas& canvas) const noexcept;
+
+    /**
+     * Paint the "N" symbol for north on the radar.
+     * @param canvas The \ref Canvas representing the radar.
+     */
     void PaintNorth(Canvas& canvas) const noexcept;
 
     /**

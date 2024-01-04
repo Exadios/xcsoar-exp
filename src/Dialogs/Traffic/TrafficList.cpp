@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -389,8 +389,8 @@ TrafficListWidget::UpdateList()
        traffic */
 
     /* add live FLARM traffic */
-    for (const auto &i : CommonInterface::Basic().target_data.traffic.list) {
-      AddItem(i->id);
+    for (const auto &i : CommonInterface::Basic().target_data.traffic.flarm_list) {
+      AddItem(i.id);
     }
 
     /* add FLARM peers that have a user-defined color */
@@ -460,7 +460,7 @@ TrafficListWidget::UpdateVolatile()
     {
     if (i.IsFlarm())
       {
-      const FlarmPtr live = std::dynamic_pointer_cast<FlarmTarget>(live_list.FindTraffic(i.id));
+      const FlarmTarget* live = live_list.FindFlarmTraffic(i.id);
 
       if (live != nullptr)
         {

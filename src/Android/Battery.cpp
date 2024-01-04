@@ -28,7 +28,7 @@ Copyright_License {
 
 gcc_visibility_default
 JNIEXPORT void JNICALL
-Java_au_org_narroginglidingclub_xcsoar_BatteryReceiver_setBatteryPercent(JNIEnv *env,
+Java_au_org_narroginglidingclub_xcsoar_BatteryReceiver_setBatteryPercent([[maybe_unused]] JNIEnv *env,
                                              [[maybe_unused]] jclass cls,
                                                   jint value, jint plugged)
 {

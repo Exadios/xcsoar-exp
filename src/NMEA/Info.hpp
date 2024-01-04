@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -46,9 +46,29 @@ Copyright_License {
 #include <type_traits>
 
 /**
- * A struct that holds all the parsed data read from the connected devices
+ * A struct that holds all the parsed data read from the connected devices.
+ * This class for objects used in two sematic contexts.
+ *
+ * The first is as an repository for the per device data. That is each device
+ * has a \ref NMEAInfo object assigned to it. Data is set into this object
+ * by either direct access to the data variables or member functions that
+ * set these variables (eg \ref NMEAInfo::ProvidePressureAltitude). Those
+ * variables which can be aged out are done on the device \ref NMEAInfo
+ * object. The age out process is executed via the \ref Expire member
+ * function.
+ *
+ * The second context is a system wide repository into which data from all
+ * device \ref NMEAInfo objects is merged into a single \ref NMEAInfo 
+ * which is a member of the common \ref DeviceBlackboard object. The member
+ * function \ref NMEAInfo::Complement is used to perform the merge into
+ * a cleared \ref NMEAInfo.
+ *
+ * Thus some member functions are suitable for use only on the per device
+ * \ref NMEAInfo objects and others are suitable for use only on the
+ * common \ref NMEAInfo object.
  */
-struct NMEAInfo {
+struct NMEAInfo
+   {
 public:
 
   /**
@@ -407,21 +427,23 @@ public:
   [[gnu::pure]]
   BrokenDateTime GetDateTimeAt(TimeStamp other_time) const noexcept;
 
-  bool MovementDetected() const {
+  bool MovementDetected() const
+    {
     return ground_speed_available && ground_speed > 2;
-  }
+    }
 
   /**
    * Sets a fake location, and marks it as "unavailable".  This is
    * used during startup to move the glider symbol to the home
    * waypoint.
    */
-  void SetFakeLocation(const GeoPoint &_location, const double _altitude) {
+  void SetFakeLocation(const GeoPoint &_location, const double _altitude)
+    {
     location = _location;
     location_available.Clear();
     gps_altitude = _altitude;
     gps_altitude_available.Clear();
-  }
+    }
 
   void ProvideTime(TimeStamp time) noexcept;
   void ProvideDate(const BrokenDate &date);
@@ -430,17 +452,19 @@ public:
    * Provide a "true" barometric altitude, but only use it if the
    * previous altitude was not present or the same/lower priority.
    */
-  void ProvideBaroAltitudeTrue(double value) {
+  void ProvideBaroAltitudeTrue(double value)
+    {
     baro_altitude = value;
     baro_altitude_weak = false;
     baro_altitude_available.Update(clock);
-  }
+    }
 
   /**
    * Same as ProvideBaroAltitudeTrue(), but don't overwrite a "strong"
    * value.
    */
-  void ProvideWeakBaroAltitude(double value) {
+  void ProvideWeakBaroAltitude(double value) 
+    {
     if (baro_altitude_available && !baro_altitude_weak)
       /* don't overwrite "strong" value */
       return;
@@ -448,31 +472,34 @@ public:
     baro_altitude = value;
     baro_altitude_weak = true;
     baro_altitude_available.Update(clock);
-  }
+    }
 
   /**
    * Clear the barometric altitude value if it is "weak".
    */
-  void ClearWeakBaroAltitude() {
+  void ClearWeakBaroAltitude() 
+    {
     if (baro_altitude_available && baro_altitude_weak)
       baro_altitude_available.Clear();
-  }
+    }
 
   /**
    * Provide pressure altitude above 1013 hPa, but only use it if
    * the previous altitude was not present or the same/lower priority.
    */
-  void ProvidePressureAltitude(double value) {
+  void ProvidePressureAltitude(double value)
+    {
     pressure_altitude = value;
     pressure_altitude_weak = false;
     pressure_altitude_available.Update(clock);
-  }
+    }
 
   /**
    * Same as ProvidePressureAltitude(), but don't overwrite a "strong"
    * value.
    */
-  void ProvideWeakPressureAltitude(double value) {
+  void ProvideWeakPressureAltitude(double value)
+    {
     if (pressure_altitude_available && !pressure_altitude_weak)
       /* don't overwrite "strong" value */
       return;
@@ -480,45 +507,49 @@ public:
     pressure_altitude = value;
     pressure_altitude_weak = true;
     pressure_altitude_available.Update(clock);
-  }
+    }
 
   /**
    * Clear the pressure altitude value if it is "weak".
    */
-  void ClearWeakPressureAltitude() {
+  void ClearWeakPressureAltitude()
+    {
     if (pressure_altitude_available && pressure_altitude_weak)
       pressure_altitude_available.Clear();
-  }
+    }
 
   /**
    * Provide barometric altitude from a static pressure sensor, but
    * only use it if the previous altitude was not present or the
    * same/lower priority.
    */
-  void ProvideStaticPressure(AtmosphericPressure value) {
+  void ProvideStaticPressure(AtmosphericPressure value)
+    {
     static_pressure = value;
     static_pressure_available.Update(clock);
-  }
+    }
 
   /**
    * Provide dynamic pressure from a pitot tube.
    * Use only to compute indicated airspeed when static pressure is known.
    * When both pitot- and dynamic pressure are available use dynamic.
    */
-  void ProvideDynamicPressure(AtmosphericPressure value) {
+  void ProvideDynamicPressure(AtmosphericPressure value)
+    {
     dyn_pressure = value;
     dyn_pressure_available.Update(clock);
-  }
+    }
 
   /**
    * Used to compute indicated airspeed
    * when static pressure is known.
    * Value already includes calibration data.
    */
-  void ProvidePitotPressure(AtmosphericPressure value) {
+  void ProvidePitotPressure(AtmosphericPressure value)
+    {
     pitot_pressure = value;
     pitot_pressure_available.Update(clock);
-  }
+    }
 
   /**
    * Used only as a config value that should be saved.
@@ -528,11 +559,12 @@ public:
    *       offset between the pitot- and the static pressure sensor in hPa (zero).
    *       temperature sensor
    */
-  void ProvideSensorCalibration(double value, double offset) {
+  void ProvideSensorCalibration(double value, double offset) 
+    {
     sensor_calibration_factor = value;
     sensor_calibration_offset = offset;
     sensor_calibration_available.Update(clock);
-  }
+    }
 
   /**
    * Returns the pressure altitude, and falls back to the barometric
@@ -540,7 +572,8 @@ public:
    * available.
    */
   [[gnu::pure]]
-  std::optional<double> GetAnyAltitude() const noexcept {
+  std::optional<double> GetAnyAltitude() const noexcept
+    {
     if (pressure_altitude_available)
       return pressure_altitude;
 
@@ -551,29 +584,31 @@ public:
       return gps_altitude;
 
     return std::nullopt;
-  }
+    }
 
   /**
    * Set both true airspeed and indicated airspeed to this value
    * [m/s].  This is used by device drivers when it is not documented
    * whether the airspeed variable is TAS or IAS.
    */
-  void ProvideBothAirspeeds(double as) {
+  void ProvideBothAirspeeds(double as)
+    {
     indicated_airspeed = true_airspeed = as;
     airspeed_available.Update(clock);
     airspeed_real = true;
-  }
+    }
 
   /**
    * Set both true airspeed and indicated airspeed to two different
    * values [m/s].
    */
-  void ProvideBothAirspeeds(double ias, double tas) {
+  void ProvideBothAirspeeds(double ias, double tas)
+    {
     indicated_airspeed = ias;
     true_airspeed = tas;
     airspeed_available.Update(clock);
     airspeed_real = true;
-  }
+    }
 
   /**
    * Set the true airspeed [m/s] and derive the indicated airspeed
@@ -602,34 +637,38 @@ public:
   /**
    * Set the gross, non-compensated, plain-old vertical speed vario value [m/s].
    */
-  void ProvideNoncompVario(double value) {
+  void ProvideNoncompVario(double value)
+    {
     noncomp_vario = value;
     noncomp_vario_available.Update(clock);
-  }
+    }
 
   /**
    * Set the barometric TE vario value [m/s].
    */
-  void ProvideTotalEnergyVario(double value) {
+  void ProvideTotalEnergyVario(double value)
+    {
     total_energy_vario = value;
     total_energy_vario_available.Update(clock);
-  }
+    }
 
   /**
    * Set the barometric netto vario value [m/s].
    */
-  void ProvideNettoVario(double value) {
+  void ProvideNettoVario(double value)
+    {
     netto_vario = value;
     netto_vario_available.Update(clock);
-  }
+    }
 
   /**
    * Set the external wind value.
    */
-  void ProvideExternalWind(const SpeedVector &value) {
+  void ProvideExternalWind(const SpeedVector &value)
+    {
     external_wind = value;
     external_wind_available.Update(clock);
-  }
+    }
 
   /**
    * Clears all information, start with tabula rasa.
@@ -664,7 +703,7 @@ public:
 private:
   void Copy(const NMEAInfo& src);
 
-};
+  };
 
 //static_assert(std::is_trivially_copyable<NMEAInfo>::value, "type is not trivial");
 //static_assert(std::is_trivial<NMEAInfo>::value, "type is not trivial");

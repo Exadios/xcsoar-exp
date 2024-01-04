@@ -29,12 +29,12 @@ Copyright_License {
  * \{
  */
 
-class TargetData;
-class NMEAInfo;
+struct TargetData;
+struct NMEAInfo;
 
 /**
  * The purpose of this class is to provide a base class for a computer
- * process  \ref RemoteTarget data. This processing is low cost and occurs
+ * process \ref RemoteTarget data. This processing is low cost and occurs
  * in the merge thread.
  */ 
 class RemoteTargetComputer

@@ -37,6 +37,6 @@ FlarmTarget::Update(const FlarmTarget& other)
   this->type               = other.type;  /* Do it here and not in 
                                              \ref RemoteTarget to preserve
                                              the \ref FlarmTarget type. */
-  RemoteTarget::Update(other);
+  this->RemoteTarget::Update(other);
   }
 

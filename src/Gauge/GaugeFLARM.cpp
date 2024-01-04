@@ -33,6 +33,11 @@ Copyright_License {
 #include "ui/canvas/opengl/Scope.hpp"
 #endif
 
+#ifndef NDEBUG
+#include "Blackboard/DeviceBlackboard.hpp"
+#include "Components.hpp"
+#endif
+
 class SmallTrafficWindow : public FlarmTrafficWindow {
   bool dragging, pressed;
 

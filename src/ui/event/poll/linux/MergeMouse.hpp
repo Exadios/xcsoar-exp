@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ struct Event;
 
 /**
  * This class keeps track of the current mouse position and generates
- * movement events for the #EventQueue.  It is responsible for merging
+ * movement events for the \ref EventQueue.  It is responsible for merging
  * the input of multiple (hot-plugged) mouse devices.
  */
 class MergeMouse final {

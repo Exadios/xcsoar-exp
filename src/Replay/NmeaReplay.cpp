@@ -62,12 +62,6 @@ NmeaReplay::ParseLine(const char *line, NMEAInfo &data)
                                ? data.time
                                : TimeStamp::Undefined());
 
-#ifndef NDEBUG
-//  std::cout << __FILE__ << ", " << __LINE__ << ": "
-//            << data.clock.ToDuration().count()
-//            << '\n';
-#endif
-
   if ((device != nullptr && device->ParseNMEA(line, data)) ||
       (parser != nullptr && parser->ParseLine(line, data))) {
     data.gps.replay = true;

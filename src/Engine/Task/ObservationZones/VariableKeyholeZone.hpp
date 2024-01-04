@@ -159,7 +159,7 @@ protected:
                  arc_boundary,
                  loc,
                  radiusOuter),
-    inner_radius(inner_radius)
+      inner_radius(inner_radius)
     {
     this->SectorZone::SetStartRadial(startRadial);
     this->SectorZone::SetEndRadial(endRadial);

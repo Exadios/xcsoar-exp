@@ -50,10 +50,6 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
 
   // Return if surveillance data is not available
   const TargetList &targets = Basic().target_data.traffic;
-#ifndef NDEBUG
-//  LogFormat("%s, %d: %s", __FILE__, __LINE__,
-//                          (targets.IsEmpty()) ? "true" : "false");
-#endif
   if (targets.IsEmpty())
     return;
 
@@ -68,9 +64,9 @@ MapWindow::DrawFLARMTraffic(Canvas &canvas,
   canvas.Select(*traffic_look.font);
 
   // Circle through the surveillance targets
-  for (auto it = targets.list.begin(), end = targets.list.end();
+  for (auto it = targets.flarm_list.begin(), end = targets.flarm_list.end();
       it != end; ++it) {
-    const std::shared_ptr<RemoteTarget>target = *it;
+    const FlarmTarget *target = it;
 
     if (!target->location_available)
       continue;

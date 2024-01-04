@@ -25,8 +25,6 @@ Copyright_License {
 #include "InfoBoxes/Panel/Panel.hpp"
 #include "InfoBoxes/Data.hpp"
 #include "Surveillance/Flarm/FlarmTarget.hpp"
-#include "Surveillance/Flarm/FlarmListConstDecorator.hpp"
-#include "Surveillance/Flarm/FlarmListDecorator.hpp"
 #include "Interface.hpp"
 #include "TeamActions.hpp"
 #include "Dialogs/Traffic/TrafficDialogs.hpp"
@@ -37,6 +35,11 @@ Copyright_License {
 #include <tchar.h>
 #include <stdio.h>
 
+/*
+ * \todo Enable team code functionality when we understand what it is. 
+ */
+
+#ifdef COMPILE_TEAM_CODE
 static void
 ShowTeamCodeDialog() noexcept
 {
@@ -54,7 +57,6 @@ static constexpr InfoBoxPanel team_code_infobox_panels[] = {
   { nullptr, nullptr }
 };
 
-#ifdef COMPILE_TEAM_CODE  // Enable when we have sorted out this functionality!
 const InfoBoxPanel *
 InfoBoxContentTeamCode::GetDialogContent() noexcept
 {
@@ -94,19 +96,18 @@ InfoBoxContentTeamCode::HandleKey(const InfoBoxKeyCodes keycode) noexcept
   TeamCodeSettings &settings =
     CommonInterface::SetComputerSettings().team_code;
   const TargetList& remote = CommonInterface::Basic().target_data.traffic;
-  FlarmListConstDecorator flarm(remote);
-  const FlarmPtr traffic = settings.team_flarm_id.IsDefined() ?
-                           std::dynamic_pointer_cast<FlarmTarget>(flarm.FindTraffic(settings.team_flarm_id))
+  const FlarmTarget* traffic = settings.team_flarm_id.IsDefined() ?
+                           remote.FindFlarmTraffic(settings.team_flarm_id)
                            : NULL;
 
   if (keycode == ibkUp)
     traffic = (traffic == NULL ?
-              flarm.FirstTraffic() :
-              flarm.NextTraffic(traffic));
+              remote.FirstFlarmTraffic() :
+              remote.NextFlarmTraffic(traffic));
   else if (keycode == ibkDown)
     traffic = (traffic == NULL ?
-              flarm.LastTraffic() :
-              flarm.PreviousTraffic(traffic));
+              remote.LastFlarmTraffic() :
+              remote.PreviousFlarmTraffic(traffic));
   else
     return false;
 

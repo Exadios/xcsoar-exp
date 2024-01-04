@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -93,9 +93,9 @@ public:
   /**
    * Checks if the time stamp has expired, and calls clear() if so.
    *
-   * @param now the current time stamp in seconds
-   * @param max_age the maximum age in seconds
-   * @return true if the value is expired
+   * @param now the current time stamp in seconds * 64.
+   * @param max_age the maximum age in nano seconds.
+   * @return true if the value is expired.
    */
   constexpr bool Expire(TimeStamp _now,
                         std::chrono::steady_clock::duration _max_age) noexcept {

@@ -36,13 +36,13 @@ void
 MapItemListBuilder::AddTraffic(const TargetList &remote_targets)
 
 {
-  for (const auto &t : remote_targets.list) {
+  for (const auto &t : remote_targets.flarm_list) {
     if (list.full())
       break;
 
-    if (location.DistanceS(t->location) < this->range) {
-      auto color = TargetFriends::GetFriendColor(t->id);
-      list.append(new TrafficMapItem(t->id, color));
+    if (location.DistanceS(t.location) < this->range) {
+      auto color = TargetFriends::GetFriendColor(t.id);
+      list.append(new TrafficMapItem(t.id, color));
     }
   }
 }

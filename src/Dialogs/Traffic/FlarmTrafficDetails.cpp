@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -41,7 +41,6 @@
 #include "Surveillance/Flarm/FlarmDetails.hpp"
 #include "Surveillance/Flarm/FlarmFriends.hpp"
 #include "Surveillance/Flarm/FlarmTarget.hpp"
-#include "Surveillance/Flarm/FlarmListDecorator.hpp"
 #include "Surveillance/TargetFriends.hpp"
 #include "FLARM/Glue.hpp"
 #include "Renderer/ColorButtonRenderer.hpp"
@@ -173,8 +172,8 @@ FlarmTrafficDetailsWidget::UpdateChanging(const MoreData &basic)
   TCHAR tmp[40];
   const TCHAR *value;
 
-  const TargetPtr target =
-    basic.target_data.traffic.FindTraffic(target_id);
+  const FlarmTarget* target =
+    basic.target_data.traffic.FindFlarmTraffic(target_id);
 
   bool target_ok = (target != nullptr) && target->IsDefined();
 
@@ -264,14 +263,13 @@ FlarmTrafficDetailsWidget::Update()
     SetText(AIRPORT, _T("--"));
 
     // Fill the plane type field
-    const TargetPtr target =
-      CommonInterface::Basic().target_data.traffic.FindTraffic(target_id);
-    const FlarmPtr  flarm = FlarmTarget::Cast2FlarmPtr(target);
+    const FlarmTarget* target =
+      CommonInterface::Basic().target_data.traffic.FindFlarmTraffic(target_id);
     const TCHAR* actype;
-    if (flarm == nullptr)
+    if (target == nullptr)
       actype = _T("--");
     else
-      actype = AircraftType::TypeName(flarm->type);
+      actype = AircraftType::TypeName(target->type);
     SetText(PLANE, actype);
   }
 

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -41,6 +41,13 @@ Copyright_License {
  */
 DeviceBlackboard::DeviceBlackboard() noexcept
 {
+#ifndef NDEBUG
+  std::cout << __FILE__ << ", " << __LINE__ << ": Ctor with this = "
+            << this << ", real_data = " << &real_data
+            << ", simulator_data = " << &simulator_data
+            << ", replay_data = " << &replay_data
+            << "\n";
+#endif
   // Clear the gps_info and calculated_info
   gps_info.Reset();
   calculated_info.Reset();
@@ -231,34 +238,24 @@ DeviceBlackboard::Merge() noexcept
    */
 
   /*
-   * The output of this function is ::device_blackboard->gps_info.
+   * The output of this function is this->gps_info so set it here.
    */
   NMEAInfo &basic = SetBasic();
 
   real_data.Reset();
 
-  for (auto &basic : per_device_data) {
-    if (!basic.alive)
+  for (auto &dev_basic : per_device_data) {
+    if (!dev_basic.alive)
       continue;
 
     /*
-     * Merge input data to real_data. By the semantics of NMEAInfo::Complement
-     * each variable of a domain is taken from the first available device
-     * that provides variables of that domain.
+     * Merge input data to real_data. By the semantics of \ref
+     * NMEAInfo::Complement each variable of a domain is taken from the
+     * first available device * that provides variables of that domain.
      */
-    basic.UpdateClock();
-    basic.Expire();
-    real_data.Complement(basic);
-#ifndef NDEBUG
-    // Flarm is OK here.
-//    FlarmListDecorator fld = FlarmListDecorator(&basic.target_data.traffic);
-//    TargetList ftl = fld.FlarmTargets();
-//    std::cout << __FILE__ << ", " << __LINE__ << ": " << ftl.GetActiveTrafficCount() << "\n";
-    // Flarm is not OK here!
-//    FlarmListDecorator rdd = FlarmListDecorator(&real_data.target_data.traffic);
-//    TargetList rtl = rdd.FlarmTargets();
-//    std::cout << __FILE__ << ", " << __LINE__ << ": " << rtl.GetActiveTrafficCount() << "\n";
-#endif
+    dev_basic.UpdateClock();
+    dev_basic.Expire();
+    real_data.Complement(dev_basic);
   }
 
   real_clock.Normalise(real_data);

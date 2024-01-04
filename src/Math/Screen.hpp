@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -49,5 +49,22 @@ ScreenClosestPoint(const PixelPoint &p1, const PixelPoint &p2,
  *        the intended size of the polygon.
  */
 void
-PolygonRotateShift(std::span<BulkPixelPoint> poly, PixelPoint shift,
-                   Angle angle, int scale = 100) noexcept;
+PolygonRotateShift(std::span<BulkPixelPoint> poly,
+                   PixelPoint shift,
+                   Angle angle,
+                   int scale = 100) noexcept;
+
+/**
+ * Shifts, rotates and scales the given polygon.
+ *
+ * @param p Point in un rotated Cartesian with the origin at zero. 
+ * @param shift The shift applied to the origin.
+ * @param angle Angle of rotation
+ * @param scale An input polygon with coordinates in the range -50 to +50
+ *        is scaled to fill a square with the size of the 'scale' argument.
+ *        (The scale value 100 preserves the size of the input polygon.)
+ *        For best scaling precision, avoid 'scale' values smaller than
+ *        the intended size of the polygon.
+ */
+void
+PointRotateShift(PixelPoint& p, const PixelPoint shift, Angle angle, int scale);

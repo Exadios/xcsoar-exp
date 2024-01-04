@@ -32,5 +32,5 @@ AdsbTarget::Update(const AdsbTarget& other)
   this->type               = other.type;  /* Do it here and not in 
                                              \ref RemoteTarget to preserve
                                              the \ref AdsbTarget type. */
-  RemoteTarget::Update(other);
+  this->RemoteTarget::Update(other);
   }
