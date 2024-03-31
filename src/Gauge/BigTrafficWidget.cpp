@@ -548,11 +548,11 @@ void
 FlarmTrafficControl::PaintTrafficInfo(Canvas& canvas) const
   {
   // Don't paint numbers if no plane selected
-  if (selection == -1 && !WarningMode())
+  if (flarm_selection == -1 && !WarningMode())
     return;
 
   // Shortcut to the selected traffic
-  FlarmTarget target = this->traffic.flarm_list[WarningMode() ? warning : selection];
+  FlarmTarget target = this->traffic.flarm_list[WarningMode() ? warning : flarm_selection];
   assert(target.IsDefined());
 
   const unsigned padding = Layout::GetTextPadding();
@@ -696,7 +696,7 @@ struct TrafficWidget::Windows
 void
 TrafficWidget::Windows::UpdateLayout(const PixelRect &rc) noexcept
   {
-  view.Move(rc);
+  this->view.Move(rc);
 
   const unsigned margin = Layout::Scale(1);
   const unsigned button_height = Layout::GetMinimumControlHeight();
@@ -752,37 +752,37 @@ TrafficWidget::~TrafficWidget() noexcept = default;
 void
 TrafficWidget::OpenDetails() noexcept
   {
-  windows->view.OpenDetails();
+  this->windows->view.OpenDetails();
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::ZoomIn() noexcept
   {
-  windows->view.ZoomIn();
-  UpdateButtons();
+  this->windows->view.ZoomIn();
+  this->UpdateButtons();
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::ZoomOut() noexcept
   {
-  windows->view.ZoomOut();
-  UpdateButtons();
+  this->windows->view.ZoomOut();
+  this->UpdateButtons();
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::PreviousTarget() noexcept
   {
-  windows->view.PrevTarget();
+  this->windows->view.PrevTarget();
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::NextTarget() noexcept
   {
-  windows->view.NextTarget();
+  this->windows->view.NextTarget();
   }
 
 //------------------------------------------------------------------------------
@@ -801,49 +801,49 @@ FlarmTrafficControl::SwitchData()
 void
 TrafficWidget::SwitchData() noexcept
   {
-  windows->view.SwitchData();
+  this->windows->view.SwitchData();
   }
 
 //------------------------------------------------------------------------------
 bool
 TrafficWidget::GetAutoZoom() const noexcept
   {
-  return windows->view.GetAutoZoom();
+  return this->windows->view.GetAutoZoom();
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::SetAutoZoom(bool value) noexcept
   {
-  windows->view.SetAutoZoom(value);
+  this->windows->view.SetAutoZoom(value);
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::ToggleAutoZoom() noexcept
   {
-  windows->view.ToggleAutoZoom();
+  this->windows->view.ToggleAutoZoom();
   }
 
 //------------------------------------------------------------------------------
 bool
 TrafficWidget::GetNorthUp() const noexcept
   {
-  return windows->view.GetNorthUp();
+  return this->windows->view.GetNorthUp();
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::SetNorthUp(bool value) noexcept
   {
-  windows->view.SetAutoZoom(value);
+  this->windows->view.SetAutoZoom(value);
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::ToggleNorthUp() noexcept
   {
-  windows->view.ToggleNorthUp();
+  this->windows->view.ToggleNorthUp();
   }
 
 //------------------------------------------------------------------------------
@@ -871,12 +871,12 @@ TrafficWidget::Update() noexcept
                              CommonInterface::GetComputerSettings().team_code,
                              basic.target_data.status);
 
-  windows->view.UpdateTaskDirection(calculated.task_stats.task_valid &&
-                                    calculated.task_stats.current_leg.solution_remaining.IsOk(),
-                                    calculated.task_stats.
-                                    current_leg.solution_remaining.cruise_track_bearing);
+  this->windows->view.UpdateTaskDirection(calculated.task_stats.task_valid &&
+                                          calculated.task_stats.current_leg.solution_remaining.IsOk(),
+                                          calculated.task_stats.
+                                          current_leg.solution_remaining.cruise_track_bearing);
 
-  UpdateButtons();
+  this->UpdateButtons();
   }
 
 //------------------------------------------------------------------------------
@@ -1002,23 +1002,23 @@ FlarmTrafficControl::OnKeyDown(unsigned key_code) noexcept
 void
 TrafficWidget::UpdateLayout() noexcept
   {
-  windows->UpdateLayout(GetContainer().GetClientRect());
+  this->windows->UpdateLayout(GetContainer().GetClientRect());
   }
 
 //------------------------------------------------------------------------------
 void
 TrafficWidget::UpdateButtons() noexcept
   {
-  const bool unlocked = !windows->view.WarningMode();
+  const bool unlocked = !this->windows->view.WarningMode();
   const TargetList& traffic = CommonInterface::Basic().target_data.traffic;
   const bool not_empty = !traffic.IsEmpty();
   const bool two_or_more = traffic.GetActiveTrafficCount() >= 2;
 
-  windows->zoom_in_button.SetEnabled(unlocked && windows->view.CanZoomIn());
-  windows->zoom_out_button.SetEnabled(unlocked && windows->view.CanZoomOut());
-  windows->previous_item_button.SetEnabled(unlocked && two_or_more);
-  windows->next_item_button.SetEnabled(unlocked && two_or_more);
-  windows->details_button.SetEnabled(unlocked && not_empty);
+  this->windows->zoom_in_button.SetEnabled(unlocked && windows->view.CanZoomIn());
+  this->windows->zoom_out_button.SetEnabled(unlocked && windows->view.CanZoomOut());
+  this->windows->previous_item_button.SetEnabled(unlocked && two_or_more);
+  this->windows->next_item_button.SetEnabled(unlocked && two_or_more);
+  this->windows->details_button.SetEnabled(unlocked && not_empty);
   }
 
 //------------------------------------------------------------------------------
@@ -1029,10 +1029,11 @@ TrafficWidget::Prepare(ContainerWindow &parent, const PixelRect &_rc) noexcept
 
   const Look &look = UIGlobals::GetLook();
 
-  windows = std::make_unique<Windows>(*this, GetContainer(),
-                                      GetContainer().GetClientRect(),
-                                      look.dialog.button, look.flarm_dialog);
-  UpdateLayout();
+  this->windows = std::make_unique<Windows>(*this,
+                                            GetContainer(),
+                                            GetContainer().GetClientRect(),
+                                            look.dialog.button, look.flarm_dialog);
+  this->UpdateLayout();
   }
 
 //------------------------------------------------------------------------------
@@ -1040,13 +1041,13 @@ void
 TrafficWidget::Show(const PixelRect &rc) noexcept
   {
   // Update Radar and Selection for the first time
-  Update();
+  this->Update();
 
   ContainerWidget::Show(rc);
-  UpdateLayout();
+  this->UpdateLayout();
 
   /* show the "Close" button only if this is a "special" page */
-  windows->close_button.SetVisible(CommonInterface::GetUIState().pages.special_page.IsDefined());
+  this->windows->close_button.SetVisible(CommonInterface::GetUIState().pages.special_page.IsDefined());
 
   CommonInterface::GetLiveBlackboard().AddListener(*this);
   }
@@ -1065,7 +1066,7 @@ TrafficWidget::Move(const PixelRect &rc) noexcept
   {
   ContainerWidget::Move(rc);
 
-  UpdateLayout();
+  this->UpdateLayout();
   }
 
 
@@ -1073,7 +1074,7 @@ TrafficWidget::Move(const PixelRect &rc) noexcept
 bool
 TrafficWidget::SetFocus() noexcept
   {
-  windows->view.SetFocus();
+  this->windows->view.SetFocus();
   return true;
   }
 
@@ -1081,5 +1082,5 @@ TrafficWidget::SetFocus() noexcept
 void
 TrafficWidget::OnGPSUpdate([[maybe_unused]] const MoreData &basic)
   {
-  Update();
+  this->Update();
   }

@@ -63,6 +63,7 @@ RemoteTarget::Update(const RemoteTarget &other)
   this->speed_received      = other.speed_received;
   this->climb_rate          = other.climb_rate;
   this->climb_rate_received = other.climb_rate_received;
+  this->location_available  = other.location_available;
   }
 
 //------------------------------------------------------------------------------

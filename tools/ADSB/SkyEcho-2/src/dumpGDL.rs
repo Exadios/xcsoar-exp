@@ -20,12 +20,14 @@
 }
 */
 
+//! A command line tool to dump SkyEcho 2 data output to terminal or file.
+//!
+
 //use std::io;
 use std::net::UdpSocket;
 use std::time::Duration;
 
-/// A command line tool to dump SkyEcho 2 data output to terminal or file.
-///
+/// Main.
 
 //------------------------------------------------------------------------------
 fn main() -> std::io::Result<()>
@@ -61,4 +63,11 @@ fn main() -> std::io::Result<()>
     } // the socket is closed here
 
   Ok(())
+  }
+
+/// Break out n messages.
+
+//------------------------------------------------------------------------------
+fn break_out_message()
+  {
   }

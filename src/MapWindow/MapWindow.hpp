@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,6 +22,10 @@ Copyright_License {
 */
 
 #pragma once
+
+/**
+ * \file
+ */
 
 #include "Projection/MapWindowProjection.hpp"
 #include "Renderer/AirspaceRenderer.hpp"
@@ -57,16 +61,19 @@ class ContainerWindow;
 class NOAAStore;
 class MapOverlay;
 
-namespace SkyLinesTracking {
+namespace SkyLinesTracking
+  {
   struct Data;
-}
+  }
 
-namespace TIM { class Glue; }
+namespace TIM
+  {
+  class Glue;
+  }
 
-class MapWindow :
-  public DoubleBufferWindow,
-  public MapWindowBlackboard
-{
+class MapWindow : public DoubleBufferWindow, public MapWindowBlackboard
+  {
+private:
 #ifndef ENABLE_OPENGL
   // graphics vars
 
@@ -81,7 +88,8 @@ protected:
   /**
    * What object does the projection's screen origin follow?
    */
-  enum FollowMode {
+  enum FollowMode
+    {
     /**
      * Follow the user's aircraft.
      */
@@ -91,7 +99,7 @@ protected:
      * The user pans the map.
      */
     FOLLOW_PAN,
-  };
+    };
 
   FollowMode follow_mode = FOLLOW_SELF;
 
@@ -117,11 +125,11 @@ protected:
    */
   MapWindowProjection render_projection;
 
-  const Waypoints *waypoints = nullptr;
-  TopographyStore *topography = nullptr;
-  CachedTopographyRenderer *topography_renderer = nullptr;
+  const Waypoints* waypoints = nullptr;
+  TopographyStore* topography = nullptr;
+  CachedTopographyRenderer* topography_renderer = nullptr;
 
-  RasterTerrain *terrain = nullptr;
+  RasterTerrain* terrain = nullptr;
 
   std::shared_ptr<RaspStore> rasp_store;
 
@@ -136,7 +144,7 @@ protected:
   std::unique_ptr<MapOverlay> overlay;
 #endif
 
-  const TrafficLook &traffic_look;
+  const TrafficLook& traffic_look;
 
   BackgroundRenderer background;
   WaypointRenderer waypoint_renderer;
@@ -146,20 +154,20 @@ protected:
 
   TrailRenderer trail_renderer;
 
-  ProtectedTaskManager *task = nullptr;
-  const ProtectedRoutePlanner *route_planner = nullptr;
-  GlideComputer *glide_computer = nullptr;
+  ProtectedTaskManager* task = nullptr;
+  const ProtectedRoutePlanner* route_planner = nullptr;
+  GlideComputer* glide_computer = nullptr;
 
 #ifdef HAVE_NOAA
-  NOAAStore *noaa_store = nullptr;
+  NOAAStore* noaa_store = nullptr;
 #endif
 
 #ifdef HAVE_SKYLINES_TRACKING
-  const SkyLinesTracking::Data *skylines_data = nullptr;
+  const SkyLinesTracking::Data* skylines_data = nullptr;
 #endif
 
 #ifdef HAVE_HTTP
-  const TIM::Glue *tim_glue = nullptr;
+  const TIM::Glue* tim_glue = nullptr;
 #endif
 
   bool compass_visible = true;
@@ -189,74 +197,85 @@ protected:
   friend class DrawThread;
 
 public:
-  MapWindow(const MapLook &look,
-            const TrafficLook &traffic_look);
+  MapWindow(const MapLook& look,
+            const TrafficLook& traffic_look);
   virtual ~MapWindow();
 
   /**
    * Is the rendered map following the user's aircraft (i.e. near it)?
    */
-  bool IsNearSelf() const {
-    return follow_mode == FOLLOW_SELF;
-  }
+  bool IsNearSelf() const 
+    {
+    return this->follow_mode == FOLLOW_SELF;
+    }
 
-  bool IsPanning() const {
-    return follow_mode == FOLLOW_PAN;
-  }
+  bool IsPanning() const
+    {
+    return this->follow_mode == FOLLOW_PAN;
+    }
 
-  void SetWaypoints(const Waypoints *_waypoints) {
-    waypoints = _waypoints;
-    waypoint_renderer.SetWaypoints(waypoints);
-  }
+  void SetWaypoints(const Waypoints* waypoints)
+    {
+    this->waypoints = waypoints;
+    this->waypoint_renderer.SetWaypoints(waypoints);
+    }
 
-  void SetTask(ProtectedTaskManager *_task) {
-    task = _task;
-  }
+  void SetTask(ProtectedTaskManager* task)
+    {
+    this->task = task;
+    }
 
-  void SetRoutePlanner(const ProtectedRoutePlanner *_route_planner) {
-    route_planner = _route_planner;
-  }
+  void SetRoutePlanner(const ProtectedRoutePlanner* route_planner)
+    {
+    this->route_planner = route_planner;
+    }
 
-  void SetGlideComputer(GlideComputer *_gc);
+  void SetGlideComputer(GlideComputer* gc);
 
-  void SetAirspaces(Airspaces *airspaces) {
-    airspace_renderer.SetAirspaces(airspaces);
-    airspace_label_renderer.SetAirspaces(airspaces);
-  }
+  void SetAirspaces(Airspaces* airspaces)
+    {
+    this->airspace_renderer.SetAirspaces(airspaces);
+    this->airspace_label_renderer.SetAirspaces(airspaces);
+    }
 
-  void SetTopography(TopographyStore *_topography);
-  void SetTerrain(RasterTerrain *_terrain);
+  void SetTopography(TopographyStore* topography);
+  void SetTerrain(RasterTerrain* terrain);
 
-  const std::shared_ptr<RaspStore> &GetRasp() const {
-    return rasp_store;
-  }
+  const std::shared_ptr<RaspStore> &GetRasp() const
+    {
+    return this->rasp_store;
+    }
 
-  void SetRasp(const std::shared_ptr<RaspStore> &_rasp_store);
+  void SetRasp(const std::shared_ptr<RaspStore>& rasp_store);
 
 #ifdef ENABLE_OPENGL
-  void SetOverlay(std::unique_ptr<MapOverlay> &&_overlay);
+  void SetOverlay(std::unique_ptr<MapOverlay>&& overlay);
 
-  const MapOverlay *GetOverlay() const {
-    return overlay.get();
-  }
+  const MapOverlay* GetOverlay() const
+    {
+    return this->overlay.get();
+    }
 #endif
 
 #ifdef HAVE_NOAA
-  void SetNOAAStore(NOAAStore *_noaa_store) {
-    noaa_store = _noaa_store;
-  }
+  void SetNOAAStore(NOAAStore* noaa_store)
+    {
+    this->noaa_store = noaa_store;
+    }
 #endif
 
 #ifdef HAVE_SKYLINES_TRACKING
-  void SetSkyLinesData(const SkyLinesTracking::Data *_data) {
-    skylines_data = _data;
-  }
+  void SetSkyLinesData(const SkyLinesTracking::Data* data)
+    {
+    this->skylines_data = data;
+    }
 #endif
 
 #ifdef HAVE_HTTP
-  void SetThermalInfoMap(const TIM::Glue *_tim) {
-    tim_glue = _tim;
-  }
+  void SetThermalInfoMap(const TIM::Glue* tim)
+    {
+    this->tim_glue = tim;
+    }
 #endif
 
   void FlushCaches();
@@ -268,55 +287,87 @@ public:
                       const ComputerSettings &settings_computer,
                       const MapSettings &settings_map);
 
-  const MapWindowProjection &VisibleProjection() const {
-    return visible_projection;
-  }
+  const MapWindowProjection& VisibleProjection() const
+    {
+    return this->visible_projection;
+    }
 
   [[gnu::pure]]
-  GeoPoint GetLocation() const {
-    return visible_projection.IsValid()
-      ? visible_projection.GetGeoLocation()
-      : GeoPoint::Invalid();
-  }
+  GeoPoint GetLocation() const
+    {
+    return this->visible_projection.IsValid() ?
+             this->visible_projection.GetGeoLocation() :
+             GeoPoint::Invalid();
+    }
 
-  void SetLocation(const GeoPoint location) {
-    visible_projection.SetGeoLocation(location);
-  }
+  void SetLocation(const GeoPoint location)
+    {
+    this->visible_projection.SetGeoLocation(location);
+    }
 
-  void UpdateScreenBounds() {
-    visible_projection.UpdateScreenBounds();
-  }
+  void UpdateScreenBounds()
+    {
+    this->visible_projection.UpdateScreenBounds();
+    }
 
 protected:
-  void DrawBestCruiseTrack(Canvas &canvas, PixelPoint aircraft_pos) const;
-  void DrawTrackBearing(Canvas &canvas,
-                        PixelPoint aircraft_pos, bool circling) const;
-  void DrawCompass(Canvas &canvas, const PixelRect &rc) const;
-  void DrawWind(Canvas &canvas, const PixelPoint &Orig,
-                           const PixelRect &rc) const;
-  void DrawWaypoints(Canvas &canvas);
+  void DrawBestCruiseTrack(Canvas& canvas, PixelPoint aircraft_pos) const;
+  void DrawTrackBearing(Canvas& canvas,
+                        PixelPoint aircraft_pos,
+                        bool circling) const;
+  void DrawCompass(Canvas& canvas, const PixelRect& rc) const;
+  void DrawWind(Canvas& canvas,
+                const PixelPoint& Orig,
+                const PixelRect& rc) const;
+  void DrawWaypoints(Canvas& canvas);
 
-  void DrawTrail(Canvas &canvas, PixelPoint aircraft_pos,
-                 TimeStamp min_time, bool enable_traildrift = false) noexcept;
-  virtual void RenderTrail(Canvas &canvas, PixelPoint aircraft_pos);
-  virtual void RenderTrackBearing(Canvas &canvas, PixelPoint aircraft_pos);
+  void DrawTrail(Canvas& canvas,
+                 PixelPoint aircraft_pos,
+                 TimeStamp min_time,
+                 bool enable_traildrift = false) noexcept;
+  virtual void RenderTrail(Canvas& canvas, PixelPoint aircraft_pos);
+  virtual void RenderTrackBearing(Canvas& canvas, PixelPoint aircraft_pos);
 
 #ifdef HAVE_SKYLINES_TRACKING
-  void DrawSkyLinesTraffic(Canvas &canvas) const;
+  void DrawSkyLinesTraffic(Canvas& canvas) const;
 #endif
 
-  void DrawTeammate(Canvas &canvas) const;
-  void DrawContest(Canvas &canvas);
-  void DrawTask(Canvas &canvas);
-  void DrawRoute(Canvas &canvas);
-  void DrawTaskOffTrackIndicator(Canvas &canvas);
-  void DrawWaves(Canvas &canvas);
-  virtual void DrawThermalEstimate(Canvas &canvas) const;
+  /**
+   * Draws the teammate icon to the given canvas
+   * @param canvas Canvas for drawing
+   */
+  void DrawTeammate(Canvas& canvas) const;
+  void DrawContest(Canvas& canvas);
+  void DrawTask(Canvas& canvas);
+  void DrawRoute(Canvas& canvas);
+  void DrawTaskOffTrackIndicator(Canvas& canvas);
+  void DrawWaves(Canvas& canvas);
+  virtual void DrawThermalEstimate(Canvas& canvas) const;
 
-  void DrawGlideThroughTerrain(Canvas &canvas) const;
-  void DrawTerrainAbove(Canvas &canvas);
-  void DrawFLARMTraffic(Canvas &canvas, PixelPoint aircraft_pos) const;
-  void DrawGLinkTraffic(Canvas &canvas, PixelPoint aircraft_pos) const;
+  void DrawGlideThroughTerrain(Canvas& canvas) const;
+  void DrawTerrainAbove(Canvas& canvas);
+
+  /**
+   * Draws the FLARM traffic icons onto the given canvas
+   * @param canvas Canvas for drawing
+   * @param aircraft_pos Our position in pixels
+   */
+  void DrawFLARMTraffic(Canvas& canvas, const PixelPoint aircraft_pos) const;
+  
+  /**
+   * Draws the ADSB traffic icons onto the given canvas
+   * @param canvas Canvas for drawing
+   * @param aircraft_pos Our position in pixels
+   */
+  void DrawADSBTraffic(Canvas& canvas, const PixelPoint aircraft_pos) const;
+
+  /**
+   * Draws the GliderLink traffic icons onto the given canvas
+   * @param canvas Canvas for drawing
+   * @param aircraft_pos Our position in pixels
+   */
+  void DrawGLinkTraffic(Canvas& canvas, PixelPoint aircraft_pos) const;
+
 
   // thread, main functions
   /**
@@ -324,7 +375,7 @@ protected:
    * @param canvas The drawing canvas
    * @param rc The area to draw in
    */
-  virtual void Render(Canvas &canvas, const PixelRect &rc);
+  virtual void Render(Canvas& canvas, const PixelRect& rc);
 
   unsigned UpdateTopography(unsigned max_update=1024);
 
@@ -333,10 +384,11 @@ protected:
    */
   bool UpdateTerrain();
 
-  void UpdateAll() {
+  void UpdateAll()
+    {
     UpdateTopography();
     UpdateTerrain();
-  }
+    }
 
 protected:
   /* virtual methods from class Window */
@@ -356,49 +408,50 @@ private:
    * Renders the terrain background
    * @param canvas The drawing canvas
    */
-  void RenderTerrain(Canvas &canvas);
+  void RenderTerrain(Canvas& canvas);
 
-  void RenderRasp(Canvas &canvas);
+  void RenderRasp(Canvas& canvas);
 
-  void RenderTerrainAbove(Canvas &canvas, bool working);
+  void RenderTerrainAbove(Canvas& canvas, bool working);
 
   /**
    * Renders the topography
    * @param canvas The drawing canvas
    */
-  void RenderTopography(Canvas &canvas);
+  void RenderTopography(Canvas& canvas);
   /**
    * Renders the topography labels
    * @param canvas The drawing canvas
    */
-  void RenderTopographyLabels(Canvas &canvas);
+  void RenderTopographyLabels(Canvas& canvas);
 
-  void RenderOverlays(Canvas &canvas);
+  void RenderOverlays(Canvas& canvas);
 
   /**
    * Renders the final glide shading
    * @param canvas The drawing canvas
    */
-  void RenderFinalGlideShading(Canvas &canvas);
+  void RenderFinalGlideShading(Canvas& canvas);
   /**
    * Renders the airspace
    * @param canvas The drawing canvas
    */
-  void RenderAirspace(Canvas &canvas);
+  void RenderAirspace(Canvas& canvas);
 
   /**
    * Renders the NOAA stations
    * @param canvas The drawing canvas
    */
-  void RenderNOAAStations(Canvas &canvas);
+  void RenderNOAAStations(Canvas& canvas);
   /**
    * Render final glide through terrain marker
    * @param canvas The drawing canvas
    */
-  void RenderGlide(Canvas &canvas);
+  void RenderGlide(Canvas& canvas);
 
 public:
-  void SetMapScale(const double x) {
-    visible_projection.SetMapScale(x);
-  }
-};
+  void SetMapScale(const double x)
+    {
+    this->visible_projection.SetMapScale(x);
+    }
+  };

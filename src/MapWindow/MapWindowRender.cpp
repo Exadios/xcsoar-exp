@@ -295,7 +295,10 @@ MapWindow::Render(Canvas &canvas, const PixelRect &rc)
   DrawTeammate(canvas);
 
   if (basic.location_available)
+    {
     DrawFLARMTraffic(canvas, aircraft_pos);
+    DrawADSBTraffic(canvas, aircraft_pos);
+    }
 
   //////////////////////////////////////////////// own aircraft
   // Finally, draw you!

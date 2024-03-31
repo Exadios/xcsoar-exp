@@ -161,6 +161,7 @@ public:
         this->adsb_list.quick_remove(i);
     }
 
+private:
   /**
    * Give the number of Flarm items in this list.
    * @return Number of Flarm targets in the list.
@@ -179,9 +180,10 @@ public:
     return this->adsb_list.size();
     }
 
+public:
   /**
    * Give the total number of items in this list.
-   * @return Number of targets in the list.
+   * @return Number of targets of all types in the list.
    */
   constexpr unsigned GetActiveTrafficCount() const
     {
@@ -190,7 +192,33 @@ public:
     }
 
   /**
-   * Looks up a Flarm item in the traffic list.
+   * Looks up a Traffic item of any type in the list.
+   * @param id Target id
+   * @return the \ref RemoteTarget pointer, nullptr if not found
+   */
+  constexpr RemoteTarget* FindTraffic(TargetId id) noexcept
+    {
+    RemoteTarget* rtn = nullptr;
+    if ((rtn = this->FindFlarmTraffic(id)) != nullptr)
+      return rtn;
+    return this->FindAdsbTraffic(id);
+    }
+
+  /**
+   * Looks up a Traffic item of any type in the list.
+   * @param id Target id
+   * @return the \ref FlarmTarget pointer, nullptr if not found
+   */
+  constexpr const RemoteTarget* FindTraffic(TargetId id) const noexcept
+    {
+    const RemoteTarget* rtn = nullptr;
+    if ((rtn = this->FindFlarmTraffic(id)) != nullptr)
+      return rtn;
+    return this->FindAdsbTraffic(id);
+    }
+
+  /**
+   * Looks up a Flarm item in the FLARM traffic list.
    *
    * @param id Target id
    * @return the \ref FlarmTarget pointer, nullptr if not found
@@ -205,12 +233,12 @@ public:
     }
 
   /**
-   * Looks up a Flarm item in the traffic list.
+   * Looks up a Flarm item in the FLARM traffic list.
    *
    * @param id Target id
    * @return the \ref FlarmTarget pointer, nullptr if not found
    */
-  constexpr const FlarmTarget* FindFlarmTraffic(TargetId id) const
+  constexpr const FlarmTarget* FindFlarmTraffic(const TargetId id) const noexcept
     {
     for (const auto& traffic : this->flarm_list)
       if (traffic.id == id)
@@ -219,12 +247,37 @@ public:
     }
 
   /**
-   * Looks up a Flarm item in the traffic list.
-   *
+   * Looks up a Traffic item of any type in the list.
+   * @param name Target name
+   * @return the \ref RemoteTarget pointer, nullptr if not found
+   */
+  constexpr RemoteTarget* FindTraffic(const TCHAR* name) noexcept
+    {
+    RemoteTarget* rtn = nullptr;
+    if ((rtn = this->FindFlarmTraffic(name)) != nullptr)
+      return rtn;
+    return this->FindAdsbTraffic(name);
+    }
+
+  /**
+   * Looks up a Traffic item of any type in the list.
+   * @param name Target name
+   * @return the \ref RemoteTarget pointer, nullptr if not found
+   */
+  constexpr const RemoteTarget* FindTraffic(const TCHAR* name) const noexcept
+    {
+    const RemoteTarget* rtn = nullptr;
+    if ((rtn = this->FindFlarmTraffic(name)) != nullptr)
+      return rtn;
+    return this->FindAdsbTraffic(name);
+    }
+ 
+  /**
+   * Looks up a Flarm item in the FLARM traffic list.
    * @param name The name or call sign
    * @return The \ref FlarmTarget pointer, nullptr if not found
    */
-  constexpr FlarmTarget* FindFlarmTraffic(const TCHAR* name)
+  constexpr FlarmTarget* FindFlarmTraffic(const TCHAR* name) noexcept
     {
     for (auto& traffic : this->flarm_list)
       if (traffic.name.equals(name))
@@ -233,12 +286,11 @@ public:
     }
 
   /**
-   * Looks up a Flarm item in the traffic list.
-   *
+   * Looks up a Flarm item in the FLARM traffic list.
    * @param name The name or call sign
    * @return The \ref FlarmTarget pointer, nullptr if not found
    */
-  constexpr const FlarmTarget* FindFlarmTraffic(const TCHAR* name) const
+  constexpr const FlarmTarget* FindFlarmTraffic(const TCHAR* name) const noexcept
     {
     for (const auto& traffic : this->flarm_list)
       if (traffic.name.equals(name))
@@ -248,11 +300,10 @@ public:
 
   /**
    * Looks up a Adsb item in the traffic list.
-   *
    * @param id Target id
    * @return the \ref AdsbTarget pointer, nullptr if not found
    */
-  constexpr AdsbTarget* FindAdsbTraffic(TargetId id) 
+  constexpr AdsbTarget* FindAdsbTraffic(TargetId id) noexcept
     {
     for (auto& traffic : this->adsb_list)
       if (traffic.id == id)
@@ -263,11 +314,10 @@ public:
 
   /**
    * Looks up a Adsb item in the traffic list.
-   *
    * @param id Target id
    * @return the \ref AdsbTarget pointer, nullptr if not found
    */
-  constexpr const AdsbTarget* FindAdsbTraffic(TargetId id) const
+  constexpr const AdsbTarget* FindAdsbTraffic(TargetId id) const noexcept
     {
     for (const auto& traffic : this->adsb_list)
       if (traffic.id == id)
@@ -277,11 +327,10 @@ public:
 
   /**
    * Looks up a Adsb item in the traffic list.
-   *
    * @param name The name or call sign
    * @return The \ref AdsbTarget pointer, nullptr if not found
    */
-  const AdsbTarget* FindAdsbTraffic(const TCHAR* name)
+  constexpr AdsbTarget* FindAdsbTraffic(const TCHAR* name) noexcept
     {
     for (auto& traffic : this->adsb_list)
       if (traffic.name.equals(name))
@@ -291,11 +340,10 @@ public:
 
   /**
    * Looks up a Adsb item in the traffic list.
-   *
    * @param name The name or call sign
    * @return The \ref AdsbTarget pointer, nullptr if not found
    */
-  constexpr const AdsbTarget* FindAdsbTraffic(const TCHAR* name) const
+  constexpr const AdsbTarget* FindAdsbTraffic(const TCHAR* name) const noexcept
     {
     for (const auto& traffic : this->adsb_list)
       if (traffic.name.equals(name))
@@ -348,7 +396,7 @@ public:
     }
 
   /**
-   * Inserts a new \ref FlarmTarget object to the list.
+   * Inserts a new \ref AdsbTarget object to the list.
    * @param The target.
    * @return A pointer to the new element that has been added or nullptr
    *         if the list is full.
@@ -366,7 +414,30 @@ public:
   /**
    * Reference the previous traffic in the ordered list.
    * @param target The reference target.
-   * @return The entry previous to target or nullptr if is already at begin().
+   * @return The entry previous to target or nullptr if is already at
+   *         the beginning of all lists.
+   */
+  constexpr const RemoteTarget* PreviousTraffic(const RemoteTarget* target) const
+    {
+    const RemoteTarget* rtn;
+    const AdsbTarget* ap = dynamic_cast<const AdsbTarget*>(target);
+    if (ap != nullptr)
+      if ((rtn = this->PreviousAdsbTraffic(ap)) == nullptr)
+        return this->LastFlarmTraffic();  // Transition to flarm targets.
+      else
+        return rtn;
+    else
+      {
+      const FlarmTarget* fp = dynamic_cast<const FlarmTarget*>(target);
+      return PreviousFlarmTraffic(fp);
+      }
+    }
+
+  /**
+   * Reference the previous FLARM traffic in the ordered FLARM list.
+   * @param target The reference target.
+   * @return The FLARM entry previous to target or nullptr if is already at
+   *         TrivialArray<FlarmTarget>::begin().
    */
   constexpr const FlarmTarget* PreviousFlarmTraffic(const FlarmTarget* target) const
     {
@@ -376,9 +447,32 @@ public:
     }
 
   /**
-   * Reference the next traffic in the ordered list.
+   * Reference the next target in the ordered list.
    * @param target The reference entry.
-   * @return The entry after target or nullptr if is already at end() - 1.
+   * @return The entry after target or nullptr if is already at
+   *         TrivialArray<AdsbTarget>::end() - 1.
+   */
+  constexpr const RemoteTarget* NextTraffic(const RemoteTarget* target) const
+    {
+    const RemoteTarget* rtn;
+    const FlarmTarget* fp = dynamic_cast<const FlarmTarget*>(target);
+    if (fp != nullptr)
+      if ((rtn = this->NextFlarmTraffic(fp)) == nullptr)
+        return this->FirstAdsbTraffic();  // Transition to adsb targets.
+      else
+        return rtn;
+    else
+      {
+      const AdsbTarget* ap = dynamic_cast<const AdsbTarget*>(target);
+      return this->NextAdsbTraffic(ap);
+      }
+    }
+
+  /**
+   * Reference the next FLARM traffic in the ordered FLARM list.
+   * @param target The reference entry.
+   * @return The FLARM entry after target or nullptr if is already at 
+   *         TrivialArray<FlarmTarget>::end() - 1.
    */
   constexpr const FlarmTarget* NextFlarmTraffic(const FlarmTarget* target) const
     {
@@ -388,14 +482,46 @@ public:
     }
 
   /**
-   * Reference the first traffic in the ordered list.
-   * @return The first target pointer or nullptr if the list is empty.
+   * Find the first traffic in the total list. The first traffic is defined
+   * as the first flarm traffic if possible. This definition is arbitrary.
+   * @return The first target pointer. If there are is flarm traffic then 
+   *         this will be a flarm pointer. Otherwise if there is any adsb
+   *         traffic then this will be a adsb pointer. If there is no traffic
+   *         then return a nullptr.
+   */
+  constexpr const RemoteTarget* FirstTraffic() const
+    {
+    const RemoteTarget* rtn;
+    if ((rtn = this->FirstFlarmTraffic()) == nullptr)
+      return this->FirstAdsbTraffic();
+    return rtn;
+    }
+
+  /**
+   * Reference the first traffic in the flarm ordered list.
+   * @return The first flarm target pointer or nullptr if the list is empty.
    */
   constexpr const FlarmTarget* FirstFlarmTraffic() const
     {
     return this->flarm_list.empty() ?
            nullptr :
            (this->flarm_list.begin());
+    }
+
+  /**
+   * Find the last traffic in the total list. The last traffic is defined
+   * as the last adsb traffic if possible. This definition is arbitrary.
+   * @return The last target pointer. If there are is adsb traffic then 
+   *         this will be a adsb pointer. Otherwise if there is any flarm
+   *         traffic then this will be a flarm pointer. If there is no traffic
+   *         then return a nullptr.
+   */
+  constexpr const RemoteTarget* LastTraffic() const
+    {
+    const RemoteTarget* rtn;
+    if ((rtn = this->LastAdsbTraffic()) == nullptr)
+      return this->LastFlarmTraffic();
+    return rtn;
     }
 
   /**
@@ -407,6 +533,52 @@ public:
     return this->flarm_list.empty() ?
            nullptr :
            (this->flarm_list.end() - 1);
+    }
+
+  /**
+   * Reference the previous traffic in the ordered list.
+   * @param target The reference target.
+   * @return The entry previous to target or nullptr if is already at begin().
+   */
+  constexpr const AdsbTarget* PreviousAdsbTraffic(const AdsbTarget* target) const
+    {
+    return target > this->adsb_list.begin()
+      ? target - 1
+      : NULL;
+    }
+
+  /**
+   * Reference the next traffic in the ordered list.
+   * @param target The reference entry.
+   * @return The entry after target or nullptr if is already at end() - 1.
+   */
+  constexpr const AdsbTarget* NextAdsbTraffic(const AdsbTarget* target) const
+    {
+    return target + 1 < this->adsb_list.end()
+      ? target + 1
+      : nullptr;
+    }
+
+  /**
+   * Reference the first traffic in the ordered list.
+   * @return The first target pointer or nullptr if the list is empty.
+   */
+  constexpr const AdsbTarget* FirstAdsbTraffic() const
+    {
+    return this->adsb_list.empty() ?
+           nullptr :
+           (this->adsb_list.begin());
+    }
+
+  /**
+   * Reference the last traffic in the adsb ordered list.
+   * @return The last target pointer or nullptr if the list is empty.
+   */
+  constexpr const AdsbTarget* LastAdsbTraffic() const
+    {
+    return this->adsb_list.empty() ?
+           nullptr :
+           (this->adsb_list.end() - 1);
     }
 
   /**

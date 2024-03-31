@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -341,8 +341,8 @@ Draw(Canvas &canvas, PixelRect rc,
 
   // Render the representation of the traffic icon
   if (traffic != nullptr)
-    TrafficRenderer::Draw(canvas, traffic_look, *traffic, traffic->track,
-                          item.color, pt);
+    TrafficRenderer::DrawFlarm(canvas, traffic_look, *traffic, traffic->track,
+                               item.color, pt);
 
   rc.left += line_height + text_padding;
 
