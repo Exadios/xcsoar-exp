@@ -28,6 +28,7 @@ Copyright_License {
 void
 MapWindow::RenderTrail(Canvas &canvas, const PixelPoint aircraft_pos)
 {
+
   auto min_time = std::max(Basic().time - std::chrono::minutes{10},
                            TimeStamp{});
 
@@ -40,8 +41,10 @@ MapWindow::DrawTrail(Canvas &canvas, const PixelPoint aircraft_pos,
                      bool enable_traildrift) noexcept
 {
   if (glide_computer)
+    {
     trail_renderer.Draw(canvas, glide_computer->GetTraceComputer(),
                         render_projection, min_time,
                         enable_traildrift, aircraft_pos,
                         Basic(), Calculated(), GetMapSettings().trail);
+    }
 }

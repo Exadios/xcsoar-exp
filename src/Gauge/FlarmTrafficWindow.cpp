@@ -89,30 +89,149 @@ FlarmTrafficWindow::OnResize(PixelSize new_size) noexcept
 
 //-----------------------------------------------------------------------------
 void
-FlarmTrafficWindow::NextTarget() noexcept
+FlarmTrafficWindow::NextFlarmTarget() noexcept
   {
   // If warning is displayed -> prevent selector movement
   if (WarningMode())
     return;
 
-  assert(this->selection < (int)this->traffic.flarm_list.size());
+  assert((this->flarm_selection < (int)this->traffic.flarm_list.size()) &&
+         (this->adsb_selection < (int)this->traffic.adsb_list.size()));
 
-  const FlarmTarget* target;
-  if (this->selection >= 0)
-    target = this->traffic.NextFlarmTraffic(&this->traffic.flarm_list[this->selection]);
+  const RemoteTarget* target;
+  if (this->flarm_selection >= 0)
+    target = this->traffic.NextTraffic(&this->traffic.flarm_list[this->flarm_selection]);
+  else if (this->adsb_selection >= 0)
+    target = this->traffic.NextTraffic(&this->traffic.adsb_list[this->adsb_selection]);
   else
     {
     target = nullptr;
-    this->selection = -1;
+    this->flarm_selection = -1;
+    this->adsb_selection = -1;
     }
 
   if (target == nullptr)
     {
-    target = this->traffic.FirstFlarmTraffic();
-    this->selection = 0;
+    if (this->flarm_selection >= 0)
+      this->SetFlarmTarget(dynamic_cast<const FlarmTarget*>(target)); 
+      /*
+       * At this point we have attempted to retrieve a target which is beyond
+       * the current end of the list, i.e. no FLARM target exists. A call to 
+       * this->SetFlarmTarget(nullptr) will set this->flarm_selection = -1
+       * which will signify that we are finished with the FLARM targets for now.
+       */
+    else
+      {
+      target = this->traffic.FirstFlarmTraffic();
+      this->flarm_selection = 0;
+      this->SetFlarmTarget(static_cast<const FlarmTarget*>(target));
+      }
+    }
+  }
+
+//------------------------------------------------------------------------------
+void
+FlarmTrafficWindow::PrevFlarmTarget() noexcept
+  {
+  // If warning is displayed -> prevent selector movement
+  if (WarningMode())
+    return;
+
+  assert(this->flarm_selection < (int)this->traffic.flarm_list.size());
+
+  const FlarmTarget* target;
+  if (this->flarm_selection >= 0)
+    target = this->traffic.PreviousFlarmTraffic(&this->traffic.flarm_list[this->flarm_selection]);
+  else
+    {
+    target = nullptr;
+    this->flarm_selection = -1;
     }
 
-  this->SetTarget(target);
+  if (target == nullptr)
+    {
+    if (this->flarm_selection >= 0)
+      this->SetFlarmTarget(target);
+      /*
+       * At this point we have attempted to retrieve a target which is before
+       * the current beginning of the list, i.e. no FLARM target exists. A
+       * call to this->SetFlarmTarget(nullptr) will set 
+       * this->flarm_selection = -1 which will signify that we are finished
+       * with the FLARM targets for now.
+       */
+    else
+      {
+      target = this->traffic.LastFlarmTraffic();
+      this->flarm_selection = (int)this->traffic.flarm_list.size() - 1;
+      this->SetFlarmTarget(target);
+      }
+    }
+  }
+
+//-----------------------------------------------------------------------------
+void
+FlarmTrafficWindow::NextAdsbTarget() noexcept
+  {
+  // If warning is displayed -> prevent selector movement
+  if (WarningMode())
+    return;
+
+  assert(this->adsb_selection < (int)this->traffic.adsb_list.size());
+
+  const AdsbTarget* target;
+  if (this->adsb_selection >= 0)
+    target = this->traffic.NextAdsbTraffic(&this->traffic.adsb_list[this->adsb_selection]);
+  else
+    {
+    target = nullptr;
+    this->adsb_selection = -1;
+    }
+
+  if (target == nullptr)
+    {
+    target = this->traffic.FirstAdsbTraffic();
+    this->adsb_selection = 0;
+    }
+
+  this->SetAdsbTarget(target);
+  }
+
+//------------------------------------------------------------------------------
+void
+FlarmTrafficWindow::PrevAdsbTarget() noexcept
+  {
+  // If warning is displayed -> prevent selector movement
+  if (WarningMode())
+    return;
+
+  assert(this->adsb_selection < (int)this->traffic.adsb_list.size());
+
+  const AdsbTarget* target;
+  if (this->adsb_selection >= 0)
+    target = this->traffic.PreviousAdsbTraffic(&this->traffic.adsb_list[this->adsb_selection]);
+  else
+    {
+    target = nullptr;
+    this->adsb_selection = -1;
+    }
+
+  if (target == nullptr)
+    {
+    target = this->traffic.LastAdsbTraffic();
+    this->adsb_selection = (int)this->traffic.adsb_list.size() - 1;
+    }
+
+  this->SetAdsbTarget(target);
+  }
+
+//------------------------------------------------------------------------------
+void
+FlarmTrafficWindow::NextTarget() noexcept
+  {
+  // If warning is displayed -> prevent selector movement
+  if (WarningMode())
+    return;
+  this->NextFlarmTarget();
   }
 
 //------------------------------------------------------------------------------
@@ -122,25 +241,7 @@ FlarmTrafficWindow::PrevTarget() noexcept
   // If warning is displayed -> prevent selector movement
   if (WarningMode())
     return;
-
-  assert(this->selection < (int)this->traffic.flarm_list.size());
-
-  const FlarmTarget* target;
-  if (this->selection >= 0)
-    target = this->traffic.PreviousFlarmTraffic(&this->traffic.flarm_list[this->selection]);
-  else
-    {
-    target = nullptr;
-    this->selection = -1;
-    }
-
-  if (target == nullptr)
-    {
-    target = this->traffic.LastFlarmTraffic();
-    this->selection = (int)this->traffic.flarm_list.size() - 1;
-    }
-
-  this->SetTarget(target);
+  this->PrevFlarmTarget();
   }
 
 //------------------------------------------------------------------------------
@@ -150,17 +251,18 @@ FlarmTrafficWindow::UpdateSelector(const TargetId id,
   {
   // Update #selection
   if (!id.IsDefined())
-    this->SetTarget(nullptr);
+    this->SetFlarmTarget(nullptr);
   else
-    this->SetTarget(id);
+    this->SetFlarmTarget(id);
 
   // If we don't have a valid selection and we can't find
   // a target close to to the PixelPoint we select the next one
   // on the internal list
-  if (this->selection < 0 && (
-        pt.x < 0 || pt.y < 0 ||
-        !SelectNearTarget(pt, this->radius * 2)) )
-    this->NextTarget();
+  if (this->flarm_selection < 0 &&
+      (pt.x < 0 ||
+       pt.y < 0 ||
+       !SelectNearTarget(pt, this->radius * 2)) )
+    this->NextFlarmTarget();
   }
 
 //------------------------------------------------------------------------------
@@ -169,7 +271,7 @@ FlarmTrafficWindow::UpdateWarnings() noexcept
   {
   const FlarmTarget* alert = this->traffic.FindMaximumAlert();
   this->warning = (alert != nullptr) ?
-                    (int)this->IndexTarget(alert->id) :
+                    (int)this->IndexFlarmTarget(alert->id) :
                     - 1;
   }
 
@@ -191,10 +293,10 @@ FlarmTrafficWindow::Update(Angle new_direction,
 
   TargetId selection_id;
   PixelPoint pt;
-  if (!small && this->selection >= 0)
+  if (!small && this->flarm_selection >= 0)
     {
-    selection_id = this->traffic.flarm_list[this->selection].id;
-    pt = sc[this->selection];
+    selection_id = this->traffic.flarm_list[this->flarm_selection].id;
+    pt = sc[this->flarm_selection];
     }
   else
     {
@@ -370,7 +472,7 @@ FlarmTrafficWindow::PaintRadarFlarmTarget(Canvas& canvas,
           circle_pen = &look.default_pen;
           }
 
-        if (!small && static_cast<unsigned> (this->selection) == i)
+        if (!small && static_cast<unsigned> (this->flarm_selection) == i)
           {
           text_color = &look.selection_color;
           target_brush = arrow_brush = &look.selection_brush;
@@ -583,7 +685,7 @@ FlarmTrafficWindow::PaintRadarAdsbTarget(Canvas& canvas,
           circle_pen = &look.default_pen;
           }
 
-        if (!small && static_cast<unsigned> (this->selection) == i)
+        if (!small && static_cast<unsigned> (this->flarm_selection) == i)
           {
           text_color = &look.selection_color;
           target_brush = arrow_brush = &look.selection_brush;
@@ -761,7 +863,7 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
     const FlarmTarget& target = this->traffic.flarm_list[i];
 
     if (!target.HasAlarm() &&
-        static_cast<unsigned> (this->selection) != i)
+        static_cast<unsigned> (this->flarm_selection) != i)
       this->PaintRadarFlarmTarget(canvas, target, i);
     }
 
@@ -783,12 +885,12 @@ FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
       this->PaintRadarAdsbTarget(canvas, target, i);
     }
 
-  if (this->selection >= 0)
+  if (this->flarm_selection >= 0)
     {
-    const FlarmTarget& target = this->traffic.flarm_list[this->selection];
+    const FlarmTarget& target = this->traffic.flarm_list[this->flarm_selection];
 
     if (!target.HasAlarm())
-      this->PaintRadarFlarmTarget(canvas, target, this->selection);
+      this->PaintRadarFlarmTarget(canvas, target, this->flarm_selection);
     }
 
   if (!this->WarningMode())
@@ -932,8 +1034,8 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const noexcept
 void
 FlarmTrafficWindow::Paint(Canvas& canvas) noexcept
   {
-  assert(this->selection < (int)this->traffic.flarm_list.size());
-  assert(this->selection < 0 || this->traffic.flarm_list[this->selection].IsDefined());
+  assert(this->flarm_selection < (int)this->traffic.flarm_list.size());
+  assert(this->flarm_selection < 0 || this->traffic.flarm_list[this->flarm_selection].IsDefined());
   assert(this->warning < (int)this->traffic.flarm_list.size());
   assert(this->warning < 0 || this->traffic.flarm_list[this->warning].IsDefined());
   assert(this->warning < 0 || this->traffic.flarm_list[this->warning].HasAlarm());
@@ -989,7 +1091,7 @@ FlarmTrafficWindow::SelectNearTarget(PixelPoint p, int max_distance) noexcept
   if (min_id >= 0)
     {
     TargetId t_id((long int)min_id);
-    this->SetTarget(t_id);
+    this->SetFlarmTarget(t_id);
     }
 
   return min_id >= 0;
@@ -997,7 +1099,7 @@ FlarmTrafficWindow::SelectNearTarget(PixelPoint p, int max_distance) noexcept
 
 //------------------------------------------------------------------------------
 int
-FlarmTrafficWindow::IndexTarget(const TargetId& id) const noexcept
+FlarmTrafficWindow::IndexFlarmTarget(const TargetId& id) const noexcept
   {
   /*
    * So, plainly, this is not the most efficient in terms of time to find
@@ -1007,6 +1109,23 @@ FlarmTrafficWindow::IndexTarget(const TargetId& id) const noexcept
   for (size_t i = 0; i < this->traffic.flarm_list.size(); i++)
     {
     if (this->traffic.flarm_list[i].id == id)
+      return i;
+    }
+  return -1;
+  }
+
+//------------------------------------------------------------------------------
+int
+FlarmTrafficWindow::IndexAdsbTarget(const TargetId& id) const noexcept
+  {
+  /*
+   * So, plainly, this is not the most efficient in terms of time to find
+   * this index. But this function is not called often so this is good
+   * enough.
+   */
+  for (size_t i = 0; i < this->traffic.adsb_list.size(); i++)
+    {
+    if (this->traffic.adsb_list[i].id == id)
       return i;
     }
   return -1;

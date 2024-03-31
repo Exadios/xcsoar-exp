@@ -52,7 +52,8 @@ class FlarmTrafficWindow : public PaintWindow
     /**
      * The index in the traffic list of the current selection.
      */
-    int selection = -1;
+    int flarm_selection = -1;
+    int adsb_selection  = -1;
     int warning = -1;
     PixelPoint radar_mid;
 
@@ -106,8 +107,8 @@ class FlarmTrafficWindow : public PaintWindow
      */
     const FlarmTarget* GetTarget() const noexcept
       {
-      return (this->selection >= 0) ? 
-        &this->traffic.flarm_list[selection] :
+      return (this->flarm_selection >= 0) ? 
+        &this->traffic.flarm_list[flarm_selection] :
         nullptr;
       }
 
@@ -118,13 +119,35 @@ class FlarmTrafficWindow : public PaintWindow
      *               and may, if conditions elsewhere allow, cause the 
      *               \ref RemoteTarget previously reference to destruct.
      */
-    void SetTarget(const FlarmTarget* target) noexcept
+    void SetTarget(const RemoteTarget* target) noexcept
       {
       if (target == nullptr)
-        this->selection = -1;
+        {
+        this->flarm_selection = -1;
+        this->adsb_selection  = -1;
+        }
       else
         {
-        this->selection = IndexTarget(target->id);
+        this->flarm_selection = IndexFlarmTarget(target->id);
+        this->adsb_selection  = IndexAdsbTarget(target->id);
+        this->Invalidate();
+        }
+      }
+
+    /**
+     * Set the quick access to the currently selected flarm target.
+     * @param target The current target. May be nullptr in which case the
+     *               \ref FlarmTarget currently pointed to is released here
+     *               and may, if conditions elsewhere allow, cause the 
+     *               \ref FlarmTarget previously reference to destruct.
+     */
+    void SetFlarmTarget(const FlarmTarget* target) noexcept
+      {
+      if (target == nullptr)
+        this->flarm_selection = -1;
+      else
+        {
+        this->flarm_selection = IndexFlarmTarget(target->id);
         this->Invalidate();
         }
       }
@@ -132,21 +155,84 @@ class FlarmTrafficWindow : public PaintWindow
     /**
      * Set the quick access to the currently selected target.
      * @param id The id of the current target. If no target having id is
-     *           currently in the list then the \ref RemoteTarget currently
+     *           currently in the list then the \ref FlarmTarget currently
      *           pointed to is released here and may, if conditions elsewhere
-     *           allow, cause the \ref RemoteTarget previously reference to
+     *           allow, cause the \ref FlarmTarget previously reference to
      *           destruct.
      */
-    void SetTarget(const TargetId& id) noexcept
+    void SetFlarmTarget(const TargetId& id) noexcept
       {
-      SetTarget(this->traffic.FindFlarmTraffic(id));
+      this->SetFlarmTarget(this->traffic.FindFlarmTraffic(id));
       }
+
+    /**
+     * Set the quick access to the currently selected target.
+     * @param target The current target. May be nullptr in which case the
+     *               \ref AdsbTarget currently pointed to is released here
+     *               and may, if conditions elsewhere allow, cause the 
+     *               \ref RemoteTarget previously reference to destruct.
+     */
+    void SetAdsbTarget(const AdsbTarget* target) noexcept
+      {
+      if (target == nullptr)
+        this->adsb_selection = -1;
+      else
+        {
+        this->adsb_selection = IndexAdsbTarget(target->id);
+        this->Invalidate();
+        }
+      }
+
+    /**
+     * Set the quick access to the currently selected target.
+     * @param id The id of the current target. If no target having id is
+     *           currently in the list then the \ref AdsbTarget currently
+     *           pointed to is released here and may, if conditions elsewhere
+     *           allow, cause the \ref FlarmTarget previously reference to
+     *           destruct.
+     */
+    void SetAdsbTarget(const TargetId& id) noexcept
+      {
+      SetAdsbTarget(this->traffic.FindAdsbTraffic(id));
+      }
+
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * advance the index, \ref this->flarm_selection, to the next FLARM target
+     * wrapping around if necessary. If the FLARM list is empty then
+     * \ref this->flarm_selection is set to -1.
+     */
+    void NextFlarmTarget() noexcept;
+
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * retard the index, \ref this->flarm_selection, to the previous FLARM
+     * target wrapping around if necessary. If the FLARM list is empty then
+     * \ref this->flarm_selection is set to -1.
+     */
+    void PrevFlarmTarget() noexcept;
+
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * advance the index, \ref this->flarm_selection, to the next FLARM target
+     * wrapping around if necessary. If the FLARM list is empty then
+     * \ref this->flarm_selection is set to -1.
+     */
+    void NextAdsbTarget() noexcept;
+
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * retard the index, \ref this->flarm_selection, to the previous FLARM
+     * target wrapping around if necessary. If the FLARM list is empty then
+     * \ref this->flarm_selection is set to -1.
+     */
+    void PrevAdsbTarget() noexcept;
 
     /**
      * If a warning is currently being displayed then do nothing otherwise
      * advance the index, \ref this->selection, to the next FLARM target
      * wrapping around if necessary. If the FLARM list is empty then
-     * \ref this->selection is set to -1.
+     * \ref this->flarm_selection is set to -1.
      */
     void NextTarget() noexcept;
 
@@ -154,7 +240,7 @@ class FlarmTrafficWindow : public PaintWindow
      * If a warning is currently being displayed then do nothing otherwise
      * retard the index, \ref this->selection, to the previous FLARM target
      * wrapping around if necessary. If the FLARM list is empty then
-     * \ref this->selection is set to -1.
+     * \ref this->flarm_selection is set to -1.
      */
     void PrevTarget() noexcept;
 
@@ -286,11 +372,18 @@ class FlarmTrafficWindow : public PaintWindow
     void PaintNorth(Canvas& canvas) const noexcept;
 
     /**
-     * Find the index in \ref TargetList::list for the given id.
+     * Find the index in \ref TargetList::flarm_list for the given id.
      * @param id The \ref TargetId of the desired record.
-     * @return The index in the list or -1 if not found.
+     * @return The index in the list or -1 if not found in the flarm list.
      */
-    int IndexTarget(const TargetId& id) const noexcept;
+    int IndexFlarmTarget(const TargetId& id) const noexcept;
+
+   /**
+     * Find the index in \ref TargetList::adsb_list for the given id.
+     * @param id The \ref TargetId of the desired record.
+     * @return The index in the list or -1 if not found in the adsb list.
+     */
+    int IndexAdsbTarget(const TargetId& id) const noexcept;
 
   protected:
     /* virtual methods from class Window */

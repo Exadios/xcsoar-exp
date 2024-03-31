@@ -2,7 +2,7 @@
  Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,24 +23,76 @@
 
 #pragma once
 
+/**
+ * \file
+ * \addtogroup Renderer
+ * \{
+ */
+
 #include "Surveillance/Color.hpp"
 
 struct PixelPoint;
 class Canvas;
 struct TrafficLook;
-struct FlarmTraffic;
-struct RemoteTarget;
+struct FlarmTarget;
+struct AdsbTarget;
 struct GliderLinkTraffic;
 class Angle;
 
+/**
+ * This namespace contains functions to render remote traffic on the main
+ * map.
+ */
 namespace TrafficRenderer
-{
-void
-Draw(Canvas &canvas, const TrafficLook &traffic_look,
-     const RemoteTarget &traffic, Angle angle,
-     TargetColor color, PixelPoint pt) noexcept;
+  {
+  /**
+   * Draw a FLARM target.
+   * @param canvas The canvas representing the map display.
+   * @param traffic_look The visual attributes of the target.
+   * @param traffic The target.
+   * @param angle The heading or track angle of the #traffic.
+   * @param color The color to make the #traffic.
+   * @param pt The pixel location of #traffic
+   */
+  void
+  DrawFlarm(Canvas &canvas,
+            const TrafficLook &traffic_look,
+            const FlarmTarget &traffic,
+            const Angle angle,
+            const TargetColor color,
+            const PixelPoint pt) noexcept;
 
-void
-Draw(Canvas &canvas, const TrafficLook &traffic_look,
-     const GliderLinkTraffic &traffic, Angle angle, PixelPoint pt) noexcept;
-}
+  /**
+   * Draw an ADSB target.
+   * @param canvas The canvas representing the map display.
+   * @param traffic_look The visual attributes of the target.
+   * @param traffic The target.
+   * @param angle The heading or track angle of the #traffic.
+   * @param color The color to make the #traffic.
+   * @param pt The pixel location of #traffic
+   */
+  void
+  DrawAdsb(Canvas &canvas,
+           const TrafficLook &traffic_look,
+           const AdsbTarget &traffic,
+           const Angle angle,
+           const PixelPoint pt) noexcept;
+
+  /**
+   * Draw a target obtained via the \ref GliderLink (i.e. SkyLines) system.
+   * @param canvas The canvas representing the map display.
+   * @param traffic_look The visual attributes of the target.
+   * @param traffic The target.
+   * @param angle The heading or track angle of the #traffic.
+   * @param color The color to make the #traffic.
+   * @param pt The pixel location of #traffic
+   */
+  void
+  DrawGliderLink(Canvas &canvas,
+                 const TrafficLook &traffic_look,
+                 const GliderLinkTraffic &traffic,
+                 const Angle angle,
+                 const PixelPoint pt) noexcept;
+  }
+
+/** \} */

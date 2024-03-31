@@ -1,3 +1,9 @@
+Version 7.27.0.3.1-Alis-1
+  - An edition produced for testing.
+  - Some FLARM functionality removed for now but the rest basically works
+  - Some ADSB functionality works.
+  - Positions from the SkyEcho 2 device dor not appear to engage the 
+    Glide Computer. Don't currently know why.
 Version 7.27.0.3.0 - 2022/10/02 - NGC Fork
 * devices
   - first pass at SkyEcho 2 ADSB transceiver

@@ -34,6 +34,7 @@ Copyright_License {
 #include "Surveillance/Adsb/AdsbTarget.hpp"
 #include "Surveillance/AircraftType.hpp"
 #include "Units/System.hpp"
+#include "time/BrokenTime.hpp"
 
 #include <vector>
 #include <span>
@@ -285,6 +286,8 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           break;
           }
 
+        assert(info.clock.IsDefined());
+
         auto data = sd.data();
         bool go = false;
         /* Position available & maintenance not required and battery not low
@@ -296,6 +299,22 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         this->time_of_day = ((unsigned int)data[3] & 0x80) << 8;
         this->time_of_day += (unsigned int)data[4] + ((unsigned int)data[5] << 8);
 
+        /**
+         * \todo pfb: Find a way to compute a broken down UTC date and time.
+         *       Util this is done SkyEcho will not be able to provide
+         *       a real position source because the Glide Computer needs
+         *       a broken down UTC date and time set in info (Issue 5).
+         * Note: GDL90 does not transmit date so this will have to be
+         *       synthesized from some other source.
+         */
+#if 0
+        int hour = this->time_of_day / (60 * 60);
+        int min  = this->time_of_day / 60 - hour * 60;
+        int sec  = this->time_of_day % 60;
+                  
+        (BrokenTime )(info.date_time_utc) = BrokenTime(hour, min, (unsigned int)sec);
+        info.time_available.Update(info.clock);
+#endif
         info.time = TimeStamp{FloatDuration(this->time_of_day)};
 
         info.gps.satellite_ids_available.Clear();   // Nope.
@@ -417,7 +436,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
       
         report.alarm_level = RemoteTarget::AlarmType::NONE; /* ADSB does not
                                                              * support alarm.*/
-//        report.location_available  = true;
+        report.location_available  = true;
         report.climb_rate_received = true;
         /* \todo pfb: Find the XCSoar wide conversion from feet / second to
                  meters / second.  */
@@ -425,7 +444,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
         report.speed_received      = true;
         report.speed               = Units::ToSysUnit((double )this->target.horiz_vel,
                                                       Unit::KNOTS);
-        report.track = Angle::Degrees((double)this->target.track);
+        report.track = Angle::Degrees((double)(this->target.track) * 360.0 / 256.0);
         report.type.Type(this->target.emitter);
         Angle phi    = Angle::Degrees((double)this->target.phi * 180.0 / pow(2, 23));
         Angle lambda = Angle::Degrees((double)this->target.lambda * 180.0 / pow(2, 23));
