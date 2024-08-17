@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,12 +22,16 @@ Copyright_License {
 */
 
 #include "Surveillance/Flarm/FlarmDetails.hpp"
-#include "FLARM/Global.hpp"
+#include "Surveillance/Global.hpp"
 #include "Surveillance/TrafficDatabases.hpp"
-#include "FLARM/FlarmId.hpp"
+#include "Surveillance/TargetId.hpp"
 #include "util/StringCompare.hxx"
 
 #include <cassert>
+
+#ifndef NDEBUG
+#include <iostream>
+#endif
 
 #ifdef FLARMNET_ORG
 //------------------------------------------------------------------------------
@@ -73,7 +77,7 @@ FlarmDetails::AddSecondaryItem(const TargetId& id, const TCHAR* name)
 
 //------------------------------------------------------------------------------
 unsigned
-FlarmDetails::FindIdsByCallSign(const TCHAR* cn, FlarmId array[],
+FlarmDetails::FindIdsByCallSign(const TCHAR* cn, TargetId array[],
                                 unsigned size)
   {
   assert(cn != NULL);

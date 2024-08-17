@@ -72,7 +72,7 @@ xcsoar_sources = [
 #'./src/FLARM/FlarmCalculations.cpp',
 #'./src/FLARM/Friends.cpp',
 #'./src/FLARM/FlarmComputer.cpp',
-'./src/FLARM/Global.cpp',
+#'./src/FLARM/Global.cpp',
 #'./src/FLARM/Glue.cpp',
 #'./src/ADSB/List.cpp',
 #'./src/ADSB/Traffic.cpp',

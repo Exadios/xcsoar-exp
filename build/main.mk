@@ -253,7 +253,7 @@ XCSOAR_SOURCES := \
 	$(SRC)/Surveillance/Flarm/FlarmDetails.cpp \
 	$(SRC)/Surveillance/Flarm/FlarmFriends.cpp \
 	$(SRC)/Surveillance/Flarm/FlarmComputer.cpp \
-	$(SRC)/FLARM/Global.cpp \
+	$(SRC)/Surveillance/Global.cpp \
 	$(SRC)/Surveillance/Glue.cpp \
 	$(SRC)/Surveillance/Adsb/AdsbTarget.cpp \
 	$(SRC)/Surveillance/Adsb/AdsbAircraftType.cpp \
@@ -275,6 +275,8 @@ XCSOAR_SOURCES := \
 	$(SRC)/IGC/Generator.cpp \
 	$(SRC)/util/MD5.cpp \
 	$(SRC)/Logger/NMEALogger.cpp \
+  $(SRC)/Logger/GDL90Logger.cpp \
+  $(SRC)/Logger/RawInputDataLogger.cpp \
 	$(SRC)/Logger/ExternalLogger.cpp \
 	$(SRC)/Logger/FlightLogger.cpp \
 	$(SRC)/Logger/GlueFlightLogger.cpp \

@@ -21,29 +21,39 @@ Copyright_License {
 }
 */
 
-#include "Surveillance/Flarm/FlarmFriends.hpp"
-#include "Surveillance/TargetId.hpp"
-#include "Surveillance/Global.hpp"
-#include "Surveillance/TrafficDatabases.hpp"
+#include "Logger/RawInputDataLogger.hpp"
+#include "io/FileOutputStream.hxx"
+#include "LocalPath.hpp"
+#include "time/BrokenDateTime.hpp"
+#include "system/Path.hpp"
+#include "util/StaticString.hxx"
 
-//------------------------------------------------------------------------------
-TargetColor
-FlarmFriends::GetFriendColor(TargetId id)
-  {
-  if (traffic_databases == nullptr)
-    return TargetColor::NONE;
-
-  return traffic_databases->GetColor(id);
-  }
+RawInputDataLogger::RawInputDataLogger() noexcept {}
+RawInputDataLogger::~RawInputDataLogger() noexcept = default;
 
 //------------------------------------------------------------------------------
 void
-FlarmFriends::SetFriendColor(TargetId id, TargetColor color)
+RawInputDataLogger::Start()
   {
-  assert(traffic_databases != nullptr);
+  if (this->file != nullptr)
+    return;
 
-  if (color == TargetColor::NONE)
-    ::traffic_databases->target_colors.Remove(id);
-  else
-    ::traffic_databases->target_colors.Set(id, color);
+  BrokenDateTime dt = BrokenDateTime::NowUTC();
+  assert(dt.IsPlausible());
+
+  StaticString<64> name;
+  name.Format(_T("%04u-%02u-%02u_%02u-%02u.%s"),
+              dt.year,
+              dt.month,
+              dt.day,
+              dt.hour,
+              dt.minute,
+              this->ExtName());
+
+  const auto logs_path = MakeLocalPath(_T("logs"));
+
+  const auto path = AllocatedPath::Build(logs_path, name);
+  file = std::make_unique<FileOutputStream>(path,
+                                            FileOutputStream::Mode::APPEND_OR_CREATE);
   }
+

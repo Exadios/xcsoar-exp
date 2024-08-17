@@ -10,6 +10,7 @@ surveillance_sources = [
                        'RemoteTargetComputer.cpp',
                        'RemoteTargetComputerFactory.cpp',
                        'Glue.cpp',
+                       'Global.cpp',
                        'Adsb/AdsbTarget.cpp',
                        'Adsb/AdsbAircraftType.cpp',
                        'Adsb/AdsbComputer.cpp',

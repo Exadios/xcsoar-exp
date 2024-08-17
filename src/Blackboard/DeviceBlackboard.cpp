@@ -30,24 +30,11 @@ Copyright_License {
 
 #include "LogFile.hpp"
 
-#ifndef NDEBUG
-#include "Components.hpp"
-#include <iostream>
-#include <string>
-#endif
-
 /**
  * Initializes the DeviceBlackboard
  */
 DeviceBlackboard::DeviceBlackboard() noexcept
 {
-#ifndef NDEBUG
-  std::cout << __FILE__ << ", " << __LINE__ << ": Ctor with this = "
-            << this << ", real_data = " << &real_data
-            << ", simulator_data = " << &simulator_data
-            << ", replay_data = " << &replay_data
-            << "\n";
-#endif
   // Clear the gps_info and calculated_info
   gps_info.Reset();
   calculated_info.Reset();

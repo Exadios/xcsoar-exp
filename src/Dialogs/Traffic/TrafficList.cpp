@@ -36,7 +36,7 @@ Copyright_License {
 #include "Surveillance/TargetId.hpp"
 #include "Surveillance/TargetList.hpp"
 #include "Surveillance/Flarm/FlarmTarget.hpp"
-#include "FLARM/Global.hpp"
+#include "Surveillance/Global.hpp"
 #include "Surveillance/TrafficDatabases.hpp"
 #include "Surveillance/Color.hpp"
 #include "util/StaticString.hxx"
@@ -71,8 +71,8 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
                           NullBlackboardListener {
   struct Item {
     /**
-     * The FLARM traffic id.  If this is "undefined", then this object
-     * does not refer to FLARM traffic.
+     * The traffic id.  If this is "undefined", then this object
+     * does not refer to target.
      */
     TargetId id;
 
@@ -86,8 +86,8 @@ class TrafficListWidget : public ListWidget, public DataFieldListener,
 #endif
 
     /**
-     * The color that was assigned by the user to this FLARM peer. It
-     * is FlarmColor::COUNT if the color has not yet been determined.
+     * The color that was assigned by the user to this traffic peer. It
+     * is TargetColor::COUNT if the color has not yet been determined.
      */
     TargetColor color = TargetColor::COUNT;
 
@@ -237,7 +237,7 @@ public:
 
 private:
   /**
-   * Find an existing item by its FLARM id.  This is a simple linear
+   * Find an existing item by its target id.  This is a simple linear
    * search that doesn't scale well with a large list.
    */
   [[gnu::pure]]
@@ -249,7 +249,7 @@ private:
   }
 
   /**
-   * Add a new item to the list, unless the given FLARM id already
+   * Add a new item to the list, unless the given target id already
    * exists.
    */
   Item &AddItem(TargetId id) {
@@ -480,7 +480,7 @@ TrafficListWidget::UpdateVolatile()
       else
         {
         if (i.location.IsValid() || i.vector.IsValid())
-          /* this item has disappeared from our FLARM: redraw the
+          /* this item has disappeared from our traffic: redraw the
              list */
           modified = true;
 

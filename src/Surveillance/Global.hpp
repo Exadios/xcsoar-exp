@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2024 The XCSoar Project
+  Copyright (C) 2000-2022 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,29 +21,8 @@ Copyright_License {
 }
 */
 
-#include "Surveillance/Flarm/FlarmFriends.hpp"
-#include "Surveillance/TargetId.hpp"
-#include "Surveillance/Global.hpp"
-#include "Surveillance/TrafficDatabases.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-TargetColor
-FlarmFriends::GetFriendColor(TargetId id)
-  {
-  if (traffic_databases == nullptr)
-    return TargetColor::NONE;
+struct TrafficDatabases;
 
-  return traffic_databases->GetColor(id);
-  }
-
-//------------------------------------------------------------------------------
-void
-FlarmFriends::SetFriendColor(TargetId id, TargetColor color)
-  {
-  assert(traffic_databases != nullptr);
-
-  if (color == TargetColor::NONE)
-    ::traffic_databases->target_colors.Remove(id);
-  else
-    ::traffic_databases->target_colors.Set(id, color);
-  }
+extern TrafficDatabases *traffic_databases;

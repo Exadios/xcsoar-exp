@@ -21,29 +21,37 @@ Copyright_License {
 }
 */
 
-#include "Surveillance/Flarm/FlarmFriends.hpp"
-#include "Surveillance/TargetId.hpp"
-#include "Surveillance/Global.hpp"
-#include "Surveillance/TrafficDatabases.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-TargetColor
-FlarmFriends::GetFriendColor(TargetId id)
+#include "thread/Mutex.hxx"
+#include "Logger/RawInputDataLogger.hpp"
+
+#include <memory>
+
+class FileOutputStream;
+class OutputStream;
+
+class GDL90Logger : public RawInputDataLogger
   {
-  if (traffic_databases == nullptr)
-    return TargetColor::NONE;
+public:
+  GDL90Logger() noexcept;
+  ~GDL90Logger() noexcept;
 
-  return traffic_databases->GetColor(id);
-  }
+  /**
+   * Logs NMEA string to log file
+   * @param text
+   */
+  void Log(const void* data) noexcept override final;
 
-//------------------------------------------------------------------------------
-void
-FlarmFriends::SetFriendColor(TargetId id, TargetColor color)
-  {
-  assert(traffic_databases != nullptr);
+protected:
+//  void Start();
 
-  if (color == TargetColor::NONE)
-    ::traffic_databases->target_colors.Remove(id);
-  else
-    ::traffic_databases->target_colors.Set(id, color);
-  }
+  const char* ExtName() const noexcept override final
+    {
+    return "gdl90";
+    }
+
+private:
+  void WriteLine(OutputStream& os, std::string_view );
+
+  };

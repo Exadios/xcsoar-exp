@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2023 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ Copyright_License {
 */
 
 #include "Surveillance/Glue.hpp"
-#include "FLARM/Global.hpp"
+#include "Surveillance/Global.hpp"
 #include "Surveillance/TrafficDatabases.hpp"
 #include "FLARM/FlarmNetReader.hpp"
 #include "Surveillance/Flarm/NameFile.hpp"
@@ -44,7 +44,7 @@ Copyright_License {
  * Loads the FLARMnet file
  */
 static void
-LoadFLARMnet(FlarmNetDatabase &db)
+LoadFLARMnet(FlarmNetDatabase& db)
 try
   {
   auto path = Profile::GetPath(ProfileKeys::FlarmFile);
@@ -69,7 +69,7 @@ catch (...)
  * @see AddSecondaryItem
  */
 static void
-LoadSecondary(FlarmNameDatabase &db)
+LoadSecondary(FlarmNameDatabase& db)
 try
   {
   LogFormat("OpenFLARMDetails");
@@ -123,7 +123,7 @@ SaveFlarmColors()
  * corresponding file (xcsoar-flarm.txt)
    */
 static void
-SaveSecondary(FlarmNameDatabase &flarm_names)
+SaveSecondary(FlarmNameDatabase& flarm_names)
 try
   {
   FileOutputStream fos(LocalPath(_T("xcsoar-flarm.txt")));

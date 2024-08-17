@@ -21,29 +21,50 @@ Copyright_License {
 }
 */
 
-#include "Surveillance/Flarm/FlarmFriends.hpp"
-#include "Surveillance/TargetId.hpp"
-#include "Surveillance/Global.hpp"
-#include "Surveillance/TrafficDatabases.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-TargetColor
-FlarmFriends::GetFriendColor(TargetId id)
+#include "thread/Mutex.hxx"
+
+#include <memory>
+
+class FileOutputStream;
+
+class RawInputDataLogger
   {
-  if (traffic_databases == nullptr)
-    return TargetColor::NONE;
+protected:
+  Mutex mutex;
+  std::unique_ptr<FileOutputStream> file;
 
-  return traffic_databases->GetColor(id);
-  }
+  bool enabled = false;
 
-//------------------------------------------------------------------------------
-void
-FlarmFriends::SetFriendColor(TargetId id, TargetColor color)
-  {
-  assert(traffic_databases != nullptr);
+public:
+  RawInputDataLogger() noexcept;
+  ~RawInputDataLogger() noexcept;
 
-  if (color == TargetColor::NONE)
-    ::traffic_databases->target_colors.Remove(id);
-  else
-    ::traffic_databases->target_colors.Set(id, color);
-  }
+  bool IsEnabled() const noexcept
+    {
+    return enabled;
+    }
+
+  void Enable() noexcept
+    {
+    enabled = true;
+    }
+
+  void ToggleEnabled() noexcept
+    {
+    enabled = !enabled;
+    }
+
+  /**
+   * Logs NMEA string to log file
+   * @param text
+   */
+  virtual void Log(const void* line) noexcept = 0;
+
+protected:
+  void Start();
+
+  virtual const char* ExtName() const noexcept = 0;
+
+  };

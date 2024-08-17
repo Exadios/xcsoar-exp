@@ -21,29 +21,41 @@ Copyright_License {
 }
 */
 
-#include "Surveillance/Flarm/FlarmFriends.hpp"
-#include "Surveillance/TargetId.hpp"
-#include "Surveillance/Global.hpp"
-#include "Surveillance/TrafficDatabases.hpp"
+#include "Logger/GDL90Logger.hpp"
+#include "io/FileOutputStream.hxx"
+#include "LocalPath.hpp"
+#include "time/BrokenDateTime.hpp"
+#include "system/Path.hpp"
+#include "util/StaticString.hxx"
+
+GDL90Logger::GDL90Logger() noexcept {}
+GDL90Logger::~GDL90Logger() noexcept = default;
 
 //------------------------------------------------------------------------------
-TargetColor
-FlarmFriends::GetFriendColor(TargetId id)
+void
+GDL90Logger::WriteLine(OutputStream& /*os*/, std::string_view /*text*/)
   {
-  if (traffic_databases == nullptr)
-    return TargetColor::NONE;
+//  os.Write(text.data(), text.size());
 
-  return traffic_databases->GetColor(id);
+//  constexpr char newline = '\n';
+//  os.Write(&newline, sizeof(newline));
   }
 
 //------------------------------------------------------------------------------
 void
-FlarmFriends::SetFriendColor(TargetId id, TargetColor color)
+GDL90Logger::Log(const void* /*text*/) noexcept
   {
-  assert(traffic_databases != nullptr);
+  if (!this->enabled)
+    return;
 
-  if (color == TargetColor::NONE)
-    ::traffic_databases->target_colors.Remove(id);
-  else
-    ::traffic_databases->target_colors.Set(id, color);
+  const std::lock_guard lock{this->mutex};
+
+  try
+    {
+    this->Start();
+//    this->WriteLine(*file, text);
+    }
+  catch (...)
+    {
+    }
   }

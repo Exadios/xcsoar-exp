@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,6 +23,8 @@ Copyright_License {
 
 #pragma once
 
+#define FLARMNET_ORG
+
 /**
  * \file
  * \addtogroup Surveillance
@@ -42,7 +44,7 @@ namespace FlarmDetails
  * @param id FLARM id
  * @return The corresponding FLARMNet Record if found, otherwise NULL
  */
-const FlarmNetRecord *
+const FlarmNetRecord*
 LookupRecord(const TargetId& id);
 
 /**
@@ -51,7 +53,7 @@ LookupRecord(const TargetId& id);
  * @param id FLARM id
  * @return The corresponding callsign if found, otherwise NULL
  */
-const TCHAR *
+const TCHAR*
 LookupCallsign(const TargetId& id);
 
 /**
@@ -61,7 +63,7 @@ LookupCallsign(const TargetId& id);
  * @return The corresponding FLARM id if found, otherwise 0
  */
 TargetId
-LookupId(const TCHAR *cn);
+LookupId(const TCHAR* cn);
 
 /**
  * Adds a FLARM details couple (callsign + FLARM id)
@@ -71,10 +73,10 @@ LookupId(const TCHAR *cn);
  * @return True if successfully added, False otherwise
  */
 bool
-AddSecondaryItem(const TargetId& id, const TCHAR *name);
+AddSecondaryItem(const TargetId& id, const TCHAR* name);
 
 unsigned
-FindIdsByCallSign(const TCHAR *cn, TargetId array[], unsigned size);
+FindIdsByCallSign(const TCHAR* cn, TargetId array[], unsigned size);
 }
 
 /**

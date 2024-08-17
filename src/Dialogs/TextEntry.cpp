@@ -35,7 +35,10 @@ TextEntryDialog(TCHAR *text, size_t width,
   case DialogSettings::TextInputStyle::Default:
   case DialogSettings::TextInputStyle::Keyboard:
     if (HasPointer())
-      return TouchTextEntry(text, width, caption, accb, default_shift_state);
+      {
+      bool result = TouchTextEntry(text, width, caption, accb, default_shift_state);
+      return result;
+      }
     else {
       KnobTextEntry(text, width, caption);
       return true;
