@@ -415,6 +415,7 @@ xcsoar_sources = [
 './src/Dialogs/Settings/dlgConfigInfoboxes.cpp',
 './src/Dialogs/Traffic/TrafficList.cpp',
 './src/Dialogs/Traffic/FlarmTrafficDetails.cpp',
+'./src/Dialogs/Traffic/AdsbTrafficDetails.cpp',
 './src/Dialogs/Traffic/TeamCodeDialog.cpp',
 './src/Dialogs/dlgAnalysis.cpp',
 './src/Dialogs/dlgChecklist.cpp',

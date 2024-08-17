@@ -21,23 +21,19 @@ Copyright_License {
 }
 */
 
-#pragma once
+/**
+ * \cond NEVER
+ */
 
-#include <tchar.h>
+#include "Screen/Debug.hpp"
 
-class TargetId;
+//------------------------------------------------------------------------------
+bool
+IsScreenInitialized()
+  {
+  return true;
+  }
 
-void
-dlgTeamCodeShowModal();
-
-void
-dlgFlarmTrafficDetailsShowModal(TargetId id);
-
-void
-dlgAdsbTrafficDetailsShowModal(TargetId id);
-
-void
-TrafficListDialog();
-
-TargetId
-PickFlarmTraffic(const TCHAR* title, TargetId array[], unsigned count);
+/**
+ * \endcond
+ */

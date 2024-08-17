@@ -21,23 +21,42 @@ Copyright_License {
 }
 */
 
-#pragma once
+/**
+ * \cond NEVER
+ */
 
-#include <tchar.h>
+#include "ui/display/x11/Display.hpp"
+#include "ui/dim/Size.hpp"
 
-class TargetId;
+namespace X11
+  {
+//------------------------------------------------------------------------------
+  Display::Display()
+    : display(nullptr)
+    {
+    }
 
-void
-dlgTeamCodeShowModal();
+//------------------------------------------------------------------------------
+  PixelSize
+  Display::GetSize() const noexcept
+    {
+    PixelSize s = {0, 0};
 
-void
-dlgFlarmTrafficDetailsShowModal(TargetId id);
+    return s;
+    }
 
-void
-dlgAdsbTrafficDetailsShowModal(TargetId id);
+//------------------------------------------------------------------------------
+  PixelSize
+  Display::GetSizeMM() const noexcept
+    {
+    PixelSize s = {0, 0};
 
-void
-TrafficListDialog();
+    return s;
+    }
 
-TargetId
-PickFlarmTraffic(const TCHAR* title, TargetId array[], unsigned count);
+  }
+
+/**
+ * \endcond
+ */
+

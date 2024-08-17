@@ -497,3 +497,6 @@ test_includes = include_directories(['src', 'src/unix'])
 subdir('test/src')
 
 subdir('tools/ADSB/NMEA')
+
+# Unit tests
+subdir('src/Gauge/UT')

@@ -21,23 +21,23 @@ Copyright_License {
 }
 */
 
-#pragma once
+/**
+ * \cond NEVER
+ */
+#include "ui/canvas/Font.hpp"
 
-#include <tchar.h>
-
-class TargetId;
-
+//------------------------------------------------------------------------------
 void
-dlgTeamCodeShowModal();
+Font::Load(const FontDescription& )
+  {
+  }
 
+//------------------------------------------------------------------------------
 void
-dlgFlarmTrafficDetailsShowModal(TargetId id);
+Font::Destroy() noexcept
+  {
+  }
 
-void
-dlgAdsbTrafficDetailsShowModal(TargetId id);
-
-void
-TrafficListDialog();
-
-TargetId
-PickFlarmTraffic(const TCHAR* title, TargetId array[], unsigned count);
+/**
+ * \endconv
+ */

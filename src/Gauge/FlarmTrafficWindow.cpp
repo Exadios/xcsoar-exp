@@ -88,31 +88,25 @@ FlarmTrafficWindow::OnResize(PixelSize new_size) noexcept
   }
 
 //-----------------------------------------------------------------------------
-void
+bool
 FlarmTrafficWindow::NextFlarmTarget() noexcept
   {
-  // If warning is displayed -> prevent selector movement
-  if (WarningMode())
-    return;
-
   assert((this->flarm_selection < (int)this->traffic.flarm_list.size()) &&
          (this->adsb_selection < (int)this->traffic.adsb_list.size()));
 
   const RemoteTarget* target;
   if (this->flarm_selection >= 0)
-    target = this->traffic.NextTraffic(&this->traffic.flarm_list[this->flarm_selection]);
-  else if (this->adsb_selection >= 0)
-    target = this->traffic.NextTraffic(&this->traffic.adsb_list[this->adsb_selection]);
+    target = this->traffic.NextFlarmTraffic(&this->traffic.flarm_list[this->flarm_selection]);
   else
     {
     target = nullptr;
     this->flarm_selection = -1;
-    this->adsb_selection = -1;
     }
 
   if (target == nullptr)
     {
     if (this->flarm_selection >= 0)
+      {
       this->SetFlarmTarget(dynamic_cast<const FlarmTarget*>(target)); 
       /*
        * At this point we have attempted to retrieve a target which is beyond
@@ -120,6 +114,8 @@ FlarmTrafficWindow::NextFlarmTarget() noexcept
        * this->SetFlarmTarget(nullptr) will set this->flarm_selection = -1
        * which will signify that we are finished with the FLARM targets for now.
        */
+      return false;
+      }
     else
       {
       target = this->traffic.FirstFlarmTraffic();
@@ -127,16 +123,18 @@ FlarmTrafficWindow::NextFlarmTarget() noexcept
       this->SetFlarmTarget(static_cast<const FlarmTarget*>(target));
       }
     }
+  /*
+   * If there are no FLARM targets then \ref SetFlarmTarget will be called
+   * with nullptr resulting in this->flarm_selection will be set to -1.
+   */
+  this->SetFlarmTarget(dynamic_cast<const FlarmTarget*>(target));
+  return true;
   }
 
 //------------------------------------------------------------------------------
-void
+bool
 FlarmTrafficWindow::PrevFlarmTarget() noexcept
   {
-  // If warning is displayed -> prevent selector movement
-  if (WarningMode())
-    return;
-
   assert(this->flarm_selection < (int)this->traffic.flarm_list.size());
 
   const FlarmTarget* target;
@@ -151,6 +149,7 @@ FlarmTrafficWindow::PrevFlarmTarget() noexcept
   if (target == nullptr)
     {
     if (this->flarm_selection >= 0)
+      {
       this->SetFlarmTarget(target);
       /*
        * At this point we have attempted to retrieve a target which is before
@@ -159,6 +158,8 @@ FlarmTrafficWindow::PrevFlarmTarget() noexcept
        * this->flarm_selection = -1 which will signify that we are finished
        * with the FLARM targets for now.
        */
+      return false;
+      }
     else
       {
       target = this->traffic.LastFlarmTraffic();
@@ -166,16 +167,13 @@ FlarmTrafficWindow::PrevFlarmTarget() noexcept
       this->SetFlarmTarget(target);
       }
     }
+  return true;
   }
 
 //-----------------------------------------------------------------------------
-void
+bool
 FlarmTrafficWindow::NextAdsbTarget() noexcept
   {
-  // If warning is displayed -> prevent selector movement
-  if (WarningMode())
-    return;
-
   assert(this->adsb_selection < (int)this->traffic.adsb_list.size());
 
   const AdsbTarget* target;
@@ -189,21 +187,36 @@ FlarmTrafficWindow::NextAdsbTarget() noexcept
 
   if (target == nullptr)
     {
-    target = this->traffic.FirstAdsbTraffic();
-    this->adsb_selection = 0;
+    if (this->adsb_selection >= 0)
+      {
+      this->SetAdsbTarget(dynamic_cast<const AdsbTarget*>(target)); 
+      /*
+       * At this point we have attempted to retrieve a target which is beyond
+       * the current end of the list, i.e. no ADSB target exists. A call to 
+       * this->SetAdsbTarget(nullptr) will set this->flarm_selection = -1
+       * which will signify that we are finished with the ADSB targets for now.
+       */
+      return false;
+      }
+    else
+      {
+      target = this->traffic.FirstAdsbTraffic();
+      this->adsb_selection = 0;
+      this->SetAdsbTarget(static_cast<const AdsbTarget*>(target));
+      }
     }
-
-  this->SetAdsbTarget(target);
+  /*
+   * If there are no ADSB targets then \ref SetAdsbTarget will be called
+   * with nullptr resulting in this->flarm_selection will be set to -1.
+   */
+  this->SetAdsbTarget(dynamic_cast<const AdsbTarget*>(target));
+  return true;
   }
 
 //------------------------------------------------------------------------------
-void
+bool
 FlarmTrafficWindow::PrevAdsbTarget() noexcept
   {
-  // If warning is displayed -> prevent selector movement
-  if (WarningMode())
-    return;
-
   assert(this->adsb_selection < (int)this->traffic.adsb_list.size());
 
   const AdsbTarget* target;
@@ -217,11 +230,26 @@ FlarmTrafficWindow::PrevAdsbTarget() noexcept
 
   if (target == nullptr)
     {
-    target = this->traffic.LastAdsbTraffic();
-    this->adsb_selection = (int)this->traffic.adsb_list.size() - 1;
+    if (this->adsb_selection >= 0)
+      {
+      this->SetAdsbTarget(target);
+      /*
+       * At this point we have attempted to retrieve a target which is before
+       * the current beginning of the list, i.e. no ADSB target exists. A
+       * call to this->SetAdsbTarget(nullptr) will set 
+       * this->adsb_selection = -1 which will signify that we are finished
+       * with the ADSB targets for now.
+       */
+      return false;
+      }
+    else
+      {
+      target = this->traffic.LastAdsbTraffic();
+      this->adsb_selection = (int)this->traffic.adsb_list.size() - 1;
+      this->SetAdsbTarget(target);
+      }
     }
-
-  this->SetAdsbTarget(target);
+  return true;
   }
 
 //------------------------------------------------------------------------------
@@ -231,7 +259,44 @@ FlarmTrafficWindow::NextTarget() noexcept
   // If warning is displayed -> prevent selector movement
   if (WarningMode())
     return;
-  this->NextFlarmTarget();
+  if (this->flarm_selection >= 0)
+    {
+    if (this->NextFlarmTarget() == false)
+      {
+      this->flarm_selection = -1;
+      const AdsbTarget*  fa = this->traffic.FirstAdsbTraffic();
+      if (fa != nullptr)
+        this->NextAdsbTarget();
+      }
+    }
+  else if (this->adsb_selection >= 0)
+    {
+    if (this->NextAdsbTarget() == false)
+      {
+      this->adsb_selection = -1;
+      const FlarmTarget* ff = this->traffic.FirstFlarmTraffic();
+      if (ff != nullptr)
+        this->NextFlarmTarget();
+      }
+    }
+  if ((this->flarm_selection == -1) && (this->adsb_selection == -1))
+    {
+    /* If there are both FLARM and ADSB targets available this logic will
+     * the FLARM targets.
+     */
+    const AdsbTarget*  fa = this->traffic.FirstAdsbTraffic();
+    this->SetAdsbTarget(fa);
+
+    const FlarmTarget* ff = this->traffic.FirstFlarmTraffic();
+    this->SetFlarmTarget(ff);
+    if ((this->flarm_selection == -1) && (this->adsb_selection == -1))
+      {
+      if (this->traffic.FirstFlarmTraffic() != nullptr)
+        this->flarm_selection = 0;
+      else if (this->traffic.FirstAdsbTraffic() != nullptr)
+        this->adsb_selection = 0;
+      }
+    }
   }
 
 //------------------------------------------------------------------------------
@@ -241,7 +306,25 @@ FlarmTrafficWindow::PrevTarget() noexcept
   // If warning is displayed -> prevent selector movement
   if (WarningMode())
     return;
-  this->PrevFlarmTarget();
+  this->PrevAdsbTarget();
+  if ((this->flarm_selection == -1) && (this->adsb_selection == -1))
+    {
+    const FlarmTarget* fa = this->traffic.LastFlarmTraffic();
+    this->SetFlarmTarget(fa);
+    if ((this->flarm_selection == -1) && (this->adsb_selection == -1))
+      {
+      if (this->traffic.LastAdsbTraffic() != nullptr)
+        this->adsb_selection = 0;
+      else if (this->traffic.LastFlarmTraffic() != nullptr)
+        this->flarm_selection = 0;
+      }
+    }
+  else if (this->flarm_selection > 0)
+  /*
+   * If only one FLARM target stay at the start of the Flarm list. Otherwise
+   * advance to the previous target.
+   */
+    this->PrevFlarmTarget();
   }
 
 //------------------------------------------------------------------------------

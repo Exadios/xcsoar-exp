@@ -51,6 +51,23 @@ class FlarmTrafficWindow : public PaintWindow
 
     /**
      * The index in the traffic list of the current selection.
+     *
+     *  | op | condition| flarm_selection(t0) | adsb_selection(t0) | flarm_selection(t1) | adsb_selection(t1) |
+     *  |-|-|-|-|-|-|
+     *  | NextTarget() | FLARM, ADSB targets == {0, 0} | -1 | -1 | -1 | -1 |
+     *  | NextTarget() | FLARM, ADSB targets == {0, 0} | 0 <= x < n | -1 | -1 | -1 |
+     *  | NextTarget() | FLARM targets > 0  | -1 | -1 | 0 | -1 |
+     *  | NextTarget() | ADSB targets > 0  | -1 | -1 | -1 | 0 |
+     *  | NextTarget() | ADSB targets == 0 | -1 | 0 <= x < n | -1 | -1 |
+     *  | NextTarget() | | 0 <= x < n - 1 | -1 | x + 1 | -1 |
+     *  | NextTarget() | | -1 | 0 <= x < n - 1 | -1 | x + 1 |
+     *  | NextTarget() | ABSB targets > 0 | -1 | x == n - 1 | 0 | -1 |
+     *  | NextTarget() | FLARM targets > 0 | x == n - 1 | -1 | -1 | 0 |
+     *  | PrevTarget() | FLARM, ADSB targets == {0, 0} | - 1 | -1 | -1 | -1 |
+     *  | PrevTarget() | FLARM, ADSB targets == {0, 0} | -1 | 0 <= x < n | -1 | -1 |
+     *  | PrevTarget() | FLARM, ADSB targets == {>0, 0} | 0 | -1 | 0 | -1 |
+     *  | PrevTarget() | FLARM, ADSB targets == {n, >0} | n - 1 | -1 | -1  | 0 |
+     *
      */
     int flarm_selection = -1;
     int adsb_selection  = -1;
@@ -104,12 +121,18 @@ class FlarmTrafficWindow : public PaintWindow
     /**
      * Give the currently selected target.
      * @return The currently selected target or nullptr if none selected.
+     *         The returned value may be dynamically downcast to \ref 
+     *         FlarmTarget or \ref AdsbTarget.
      */
-    const FlarmTarget* GetTarget() const noexcept
+    const RemoteTarget* GetTarget() const noexcept
       {
-      return (this->flarm_selection >= 0) ? 
-        &this->traffic.flarm_list[flarm_selection] :
-        nullptr;
+      if (this->flarm_selection >= 0)
+        return &this->traffic.flarm_list[flarm_selection];
+      
+      if (this->adsb_selection >= 0)
+        return &this->traffic.adsb_list[adsb_selection];
+
+      return nullptr;
       }
 
     /**
@@ -134,113 +157,18 @@ class FlarmTrafficWindow : public PaintWindow
         }
       }
 
-    /**
-     * Set the quick access to the currently selected flarm target.
-     * @param target The current target. May be nullptr in which case the
-     *               \ref FlarmTarget currently pointed to is released here
-     *               and may, if conditions elsewhere allow, cause the 
-     *               \ref FlarmTarget previously reference to destruct.
-     */
-    void SetFlarmTarget(const FlarmTarget* target) noexcept
-      {
-      if (target == nullptr)
-        this->flarm_selection = -1;
-      else
-        {
-        this->flarm_selection = IndexFlarmTarget(target->id);
-        this->Invalidate();
-        }
-      }
-
-    /**
-     * Set the quick access to the currently selected target.
-     * @param id The id of the current target. If no target having id is
-     *           currently in the list then the \ref FlarmTarget currently
-     *           pointed to is released here and may, if conditions elsewhere
-     *           allow, cause the \ref FlarmTarget previously reference to
-     *           destruct.
-     */
-    void SetFlarmTarget(const TargetId& id) noexcept
-      {
-      this->SetFlarmTarget(this->traffic.FindFlarmTraffic(id));
-      }
-
-    /**
-     * Set the quick access to the currently selected target.
-     * @param target The current target. May be nullptr in which case the
-     *               \ref AdsbTarget currently pointed to is released here
-     *               and may, if conditions elsewhere allow, cause the 
-     *               \ref RemoteTarget previously reference to destruct.
-     */
-    void SetAdsbTarget(const AdsbTarget* target) noexcept
-      {
-      if (target == nullptr)
-        this->adsb_selection = -1;
-      else
-        {
-        this->adsb_selection = IndexAdsbTarget(target->id);
-        this->Invalidate();
-        }
-      }
-
-    /**
-     * Set the quick access to the currently selected target.
-     * @param id The id of the current target. If no target having id is
-     *           currently in the list then the \ref AdsbTarget currently
-     *           pointed to is released here and may, if conditions elsewhere
-     *           allow, cause the \ref FlarmTarget previously reference to
-     *           destruct.
-     */
-    void SetAdsbTarget(const TargetId& id) noexcept
-      {
-      SetAdsbTarget(this->traffic.FindAdsbTraffic(id));
-      }
 
     /**
      * If a warning is currently being displayed then do nothing otherwise
-     * advance the index, \ref this->flarm_selection, to the next FLARM target
-     * wrapping around if necessary. If the FLARM list is empty then
-     * \ref this->flarm_selection is set to -1.
-     */
-    void NextFlarmTarget() noexcept;
-
-    /**
-     * If a warning is currently being displayed then do nothing otherwise
-     * retard the index, \ref this->flarm_selection, to the previous FLARM
-     * target wrapping around if necessary. If the FLARM list is empty then
-     * \ref this->flarm_selection is set to -1.
-     */
-    void PrevFlarmTarget() noexcept;
-
-    /**
-     * If a warning is currently being displayed then do nothing otherwise
-     * advance the index, \ref this->flarm_selection, to the next FLARM target
-     * wrapping around if necessary. If the FLARM list is empty then
-     * \ref this->flarm_selection is set to -1.
-     */
-    void NextAdsbTarget() noexcept;
-
-    /**
-     * If a warning is currently being displayed then do nothing otherwise
-     * retard the index, \ref this->flarm_selection, to the previous FLARM
-     * target wrapping around if necessary. If the FLARM list is empty then
-     * \ref this->flarm_selection is set to -1.
-     */
-    void PrevAdsbTarget() noexcept;
-
-    /**
-     * If a warning is currently being displayed then do nothing otherwise
-     * advance the index, \ref this->selection, to the next FLARM target
-     * wrapping around if necessary. If the FLARM list is empty then
-     * \ref this->flarm_selection is set to -1.
+     * advance the index, \ref this->selection, to the next target
+     * wrapping around if necessary.
      */
     void NextTarget() noexcept;
 
     /**
      * If a warning is currently being displayed then do nothing otherwise
-     * retard the index, \ref this->selection, to the previous FLARM target
-     * wrapping around if necessary. If the FLARM list is empty then
-     * \ref this->flarm_selection is set to -1.
+     * retard the index, \ref this->selection, to the previous target
+     * wrapping around if necessary.
      */
     void PrevTarget() noexcept;
 
@@ -394,6 +322,114 @@ class FlarmTrafficWindow : public PaintWindow
 
   /* Temporary debug routines. */
   private:
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * advance the index, \ref this->flarm_selection, to the next FLARM target
+     * unless an attempt to transition past the end of the list.
+     * @return If false then this call has resulted in an attempt to
+     *         transition past the last target in this list. In this event
+     *         the caller is responsible to set this->flarm_selection
+     *         appropriately.
+     */
+    bool NextFlarmTarget() noexcept;
+
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * retard the index, \ref this->flarm_selection, to the previous FLARM
+     * target unless an attempt to transition beyond the start of the list.
+     * @return If false then this call has resulted in an attempt to
+     *         transition beyond the first target in this list. In this event
+     *         the caller is responsible to set this->flarm_selection
+     *         appropriately.
+     */
+    bool PrevFlarmTarget() noexcept;
+
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * retard the index, \ref this->adsb_selection, to the previous ADSB
+     * target unless an attempt to transition beyond the start of the list.
+     * @return If false then this call has resulted in an attempt to
+     *         transition beyond the first target in this list. In this event
+     *         the caller is responsible to set this->adsb_selection
+     *         appropriately.
+     */
+    bool NextAdsbTarget() noexcept;
+
+    /**
+     * If a warning is currently being displayed then do nothing otherwise
+     * advance the index, \ref this->adsb_selection, to the next ADSB target
+     * unless an attempt to transition past the end of the list.
+     * @return If false then this call has resulted in an attempt to
+     *         transition past the last target in this list. In this event
+     *         the caller is responsible to set this->adsb_selection
+     *         appropriately.
+     */
+    bool PrevAdsbTarget() noexcept;
+
+    /**
+     * Set the quick access to the currently selected flarm target.
+     * @param target The current target. May be nullptr in which case the
+     *               \ref FlarmTarget currently pointed to is released here
+     *               and may, if conditions elsewhere allow, cause the 
+     *               \ref FlarmTarget previously reference to destruct.
+     */
+    void SetFlarmTarget(const FlarmTarget* target) noexcept
+      {
+      if (target == nullptr)
+        this->flarm_selection = -1;
+      else
+        {
+        this->flarm_selection = IndexFlarmTarget(target->id);
+        this->adsb_selection  = -1; // If FLARM is set then ADSB must be unset.
+        this->Invalidate();
+        }
+      }
+
+    /**
+     * Set the quick access to the currently selected target.
+     * @param id The id of the current target. If no target having id is
+     *           currently in the list then the \ref FlarmTarget currently
+     *           pointed to is released here and may, if conditions elsewhere
+     *           allow, cause the \ref FlarmTarget previously reference to
+     *           destruct.
+     */
+    void SetFlarmTarget(const TargetId& id) noexcept
+      {
+      this->SetFlarmTarget(this->traffic.FindFlarmTraffic(id));
+      }
+
+    /**
+     * Set the quick access to the currently selected target.
+     * @param target The current target. May be nullptr in which case the
+     *               \ref AdsbTarget currently pointed to is released here
+     *               and may, if conditions elsewhere allow, cause the 
+     *               \ref RemoteTarget previously reference to destruct.
+     */
+    void SetAdsbTarget(const AdsbTarget* target) noexcept
+      {
+      if (target == nullptr)
+        this->adsb_selection = -1;
+      else
+        {
+        this->adsb_selection  = IndexAdsbTarget(target->id);
+        this->flarm_selection = -1; // If ADSB is set then FLARM must be unset.
+        this->Invalidate();
+        }
+      }
+
+    /**
+     * Set the quick access to the currently selected target.
+     * @param id The id of the current target. If no target having id is
+     *           currently in the list then the \ref AdsbTarget currently
+     *           pointed to is released here and may, if conditions elsewhere
+     *           allow, cause the \ref FlarmTarget previously reference to
+     *           destruct.
+     */
+    void SetAdsbTarget(const TargetId& id) noexcept
+      {
+      this->SetAdsbTarget(this->traffic.FindAdsbTraffic(id));
+      }
+
 #ifndef NDEBUG
     void WalkTheList() const noexcept;
 #endif

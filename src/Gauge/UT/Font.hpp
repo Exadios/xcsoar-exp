@@ -23,21 +23,15 @@ Copyright_License {
 
 #pragma once
 
-#include <tchar.h>
+/**
+ * \cond NEVER
+ */
 
-class TargetId;
+/**
+ * \file
+ */
 
-void
-dlgTeamCodeShowModal();
 
-void
-dlgFlarmTrafficDetailsShowModal(TargetId id);
-
-void
-dlgAdsbTrafficDetailsShowModal(TargetId id);
-
-void
-TrafficListDialog();
-
-TargetId
-PickFlarmTraffic(const TCHAR* title, TargetId array[], unsigned count);
+/**
+ * \endconf
+ */

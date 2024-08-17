@@ -9,3 +9,4 @@ resource_lib = library('resource', resource_sources,
                        include_directories : common_includes,
                        
                       )
+

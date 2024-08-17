@@ -60,6 +60,7 @@ LogoPageWindow::OnPaint(Canvas &canvas) noexcept
 
   Bitmap logo(width > 360 ? IDB_LOGO_HD : IDB_LOGO);
   Bitmap title(width > 360 ? IDB_TITLE_HD : IDB_TITLE);
+  Bitmap session_contact(IDB_SESSION_ADDR);
 
   // Determine title and logo image size
   PixelSize logo_size = logo.GetSize();
@@ -80,9 +81,9 @@ LogoPageWindow::OnPaint(Canvas &canvas) noexcept
 
   Font font;
   if (width > 360)
-    font.Load(FontDescription(Layout::VptScale(16)));
+    font.Load(FontDescription(Layout::VptScale(10)));
   else
-    font.Load(FontDescription(Layout::VptScale(8)));
+    font.Load(FontDescription(Layout::VptScale(5)));
   canvas.Select(font);
   canvas.SetBackgroundTransparent();
 
@@ -95,7 +96,6 @@ LogoPageWindow::OnPaint(Canvas &canvas) noexcept
   canvas.DrawText({x, y}, version);
   x += ts.width;
   canvas.DrawText({x, y}, XCSoar_VersionString);
-
 
 #ifdef GIT_COMMIT_ID
   y += ts.height + Layout::FastScale(2);
@@ -110,16 +110,26 @@ LogoPageWindow::OnPaint(Canvas &canvas) noexcept
   y += ts.height + Layout::FastScale(2);
 #endif
 
-  y += Layout::FastScale(8);
+  y += Layout::FastScale(2);
   x = middle - (ts.width / 2);
   y += ts.height;
   canvas.SetTextColor(COLOR_BLACK);
   x = middle - (ts2.width / 2);
   y += ts2.height;
   canvas.SetTextColor(COLOR_XCSOAR);
-  y += Layout::FastScale(22);
+  y += Layout::FastScale(2);
 //  canvas.DrawText({x, y}, _T("Signal: +61 422 348 370"));
   canvas.DrawText({x, y}, _T("Signal: +61 493 122 651"));
+  const TCHAR* session = _T("Session:");
+  ts = canvas.CalcTextSize(session);
+  x = middle - ts.width / 2;
+  y += ts.height + Layout::FastScale(2);
+  canvas.DrawText({x,y}, session);
+  PixelSize session_size = session_contact.GetSize();
+  x = middle - (session_size.width / 2);
+//  y += session_size.height + Layout::FastScale(2);
+  y += Layout::FastScale(12);
+  canvas.Copy({x, y}, session_size, session_contact, {0, 0});
 }
 
 static std::unique_ptr<Window>

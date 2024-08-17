@@ -617,12 +617,20 @@ FlarmTrafficControl::OpenDetails()
     return;
 
   // Don't open the details dialog if no plane selected
-  const FlarmTarget* target = this->GetTarget();
-  if (target == NULL)
-    return;
-
-  // Show the details dialog
-  dlgFlarmTrafficDetailsShowModal(target->id);
+  const RemoteTarget* rt = this->GetTarget();
+  const FlarmTarget* flarm = dynamic_cast<const FlarmTarget*>(rt);
+  const AdsbTarget* adsb   = dynamic_cast<const AdsbTarget*>(rt);
+  if (flarm == nullptr)
+    {
+    if (adsb == nullptr)
+      {
+      return;
+      }
+    else
+      dlgAdsbTrafficDetailsShowModal(adsb->id);
+    }
+  else
+    dlgFlarmTrafficDetailsShowModal(flarm->id);
   }
 
 //------------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+Version 7.27.0.3.1-Alpha-3
+  - Work on Surveillance/TargetList and Gauge/FlarmTrafficWindow. 
 Version 7.27.0.3.1-Alis-1
   - An edition produced for testing.
   - Some FLARM functionality removed for now but the rest basically works

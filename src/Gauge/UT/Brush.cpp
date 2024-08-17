@@ -21,23 +21,12 @@ Copyright_License {
 }
 */
 
-#pragma once
+/**
+ * \cond NEVER
+ */
 
-#include <tchar.h>
+#include "ui/canvas/Brush.hpp"
 
-class TargetId;
-
-void
-dlgTeamCodeShowModal();
-
-void
-dlgFlarmTrafficDetailsShowModal(TargetId id);
-
-void
-dlgAdsbTrafficDetailsShowModal(TargetId id);
-
-void
-TrafficListDialog();
-
-TargetId
-PickFlarmTraffic(const TCHAR* title, TargetId array[], unsigned count);
+/**
+ * \endcond
+ */

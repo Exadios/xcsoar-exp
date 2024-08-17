@@ -161,7 +161,6 @@ public:
         this->adsb_list.quick_remove(i);
     }
 
-private:
   /**
    * Give the number of Flarm items in this list.
    * @return Number of Flarm targets in the list.
@@ -180,7 +179,6 @@ private:
     return this->adsb_list.size();
     }
 
-public:
   /**
    * Give the total number of items in this list.
    * @return Number of targets of all types in the list.
