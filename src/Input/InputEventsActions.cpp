@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -74,6 +74,7 @@ doc/html/advanced/input/ALL		http://xcsoar.sourceforge.net/advanced/input/
 #include "Language/Language.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/NMEALogger.hpp"
+#include "Logger/GDL90Logger.hpp"
 #include "Waypoint/Waypoints.hpp"
 #include "Waypoint/Factory.hpp"
 #include "Waypoint/WaypointGlue.hpp"
@@ -448,6 +449,7 @@ InputEvents::eventAutoLogger(const TCHAR *misc)
 // toggle ask: toggles between on and off, asking the user to confirm
 // show: displays a status message indicating whether the logger is active
 // nmea: turns on and off NMEA logging
+// gdl90: turns on and off GDL90 logging
 // note: the text following the 'note' characters is added to the log file
 void
 InputEvents::eventLogger(const TCHAR *misc)
@@ -479,11 +481,18 @@ try {
     logger->GUIToggleLogger(basic, settings_computer,
                             protected_task_manager, true);
   else if (StringIsEqual(misc, _T("nmea"))) {
-    nmea_logger->ToggleEnabled();
-    if (nmea_logger->IsEnabled()) {
+    ::nmea_logger->ToggleEnabled();
+    if (::nmea_logger->IsEnabled()) {
       Message::AddMessage(_("NMEA log on"));
     } else {
       Message::AddMessage(_("NMEA log off"));
+    }
+  } else if (StringIsEqual(misc, _T("gdl90"))) {
+    ::gdl90_logger->ToggleEnabled();
+    if (::gdl90_logger->IsEnabled()) {
+      Message::AddMessage(_("GDL90 log on"));
+    } else {
+      Message::AddMessage(_("GDL90 log off"));
     }
   } else if (StringIsEqual(misc, _T("show")))
     if (logger->IsLoggerActive()) {

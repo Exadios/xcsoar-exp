@@ -38,10 +38,10 @@ public:
   ~GDL90Logger() noexcept;
 
   /**
-   * Logs NMEA string to log file
-   * @param text
+   * Logs packets to log file
+   * @param data Packets
    */
-  void Log(const void* data) noexcept override final;
+  void Log(const std::span<const std::byte> s) noexcept override final;
 
 protected:
 //  void Start();
@@ -52,6 +52,10 @@ protected:
     }
 
 private:
-  void WriteLine(OutputStream& os, std::string_view );
+  /**
+   * Write an entry to our file.
+   * data The current message)
+   */
+  void WriteMessage(OutputStream& f, const std::span<const std::byte> s);
 
   };

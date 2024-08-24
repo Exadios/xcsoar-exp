@@ -1443,15 +1443,15 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
 bool
 DeviceDescriptor::LineReceived(const char *line) noexcept
 {
-  if (nmea_logger != nullptr)
-    nmea_logger->Log(line);
+  if (::nmea_logger != nullptr)
+    ::nmea_logger->Log(line);
 
   if (dispatcher != nullptr)
-    dispatcher->LineReceived(line);
+    this->dispatcher->LineReceived(line);
 
   const auto e = BeginEdit();
   e->UpdateClock();     // Update the NMEAInfo clock
-  ParseNMEA(line, *e);
+  this->ParseNMEA(line, *e);
 
   e.Commit();           // Schedule a merge
 

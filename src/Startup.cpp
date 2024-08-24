@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -47,6 +47,7 @@ Copyright_License {
 #include "FLARM/Glue.hpp"
 #include "Logger/Logger.hpp"
 #include "Logger/NMEALogger.hpp"
+#include "Logger/GDL90Logger.hpp"
 #include "Logger/GlueFlightLogger.hpp"
 #include "Waypoint/WaypointDetailsReader.hpp"
 #include "Blackboard/DeviceBlackboard.hpp"
@@ -340,8 +341,8 @@ Startup(UI::Display &display)
   InputEvents::readFile();
 
   // Initialize DeviceBlackboard
-  device_blackboard = new DeviceBlackboard();
-  devices = new MultipleDevices(*asio_thread, *global_cares_channel);
+  ::device_blackboard = new DeviceBlackboard();
+  ::devices = new MultipleDevices(*asio_thread, *global_cares_channel);
 
   // Initialize main blackboard data
   task_events = new GlideComputerTaskEvents();
@@ -349,24 +350,25 @@ Startup(UI::Display &display)
   task_manager->SetTaskEvents(*task_events);
   task_manager->Reset();
 
-  protected_task_manager =
+  ::protected_task_manager =
     new ProtectedTaskManager(*task_manager, computer_settings.task);
 
   // Read the terrain file
   main_window->LoadTerrain();
 
-  logger = new Logger();
-  nmea_logger = new NMEALogger();
+  ::logger = new Logger();
+  ::nmea_logger = new NMEALogger();
+  ::gdl90_logger = new GDL90Logger();
 
-  glide_computer = new GlideComputer(computer_settings,
+  ::glide_computer = new GlideComputer(computer_settings,
                                      way_points, airspace_database,
                                      *protected_task_manager,
                                      *task_events);
-  glide_computer->SetTerrain(terrain);
-  glide_computer->SetLogger(logger);
-  glide_computer->Initialise();
+  ::glide_computer->SetTerrain(terrain);
+  ::glide_computer->SetLogger(logger);
+  ::glide_computer->Initialise();
 
-  replay = new Replay(logger, *protected_task_manager);
+  ::replay = new Replay(logger, *protected_task_manager);
 
 #ifdef HAVE_CMDLINE_REPLAY
   if (CommandLine::replay_path != nullptr) {
@@ -511,7 +513,9 @@ Startup(UI::Display &display)
   }
 
   if (computer_settings.logger.enable_nmea_logger)
-    nmea_logger->Enable();
+    ::nmea_logger->Enable();
+  if (computer_settings.logger.enable_gdl90_logger)
+    ::gdl90_logger->Enable();
 
   LogFormat("ProgramStarted");
 
@@ -682,6 +686,8 @@ Shutdown()
 
   delete nmea_logger;
   nmea_logger = nullptr;
+  delete gdl90_logger;
+  gdl90_logger = nullptr;
 
   delete replay;
   replay = nullptr;

@@ -33,17 +33,14 @@ GDL90Logger::~GDL90Logger() noexcept = default;
 
 //------------------------------------------------------------------------------
 void
-GDL90Logger::WriteLine(OutputStream& /*os*/, std::string_view /*text*/)
+GDL90Logger::WriteMessage(OutputStream& os, const std::span<const std::byte> s)
   {
-//  os.Write(text.data(), text.size());
-
-//  constexpr char newline = '\n';
-//  os.Write(&newline, sizeof(newline));
+  os.Write(s.data(), s.size());
   }
 
 //------------------------------------------------------------------------------
 void
-GDL90Logger::Log(const void* /*text*/) noexcept
+GDL90Logger::Log(const std::span<const std::byte> s) noexcept
   {
   if (!this->enabled)
     return;
@@ -53,9 +50,10 @@ GDL90Logger::Log(const void* /*text*/) noexcept
   try
     {
     this->Start();
-//    this->WriteLine(*file, text);
+    this->WriteMessage(*this->file, s);
     }
   catch (...)
     {
     }
   }
+

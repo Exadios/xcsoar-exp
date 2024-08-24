@@ -35,6 +35,8 @@ Copyright_License {
 #include "Surveillance/AircraftType.hpp"
 #include "Units/System.hpp"
 #include "time/BrokenTime.hpp"
+#include "Components.hpp"
+#include "Logger/GDL90Logger.hpp"
 
 #include <vector>
 #include <span>
@@ -231,6 +233,9 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
     return false;
     }
  
+  if (::gdl90_logger != nullptr)
+    ::gdl90_logger->Log(s);
+
   auto pkts = this->CutPacket(s);
 
   bool rtn = false;

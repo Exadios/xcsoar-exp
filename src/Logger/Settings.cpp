@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,9 +23,10 @@ Copyright_License {
 
 #include "Settings.hpp"
 
+//------------------------------------------------------------------------------
 void
 LoggerSettings::SetDefaults()
-{
+  {
   time_step_cruise = std::chrono::seconds{5};
   time_step_circling = std::chrono::seconds{1};
   auto_logger = AutoLogger::ON;
@@ -39,4 +40,5 @@ LoggerSettings::SetDefaults()
   enable_flight_logger = false;
 
   enable_nmea_logger = false;
-}
+  enable_gdl90_logger = false;
+  }

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -212,6 +212,7 @@ const char AutoLogger[] = "AutoLogger";
 const char DisableAutoLogger[] = "DisableAutoLogger";
 const char EnableFlightLogger[] = "EnableFlightLogger";
 const char EnableNMEALogger[] = "EnableNMEALogger";
+const char EnableGDL90Logger[] = "EnableGDL90Logger";
 const char MapFile[] = "MapFile"; // pL
 const char BallastSecsToEmpty[] = "BallastSecsToEmpty";
 const char DialogFont[] = "DialogFont";

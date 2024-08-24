@@ -148,7 +148,15 @@ static constexpr TabMenuPage setup_pages[] = {
 #ifdef HAVE_TRACKING
   { N_("Tracking"), CreateTrackingConfigPanel },
 #endif
+#ifndef KOBO
+/*
+ * \todo Figure out how to reduce the font and menu tab size on this panel
+ *       so that we can see all of these items. At this time if "XCSoar Cloud"
+ *       tab is displayed then "Logger" tab is pushed off the display on
+ *       the Kobo.
+ */
   { _T("XCSoar Cloud"), CreateCloudConfigPanel },
+#endif  // KOBO
 #if defined(HAVE_PCMET) || defined(HAVE_HTTP)
   { N_("Weather"), CreateWeatherConfigPanel },
 #endif

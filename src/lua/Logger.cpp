@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -54,6 +54,8 @@ l_logger_index(lua_State *L)
       Lua::Push(L, (int)logger.auto_logger);
   } else if (StringIsEqual(name, "nmea_logger")) {
       Lua::Push(L, logger.enable_nmea_logger);
+  } else if (StringIsEqual(name, "gdl90_logger")) {
+      Lua::Push(L, logger.enable_gdl90_logger);
   } else if (StringIsEqual(name, "log_book")) {
       Lua::Push(L, logger.enable_flight_logger);
   } else if (StringIsEqual(name, "logger_id")) {
@@ -152,6 +154,32 @@ l_logger_disablenmea(lua_State *L)
   return 0;
 }
 
+//------------------------------------------------------------------------------
+static int
+l_logger_enablegdl90(lua_State* L)
+  {
+  if (lua_gettop(L) != 0)
+    return luaL_error(L, "Invalid parameters");
+  ComputerSettings& settings_computer = CommonInterface::SetComputerSettings();
+  LoggerSettings& logger = settings_computer.logger;
+  logger.enable_gdl90_logger = true;
+
+  return 0;
+  }
+
+//------------------------------------------------------------------------------
+static int
+l_logger_disablegdl90(lua_State* L)
+  {
+  if (lua_gettop(L) != 0)
+    return luaL_error(L, "Invalid parameters");
+  ComputerSettings& settings_computer = CommonInterface::SetComputerSettings();
+  LoggerSettings& logger = settings_computer.logger;
+  logger.enable_gdl90_logger = false;
+
+  return 0;
+  }
+
 static int
 l_logger_enablelogbook(lua_State *L)
 {
@@ -201,6 +229,8 @@ static constexpr struct luaL_Reg settings_funcs[] = {
   {"set_autologger", l_logger_setautologger},
   {"enable_nmea", l_logger_enablenmea},
   {"disable_nmea", l_logger_disablenmea},
+  {"enable_gdl90", l_logger_enablegdl90},
+  {"disable_gdl90", l_logger_disablegdl90},
   {"enable_logbook", l_logger_enablelogbook},
   {"disable_logbook", l_logger_disablelogbook},
   {"set_logger_id", l_logger_setloggerid},

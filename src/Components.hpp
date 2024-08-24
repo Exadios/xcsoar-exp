@@ -50,6 +50,7 @@ class ProtectedTaskManager;
 class Replay;
 class Logger;
 class NMEALogger;
+class GDL90Logger;
 class GlueFlightLogger;
 class TrackingGlue;
 namespace TIM { class Glue; }
@@ -74,6 +75,7 @@ extern CalculationThread *calculation_thread;
 
 extern Logger *logger;
 extern NMEALogger *nmea_logger;
+extern GDL90Logger* gdl90_logger;
 extern GlueFlightLogger *flight_logger;
 
 extern TrackingGlue *tracking;

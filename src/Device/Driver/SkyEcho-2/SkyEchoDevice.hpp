@@ -59,7 +59,7 @@ public:
    * @param port The input port associated with this device.
    */
   SkyEchoDevice(Port &port)
-    :port(port)
+    : port(port)
     {
     this->Initfcs();
     }
@@ -102,7 +102,6 @@ private:
 
   /**
    * The CRC table computed at ctor time.
-   * \todo pfb: Investigate generating this table at compile time.
    */
   uint16_t crc16Table[256]; // Table for FCS.
 

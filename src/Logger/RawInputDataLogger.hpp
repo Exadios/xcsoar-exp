@@ -26,6 +26,7 @@ Copyright_License {
 #include "thread/Mutex.hxx"
 
 #include <memory>
+#include <span>
 
 class FileOutputStream;
 
@@ -39,18 +40,24 @@ protected:
 
 public:
   RawInputDataLogger() noexcept;
-  ~RawInputDataLogger() noexcept;
+  virtual ~RawInputDataLogger() noexcept;
 
   bool IsEnabled() const noexcept
     {
     return enabled;
     }
 
+  /**
+   * Enable this logger.
+   */
   void Enable() noexcept
     {
     enabled = true;
     }
 
+  /**
+   * Invert the current enabled state of this logger.
+   */
   void ToggleEnabled() noexcept
     {
     enabled = !enabled;
@@ -58,13 +65,20 @@ public:
 
   /**
    * Logs NMEA string to log file
-   * @param text
+   * @param data The data to be logged. This data
    */
-  virtual void Log(const void* line) noexcept = 0;
+  virtual void Log(const std::span<const std::byte> s) noexcept = 0;
 
 protected:
+  /**
+   * Initialize the class by creating and opening the file.
+   */
   void Start();
 
+  /**
+   * Provide the "file extension" of the logger file.
+   * @return The extension only in ASCII
+   */
   virtual const char* ExtName() const noexcept = 0;
 
   };

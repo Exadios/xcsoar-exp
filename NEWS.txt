@@ -1,3 +1,5 @@
+Version 7.27.0.3.1-Alpha-5
+  - Added GDL90 logging ability.
 Version 7.27.0.3.1-Alpha-4
   - Added ability to assign tail numbers to FLARM targets on PPI display.
 Version 7.27.0.3.1-Alpha-3

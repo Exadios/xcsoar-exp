@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@ Copyright_License {
 #include "UIGlobals.hpp"
 #include "Form/DataField/Enum.hpp"
 #include "Logger/NMEALogger.hpp"
+#include "Logger/GDL90Logger.hpp"
 #include "UtilsSettings.hpp"
 #include "Components.hpp"
 #include "Units/Group.hpp"
@@ -43,6 +44,7 @@ enum ControlIndex {
   LoggerTimeStepCircling,
   DisableAutoLogger,
   EnableNMEALogger,
+  EnableGDL90Logger,
   EnableFlightLogger,
   LoggerID,
 };
@@ -105,6 +107,12 @@ LoggerConfigPanel::Prepare(ContainerWindow &parent,
              logger.enable_nmea_logger);
   SetExpertRow(EnableNMEALogger);
 
+AddBoolean(_("GDL90 logger"),
+             _("Enable the GDL90 logger on startup? If this option is disabled,"
+                 " the GDL90 logger can still be started manually."),
+             /*logger.enable_gdl90_logger*/ logger.enable_gdl90_logger);
+  SetExpertRow(EnableGDL90Logger);
+
   AddBoolean(_("Log book"), _("Logs each start and landing."),
              logger.enable_flight_logger);
   SetExpertRow(EnableFlightLogger);
@@ -140,9 +148,14 @@ LoggerConfigPanel::Save(bool &changed) noexcept
 
   changed |= SaveValue(EnableNMEALogger, ProfileKeys::EnableNMEALogger,
                        logger.enable_nmea_logger);
+  changed |= SaveValue(EnableGDL90Logger, ProfileKeys::EnableGDL90Logger,
+                       logger.enable_gdl90_logger);
 
-  if (logger.enable_nmea_logger && nmea_logger != nullptr)
-    nmea_logger->Enable();
+  if (logger.enable_nmea_logger && ::nmea_logger != nullptr)
+    ::nmea_logger->Enable();
+
+  if (logger.enable_gdl90_logger && ::gdl90_logger != nullptr)
+    ::gdl90_logger->Enable();
 
   if (SaveValue(EnableFlightLogger, ProfileKeys::EnableFlightLogger,
                 logger.enable_flight_logger)) {

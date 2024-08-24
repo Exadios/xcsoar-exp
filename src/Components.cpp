@@ -61,6 +61,7 @@ CalculationThread *calculation_thread;
 
 Logger *logger;
 NMEALogger *nmea_logger;
+GDL90Logger* gdl90_logger;
 GlueFlightLogger *flight_logger;
 Replay *replay;
 
@@ -107,7 +108,7 @@ InDrawThread()
 #ifdef ENABLE_OPENGL
   return InMainThread() && draw_thread_handle.IsInside();
 #else
-  return draw_thread != nullptr && draw_thread->IsInside();
+  return ::draw_thread != nullptr && draw_thread->IsInside();
 #endif
 }
 
