@@ -28,6 +28,10 @@ Copyright_License {
 #include "system/Path.hpp"
 #include "util/StaticString.hxx"
 
+#ifndef NDEBUG
+#include <iostream>
+#endif
+
 GDL90Logger::GDL90Logger() noexcept {}
 GDL90Logger::~GDL90Logger() noexcept = default;
 
@@ -44,6 +48,10 @@ GDL90Logger::Log(const std::span<const std::byte> s) noexcept
   {
   if (!this->enabled)
     return;
+
+#ifndef NDEBUG
+  std::cout << __FILE__ << ", " << __LINE__ << "\n";
+#endif
 
   const std::lock_guard lock{this->mutex};
 

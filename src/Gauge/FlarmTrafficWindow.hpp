@@ -36,7 +36,7 @@ class Brush;
 struct FlarmTrafficLook;
 
 /**
- * A Window which renders FLARM traffic.
+ * A Window which renders remote (currently FLARM and ADSB) traffic.
  */
 class FlarmTrafficWindow : public PaintWindow
   {
@@ -106,9 +106,9 @@ class FlarmTrafficWindow : public PaintWindow
       } side_display_type = SideInfoType::VARIO;
 
   public:
-    FlarmTrafficWindow(const FlarmTrafficLook &_look,
-                       unsigned _h_padding, unsigned _v_padding,
-                       bool _small = false) noexcept;
+    FlarmTrafficWindow(const FlarmTrafficLook &look,
+                       unsigned h_padding, unsigned v_padding,
+                       bool small = false) noexcept;
 
   public:
     [[gnu::pure]]
@@ -261,7 +261,7 @@ class FlarmTrafficWindow : public PaintWindow
 
     /**
      * Paint all targets on a radar display
-     * @param canvas The canavas representing the radar display.
+     * @param canvas The canvas representing the radar display.
      */
     void PaintRadarTraffic(Canvas& canvas) noexcept;
 
@@ -288,7 +288,7 @@ class FlarmTrafficWindow : public PaintWindow
 
 
     /**
-     * Paint the radar's fixed furnature.
+     * Paint the radar's fixed furniture.
      * @param canvas The \ref Canvas representing the radar.
      */
     void PaintRadarBackground(Canvas& canvas) const noexcept;

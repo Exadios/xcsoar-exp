@@ -39,5 +39,5 @@ Font::Destroy() noexcept
   }
 
 /**
- * \endconv
+ * \endcond
  */

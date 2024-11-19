@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2022 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -153,7 +153,7 @@ SymbolsConfigPanel::Prepare([[maybe_unused]] ContainerWindow &parent,
           _("Display the ground track as a grey line on the map."),
           ground_track_mode_list, (unsigned)settings_map.display_ground_track);
 
-  AddBoolean(_("FLARM traffic"), _("This enables the display of FLARM traffic on the map window."),
+  AddBoolean(_("Surveillance traffic"), _("This enables the display of Surveillance traffic on the map window."),
              settings_map.show_flarm_on_map);
 
   AddEnum(_("Trail length"),

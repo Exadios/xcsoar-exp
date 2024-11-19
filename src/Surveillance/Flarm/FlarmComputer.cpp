@@ -85,6 +85,7 @@ FlarmComputer::Process(TargetData& flarm,
     // if we don't know the target's name yet
     if (!target.HasName())
       {
+
       // lookup the name of this target's id
       const TCHAR* fname = 
                      FlarmDetails::LookupCallsign(target.id);

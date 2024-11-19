@@ -12,6 +12,26 @@ feednmea_sources = [
                     source_root + 'Device/Config.cpp',
                    ]
 
+feedgdl90_sources = [
+                     'FeedGDL90.cpp',
+                     'DebugPort.cpp',
+                     'FakeLogFile.cpp',
+                     'FakeLanguage.cpp',
+                     source_root + 'Operation/ConsoleOperationEnvironment.cpp',
+                     source_root + 'Device/Port/ConfiguredPort.cpp',
+                     source_root + 'Device/Config.cpp',
+                    ]
+
+testgdl90_sources = [
+                     'TestGDL90.cpp',
+                     'DebugPort.cpp',
+                     'FakeLogFile.cpp',
+                     'FakeLanguage.cpp',
+                     source_root + 'Operation/ConsoleOperationEnvironment.cpp',
+                     source_root + 'Device/Port/ConfiguredPort.cpp',
+                     source_root + 'Device/Config.cpp',
+                    ]
+
 nmea2gdl90_sources = [
                       'NMEA2GDL90.cpp',
                       'DebugPort.cpp',

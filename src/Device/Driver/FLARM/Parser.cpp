@@ -58,10 +58,6 @@ FlarmDevice::ParsePFLAC(NMEAInputLine &line)
 bool
 FlarmDevice::ParseNMEA(const char *_line, [[maybe_unused]] NMEAInfo &info)
 {
-#ifndef NDEBUG
-  std::cout << __FILE__ << ", " << __LINE__ << ": "
-            << _line  << "\n";
-#endif
   if (!VerifyNMEAChecksum(_line))
     return false;
 

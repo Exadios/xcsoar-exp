@@ -87,8 +87,10 @@ public:
   Validity new_traffic;
 
   /** Target information */
-  TrivialArrayExtender<FlarmTarget, MAX_COUNT> flarm_list;
-  TrivialArrayExtender<AdsbTarget,  MAX_COUNT> adsb_list;
+  typedef TrivialArrayExtender<FlarmTarget, MAX_COUNT> FlarmListType;
+  typedef TrivialArrayExtender<AdsbTarget, MAX_COUNT> AdsbListType;
+  FlarmListType flarm_list;
+  AdsbListType  adsb_list;
 
   /**
    * Clear everything!
@@ -645,7 +647,7 @@ public:
    * @return This reference may be used to manipulate the implementations 
    *         \ref flarm_list variable;
    */
-  constexpr TrivialArrayExtender<FlarmTarget, MAX_COUNT >* FlarmList()
+  constexpr FlarmListType* FlarmList()
     {
     return &this->flarm_list;
     }
@@ -655,7 +657,7 @@ public:
    * @return This reference may be used to manipulate the implementations 
    *         \ref adsb_list variable;
    */
-  constexpr TrivialArrayExtender<AdsbTarget, MAX_COUNT >* AdsbList()
+  constexpr AdsbListType* AdsbList()
     {
     return &this->adsb_list;
     }
@@ -665,7 +667,7 @@ public:
    * @return This reference may be used to read the implementations 
    *         \ref flarm_list variable;
    */
-  constexpr const TrivialArrayExtender<FlarmTarget, MAX_COUNT>* FlarmList() const
+  constexpr const FlarmListType* FlarmList() const
     {
     return &this->flarm_list;
     }
@@ -675,7 +677,7 @@ public:
    * @return This reference may be used to read the implementations 
    *         \ref adsb_list variable;
    */
-  constexpr const TrivialArrayExtender<AdsbTarget, MAX_COUNT>* AdsbList() const
+  constexpr const AdsbListType* AdsbList() const
     {
     return &this->adsb_list;
     }

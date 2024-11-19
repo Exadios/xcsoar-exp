@@ -58,14 +58,10 @@ private:
   enum Controls 
     {
     CALLSIGN,
-    CHANGE_CALLSIGN_BUTTON,
     SPACER1,
     DISTANCE,
     ALTITUDE,
-    VARIO,
     SPACER2,
-    PILOT,
-    AIRPORT,
     RADIO,
     PLANE,
     };
@@ -189,7 +185,7 @@ AdsbTrafficDetailsWidget::UpdateChanging(const MoreData& basic)
   else
     value = _T("--");
 
-  SetText(DISTANCE, value);
+  SetText(AdsbTrafficDetailsWidget::DISTANCE, value);
 
   // Fill altitude field
   if (target_ok)
@@ -210,7 +206,7 @@ AdsbTrafficDetailsWidget::UpdateChanging(const MoreData& basic)
   else
     value = _T("--");
 
-  SetText(ALTITUDE, value);
+  SetText(AdsbTrafficDetailsWidget::ALTITUDE, value);
   }
 
 /**
@@ -252,7 +248,7 @@ AdsbTrafficDetailsWidget::Update()
   else
 #endif
     value = _T("--");
-  SetText(CALLSIGN, value);
+  SetText(AdsbTrafficDetailsWidget::CALLSIGN, value);
 
   // Update the frequently changing fields too
   UpdateChanging(CommonInterface::Basic());

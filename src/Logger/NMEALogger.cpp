@@ -31,9 +31,10 @@ Copyright_License {
 NMEALogger::NMEALogger() noexcept {}
 NMEALogger::~NMEALogger() noexcept = default;
 
+//------------------------------------------------------------------------------
 inline void
 NMEALogger::Start()
-{
+  {
   if (file != nullptr)
     return;
 
@@ -50,28 +51,33 @@ NMEALogger::Start()
   const auto path = AllocatedPath::Build(logs_path, name);
   this->file = std::make_unique<FileOutputStream>(path,
                                                   FileOutputStream::Mode::APPEND_OR_CREATE);
-}
+  }
 
+//------------------------------------------------------------------------------
 static void
 WriteLine(OutputStream &os, std::string_view text)
-{
+  {
   os.Write(text.data(), text.size());
 
   static constexpr char newline = '\n';
   os.Write(&newline, sizeof(newline));
-}
+  }
 
+//------------------------------------------------------------------------------
 void
 NMEALogger::Log(const char *text) noexcept
-{
+  {
   if (!enabled)
     return;
 
   const std::lock_guard lock{mutex};
 
-  try {
+  try 
+    {
     Start();
     WriteLine(*file, text);
-  } catch (...) {
+    }
+  catch (...)
+    {
+    }
   }
-}

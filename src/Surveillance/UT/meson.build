@@ -1,5 +1,5 @@
 cxx = meson.get_compiler('cpp')
-libpthread      = cxx.find_library('libpthread')
+#libpthread      = cxx.find_library('libpthread')
 
 libsurveillance_test_harness = executable('libsurveillance_test_harness',
                                           [
@@ -11,7 +11,7 @@ libsurveillance_test_harness = executable('libsurveillance_test_harness',
                                                         thread_lib,
                                                         resource_lib,
                                                       ],
-                                          dependencies : libpthread
+#                                          dependencies : libpthread
                                          )
 test('surveillance_lib test 1', libsurveillance_test_harness,
      args : '1', ) 
@@ -39,5 +39,5 @@ targetlist_semantics = executable('targetlist-semantics',
                                                 thread_lib,
                                                 resource_lib,
                                               ],
-                                   dependencies : libpthread
+#                                   dependencies : libpthread
                                   )

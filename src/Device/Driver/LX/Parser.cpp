@@ -339,10 +339,6 @@ PLXVS(NMEAInputLine &line, NMEAInfo &info)
 bool
 LXDevice::ParseNMEA(const char *String, NMEAInfo &info)
 {
-#ifndef NDEBUG
-  std::cout << __FILE__ << ", " << __LINE__ << ": "
-            << String  << "\n";
-#endif
   if (!VerifyNMEAChecksum(String))
     return false;
 

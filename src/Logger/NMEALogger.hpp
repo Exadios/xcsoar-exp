@@ -23,13 +23,19 @@ Copyright_License {
 
 #pragma once
 
+/**
+ * \file
+ * \addtogroup Logger
+ */
+
 #include "thread/Mutex.hxx"
 
 #include <memory>
 
 class FileOutputStream;
 
-class NMEALogger {
+class NMEALogger
+  {
   Mutex mutex;
   std::unique_ptr<FileOutputStream> file;
 
@@ -39,24 +45,30 @@ public:
   NMEALogger() noexcept;
   ~NMEALogger() noexcept;
 
-  bool IsEnabled() const noexcept {
+  bool IsEnabled() const noexcept
+    {
     return enabled;
-  }
+    }
 
-  void Enable() noexcept {
+  void Enable() noexcept
+    {
     enabled = true;
-  }
+    }
 
-  void ToggleEnabled() noexcept {
+  void ToggleEnabled() noexcept
+    {
     enabled = !enabled;
-  }
+    }
 
   /**
    * Logs NMEA string to log file
-   * @param text
+   * @param line The NMEA record to log - including header, body, checksum 
+   *             and terminating CR/LF.
    */
-  void Log(const char *line) noexcept;
+  void Log(const char* line) noexcept;
 
 private:
   void Start();
-};
+  };
+
+/** \} */

@@ -33,7 +33,17 @@
 
 #include "io/OutputStream.hxx"
 
+#pragma GCC diagnostic push
+/*
+ * The following pragma solves a error in boost lib v1.80.0. The error
+ * presents as:
+ * "boost_1_80_0/boost/system/detail/error_code.hpp:60:13: error: redundant redeclaration of ‘std::size_t boost::system::hash_value(const error_code&)’ in same scope [-Werror=redundant-decls]"
+ * Why the boost error is occurring is not clear to me at this time. Also how
+ * it ever work is, likewise, not clear.
+ */
+#pragma GCC diagnostic ignored "-Wredundant-decls"
 #include <boost/json.hpp>
+#pragma GCC diagnostic pop
 
 namespace Json {
 

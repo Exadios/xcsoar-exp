@@ -124,12 +124,6 @@ GlueMapWindow::SetUIState(const UIState &new_value)
 void
 GlueMapWindow::ExchangeBlackboard()
 {
-#ifndef NDEBUG
-//  LogFormat("%s, %d: %s", __FILE__, __LINE__,
-//            ::device_blackboard->Basic().target_data.traffic.IsEmpty() ? 
-//              "true" :
-//              "false");
-#endif
   /* copy device_blackboard to MapWindow */
 
   {

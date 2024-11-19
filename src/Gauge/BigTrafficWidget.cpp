@@ -49,120 +49,125 @@
 #include "Asset.hpp"
 
 /**
- * A Window which renders FLARM traffic, with user interaction.
+ * A Window which renders remote (currently FLARM and ADSB) traffic, with
+ * user interaction.
  */
 class FlarmTrafficControl : public FlarmTrafficWindow
   {
-  protected:
-    bool enable_auto_zoom = true, dragging = false;
-    unsigned zoom = 2;
-    Angle task_direction = Angle::Degrees(-1);
-    GestureManager gestures;
+protected:
+  bool enable_auto_zoom = true, dragging = false;
+  unsigned zoom = 2;
+  Angle task_direction = Angle::Degrees(-1);
+  GestureManager gestures;
 
-  public:
-    FlarmTrafficControl(const FlarmTrafficLook &look)
-      :FlarmTrafficWindow(look, Layout::Scale(10),
-                          Layout::GetMinimumControlHeight() + Layout::Scale(2)) {}
+public:
+  FlarmTrafficControl(const FlarmTrafficLook &look)
+  : FlarmTrafficWindow(look, Layout::Scale(10),
+                       Layout::GetMinimumControlHeight() + Layout::Scale(2))
+    {
+    }
 
-  protected:
-    void CalcAutoZoom();
+protected:
+  void CalcAutoZoom();
 
-  public:
-    /**
-     * Update the Flarm display.
-     * @param new_direction The new aircraft track or heading.
-     * @param new_traffic_data The new list of remote targets.
-     * @param new_settings The new team codes.
-     * @param flarm_status Present status of the remote target system.
-     */
-    void Update(Angle new_direction,
-                const TargetList& new_traffic_data,
-                const TeamCodeSettings& new_settings,
-                TargetStatus traffic_status);
+public:
+  /**
+   * Update the Flarm display.
+   * @param new_direction The new aircraft track or heading.
+   * @param new_traffic_data The new list of remote targets.
+   * @param new_settings The new team codes.
+   * @param flarm_status Present status of the remote target system.
+   */
+  void Update(Angle new_direction,
+              const TargetList& new_traffic_data,
+              const TeamCodeSettings& new_settings,
+              TargetStatus traffic_status);
 
-    void UpdateTaskDirection(bool show_task_direction, Angle bearing);
+  void UpdateTaskDirection(bool show_task_direction, Angle bearing);
 
-    bool GetNorthUp() const
-      {
-      return enable_north_up;
-      }
+  bool GetNorthUp() const
+    {
+    return enable_north_up;
+    }
 
-    void SetNorthUp(bool enabled);
+  void SetNorthUp(bool enabled);
 
-    void ToggleNorthUp()
-      {
-      SetNorthUp(!GetNorthUp());
-      }
+  void ToggleNorthUp()
+    {
+    SetNorthUp(!GetNorthUp());
+    }
 
-    bool GetAutoZoom() const
-      {
-      return enable_auto_zoom;
-      }
+  bool GetAutoZoom() const
+    {
+    return enable_auto_zoom;
+    }
 
-    static unsigned GetZoomDistance(unsigned zoom);
+  static unsigned GetZoomDistance(unsigned zoom);
 
-    void SetZoom(unsigned _zoom)
-      {
-      zoom = _zoom;
-      SetDistance(GetZoomDistance(_zoom));
-      }
+  void SetZoom(unsigned _zoom)
+    {
+    zoom = _zoom;
+    SetDistance(GetZoomDistance(_zoom));
+    }
 
-    void SetAutoZoom(bool enabled);
+  void SetAutoZoom(bool enabled);
 
-    void ToggleAutoZoom()
-      {
-      SetAutoZoom(!GetAutoZoom());
-      }
+  void ToggleAutoZoom()
+    {
+    SetAutoZoom(!GetAutoZoom());
+    }
 
-    bool CanZoomOut() const
-      {
-      return zoom < 4;
-      }
+  bool CanZoomOut() const
+    {
+    return zoom < 4;
+    }
 
-    bool CanZoomIn() const
-      {
-      return zoom > 0;
-      }
+  bool CanZoomIn() const
+    {
+    return zoom > 0;
+    }
 
-    void ZoomOut();
-    void ZoomIn();
+  void ZoomOut();
+  void ZoomIn();
 
-    void SwitchData();
-    void OpenDetails();
+  void SwitchData();
+  void OpenDetails();
 
-  protected:
-    void PaintTrafficInfo(Canvas &canvas) const;
-    void PaintClimbRate(Canvas &canvas, PixelRect rc, double climb_rate) const;
-    void PaintDistance(Canvas &canvas, PixelRect rc, double distance) const;
-    void PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
-                               double relative_altitude) const;
-    void PaintID(Canvas& canvas,
-                 PixelRect rc,
-                 const FlarmTarget& traffic) const;
-    void PaintTaskDirection(Canvas &canvas) const;
+protected:
+  void PaintTrafficInfo(Canvas &canvas) const;
+  void PaintFlarmTrafficInfo(Canvas &canvas) const;
+  void PaintAdsbTrafficInfo(Canvas &canvas) const;
+  void PaintClimbRate(Canvas &canvas, PixelRect rc, double climb_rate) const;
+  void PaintDistance(Canvas &canvas, PixelRect rc, double distance) const;
+  void PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
+                             double relative_altitude) const;
+  void PaintID(Canvas& canvas,
+               PixelRect rc,
+               const RemoteTarget& traffic) const;
+  void PaintTaskDirection(Canvas &canvas) const;
 
-    void StopDragging()
-      {
-      if (!dragging)
-        return;
+  void StopDragging()
+    {
+    if (!dragging)
+      return;
 
-      dragging = false;
-      ReleaseCapture();
-      }
+    dragging = false;
+    ReleaseCapture();
+    }
 
-  protected:
-    bool OnMouseGesture(const TCHAR* gesture);
+protected:
+  bool OnMouseGesture(const TCHAR* gesture);
 
-    /* virtual methods from class Window */
-    void OnCreate() noexcept override;
-    bool OnMouseMove(PixelPoint p, unsigned keys) noexcept override;
-    bool OnMouseDown(PixelPoint p) noexcept override;
-    bool OnMouseUp(PixelPoint p) noexcept override;
-    bool OnMouseDouble(PixelPoint p) noexcept override;
-    bool OnKeyDown(unsigned key_code) noexcept override;
-    void OnCancelMode() noexcept override;
+  /* virtual methods from class Window */
+  void OnCreate() noexcept override;
+  bool OnMouseMove(PixelPoint p, unsigned keys) noexcept override;
+  bool OnMouseDown(PixelPoint p) noexcept override;
+  bool OnMouseUp(PixelPoint p) noexcept override;
+  bool OnMouseDouble(PixelPoint p) noexcept override;
+  bool OnKeyDown(unsigned key_code) noexcept override;
+  void OnCancelMode() noexcept override;
 
-    /* virtual methods from class PaintWindow */
+  /* virtual methods from class PaintWindow */
     void OnPaint(Canvas &canvas) noexcept override;
   };
 
@@ -478,7 +483,7 @@ FlarmTrafficControl::PaintRelativeAltitude(Canvas &canvas, PixelRect rc,
 void
 FlarmTrafficControl::PaintID(Canvas& canvas,
                              PixelRect rc,
-                             const FlarmTarget& traffic) const
+                             const RemoteTarget& traffic) const
   {
   TCHAR buffer[20];
 
@@ -501,6 +506,10 @@ FlarmTrafficControl::PaintID(Canvas& canvas,
   if (!WarningMode())
     {
 #ifdef ENABLE_TEAM_FLYING
+    /**
+     * \todo
+     * pfb: Implement ENABLE_TEAM_FLYING in build. (Issue 5)
+     */
     // Team color dot
     TargetColor team_color = FlarmFriends::GetFriendColor(traffic.id);
 #else
@@ -540,30 +549,46 @@ FlarmTrafficControl::PaintID(Canvas& canvas,
   }
 
 /**
- * Paints the basic info for the selected target on the given canvas
- * @param canvas The canvas to paint on
+ *
  */
 //------------------------------------------------------------------------------
 void
 FlarmTrafficControl::PaintTrafficInfo(Canvas& canvas) const
   {
+  if (this->flarm_selection != -1)
+    this->PaintFlarmTrafficInfo(canvas);
+  else if (this->adsb_selection != -1)
+    this->PaintAdsbTrafficInfo(canvas);
+  return;
+  }
+
+/**
+ * Paints the basic info for the selected FLARM target on the given canvas
+ * @param canvas The canvas to paint on
+ */
+//------------------------------------------------------------------------------
+void
+FlarmTrafficControl::PaintFlarmTrafficInfo(Canvas& canvas) const
+  {
   // Don't paint numbers if no plane selected
-  if (flarm_selection == -1 && !WarningMode())
+  if (this->flarm_selection == -1 && !this->WarningMode())
     return;
 
   // Shortcut to the selected traffic
-  FlarmTarget target = this->traffic.flarm_list[WarningMode() ? warning : flarm_selection];
-  assert(target.IsDefined());
+  FlarmTarget ft = this->traffic.flarm_list[this->WarningMode() ?
+                                              this->warning :
+                                              this->flarm_selection];
+  assert(ft.IsDefined());
 
   const unsigned padding = Layout::GetTextPadding();
   PixelRect rc;
   rc.left = padding;
   rc.top = padding;
-  rc.right = canvas.GetWidth() - padding;
+  rc.right  = canvas.GetWidth()  - padding;
   rc.bottom = canvas.GetHeight() - padding;
 
   // Set the text color and background
-  switch (target.alarm_level)
+  switch (ft.alarm_level)
     {
     case RemoteTarget::AlarmType::LOW:
     case RemoteTarget::AlarmType::INFO_ALERT:
@@ -581,20 +606,80 @@ FlarmTrafficControl::PaintTrafficInfo(Canvas& canvas) const
   canvas.SetBackgroundTransparent();
 
   // Climb Rate
-  if (!WarningMode() && target.climb_rate_avg30s_available)
-    PaintClimbRate(canvas, rc, target.climb_rate_avg30s);
+  if (!this->WarningMode() && ft.climb_rate_avg30s_available)
+    PaintClimbRate(canvas, rc, ft.climb_rate_avg30s);
 
   // Distance
-  PaintDistance(canvas, rc, target.distance);
+  PaintDistance(canvas, rc, ft.distance);
 
   // Relative Height
-  PaintRelativeAltitude(canvas, rc, target.relative_altitude);
+  PaintRelativeAltitude(canvas, rc, ft.relative_altitude);
 
   // ID / Name
-  if (!target.HasAlarm())
+  if (!ft.HasAlarm())
     canvas.SetTextColor(look.selection_color);
 
-  this->PaintID(canvas, rc, target);
+  this->PaintID(canvas, rc, ft);
+  }
+
+/**
+ * Paints the basic info for the selected FLARM target on the given canvas
+ * @param canvas The canvas to paint on
+ */
+//------------------------------------------------------------------------------
+void
+FlarmTrafficControl::PaintAdsbTrafficInfo(Canvas& canvas) const
+  {
+  // Don't paint numbers if no plane selected
+  if (this->adsb_selection == -1 && !this->WarningMode())
+    return;
+
+  // Shortcut to the selected traffic
+  AdsbTarget at = this->traffic.adsb_list[this->WarningMode() ?
+                                            this->warning :
+                                            this->adsb_selection];
+  assert(at.IsDefined());
+
+  const unsigned padding = Layout::GetTextPadding();
+  PixelRect rc;
+  rc.left = padding;
+  rc.top = padding;
+  rc.right  = canvas.GetWidth()  - padding;
+  rc.bottom = canvas.GetHeight() - padding;
+
+  // Set the text color and background
+  switch (at.alarm_level)
+    {
+    case RemoteTarget::AlarmType::LOW:
+    case RemoteTarget::AlarmType::INFO_ALERT:
+      canvas.SetTextColor(look.warning_color);
+      break;
+    case RemoteTarget::AlarmType::IMPORTANT:
+    case RemoteTarget::AlarmType::URGENT:
+      canvas.SetTextColor(look.alarm_color);
+      break;
+    case RemoteTarget::AlarmType::NONE:
+      canvas.SetTextColor(look.default_color);
+      break;
+    }
+
+  canvas.SetBackgroundTransparent();
+
+  // Climb Rate
+  if (!this->WarningMode() && at.climb_rate_avg30s_available)
+    PaintClimbRate(canvas, rc, at.climb_rate_avg30s);
+
+  // Distance
+  PaintDistance(canvas, rc, at.distance);
+
+  // Relative Height
+  PaintRelativeAltitude(canvas, rc, at.relative_altitude);
+
+  // ID / Name
+  if (!at.HasAlarm())
+    canvas.SetTextColor(look.selection_color);
+
+  this->PaintID(canvas, rc, at);
   }
 
 //------------------------------------------------------------------------------

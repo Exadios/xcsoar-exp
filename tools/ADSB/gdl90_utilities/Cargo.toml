@@ -1,0 +1,15 @@
+[package]
+name = "gdl90_utilities"
+version = "0.1.0"
+edition = "2021"
+authors = ["Exadios Session 059fbce4f4ab32b338f0ae4b8d12dff3d503f197cd19b3e6b5c771adda0d3fa723"] 
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "test"
+test = false
+bench = false
+
+[dependencies]
+gdl90 = "1.0.0"

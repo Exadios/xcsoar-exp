@@ -297,7 +297,7 @@ public:
   ~DeviceDescriptor() noexcept;
 
   unsigned GetIndex() const noexcept {
-    return index;
+    return this->index;
   }
 
   const DeviceConfig &GetConfig() const noexcept {

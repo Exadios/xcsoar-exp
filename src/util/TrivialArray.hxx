@@ -36,6 +36,10 @@
 #include <initializer_list>
 #include <span>
 
+#ifndef NDEBUG
+#include <iostream>
+#endif
+
 /**
  * An array with a maximum size known at compile time.  It keeps track
  * of the actual length at runtime. The clear() function needs to be
@@ -163,6 +167,10 @@ public:
 	 * Returns one constant element.  No bounds checking.
 	 */
 	constexpr const_reference operator[](size_type i) const noexcept {
+#ifndef NDEBUG
+  if (i >= size())
+    std::cout << __FILE__ << __LINE__ << ": " << i << ", " << size() << "\n";
+#endif
 		assert(i < size());
 
 		return array[i];

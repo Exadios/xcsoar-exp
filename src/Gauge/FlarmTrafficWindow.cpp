@@ -48,13 +48,13 @@
 #endif
 
 //------------------------------------------------------------------------------
-FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &_look,
-                                       unsigned _h_padding,
-                                       unsigned _v_padding,
-                                       bool _small) noexcept
-  :look(_look),
-   h_padding(_h_padding), v_padding(_v_padding),
-   small(_small)
+FlarmTrafficWindow::FlarmTrafficWindow(const FlarmTrafficLook &look,
+                                       unsigned h_padding,
+                                       unsigned v_padding,
+                                       bool small) noexcept
+  : look(look),
+    h_padding(h_padding), v_padding(v_padding),
+    small(small)
   {
   this->traffic.Clear();
   this->data_modified.Clear();
@@ -91,8 +91,7 @@ FlarmTrafficWindow::OnResize(PixelSize new_size) noexcept
 bool
 FlarmTrafficWindow::NextFlarmTarget() noexcept
   {
-  assert((this->flarm_selection < (int)this->traffic.flarm_list.size()) &&
-         (this->adsb_selection < (int)this->traffic.adsb_list.size()));
+  assert(this->flarm_selection < (int)this->traffic.flarm_list.size());
 
   const RemoteTarget* target;
   if (this->flarm_selection >= 0)
@@ -103,7 +102,7 @@ FlarmTrafficWindow::NextFlarmTarget() noexcept
     this->flarm_selection = -1;
     }
 
-  if (target == nullptr)
+  if (nullptr == target)
     {
     if (this->flarm_selection >= 0)
       {
@@ -146,7 +145,7 @@ FlarmTrafficWindow::PrevFlarmTarget() noexcept
     this->flarm_selection = -1;
     }
 
-  if (target == nullptr)
+  if (nullptr == target)
     {
     if (this->flarm_selection >= 0)
       {
@@ -185,7 +184,7 @@ FlarmTrafficWindow::NextAdsbTarget() noexcept
     this->adsb_selection = -1;
     }
 
-  if (target == nullptr)
+  if (nullptr == target)
     {
     if (this->adsb_selection >= 0)
       {
@@ -193,7 +192,7 @@ FlarmTrafficWindow::NextAdsbTarget() noexcept
       /*
        * At this point we have attempted to retrieve a target which is beyond
        * the current end of the list, i.e. no ADSB target exists. A call to 
-       * this->SetAdsbTarget(nullptr) will set this->flarm_selection = -1
+       * this->SetAdsbTarget(nullptr) will set this->adsb_selection = -1
        * which will signify that we are finished with the ADSB targets for now.
        */
       return false;
@@ -207,7 +206,7 @@ FlarmTrafficWindow::NextAdsbTarget() noexcept
     }
   /*
    * If there are no ADSB targets then \ref SetAdsbTarget will be called
-   * with nullptr resulting in this->flarm_selection will be set to -1.
+   * with nullptr resulting in this->adsb_selection will be set to -1.
    */
   this->SetAdsbTarget(dynamic_cast<const AdsbTarget*>(target));
   return true;
@@ -228,7 +227,7 @@ FlarmTrafficWindow::PrevAdsbTarget() noexcept
     this->adsb_selection = -1;
     }
 
-  if (target == nullptr)
+  if (nullptr == target)
     {
     if (this->adsb_selection >= 0)
       {
@@ -261,7 +260,7 @@ FlarmTrafficWindow::NextTarget() noexcept
     return;
   if (this->flarm_selection >= 0)
     {
-    if (this->NextFlarmTarget() == false)
+    if (false == this->NextFlarmTarget())
       {
       this->flarm_selection = -1;
       const AdsbTarget*  fa = this->traffic.FirstAdsbTraffic();
@@ -271,7 +270,7 @@ FlarmTrafficWindow::NextTarget() noexcept
     }
   else if (this->adsb_selection >= 0)
     {
-    if (this->NextAdsbTarget() == false)
+    if (false == this->NextAdsbTarget())
       {
       this->adsb_selection = -1;
       const FlarmTarget* ff = this->traffic.FirstFlarmTraffic();
@@ -279,7 +278,7 @@ FlarmTrafficWindow::NextTarget() noexcept
         this->NextFlarmTarget();
       }
     }
-  if ((this->flarm_selection == -1) && (this->adsb_selection == -1))
+  if ((-1 == this->flarm_selection) && (-1 == this->adsb_selection))
     {
     /* If there are both FLARM and ADSB targets available this logic will
      * the FLARM targets.
@@ -289,12 +288,16 @@ FlarmTrafficWindow::NextTarget() noexcept
 
     const FlarmTarget* ff = this->traffic.FirstFlarmTraffic();
     this->SetFlarmTarget(ff);
-    if ((this->flarm_selection == -1) && (this->adsb_selection == -1))
+    if ((-1 == this->flarm_selection) && (-1 == this->adsb_selection))
       {
       if (this->traffic.FirstFlarmTraffic() != nullptr)
+        {
         this->flarm_selection = 0;
+        }
       else if (this->traffic.FirstAdsbTraffic() != nullptr)
+        {
         this->adsb_selection = 0;
+        }
       }
     }
   }
@@ -307,16 +310,20 @@ FlarmTrafficWindow::PrevTarget() noexcept
   if (WarningMode())
     return;
   this->PrevAdsbTarget();
-  if ((this->flarm_selection == -1) && (this->adsb_selection == -1))
+  if ((-1 == this->flarm_selection) && (-1 == this->adsb_selection))
     {
     const FlarmTarget* fa = this->traffic.LastFlarmTraffic();
     this->SetFlarmTarget(fa);
-    if ((this->flarm_selection == -1) && (this->adsb_selection == -1))
+    if ((-1 == this->flarm_selection) && (-1 == this->adsb_selection))
       {
       if (this->traffic.LastAdsbTraffic() != nullptr)
+        {
         this->adsb_selection = 0;
+        }
       else if (this->traffic.LastFlarmTraffic() != nullptr)
+        {
         this->flarm_selection = 0;
+        }
       }
     }
   else if (this->flarm_selection > 0)
@@ -341,11 +348,26 @@ FlarmTrafficWindow::UpdateSelector(const TargetId id,
   // If we don't have a valid selection and we can't find
   // a target close to to the PixelPoint we select the next one
   // on the internal list
-  if (this->flarm_selection < 0 &&
+  if (this->flarm_selection < 0 && this->adsb_selection < 0 &&
       (pt.x < 0 ||
        pt.y < 0 ||
        !SelectNearTarget(pt, this->radius * 2)) )
     this->NextFlarmTarget();
+  if (this->flarm_selection < 0) 
+    {
+    if (this->adsb_selection < 0)
+      {
+      // No flarm selection, try ADSB.
+      if (false == this->traffic.adsb_list.empty())
+        this->adsb_selection = 0;
+      }
+    else
+      {
+      if ((TargetList::AdsbListType::size_type)this->adsb_selection >=
+          this->traffic.adsb_list.size())
+        this->adsb_selection = this->traffic.adsb_list.size() - 1;
+      }
+    }
   }
 
 //------------------------------------------------------------------------------
@@ -361,8 +383,8 @@ FlarmTrafficWindow::UpdateWarnings() noexcept
 //------------------------------------------------------------------------------
 void
 FlarmTrafficWindow::Update(Angle new_direction,
-                           const TargetList &new_traffic,
-                           const TeamCodeSettings &new_settings,
+                           const TargetList& new_traffic,
+                           const TeamCodeSettings& new_settings,
                            TargetStatus target_status) noexcept
   {
   static constexpr Angle min_heading_delta = Angle::Degrees(2);
@@ -376,7 +398,7 @@ FlarmTrafficWindow::Update(Angle new_direction,
 
   TargetId selection_id;
   PixelPoint pt;
-  if (!small && this->flarm_selection >= 0)
+  if (!this->small && this->flarm_selection >= 0)
     {
     selection_id = this->traffic.flarm_list[this->flarm_selection].id;
     pt = sc[this->flarm_selection];
@@ -414,7 +436,7 @@ FlarmTrafficWindow::RangeScale(double d) const noexcept
 void
 FlarmTrafficWindow::PaintRadarNoTraffic(Canvas &canvas) const noexcept
   {
-  if (small)
+  if (this->small)
     return;
 
   const TCHAR* str = _("No Traffic");
@@ -428,7 +450,7 @@ FlarmTrafficWindow::PaintRadarNoTraffic(Canvas &canvas) const noexcept
 void
 FlarmTrafficWindow::PaintRadarNoGo(Canvas &canvas) const noexcept
   {
-  if (small)
+  if (this->small)
     return;
 
   const TCHAR* str = _("No Go");
@@ -507,8 +529,10 @@ FlarmTrafficWindow::PaintRadarFlarmTarget(Canvas& canvas,
   sc[i].y = radar_mid.y + iround(p.y * scale);
 
   const Color* text_color;
-  const Pen* target_pen, * circle_pen;
-  const Brush* target_brush = nullptr, * arrow_brush;
+  const Pen* target_pen;
+  const Pen* circle_pen;
+  const Brush* target_brush = nullptr;
+  const Brush* arrow_brush;
   unsigned circles = 0;
 
   // Set the arrow color depending on alarm level
@@ -555,7 +579,7 @@ FlarmTrafficWindow::PaintRadarFlarmTarget(Canvas& canvas,
           circle_pen = &look.default_pen;
           }
 
-        if (!small && static_cast<unsigned> (this->flarm_selection) == i)
+        if (!this->small && static_cast<unsigned> (this->flarm_selection) == i)
           {
           text_color = &look.selection_color;
           target_brush = arrow_brush = &look.selection_brush;
@@ -584,14 +608,14 @@ FlarmTrafficWindow::PaintRadarFlarmTarget(Canvas& canvas,
     {
     canvas.SelectHollowBrush();
     canvas.Select(*circle_pen);
-    canvas.DrawCircle(sc[i], Layout::FastScale(small ? 8 : 16));
-    if (circles == 2)
-      canvas.DrawCircle(sc[i], Layout::FastScale(small ? 10 : 19));
+    canvas.DrawCircle(sc[i], Layout::FastScale(this->small ? 8 : 16));
+    if (2 == circles)
+      canvas.DrawCircle(sc[i], Layout::FastScale(this->small ? 10 : 19));
     }
 
   // Create an arrow polygon
   BulkPixelPoint Arrow[4];
-  if (small)
+  if (this->small)
     {
     Arrow[0].x = -3;
     Arrow[0].y = 4;
@@ -622,7 +646,7 @@ FlarmTrafficWindow::PaintRadarFlarmTarget(Canvas& canvas,
 
   // Select pen and brush
   canvas.Select(*target_pen);
-  if (target_brush == nullptr)
+  if (nullptr == target_brush)
     canvas.SelectHollowBrush();
   else
     canvas.Select(*target_brush);
@@ -630,7 +654,7 @@ FlarmTrafficWindow::PaintRadarFlarmTarget(Canvas& canvas,
   // Draw the polygon
   canvas.DrawPolygon(Arrow, 4);
 
-  if (small)
+  if (this->small)
     {
     if (!WarningMode() || target.HasAlarm())
       PaintTargetInfoSmall(canvas, target, i, *text_color, *arrow_brush);
@@ -643,7 +667,7 @@ FlarmTrafficWindow::PaintRadarFlarmTarget(Canvas& canvas,
     return;
 
   // if vertical speed to small or negative -> skip this one
-  if (side_display_type == SideInfoType::VARIO &&
+  if (SideInfoType::VARIO == side_display_type &&
       (!target.climb_rate_avg30s_available ||
        target.climb_rate_avg30s < 0.5 ||
        target.IsPowered()))
@@ -656,7 +680,7 @@ FlarmTrafficWindow::PaintRadarFlarmTarget(Canvas& canvas,
   // Format string
   TCHAR tmp[10];
 
-  if (side_display_type == SideInfoType::VARIO)
+  if (SideInfoType::VARIO == side_display_type)
     FormatUserVerticalSpeed(target.climb_rate_avg30s, tmp, false);
   else
     FormatRelativeUserAltitude(target.relative_altitude, tmp, true);
@@ -720,8 +744,10 @@ FlarmTrafficWindow::PaintRadarAdsbTarget(Canvas& canvas,
   sc[i].y = radar_mid.y + iround(p.y * scale);
 
   const Color* text_color;
-  const Pen* target_pen, * circle_pen;
-  const Brush* target_brush = nullptr, * arrow_brush;
+  const Pen* target_pen;
+  const Pen* circle_pen;
+  const Brush* target_brush = nullptr;
+  const Brush* arrow_brush;
   unsigned circles = 0;
 
   // Set the arrow color depending on alarm level
@@ -768,7 +794,7 @@ FlarmTrafficWindow::PaintRadarAdsbTarget(Canvas& canvas,
           circle_pen = &look.default_pen;
           }
 
-        if (!small && static_cast<unsigned> (this->flarm_selection) == i)
+        if (!this->small && static_cast<unsigned> (this->adsb_selection) == i)
           {
           text_color = &look.selection_color;
           target_brush = arrow_brush = &look.selection_brush;
@@ -797,14 +823,14 @@ FlarmTrafficWindow::PaintRadarAdsbTarget(Canvas& canvas,
     {
     canvas.SelectHollowBrush();
     canvas.Select(*circle_pen);
-    canvas.DrawCircle(sc[i], Layout::FastScale(small ? 8 : 16));
-    if (circles == 2)
-      canvas.DrawCircle(sc[i], Layout::FastScale(small ? 10 : 19));
+    canvas.DrawCircle(sc[i], Layout::FastScale(this->small ? 8 : 16));
+    if (2 == circles)
+      canvas.DrawCircle(sc[i], Layout::FastScale(this->small ? 10 : 19));
     }
 
   // Create an ATC style glyph
   PixelPoint glyph[2][2];
-  if (small)
+  if (this->small)
     {
     glyph[0][0].x = -2;
     glyph[0][0].y =  0;
@@ -842,7 +868,7 @@ FlarmTrafficWindow::PaintRadarAdsbTarget(Canvas& canvas,
 
   // Select pen and brush
   canvas.Select(*target_pen);
-  if (target_brush == nullptr)
+  if (nullptr == target_brush)
     canvas.SelectHollowBrush();
   else
     canvas.Select(*target_brush);
@@ -851,7 +877,7 @@ FlarmTrafficWindow::PaintRadarAdsbTarget(Canvas& canvas,
   for (int j = 0; j < 2; j++)
     canvas.DrawLine(glyph[j][0], glyph[j][1]);
 
-  if (small)
+  if (this->small)
     {
     if (!WarningMode() || target.HasAlarm())
       PaintTargetInfoSmall(canvas, target, i, *text_color, *arrow_brush);
@@ -874,7 +900,7 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas& canvas,
     iround(Units::ToUserAltitude(target.relative_altitude) / 100);
 
   // if (relative altitude is other than zero)
-  if (relalt == 0)
+  if (0 == relalt)
     return;
 
   // Write the relativ altitude devided by 100 to the Buffer
@@ -995,8 +1021,8 @@ FlarmTrafficWindow::PaintRadarPlane(Canvas &canvas) const noexcept
   {
   canvas.Select(look.plane_pen);
 
-  PixelPoint p1(Layout::FastScale(small ? 5 : 10),
-                -Layout::FastScale(small ? 1 : 2));
+  PixelPoint p1(Layout::FastScale(this->small ? 5 : 10),
+                -Layout::FastScale(this->small ? 1 : 2));
   PixelPoint p2(-p1.x, p1.y);
 
   if (enable_north_up)
@@ -1007,7 +1033,7 @@ FlarmTrafficWindow::PaintRadarPlane(Canvas &canvas) const noexcept
 
   canvas.DrawLine(radar_mid + p1, radar_mid + p2);
 
-  p2 = { 0, Layout::FastScale(small ? 3 : 6) };
+  p2 = { 0, Layout::FastScale(this->small ? 3 : 6) };
   p1 = { 0, -p2.y };
 
   if (enable_north_up)
@@ -1018,7 +1044,7 @@ FlarmTrafficWindow::PaintRadarPlane(Canvas &canvas) const noexcept
 
   canvas.DrawLine(radar_mid + p1, radar_mid + p2);
 
-  p1.x = Layout::FastScale(small ? 2 : 4);
+  p1.x = Layout::FastScale(this->small ? 2 : 4);
   p1.y = p1.x;
   p2 = { -p1.x, p1.y };
 
@@ -1088,7 +1114,7 @@ FlarmTrafficWindow::PaintRadarBackground(Canvas &canvas) const noexcept
 
   PaintRadarPlane(canvas);
 
-  if (small)
+  if (this->small)
     return;
 
   // Paint zoom strings
@@ -1132,7 +1158,7 @@ void
 FlarmTrafficWindow::OnPaint(Canvas &canvas) noexcept
   {
 #ifdef ENABLE_OPENGL
-  if (small)
+  if (this->small)
     {
     const ScopeAlphaBlend alpha_blend;
 

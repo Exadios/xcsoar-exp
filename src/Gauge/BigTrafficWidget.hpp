@@ -28,7 +28,7 @@
  */
 
 /**
- * \todo Implement ENABLE_TEAM_FLYING in build. (Issue 5)
+ * \todo pfb: Implement ENABLE_TEAM_FLYING in build. (Issue 5)
  */
 
 #include "Widget/ContainerWidget.hpp"

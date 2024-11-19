@@ -309,8 +309,14 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
          *       Util this is done SkyEcho will not be able to provide
          *       a real position source because the Glide Computer needs
          *       a broken down UTC date and time set in info (Issue 5).
+         * \note
          * Note: GDL90 does not transmit date so this will have to be
          *       synthesized from some other source.
+         * \note
+         * Note: It seems that no other available software receiving GDL90
+         *       attempts to produce a full GPS (i.e. date time position)
+         *       either. Should we, or should we rely on another GPS
+         *       source to do this and just use the GDL90 for remote targets?
          */
 #if 0
         int hour = this->time_of_day / (60 * 60);
@@ -459,6 +465,7 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                                           Unit::FEET);
         report.id.Arg(this->target.address);
         // There's got to be a better way to do this.
+        report.name.clear();
         for (unsigned i = 0;
              i < sizeof(TrafficStruct::call_sign) / sizeof (char);
              i++)

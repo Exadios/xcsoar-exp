@@ -27,10 +27,13 @@ Copyright_License {
 void
 AdsbTarget::Update(const AdsbTarget& other)
   {
-  this->location           = other.location;
-  this->altitude           = other.altitude;
-  this->type               = other.type;  /* Do it here and not in 
-                                             \ref RemoteTarget to preserve
-                                             the \ref AdsbTarget type. */
+  this->location = other.location;
+  this->altitude = other.altitude;
+  this->type     = other.type;  /* Do it here and not in \ref RemoteTarget
+                                 * to preserve the \ref AdsbTarget type. */
+  this->name     = other.name;  /* Copy name received via the RF here and not
+                                 * in \ref Remote because other systems
+                                 * (e.g. Flarm) get their names from external
+                                 * sources. */
   this->RemoteTarget::Update(other);
   }

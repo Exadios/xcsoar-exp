@@ -152,15 +152,6 @@ WinMain(HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance,
 #endif
 
 try {
-#ifdef HAVE_POSIX
-#ifndef NDEBUG
-  CommonInterface::thread_register.AddThisThread(pthread_self(), "main");
-//  LogFormat("%s, %d: %s = %lu", __FILE__, __LINE__, 
-//            CommonInterface::thread_register.ThreadName(pthread_self()).c_str(),
-//            pthread_self());
-#endif  // NDEBUG
-#endif  // HAVE_POSIX
-
 #ifdef USE_WIN32_RESOURCES
   ResourceLoader::Init(hInstance);
 #endif

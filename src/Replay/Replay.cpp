@@ -137,13 +137,6 @@ Replay::Update()
       /* still not time to use next_data */
       return true;
 
-#ifndef NDEBUG
-    std::cout << __FILE__ << ", " << __LINE__ << ": "
-              << (next_data.target_data.traffic.IsEmpty() ? "true, " : "false, ")
-              << CommonInterface::thread_register.ThreadName(pthread_self()) << ", "
-              << &next_data
-              << '\n';
-#endif
     {
       const std::lock_guard lock{device_blackboard->mutex};
       ::device_blackboard->SetReplayState() = next_data;

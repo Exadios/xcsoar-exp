@@ -23,6 +23,12 @@ Copyright_License {
 
 #pragma once
 
+/**
+ * \file
+ * \addtogroup Logger
+ * \{
+ */
+
 #include "thread/Mutex.hxx"
 
 #include <memory>
@@ -30,6 +36,9 @@ Copyright_License {
 
 class FileOutputStream;
 
+/**
+ * Base class for raw loggers.
+ */
 class RawInputDataLogger
   {
 protected:
@@ -42,6 +51,10 @@ public:
   RawInputDataLogger() noexcept;
   virtual ~RawInputDataLogger() noexcept;
 
+  /**
+   * Is this logger enabled?
+   * @return Yes if true.
+   */
   bool IsEnabled() const noexcept
     {
     return enabled;
@@ -64,7 +77,8 @@ public:
     }
 
   /**
-   * Logs NMEA string to log file
+   * Log a string of data bytes to log file. If this logger is not enabled
+   * then do nothing.
    * @param data The data to be logged. This data
    */
   virtual void Log(const std::span<const std::byte> s) noexcept = 0;
@@ -82,3 +96,5 @@ protected:
   virtual const char* ExtName() const noexcept = 0;
 
   };
+
+/** \} */

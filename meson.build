@@ -52,15 +52,19 @@ add_project_arguments([
                        '-Wno-error=non-virtual-dtor',
                        '-Wno-non-virtual-dtor', # Meson insists on having -Wnon-virtual-dtor
                        '-Wno-undef',  # This should not be. It is necessary to fix a problem in Boost.
-                #       '-DBOOST_NO_IOSTREAM',
-                #       '-DBOOST_MATH_NO_LEXICAL_CAST',
-                #       '-DBOOST_UBLAS_NO_STD_CERR',
-                #       '-DBOOST_ERROR_CODE_HEADER_ONLY',
-                #       '-DBOOST_SYSTEM_NO_DEPRECATED',
-                #       '-DBOOST_NO_STD_LOCALE',
-                #       '-DBOOST_LEXICAL_CAST_ASSUME_C_LOCALE',
-                #       '-DBOOST_NO_CXX98_FUNCTION_BASE',
-                 #      '-DBOOST_JSON_STANDALONE',
+                       '-DBOOST_NO_STDLIB_CONFIG',  # Stop Boost headers doing
+                                                    # crazy stuff with our
+                                                    # defines given here.
+                       '-DBOOST_FT_AUTODETECT_CALLING_CONVENTIONS',
+                       '-DBOOST_NO_IOSTREAM',
+                       '-DBOOST_MATH_NO_LEXICAL_CAST',
+                       '-DBOOST_UBLAS_NO_STD_CERR',
+                       '-DBOOST_ERROR_CODE_HEADER_ONLY',
+                       '-DBOOST_SYSTEM_NO_DEPRECATED',
+                       '-DBOOST_NO_STD_LOCALE',
+                       '-DBOOST_LEXICAL_CAST_ASSUME_C_LOCALE',
+                       '-DBOOST_NO_CXX98_FUNCTION_BASE',
+                       '-DBOOST_JSON_STANDALONE',
                        '-DHAVE_POSIX',
                        '-DHAVE_VASPRINTF',
                        '-DEYE_CANDY',
@@ -85,7 +89,6 @@ add_project_arguments([
                        '-DUSE_POLL_EVENT',
                        '-isystem /usr/include/x86_6-linux-gnu',
                        '-DUSE_POLL_EVENT',
-                 #      '-DBOOST_JSON_STANDALONE',
                        '-DUSE_FREETYPE',
                        '-DENABLE_OPENGL',
                        '-DHAVE_GLES',
@@ -140,6 +143,7 @@ add_project_arguments([
                        '-isystem /usr/include/x86_6-linux-gnu',
                        '-isystem /usr/include/lua5.4',
                        '-isystem /usr/include/freetype2/',
+                       '-isystem output/src/boost_1_80_0',
                        '-O0',
                        '-g3',
                        version_define,
@@ -170,15 +174,6 @@ add_project_arguments([
                        '-Wcast-align',
                        '-Werror',
                        '-Wno-error=non-virtual-dtor',
-                #       '-DBOOST_NO_IOSTREAM',
-                #       '-DBOOST_MATH_NO_LEXICAL_CAST',
-                #       '-DBOOST_UBLAS_NO_STD_CERR',
-                #       '-DBOOST_ERROR_CODE_HEADER_ONLY',
-                #       '-DBOOST_SYSTEM_NO_DEPRECATED',
-                #       '-DBOOST_NO_STD_LOCALE',
-                #       '-DBOOST_LEXICAL_CAST_ASSUME_C_LOCALE',
-                #       '-DBOOST_NO_CXX98_FUNCTION_BASE',
-                #       '-DBOOST_JSON_STANDALONE',
                        '-DHAVE_POSIX',
                        '-DHAVE_VASPRINTF',
                        '-DEYE_CANDY',
@@ -203,7 +198,6 @@ add_project_arguments([
                        '-DUSE_POLL_EVENT',
                        '-isystem /usr/include/x86_6-linux-gnu',
                        '-DUSE_POLL_EVENT',
-                  #     '-DBOOST_JSON_STANDALONE',
                        '-DUSE_FREETYPE',
                        '-DENABLE_OPENGL',
                        '-DHAVE_GLES',
@@ -497,6 +491,7 @@ test_includes = include_directories(['src', 'src/unix'])
 subdir('test/src')
 
 subdir('tools/ADSB/NMEA')
+subdir('tools/ADSB/GDL90')
 
 # Unit tests
 subdir('src/Gauge/UT')

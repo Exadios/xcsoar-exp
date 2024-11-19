@@ -1416,10 +1416,10 @@ DeviceDescriptor::DataReceived(std::span<const std::byte> s) noexcept
     {
     if (this->monitor != nullptr)
       this->monitor->DataReceived(s);
-    NMEAInfo& basic(::device_blackboard->SetRealState(index));
+    NMEAInfo& basic(::device_blackboard->SetRealState(this->index));
     basic.UpdateClock();
     ::device_blackboard->mutex.lock();
-    this->device->DataReceived(s, ::device_blackboard->SetRealState(index));
+    this->device->DataReceived(s, ::device_blackboard->SetRealState(this->index));
     basic.alive.Update(basic.clock);
     ::device_blackboard->ScheduleMerge();
     ::device_blackboard->mutex.unlock();

@@ -23,6 +23,12 @@ Copyright_License {
 
 #pragma once
 
+/**
+ * \file
+ * \addtogroup Logger
+ * \{
+ */
+
 #include "thread/Mutex.hxx"
 #include "Logger/RawInputDataLogger.hpp"
 
@@ -31,6 +37,9 @@ Copyright_License {
 class FileOutputStream;
 class OutputStream;
 
+/**
+ * A logger to record incomming GDL90 packets.
+ */
 class GDL90Logger : public RawInputDataLogger
   {
 public:
@@ -38,14 +47,18 @@ public:
   ~GDL90Logger() noexcept;
 
   /**
-   * Logs packets to log file
-   * @param data Packets
+   * Log packets to log file. If this logger is not enabled then do nothing.
+   * @param s Packets
    */
   void Log(const std::span<const std::byte> s) noexcept override final;
 
 protected:
 //  void Start();
 
+  /**
+   * The file extension for GDL90 log files.
+   * @return "gdl90"
+   */
   const char* ExtName() const noexcept override final
     {
     return "gdl90";
@@ -59,3 +72,5 @@ private:
   void WriteMessage(OutputStream& f, const std::span<const std::byte> s);
 
   };
+
+/** \} */

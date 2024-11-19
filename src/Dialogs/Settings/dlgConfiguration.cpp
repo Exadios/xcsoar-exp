@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2021 The XCSoar Project
+  Copyright (C) 2000-2024 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ static constexpr TabMenuPage computer_pages[] = {
 };
 
 static constexpr TabMenuPage gauge_pages[] = {
-  { N_("FLARM, Other"), CreateGaugesConfigPanel },
+  { N_("Surveillance, Other"), CreateGaugesConfigPanel },
   { N_("Vario"), CreateVarioConfigPanel },
 #ifdef HAVE_PCM_PLAYER
   { N_("Audio Vario"), CreateAudioVarioConfigPanel },

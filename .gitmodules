@@ -7,3 +7,6 @@
 [submodule "android/UsbSerial"]
 	path = android/UsbSerial
 	url = https://github.com/XCSoar/UsbSerial.git
+[submodule "tools/ADSB/GDL90/gdl90"]
+	path = tools/ADSB/GDL90/gdl90
+	url = git@github.com:Exadios/gdl90.git

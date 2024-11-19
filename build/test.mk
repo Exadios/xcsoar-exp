@@ -785,12 +785,14 @@ DEBUG_PROGRAM_NAMES += \
 	RunProfileListDialog \
 	TestNotify \
 	FeedNMEA \
+  FeedGDL90 \
 	FeedVega EmulateDevice \
 	RunVegaSettings \
 	RunFlarmUtils \
 	RunLX1600Utils \
 	IGC2NMEA \
-  VariableKeyholeZone
+  VariableKeyholeZone \
+  TestGDL90
 endif
 
 ifeq ($(TARGET),UNIX)
@@ -2413,6 +2415,17 @@ FEED_NMEA_SOURCES = \
 	$(TEST_SRC_DIR)/FeedNMEA.cpp
 FEED_NMEA_DEPENDS = PORT ASYNC LIBNET OPERATION IO OS THREAD TIME UTIL
 $(eval $(call link-program,FeedNMEA,FEED_NMEA))
+
+FEED_GDL90_SOURCES = \
+	$(SRC)/Device/Port/ConfiguredPort.cpp \
+	$(SRC)/Device/Config.cpp \
+	$(SRC)/Operation/ConsoleOperationEnvironment.cpp \
+	$(TEST_SRC_DIR)/FakeLogFile.cpp \
+	$(TEST_SRC_DIR)/FakeLanguage.cpp \
+	$(TEST_SRC_DIR)/DebugPort.cpp \
+	$(TEST_SRC_DIR)/FeedGDL90.cpp
+FEED_GDL90_DEPENDS = PORT ASYNC LIBNET OPERATION IO OS THREAD TIME UTIL
+$(eval $(call link-program,FeedGDL90,FEED_GDL90))
 
 FEED_VEGA_SOURCES = \
 	$(SRC)/Device/Port/ConfiguredPort.cpp \

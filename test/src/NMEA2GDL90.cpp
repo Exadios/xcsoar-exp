@@ -52,6 +52,8 @@ Copyright_License {
 #include <span>
 #include <cmath>
 #include <memory>
+#include <map>
+#include <fstream>
 
 constexpr double meters2feet = 3.2808399;
 constexpr double meters_per_second2knot = 1.94;
@@ -73,6 +75,36 @@ char idBuffer[1024];  /* A buffer, much bigger than needed,
                          to hold a id string. */
 
 uint16_t crc16Table[256]; // Table for FCS.
+
+std::map<unsigned long int, std::string> adsbNames;
+
+//------------------------------------------------------------------------------
+void
+InitAircraftNames()
+  {
+  std::ifstream adsbNamesFile("AdsbNames.txt");
+  if (!adsbNamesFile.is_open())
+    return;   // No file so forget it.
+
+  while (!adsbNamesFile.eof())
+    {
+    unsigned long int id_key;
+    std::string call;
+
+    adsbNamesFile >> std::hex >> id_key >> std::dec >> call;
+//    std::cout << std::hex << id_key << std::dec << ", " << call << "\n";
+    if (adsbNamesFile.eof())
+      break;
+    if (call.length() > 8)
+      break;  // Callsign too big. ignore.
+    while (call.length() < 8)
+      call = call + " ";
+    ::adsbNames.insert({id_key, call});
+    }
+//  for (const auto& pair : ::adsbNames)
+//    std::cout << std::hex << pair.first << std::dec << ", " << pair.second << "\n";
+  adsbNamesFile.close();
+  }
 
 //------------------------------------------------------------------------------
 std::vector<std::byte>
@@ -353,9 +385,9 @@ DoTrafficReportMessage(std::unique_ptr<Port>& port,
   ::TrafficReportMessage[0] = std::byte{20};
   ::TrafficReportMessage[1] = std::byte{0x01};
 
-  ::TrafficReportMessage[2] = std::byte{(unsigned char)(target.id.Arg() & 0xff)};
+  ::TrafficReportMessage[4] = std::byte{(unsigned char)(target.id.Arg() & 0xff)};
   ::TrafficReportMessage[3] = std::byte{(unsigned char)((target.id.Arg() & 0xff00) >> 8)};
-  ::TrafficReportMessage[4] = std::byte{(unsigned char)((target.id.Arg() & 0xff0000) >> 16)};
+  ::TrafficReportMessage[2] = std::byte{(unsigned char)((target.id.Arg() & 0xff0000) >> 16)};
 
   if (info.location_available.IsValid() == true)
     {
@@ -462,12 +494,23 @@ DoTrafficReportMessage(std::unique_ptr<Port>& port,
   for (size_t i = 19; i < 27; i++)
     ::TrafficReportMessage[i] = std::byte{'\0'};
 
-  target.id.Format(idBuffer);
-  for (size_t i = 0; i < 7; i++)
+  if (auto s = adsbNames.find((long unsigned int)target.id.Arg());
+           s != adsbNames.end())
     {
-    ::TrafficReportMessage[i + 19] = std::byte{(unsigned char)idBuffer[i]};
-    if (idBuffer[i] == '\0')
-      break;
+    for (size_t i = 0; i < 7; i++)
+      {
+      ::TrafficReportMessage[i + 19] = std::byte{(unsigned char)s->second[i]};
+      }
+    }
+  else
+    {
+    target.id.Format(idBuffer);
+    for (size_t i = 0; i < 7; i++)
+      {
+      ::TrafficReportMessage[i + 19] = std::byte{(unsigned char)idBuffer[i]};
+      if (idBuffer[i] == '\0')
+        break;
+      }
     }
   
   ::TrafficReportMessage[27] = std::byte{0x00}; // No emergency.
@@ -523,6 +566,9 @@ try
   Args args(argc, argv, "PORT BAUD");
   DebugPort debug_port(args);
   args.ExpectEnd();
+
+  InitAircraftNames();
+
   bool done_heartbeat = false;
 
   ScopeGlobalAsioThread global_asio_thread;

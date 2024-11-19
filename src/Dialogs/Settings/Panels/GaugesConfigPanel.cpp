@@ -103,12 +103,12 @@ GaugesConfigPanel::Prepare(ContainerWindow &parent,
 
   RowFormWidget::Prepare(parent, rc);
 
-  AddBoolean(_("FLARM radar"),
-             _("This enables the display of the FLARM radar gauge. The track bearing of the target relative to the track bearing of the aircraft is displayed as an arrow head, and a triangle pointing up or down shows the relative altitude of the target relative to you. In all modes, the color of the target indicates the threat level."),
+  AddBoolean(_("Surveillance  radar"),
+             _("This enables the display of the Surveillance radar gauge. The track bearing of the target relative to the track bearing of the aircraft is displayed as an arrow head in he case of a FLARM target or an inverted 'T' in the case of an ADSB target, and a triangle pointing up or down shows the relative altitude of the target relative to you. In all modes, the color of the target indicates the threat level if applicable."),
              ui_settings.traffic.enable_gauge);
 
-  AddBoolean(_("Auto close FLARM"),
-             _("Setting this to \"On\" will automatically close the FLARM dialog if there is no traffic. \"Off\" will keep the dialog open even without current traffic."),
+  AddBoolean(_("Auto close Surveillance"),
+             _("Setting this to \"On\" will automatically close the Surveillance dialog if there is no traffic. \"Off\" will keep the dialog open even without current traffic."),
              ui_settings.traffic.auto_close_dialog);
   SetExpertRow(AutoCloseFlarmDialog);
 
