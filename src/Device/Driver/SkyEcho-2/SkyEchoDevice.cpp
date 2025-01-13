@@ -185,7 +185,7 @@ SkyEchoDevice::Traffic(std::span<const std::byte> s, TrafficStruct &t)
                                          ((unsigned int)s[10] << 8) +
                                          ((unsigned int)s[11]),
                                          24);
-  t.altitude      = ((unsigned int)s[12] << 8) +
+  t.altitude      = ((unsigned int)s[12] << 4) +
                     (((unsigned int)s[13] & 0xf0) >> 4);
   t.misc          = (unsigned int)s[13] & 0x0f;
   t.nav_integrity = ((unsigned int)s[14] & 0xf0) >> 4;
@@ -431,9 +431,10 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           info.gps_altitude_available.Update(info.clock);
           }
 
-        /* \todo pfb: Figure out what "vertical warning indicator" and
-                 "vertical figure of merit" in table 16 of the GDL 90
-                 document are all about.
+        /**
+         * \todo pfb: Figure out what "vertical warning indicator" and
+                     "vertical figure of merit" in table 16 of the GDL 90
+                     document are all about. (Issue 5)
         */
         break;
         }
@@ -449,8 +450,10 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
                                                              * support alarm.*/
         report.location_available  = true;
         report.climb_rate_received = true;
-        /* \todo pfb: Find the XCSoar wide conversion from feet / second to
-                 meters / second.  */
+        /**
+         * \todo pfb: Find the XCSoar wide conversion from feet / second to
+         *            meters / second. (Issue 5)
+         */
         report.climb_rate          = (this->target.vert_vel * 64 / 3.2808) / 60;
         report.speed_received      = true;
         report.speed               = Units::ToSysUnit((double )this->target.horiz_vel,

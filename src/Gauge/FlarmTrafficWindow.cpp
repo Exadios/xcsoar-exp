@@ -959,7 +959,9 @@ FlarmTrafficWindow::PaintTargetInfoSmall(Canvas& canvas,
 void
 FlarmTrafficWindow::PaintRadarTraffic(Canvas &canvas) noexcept
   {
-  /* \todo Reimplement the Radar NoGo display. */
+  /**
+   * \todo Reimplement the Radar NoGo display. (Issue 5)
+   */
   if (this->traffic.IsEmpty())
     {
     this->PaintRadarNoTraffic(canvas);

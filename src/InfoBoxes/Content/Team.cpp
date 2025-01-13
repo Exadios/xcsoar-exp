@@ -35,8 +35,8 @@ Copyright_License {
 #include <tchar.h>
 #include <stdio.h>
 
-/*
- * \todo Enable team code functionality when we understand what it is. 
+/**
+ * \todo Enable team code functionality when we understand what it is. (Issue 5)
  */
 
 #ifdef COMPILE_TEAM_CODE

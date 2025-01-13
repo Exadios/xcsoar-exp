@@ -91,10 +91,11 @@ AdsbComputer::Process(TargetData& adsb,
        *
        * Too great a distance is arbitrarily defined here as twice the 
        * maximum range of the surveillance radar.
-       *
+       */
+      /**
        * \todo Somehow more closely connect this check here to the
        *       maximum range on the radar so that this value is a function
-       *       of that code.
+       *       of that code. (Issue 5)
       */
       if (target.distance > RoughDistance(20000))  // 20kM
         {
@@ -105,16 +106,28 @@ AdsbComputer::Process(TargetData& adsb,
       // Calculate absolute altitude
       target.altitude_available = basic.gps_altitude_available;
       if (target.altitude_available)
-        target.altitude = target.relative_altitude +
-                           RoughAltitude(basic.gps_altitude);
+        {
+        target.relative_altitude = target.altitude -
+                                   RoughAltitude(basic.gps_altitude);
+        }
 
       // Calculate average climb rate
+#ifdef ADSB_CLIMB_RATE
+      /* When ready compute a climb rate for ADSB. The code below does not do
+       * that.
+       */
+      /**
+       * \todo pfb: Implement ADSB climb rate. (Issue 5)
+       */
       target.climb_rate_avg30s_available = target.altitude_available;
       if (target.climb_rate_avg30s_available)
         target.climb_rate_avg30s =
             this->adsb_calculations.Average30s(target.id,
                                                basic.time,
                                                target.altitude);
+#else
+      target.climb_rate_avg30s_available = false;
+#endif
 
       // The following calculations are only relevant for targets
       // where information is missing

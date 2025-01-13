@@ -32,9 +32,10 @@ Copyright_License {
 /**
  * Presently this functionality is not implemented due to ADS-B not being
  * supported.
- * \todo Investigate the utility of Flarm Traffic Details (Users Manual,
- *       section 8.6) and make a decision of whether to implement it with
- *       the addition of ADS-B data. (Issue 5) (COMPILE_TEAM_CODE).
+ */
+/** \todo Investigate the utility of Flarm Traffic Details (Users Manual,
+ *        section 8.6) and make a decision of whether to implement it with
+ *        the addition of ADS-B data. (Issue 5) (COMPILE_TEAM_CODE).
  */
 
 class InfoBoxContentTeamCode : public InfoBoxContent

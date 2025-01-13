@@ -304,8 +304,8 @@ DoOwnShiptReport(std::unique_ptr<Port>& port, NMEAInfo& info)
 
   if (info.gps_altitude_available == true)
     {
-    unsigned int fixed_altitude = (info.gps_altitude - 1000.0) / 25.0;
-    ::OwnShipReportMessage[11] = std::byte{(unsigned char )((fixed_altitude & 0xff00) >> 8)};
+    unsigned int fixed_altitude = (info.gps_altitude * meters2feet + 1000.0) / 25.0;
+    ::OwnShipReportMessage[11] = std::byte{(unsigned char )((fixed_altitude & 0x0ff0) >> 4)};
     ::OwnShipReportMessage[12] = std::byte{(unsigned char )((fixed_altitude << 4) & 0x00f0)};
     }
   else
@@ -448,9 +448,10 @@ DoTrafficReportMessage(std::unique_ptr<Port>& port,
 
   if (target.altitude_available == true)
     {
-    unsigned int fixed_altitude = (target.altitude - RoughAltitude(1000.0)) / 25.0;
-    ::TrafficReportMessage[11] = std::byte{(unsigned char )((fixed_altitude & 0xff00) >> 8)};
-    ::TrafficReportMessage[12] = std::byte{(unsigned char )((fixed_altitude << 4) & 0x00f0)};
+    unsigned int fixed_altitude = (target.altitude * meters2feet +
+                                   RoughAltitude(1000.0)) / 25.0;
+    ::TrafficReportMessage[11] = std::byte{(unsigned char)(((unsigned short int)fixed_altitude & 0x0ff0) >> 4)};
+    ::TrafficReportMessage[12] = std::byte{(unsigned char)(((unsigned short int)fixed_altitude << 4) & 0x00f0)};
     }
   else
     {

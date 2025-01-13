@@ -1344,7 +1344,7 @@ DeviceDescriptor::PortError(const char *msg) noexcept
 /**
  * Temporarily substitute the binary stuff for some nav stuff.
  * \todo pfb: Rewrite to allow binary nav instruments and binary non nav stuff.
- * pfb debug
+ * pfb debug (Issue 5)
  */
 #if 0
 bool

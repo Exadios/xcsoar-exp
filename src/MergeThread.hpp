@@ -35,7 +35,8 @@ class DeviceBlackboard;
  * The MergeThread collects new data from the DeviceBlackboard, merges
  * it and runs a number of cheap calculations.
  */
-class MergeThread final : public WorkerThread {
+class MergeThread final : public WorkerThread
+  {
   /**
    * A local reference to the global ::device_blackboard.
    */
@@ -64,19 +65,21 @@ public:
    * This method is called during XCSoar startup, for the initial run
    * of the MergeThread.
    */
-  void FirstRun() {
+  void FirstRun() 
+    {
     assert(!IsDefined());
 
     Process();
-  }
+    }
 
   /**
    * Throws on error.
    */
-  void Start(bool suspended=false) {
+  void Start(bool suspended=false)
+    {
     WorkerThread::Start(suspended);
     SetLowPriority();
-  }
+    }
 
 private:
   /**
@@ -86,4 +89,4 @@ private:
 
 protected:
   void Tick() noexcept override;
-};
+  };

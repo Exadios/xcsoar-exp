@@ -35,7 +35,7 @@ Copyright_License {
  * @param device_blackboard A reference to the ::device_blackboard.
  *                          See \ref CreateCalculationThread().
  */
-MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
+MergeThread::MergeThread(DeviceBlackboard& device_blackboard)
   :WorkerThread("MergeThread",
 #ifdef KOBO
                 /* throttle more on the Kobo, because the EPaper
@@ -47,7 +47,7 @@ MergeThread::MergeThread(DeviceBlackboard &_device_blackboard)
                 std::chrono::milliseconds{20},
 #endif
                 std::chrono::milliseconds{10}),
-   device_blackboard(_device_blackboard)
+   device_blackboard(device_blackboard)
   {
   last_fix.Reset();
   last_any.Reset();

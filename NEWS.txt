@@ -1,3 +1,6 @@
+Version 7.27.0.3.1-Alpha-7
+  - ADSB target height passed all the way through to the displays. ADSB 
+    "Vario" still not implemented.
 Version 7.27.0.3.1-Alpha-6
   - Improved target selection on PPI display.
 Version 7.27.0.3.1-Alpha-5

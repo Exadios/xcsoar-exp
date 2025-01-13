@@ -104,7 +104,7 @@ public:
   /** Altitude of the target */
   RoughAltitude altitude;
 
-  /** Altidude-based distance of the target */
+  /** Difference between the target altitude and our own altitude. */
   RoughAltitude relative_altitude;
 
   /** Turnrate of the target */

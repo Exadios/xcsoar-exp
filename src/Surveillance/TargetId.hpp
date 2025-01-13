@@ -125,16 +125,6 @@ public:
     this->value = value;
     }
 
-#if 0
-  /**
-   * Give this id as a \ref FlarmId. This is temporarily necessary because
-   * \ref FlarmId * is used in many ancillary areas of XCSoar.
-   * @return This id as a \ref FlarmId.
-   * \todo Get rid of \ref FlarmId throughout XCSoar.
-   */
-  FlarmId ToFlarmId() const;
-#endif
-
   friend constexpr auto operator<=>(const TargetId&,
                                     const TargetId&) noexcept = default;
 

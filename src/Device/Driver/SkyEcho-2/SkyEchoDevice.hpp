@@ -37,6 +37,7 @@ Copyright_License {
 #include "Geo/GeoPoint.hpp"
 
 #include <cstdint>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <span>

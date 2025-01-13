@@ -113,7 +113,7 @@ GlideComputerEvents::OnCalculatedUpdate(const MoreData &basic,
 void
 GlideComputerEvents::OnComputerSettingsUpdate([[maybe_unused]] const ComputerSettings &settings)
 {
-// \todo Implement ENABLE_TEAM_FLYING in build. (Issue 5)
+/// \todo Implement ENABLE_TEAM_FLYING in build. (Issue 5)
 #ifdef ENABLE_TEAM_FLYING
   enable_team = settings.team_code.team_flarm_id.IsDefined() ||
     settings.team_code.team_code.IsDefined();
