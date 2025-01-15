@@ -58,8 +58,10 @@
 #include "TeamActions.hpp"
 
 class FlarmTrafficDetailsWidget final
-  : public RowFormWidget, NullBlackboardListener {
-  enum Controls {
+      : public RowFormWidget, NullBlackboardListener
+  {
+  enum Controls
+    {
     CALLSIGN,
     CHANGE_CALLSIGN_BUTTON,
     SPACER1,
@@ -71,26 +73,29 @@ class FlarmTrafficDetailsWidget final
     AIRPORT,
     RADIO,
     PLANE,
-  };
+    };
 
-  WndForm &dialog;
+  WndForm& dialog;
 
   const TargetId target_id;
 
 public:
-  FlarmTrafficDetailsWidget(WndForm &_dialog, TargetId target_id)
-    :RowFormWidget(_dialog.GetLook()), dialog(_dialog),
-     target_id(target_id) {}
+  FlarmTrafficDetailsWidget(WndForm& _dialog, TargetId target_id)
+  : RowFormWidget(_dialog.GetLook()),
+    dialog(_dialog),
+    target_id(target_id)
+      {
+      }
 
-  void CreateButtons(WidgetDialog &buttons);
+  void CreateButtons(WidgetDialog& buttons);
 
   /* virtual methods from Widget */
-  void Prepare(ContainerWindow &parent, const PixelRect &rc) noexcept override;
-  void Show(const PixelRect &rc) noexcept override;
+  void Prepare(ContainerWindow& parent, const PixelRect& rc) noexcept override;
+  void Show(const PixelRect& rc) noexcept override;
   void Hide() noexcept override;
 
 private:
-  void UpdateChanging(const MoreData &basic);
+  void UpdateChanging(const MoreData& basic);
   void Update();
 
   void OnCallsignClicked();
@@ -98,14 +103,15 @@ private:
   void OnFriendColorClicked(TargetColor color);
 
   /* virtual methods from BlackboardListener */
-  void OnGPSUpdate(const MoreData &basic) override {
+  void OnGPSUpdate(const MoreData& basic) override
+    {
     UpdateChanging(basic);
-  }
-};
+    }
+  };
 
 inline void
-FlarmTrafficDetailsWidget::CreateButtons(WidgetDialog &buttons)
-{
+FlarmTrafficDetailsWidget::CreateButtons(WidgetDialog& buttons)
+  {
   const ButtonLook &button_look = buttons.GetButtonLook();
 
   buttons.AddButton(std::make_unique<ColorButtonRenderer>(button_look,
@@ -126,12 +132,12 @@ FlarmTrafficDetailsWidget::CreateButtons(WidgetDialog &buttons)
 
   buttons.AddButton(_("Clear"), [this](){ OnFriendColorClicked(TargetColor::NONE); });
   buttons.AddButton(_("Team"), [this](){ OnTeamClicked(); });
-}
+  }
 
 void
 FlarmTrafficDetailsWidget::Prepare([[maybe_unused]] ContainerWindow &parent,
                                    [[maybe_unused]] const PixelRect &rc) noexcept
-{
+  {
   AddReadOnly(_("Callsign"));
   AddButton(_("Change callsign"), [this](){ OnCallsignClicked(); });
   AddSpacer();
@@ -142,33 +148,33 @@ FlarmTrafficDetailsWidget::Prepare([[maybe_unused]] ContainerWindow &parent,
   AddReadOnly(_("Pilot"));
   AddReadOnly(_("Airport"));
   AddReadOnly(_("Radio frequency"));
-  AddReadOnly(_("Plane"));
+  AddReadOnly(_("Aircraft"));
 
   Update();
-}
+  }
 
 void
-FlarmTrafficDetailsWidget::Show(const PixelRect &rc) noexcept
-{
+FlarmTrafficDetailsWidget::Show(const PixelRect& rc) noexcept
+  {
   RowFormWidget::Show(rc);
   Update();
   CommonInterface::GetLiveBlackboard().AddListener(*this);
-}
+  }
 
 void
 FlarmTrafficDetailsWidget::Hide() noexcept
-{
+  {
   CommonInterface::GetLiveBlackboard().RemoveListener(*this);
   RowFormWidget::Hide();
-}
+  }
 
 /**
  * Updates all the dialogs fields, that are changing frequently.
  * e.g. climb speed, distance, height
  */
 void
-FlarmTrafficDetailsWidget::UpdateChanging(const MoreData &basic)
-{
+FlarmTrafficDetailsWidget::UpdateChanging(const MoreData& basic)
+  {
   TCHAR tmp[40];
   const TCHAR *value;
 
@@ -178,44 +184,51 @@ FlarmTrafficDetailsWidget::UpdateChanging(const MoreData &basic)
   bool target_ok = (target != nullptr) && target->IsDefined();
 
   // Fill distance/direction field
-  if (target_ok) {
+  if (target_ok)
+    {
     FormatUserDistanceSmart(target->distance, tmp, 20, 1000);
     TCHAR *p = tmp + _tcslen(tmp);
     *p++ = _T(' ');
     FormatAngleDelta(p, 20, target->Bearing() - basic.track);
     value = tmp;
-  } else
+    }
+  else
     value = _T("--");
 
   SetText(DISTANCE, value);
 
   // Fill altitude field
-  if (target_ok) {
+  if (target_ok)
+    {
     TCHAR *p = tmp;
-    if (target->altitude_available) {
+    if (target->altitude_available)
+      {
       FormatUserAltitude(target->altitude, p, 20);
       p += _tcslen(p);
       *p++ = _T(' ');
-    }
+      }
 
     Angle dir = Angle::FromXY(target->distance, target->relative_altitude);
     FormatVerticalAngleDelta(p, 20, dir);
 
     value = tmp;
-  } else
+    }
+  else
     value = _T("--");
 
   SetText(ALTITUDE, value);
 
   // Fill climb speed field
-  if (target_ok && target->climb_rate_avg30s_available) {
+  if (target_ok && target->climb_rate_avg30s_available)
+    {
     FormatUserVerticalSpeed(target->climb_rate_avg30s, tmp, 20);
     value = tmp;
-  } else
+    }
+  else
     value = _T("--");
 
   SetText(VARIO, value);
-}
+  }
 
 /**
  * Updates all the dialogs fields.
@@ -224,7 +237,7 @@ FlarmTrafficDetailsWidget::UpdateChanging(const MoreData &basic)
  */
 void
 FlarmTrafficDetailsWidget::Update()
-{
+  {
   TCHAR tmp[200], tmp_id[7];
   const TCHAR *value;
 
@@ -236,7 +249,8 @@ FlarmTrafficDetailsWidget::Update()
   // Try to find the target in the FLARMnet database
   /// @todo: make this code a little more usable
   const FlarmNetRecord *record = FlarmDetails::LookupRecord(target_id);
-  if (record) {
+  if (record)
+    {
     // Fill the pilot name field
     SetText(PILOT, record->pilot);
 
@@ -252,7 +266,9 @@ FlarmTrafficDetailsWidget::Update()
 
     // Fill the plane type field
     SetText(PLANE, record->plane_type);
-  } else {
+    }
+  else
+    {
     // Fill the pilot name field
     SetText(PILOT, _T("--"));
 
@@ -271,53 +287,58 @@ FlarmTrafficDetailsWidget::Update()
     else
       actype = AircraftType::TypeName(target->type);
     SetText(PLANE, actype);
-  }
+    }
 
   // Fill the callsign field (+ registration)
   // note: don't use target->Name here since it is not updated
   //       yet if it was changed
   const TCHAR* cs = FlarmDetails::LookupCallsign(target_id);
-  if (cs != nullptr && cs[0] != 0) {
-    try {
+  if (cs != nullptr && cs[0] != 0)
+    {
+    try
+      {
       BasicStringBuilder<TCHAR> builder(tmp, ARRAY_SIZE(tmp));
       builder.Append(cs);
       if (record)
         builder.Append(_T(" ("), record->registration.c_str(), _T(")"));
       value = tmp;
-    } catch (BasicStringBuilder<TCHAR>::Overflow) {
+      } 
+    catch (BasicStringBuilder<TCHAR>::Overflow)
+      {
       value = cs;
+      }
     }
-  } else
+  else
     value = _T("--");
   SetText(CALLSIGN, value);
 
   // Update the frequently changing fields too
   UpdateChanging(CommonInterface::Basic());
-}
+  }
 
 /**
  * This event handler is called when the "Team" button is pressed
  */
 inline void
 FlarmTrafficDetailsWidget::OnTeamClicked()
-{
+  {
   // Ask for confirmation
   if (ShowMessageBox(_("Do you want to set this FLARM contact as your new teammate?"),
-                  _("New Teammate"), MB_YESNO) != IDYES)
+                     _("New Teammate"), MB_YESNO) != IDYES)
     return;
 
   TeamActions::TrackFlarm(target_id);
 
   // Close the dialog
   dialog.SetModalResult(mrOK);
-}
+  }
 
 /**
  * This event handler is called when the "Change Callsign" button is pressed
  */
 inline void
 FlarmTrafficDetailsWidget::OnCallsignClicked()
-{
+  {
   StaticString<21> newName;
   newName.clear();
   if (TextEntryDialog(newName, _("Competition ID")) &&
@@ -325,30 +346,29 @@ FlarmTrafficDetailsWidget::OnCallsignClicked()
     SaveFlarmNames();
 
   Update();
-}
+  }
 
 void
 FlarmTrafficDetailsWidget::OnFriendColorClicked(TargetColor color)
-{
+  {
   FlarmFriends::SetFriendColor(target_id, color);
   dialog.SetModalResult(mrOK);
-}
+  }
 
 /**
  * The function opens the FLARM Traffic Details dialog
  */
 void
 dlgFlarmTrafficDetailsShowModal(TargetId id)
-{
-  const DialogLook &look = UIGlobals::GetDialogLook();
+  {
+  const DialogLook& look = UIGlobals::GetDialogLook();
 
   WidgetDialog dialog(WidgetDialog::Full{}, UIGlobals::GetMainWindow(),
                       look, _("FLARM Traffic Details"));
 
-  FlarmTrafficDetailsWidget *widget =
-    new FlarmTrafficDetailsWidget(dialog, id);
+  FlarmTrafficDetailsWidget* widget = new FlarmTrafficDetailsWidget(dialog, id);
   widget->CreateButtons(dialog);
   dialog.AddButton(_("Close"), mrCancel);
   dialog.FinishPreliminary(widget);
   dialog.ShowModal();
-}
+  }

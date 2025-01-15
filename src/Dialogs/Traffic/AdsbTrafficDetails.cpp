@@ -136,7 +136,7 @@ AdsbTrafficDetailsWidget::Prepare([[maybe_unused]] ContainerWindow& parent,
   AddReadOnly(_("Altitude"));
   AddSpacer();
   AddReadOnly(_("Radio frequency"));
-  AddReadOnly(_("Plane"));
+  AddReadOnly(_("Aircraft"));
 
   Update();
   }
@@ -207,6 +207,12 @@ AdsbTrafficDetailsWidget::UpdateChanging(const MoreData& basic)
     value = _T("--");
 
   SetText(AdsbTrafficDetailsWidget::ALTITUDE, value);
+
+  /*
+   * Set the aircraft call sign here rather than in #Update because this
+   * function is called with #MoreData as an argument and #Update isn't.
+   */
+  SetText(CALLSIGN, target->name);
   }
 
 /**

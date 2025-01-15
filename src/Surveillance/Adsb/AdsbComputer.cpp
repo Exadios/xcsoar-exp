@@ -112,7 +112,6 @@ AdsbComputer::Process(TargetData& adsb,
         }
 
       // Calculate average climb rate
-#ifdef ADSB_CLIMB_RATE
       /* When ready compute a climb rate for ADSB. The code below does not do
        * that.
        */
@@ -125,10 +124,6 @@ AdsbComputer::Process(TargetData& adsb,
             this->adsb_calculations.Average30s(target.id,
                                                basic.time,
                                                target.altitude);
-#else
-      target.climb_rate_avg30s_available = false;
-#endif
-
       // The following calculations are only relevant for targets
       // where information is missing
       if (target.track_received && 

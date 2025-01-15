@@ -668,8 +668,13 @@ FlarmTrafficControl::PaintAdsbTrafficInfo(Canvas& canvas) const
   canvas.SetBackgroundTransparent();
 
   // Climb Rate
-  if (!this->WarningMode() && at.climb_rate_avg30s_available)
-    PaintClimbRate(canvas, rc, at.climb_rate_avg30s);
+  if (!this->WarningMode())
+    {
+    if (at.climb_rate_received)
+      PaintClimbRate(canvas, rc, at.climb_rate);
+    else if (at.climb_rate_avg30s_available)
+      PaintClimbRate(canvas, rc, at.climb_rate_avg30s);
+    }
 
   // Distance
   PaintDistance(canvas, rc, at.distance);

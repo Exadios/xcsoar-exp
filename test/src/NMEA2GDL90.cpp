@@ -57,6 +57,7 @@ Copyright_License {
 
 constexpr double meters2feet = 3.2808399;
 constexpr double meters_per_second2knot = 1.94;
+constexpr double meters_per_second2feet_per_minute = 60 * meters2feet;
 
 std::vector<std::byte> Packetize(std::vector<std::byte> s);
 void DoHeartbeatMessage(std::unique_ptr<Port>& port, NMEAInfo& info);
@@ -77,6 +78,16 @@ char idBuffer[1024];  /* A buffer, much bigger than needed,
 uint16_t crc16Table[256]; // Table for FCS.
 
 std::map<unsigned long int, std::string> adsbNames;
+
+#ifndef NDEBUG
+#include <bitset>
+#include <utility>
+//------------------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& os, std::byte b)
+  {
+  return os << std::bitset<8>(std::to_integer<int>(b));
+  }
+#endif
 
 //------------------------------------------------------------------------------
 void
@@ -254,7 +265,7 @@ DoHeartbeatMessage(std::unique_ptr<Port>& port, NMEAInfo& info)
 
 //------------------------------------------------------------------------------
 void
-DoOwnShiptReport(std::unique_ptr<Port>& port, NMEAInfo& info)
+DoOwnShipReport(std::unique_ptr<Port>& port, NMEAInfo& info)
   {
   ::OwnShipReportMessage.resize(28);
 
@@ -350,7 +361,9 @@ DoOwnShiptReport(std::unique_ptr<Port>& port, NMEAInfo& info)
   ::OwnShipReportMessage[15]  = std::byte{(unsigned char )((horizontal_velocity & 0x0f) << 4)};
   unsigned int vertical_velocity = 0;
   if (info.noncomp_vario_available == true)
-    vertical_velocity = info.noncomp_vario * meters2feet / 64;
+    {
+    vertical_velocity = info.noncomp_vario * meters_per_second2feet_per_minute / 64;
+    }
   ::OwnShipReportMessage[15] |= std::byte{(unsigned char )((vertical_velocity << 4) & 0xf0)};
   ::OwnShipReportMessage[16]  = std::byte{(unsigned char )((vertical_velocity >> 4) & 0xff)};
   unsigned char true_track = (unsigned char )(info.track.Degrees() * 256.0 / 360) & 0xff;
@@ -476,7 +489,9 @@ DoTrafficReportMessage(std::unique_ptr<Port>& port,
   ::TrafficReportMessage[15]  = std::byte{(unsigned char )((horizontal_velocity & 0x0f) << 4)};
   unsigned int vertical_velocity = 0;
   if (target.climb_rate_received == true)
-    vertical_velocity = target.climb_rate * meters2feet / 64;
+    {
+    vertical_velocity = target.climb_rate * meters_per_second2feet_per_minute / 64;
+    }
   ::TrafficReportMessage[15] |= std::byte{(unsigned char )((vertical_velocity << 4) & 0xf0)};
   ::TrafficReportMessage[16]  = std::byte{(unsigned char )((vertical_velocity >> 4) & 0xff)};
   if (target.track_received == true)
@@ -616,9 +631,7 @@ try
 
     line_no++;
     if ((parser.ParseLine(line, info)) == false)
-      {
       continue;
-      }
 
     info.alive.Update(info.clock);
     if (info.location_available &&
@@ -627,7 +640,7 @@ try
         done_heartbeat)
       {
       done_heartbeat = false;
-      DoOwnShiptReport(port, info);
+      DoOwnShipReport(port, info);
       }
 
     if (memcmp(line, "$GP", 3) == 0 &&

@@ -115,6 +115,12 @@ FlarmComputer::Process(TargetData& flarm,
       target.altitude = target.relative_altitude +
                         RoughAltitude(basic.gps_altitude);
 
+    // Calculate average climb rate
+    target.climb_rate_avg30s_available = target.altitude_available;
+    if (target.climb_rate_avg30s_available)
+      target.climb_rate_avg30s =
+        flarm_calculations.Average30s(target.id, basic.time, target.altitude);
+
     // The following calculations are only relevant for targets
     // where information is missing
     if (target.track_received     &&

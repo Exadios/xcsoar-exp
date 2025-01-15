@@ -1,3 +1,6 @@
+Version 7.27.0.3.1-Alpha-8
+  - Implement "vario" on PPI display for ADSB targets. Use received
+    climb_rate for ADSB displays, not climb_rate_avg30s.
 Version 7.27.0.3.1-Alpha-7
   - ADSB target height passed all the way through to the displays. ADSB 
     "Vario" still not implemented.

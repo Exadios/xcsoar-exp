@@ -398,12 +398,18 @@ SkyEchoDevice::DataReceived(std::span<const std::byte> s,
           info.track = Angle::Degrees((double)(this->own_ship.track) * 360.0 / 256.0);
           info.ground_speed = Units::ToSysUnit((double)this->own_ship.horiz_vel,
                                                Unit::KNOTS);
+         /**
+          * \todo pfb: Find the XCSoar wide conversion from feet / second to
+          *            meters / second. (Issue 5)
+          */
+          info.noncomp_vario = (this->target.vert_vel * 64 / 3.2808) / 60;
           info.track_available.Update(info.clock);
           info.ground_speed_available.Update(info.clock);
 
           info.location_available.Update(info.clock);
           info.target_data.status.gps = TargetStatus::GPSStatus::GPS_3D;
           info.target_data.status.available.Update(info.clock);
+          info.noncomp_vario_available.Update(info.clock);
           }
         else
           info.target_data.status.gps = TargetStatus::GPSStatus::NONE;
