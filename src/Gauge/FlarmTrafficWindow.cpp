@@ -1173,7 +1173,7 @@ FlarmTrafficWindow::OnPaint(Canvas &canvas) noexcept
 #endif
     canvas.Clear(look.background_color);
 
-  Paint(canvas);
+  this->Paint(canvas);
   }
 
 //------------------------------------------------------------------------------

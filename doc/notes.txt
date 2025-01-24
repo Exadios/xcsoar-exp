@@ -10,6 +10,23 @@ SmallTrafficWindow::OnPaint(Canvas& )                          |
 FlarmTrafficWindow::OnPaint(Canvas& )                          |
 FlarmTrafficWindow::Paint(Canvas& )                            |
 
+
+--------------------------------------------------------------------------------
+Refresh of PPI display when no targets:
+--
+TopWindow::RunEventLoop()
+EventLoop::Get(Event& )
+TopWindow::Refresh()
+TopWindow::Expose()
+MainWindow::OnPaint(Canvas& )
+ContainerWindow::OnPaint(Canvas& )
+WindowList::Paint(Canvas& )
+ContainerWindow::OnPaint(Canvas& )
+WindowList::Paint(Canvas& )
+FlarmTrafficControl::OnPaint(Canvas& )
+FlarmTrafficWindow::Paint(Canvas& )
+FlarmTrafficWindow::PaintRadarTraffic(Canvas& )
+
 Main()                                                         |
 TopWindow::RunEventLoop()                                      |
 EventLoop::Get(...)                                            |
@@ -84,3 +101,7 @@ TrafficList this
 Targets added to 0x55beb7527f70
 
 Targets expired to 0x55beb7524650
+
+Window::Create()
+ContainerWindow()::AddChild(Window& )
+WindowList::Add(Window& )

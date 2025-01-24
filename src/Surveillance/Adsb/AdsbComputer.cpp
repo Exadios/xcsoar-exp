@@ -73,11 +73,15 @@ AdsbComputer::Process(TargetData& adsb,
     latitude_to_north = dlat / delta_lat.Degrees();
     longitude_to_east = dlon / delta_lon.Degrees();
     // for each item in traffic
+    /*
+     * First calculate the distance to target for each target currently in
+     * the list. This is because the distance is used to prune the list in
+     * the next step and all distances must be valid for this to occur.
+     */
     for (size_t i = 0; i < adsb.traffic.adsb_list.size(); i++)
       {
       AdsbTarget& target = adsb.traffic.adsb_list[i];
-//    for (auto& target : adsb.traffic.adsb_list) 
-//      {
+
       // Calculate distance
       Angle delta_phi    = target.location.latitude  -
                            basic.location.latitude;
@@ -86,6 +90,10 @@ AdsbComputer::Process(TargetData& adsb,
       target.relative_north = delta_phi.Degrees()    * latitude_to_north;
       target.relative_east  = delta_lambda.Degrees() * longitude_to_east;
       target.distance = hypot(target.relative_north, target.relative_east);
+      }
+    for (size_t i = 0; i < adsb.traffic.adsb_list.size(); i++)
+      {
+      AdsbTarget& target = adsb.traffic.adsb_list[i];
 
       /* Cut out this target if the range is too great.
        *

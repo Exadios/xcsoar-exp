@@ -212,7 +212,10 @@ AdsbTrafficDetailsWidget::UpdateChanging(const MoreData& basic)
    * Set the aircraft call sign here rather than in #Update because this
    * function is called with #MoreData as an argument and #Update isn't.
    */
-  SetText(CALLSIGN, target->name);
+  if (true == target_ok)
+    SetText(CALLSIGN, target->name);
+  else
+    SetText(CALLSIGN, "--");
   }
 
 /**
