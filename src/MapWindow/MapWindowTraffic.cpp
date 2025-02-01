@@ -220,6 +220,12 @@ MapWindow::DrawGLinkTraffic([[maybe_unused]] Canvas& canvas,
                             [[maybe_unused]] const PixelPoint aircraft_pos) const
   {
 #ifdef ANDROID
+#if 0 // Not implemented for Android yet.
+
+/*
+ * \todo
+ * Implement #MapWindow::DrawGLinkTraffic() for Android.
+ */
 
   // Return if surveillance icons on moving map are disabled
   if (!this->GetMapSettings().show_flarm_on_map)
@@ -240,13 +246,13 @@ MapWindow::DrawGLinkTraffic([[maybe_unused]] Canvas& canvas,
     {
 
     // Save the location of the target
-    GeoPoint this->target_loc = traf.location;
+    GeoPoint target_loc = traf.location;
 
     // Points for the screen coordinates for the icon, name and average climb
     PixelPoint sc, sc_name, sc_av, sc_alt;
 
     // If GliderLink target not on the screen, move to the next one
-    if (auto p = this->projection.GeoToScreenIfVisible(this->target_loc))
+    if (auto p = projection.GeoToScreenIfVisible(target_loc))
       sc = *p;
     else
       continue;
@@ -299,13 +305,19 @@ MapWindow::DrawGLinkTraffic([[maybe_unused]] Canvas& canvas,
       ::TextInBox(canvas, label_alt, sc_alt, mode, GetClientRect());
       }
 
-    TrafficRenderer::Draw(canvas,
-                          traffic_look,
-                          traf,
-                          traf.track - projection.GetScreenAngle(),
-                          sc);
+    /* Following line does not compile. Find out what we are trying to
+     * do here and code to suit.
+     */
+    auto color = TargetFriends::GetFriendColor(traf->id);
+    TrafficRenderer::DrawFlarm(canvas,
+                               traffic_look,
+                               traf,
+                               traf.track - projection.GetScreenAngle(),
+                               color,
+                               sc);
     }
-#endif
+#endif // 0
+#endif // Android
   }
 
 //------------------------------------------------------------------------------

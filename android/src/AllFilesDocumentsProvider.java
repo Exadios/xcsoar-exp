@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Bruno de Lacheisserie
+/* Copyright (c) 2018-2025, Bruno de Lacheisserie
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.xcsoar;
+package au.org.narroginglidingclub.xcsoar;
 
 import android.content.ContentResolver;
 import android.content.Context;

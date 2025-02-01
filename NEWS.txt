@@ -1,3 +1,6 @@
+Version 7.27.0.3.1-Alpha-9
+  - No change for the Kobo target.
+  - Changes necessary to get the Android target working again.
 Version 7.27.0.3.1-Alpha-8
   - Implement "vario" on PPI display for ADSB targets. Use received
     climb_rate for ADSB displays, not climb_rate_avg30s.

@@ -120,6 +120,15 @@ LogoPageWindow::OnPaint(Canvas &canvas) noexcept
   y += Layout::FastScale(2);
 //  canvas.DrawText({x, y}, _T("Signal: +61 422 348 370"));
   canvas.DrawText({x, y}, _T("Signal: +61 493 122 651"));
+#ifndef ANDROID
+  /*
+   * This causes a SIGSEGV on the Android build. Not debugged now. Will
+   * do it later.
+   */
+  /*
+   * \todo
+   * Diagnose SIGSEGV in this code below.
+   */
   const TCHAR* session = _T("Session:");
   ts = canvas.CalcTextSize(session);
   x = middle - ts.width / 2;
@@ -130,6 +139,7 @@ LogoPageWindow::OnPaint(Canvas &canvas) noexcept
 //  y += session_size.height + Layout::FastScale(2);
   y += Layout::FastScale(12);
   canvas.Copy({x, y}, session_size, session_contact, {0, 0});
+#endif
 }
 
 static std::unique_ptr<Window>
