@@ -1,26 +1,13 @@
-Version 7.27.0.3.1-Alpha-9
-  - No change for the Kobo target.
+Version 7.27.0.3.2
   - Changes necessary to get the Android target working again.
-Version 7.27.0.3.1-Alpha-8
   - Implement "vario" on PPI display for ADSB targets. Use received
     climb_rate for ADSB displays, not climb_rate_avg30s.
-Version 7.27.0.3.1-Alpha-7
   - ADSB target height passed all the way through to the displays. ADSB 
     "Vario" still not implemented.
-Version 7.27.0.3.1-Alpha-6
   - Improved target selection on PPI display.
-Version 7.27.0.3.1-Alpha-5
   - Added GDL90 logging ability.
-Version 7.27.0.3.1-Alpha-4
   - Added ability to assign tail numbers to FLARM targets on PPI display.
-Version 7.27.0.3.1-Alpha-3
-  - Work on Surveillance/TargetList and Gauge/FlarmTrafficWindow. 
-Version 7.27.0.3.1-Alis-1
-  - An edition produced for testing.
-  - Some FLARM functionality removed for now but the rest basically works
-  - Some ADSB functionality works.
-  - Positions from the SkyEcho 2 device dor not appear to engage the 
-    Glide Computer. Don't currently know why.
+  - Team flying not yet implemented.
 Version 7.27.0.3.0 - 2022/10/02 - NGC Fork
 * devices
   - first pass at SkyEcho 2 ADSB transceiver

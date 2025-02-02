@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="au.org.narroginglidingclub.xcsoar"
           android:installLocation="auto"
-          android:versionCode="20"
-          android:versionName="7.27.0.3.1-Alpha-9">
+          android:versionCode="21"
+          android:versionName="7.27.0.3.2">
   <application
       android:requestLegacyExternalStorage="true"
       android:preserveLegacyExternalStorage="true"
