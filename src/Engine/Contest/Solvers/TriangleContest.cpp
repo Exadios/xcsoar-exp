@@ -26,8 +26,6 @@
 #include "util/QuadTree.hxx"
 
 /*
- @todo potential to use 3d convex hull to speed search
-
  2nd point inclusion rules:
    if min leg length is 25%, max is 45%
    pmin = 0.25
@@ -48,10 +46,13 @@
  * Maximum allowed distance between start end finish.  According to
  * FAI-OLC 2012 rules, this is 1 km.
  *
- * TODO: due to trace thinning, our TracePoints are sometimes not
+ * \todo
+ * Due to trace thinning, our TracePoints are sometimes not
  * close enough for this check to succeed.  To work around this for
  * now, we allow up to 5 km until this library has been implemented
  * properly.
+ *
+ * \todo potential to use 3d convex hull to speed search.
  */
 static constexpr double max_distance(1000);
 

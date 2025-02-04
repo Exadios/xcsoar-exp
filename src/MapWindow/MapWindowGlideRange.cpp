@@ -279,7 +279,7 @@ MapWindow::RenderTerrainAbove(Canvas &canvas, bool working)
 
   const Pen& reach_pen = working? look.reach_working_pen : look.reach_terrain_pen;
   const Pen& reach_pen_thick = working? look.reach_working_pen_thick : look.reach_terrain_pen_thick;
-  // @todo: update this rendering
+  /// @todo: update this rendering
 
   // Don't draw shade if
   // .. shade feature disabled

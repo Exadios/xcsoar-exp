@@ -84,7 +84,7 @@ public:
 		      std::chrono::steady_clock::duration timeout,
 		      P &&predicate) noexcept {
 		while (!predicate()) {
-			// TODO: without wait_until(), this multiplies the timeout
+			// Without wait_until(), this multiplies the timeout
 			if (!wait_for(lock, timeout))
 				return predicate();
 		}

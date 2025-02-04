@@ -36,7 +36,7 @@ ConditionMonitorFinalGlide::CheckCondition([[maybe_unused]] const NMEAInfo &basi
 
   const GlideResult &res = calculated.task_stats.total.solution_remaining;
 
-  // TODO: use low pass filter
+  /// \todo Use low pass filter.
   tad = res.altitude_difference * 0.2 + 0.8 * tad;
 
   bool BeforeFinalGlide = !res.IsFinalGlide();

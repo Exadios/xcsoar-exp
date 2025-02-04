@@ -58,7 +58,7 @@ CuSonde::Reset() noexcept
     i.Reset();
 }
 
-// TODO accuracy: recalculate thermal index etc if maxGroundTemp changes
+/// \todo Accuracy: recalculate thermal index etc if maxGroundTemp changes
 
 /**
  * Sets the predicted maximum ground temperature to val

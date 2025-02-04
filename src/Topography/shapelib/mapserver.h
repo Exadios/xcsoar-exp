@@ -304,7 +304,7 @@ extern "C" {
 #define MS_FEATUREINITSIZE 10 /* how many points initially can a feature have */
 #define MS_FEATUREINCREMENT 10
 
-#define MS_EXPRESSION 2000 /* todo: make this an enum */
+#define MS_EXPRESSION 2000 /// todo: make this an enum.
 #define MS_REGEX 2001
 #define MS_STRING 2002
 #define MS_NUMBER 2003
@@ -2301,7 +2301,7 @@ void msPopulateTextSymbolForLabelAndString(textSymbolObj *ts, labelObj *l, char 
 
   MS_DLL_EXPORT int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
   MS_DLL_EXPORT int msIsLayerQueryable(layerObj *lp);
-  MS_DLL_EXPORT void msQueryFree(mapObj *map, int qlayer); /* todo: rename */
+  MS_DLL_EXPORT void msQueryFree(mapObj *map, int qlayer); /// todo: rename.
   MS_DLL_EXPORT int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape);
   MS_DLL_EXPORT int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect);
   MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p, double buffer, int maxresults );

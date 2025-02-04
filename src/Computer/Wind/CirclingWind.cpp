@@ -125,8 +125,9 @@ CirclingWind::NewSample(const MoreData &info, const CirclingInfo &circling)
     sample.time = info.clock;
     sample.vector = SpeedVector(info.track, info.ground_speed);
   } else {
-    // TODO code: give error, too many wind samples
-    // or use circular buffer
+    /** 
+     * \todo Code: give error, too many wind samples or use circular buffer.
+     */
   }
 
   Result result(0);

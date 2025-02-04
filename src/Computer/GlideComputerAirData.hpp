@@ -42,9 +42,12 @@ class Waypoints;
 class RasterTerrain;
 class GlidePolar;
 
-// TODO: replace copy constructors so copies of these structures
-// do not replicate the large items or items that should be singletons
-// OR: just make them static?
+/**
+ * \todo 
+ * Replace copy constructors so copies of these structures
+ * do not replicate the large items or items that should be singletons.
+ * Or just make them static?
+ */
 
 class GlideComputerAirData {
   const Waypoints &waypoints;

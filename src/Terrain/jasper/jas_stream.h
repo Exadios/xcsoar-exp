@@ -453,7 +453,7 @@ A nonzero value indicates that the stream has encountered EOF.
 #define jas_stream_eof(stream) \
 	(((stream)->flags_ & JAS_STREAM_EOF) != 0)
 
-/*!
+/**
 @brief Get the error indicator for a stream.
 @param stream
 The stream whose error indicator is to be queried.
@@ -471,8 +471,7 @@ Note that EOF is not an error.
 @param stream
 The stream whose error indicator is to be cleared.
 
-@todo
-TODO/FIXME: Should this macro evaluate to void?
+@todo Should this macro evaluate to void?
 */
 #define jas_stream_clearerr(stream) \
 	((stream)->flags_ &= ~(JAS_STREAM_ERR | JAS_STREAM_EOF))

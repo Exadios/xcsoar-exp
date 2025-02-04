@@ -71,7 +71,7 @@ class WaveComputer {
   /**
    * List of all detected waves.  To be copied to #WaveResult.
    *
-   * TODO: cleanup, prune old ones.
+   * \todo Cleanup, prune old ones.
    */
   std::list<WaveInfo> waves;
 

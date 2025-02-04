@@ -91,10 +91,10 @@ static bool
 checkFilter(const TCHAR *filename, const TCHAR *filter) noexcept
 {
   // filter = e.g. "*.igc" or "config/*.prf"
-  // todo: make filters like "config/*.prf" work
+  /// \todo: make filters like "config/*.prf" work
 
   // if invalid or short filter "*" -> return true
-  // todo: check for asterisk
+  /// \todo: check for asterisk
   if (!filter || StringIsEmpty(filter + 1))
     return true;
 

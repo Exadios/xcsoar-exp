@@ -509,7 +509,7 @@ WndForm::OnPaint(Canvas &canvas) noexcept
     // Set the titlebar font and font-size
     canvas.Select(*look.caption.font);
 
-    // JMW todo add here icons?
+    /// JMW \todo add here icons?
 
 #ifdef EYE_CANDY
     if (!IsDithered() && is_active) {

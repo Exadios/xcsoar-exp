@@ -50,7 +50,8 @@ WaveComputer::ResetCurrent() noexcept
  * Obtain the #Validity instance that applies to
  * #NMEAInfo::netto_vario_available.
  *
- * TODO: this is a kludge that duplicates code from #BasicComputer.
+ * \todo
+ * This is a kludge that duplicates code from #BasicComputer.
  * We should have new attributes in #NMEAInfo to get that piece of
  * information right away without this ugly code duplication.
  */
@@ -152,7 +153,7 @@ CalcRatioAndDistance(const FlatLine line, const FlatPoint point) noexcept
 /**
  * Check if the two wave lines match, and attempt to merge them.
  *
- * TODO: this is clumsy and unoptimised code; please improve!
+ * \todo This is clumsy and unoptimised code; please improve!
  *
  * @return true if the lines have been merged into #a
  */
@@ -205,7 +206,7 @@ MergeLines(FlatLine &a, const FlatLine b) noexcept
 /**
  * Check if the two wave lines match, and attempt to merge them.
  *
- * TODO: this is clumsy and unoptimised code; please improve!
+ * \todo This is clumsy and unoptimised code; please improve!
  *
  * @return true if the lines have been merged into #i
  */

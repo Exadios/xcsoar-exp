@@ -80,8 +80,10 @@ PBB50(NMEAInputLine &line, NMEAInfo &info)
     info.settings.ProvideMacCready(Units::ToSysUnit(value, Unit::KNOTS),
                                    info.clock);
 
-  /// @todo: OLD_TASK device MC/bugs/ballast is currently not implemented, have to push MC to master
-  ///  oldGlidePolar::SetMacCready(info.MacCready);
+  /**
+   * \todo: OLD_TASK device MC/bugs/ballast is currently not implemented,
+   * have to push MC to master oldGlidePolar::SetMacCready(info.MacCready);
+   */
 
   if (line.ReadChecked(value) && vtas_av)
     info.ProvideBothAirspeeds(Units::ToSysUnit(sqrt(value), Unit::KNOTS),

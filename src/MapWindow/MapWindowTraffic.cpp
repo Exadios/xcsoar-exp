@@ -94,7 +94,9 @@ MapWindow::DrawFLARMTraffic(Canvas& canvas,
     TextInBoxMode mode;
     mode.shape = LabelShape::OUTLINED;
 
-    // JMW TODO enhancement: decluttering of target altitudes (sort by max lift)
+    /** \todo Enhancement: decluttering of target altitudes (sort by max
+     *  lift) (JMW)
+     */
 
     int dx = sc_av.x - aircraft_pos.x;
     int dy = sc_av.y - aircraft_pos.y;
@@ -184,7 +186,10 @@ MapWindow::DrawADSBTraffic(Canvas& canvas,
     TextInBoxMode mode;
     mode.shape = LabelShape::OUTLINED;
 
-    // JMW TODO enhancement: decluttering of target altitudes (sort by max lift)
+    /**
+     * \todo Enhancement: decluttering of target altitudes (sort by max
+     * lift) (JMW)
+     */
 
     int dx = sc_av.x - aircraft_pos.x;
     int dy = sc_av.y - aircraft_pos.y;
@@ -222,7 +227,7 @@ MapWindow::DrawGLinkTraffic([[maybe_unused]] Canvas& canvas,
 #ifdef ANDROID
 #if 0 // Not implemented for Android yet.
 
-/*
+/**
  * \todo
  * Implement #MapWindow::DrawGLinkTraffic() for Android.
  */

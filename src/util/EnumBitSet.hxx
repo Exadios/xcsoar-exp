@@ -39,7 +39,7 @@
  */
 template<typename E>
 class EnumBitSet {
-	// TODO: change to std::is_scoped_enum_v (C++23)
+	/// \todo Change to std::is_scoped_enum_v (C++23)
 	static_assert(std::is_enum_v<E>,
 		      "Parameter type must be an enum");
 

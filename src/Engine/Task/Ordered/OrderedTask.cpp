@@ -1209,7 +1209,7 @@ OrderedTask::UpdateStartTransition(const AircraftState &state,
     // reset on invalid transition to outside
     // point to nominal start point
   }
-  // @todo: modify this for optional start?
+  /// @todo: modify this for optional start?
 }
 
 bool
@@ -1323,8 +1323,9 @@ OrderedTask::Commit(const OrderedTask& that)
 
   if (modified)
     UpdateGeometry();
-    // @todo also re-scan task sample state,
-    // potentially resetting task
+    /**
+     * \todo also re-scan task sample state, potentially resetting task.
+     */
 
   return modified;
 }

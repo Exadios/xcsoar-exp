@@ -49,7 +49,6 @@ KalmanFilter1d::Update(const double z_abs, const double var_z_abs,
   // Some abbreviated constants to make the code line up nicely:
   static constexpr double F1 = 1;
 
-  // Validity checks. TODO: more?
   assert(dt > 0);
 
   // Note: math is not optimized by hand. Let the compiler sort it out.

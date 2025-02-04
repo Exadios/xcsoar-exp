@@ -424,9 +424,12 @@ WPASupplicant::ReadDiscard() noexcept
 std::size_t
 WPASupplicant::ReadTimeout(void *buffer, size_t length, int timeout_ms)
 {
-  /* TODO: this is a kludge, because SocketDescriptor::Read()
-     hard-codes MSG_DONTWAIT; we would be better off moving all of
-     this into an IOLoop/IOThread */
+  /**
+   * \todo
+   * This is a kludge, because SocketDescriptor::Read() hard-codes
+   * MSG_DONTWAIT; we would be better off moving all of this into an
+   * IOLoop/IOThread
+   */
 
   ssize_t nbytes = fd.Read(buffer, length);
   if (nbytes < 0) {

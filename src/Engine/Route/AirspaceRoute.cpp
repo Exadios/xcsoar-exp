@@ -123,7 +123,7 @@ AirspaceRoute::FindClearingPair(const SearchPointVector &spv,
 
   int j = 0;
   while (i != end && j < 2) {
-    AFlatGeoPoint pborder(i->GetFlatLocation(), dest.altitude); // @todo alt!
+    AFlatGeoPoint pborder(i->GetFlatLocation(), dest.altitude); /// @todo alt!
     const FlatRay ray(pborder, dest);
 
     if (spv.IntersectsWith(ray)) {
@@ -134,7 +134,7 @@ AirspaceRoute::FindClearingPair(const SearchPointVector &spv,
         continue;
       }
     } else {
-      AGeoPoint gborder(projection.Unproject(pborder), dest.altitude); // @todo alt!
+      AGeoPoint gborder(projection.Unproject(pborder), dest.altitude); /// @todo alt!
       if (!check_others || !InsideOthers(gborder)) {
         if (j == 0) {
           p.first = pborder;
@@ -169,10 +169,10 @@ AirspaceRoute::GetBackupPairs(const SearchPointVector &spv,
   ClearingPair p(intc, intc);
 
   SearchPointVector::const_iterator i_left = spv.NextCircular(start);
-  p.first = AFlatGeoPoint(i_left->GetFlatLocation(), _start.altitude); // @todo alt!
+  p.first = AFlatGeoPoint(i_left->GetFlatLocation(), _start.altitude); /// @todo alt!
 
   SearchPointVector::const_iterator i_right = spv.PreviousCircular(start);
-  p.second = AFlatGeoPoint(i_right->GetFlatLocation(), _start.altitude); // @todo alt!
+  p.second = AFlatGeoPoint(i_right->GetFlatLocation(), _start.altitude); /// @todo alt!
 
   return p;
 }
@@ -208,12 +208,15 @@ AirspaceRoute::Synchronise(const Airspaces &master,
                            const AGeoPoint &origin,
                            const AGeoPoint &destination) noexcept
 {
-  // @todo: also synchronise with AirspaceWarningManager to filter out items that are
-  // acknowledged.
+  /**
+   * \todo
+   * Also synchronise with AirspaceWarningManager to filter out items that are
+   * acknowledged.
+   */
   h_min = std::min((int)origin.altitude, std::min((int)destination.altitude, h_min));
   h_max = std::max((int)origin.altitude, std::max((int)destination.altitude, h_max));
 
-  // @todo: have margin for h_max to allow for climb
+  /// \todo: have margin for h_max to allow for climb
   AirspacePredicateHeightRangeExcludeTwo h_condition(h_min, h_max, origin, destination);
 
   const auto and_condition = MakeAndPredicate(h_condition,

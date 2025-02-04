@@ -36,8 +36,11 @@ Copyright_License {
 using std::max;
 using namespace std::chrono;
 
-// JMW TODO: abstract up to higher layer so a base copy of this won't
-// call any event
+/** 
+ * \todo 
+ * Abstract up to higher layer so a base copy of this won't call any event.
+ * (JMW)
+ */
 
 TaskComputer::TaskComputer(ProtectedTaskManager &_task,
                            const Airspaces &airspace_database,

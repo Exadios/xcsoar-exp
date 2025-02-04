@@ -261,10 +261,12 @@ PopupMessage::Render()
 int
 PopupMessage::GetEmptySlot()
 {
-  // find oldest message that is no longer visible
-
-  // \todo: make this more robust with respect to message types and if can't
-  // find anything to remove..
+  /**
+   * find oldest message that is no longer visible.
+   *
+   * \todo: make this more robust with respect to message types and if can't
+   * find anything to remove..
+   */
   unsigned imin = 0;
   std::chrono::steady_clock::time_point tmin{};
   for (unsigned i = 0; i < MAXMESSAGES; i++) {

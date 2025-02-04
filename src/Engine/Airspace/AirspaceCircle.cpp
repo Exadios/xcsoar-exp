@@ -32,7 +32,7 @@ AirspaceCircle::AirspaceCircle(const GeoPoint &loc, const double _radius) noexce
 {
   is_convex = TriState::TRUE;
 
-  // @todo: find better enclosing radius as fn of NUM_SEGMENTS
+  /// @todo: find better enclosing radius as fn of NUM_SEGMENTS
 
   static constexpr unsigned NUM_SEGMENTS = 12;
   m_border.reserve(NUM_SEGMENTS);

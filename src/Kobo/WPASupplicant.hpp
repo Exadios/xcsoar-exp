@@ -70,7 +70,7 @@ public:
 
   [[gnu::pure]]
   bool IsConnected() const noexcept {
-    // TODO: what if the socket is broken?
+    /// \todo What if the socket is broken?
     return fd.IsDefined();
   }
 

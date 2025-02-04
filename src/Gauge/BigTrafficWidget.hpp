@@ -27,10 +27,6 @@
  * \file
  */
 
-/**
- * \todo pfb: Implement ENABLE_TEAM_FLYING in build. (Issue 5)
- */
-
 #include "Widget/ContainerWidget.hpp"
 #include "Blackboard/BlackboardListener.hpp"
 
@@ -42,6 +38,8 @@ class FlarmTrafficControl;
 /**
  * Class to present and manage a PPI radar widget for the display of
  * remote targets - e.g. FLARM and ADS-B targets.
+ *
+ * \todo pfb: Implement ENABLE_TEAM_FLYING in build. (Issue 5)
  */
 class TrafficWidget : public ContainerWidget, private NullBlackboardListener
   {

@@ -164,7 +164,7 @@ SuspendAppendSaveWaypoint(Waypoint &&wp)
 // Execution - list of things you can do
 // -----------------------------------------------------------------------
 
-// TODO code: Keep marker text for use in log file etc.
+/// \todo Code: Keep marker text for use in log file etc.
 void
 InputEvents::eventMarkLocation(const TCHAR *misc)
 {
@@ -285,7 +285,10 @@ InputEvents::eventScreenModes(const TCHAR *misc)
 void
 InputEvents::eventClearStatusMessages([[maybe_unused]] const TCHAR *misc)
 {
-  // TODO enhancement: allow selection of specific messages (here we are acknowledging all)
+  /**
+   * \todo Enhancement: allow selection of specific messages (here we are
+   * acknowledging all).
+   */
   if (CommonInterface::main_window->popup != nullptr)
     CommonInterface::main_window->popup->Acknowledge();
 }
@@ -308,7 +311,7 @@ InputEvents::eventMode(const TCHAR *misc)
 void
 InputEvents::eventMainMenu([[maybe_unused]] const TCHAR *misc)
 {
-  // todo: popup main menu
+  /// \todo: popup main menu
 }
 
 // Checklist
@@ -457,8 +460,10 @@ try {
   if (logger == nullptr)
     return;
 
-  // TODO feature: start logger without requiring feedback
-  // start stop toggle addnote
+  /**
+   * \todo Feature: start logger without requiring feedback 
+   * start stop toggle addnote.
+   */
 
   const NMEAInfo &basic = CommonInterface::Basic();
   const ComputerSettings &settings_computer =
@@ -514,7 +519,7 @@ void
 InputEvents::eventRepeatStatusMessage([[maybe_unused]] const TCHAR *misc)
 {
   // new interface
-  // TODO enhancement: display only by type specified in misc field
+  /// \todo Enhancement: display only by type specified in misc field.
   if (CommonInterface::main_window->popup != nullptr)
     CommonInterface::main_window->popup->Repeat();
 }
@@ -688,16 +693,23 @@ InputEvents::eventAddWaypoint(const TCHAR *misc)
   trigger_redraw();
 }
 
-// JMW TODO enhancement: have all inputevents return bool, indicating whether
-// the button should after processing be hilit or not.
-// this allows the buttons to indicate whether things are enabled/disabled
-// SDP TODO enhancement: maybe instead do conditional processing ?
-//     I like this idea; if one returns false, then don't execute the
-//     remaining events.
+/**
+ * \todo Enhancement: have all inputevents return bool, indicating whether
+ * the button should after processing be hilit or not. This allows the
+ * buttons to indicate whether things are enabled/disabled. (JMW)
+ */
+/**
+ * \todo Enhancement: maybe instead do conditional processing ?
+ * I like this idea; if one returns false, then don't execute the
+ * remaining events. (SDP)
+ */
 
-// JMW TODO enhancement: make sure when we change things here we also set registry values...
-// or maybe have special tag "save" which indicates it should be saved (notice that
-// the wind adjustment uses this already, see in Process.cpp)
+/**
+ * \todo Enhancement: make sure when we change things here we also set
+ * registry values...
+ * or maybe have special tag "save" which indicates it should be saved 
+ * (notice that the wind adjustment uses this already, see in Process.cpp) (JMW)
+ */
 
 /* Recently done
 
@@ -708,22 +720,22 @@ eventProfileSave		- Save profile to a file (misc = filename)
 
 */
 
-/* TODO feature: - new events
-
-eventPanWaypoint		                - Set pan to a waypoint
-- Waypoint could be "next", "first", "last", "previous", or named
-- Note: wrong name - probably just part of eventPan
-eventPressure		- Increase, Decrease, show, Set pressure value
-eventDeclare			- (JMW separate from internal logger)
-eventAirspaceDisplay	- all, below nnn, below me, auto nnn
-eventAirspaceWarnings- on, off, time nn, ack nn
-eventTerrain			- see map_window.Event_Terrain
-eventCompass			- on, off, cruise on, crusie off, climb on, climb off
-eventVario			- on, off // JMW what does this do?
-eventOrientation		- north, track,  ???
-eventTerrainRange	        - on, off (might be part of eventTerrain)
-eventSounds			- Include Task and Modes sounds along with Vario
-- Include master nn, deadband nn, netto trigger mph/kts/...
+/** \todo Feature: - new events
+ *
+ * eventPanWaypoint		                - Set pan to a waypoint
+ * Waypoint could be "next", "first", "last", "previous", or named
+ * Note: wrong name - probably just part of eventPan
+ * eventPressure		- Increase, Decrease, show, Set pressure value
+ * eventDeclare			- (JMW separate from internal logger)
+ * eventAirspaceDisplay	- all, below nnn, below me, auto nnn
+ * eventAirspaceWarnings- on, off, time nn, ack nn
+ * eventTerrain			- see map_window.Event_Terrain
+ * eventCompass			- on, off, cruise on, crusie off, climb on, climb off
+ * eventVario			- on, off // JMW what does this do?
+ * eventOrientation		- north, track,  ???
+ * eventTerrainRange	        - on, off (might be part of eventTerrain)
+ * eventSounds			- Include Task and Modes sounds along with Vario
+ * Include master nn, deadband nn, netto trigger mph/kts/...
 
 */
 

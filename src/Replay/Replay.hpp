@@ -36,6 +36,8 @@ class CatmullRomInterpolator;
 class Error;
 
 /**
+ * Replay engine.
+ *
  * \todo
  *
  * At the moment replay of NMEA files fails. The problem is that the 

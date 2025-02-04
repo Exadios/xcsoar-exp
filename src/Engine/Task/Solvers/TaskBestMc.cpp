@@ -25,7 +25,7 @@
 
 #include <algorithm>
 
-// @todo only engage this class if above final glide at mc=0
+/// @todo only engage this class if above final glide at mc=0
 
 TaskBestMc::TaskBestMc(TaskPoint &tp,
                        const AircraftState &_aircraft,

@@ -378,7 +378,6 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
     const Angle RadialEnd = (A12adj + turnpoint_infos.angle1).AsBearing();
 
     /**
-     * TODO
      * \todo Make a number of wimp and annular OZs and discover how CU
      * differentiates the two.
      */

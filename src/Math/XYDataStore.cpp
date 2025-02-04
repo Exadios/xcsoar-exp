@@ -50,7 +50,7 @@ XYDataStore::StoreAdd(double x, double y, double weight) noexcept
     x_min = x;
 
   // Add point
-  // TODO code: really should have a circular buffer here
+  /// \todo Code: really should have a circular buffer here
   if (!slots.full())
     slots.append() = Slot(x, y, weight);
 

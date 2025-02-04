@@ -91,7 +91,6 @@ AATTaskFactory::GetMutatedPointType(const OrderedTaskPoint &tp) const noexcept
   case TaskPointFactoryType::SYMMETRIC_QUADRANT:
     newtype = TaskPointFactoryType::AAT_CYLINDER;
     /**
-     * TODO
      * \todo
      * - create a 90 degree symmetric AAT sector
      */

@@ -94,7 +94,7 @@ struct EventBuilder {
       }
 
       // Make label event
-      // TODO code: Consider Reuse existing entries...
+      /// \todo Code: Consider Reuse existing entries...
       if (location > 0) {
         // Only copy this once per object - save string space
         if (!new_label) {
@@ -167,7 +167,7 @@ struct EventBuilder {
 void
 ParseInputFile(InputConfig &config, TLineReader &reader)
 {
-  // TODO code - Safer sizes, strings etc - use C++
+  /// \todo Code - Safer sizes, strings etc - use C++
 
   // Multiple modes (so large string)
   EventBuilder current;
@@ -215,7 +215,7 @@ ParseInputFile(InputConfig &config, TLineReader &reader)
           continue;
         }
 
-        // TODO code: Consider reusing existing identical events
+        /// \todo Code: Consider reusing existing identical events
 
         pt2Event event = InputEvents::findEvent(d_event);
         if (!event) {

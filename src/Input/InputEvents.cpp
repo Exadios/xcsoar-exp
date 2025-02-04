@@ -347,7 +347,7 @@ InputEvents::ProcessKey(Mode mode, unsigned key_code) noexcept
     /* the Kobo power button opens the main menu */
     key_code = KEY_MENU;
 #else
-  // TODO: check the console key code
+  /// \todo Check the console key code
 #endif
 #endif
 
@@ -441,7 +441,7 @@ InputEvents::processGlideComputer_real(unsigned gce_id) noexcept
     return false;
   int event_id = 0;
 
-  // TODO feature: Log glide computer events to IGC file
+  /// \todo Feature: Log glide computer events to IGC file
 
   // Valid input ?
   if (gce_id >= GCE_COUNT)

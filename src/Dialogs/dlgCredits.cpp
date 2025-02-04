@@ -125,7 +125,7 @@ LogoPageWindow::OnPaint(Canvas &canvas) noexcept
    * This causes a SIGSEGV on the Android build. Not debugged now. Will
    * do it later.
    */
-  /*
+  /**
    * \todo
    * Diagnose SIGSEGV in this code below.
    */

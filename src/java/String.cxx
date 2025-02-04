@@ -32,7 +32,7 @@
 #include "util/ScopeExit.hxx"
 
 Java::String::String(JNIEnv *_env, std::string_view _value) noexcept
-	// TODO: is there no way to do this without duplicating the string?
+	/// \todo Is there no way to do this without duplicating the string?
 	:String(_env, std::string{_value}.c_str())
 {
 }

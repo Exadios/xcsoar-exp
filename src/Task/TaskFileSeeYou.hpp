@@ -27,7 +27,7 @@
 /**
  * A class that reads and parses a SeeYou task file to an XCSoar internal
  * task representation.
- * TODO
+ * 
  * \todo Remove debugs in code!
  */
 

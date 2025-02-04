@@ -126,7 +126,7 @@ GlueMapWindow::DrawPanInfo(Canvas &canvas) const
 
   if (compass_visible)
     /* don't obscure the north arrow */
-    /* TODO: obtain offset from CompassRenderer */
+    /** \todo Obtain offset from CompassRenderer */
     p.y += Layout::Scale(19) + Layout::FastScale(13);
 
   if (terrain) {

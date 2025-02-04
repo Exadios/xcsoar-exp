@@ -110,10 +110,13 @@ ParseRunwayDirection(const TCHAR* src, Runway &dest)
   if (a2 == 360)
     a2 = 0;
 
-  // TODO: WELT2000 generates quite a few entries where
-  //       a) a1 == a2 (accept those) and
-  //       b) the angles are neither equal or reciprocal (discard those)
-  //       Try finding a logic behind this behaviour.
+  /**
+   * \todo
+   * WELT2000 generates quite a few entries where
+   *       a) a1 == a2 (accept those) and
+   *       b) the angles are neither equal or reciprocal (discard those)
+   *       Try finding a logic behind this behaviour.
+   */
   if (a1 != a2 && (a1 + 180) % 360 != a2)
     return false;
 

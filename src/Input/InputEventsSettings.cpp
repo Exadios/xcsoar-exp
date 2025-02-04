@@ -165,7 +165,7 @@ InputEvents::eventAudioDeadband(const TCHAR *misc)
 
   Profile::Set(ProfileKeys::SoundDeadband, settings.sound_deadband);
 
-  // TODO feature: send to vario if available
+  /// \todo Feature: send to vario if available
 }
 
 // Bugs

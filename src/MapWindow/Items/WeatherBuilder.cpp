@@ -82,7 +82,7 @@ MapItemListBuilder::AddThermals(std::span<const TIM::Thermal> thermals) noexcept
 
     ThermalSource source;
     source.location = i.location;
-    source.ground_height = 0; // TODO
+    source.ground_height = 0;
     source.lift_rate = i.climb_rate;
     // TODO source.time = i.time;
 

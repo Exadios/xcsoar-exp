@@ -73,7 +73,7 @@ MapWindow::DrawThermalEstimate(Canvas &canvas) const
   if (cloud_settings.show_thermals && skylines_data != nullptr) {
     const std::lock_guard lock{skylines_data->mutex};
     for (auto &i : skylines_data->thermals) {
-      // TODO: apply wind drift
+      /// \todo Apply wind drift
       if (auto p = render_projection.GeoToScreenIfVisible(i.bottom_location))
         look.thermal_source_icon.Draw(canvas, *p);
     }

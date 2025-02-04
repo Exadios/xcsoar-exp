@@ -114,7 +114,7 @@ RoutePlanner::Solve(const AGeoPoint &origin, const AGeoPoint &destination,
       retval = true;
     }
 
-    if (is_final) // @todo: allow fallback if failed
+    if (is_final) /// @todo: allow fallback if failed
     { // copy improving solutions
       Route this_solution;
       unsigned d = FindSolution(node, this_solution);

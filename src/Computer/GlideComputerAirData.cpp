@@ -45,8 +45,12 @@ GlideComputerAirData::GlideComputerAirData(const Waypoints &_way_points)
   :waypoints(_way_points),
    terrain(NULL)
 {
-  // JMW TODO enhancement: seed initial wind store with start conditions
-  // SetWindEstimate(Calculated().WindSpeed, Calculated().WindBearing, 1);
+  /**
+   * \todo
+   * Enhancement - seed initial wind store with start conditions
+   * SetWindEstimate(Calculated().WindSpeed, Calculated().WindBearing, 1);
+   * (JMW)
+   */
 }
 
 void
@@ -176,7 +180,7 @@ GlideComputerAirData::AverageClimbRate(const NMEAInfo &basic,
       (!basic.acceleration.available ||
        !basic.acceleration.real ||
        fabs(basic.acceleration.g_load - 1) <= CLIMB_RATE_G_MIN)) {
-    // TODO: Check this is correct for TAS/IAS
+    /// \todo Check this is correct for TAS/IAS
     auto ias_to_tas = basic.indicated_airspeed / basic.true_airspeed;
     auto w_tas = basic.total_energy_vario * ias_to_tas;
 

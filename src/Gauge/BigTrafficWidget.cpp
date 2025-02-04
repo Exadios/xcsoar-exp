@@ -229,7 +229,7 @@ void
 FlarmTrafficControl::CalcAutoZoom()
   {
   /**
-   * \ todo Include ADSB in calculation of auto zoom (Issue 5)
+   * \todo Include ADSB in calculation of auto zoom (Issue 5)
    */
   bool warning_mode = WarningMode();
   RoughDistance zoom_dist = 0;

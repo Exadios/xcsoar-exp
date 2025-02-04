@@ -42,7 +42,7 @@ class WindComputer {
   CirclingWind circling_wind;
   WindEKFGlue wind_ekf;
 
-  // TODO: protect with a Mutex
+  /// \todo protect with a Mutex
   WindStore wind_store;
 
   /**

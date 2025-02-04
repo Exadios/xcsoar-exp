@@ -66,8 +66,8 @@ TerrainRoute::SolveReach(const AGeoPoint &origin,
   return reach;
 }
 
-/*
-  @todo:
+/**
+  \todo:
   - check wind directions are correct
   - check overflow/accuracy of slope factor in RasterTile::FirstIntersection
   - graphical feedback on flight mode of Route in GUI

@@ -49,7 +49,7 @@ SetAirfieldDetails(Waypoints &way_points, const TCHAR *name,
   if (wp == nullptr)
     return;
 
-  // TODO: eliminate this const_cast hack
+  /// \todo Eliminate this const_cast hack
   Waypoint &new_wp = const_cast<Waypoint &>(*wp);
   new_wp.details = Details.c_str();
   new_wp.files_embed.assign(files_embed.begin(), files_embed.end());

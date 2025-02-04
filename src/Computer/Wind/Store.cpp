@@ -93,7 +93,7 @@ WindStore::NewWind([[maybe_unused]] const NMEAInfo &info, DerivedInfo &derived,
     derived.estimated_wind = SpeedVector(bearing.AsBearing(), mag);
     derived.estimated_wind_available.Update(update_clock);
   } else {
-    // TODO code: give warning, wind estimate bogus or very strong!
+    /// \todo code: give warning, wind estimate bogus or very strong!
   }
 
   #ifdef DEBUG_WIND
