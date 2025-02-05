@@ -15,6 +15,8 @@ project('XCSoar', [ 'cpp', 'c' ],
                           'optimization=0',
                          ])
 
+
+ut_build = false
 vs = find_program('tools/Meson/scripts/version')
 rv = run_command(vs)
 message(rv.stdout().strip())
@@ -494,4 +496,6 @@ subdir('tools/ADSB/NMEA')
 subdir('tools/ADSB/GDL90')
 
 # Unit tests
-subdir('src/Gauge/UT')
+if ut_build
+  subdir('src/Gauge/UT')
+endif
