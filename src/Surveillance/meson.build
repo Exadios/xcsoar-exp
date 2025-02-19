@@ -5,6 +5,6 @@ surveillance_lib = library('surveillance', surveillance_sources,
                            include_directories : common_includes
                           )
 
-if ut_build
+if get_option('ut_build').enabled()
   subdir('UT')
 endif

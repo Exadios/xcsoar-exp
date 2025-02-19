@@ -1,7 +1,7 @@
 project('XCSoar', [ 'cpp', 'c' ], 
         meson_version  : '>=0.56.2',
         license        : 'GPL2+',
-        version        : ('v7.27.0.3.1'),
+        version        : ('v7.27.0.3.2'),
         default_options: [
                           'buildtype=debug',
                           'debug=true',
@@ -15,10 +15,8 @@ project('XCSoar', [ 'cpp', 'c' ],
                           'optimization=0',
                          ])
 
-
-ut_build = false
 vs = find_program('tools/Meson/scripts/version')
-rv = run_command(vs)
+rv = run_command(vs, check : true)
 message(rv.stdout().strip())
 message(rv.stderr().strip())
 version_define = ''.join(['-DXCSOAR_VERSION="', rv.stdout().strip(), '"'])
@@ -283,7 +281,9 @@ common_includes = include_directories([
 
 # Use old make system to generate some required targets (because its too 
 # difficult to do otherwise)
-make = find_program('make', required : true)
+make    = find_program('make', required : true)
+perl    = find_program('perl', required : true)
+host_cc = find_program('cc',   required : true)
 custom_target('egm96s',
               command : [ make,
                           'output/data/egm96s.dem.c',
@@ -305,14 +305,82 @@ egm96s_lib = library('egm96s', [
                                  'output/data/NEWS.txt.gz.c',
                                ]
                     )
-custom_target('resourses',
-              command : [ make,
-                          'output/UNIX/resources.c',
-                        ],
-              output : 'resources.c'
-             )
+#custom_target('resources',
+#              command : [ make,
+#                          'output/UNIX/resources.c',
+#                        ],
+#              output : 'resources.c'
+#             )
 
-resources_lib = library('resources', 'output/UNIX/resources.c')
+# Some build tools
+LinkResources = find_program('tools/LinkResources-meson.pl')
+xcsoar_rc_helper = find_program('tools/Meson/scripts/xcsoar_rc-helper')
+resource_h_helper = find_program('tools/Meson/scripts/resource_h-helper')
+
+# Some generators.
+#linkresources_generator = generator(LinkResources,
+#                                    arguments: ['@INPUT@',
+#                                                '@OUTPUT@'],
+#                                    output:    '@BASENAME@.c')
+#resources_c = linkresources_generator.process('Data/XCSoar.rc')
+
+# Some custom targets
+#resource_h = custom_target('resource_h',
+#                           command : [ perl,
+#                                       '-ne',
+#                                       '\'print \"#define $1 $2 \n\" if /^MAKE_RESOURCE\((\w+), (\d+)\);/;\'',
+#                                       '@INPUT@', '@OUTPUT@',
+#                                     ],
+#                           input   : meson.project_source_root() +
+#                                     '/src/Resources.hpp',
+#                           output  : 'resource.h'
+#                          )
+resource_h = custom_target('resource_h', 
+                           command : [ resource_h_helper,
+                                       '@INPUT@',
+                                       '@OUTPUT@',
+                                     ],
+                           input   : 'src/Resources.hpp',
+                           output  : 'resource.h',
+                          )
+
+xcsoar_rc = custom_target('xcsoar_rc',
+                          command :  [ xcsoar_rc_helper,
+                                       '@INPUT0@',
+                                       '@OUTPUT@',
+                                       '@INPUT1@',
+                                       '-DHAVE_POSIX',
+                                       '-DHAVE_VASPRINTF',
+                                       '-DEYE_CANDY',
+                                       '-D_GLIBCXX_ASSERTIONS',
+                                       '-DENABLE_OPENGL',
+                                       '-DHAVE_GLES',
+                                       '-DHAVE_GLES2',
+                                       '-isystem lib/glm',
+                                       '-DGL_GLEXT_PROTOTYPES',
+                                     ],
+                          input :    [ meson.project_source_root() +
+                                       '/Data/XCSoar.rc',
+                                       meson.project_source_root() +
+                                       '/output/meson/include/',
+                                     ],
+                          depends : resource_h,
+                          output :  'XCSoar.rc'
+                         )
+                                    
+resources_c = custom_target('linkresources',
+                            command : [ LinkResources, '@INPUT@', '@OUTPUT@' ],
+                            input   : xcsoar_rc,
+                            env     : [
+                                        'PERL5LIB=../../tools',
+                                        'PERLLIB=../../tools'
+                                      ],
+                            output  : 'resources.c',
+                            depends : resource_h,
+                           )
+
+#resources_lib = library('resources', '@OUTDIR@/resources.c')
+resources_lib = library('resources', resources_c)
 
 #subdir('Data')
 
@@ -496,6 +564,6 @@ subdir('tools/ADSB/NMEA')
 subdir('tools/ADSB/GDL90')
 
 # Unit tests
-if ut_build
+if get_option('ut_build').enabled()
   subdir('src/Gauge/UT')
 endif
