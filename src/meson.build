@@ -7,6 +7,6 @@ resource = subproject('resource_sources')
 resource_sources = resource.get_variable('resource_sources')
 resource_lib = library('resource', resource_sources,
                        include_directories : common_includes,
-                       
+                       link_depends        : resource_data_h
                       )
 

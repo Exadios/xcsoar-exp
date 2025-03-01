@@ -262,12 +262,13 @@ add_project_arguments([
                       ],
                       language : 'c')
 
+generated_headers = include_directories('include')
 common_includes = include_directories([
                                        './src/unix',
                                        './output/include',
                                        './src',
                                        './src/Engine',
-                                       './output/UNIX/include',
+                                       './include',
                                        './src/Terrain/jasper/..',
                                        './src/Profile',
                                        './src/time',
@@ -305,17 +306,15 @@ egm96s_lib = library('egm96s', [
                                  'output/data/NEWS.txt.gz.c',
                                ]
                     )
-#custom_target('resources',
-#              command : [ make,
-#                          'output/UNIX/resources.c',
-#                        ],
-#              output : 'resources.c'
-#             )
 
 # Some build tools
 LinkResources = find_program('tools/LinkResources-meson.pl')
 xcsoar_rc_helper = find_program('tools/Meson/scripts/xcsoar_rc-helper')
 resource_h_helper = find_program('tools/Meson/scripts/resource_h-helper')
+#generatesinetables = executable('GenerateSineTables',
+#                                'tools/GenerateSineTables.cpp'
+#)
+#generatesinetables = find_program('generatesinetables')
 
 # Some generators.
 #linkresources_generator = generator(LinkResources,
@@ -324,49 +323,46 @@ resource_h_helper = find_program('tools/Meson/scripts/resource_h-helper')
 #                                    output:    '@BASENAME@.c')
 #resources_c = linkresources_generator.process('Data/XCSoar.rc')
 
-# Some custom targets
-#resource_h = custom_target('resource_h',
-#                           command : [ perl,
-#                                       '-ne',
-#                                       '\'print \"#define $1 $2 \n\" if /^MAKE_RESOURCE\((\w+), (\d+)\);/;\'',
-#                                       '@INPUT@', '@OUTPUT@',
-#                                     ],
-#                           input   : meson.project_source_root() +
-#                                     '/src/Resources.hpp',
-#                           output  : 'resource.h'
-#                          )
-resource_h = custom_target('resource_h', 
-                           command : [ resource_h_helper,
-                                       '@INPUT@',
-                                       '@OUTPUT@',
-                                     ],
-                           input   : 'src/Resources.hpp',
-                           output  : 'resource.h',
-                          )
+subdir('include')
 
-xcsoar_rc = custom_target('xcsoar_rc',
-                          command :  [ xcsoar_rc_helper,
-                                       '@INPUT0@',
-                                       '@OUTPUT@',
-                                       '@INPUT1@',
-                                       '-DHAVE_POSIX',
-                                       '-DHAVE_VASPRINTF',
-                                       '-DEYE_CANDY',
-                                       '-D_GLIBCXX_ASSERTIONS',
-                                       '-DENABLE_OPENGL',
-                                       '-DHAVE_GLES',
-                                       '-DHAVE_GLES2',
-                                       '-isystem lib/glm',
-                                       '-DGL_GLEXT_PROTOTYPES',
-                                     ],
-                          input :    [ meson.project_source_root() +
-                                       '/Data/XCSoar.rc',
-                                       meson.project_source_root() +
-                                       '/output/meson/include/',
-                                     ],
-                          depends : resource_h,
-                          output :  'XCSoar.rc'
-                         )
+# Some custom targets
+mathtables_h = custom_target('MathTables',
+                             command : generatesinetables,
+                             output  : 'MathTables.h'
+                            )
+
+#resource_h = custom_target('resource_h', 
+#                           command : [ resource_h_helper,
+#                                       '@INPUT@',
+#                                       '@OUTPUT@',
+#                                     ],
+#                           input   : 'src/Resources.hpp',
+#                           output  : 'resource.h',
+#                          )
+
+#xcsoar_rc = custom_target('xcsoar_rc',
+#                          command :  [ xcsoar_rc_helper,
+#                                       '@INPUT0@',
+#                                       '@OUTPUT@',
+#                                       '@INPUT1@',
+#                                       '-DHAVE_POSIX',
+#                                       '-DHAVE_VASPRINTF',
+#                                       '-DEYE_CANDY',
+#                                       '-D_GLIBCXX_ASSERTIONS',
+#                                       '-DENABLE_OPENGL',
+#                                       '-DHAVE_GLES',
+#                                       '-DHAVE_GLES2',
+#                                       '-isystem lib/glm',
+#                                       '-DGL_GLEXT_PROTOTYPES',
+#                                     ],
+#                          input :    [ meson.project_source_root() +
+#                                       '/Data/XCSoar.rc',
+#                                       meson.project_source_root() +
+#                                       '/output/meson/include/',
+#                                     ],
+#                          depends : resource_h,
+#                          output :  'XCSoar.rc'
+#                         )
                                     
 resources_c = custom_target('linkresources',
                             command : [ LinkResources, '@INPUT@', '@OUTPUT@' ],

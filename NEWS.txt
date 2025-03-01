@@ -1,3 +1,5 @@
+Version 7.27.0.3.2-Alpha-1
+  - Update of meson build system.
 Version 7.27.0.3.2
   - Changes necessary to get the Android target working again.
   - Implement "vario" on PPI display for ADSB targets. Use received
