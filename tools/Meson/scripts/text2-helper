@@ -1,0 +1,4 @@
+#!/bin/bash
+
+perl ../../tools/${1} ${2} > ${3}.tmp
+mv ${3}.tmp ${3}

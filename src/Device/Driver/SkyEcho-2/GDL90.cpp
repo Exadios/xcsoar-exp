@@ -170,16 +170,16 @@ TrafficReport::TrafficAlertStatus() const noexcept
 unsigned int
 TrafficReport::AddressType() const noexcept
   {
-  return std::to_integer<unsigned int>(image[1]) && 0xf;
+  return std::to_integer<unsigned int>(image[1]) & 0xf;
   }
 
 //------------------------------------------------------------------------------
 unsigned int
 TrafficReport::ParticipantAddress() const noexcept
   {
-  return std::to_integer<unsigned int>(image[4]) * (2^16) +
-         std::to_integer<unsigned int>(image[3]) * (2^8)  +
-         std::to_integer<unsigned int>(image[2]);
+  return (std::to_integer<unsigned int>(image[4]) << 16) +
+         (std::to_integer<unsigned int>(image[3]) << 8)  +
+         (std::to_integer<unsigned int>(image[2]));
   }
 
 //------------------------------------------------------------------------------

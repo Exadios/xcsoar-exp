@@ -1,0 +1,101 @@
+[binaries]
+c = [ 'ccache', 'clang' ]
+cpp = [ 'ccache', 'clang++' ]
+ld = 'ld'
+#ar = '/usr/bin/llvm-ar'
+objcopy = '/usr/bin/llvm-objcopy'
+strip = '/usr/bin/llvm-strip'
+pkgconfig = '/usr/bin/arm-linux-gnueabihf-pkg-config'
+
+[target_machine]
+system = 'linux'
+cpu_family = 'arm'
+cpu = 'armv7'
+endian = 'little'
+
+[properties]
+ld_args  = [
+            '--target=arm-unknown-linux-gnueabihf',
+            '--sysroot=/',
+           ]
+
+[built-in options]
+#ld_args   = [
+#             '--target=arm-unknown-linux-gnueabihf',
+#             '--sysroot=/',
+#             '-march=armv7-a',
+#             '-mfpu=neon',
+#             '-mfloat-abi=hard',
+#             '-mthumb',
+#             '-mno-PIE',
+            #]
+c_args    = [
+             '--target=arm-unknown-linux-gnueabihf',
+             '-mfloat-abi=hard',
+
+            ]
+cpp_args  = [
+#             '-Wl,-march=armv7-a,-mfpu=neon,-mfloat-abi=hard,-mthumb,-fno-PIE',
+             '--target=arm-unknown-linux-gnueabihf',
+#             '--sysroot=/',
+             '-march=armv7-a',
+             '-mfpu=neon',
+             '-mfloat-abi=hard',
+             '-mthumb',
+             '-fno-PIE',
+             '-mfloat-abi=hard',
+             '-funit-at-a-time',
+             '-ffast-math',
+             '-fno-threadsafe-statics',
+             '-fmerge-all-constants',
+             '-fno-operator-names',
+             '-fvisibility=hidden',
+             '-finput-charset=utf-8',
+             '-Wwrite-strings',
+             '-Wcast-qual',
+             '-Wpointer-arith',
+             '-Wsign-compare',
+             '-Wmissing-declarations',
+             '-Wredundant-decls',
+             '-Wvla',
+             '-Wno-missing-field-initializers',
+             '-Wcast-align',
+             '-Wno-error=non-virtual-dtor',
+             '-Wno-unused-parameter',
+             '-Wno-non-virtual-dtor', # Meson insists on having -Wnon-virtual-dtor
+             '-Wno-undef',  # This should not be. It is necessary to fix a problem in Boost.
+             '-Wno-unused-parameter', # More Boost problems.
+             '-DBOOST_NO_STDLIB_CONFIG',  # Stop Boost headers doing
+                                          # crazy stuff with our
+                                          # defines given here.
+             '-DBOOST_FT_AUTODETECT_CALLING_CONVENTIONS',
+             '-DBOOST_NO_IOSTREAM',
+             '-DBOOST_MATH_NO_LEXICAL_CAST',
+             '-DBOOST_UBLAS_NO_STD_CERR',
+             '-DBOOST_ERROR_CODE_HEADER_ONLY',
+             '-DBOOST_SYSTEM_NO_DEPRECATED',
+             '-DBOOST_NO_STD_LOCALE',
+             '-DBOOST_LEXICAL_CAST_ASSUME_C_LOCALE',
+             '-DBOOST_NO_CXX98_FUNCTION_BASE',
+             '-DBOOST_JSON_STANDALONE',
+             '-DHAVE_POSIX',
+             '-DHAVE_VASPRINTF',
+             '-DEYE_CANDY',
+             '-D_GLIBCXX_ASSERTIONS',
+             '-DENABLE_ALSA',
+             '-DUSE_FREETYPE',
+             '-DENABLE_OPENGL',
+             '-DHAVE_GLES',
+             '-DHAVE_GLES2',
+             '-isystem lib/glm',
+             '-DGL_GLEXT_PROTOTYPES',
+             '-DUSE_GLX',
+             '-DUSE_X11',
+             '-DUSE_POLL_EVENT',
+             '-isystem /usr/include/x86_6-linux-gnu',
+             '-isystem /usr/include/x86_6-linux-gnu',
+             '-isystem /usr/include/lua5.4',
+             '-isystem /usr/include/freetype2/',
+             '-isystem output/src/boost_1_80_0',
+             '-g3',
+            ]

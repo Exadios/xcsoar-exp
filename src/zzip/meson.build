@@ -11,4 +11,7 @@ zzip_lib = library('zzip', zzip_sources,
                    # Meson inserted option will cause it to include
                    # instead zzlib/stdint.h
                    implicit_include_directories : false,
+                   # Cast alignment errors may cause porting problems.
+                   # This should be fixed.
+                   c_args                       : '-Wno-cast-align',
                   )

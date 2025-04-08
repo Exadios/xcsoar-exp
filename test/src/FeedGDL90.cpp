@@ -104,7 +104,7 @@ try
       }
     while (packed[0] != 0x7e);
 
-    unsigned char c = 0;
+    char c = 0;
     int n = 0;
     do
       {

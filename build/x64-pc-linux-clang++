@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec /usr/bin/clang++ -B../../build -stdlib=libc++ --target=x64-pc-linux --sysroot=/ "$@"

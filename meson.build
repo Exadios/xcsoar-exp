@@ -1,18 +1,19 @@
-project('XCSoar', [ 'cpp', 'c' ], 
-        meson_version  : '>=0.56.2',
+project('XCSoar', [ 'c', 'cpp' ], 
+        meson_version  : '>=1.0.1',
         license        : 'GPL2+',
         version        : ('v7.27.0.3.2'),
         default_options: [
-                          'buildtype=debug',
-                          'debug=true',
+                          'buildtype=release',
+                          'debug=false',
                           'b_lundef=false',
                           'c_std=gnu11',
-#                          'cpp_std=c++17',
-                          'warning_level=0',
+                          'cpp_std=c++20',
+                          'warning_level=2',
                           'default_library=static',
-                          'werror=false',
+                          'werror=true',
 #                          'wno-error=non-virtual-dtor',
                           'optimization=0',
+                          'strip=true',
                          ])
 
 vs = find_program('tools/Meson/scripts/version')
@@ -23,35 +24,33 @@ version_define = ''.join(['-DXCSOAR_VERSION="', rv.stdout().strip(), '"'])
 message(version_define)
 # \todo Figure out a GIT_COMMIT that works. See build/version.mk
 
+c_compiler = meson.get_compiler('c')
+cpp_compiler = meson.get_compiler('cpp')
+
 add_project_arguments([
                        '-funit-at-a-time',
                        '-ffast-math',
-                       '-std=c++20',
+                       '-std=c++20',  # default_options above appear not to set
+                                      # this. I don't know why.
                        '-fno-threadsafe-statics',
                        '-fmerge-all-constants',
-                       '-fcoroutines',
-                       '-fconserve-space',
                        '-fno-operator-names',
                        '-fvisibility=hidden',
                        '-finput-charset=utf-8',
-                       '-Wall',
-                       '-Wextra',
                        '-Wwrite-strings',
                        '-Wcast-qual',
                        '-Wpointer-arith',
                        '-Wsign-compare',
-                       '-Wundef',
                 #       '-Wmissing-declarations',
                        '-Wredundant-decls',
-                       '-Wmissing-noreturn',
                        '-Wvla',
-                       '-Wno-format-truncation',
                        '-Wno-missing-field-initializers',
                        '-Wcast-align',
-                       '-Werror',
                        '-Wno-error=non-virtual-dtor',
+                       '-Wno-unused-parameter',
                        '-Wno-non-virtual-dtor', # Meson insists on having -Wnon-virtual-dtor
                        '-Wno-undef',  # This should not be. It is necessary to fix a problem in Boost.
+#                       '-Wno-unused-parameter', # More Boost problems.
                        '-DBOOST_NO_STDLIB_CONFIG',  # Stop Boost headers doing
                                                     # crazy stuff with our
                                                     # defines given here.
@@ -144,22 +143,32 @@ add_project_arguments([
                        '-isystem /usr/include/lua5.4',
                        '-isystem /usr/include/freetype2/',
                        '-isystem output/src/boost_1_80_0',
-                       '-O0',
                        '-g3',
                        version_define,
                       ],
-                      language : 'cpp')
+                      language : 'cpp',
+                     )
+#add_project_arguments(cpp_args,
+#                      language : 'cpp',
+#                     )
+if cpp_compiler.get_id() == 'gcc'
+add_project_arguments([
+                       '-fconserve-space',
+                       '-Wno-format-truncation',
+                       '-fcoroutines',
+                       '-Wmissing-noreturn',  # For boost library
+                      ],
+                      language : 'cpp',)
+endif
+
 add_project_arguments([
                        '-funit-at-a-time',
                        '-ffast-math',
-                       '-g',
-                       '-std=gnu11',
+                       '-std=gnu11',  # default_options above appear not to set
+                                      # this. I don't know why.
                        '-fmerge-all-constants',
-                       '-fconserve-space',
                        '-fvisibility=hidden',
                        '-finput-charset=utf-8',
-                       '-Wall',
-                       '-Wextra',
                        '-Wwrite-strings',
                        '-Wcast-qual',
                        '-Wpointer-arith',
@@ -167,12 +176,9 @@ add_project_arguments([
                        '-Wundef',
                        '-Wmissing-declarations',
                        '-Wredundant-decls',
-                       '-Wmissing-noreturn',
                        '-Wvla',
-                       '-Wno-format-truncation',
                        '-Wno-missing-field-initializers',
                        '-Wcast-align',
-                       '-Werror',
                        '-Wno-error=non-virtual-dtor',
                        '-DHAVE_POSIX',
                        '-DHAVE_VASPRINTF',
@@ -256,19 +262,22 @@ add_project_arguments([
                        '-isystem /usr/include/x86_6-linux-gnu',
                        '-isystem /usr/include/lua5.4',
                        '-isystem /usr/include/freetype2/',
-                       '-O0',
-                       '-g3',
                        version_define,
                       ],
                       language : 'c')
-
-generated_headers = include_directories('include')
+if c_compiler.get_id() == 'gcc'
+add_project_arguments([
+                       '-fconserve-space',
+                       '-Wno-format-truncation',
+                      ],
+                      language : 'c',)
+endif
+#generated_headers = include_directories('include')
 common_includes = include_directories([
+                                       './',  # To include generated headers
                                        './src/unix',
-                                       './output/include',
                                        './src',
                                        './src/Engine',
-                                       './include',
                                        './src/Terrain/jasper/..',
                                        './src/Profile',
                                        './src/time',
@@ -309,61 +318,163 @@ egm96s_lib = library('egm96s', [
 
 # Some build tools
 LinkResources = find_program('tools/LinkResources-meson.pl')
-xcsoar_rc_helper = find_program('tools/Meson/scripts/xcsoar_rc-helper')
-resource_h_helper = find_program('tools/Meson/scripts/resource_h-helper')
-#generatesinetables = executable('GenerateSineTables',
-#                                'tools/GenerateSineTables.cpp'
-#)
-#generatesinetables = find_program('generatesinetables')
+xcsoar_rc_helper = find_program('tools/Meson/build-helpers/xcsoar_rc-helper')
+resource_h_helper = find_program('tools/Meson/build-helpers/resource_h-helper')
+text2_helper = find_program('tools/Meson/build-helpers/text2-helper')
+text1_helper = find_program('tools/Meson/build-helpers/text1-helper')
 
-# Some generators.
-#linkresources_generator = generator(LinkResources,
-#                                    arguments: ['@INPUT@',
-#                                                '@OUTPUT@'],
-#                                    output:    '@BASENAME@.c')
-#resources_c = linkresources_generator.process('Data/XCSoar.rc')
+debug('*** Host Machine ***')
+debug('cpu : ' + host_machine.cpu())
+debug('cpu_family : ' + host_machine.cpu_family())
+debug('endian : ' + host_machine.endian())
+#debug('kernel : ' + host_machine.kernel())
+#debug('subsystem : ' + host_machine.subsystem())
+debug('system : ' + host_machine.system())
 
-subdir('include')
-
+#------------------------------------------------------------------------------#
 # Some custom targets
+
+xs = subproject('xcsoar_sources')
+gst_sources = xs.get_variable('gst_sources')
+xcsoar_sources = xs.get_variable('xcsoar_sources')
+xcsoar_cpp_args = xs.get_variable('xcsoar_cpp_args')
+
+generatesinetables = executable('generatesinetables', gst_sources,
+                                include_directories : common_includes,
+                                build_by_default    : true,
+                                native              : true,
+                               )
+
+resource_h = custom_target('resource_h', 
+                           command : [ resource_h_helper,
+                                       '@INPUT@',
+                                       '@OUTPUT@',
+                                     ],
+                           input   : meson.project_source_root() +
+                                     '/src/Resources.hpp',
+                           output  : 'resource.h',
+                          )
+
+xcsoar_rc = custom_target('xcsoar_rc',
+                          command : [ xcsoar_rc_helper,
+                                      '@INPUT0@',
+                                      '@OUTPUT@',
+                                      '@INPUT1@',
+                                      '-DHAVE_POSIX',
+                                      '-DHAVE_VASPRINTF',
+                                      '-DEYE_CANDY',
+                                      '-D_GLIBCXX_ASSERTIONS',
+                                      '-DENABLE_OPENGL',
+                                      '-DHAVE_GLES',
+                                      '-DHAVE_GLES2',
+                                      '-isystem lib/glm',
+                                      '-DGL_GLEXT_PROTOTYPES',
+                                    ],
+                          input   : [ meson.project_source_root() +
+                                      '/Data/XCSoar.rc',
+                                      meson.current_build_dir(),
+                                    ],
+                          depends  : resource_h,
+                          output   : 'XCSoar.rc'
+                         )
+
+inputevents_text2event = custom_target('InputEvents_Text2Event',
+                                       command : [ text2_helper,
+                                                   'Text2Event.pl',
+                                                   '@INPUT@',
+                                                   '@OUTPUT@',
+                                                 ],
+                                        input  : './src/Input/InputEvents.hpp',
+                                        output : 'InputEvents_Text2Event.cpp',
+                                        build_by_default : true,
+                                       )
+
+inputevents_text2gce = custom_target('InputEvents_Text2GCE',
+                                     command : [ text2_helper,
+                                                 'Text2GCE.pl',
+                                                 '@INPUT@',
+                                                 '@OUTPUT@',
+                                               ],
+                                      input  : './src/Input/InputQueue.hpp',
+                                      output : 'InputEvents_Text2GCE.cpp',
+                                      build_by_default : true,
+                                     )
+
+inputevents_text2ne = custom_target('InputEvents_Text2NE',
+                                    command : [ text2_helper,
+                                                'Text2NE.pl',
+                                                '@INPUT@',
+                                                '@OUTPUT@',
+                                              ],
+                                     input  : './src/Input/InputQueue.hpp',
+                                     output : 'InputEvents_Text2NE.cpp',
+                                     build_by_default : true,
+                                    )
+
+inputevents_char2gce = custom_target('InputEvents_Char2GCE',
+                                     command : [ text2_helper,
+                                                 'Char2GCE.pl',
+                                                 '@INPUT@',
+                                                 '@OUTPUT@',
+                                               ],
+                                      input  : './src/Input/InputQueue.hpp',
+                                      output : 'InputEvents_Char2GCE.cpp',
+                                      build_by_default : true,
+                                     )
+
+inputevents_char2ne = custom_target('InputEvents_Char2NE',
+                                    command : [ text2_helper,
+                                                'Char2NE.pl',
+                                                '@INPUT@',
+                                                '@OUTPUT@',
+                                              ],
+                                     input  : './src/Input/InputQueue.hpp',
+                                     output : 'InputEvents_Char2NE.cpp',
+                                     build_by_default : true,
+                                    )
+
+inputevents_default = custom_target('InputEvents_default',
+                                    command : [ text2_helper,
+                                                'xci2cpp.pl',
+                                                '@INPUT@',
+                                                '@OUTPUT@',
+                                              ],
+                                     input  : './Data/Input/default.xci',
+                                     output : 'InputEvents_default.cpp',
+                                     build_by_default : true,
+                                    )
+
+status_defaults = custom_target('Status_defaults',
+                                command : [ text2_helper,
+                                            'xcs2cpp.pl',
+                                            '@INPUT@',
+                                            '@OUTPUT@',
+                                          ],
+                                input   : './Data/Status/default.xcs',
+                                output  : 'Status_defaults.cpp',
+                                build_by_default : true,
+                               )
+
+resource_data_h = custom_target('resource_data',
+                                command : [ text2_helper,
+                                            'GenerateResources-meson.pl',
+                                            '@INPUT@',
+                                            '@OUTPUT@',
+                                          ],
+                                input   : xcsoar_rc,
+                                output  : 'resource_data.h'
+                               )
+
 mathtables_h = custom_target('MathTables',
-                             command : generatesinetables,
-                             output  : 'MathTables.h'
+                             command : [ text1_helper,
+                                         generatesinetables.full_path(),
+                                         '@OUTPUT@',
+                                       ],
+                             output  : 'MathTables.h',
+                             depends : generatesinetables,
+                             build_by_default : true,
                             )
 
-#resource_h = custom_target('resource_h', 
-#                           command : [ resource_h_helper,
-#                                       '@INPUT@',
-#                                       '@OUTPUT@',
-#                                     ],
-#                           input   : 'src/Resources.hpp',
-#                           output  : 'resource.h',
-#                          )
-
-#xcsoar_rc = custom_target('xcsoar_rc',
-#                          command :  [ xcsoar_rc_helper,
-#                                       '@INPUT0@',
-#                                       '@OUTPUT@',
-#                                       '@INPUT1@',
-#                                       '-DHAVE_POSIX',
-#                                       '-DHAVE_VASPRINTF',
-#                                       '-DEYE_CANDY',
-#                                       '-D_GLIBCXX_ASSERTIONS',
-#                                       '-DENABLE_OPENGL',
-#                                       '-DHAVE_GLES',
-#                                       '-DHAVE_GLES2',
-#                                       '-isystem lib/glm',
-#                                       '-DGL_GLEXT_PROTOTYPES',
-#                                     ],
-#                          input :    [ meson.project_source_root() +
-#                                       '/Data/XCSoar.rc',
-#                                       meson.project_source_root() +
-#                                       '/output/meson/include/',
-#                                     ],
-#                          depends : resource_h,
-#                          output :  'XCSoar.rc'
-#                         )
-                                    
 resources_c = custom_target('linkresources',
                             command : [ LinkResources, '@INPUT@', '@OUTPUT@' ],
                             input   : xcsoar_rc,
@@ -375,10 +486,8 @@ resources_c = custom_target('linkresources',
                             depends : resource_h,
                            )
 
-#resources_lib = library('resources', '@OUTDIR@/resources.c')
 resources_lib = library('resources', resources_c)
-
-#subdir('Data')
+#------------------------------------------------------------------------------#
 
 subdir('src')
 subdir('src/Engine/Task')
@@ -439,22 +548,53 @@ subdir('src/Surveillance')
 
 cxx = meson.get_compiler('cpp')
 
-xs = subproject('xcsoar_sources')
-xcsoar_sources = xs.get_variable('xcsoar_sources')
-xcsoar_cpp_args = xs.get_variable('xcsoar_cpp_args')
-
-lua5_4          = dependency('lua5.4-c++')
-glu1_mesa_dev   = dependency('glu')
+lua5_4          = dependency('lua5.4-c++',
+                             disabler : true,
+                             native   : false,
+                             method   : 'pkg-config',
+                            )
+#lua5_4          = cxx.find_library('lua5.4-c++',
+#                                   required : true,
+#                                   disabler : true,
+#                                  )
+#glu1_mesa_dev   = dependency('glu')
+glu1_mesa_dev   = cxx.find_library('GLU',
+                                   required : true,
+                                   disabler : true,
+                                  )
 curl_dev        = dependency('libcurl')
-freetype_dev    = dependency('freetype2')
+#curl_dev        = cxx.find_library('libcurl',
+#                                   required : true,
+#                                   disabler : true,
+#                                  )
+freetype_dev    = dependency('freetype2',
+                             disabler : true,
+                             method   : 'pkg-config',
+                             native   : false,
+                            )
+#freetype_dev    = cxx.find_library('freetype2',
+#                                   required : true,
+#                                   disabler : true,
+#                                   dirs     : '/usr/lib/arm-linux-gnueabihf/',
+#                                  )
 cares_dev       = dependency('libcares')
+#cares_dev       = cxx.find_library('libcares', required : true)
 png16_dev       = dependency('libpng16')
+#png16_dev       = cxx.find_library('libpng16', required : true)
 libjpeg_dev     = dependency('libjpeg')
+#libjpeg_dev     = cxx.find_library('libjpeg', required : true)
 libasound2_dev  = dependency('alsa')
+#libasound2_dev  = cxx.find_library('libasound2', required : true)
 libjpeg_dev     = dependency('libjpeg')
+#libjpeg_dev     = cxx.find_library('libjpeg', required : true)
 libsodium_dev   = dependency('libsodium')
+#libsodium_dev   = cxx.find_library('libsodium', required : true)
 libtiff_dev     = dependency('libtiff-4')
-libssl_dev      = dependency('openssl')
+#libtiff_dev     = cxx.find_library('libtiff-4', required : true)
+libssl_dev      = dependency('openssl',
+                             disabler : true
+                            )
+#libssl_dev      = cxx.find_library('openssl', required : true)
 libpthread      = cxx.find_library('libpthread')
 libm            = cxx.find_library('libm', required : true)
 libz            = cxx.find_library('libz', required : true)
@@ -553,13 +693,16 @@ xcsoar = executable('xcsoar', 'src/XCSoar.cpp',
                       cpp_args : xcsoar_cpp_args,
                     )
 
-test_includes = include_directories(['src', 'src/unix'])
-subdir('test/src')
-
-subdir('tools/ADSB/NMEA')
-subdir('tools/ADSB/GDL90')
+# Tools
+if meson.is_cross_build() != true
+  test_includes = include_directories(['src', 'src/unix'])
+  subdir('test/src')
+  subdir('tools/ADSB/NMEA')
+  subdir('tools/ADSB/GDL90')
 
 # Unit tests
-if get_option('ut_build').enabled()
-  subdir('src/Gauge/UT')
+  if get_option('ut_build').enabled()
+    subdir('src/Gauge/UT')
+  endif
 endif
+

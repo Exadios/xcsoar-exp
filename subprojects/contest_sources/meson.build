@@ -10,7 +10,6 @@ contest_sources = [
 'Solvers/OLCLeague.cpp',
 'Solvers/OLCSprint.cpp',
 'Solvers/OLCClassic.cpp',
-'Solvers/TriangleContest.cpp',
 'Solvers/OLCTriangleRules.cpp',
 'Solvers/OLCFAI.cpp',
 'Solvers/OLCPlus.cpp',
@@ -25,5 +24,5 @@ contest_sources = [
 'Solvers/WeglideFAI.cpp',
 'Solvers/WeglideOR.cpp',
 'Solvers/Charron.cpp',
-
  ]
+contest_sources_extra = ['Solvers/TriangleContest.cpp',]

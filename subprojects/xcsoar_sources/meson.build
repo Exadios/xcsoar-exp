@@ -62,22 +62,7 @@ xcsoar_sources = [
 './src/net/client/WeGlide/UploadIGCFile.cpp',
 './src/Plane/PlaneGlue.cpp',
 './src/Plane/PlaneFileGlue.cpp',
-#'./src/FLARM/FlarmId.cpp',
-#'./src/FLARM/Error.cpp',
-#'./src/FLARM/List.cpp',
-#'./src/FLARM/FlarmNetRecord.cpp',
-#'./src/FLARM/FlarmNetDatabase.cpp',
 './src/FLARM/FlarmNetReader.cpp',
-#'./src/FLARM/Traffic.cpp',
-#'./src/FLARM/FlarmCalculations.cpp',
-#'./src/FLARM/Friends.cpp',
-#'./src/FLARM/FlarmComputer.cpp',
-#'./src/FLARM/Global.cpp',
-#'./src/FLARM/Glue.cpp',
-#'./src/ADSB/List.cpp',
-#'./src/ADSB/Traffic.cpp',
-#'./src/ADSB/AdsbCalculations.cpp',
-#'./src/ADSB/AdsbComputer.cpp',
 './src/BallastDumpManager.cpp',
 './src/Logger/Settings.cpp',
 './src/Logger/Logger.cpp',
@@ -295,9 +280,6 @@ xcsoar_sources = [
 './src/Units/Settings.cpp',
 './src/Units/Temperature.cpp',
 './src/Formatter/AngleFormatter.cpp',
-#'./src/FLARM/FlarmDetails.cpp',
-#'./src/FLARM/NameDatabase.cpp',
-#'./src/FLARM/NameFile.cpp',
 './src/UtilsSettings.cpp',
 './src/UtilsSystem.cpp',
 './src/Version.cpp',
@@ -544,8 +526,14 @@ xcsoar_sources = [
 './src/Tracking/SkyLines/Glue.cpp',
 './src/Tracking/TrackingGlue.cpp',
 './src/Audio/VarioGlue.cpp'
- ]
+]
 xcsoar_cpp_args = [
 '-Wno-error=redundant-decls',
 '-Wno-redundant-decls',
- ]  # This is necessary for boost. I do not understand fully why!
+]  # This is necessary for boost. I do not understand fully why!
+
+# Sources for generated tools.
+gst_sources = [
+'./tools/GenerateSineTables.cpp',
+
+]

@@ -140,7 +140,7 @@ Packetize(std::vector<std::byte> s)
   }
 
 //------------------------------------------------------------------------------
-constexpr void
+void
 Initfcs()
   {
   /* This code comes from GDL 90 specification document 

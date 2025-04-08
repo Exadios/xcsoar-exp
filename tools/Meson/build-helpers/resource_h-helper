@@ -2,4 +2,3 @@
 
 perl -ne 'print "#define $1 $2 \n" if /^MAKE_RESOURCE\((\w+), (\d+)\);/;' ${1} > ${2}.tmp
 mv ${2}.tmp ${2}
-ln -sf ../${2} include/${2}
