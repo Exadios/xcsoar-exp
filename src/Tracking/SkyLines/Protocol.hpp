@@ -1,6 +1,6 @@
 /*
  * XCSoar Glide Computer - http://www.xcsoar.org/
- * Copyright (C) 2000-2025 The XCSoar Project
+ * Copyright (C) 2000-2026 The XCSoar Project
  * A detailed list of copyright holders can be found in the file "AUTHORS".
  *
  * Redistribution and use in source and binary forms, with or without
